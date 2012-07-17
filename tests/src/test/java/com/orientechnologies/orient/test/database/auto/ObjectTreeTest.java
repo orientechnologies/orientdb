@@ -42,7 +42,10 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import com.orientechnologies.orient.test.domain.base.JavaCascadeDeleteTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.business.Address;
+import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.customserialization.Sec;
@@ -291,6 +294,101 @@ public class ObjectTreeTest {
 				}
 			}
 		}
+	}
+
+	@Test(dependsOnMethods = "testQueryMultiCircular")
+	public void testCascadeDeleteSimpleObject() {
+		JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
+		JavaSimpleTestClass simple = database.newInstance(JavaSimpleTestClass.class);
+		simple.setText("asdasd");
+		test.setSimpleClass(simple);
+		database.save(test);
+		ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
+		ORID simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
+		close();
+		open();
+		database.delete(testRid);
+		simple = database.load(simpleRid);
+		Assert.assertNull(simple);
+	}
+
+	@Test(dependsOnMethods = "testCascadeDeleteSimpleObject")
+	public void testCascadeDeleteCollections() {
+		JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
+		Child listChild1 = database.newInstance(Child.class);
+		listChild1.setName("list1");
+		test.getList().add(listChild1);
+		Child listChild2 = database.newInstance(Child.class);
+		listChild2.setName("list2");
+		test.getList().add(listChild2);
+		Child listChild3 = database.newInstance(Child.class);
+		listChild3.setName("list3");
+		test.getList().add(listChild3);
+
+		Child setChild1 = database.newInstance(Child.class);
+		setChild1.setName("set1");
+		test.getSet().add(setChild1);
+		Child setChild2 = database.newInstance(Child.class);
+		setChild2.setName("set2");
+		test.getSet().add(setChild2);
+		Child setChild3 = database.newInstance(Child.class);
+		setChild3.setName("set3");
+		test.getSet().add(setChild3);
+
+		database.save(test);
+		ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
+		ORID list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		ORID list2Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		ORID list3Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		ORID set1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		ORID set2Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		ORID set3Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+		close();
+		open();
+		database.delete(testRid);
+		listChild1 = database.load(list1Rid);
+		listChild2 = database.load(list2Rid);
+		listChild3 = database.load(list3Rid);
+		setChild1 = database.load(set1Rid);
+		setChild2 = database.load(set2Rid);
+		setChild3 = database.load(set3Rid);
+		Assert.assertNull(listChild1);
+		Assert.assertNull(listChild2);
+		Assert.assertNull(listChild3);
+		Assert.assertNull(setChild1);
+		Assert.assertNull(setChild2);
+		Assert.assertNull(setChild3);
+	}
+
+	@Test(dependsOnMethods = "testCascadeDeleteCollections")
+	public void testCascadeDeleteMap() {
+		JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
+		Child mapChild1 = database.newInstance(Child.class);
+		mapChild1.setName("map1");
+		test.getChildren().put("1", mapChild1);
+		Child mapChild2 = database.newInstance(Child.class);
+		mapChild2.setName("map2");
+		test.getChildren().put("2", mapChild2);
+		Child mapChild3 = database.newInstance(Child.class);
+		mapChild3.setName("map3");
+		test.getChildren().put("3", mapChild3);
+
+		database.save(test);
+		ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
+		ORID map1Rid = database.getRecordByUserObject(mapChild1, false).getIdentity();
+		ORID map2Rid = database.getRecordByUserObject(mapChild2, false).getIdentity();
+		ORID map3Rid = database.getRecordByUserObject(mapChild3, false).getIdentity();
+
+		close();
+		open();
+
+		database.delete(testRid);
+		mapChild1 = database.load(map1Rid);
+		mapChild2 = database.load(map2Rid);
+		mapChild3 = database.load(map3Rid);
+		Assert.assertNull(mapChild1);
+		Assert.assertNull(mapChild2);
+		Assert.assertNull(mapChild3);
 	}
 
 	@Test(dependsOnMethods = "testPool")

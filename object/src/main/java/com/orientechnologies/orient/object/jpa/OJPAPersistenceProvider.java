@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
+import javax.persistence.spi.ProviderUtil;
 
 @SuppressWarnings("rawtypes")
 public class OJPAPersistenceProvider implements PersistenceProvider {
@@ -30,5 +31,9 @@ public class OJPAPersistenceProvider implements PersistenceProvider {
 
 	public EntityManagerFactory createContainerEntityManagerFactory(PersistenceUnitInfo info, Map map) {
 		return OJPAEntityManagerFactory.getInstance();
+	}
+
+	public ProviderUtil getProviderUtil() {
+		throw new UnsupportedOperationException("getProviderUtil");
 	}
 }

@@ -18,10 +18,15 @@ package com.orientechnologies.orient.object.jpa;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.metamodel.Metamodel;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -127,6 +132,82 @@ public class OJPAEntityManager implements EntityManager {
 
 	public void joinTransaction() {
 		throw new UnsupportedOperationException("joinTransaction");
+	}
+
+	public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("find(Class<T>, LockModeType, Map<String, Object>)");
+	}
+
+	public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
+		throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType");
+	}
+
+	public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType, Map<String, Object>)");
+	}
+
+	public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("lock");
+
+	}
+
+	public void refresh(Object entity, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("refresh");
+
+	}
+
+	public void refresh(Object entity, LockModeType lockMode) {
+		throw new UnsupportedOperationException("refresh");
+
+	}
+
+	public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("refresh");
+
+	}
+
+	public void detach(Object entity) {
+		throw new UnsupportedOperationException("detach");
+	}
+
+	public LockModeType getLockMode(Object entity) {
+		throw new UnsupportedOperationException("getLockMode");
+	}
+
+	public void setProperty(String propertyName, Object value) {
+		throw new UnsupportedOperationException("setProperty");
+	}
+
+	public Map<String, Object> getProperties() {
+		throw new UnsupportedOperationException("getProperties");
+	}
+
+	public <T> TypedQuery<T> createQuery(CriteriaQuery<T> criteriaQuery) {
+		throw new UnsupportedOperationException("createQuery");
+	}
+
+	public <T> TypedQuery<T> createQuery(String qlString, Class<T> resultClass) {
+		throw new UnsupportedOperationException("createQuery");
+	}
+
+	public <T> TypedQuery<T> createNamedQuery(String name, Class<T> resultClass) {
+		throw new UnsupportedOperationException("createNamedQuery");
+	}
+
+	public <T> T unwrap(Class<T> cls) {
+		throw new UnsupportedOperationException("unwrap");
+	}
+
+	public EntityManagerFactory getEntityManagerFactory() {
+		return OJPAEntityManagerFactory.getInstance();
+	}
+
+	public CriteriaBuilder getCriteriaBuilder() {
+		throw new UnsupportedOperationException("getCriteriaBuilder");
+	}
+
+	public Metamodel getMetamodel() {
+		throw new UnsupportedOperationException("getMetamodel");
 	}
 
 	public Object getDelegate() {

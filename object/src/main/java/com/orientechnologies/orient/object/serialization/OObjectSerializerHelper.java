@@ -107,6 +107,12 @@ public class OObjectSerializerHelper {
 	public static Class																				jpaEmbeddedClass;
 	@SuppressWarnings("rawtypes")
 	public static Class																				jpaTransientClass;
+	@SuppressWarnings("rawtypes")
+	public static Class																				jpaOneToOneClass;
+	@SuppressWarnings("rawtypes")
+	public static Class																				jpaOneToManyClass;
+	@SuppressWarnings("rawtypes")
+	public static Class																				jpaManyToManyClass;
 
 	static {
 		try {
@@ -115,7 +121,9 @@ public class OObjectSerializerHelper {
 			jpaVersionClass = Class.forName("javax.persistence.Version");
 			jpaEmbeddedClass = Class.forName("javax.persistence.Embedded");
 			jpaTransientClass = Class.forName("javax.persistence.Transient");
-
+			jpaOneToOneClass = Class.forName("javax.persistence.OneToOne");
+			jpaOneToManyClass = Class.forName("javax.persistence.OneToMany");
+			jpaManyToManyClass = Class.forName("javax.persistence.ManyToMany");
 			// DETERMINE IF THERE IS AVAILABLE JPA 2
 			jpaAccessClass = Class.forName("javax.persistence.Access");
 

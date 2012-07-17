@@ -35,6 +35,11 @@ import java.util.Set;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
+import javax.persistence.CascadeType;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -79,6 +84,7 @@ public class OObjectEntitySerializer {
 	private static final HashMap<Class<?>, List<String>>					directAccessFields	= new HashMap<Class<?>, List<String>>();
 	private static final HashMap<Class<?>, Field>									boundDocumentFields	= new HashMap<Class<?>, Field>();
 	private static final HashMap<Class<?>, List<String>>					transientFields			= new HashMap<Class<?>, List<String>>();
+	private static final HashMap<Class<?>, List<String>>					cascadeDeleteFields	= new HashMap<Class<?>, List<String>>();
 	private static final HashMap<Class<?>, Map<Field, Class<?>>>	serializedFields		= new HashMap<Class<?>, Map<Field, Class<?>>>();
 	private static final HashMap<Class<?>, Field>									fieldIds						= new HashMap<Class<?>, Field>();
 	private static final HashMap<Class<?>, Field>									fieldVersions				= new HashMap<Class<?>, Field>();
@@ -207,7 +213,42 @@ public class OObjectEntitySerializer {
 		boolean isTransientField = false;
 		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
 				&& !currentClass.equals(ODocument.class) && !isTransientField;) {
-			List<String> classEmbeddedFields = transientFields.get(iClass);
+			List<String> classCascadeDeleteFields = transientFields.get(currentClass);
+			isTransientField = classCascadeDeleteFields != null && classCascadeDeleteFields.contains(iField);
+			currentClass = currentClass.getSuperclass();
+		}
+		return isTransientField;
+	}
+
+	public static List<String> getCascadeDeleteFields(Class<?> iClass) {
+		checkClassRegistration(iClass);
+		List<String> classCascadeDeleteFields = new ArrayList<String>();
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class);) {
+			List<String> classDeleteFields = cascadeDeleteFields.get(currentClass);
+			if (classDeleteFields != null)
+				classCascadeDeleteFields.addAll(classDeleteFields);
+			currentClass = currentClass.getSuperclass();
+		}
+		return classCascadeDeleteFields;
+	}
+
+	public static List<String> getCascadeDeleteFields(String iClassName) {
+		if (iClassName == null || iClassName.isEmpty())
+			return null;
+		for (Class<?> iClass : cascadeDeleteFields.keySet()) {
+			if (iClass.getSimpleName().equals(iClassName))
+				return getCascadeDeleteFields(iClass);
+		}
+		return null;
+	}
+
+	public static boolean isCascadeDeleteField(Class<?> iClass, String iField) {
+		checkClassRegistration(iClass);
+		boolean isTransientField = false;
+		for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+				&& !currentClass.equals(ODocument.class) && !isTransientField;) {
+			List<String> classEmbeddedFields = cascadeDeleteFields.get(currentClass);
 			isTransientField = classEmbeddedFields != null && classEmbeddedFields.contains(iField);
 			currentClass = currentClass.getSuperclass();
 		}
@@ -275,6 +316,39 @@ public class OObjectEntitySerializer {
 								classTransientFields = new ArrayList<String>();
 							classTransientFields.add(fieldName);
 							transientFields.put(currentClass, classTransientFields);
+						}
+					}
+
+					if (OObjectSerializerHelper.jpaOneToOneClass != null) {
+						Annotation ann = f.getAnnotation(OObjectSerializerHelper.jpaOneToOneClass);
+						if (ann != null) {
+							// @OneToOne DEFINED
+							OneToOne oneToOne = ((OneToOne) ann);
+							if (checkCascadeDelete(oneToOne)) {
+								addCascadeDeleteField(currentClass, fieldName);
+							}
+						}
+					}
+
+					if (OObjectSerializerHelper.jpaOneToManyClass != null) {
+						Annotation ann = f.getAnnotation(OObjectSerializerHelper.jpaOneToManyClass);
+						if (ann != null) {
+							// @OneToMany DEFINED
+							OneToMany oneToMany = ((OneToMany) ann);
+							if (checkCascadeDelete(oneToMany)) {
+								addCascadeDeleteField(currentClass, fieldName);
+							}
+						}
+					}
+
+					if (OObjectSerializerHelper.jpaManyToManyClass != null) {
+						Annotation ann = f.getAnnotation(OObjectSerializerHelper.jpaManyToManyClass);
+						if (ann != null) {
+							// @OneToMany DEFINED
+							ManyToMany manyToMany = ((ManyToMany) ann);
+							if (checkCascadeDelete(manyToMany)) {
+								addCascadeDeleteField(currentClass, fieldName);
+							}
 						}
 					}
 
@@ -398,6 +472,36 @@ public class OObjectEntitySerializer {
 		}
 		if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
 			ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().save();
+	}
+
+	protected static boolean checkCascadeDelete(OneToOne oneToOne) {
+		return oneToOne.orphanRemoval() || checkCascadeAnnotationAttribute(oneToOne.cascade());
+	}
+
+	protected static boolean checkCascadeDelete(OneToMany oneToMany) {
+		return oneToMany.orphanRemoval() || checkCascadeAnnotationAttribute(oneToMany.cascade());
+	}
+
+	protected static boolean checkCascadeDelete(ManyToMany manyToMany) {
+		return checkCascadeAnnotationAttribute(manyToMany.cascade());
+	}
+
+	protected static boolean checkCascadeAnnotationAttribute(CascadeType[] cascadeList) {
+		if (cascadeList == null || cascadeList.length <= 0)
+			return false;
+		for (CascadeType type : cascadeList) {
+			if (type.equals(CascadeType.ALL) || type.equals(CascadeType.REMOVE))
+				return true;
+		}
+		return false;
+	}
+
+	protected static void addCascadeDeleteField(Class<?> currentClass, final String fieldName) {
+		List<String> classCascadeDeleteFields = cascadeDeleteFields.get(currentClass);
+		if (classCascadeDeleteFields == null)
+			classCascadeDeleteFields = new ArrayList<String>();
+		classCascadeDeleteFields.add(fieldName);
+		cascadeDeleteFields.put(currentClass, classCascadeDeleteFields);
 	}
 
 	public static boolean isSerializedType(final Field iField) {

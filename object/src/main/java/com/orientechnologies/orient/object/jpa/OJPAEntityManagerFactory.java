@@ -20,8 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnitUtil;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.metamodel.Metamodel;
 
 /**
  * JPA EntityManagerFactory implementation that uses OrientDB EntityManager instances. Can works also as singleton by using
@@ -61,4 +65,25 @@ public class OJPAEntityManagerFactory implements EntityManagerFactory {
 	public static OJPAEntityManagerFactory getInstance() {
 		return INSTANCE;
 	}
+
+	public CriteriaBuilder getCriteriaBuilder() {
+		throw new UnsupportedOperationException("getCriteriaBuilder");
+	}
+
+	public Metamodel getMetamodel() {
+		throw new UnsupportedOperationException("getMetamodel");
+	}
+
+	public Map<String, Object> getProperties() {
+		throw new UnsupportedOperationException("getProperties");
+	}
+
+	public Cache getCache() {
+		throw new UnsupportedOperationException("getCache");
+	}
+
+	public PersistenceUnitUtil getPersistenceUnitUtil() {
+		throw new UnsupportedOperationException("getPersistenceUnitUtil");
+	}
+
 }
