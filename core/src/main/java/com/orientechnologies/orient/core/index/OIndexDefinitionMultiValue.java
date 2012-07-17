@@ -19,30 +19,34 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 
-	/**
-	 * Interface that indicates that index definition is based on collection of values but not on single value.
-	 *
-	 * @author <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
-	 * @since 20.12.11
-	 */
-  public interface OIndexDefinitionMultiValue extends OIndexDefinition {
+/**
+ * Interface that indicates that index definition is based on collection of values but not on single value.
+ * 
+ * @author <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @since 20.12.11
+ */
+public interface OIndexDefinitionMultiValue extends OIndexDefinition {
 
-	/**
-	 * Converts passed in value in the key of single index entry.
-	 *
-	 * @param param Value to convert.
-	 * @return Index key.
-	 */
-	public Object createSingleValue(final Object param);
+  /**
+   * Converts passed in value in the key of single index entry.
+   * 
+   * @param param
+   *          Value to convert.
+   * @return Index key.
+   */
+  public Object createSingleValue(final Object... param);
 
-	/**
-	 * Process event that contains operation on collection and extract values that should be added removed from index
-	 * to reflect collection changes in the given index.
-	 *
-	 * @param changeEvent   Event that describes operation that was performed on collection.
-	 * @param keysToAdd     Values that should be added to related index.
-	 * @param keysToRemove  Values that should be removed to related index.
-	 */
-	public void processChangeEvent(final OMultiValueChangeEvent<?,?> changeEvent, final Map<Object, Integer> keysToAdd,
-																	 final Map<Object, Integer> keysToRemove);
+  /**
+   * Process event that contains operation on collection and extract values that should be added removed from index to reflect
+   * collection changes in the given index.
+   * 
+   * @param changeEvent
+   *          Event that describes operation that was performed on collection.
+   * @param keysToAdd
+   *          Values that should be added to related index.
+   * @param keysToRemove
+   *          Values that should be removed to related index.
+   */
+  public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove);
 }

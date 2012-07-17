@@ -7,6 +7,9 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
 /**
@@ -21,64 +24,69 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
  * index search and filed - value pair that uses this index should always be placed at last position.
  */
 public class OIndexSearchResult {
-	final Map<String, Object>							fieldValuePairs	= new HashMap<String, Object>();
-	final OQueryOperator									lastOperator;
-	final OSQLFilterItemField.FieldChain	lastField;
-	final Object													lastValue;
+  final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
+  final OQueryOperator                 lastOperator;
+  final OSQLFilterItemField.FieldChain lastField;
+  final Object                         lastValue;
 
-	OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
-		this.lastOperator = lastOperator;
-		lastField = field;
-		lastValue = value;
-	}
+  OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
+    this.lastOperator = lastOperator;
+    lastField = field;
+    lastValue = value;
+  }
 
-	/**
-	 * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method will
-	 * return <code>true</code> for the same passed in parameter.
-	 * 
-	 * @param searchResult
-	 *          Query subset to merge.
-	 * @return New instance that presents merged query.
-	 */
-	OIndexSearchResult merge(final OIndexSearchResult searchResult) {
-		final OQueryOperator operator;
-		final OIndexSearchResult result;
+  /**
+   * Combines two queries subset into one. This operation will be valid only if {@link #canBeMerged(OIndexSearchResult)} method will
+   * return <code>true</code> for the same passed in parameter.
+   * 
+   * @param searchResult
+   *          Query subset to merge.
+   * @return New instance that presents merged query.
+   */
+  OIndexSearchResult merge(final OIndexSearchResult searchResult) {
+    final OQueryOperator operator;
+    final OIndexSearchResult result;
 
-		if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
-			result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
-			result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-			result.fieldValuePairs.putAll(fieldValuePairs);
-			result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
-		} else {
-			operator = searchResult.lastOperator;
-			result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
-			result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-			result.fieldValuePairs.putAll(fieldValuePairs);
-			result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
-		}
-		return result;
-	}
+    if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
+      result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
+      result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
+      result.fieldValuePairs.putAll(fieldValuePairs);
+      result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
+    } else {
+      operator = searchResult.lastOperator;
+      result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
+      result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
+      result.fieldValuePairs.putAll(fieldValuePairs);
+      result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
+    }
+    return result;
+  }
 
-	/**
-	 * @param searchResult
-	 *          Query subset is going to be merged with given one.
-	 * @return <code>true</code> if two query subsets can be merged.
-	 */
-	boolean canBeMerged(final OIndexSearchResult searchResult) {
-		if (lastField.isLong() || searchResult.lastField.isLong()) {
-			return false;
-		}
-		return (lastOperator instanceof OQueryOperatorEquals) || (searchResult.lastOperator instanceof OQueryOperatorEquals);
-	}
+  /**
+   * @param searchResult
+   *          Query subset is going to be merged with given one.
+   * @return <code>true</code> if two query subsets can be merged.
+   */
+  boolean canBeMerged(final OIndexSearchResult searchResult) {
+    if (lastField.isLong() || searchResult.lastField.isLong()) {
+      return false;
+    }
+    return isIndexEqualityOperator(lastOperator) || isIndexEqualityOperator(searchResult.lastOperator);
+  }
 
-	List<String> fields() {
-		final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
-		result.addAll(fieldValuePairs.keySet());
-		result.add(lastField.getItemName(0));
-		return result;
-	}
+  List<String> fields() {
+    final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
+    result.addAll(fieldValuePairs.keySet());
+    result.add(lastField.getItemName(0));
+    return result;
+  }
 
-	int getFieldCount() {
-		return fieldValuePairs.size() + 1;
-	}
+  int getFieldCount() {
+    return fieldValuePairs.size() + 1;
+  }
+
+  public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
+    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
+        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
+  }
 }

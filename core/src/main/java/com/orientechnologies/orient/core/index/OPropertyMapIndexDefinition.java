@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -32,176 +33,183 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {
 
-	/**
-	 * Indicates whether Map will be indexed using its keys or values.
-	 */
-	public static enum INDEX_BY {
-		KEY, VALUE
-	}
+  /**
+   * Indicates whether Map will be indexed using its keys or values.
+   */
+  public static enum INDEX_BY {
+    KEY, VALUE
+  }
 
-	private INDEX_BY	indexBy	= INDEX_BY.KEY;
+  private INDEX_BY indexBy = INDEX_BY.KEY;
 
-	public OPropertyMapIndexDefinition() {
-	}
+  public OPropertyMapIndexDefinition() {
+  }
 
-	public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
-		super(iClassName, iField, iType);
+  public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
+    super(iClassName, iField, iType);
 
-		if (indexBy == null)
-			throw new NullPointerException("You have to provide way by which map entries should be mapped");
+    if (indexBy == null)
+      throw new NullPointerException("You have to provide way by which map entries should be mapped");
 
-		this.indexBy = indexBy;
-	}
+    this.indexBy = indexBy;
+  }
 
-	@Override
-	public Object getDocumentValueToIndex(ODocument iDocument) {
-		return createValue(iDocument.field(field));
-	}
+  @Override
+  public Object getDocumentValueToIndex(ODocument iDocument) {
+    return createValue(iDocument.field(field));
+  }
 
-	@Override
-	public Object createValue(List<?> params) {
-		if (!(params.get(0) instanceof Map))
-			return null;
+  @Override
+  public Object createValue(List<?> params) {
+    if (!(params.get(0) instanceof Map))
+      return null;
 
-		final Collection<?> mapParams = extractMapParams((Map<?, ?>) params.get(0));
-		final List<Object> result = new ArrayList<Object>(mapParams.size());
-		for (final Object mapParam : mapParams) {
-			result.add(createSingleValue(mapParam));
-		}
+    final Collection<?> mapParams = extractMapParams((Map<?, ?>) params.get(0));
+    final List<Object> result = new ArrayList<Object>(mapParams.size());
+    for (final Object mapParam : mapParams) {
+      result.add(createSingleValue(mapParam));
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	@Override
-	public Object createValue(Object... params) {
-		if (!(params[0] instanceof Map))
-			return null;
+  @Override
+  public Object createValue(Object... params) {
+    if (!(params[0] instanceof Map))
+      return null;
 
-		final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
+    final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
 
-		final List<Object> result = new ArrayList<Object>(mapParams.size());
-		for (final Object mapParam : mapParams) {
-			result.add(createSingleValue(mapParam));
-		}
+    final List<Object> result = new ArrayList<Object>(mapParams.size());
+    for (final Object mapParam : mapParams) {
+      result.add(createSingleValue(mapParam));
+    }
 
-		return result;
-	}
+    return result;
+  }
 
-	public INDEX_BY getIndexBy() {
-		return indexBy;
-	}
+  public INDEX_BY getIndexBy() {
+    return indexBy;
+  }
 
-	@Override
-	protected void serializeToStream() {
-		super.serializeToStream();
-		document.field("mapIndexBy", indexBy.toString());
-	}
+  @Override
+  protected void serializeToStream() {
+    super.serializeToStream();
+    document.field("mapIndexBy", indexBy.toString());
+  }
 
-	@Override
-	protected void serializeFromStream() {
-		super.serializeFromStream();
-		indexBy = INDEX_BY.valueOf(document.<String> field("mapIndexBy"));
-	}
+  @Override
+  protected void serializeFromStream() {
+    super.serializeFromStream();
+    indexBy = INDEX_BY.valueOf(document.<String> field("mapIndexBy"));
+  }
 
-	private Collection<?> extractMapParams(Map<?, ?> map) {
-		if (indexBy == INDEX_BY.KEY)
-			return map.keySet();
+  private Collection<?> extractMapParams(Map<?, ?> map) {
+    if (indexBy == INDEX_BY.KEY)
+      return map.keySet();
 
-		return map.values();
-	}
+    return map.values();
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		if (!super.equals(o))
-			return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
 
-		OPropertyMapIndexDefinition that = (OPropertyMapIndexDefinition) o;
+    OPropertyMapIndexDefinition that = (OPropertyMapIndexDefinition) o;
 
-		if (indexBy != that.indexBy)
-			return false;
+    if (indexBy != that.indexBy)
+      return false;
 
-		return true;
-	}
+    return true;
+  }
 
-	public Object createSingleValue(final Object param) {
-		return OType.convert(param, keyType.getDefaultJavaType());
-	}
+  public Object createSingleValue(final Object... param) {
+    return OType.convert(param[0], keyType.getDefaultJavaType());
+  }
 
-	public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
-			final Map<Object, Integer> keysToRemove) {
-		final boolean result;
-		if (indexBy.equals(INDEX_BY.KEY))
-			result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
-		else
-			result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
+  public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove) {
+    final boolean result;
+    if (indexBy.equals(INDEX_BY.KEY))
+      result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
+    else
+      result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
 
-		if (!result)
-			throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
-	}
+    if (!result)
+      throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
+  }
 
-	private boolean processKeyChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
-			final Map<Object, Integer> keysToRemove) {
-		switch (changeEvent.getChangeType()) {
-		case ADD:
-			processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-			return true;
-		case REMOVE:
-			processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
-			return true;
-		case UPDATE:
-			return true;
-		}
-		return false;
-	}
+  private boolean processKeyChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove) {
+    switch (changeEvent.getChangeType()) {
+    case ADD:
+      processAdd(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+      return true;
+    case REMOVE:
+      processRemoval(createSingleValue(changeEvent.getKey()), keysToAdd, keysToRemove);
+      return true;
+    case UPDATE:
+      return true;
+    }
+    return false;
+  }
 
-	private boolean processValueChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
-			final Map<Object, Integer> keysToRemove) {
-		switch (changeEvent.getChangeType()) {
-		case ADD:
-			processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-			return true;
-		case REMOVE:
-			processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-			return true;
-		case UPDATE:
-			processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
-			processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
-			return true;
-		}
-		return false;
-	}
+  private boolean processValueChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
+      final Map<Object, Integer> keysToRemove) {
+    switch (changeEvent.getChangeType()) {
+    case ADD:
+      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+      return true;
+    case REMOVE:
+      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+      return true;
+    case UPDATE:
+      processRemoval(createSingleValue(changeEvent.getOldValue()), keysToAdd, keysToRemove);
+      processAdd(createSingleValue(changeEvent.getValue()), keysToAdd, keysToRemove);
+      return true;
+    }
+    return false;
+  }
 
-	@Override
-	public int hashCode() {
-		int result = super.hashCode();
-		result = 31 * result + indexBy.hashCode();
-		return result;
-	}
+  @Override
+  public List<String> getFieldsToIndex() {
+    if (indexBy == INDEX_BY.KEY)
+      return Collections.singletonList(field + " by key");
+    return Collections.singletonList(field + " by value");
+  }
 
-	@Override
-	public String toString() {
-		return "OPropertyMapIndexDefinition{" + "indexBy=" + indexBy + "} " + super.toString();
-	}
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + indexBy.hashCode();
+    return result;
+  }
 
-	@Override
-	public String toCreateIndexDDL(String indexName, String indexType) {
-		final StringBuilder ddl = new StringBuilder("create index ");
+  @Override
+  public String toString() {
+    return "OPropertyMapIndexDefinition{" + "indexBy=" + indexBy + "} " + super.toString();
+  }
 
-		ddl.append(indexName).append(" on ");
-		ddl.append(className).append(" ( ").append(field);
+  @Override
+  public String toCreateIndexDDL(String indexName, String indexType) {
+    final StringBuilder ddl = new StringBuilder("create index ");
 
-		if (indexBy == INDEX_BY.KEY)
-			ddl.append(" by key");
-		else
-			ddl.append(" by value");
+    ddl.append(indexName).append(" on ");
+    ddl.append(className).append(" ( ").append(field);
 
-		ddl.append(" ) ");
-		ddl.append(indexType);
+    if (indexBy == INDEX_BY.KEY)
+      ddl.append(" by key");
+    else
+      ddl.append(" by value");
 
-		return ddl.toString();
-	}
+    ddl.append(" ) ");
+    ddl.append(indexType);
+
+    return ddl.toString();
+  }
 }

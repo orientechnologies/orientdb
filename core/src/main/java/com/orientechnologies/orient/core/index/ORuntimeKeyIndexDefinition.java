@@ -53,6 +53,10 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
     return Collections.emptyList();
   }
 
+  public List<String> getFieldsToIndex() {
+    return Collections.emptyList();
+  }
+
   public String getClassName() {
     return null;
   }
@@ -129,7 +133,7 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
    */
   public String toCreateIndexDDL(final String indexName, final String indexType) {
     final StringBuilder ddl = new StringBuilder("create index ");
-    ddl.append(indexName).append(" ").append(indexType).append(" ");
+    ddl.append(indexName).append(' ').append(indexType).append(' ');
     ddl.append("runtime ").append(serializer.getId());
     return ddl.toString();
   }

@@ -55,6 +55,10 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
     return Collections.singletonList(field);
   }
 
+  public List<String> getFieldsToIndex() {
+    return Collections.singletonList(field);
+  }
+
   public Object getDocumentValueToIndex(final ODocument iDocument) {
     if (OType.LINK.equals(keyType)) {
       final OIdentifiable identifiable = iDocument.field(field, OType.LINK);

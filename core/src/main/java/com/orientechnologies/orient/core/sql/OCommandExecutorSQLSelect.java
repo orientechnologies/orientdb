@@ -60,7 +60,6 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
@@ -382,11 +381,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final int searchResultFieldsCount = searchResult.fields().size();
 
       final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
-      Collections.sort(involvedIndexes, new Comparator<OIndex>() {
-        public int compare(final OIndex indexOne, final OIndex indexTwo) {
-          return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
-        }
-      });
+      Collections.sort(involvedIndexes, IndexComparator.INSTANCE);
 
       // go through all possible index for given set of fields.
       for (final OIndex index : involvedIndexes) {
@@ -395,7 +390,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         // we need to test that last field in query subset and field in index that has the same position
         // are equals.
-        if (!(operator instanceof OQueryOperatorEquals)) {
+        if (!OIndexSearchResult.isIndexEqualityOperator(operator)) {
           final String lastFiled = searchResult.lastField.getItemName(searchResult.lastField.getItemCount() - 1);
           final String relatedIndexField = indexDefinition.getFields().get(searchResult.fieldValuePairs.size());
           if (!lastFiled.equals(relatedIndexField))
@@ -423,7 +418,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
+  private static List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
     final Set<OIndex<?>> involvedIndexes = iSchemaClass.getInvolvedIndexes(searchResultFields.fields());
 
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
@@ -438,18 +433,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return result;
   }
 
-  private OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, final OSQLFilterCondition iCondition,
+  private static OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, OSQLFilterCondition iCondition,
       final List<OIndexSearchResult> iIndexSearchResults) {
     if (iCondition == null)
       return null;
 
-    final OQueryOperator operator = iCondition.getOperator();
-    if (operator == null)
+    OQueryOperator operator = iCondition.getOperator();
+
+    while (operator == null) {
       if (iCondition.getRight() == null && iCondition.getLeft() instanceof OSQLFilterCondition) {
-        return analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(), iIndexSearchResults);
+        iCondition = (OSQLFilterCondition) iCondition.getLeft();
+        operator = iCondition.getOperator();
       } else {
         return null;
       }
+    }
 
     final OIndexReuseType indexReuseType = operator.getIndexReuseType(iCondition.getLeft(), iCondition.getRight());
     if (indexReuseType.equals(OIndexReuseType.INDEX_INTERSECTION)) {
@@ -494,7 +492,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *          Value to search
    * @return true if the property was indexed and found, otherwise false
    */
-  private OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
+  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField))
       return null;
 
@@ -908,7 +906,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
+  private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
     if (indexDefinition instanceof OCompositeIndexDefinition) {
       if (value instanceof List) {
         final List<?> values = (List<?>) value;
@@ -939,7 +937,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private ODocument createIndexEntryAsDocument(final Object iKey, final OIdentifiable iValue) {
+  private static ODocument createIndexEntryAsDocument(final Object iKey, final OIdentifiable iValue) {
     final ODocument doc = new ODocument().setOrdered(true);
     doc.field("key", iKey);
     doc.field("rid", iValue);
@@ -968,7 +966,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
+  private static boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
     if (!iSchemaClass.areIndexed(result.fields())) {
       return false;
     }
@@ -1023,5 +1021,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return false;
+  }
+
+  private static class IndexComparator implements Comparator<OIndex> {
+    private static final IndexComparator INSTANCE = new IndexComparator();
+
+    public int compare(final OIndex indexOne, final OIndex indexTwo) {
+      return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
+    }
   }
 }

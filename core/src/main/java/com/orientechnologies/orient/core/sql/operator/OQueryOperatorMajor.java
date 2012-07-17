@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
@@ -91,12 +92,14 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       // index that contains keys with values field1=1 and field2=2 and which right included boundary
       // is the biggest composite key in the index that contains key with value field1=1.
 
-      final Object keyOne = indexDefinition.createValue(keyParams);
+      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+
+      final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
         return null;
 
-      final Object keyTwo = indexDefinition.createValue(keyParams.subList(0, keyParams.size() - 1));
+      final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams.subList(0, keyParams.size() - 1));
 
       if (keyTwo == null)
         return null;
@@ -109,6 +112,8 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (OProfiler.getInstance().isRecording()) {
         OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
         OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
+        OProfiler.getInstance().updateCounter(
+            "Query.compositeIndexUsage." + indexDefinition.getParamCount() + '.' + keyParams.size(), 1);
       }
     }
 

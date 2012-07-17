@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -14,6 +15,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  * @author Artem Orobets
  */
 public class OIndexDefinitionFactory {
+  private static final Pattern FILED_NAME_PATTERN = Pattern.compile("\\s+");
+
   /**
    * Creates an instance of {@link OIndexDefinition} for automatic index.
    * 
@@ -43,35 +46,26 @@ public class OIndexDefinitionFactory {
    * @return extracted property name
    */
   public static String extractFieldName(final String fieldDefinition) {
-    String[] fieldNameParts = fieldDefinition.split("\\s+");
+    String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldDefinition);
     if (fieldNameParts.length == 1)
       return fieldDefinition;
     if (fieldNameParts.length == 3 && "by".equalsIgnoreCase(fieldNameParts[1]))
       return fieldNameParts[0];
 
     throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-        + fieldDefinition + "'");
+        + fieldDefinition + '\'');
   }
 
   private static OIndexDefinition createMultipleFieldIndexDefinition(final OClass oClass, final List<String> fieldsToIndex,
       final List<OType> types) {
-    final OIndexDefinition indexDefinition;
     final String className = oClass.getName();
     final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
 
     for (int i = 0, fieldsToIndexSize = fieldsToIndex.size(); i < fieldsToIndexSize; i++) {
-      String fieldName = adjustFieldName(oClass, fieldsToIndex.get(i));
-      final OType propertyType = types.get(i);
-      if (propertyType.equals(OType.EMBEDDEDLIST) || propertyType.equals(OType.EMBEDDEDSET) || propertyType.equals(OType.LINKSET)
-          || propertyType.equals(OType.LINKLIST) || propertyType.equals(OType.EMBEDDEDMAP) || propertyType.equals(OType.LINKMAP))
-        throw new OIndexException("Collections are not supported in composite indexes");
-
-      final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(className, fieldName, propertyType);
-      compositeIndex.addIndex(propertyIndex);
+      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i)));
     }
 
-    indexDefinition = compositeIndex;
-    return indexDefinition;
+    return compositeIndex;
   }
 
   private static void checkTypes(OClass oClass, List<String> fieldNames, List<OType> types) {
@@ -135,7 +129,7 @@ public class OIndexDefinitionFactory {
   }
 
   private static OPropertyMapIndexDefinition.INDEX_BY extractMapIndexSpecifier(final String fieldName) {
-    String[] fieldNameParts = fieldName.split("\\s+");
+    String[] fieldNameParts = FILED_NAME_PATTERN.split(fieldName);
     if (fieldNameParts.length == 1)
       return OPropertyMapIndexDefinition.INDEX_BY.KEY;
 
@@ -145,12 +139,12 @@ public class OIndexDefinitionFactory {
           return OPropertyMapIndexDefinition.INDEX_BY.valueOf(fieldNameParts[2].toUpperCase());
         } catch (IllegalArgumentException iae) {
           throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '"
-              + fieldName + "'");
+              + fieldName + '\'');
         }
     }
 
     throw new IllegalArgumentException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
-        + "'");
+        + '\'');
   }
 
   private static String adjustFieldName(final OClass clazz, final String fieldName) {
