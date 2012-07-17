@@ -291,6 +291,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void dropProperty(final String iPropertyName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a property inside a transaction");
+
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
 
     final String lowerName = iPropertyName.toLowerCase();
@@ -311,6 +314,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void dropPropertyInternal(final String iPropertyName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a property inside a transaction");
+
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
 
     final OProperty prop = properties.remove(iPropertyName.toLowerCase());
@@ -320,6 +326,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot create a new property inside a transaction");
+
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
     final String lowerName = iPropertyName.toLowerCase();

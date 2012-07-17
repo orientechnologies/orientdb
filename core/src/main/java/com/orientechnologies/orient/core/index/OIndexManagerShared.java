@@ -64,6 +64,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot create a new index inside a transaction");
 
     final Character c = OSchemaShared.checkNameIfValid(iName);
     if (c != null)
@@ -86,6 +88,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop an index inside a transaction");
+
     acquireExclusiveLock();
     try {
       final OIndex<?> idx = indexes.remove(iIndexName.toLowerCase());

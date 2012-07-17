@@ -297,6 +297,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
   public void dropClass(final String iClassName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a class inside a transaction");
+
     if (iClassName == null)
       throw new IllegalArgumentException("Class name is null");
 
@@ -328,6 +331,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void dropClassInternal(final String iClassName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a class inside a transaction");
+
     if (iClassName == null)
       throw new IllegalArgumentException("Class name is null");
 
