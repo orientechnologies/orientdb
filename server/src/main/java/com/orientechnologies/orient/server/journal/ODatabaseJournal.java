@@ -335,7 +335,7 @@ public class ODatabaseJournal {
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null);
         if (record != null)
-          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
+          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version - 1, record.recordType);
         break;
       }
 
@@ -343,8 +343,7 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
             + OBinaryProtocol.SIZE_SHORT));
         final ORawBuffer record = storage.readRecord(rid, null, false, null);
-        if (record != null)
-          task = new ODeleteRecordDistributedTask(runId, operationId, rid, record.version);
+        task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : -1);
         break;
       }
 
@@ -356,7 +355,8 @@ public class ODatabaseJournal {
       }
       }
 
-      task.setStatus(STATUS.ALIGN);
+      if (task != null)
+        task.setStatus(STATUS.ALIGN);
 
     } finally {
       lock.releaseExclusiveLock();

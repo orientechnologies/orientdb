@@ -56,10 +56,12 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
     final ODatabaseDocumentTx database = getDatabase();
     try {
       final ORecordInternal<?> record = database.load(rid);
-      record.setVersion(version);
-      record.delete();
-
-      return Boolean.TRUE;
+      if (record != null) {
+        record.setVersion(version);
+        record.delete();
+        return Boolean.TRUE;
+      }
+      return Boolean.FALSE;
     } finally {
       database.close();
     }

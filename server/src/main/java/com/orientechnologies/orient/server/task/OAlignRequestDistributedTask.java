@@ -81,6 +81,11 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
           final long pos = it.next();
 
           final OAbstractDistributedTask<?> operation = log.getOperation(pos);
+          if (operation == null) {
+            OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] skipped operation #%d.%d", nodeSource, databaseName,
+                lastRunId, lastOperationId);
+            continue;
+          }
 
           OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
 

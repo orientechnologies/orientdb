@@ -67,8 +67,8 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
       // NODE NOT ONLINE, REFUSE THE OPEPRATION
-      throw new OServerOfflineException("Cannot execute the operation because the server is offline: current status: "
-          + dManager.getStatus());
+      throw new OServerOfflineException(dManager.getLocalNodeId(),
+          "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
 
@@ -113,8 +113,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
             final Object remoteResult = entry.getValue();
 
             if (localResult != remoteResult
-                && (localResult == null && remoteResult != null || localResult != null && remoteResult == null || remoteResult
-                    .equals(localResult))) {
+                && (localResult == null && remoteResult != null || localResult != null && remoteResult == null)) {
 
               // CONFLICT
               handleConflict(remoteNode, localResult, remoteResult);
