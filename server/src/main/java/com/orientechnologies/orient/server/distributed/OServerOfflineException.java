@@ -26,4 +26,8 @@ public class OServerOfflineException extends ODistributedException {
 
   public OServerOfflineException() {
   }
+
+  public OServerOfflineException(final String iMessage) {
+    super(iMessage);
+  }
 }

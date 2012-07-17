@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.OServerOfflineException;
@@ -63,9 +64,11 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%d", nodeSource, getName(), rid, version);
 
-    if (status != STATUS.ALIGN && !getDistributedServerManager().checkStatus("online"))
-      // NODE NOT ONLINE, REFUSE THE OEPRATION
-      throw new OServerOfflineException();
+    final ODistributedServerManager dManager = getDistributedServerManager();
+    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
+      // NODE NOT ONLINE, REFUSE THE OPEPRATION
+      throw new OServerOfflineException("Cannot execute the operation because the server is offline: current status: "
+          + dManager.getStatus());
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
 

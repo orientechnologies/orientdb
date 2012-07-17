@@ -130,7 +130,10 @@ public class OStorageSynchronizer {
       // NOT YET OPEN: OPEN IT NOW
       OLogManager.instance().warn(this, "DISTRIBUTED Initializing storage '%s'", iName);
 
-      stg = Orient.instance().loadStorage(OServerMain.server().getStorageURL(iName));
+      final String url = OServerMain.server().getStorageURL(iName);
+      if (url == null)
+        throw new IllegalArgumentException("Database '" + iName + "' is not configured on local server");
+      stg = Orient.instance().loadStorage(url);
       stg.open(null, null, null);
     }
     return stg;

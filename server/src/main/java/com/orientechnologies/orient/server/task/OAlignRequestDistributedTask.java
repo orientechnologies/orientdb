@@ -64,6 +64,9 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
     final String localNode = dManager.getLocalNodeId();
 
     final OStorageSynchronizer synchronizer = getDatabaseSynchronizer();
+    if (synchronizer == null)
+      return 0;
+
     final ODatabaseJournal log = synchronizer.getLog();
 
     // GET THE DISTRIBUTED LOCK TO ALIGN THE DATABASE

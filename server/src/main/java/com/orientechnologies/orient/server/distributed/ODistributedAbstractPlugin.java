@@ -195,6 +195,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       if (sync == null) {
         try {
           sync = new OStorageSynchronizer(this, iDatabaseName);
+        } catch (IllegalArgumentException e) {
+          return null;
         } catch (IOException e) {
           throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
         }

@@ -60,6 +60,9 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   private ODatabaseComplex<?> database;
   private OIndex<?>           index                      = null;
 
+  public ODefaultReplicationConflictResolver() {
+  }
+
   public void startup(final ODistributedServerManager iDManager, final String iDatabaseName) {
     synchronized (this) {
       if (index != null)
