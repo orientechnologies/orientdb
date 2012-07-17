@@ -196,7 +196,8 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 			return;
 
 		for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
-			super.put(e.getKey(), getDatabase().getUserObjectByRecord((ORecordInternal<?>) e.getValue(), null));
+			super.put(e.getKey(),
+					getDatabase().getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) e.getValue()).getRecord(), null));
 
 		converted = true;
 	}
