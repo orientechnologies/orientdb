@@ -1,0 +1,14 @@
+{
+	'synchronization' : true,
+	'clusters' : {
+		'internal' : { 'synchronization' : false },
+		'index' : { 'synchronization' : false },
+		'ODistributedConflict' : { 'synchronization' : false },
+		'*' : {
+			'synchronization' : true,
+			'master' : '$auto',
+      		'synch-replicas' : 1,
+      		'asynch-replicas' : "100%",
+		}
+	}
+}
