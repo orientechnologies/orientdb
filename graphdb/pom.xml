@@ -77,17 +77,13 @@
 		<dependency>
 			<groupId>com.tinkerpop.gremlin</groupId>
 			<artifactId>gremlin-java</artifactId>
-			<version>2.0.0</version>
-			<type>jar</type>
-			<scope>compile</scope>
+			<version>${blueprints.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.tinkerpop.gremlin</groupId>
 			<artifactId>gremlin-groovy</artifactId>
-			<version>2.0.0</version>
-			<type>jar</type>
-			<scope>compile</scope>
+			<version>${blueprints.version}</version>
 		</dependency>
 
 		<dependency>
