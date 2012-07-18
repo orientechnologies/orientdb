@@ -1023,10 +1023,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private static class IndexComparator implements Comparator<OIndex> {
+  private static class IndexComparator implements Comparator<OIndex<?>> {
     private static final IndexComparator INSTANCE = new IndexComparator();
 
-    public int compare(final OIndex indexOne, final OIndex indexTwo) {
+    public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
       return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
     }
   }
