@@ -344,8 +344,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public String getMasterNode(final String iDatabaseName, final String iClusterName, final Object iKey) {
-    final String masterNode = getDatabaseClusterConfiguration(iDatabaseName, iClusterName).field("master");
-    if (!masterNode.equalsIgnoreCase("$auto"))
+    String masterNode = getDatabaseClusterConfiguration(iDatabaseName, iClusterName).field("master");
+    if (masterNode == null) {
+      OLogManager
+          .instance()
+          .warn(
+              this,
+              "DISTRIBUTED found wrong configuration for database '%s': cannot find the 'master' field for the cluster '%s'. '$auto' will be used",
+              iDatabaseName, iClusterName);
+      masterNode = "$auto";
+    } else if (!masterNode.equalsIgnoreCase("$auto"))
       return masterNode;
 
     // AUTO, BY HAZELCAST PARTITION SERVICE
