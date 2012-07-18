@@ -87,7 +87,7 @@ public class MemoryLocker {
           errorMessage = "Unexpected exception with code " + lastError + ".";
           break;
         }
-        OLogManager.instance().error(null, "[MemoryLocker.lockMemory] Error occurred while locking memory!\n" + errorMessage);
+        OLogManager.instance().error(null, "[MemoryLocker.lockMemory] Error occurred while locking memory: %s", errorMessage);
 
       } else {
         OLogManager.instance().info(null, "[MemoryLocker.lockMemory] Memory locked successfully!");
