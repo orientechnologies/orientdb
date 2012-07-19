@@ -346,17 +346,14 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
    *          determine read or write lock will be performed.
    */
   private void acquireLocksOnEntries(final OMMapBufferEntry[] entries, OPERATION_TYPE operationType) {
-    for (OMMapBufferEntry entry : entries) {
-      if (OPERATION_TYPE.WRITE.equals(operationType))
-        entry.acquireWriteLock();
-      else
-        entry.acquireReadLock();
-    }
-    if (operationType == OPERATION_TYPE.WRITE) {
+    if (operationType == OPERATION_TYPE.WRITE)
       for (OMMapBufferEntry entry : entries) {
+        entry.acquireWriteLock();
         entry.setDirty();
       }
-    }
+    else
+      for (OMMapBufferEntry entry : entries)
+        entry.acquireReadLock();
   }
 
   /**
