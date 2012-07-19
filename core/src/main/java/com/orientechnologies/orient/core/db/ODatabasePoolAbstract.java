@@ -27,18 +27,18 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB>, OOrientListener {
 
-  private static final int                                           DEF_WAIT_TIMEOUT = 5000;
-  private final ConcurrentHashMap<String, OResourcePool<String, DB>> pools            = new ConcurrentHashMap<String, OResourcePool<String, DB>>();
+  private final ConcurrentHashMap<String, OResourcePool<String, DB>> pools = new ConcurrentHashMap<String, OResourcePool<String, DB>>();
   private int                                                        maxSize;
-  private int                                                        timeout          = DEF_WAIT_TIMEOUT;
+  private int                                                        timeout;
   protected Object                                                   owner;
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize) {
-    this(iOwner, iMinSize, iMaxSize, DEF_WAIT_TIMEOUT);
+    this(iOwner, iMinSize, iMaxSize, OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.getValueAsInteger());
   }
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize, final int iTimeout) {

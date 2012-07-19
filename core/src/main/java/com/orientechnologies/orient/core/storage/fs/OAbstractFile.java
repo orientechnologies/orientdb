@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,6 +23,14 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
  * 
@@ -57,7 +57,7 @@ public abstract class OAbstractFile implements OFile {
   protected byte[]           securityCode           = new byte[32];          // PART OF HEADER (32 bytes)
   protected String           mode;
   protected boolean          failCheck              = true;
-  protected int              size;                                           // PART OF HEADER (4 bytes)
+  protected volatile int     size;                                           // PART OF HEADER (4 bytes)
 
   protected static final int HEADER_SIZE            = 1024;
   protected static final int HEADER_DATA_OFFSET     = 128;

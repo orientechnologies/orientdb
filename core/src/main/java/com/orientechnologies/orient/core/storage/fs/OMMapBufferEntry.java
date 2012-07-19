@@ -25,16 +25,16 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 public class OMMapBufferEntry extends OSharedResourceAbstract implements Comparable<OMMapBufferEntry> {
-  private static final int FORCE_DELAY;
-  private static final int FORCE_RETRY;
+  private static final int  FORCE_DELAY;
+  private static final int  FORCE_RETRY;
 
-  static Class<?>          sunClass = null;
-  OFileMMap                file;
-  MappedByteBuffer         buffer;
-  long                     beginOffset;
-  int                      size;
-  long                     counter;
-  volatile boolean         dirty;
+  static Class<?>           sunClass = null;
+  volatile OFileMMap        file;
+  volatile MappedByteBuffer buffer;
+  final long                beginOffset;
+  final int                 size;
+  volatile long             counter;
+  volatile boolean          dirty;
 
   static {
     FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
