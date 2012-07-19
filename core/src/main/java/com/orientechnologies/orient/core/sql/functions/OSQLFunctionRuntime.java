@@ -37,89 +37,93 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  */
 public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
-	public OSQLFunction	function;
-	public Object[]			configuredParameters;
-	public Object[]			runtimeParameters;
+  public OSQLFunction function;
+  public Object[]     configuredParameters;
+  public Object[]     runtimeParameters;
 
-	public OSQLFunctionRuntime(final OBaseParser iQueryToParse, final String iText) {
-		super(iQueryToParse, iText);
-	}
+  public OSQLFunctionRuntime(final OBaseParser iQueryToParse, final String iText) {
+    super(iQueryToParse, iText);
+  }
 
-	public boolean aggregateResults() {
-		return function.aggregateResults(configuredParameters);
-	}
+  public boolean aggregateResults() {
+    return function.aggregateResults(configuredParameters);
+  }
 
-	public boolean filterResult() {
-		return function.filterResult();
-	}
+  public boolean filterResult() {
+    return function.filterResult();
+  }
 
-	/**
-	 * Execute a function.
-	 * 
-	 * @param o
-	 *          Current record
-	 * @param iRequester
-	 * @return
-	 */
-	public Object execute(final OIdentifiable o, final OCommandExecutor iRequester) {
-		// RESOLVE VALUES USING THE CURRENT RECORD
-		for (int i = 0; i < configuredParameters.length; ++i) {
-			if (configuredParameters[i] instanceof OSQLFilterItemField)
-				runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(o, null);
-			else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iRequester);
-		}
+  /**
+   * Execute a function.
+   * 
+   * @param o
+   *          Current record
+   * @param iRequester
+   * @return
+   */
+  public Object execute(final OIdentifiable o, final OCommandExecutor iRequester) {
+    // RESOLVE VALUES USING THE CURRENT RECORD
+    for (int i = 0; i < configuredParameters.length; ++i) {
+      if (configuredParameters[i] instanceof OSQLFilterItemField)
+        runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(o, null);
+      else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
+        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iRequester);
+    }
 
-		final Object functionResult = function.execute(o, runtimeParameters, iRequester);
+    final Object functionResult = function.execute(o, runtimeParameters, iRequester);
 
-		return transformValue(o, functionResult);
-	}
+    return transformValue(o, functionResult);
+  }
 
-	public Object getResult() {
-		return transformValue(null, function.getResult());
-	}
+  public Object getResult() {
+    return transformValue(null, function.getResult());
+  }
 
-	public void setResult(final Object iValue) {
-		function.setResult(iValue);
-	}
+  public void setResult(final Object iValue) {
+    function.setResult(iValue);
+  }
 
-	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
-		return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null);
-	}
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+    return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null);
+  }
 
-	@Override
-	public String getRoot() {
-		return function.getName();
-	}
+  @Override
+  public String getRoot() {
+    return function.getName();
+  }
 
-	@Override
-	protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
-		final int beginParenthesis = iText.indexOf('(');
+  @Override
+  protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
+    final int beginParenthesis = iText.indexOf('(');
 
-		// SEARCH FOR THE FUNCTION
-		final String funcName = iText.substring(0, beginParenthesis);
+    // SEARCH FOR THE FUNCTION
+    final String funcName = iText.substring(0, beginParenthesis);
 
-		final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
+    final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
-		function = OSQLEngine.getInstance().getFunction(funcName);
-		if (function == null)
-			throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
+    function = OSQLEngine.getInstance().getFunction(funcName);
+    if (function == null)
+      throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
-		if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
-				&& funcParamsText.size() > function.getMaxParams())
-			throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
+    if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
+        && funcParamsText.size() > function.getMaxParams())
+      throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
 
-		// PARSE PARAMETERS
-		this.configuredParameters = new Object[funcParamsText.size()];
-		for (int i = 0; i < funcParamsText.size(); ++i) {
-			this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
-		}
+    // PARSE PARAMETERS
+    this.configuredParameters = new Object[funcParamsText.size()];
+    for (int i = 0; i < funcParamsText.size(); ++i) {
+      this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
+    }
 
-		// COPY STATIC VALUES
-		this.runtimeParameters = new Object[configuredParameters.length];
-		for (int i = 0; i < configuredParameters.length; ++i) {
-			if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
-				runtimeParameters[i] = configuredParameters[i];
-		}
-	}
+    // COPY STATIC VALUES
+    this.runtimeParameters = new Object[configuredParameters.length];
+    for (int i = 0; i < configuredParameters.length; ++i) {
+      if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
+        runtimeParameters[i] = configuredParameters[i];
+    }
+  }
+
+  public OSQLFunction getFunction() {
+    return function;
+  }
 }

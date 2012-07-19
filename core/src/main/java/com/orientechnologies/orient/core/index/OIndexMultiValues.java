@@ -63,6 +63,22 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     }
   }
 
+  public long count(final Object iKey) {
+    acquireExclusiveLock();
+    try {
+
+      final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) map.get(iKey);
+
+      if (values == null)
+        return 0;
+
+      return values.size();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public OIndexMultiValues put(final Object iKey, final OIdentifiable iSingleValue) {
     modificationLock.requestModificationLock();
 

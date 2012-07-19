@@ -156,7 +156,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return null;
   }
 
-  protected boolean addResult(final OIdentifiable iRecord) {
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if (iRecord != null) {
       resultCount++;
 

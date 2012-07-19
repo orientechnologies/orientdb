@@ -99,7 +99,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Collection<OIdentifiable> result;
 

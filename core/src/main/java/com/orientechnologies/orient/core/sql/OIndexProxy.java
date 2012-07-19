@@ -95,6 +95,10 @@ public class OIndexProxy<T> implements OIndex<T> {
     }
   }
 
+  public long count(Object iKey) {
+    return index.count(iKey);
+  }
+
   /**
    * {@inheritDoc}
    */

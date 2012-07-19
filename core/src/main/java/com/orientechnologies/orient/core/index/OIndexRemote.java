@@ -71,6 +71,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_REMOVE2                                     = "delete from index:%s where key = ? and rid = ?";
   private final static String   QUERY_REMOVE3                                     = "delete from index:%s where rid = ?";
   private final static String   QUERY_CONTAINS                                    = "select count(*) as size from index:%s where key = ?";
+  private final static String   QUERY_COUNT                                       = "select count(*) as size from index:%s where key = ?";
   private final static String   QUERY_SIZE                                        = "select count(*) as size from index:%s";
   private final static String   QUERY_KEY_SIZE                                    = "select count(distinct( key )) as size from index:%s";
   private final static String   QUERY_KEYS                                        = "select key from index:%s";
@@ -186,6 +187,12 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     final OCommandRequest cmd = formatCommand(QUERY_CONTAINS, name);
     final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
     return (Long) result.get(0).field("size") > 0;
+  }
+
+  public long count(Object iKey) {
+    final OCommandRequest cmd = formatCommand(QUERY_COUNT, name);
+    final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
+    return result.get(0).field("size");
   }
 
   public OIndexRemote<T> put(Object iKey, final OIdentifiable iValue) {

@@ -62,6 +62,10 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.get(iKey);
   }
 
+  public long count(final Object iKey) {
+    return delegate.count(iKey);
+  }
+
   public boolean contains(final Object iKey) {
     return delegate.contains(iKey);
   }
@@ -254,7 +258,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.toString();
   }
 
-	public long getKeySize() {
-		return delegate.getKeySize();
-	}
+  public long getKeySize() {
+    return delegate.getKeySize();
+  }
 }

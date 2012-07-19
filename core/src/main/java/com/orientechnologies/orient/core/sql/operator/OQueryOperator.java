@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -53,6 +52,10 @@ public abstract class OQueryOperator {
      * Used when this operator is equal the other one
      */
     EQUAL
+  }
+
+  public static enum INDEX_OPERATION_TYPE {
+    GET, COUNT
   }
 
   /**
@@ -115,13 +118,14 @@ public abstract class OQueryOperator {
    * 
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
+   * @param iOperationType TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
    * @param fetchLimit
    *          Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
    * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
    */
-  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, final List<Object> keyParams, final int fetchLimit) {
+  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, final List<Object> keyParams, final int fetchLimit) {
     return null;
   }
 

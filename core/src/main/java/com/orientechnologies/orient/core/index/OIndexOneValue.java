@@ -50,11 +50,21 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public OIdentifiable get(final Object iKey) {
-
     acquireExclusiveLock();
     try {
 
       return map.get(iKey);
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public long count(final Object iKey) {
+    acquireExclusiveLock();
+    try {
+
+      return map.containsKey(iKey) ? 1 : 0;
 
     } finally {
       releaseExclusiveLock();
@@ -244,7 +254,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     }
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
@@ -400,7 +409,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);

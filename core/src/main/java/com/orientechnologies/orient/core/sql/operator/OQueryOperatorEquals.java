@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -100,7 +99,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Collection<OIdentifiable> executeIndexQuery(OIndex<?> index, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OIndex<?> index, final INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -117,13 +116,22 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      final Object indexResult = index.get(key);
+      final Object indexResult;
+      if (iOperationType == INDEX_OPERATION_TYPE.GET)
+        indexResult = index.get(key);
+      else
+        indexResult = index.count(key);
+
       if (indexResult instanceof Collection)
         return (Collection<OIdentifiable>) indexResult;
 
       if (indexResult == null)
         return Collections.emptyList();
-      return Collections.singletonList((OIdentifiable) indexResult);
+      else if (indexResult instanceof Collection<?>)
+        return Collections.singletonList((OIdentifiable) indexResult);
+      else
+        return indexResult;
+      
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
