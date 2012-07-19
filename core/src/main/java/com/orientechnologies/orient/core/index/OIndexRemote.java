@@ -192,7 +192,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public long count(Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_COUNT, name);
     final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
-    return result.get(0).field("size");
+    return (Long) result.get(0).field("size");
   }
 
   public OIndexRemote<T> put(Object iKey, final OIdentifiable iValue) {
