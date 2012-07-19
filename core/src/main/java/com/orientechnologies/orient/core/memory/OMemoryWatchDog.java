@@ -59,7 +59,7 @@ public class OMemoryWatchDog extends Thread {
 	public OMemoryWatchDog() {
 		super(Orient.getThreadGroup(), "OrientDB MemoryWatchDog");
 
-		OProfiler.getInstance().registerHookValue("memory.alerts", new OProfilerHookValue() {
+		OProfiler.getInstance().registerHookValue("system.memory.alerts", new OProfilerHookValue() {
 			public Object getValue() {
 				return alertTimes;
 			}

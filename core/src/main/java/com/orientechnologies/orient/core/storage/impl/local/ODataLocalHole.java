@@ -59,11 +59,11 @@ public class ODataLocalHole extends OSingleFileSegment {
   public ODataLocalHole(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
     super(iStorage, iConfig);
 
-    PROFILER_DATA_RECYCLED_COMPLETE = "storage." + storage.getName() + ".data.recycled.complete";
-    PROFILER_DATA_RECYCLED_PARTIAL = "storage." + storage.getName() + ".data.recycled.partial";
-    PROFILER_DATA_RECYCLED_NOTFOUND = "storage." + storage.getName() + ".data.recycled.notFound";
-    PROFILER_DATA_HOLE_CREATE = "storage." + storage.getName() + ".data.createHole";
-    PROFILER_DATA_HOLE_UPDATE = "storage." + storage.getName() + ".data.updateHole";
+    PROFILER_DATA_RECYCLED_COMPLETE = "db." + storage.getName() + ".data.recycled.complete";
+    PROFILER_DATA_RECYCLED_PARTIAL = "db." + storage.getName() + ".data.recycled.partial";
+    PROFILER_DATA_RECYCLED_NOTFOUND = "db." + storage.getName() + ".data.recycled.notFound";
+    PROFILER_DATA_HOLE_CREATE = "db." + storage.getName() + ".data.createHole";
+    PROFILER_DATA_HOLE_UPDATE = "db." + storage.getName() + ".data.updateHole";
 
     availableHolesBySize = new OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>(512, 0.7f);
     availableHolesByPosition = new OMVRBTreeMemory<ODataHoleInfo, ODataHoleInfo>(new Comparator<ODataHoleInfo>() {

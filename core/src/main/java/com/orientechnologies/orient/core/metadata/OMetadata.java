@@ -60,17 +60,11 @@ public class OMetadata {
   }
 
   public void create() throws IOException {
-    final long timer = OProfiler.getInstance().startChrono();
+    init(false);
 
-    try {
-      init(false);
-
-      security.create();
-      schema.create();
-      indexManager.create();
-    } finally {
-      OProfiler.getInstance().stopChrono("OMetadata.load", timer);
-    }
+    security.create();
+    schema.create();
+    indexManager.create();
   }
 
   public OSchema getSchema() {

@@ -265,7 +265,7 @@ public class OStorageMemory extends OStorageEmbedded {
         dataSegments.add(dataSegment);
       else
         dataSegments.set(pos, dataSegment);
-      
+
       return pos;
 
     } finally {
@@ -302,7 +302,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono("OStorageMemory.createRecord", timer);
+      OProfiler.getInstance().stopChrono(PROFILER_CREATE_RECORD, timer);
     }
   }
 
@@ -315,18 +315,18 @@ public class OStorageMemory extends OStorageEmbedded {
     final long timer = OProfiler.getInstance().startChrono();
 
     lock.acquireSharedLock();
-    
+
     try {
-    	
+
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
-        
+
       try {
         final long lastPos = iClusterSegment.getLastEntryPosition();
 
         if (iRid.clusterPosition > lastPos)
-        	throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
-        			+ iClusterSegment.getName() + "' is 0-" + lastPos);
-          
+          throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
+              + iClusterSegment.getName() + "' is 0-" + lastPos);
+
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
         if (ppos == null)
@@ -344,7 +344,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono("OStorageMemory.readRecord", timer);
+      OProfiler.getInstance().stopChrono(PROFILER_READ_RECORD, timer);
     }
   }
 
@@ -398,7 +398,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono("OStorageMemory.updateRecord", timer);
+      OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
     }
   }
 
@@ -448,7 +448,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono("OStorageMemory.deleteRecord", timer);
+      OProfiler.getInstance().stopChrono(PROFILER_DELETE_RECORD, timer);
     }
   }
 

@@ -66,6 +66,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private final Map<String, OServerCommand> wildcardCommands  = new HashMap<String, OServerCommand>();
   private String                            responseCharSet;
   private String[]                          additionalResponseHeaders;
+  private String                            listeningAddress  = "?";
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.getThreadGroup(), "IO-HTTP");
@@ -91,11 +92,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     connection.data.caller = channel.toString();
 
+    listeningAddress = getListeningAddress();
+
     start();
   }
 
   public void service() throws ONetworkProtocolException, IOException {
-    OProfiler.getInstance().updateCounter("Server.requests", +1);
+    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".requests", +1);
 
     ++connection.data.totalRequests;
     connection.data.commandInfo = null;
@@ -503,22 +506,22 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       readAllContent(request);
     } finally {
       if (connection.data.lastCommandReceived > -1)
-        OProfiler.getInstance().stopChrono("ONetworkProtocolHttp.execute", connection.data.lastCommandReceived);
+        OProfiler.getInstance().stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
     }
   }
 
   protected void connectionClosed() {
-    OProfiler.getInstance().updateCounter("OrientDB-Server.http.closed", +1);
+    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".closed", +1);
     sendShutdown();
   }
 
   protected void timeout() {
-    OProfiler.getInstance().updateCounter("OrientDB-Server.http.timeout", +1);
+    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".timeout", +1);
     sendShutdown();
   }
 
   protected void connectionError() {
-    OProfiler.getInstance().updateCounter("OrientDB-Server.http.error", +1);
+    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".error", +1);
     sendShutdown();
   }
 

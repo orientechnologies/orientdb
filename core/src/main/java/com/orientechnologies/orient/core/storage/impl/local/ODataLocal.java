@@ -78,12 +78,12 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     defragMaxHoleDistance = OGlobalConfiguration.FILE_DEFRAG_HOLE_MAX_DISTANCE.getValueAsInteger();
     defragStrategy = OGlobalConfiguration.FILE_DEFRAG_STRATEGY.getValueAsInteger();
 
-    PROFILER_HOLE_HANDLE = "storage." + storage.getName() + ".data.handleHole";
-    PROFILER_HOLE_FIND_CLOSER = "storage." + storage.getName() + ".data.findClosestHole";
-    PROFILER_UPDATE_REUSED_ALL = "storage." + storage.getName() + ".data.update.reusedAll";
-    PROFILER_UPDATE_REUSED_PARTIAL = "storage." + storage.getName() + ".data.update.reusedPartial";
-    PROFILER_UPDATE_NOT_REUSED = "storage." + storage.getName() + ".data.update.notReused";
-    PROFILER_MOVE_RECORD = "storage." + storage.getName() + ".data.move";
+    PROFILER_HOLE_HANDLE = "db." + storage.getName() + ".data.handleHole";
+    PROFILER_HOLE_FIND_CLOSER = "db." + storage.getName() + ".data.findClosestHole";
+    PROFILER_UPDATE_REUSED_ALL = "db." + storage.getName() + ".data.update.reusedAll";
+    PROFILER_UPDATE_REUSED_PARTIAL = "db." + storage.getName() + ".data.update.reusedPartial";
+    PROFILER_UPDATE_NOT_REUSED = "db." + storage.getName() + ".data.update.notReused";
+    PROFILER_MOVE_RECORD = "db." + storage.getName() + ".data.move";
   }
 
   @Override

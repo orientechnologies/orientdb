@@ -43,9 +43,9 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     secondary = db.getLevel2Cache();
 
-    profilerPrefix = "db." + db.getName();
-    CACHE_HIT = profilerPrefix + ".cache.found";
-    CACHE_MISS = profilerPrefix + ".cache.notFound";
+    profilerPrefix = "db." + db.getName() + ".cache.level1.";
+    CACHE_HIT = profilerPrefix + "cache.found";
+    CACHE_MISS = profilerPrefix + "cache.notFound";
 
     excludedCluster = db.getClusterIdByName(CLUSTER_INDEX_NAME);
 

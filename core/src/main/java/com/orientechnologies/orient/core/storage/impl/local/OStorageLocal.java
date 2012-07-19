@@ -74,10 +74,6 @@ public class OStorageLocal extends OStorageEmbedded {
   private int                           defaultClusterId    = -1;
 
   private static String[]               ALL_FILE_EXTENSIONS = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx" };
-  private final String                  PROFILER_CREATE_RECORD;
-  private final String                  PROFILER_READ_RECORD;
-  private final String                  PROFILER_UPDATE_RECORD;
-  private final String                  PROFILER_DELETE_RECORD;
 
   private OModificationLock             modificationLock    = new OModificationLock();
 
@@ -97,11 +93,6 @@ public class OStorageLocal extends OStorageEmbedded {
     variableParser = new OStorageVariableParser(storagePath);
     configuration = new OStorageConfigurationSegment(this);
     txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
-
-    PROFILER_CREATE_RECORD = "storage." + name + ".createRecord";
-    PROFILER_READ_RECORD = "storage." + name + ".readRecord";
-    PROFILER_UPDATE_RECORD = "storage." + name + ".updateRecord";
-    PROFILER_DELETE_RECORD = "storage." + name + ".deleteRecord";
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -208,7 +199,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + ".open", timer);
+      OProfiler.getInstance().stopChrono("db." + name + ".open", timer);
     }
   }
 
@@ -257,7 +248,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + ".create", timer);
+      OProfiler.getInstance().stopChrono("db." + name + ".create", timer);
     }
   }
 
@@ -314,7 +305,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + ".close", timer);
+      OProfiler.getInstance().stopChrono("db." + name + ".close", timer);
     }
   }
 
@@ -389,7 +380,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + ".delete", timer);
+      OProfiler.getInstance().stopChrono("db." + name + ".delete", timer);
     }
   }
 
@@ -1124,7 +1115,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + ".synch", timer);
+      OProfiler.getInstance().stopChrono("db." + name + ".synch", timer);
     }
   }
 
@@ -1149,7 +1140,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("storage." + name + "record.synch", timer);
+      OProfiler.getInstance().stopChrono("db." + name + "record.synch", timer);
     }
   }
 
@@ -1682,12 +1673,12 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   private void installProfilerHooks() {
-    OProfiler.getInstance().registerHookValue("storage." + name + ".data.holes", new OProfilerHookValue() {
+    OProfiler.getInstance().registerHookValue("db." + name + ".data.holes", new OProfilerHookValue() {
       public Object getValue() {
         return getHoles();
       }
     });
-    OProfiler.getInstance().registerHookValue("storage." + name + ".data.holeSize", new OProfilerHookValue() {
+    OProfiler.getInstance().registerHookValue("db." + name + ".data.holeSize", new OProfilerHookValue() {
       public Object getValue() {
         return getHoleSize();
       }

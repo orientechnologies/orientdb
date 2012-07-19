@@ -108,12 +108,7 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, false);
 
-      if (OProfiler.getInstance().isRecording()) {
-        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-        OProfiler.getInstance().updateCounter(
-            "Query.compositeIndexUsage." + indexDefinition.getParamCount() + '.' + keyParams.size(), 1);
-      }
+      updateProfiler(index, keyParams, indexDefinition);
     }
 
     return result;

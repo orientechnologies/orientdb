@@ -15,8 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.List;
+
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
@@ -29,64 +34,74 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
  */
 public abstract class OQueryOperatorEquality extends OQueryOperator {
 
-	protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, false);
-	}
+  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical) {
+    super(iKeyword, iPrecedence, false);
+  }
 
-	protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
-			final int iExpectedRightWords) {
-		super(iKeyword, iPrecedence, false, iExpectedRightWords);
-	}
+  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
+      final int iExpectedRightWords) {
+    super(iKeyword, iPrecedence, false, iExpectedRightWords);
+  }
 
-	protected abstract boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition,
-			final Object iLeft, final Object iRight, OCommandContext iContext);
+  protected abstract boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition,
+      final Object iLeft, final Object iRight, OCommandContext iContext);
 
-	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		if (iLeft instanceof OQueryRuntimeValueMulti) {
-			// LEFT = MULTI
-			final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    if (iLeft instanceof OQueryRuntimeValueMulti) {
+      // LEFT = MULTI
+      final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
-			if (left.values.length == 0)
-				return false;
+      if (left.values.length == 0)
+        return false;
 
-			if (left.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
-				// ALL VALUES
-				for (final Object v : left.values)
-					if (v == null || !evaluateExpression(iRecord, iCondition, v, iRight, iContext))
-						return false;
-				return true;
-			} else {
-				// ANY VALUES
-				for (final Object v : left.values)
-					if (v != null && evaluateExpression(iRecord, iCondition, v, iRight, iContext))
-						return true;
-				return false;
-			}
+      if (left.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
+        // ALL VALUES
+        for (final Object v : left.values)
+          if (v == null || !evaluateExpression(iRecord, iCondition, v, iRight, iContext))
+            return false;
+        return true;
+      } else {
+        // ANY VALUES
+        for (final Object v : left.values)
+          if (v != null && evaluateExpression(iRecord, iCondition, v, iRight, iContext))
+            return true;
+        return false;
+      }
 
-		} else if (iRight instanceof OQueryRuntimeValueMulti) {
-			// RIGHT = MULTI
-			final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
+    } else if (iRight instanceof OQueryRuntimeValueMulti) {
+      // RIGHT = MULTI
+      final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
 
-			if (right.values.length == 0)
-				return false;
+      if (right.values.length == 0)
+        return false;
 
-			if (right.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
-				// ALL VALUES
-				for (final Object v : right.values)
-					if (v == null || !evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
-						return false;
-				return true;
-			} else {
-				// ANY VALUES
-				for (final Object v : right.values)
-					if (v != null && evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
-						return true;
-				return false;
-			}
-		} else
-			// SINGLE SIMPLE ITEM
-			return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
-	}
+      if (right.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
+        // ALL VALUES
+        for (final Object v : right.values)
+          if (v == null || !evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
+            return false;
+        return true;
+      } else {
+        // ANY VALUES
+        for (final Object v : right.values)
+          if (v != null && evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
+            return true;
+        return false;
+      }
+    } else
+      // SINGLE SIMPLE ITEM
+      return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
+  }
+
+  protected void updateProfiler(OIndex<?> index, List<Object> keyParams, final OIndexDefinition indexDefinition) {
+    if (OProfiler.getInstance().isRecording()) {
+      OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
+      OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
+      OProfiler.getInstance().updateCounter(
+          "Query.compositeIndexUsage." + indexDefinition.getParamCount() + '.' + keyParams.size(), 1);
+    }
+  }
+
 }

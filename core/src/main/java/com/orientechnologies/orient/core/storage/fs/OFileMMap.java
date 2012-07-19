@@ -464,10 +464,10 @@ public class OFileMMap extends OAbstractFile {
     // POP THE FIRST AVAILABLE
     ByteBuffer buffer = bufferPool.poll();
     if (buffer != null)
-      OProfiler.getInstance().updateCounter("MMap.pooledBuffers", -1);
+      OProfiler.getInstance().updateCounter("system.file.mmap.pooledBuffers", -1);
     else {
       buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
-      OProfiler.getInstance().updateStat("MMap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
+      OProfiler.getInstance().updateStat("system.file.mmap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
     }
 
     buffer.limit(iSize);

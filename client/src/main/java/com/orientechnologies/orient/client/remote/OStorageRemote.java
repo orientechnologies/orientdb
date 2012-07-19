@@ -1464,14 +1464,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final long startToWait = System.currentTimeMillis();
             try {
               networkPool.wait(5000);
-              OProfiler.getInstance().updateCounter("network.connectionPool.timeout", +1);
+              OProfiler.getInstance().updateCounter("system.network.connectionPool.timeout", +1);
             } catch (InterruptedException e) {
               // THREAD INTERRUPTED: RETURN EXCEPTION
               Thread.currentThread().interrupt();
               throw new OStorageException("Cannot acquire a connection because the thread has been interrupted");
             }
 
-            final long elapsed = OProfiler.getInstance().stopChrono("network.connectionPool.waitingTime", startToWait);
+            final long elapsed = OProfiler.getInstance().stopChrono("system.network.connectionPool.waitingTime", startToWait);
 
             if (debug)
               System.out.println("Waiting for connection = elapsed: " + elapsed);

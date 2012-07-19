@@ -82,7 +82,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @throws IOException
    */
   public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-    OProfiler.getInstance().updateCounter("OServer.connections.actives", +1);
+    OProfiler.getInstance().updateCounter("server.connections.actives", +1);
 
     final OClientConnection connection;
 
@@ -128,7 +128,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    OProfiler.getInstance().updateCounter("OServer.connections.actives", -1);
+    OProfiler.getInstance().updateCounter("server.connections.actives", -1);
 
     acquireExclusiveLock();
     try {
@@ -151,7 +151,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public void disconnect(final OClientConnection connection) {
-    OProfiler.getInstance().updateCounter("OServer.connections.actives", -1);
+    OProfiler.getInstance().updateCounter("server.connections.actives", -1);
 
     connection.close();
 

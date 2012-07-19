@@ -33,10 +33,19 @@ import com.orientechnologies.orient.core.id.ORecordId;
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final ORecordLockManager lockManager;
+  protected final String             PROFILER_CREATE_RECORD;
+  protected final String             PROFILER_READ_RECORD;
+  protected final String             PROFILER_UPDATE_RECORD;
+  protected final String             PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode);
     lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
+
+    PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
+    PROFILER_READ_RECORD = "db." + name + ".readRecord";
+    PROFILER_UPDATE_RECORD = "db." + name + ".updateRecord";
+    PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
 
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);

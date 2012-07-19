@@ -136,19 +136,19 @@ public abstract class OAbstractRecordCache {
   public void startup() {
     underlying.startup();
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + ".cache.enabled", new OProfilerHookValue() {
+    OProfiler.getInstance().registerHookValue(profilerPrefix + "enabled", new OProfilerHookValue() {
       public Object getValue() {
         return isEnabled();
       }
     });
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + ".cache.current", new OProfilerHookValue() {
+    OProfiler.getInstance().registerHookValue(profilerPrefix + "current", new OProfilerHookValue() {
       public Object getValue() {
         return getSize();
       }
     });
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + ".cache.max", new OProfilerHookValue() {
+    OProfiler.getInstance().registerHookValue(profilerPrefix + "max", new OProfilerHookValue() {
       public Object getValue() {
         return getMaxSize();
       }
