@@ -51,6 +51,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   protected EXECUTION_MODE                  mode;
   protected STATUS                          status;
+  protected boolean                         inheritedDatabase;
 
   protected static OServerUserConfiguration replicatorUser;
   static {
@@ -178,7 +179,9 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, null);
   }
 
-  protected ODatabaseDocumentTx getDatabase() {
+  protected ODatabaseDocumentTx openDatabase() {
+    inheritedDatabase = true;
+
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && db.getName().equals(databaseName) && !db.isClosed()) {
       if (db instanceof ODatabaseDocumentTx)
@@ -187,7 +190,13 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
         return (ODatabaseDocumentTx) db.getDatabaseOwner();
     }
 
+    inheritedDatabase = false;
     return (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName, replicatorUser.name,
         replicatorUser.password);
+  }
+
+  protected void closeDatabase(final ODatabaseDocumentTx iDatabase) {
+    if (!inheritedDatabase)
+      iDatabase.close();
   }
 }

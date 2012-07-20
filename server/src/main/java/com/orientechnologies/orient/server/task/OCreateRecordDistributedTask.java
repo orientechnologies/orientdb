@@ -68,7 +68,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
-    final ODatabaseDocumentTx database = getDatabase();
+    final ODatabaseDocumentTx database = openDatabase();
     rid.clusterPosition = -1;
     try {
       record.fill(rid, version, content, true);
@@ -81,7 +81,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getVersion());
     } finally {
-      database.close();
+      closeDatabase(database);
     }
   }
 

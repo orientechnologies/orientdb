@@ -40,7 +40,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
 
   protected long             lastRunId;
   protected long             lastOperationId;
-  protected static final int OP_BUFFER        = 50;
+  protected static final int OP_BUFFER        = 150;
 
   public OAlignRequestDistributedTask() {
   }

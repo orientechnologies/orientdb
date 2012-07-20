@@ -63,7 +63,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] UPDATE RECORD %s v.%d", nodeSource, databaseName, rid, version);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
-    final ODatabaseDocumentTx database = getDatabase();
+    final ODatabaseDocumentTx database = openDatabase();
     try {
       record.fill(rid, version, content, true);
       record.save();
@@ -71,7 +71,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
       return record.getVersion();
 
     } finally {
-      database.close();
+      closeDatabase(database);
     }
   }
 

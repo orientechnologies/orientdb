@@ -59,11 +59,11 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
       // NODE NOT ONLINE, REFUSE THE OEPRATION
       throw new OServerOfflineException();
 
-    final ODatabaseDocumentTx db = getDatabase();
+    final ODatabaseDocumentTx db = openDatabase();
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
 
-      Object result = getDatabase().command(new OCommandSQL(text));
+      Object result = openDatabase().command(new OCommandSQL(text));
 
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
         return result;
@@ -73,7 +73,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
 
     } finally {
       ODistributedThreadLocal.INSTANCE.distributedExecution = false;
-      db.close();
+      closeDatabase(db);
     }
   }
 
