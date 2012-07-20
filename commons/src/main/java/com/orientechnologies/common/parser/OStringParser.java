@@ -85,9 +85,6 @@ public class OStringParser {
 
             if (iIncludeStringSep)
               buffer.append(c);
-
-            fields.add(buffer.toString());
-            buffer.setLength(0);
             continue;
           }
         } else {
@@ -229,16 +226,76 @@ public class OStringParser {
   }
 
   /**
+   * Finds a character inside a string specyfing the limits and direction. If iFrom is minor than iTo, then it moves forward,
+   * otherwise backward.
+   */
+  public static int indexOfOutsideStrings(final String iText, final char iToFind, int iFrom, int iTo) {
+    if (iTo == -1)
+      iTo = iText.length() - 1;
+    if (iFrom == -1)
+      iFrom = iText.length() - 1;
+
+    char c;
+    char stringChar = ' ';
+    boolean escape = false;
+
+    final StringBuilder buffer = new StringBuilder();
+
+    int i = iFrom;
+    while (true) {
+      c = iText.charAt(i);
+
+      if (!escape && c == '\\' && ((i + 1) < iText.length())) {
+        if (iText.charAt(i + 1) == 'u') {
+          i = readUnicode(iText, i + 2, buffer);
+        } else
+          escape = true;
+      } else {
+        if (c == '\'' || c == '"') {
+          // BEGIN/END STRING
+          if (stringChar == ' ') {
+            // BEGIN
+            stringChar = c;
+          } else {
+            // END
+            if (!escape && c == stringChar)
+              stringChar = ' ';
+          }
+        }
+
+        if (c == iToFind && stringChar == ' ')
+          return i;
+
+        if (escape)
+          escape = false;
+      }
+
+      if (iFrom < iTo) {
+        // MOVE FORWARD
+        if (++i > iTo)
+          break;
+      } else {
+        // MOVE BACKWARD
+        if (--i < iFrom)
+          break;
+      }
+    }
+    return -1;
+  }
+
+  /**
    * Jump white spaces.
    * 
    * @param iText
    *          String to analyze
    * @param iCurrentPosition
    *          Current position in text
+   * @param iMaxPosition
+   *          TODO
    * @return The new offset inside the string analyzed
    */
-  public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition) {
-    return jump(iText, iCurrentPosition, COMMON_JUMP);
+  public static int jumpWhiteSpaces(final CharSequence iText, final int iCurrentPosition, final int iMaxPosition) {
+    return jump(iText, iCurrentPosition, iMaxPosition, COMMON_JUMP);
   }
 
   /**
@@ -248,15 +305,17 @@ public class OStringParser {
    *          String to analyze
    * @param iCurrentPosition
    *          Current position in text
+   * @param iMaxPosition
+   *          Maximum position to read
    * @param iJumpChars
    *          String as char array of chars to jump
    * @return The new offset inside the string analyzed
    */
-  public static int jump(final CharSequence iText, int iCurrentPosition, final String iJumpChars) {
+  public static int jump(final CharSequence iText, int iCurrentPosition, final int iMaxPosition, final String iJumpChars) {
     if (iCurrentPosition < 0)
       return -1;
 
-    final int size = iText.length();
+    final int size = iMaxPosition > -1 ? Math.min(iMaxPosition, iText.length()) : iText.length();
     final int jumpCharSize = iJumpChars.length();
     boolean found = true;
     char c;
@@ -277,7 +336,7 @@ public class OStringParser {
     return iCurrentPosition >= size ? -1 : iCurrentPosition;
   }
 
-  public static int readUnicode(String iText, int position, StringBuilder buffer) {
+  public static int readUnicode(String iText, int position, final StringBuilder buffer) {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder();
     final int lastPos = position + 4;
@@ -288,7 +347,7 @@ public class OStringParser {
     return position - 1;
   }
 
-  public static int readUnicode(char[] iText, int position, StringBuilder buffer) {
+  public static int readUnicode(char[] iText, int position, final StringBuilder buffer) {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder();
     final int lastPos = position + 4;
@@ -299,7 +358,7 @@ public class OStringParser {
     return position - 1;
   }
 
-  public static String replaceAll(String iText, String iToReplace, String iReplacement) {
+  public static String replaceAll(final String iText, final String iToReplace, final String iReplacement) {
     if (iText == null || iText.length() <= 0 || iToReplace == null || iToReplace.length() <= 0)
       return iText;
     int pos = iText.indexOf(iToReplace);

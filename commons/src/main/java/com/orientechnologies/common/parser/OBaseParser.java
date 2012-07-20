@@ -206,7 +206,7 @@ public abstract class OBaseParser {
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSkipWhiteSpaces() {
-    currentPos = OStringParser.jumpWhiteSpaces(text, currentPos);
+    currentPos = OStringParser.jumpWhiteSpaces(text, currentPos, -1);
     return currentPos > -1;
   }
 
@@ -392,7 +392,7 @@ public abstract class OBaseParser {
       final boolean iForceUpperCase, final String iSeparatorChars) {
     ioWord.setLength(0);
 
-    ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition);
+    ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition, -1);
     if (ioCurrentPosition < 0)
       return -1;
 
