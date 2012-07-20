@@ -23,25 +23,28 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
 @XmlRootElement(name = "network")
 public class OServerNetworkConfiguration {
-	@XmlElementWrapper
-	@XmlAnyElement
-	@XmlElementRef(type = OServerNetworkProtocolConfiguration.class)
-	public List<OServerNetworkProtocolConfiguration>	protocols;
+  @XmlElementWrapper
+  @XmlAnyElement
+  @XmlElementRef(type = OServerNetworkProtocolConfiguration.class)
+  public List<OServerNetworkProtocolConfiguration> protocols;
 
-	@XmlElementWrapper
-	@XmlAnyElement
-	@XmlElementRef(type = OServerNetworkListenerConfiguration.class)
-	public List<OServerNetworkListenerConfiguration>	listeners;
+  @XmlElementWrapper
+  @XmlAnyElement
+  @XmlElementRef(type = OServerNetworkListenerConfiguration.class)
+  public List<OServerNetworkListenerConfiguration> listeners;
 
-	public OServerNetworkConfiguration() {
-	}
+  public OServerNetworkConfiguration() {
+  }
 
-	public OServerNetworkConfiguration(Object iObject) {
-		protocols = new ArrayList<OServerNetworkProtocolConfiguration>();
+  public OServerNetworkConfiguration(Object iObject) {
+    protocols = new ArrayList<OServerNetworkProtocolConfiguration>();
+    protocols.add(new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName()));
 
-		listeners = new ArrayList<OServerNetworkListenerConfiguration>();
-		listeners.add(new OServerNetworkListenerConfiguration());
-	}
+    listeners = new ArrayList<OServerNetworkListenerConfiguration>();
+    listeners.add(new OServerNetworkListenerConfiguration());
+  }
 }
