@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_STRATEGY;
+
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_STRATEGY;
 
 /**
  * Second level cache. It's shared among database instances with the same URL.
@@ -30,8 +31,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACH
  * @author Sylvain Spinelli
  */
 public class OLevel2RecordCache extends OAbstractRecordCache {
-
-  private STRATEGY strategy;
+  private final String CACHE_HIT;
+  private final String CACHE_MISS;
+  private STRATEGY     strategy;
 
   public enum STRATEGY {
     POP_RECORD, COPY_RECORD
@@ -40,6 +42,9 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
   public OLevel2RecordCache(final OStorage iStorage) {
     super(new OCacheLocator().secondaryCache(iStorage.getName()));
     profilerPrefix = "db." + iStorage.getName() + ".cache.level2.";
+    CACHE_HIT = profilerPrefix + "cache.found";
+    CACHE_MISS = profilerPrefix + "cache.notFound";
+
     strategy = STRATEGY.values()[(CACHE_LEVEL2_STRATEGY.getValueAsInteger())];
   }
 
@@ -89,27 +94,35 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
    * 
    * @param iRID
    *          record identity
+   * @param iRemove
    * @return record if exists in cache, {@code null} otherwise
    */
   protected ORecordInternal<?> retrieveRecord(final ORID iRID) {
     if (!isEnabled() || iRID.getClusterId() == excludedCluster)
       return null;
 
-    final ORecordInternal<?> record;
+    ORecordInternal<?> record;
     underlying.lock(iRID);
     try {
       record = underlying.remove(iRID);
 
-      if (record == null || record.isDirty())
+      if (record == null || record.isDirty()) {
+        OProfiler.getInstance().updateCounter(CACHE_MISS, 1);
         return null;
+      }
 
-      if (strategy == STRATEGY.COPY_RECORD)
-        // PUT BACK A CLONE (THIS UPDATE ALSO THE LRU)
-        underlying.put((ORecordInternal<?>) record.flatCopy());
+      if (strategy == STRATEGY.COPY_RECORD) {
+        final ORecordInternal<?> resident = OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean() ? (ORecordInternal<?>) record
+            .flatCopy() : record;
+        // PUT BACK A COPY OR ThE ORIGINAL IF NOT MULTI-THREADS (THIS UPDATE ALSO THE LRU)
+        underlying.put(resident);
+      }
+
     } finally {
       underlying.unlock(iRID);
     }
 
+    OProfiler.getInstance().updateCounter(CACHE_HIT, 1);
     return record;
   }
 

@@ -82,7 +82,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
    */
   public ORecordInternal<?> findRecord(final ORID rid) {
     if (!isEnabled())
-      return null;
+      // DELEGATE TO THE 2nd LEVEL CACHE
+      return null; // secondary.retrieveRecord(rid);
 
     ORecordInternal<?> record;
     underlying.lock(rid);
@@ -90,9 +91,11 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
       record = underlying.get(rid);
 
       if (record == null) {
+        // DELEGATE TO THE 2nd LEVEL CACHE
         record = secondary.retrieveRecord(rid);
 
         if (record != null)
+          // STORE IT LOCALLY
           underlying.put(record);
       }
     } finally {

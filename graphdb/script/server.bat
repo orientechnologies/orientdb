@@ -68,8 +68,9 @@ set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set LOG_CONSOLE_LEVEL=info
 set LOG_FILE_LEVEL=fine
 set WWW_PATH=%ORIENTDB_HOME%/www
-REM set JAVA_OPTS=-Xms1024m -Xmx1024m
+set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.strategy=1
+set JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
 
-call %JAVA% -server %JAVA_OPTS% -XX:+UseParallelGC -XX:+AggressiveOpts -XX:CompileThreshold=200 -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dlog.console.level=%LOG_CONSOLE_LEVEL% -Dlog.file.level=%LOG_FILE_LEVEL% -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
+call %JAVA% -server %JAVA_OPTS% %JAVA_OPTS_SCRIPT% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dlog.console.level=%LOG_CONSOLE_LEVEL% -Dlog.file.level=%LOG_FILE_LEVEL% -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
 
 :end
