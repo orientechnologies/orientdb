@@ -107,12 +107,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   public OLevel1RecordCache getLevel1Cache() {
-    checkOpeness();
     return underlying.getLevel1Cache();
   }
 
   public OLevel2RecordCache getLevel2Cache() {
-    checkOpeness();
     return getStorage().getLevel2Cache();
   }
 
