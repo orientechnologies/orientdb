@@ -264,7 +264,7 @@ public class OLogManager {
   public static void installCustomFormatter() {
     try {
       // ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
-      final Logger log = Logger.getLogger(DEFAULT_LOG);
+      final Logger log = Logger.getLogger("");
       if (log.getHandlers().length == 0) {
         // SET DEFAULT LOG FORMATTER
         final Handler h = new ConsoleHandler();
