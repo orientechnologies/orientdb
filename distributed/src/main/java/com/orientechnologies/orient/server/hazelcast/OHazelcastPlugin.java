@@ -218,7 +218,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           final OServerOfflineException exc = (OServerOfflineException) e.getCause();
 
           // RETRY
-          OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online, retrying %d...", exc.getNodeId(),
+          OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online (status=%s), retrying %d...", exc.getNodeId(), exc.getNodeStatus(),
               retry + 1);
           // WAIT A BIT
           try {

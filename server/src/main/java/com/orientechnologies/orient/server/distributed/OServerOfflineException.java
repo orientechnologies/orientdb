@@ -24,20 +24,27 @@ package com.orientechnologies.orient.server.distributed;
 public class OServerOfflineException extends ODistributedException {
   private static final long serialVersionUID = 1L;
   private String            nodeId;
+  private String            nodeStatus;
 
   public OServerOfflineException() {
   }
 
-  public OServerOfflineException(final String iNodeId) {
+  public OServerOfflineException(final String iNodeId, final String iNodeStatus) {
     nodeId = iNodeId;
+    nodeStatus = iNodeStatus;
   }
 
-  public OServerOfflineException(final String iNodeId, final String iMessage) {
+  public OServerOfflineException(final String iNodeId, final String iNodeStatus, final String iMessage) {
     super(iMessage);
     nodeId = iNodeId;
+    nodeStatus = iNodeStatus;
   }
 
   public String getNodeId() {
     return nodeId;
+  }
+
+  public String getNodeStatus() {
+    return nodeStatus;
   }
 }
