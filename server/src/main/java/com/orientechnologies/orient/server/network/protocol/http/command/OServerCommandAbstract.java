@@ -142,7 +142,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       iRequest.channel.outStream.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  protected String[] checkSyntax(String iURL, final int iArgumentCount, final String iSyntax) {
+  protected String[] checkSyntax(final String iURL, final int iArgumentCount, final String iSyntax) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iURL, URL_SEPARATOR, 1, -1, true);
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);

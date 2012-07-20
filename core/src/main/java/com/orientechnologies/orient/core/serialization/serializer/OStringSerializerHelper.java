@@ -614,7 +614,7 @@ public abstract class OStringSerializerHelper {
 
   public static OClass getRecordClassName(final String iValue, OClass iLinkedClass) {
     // EXTRACT THE CLASS NAME
-    int classSeparatorPos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+    final int classSeparatorPos = OStringParser.indexOfOutsideStrings(iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0, -1);
     if (classSeparatorPos > -1) {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
