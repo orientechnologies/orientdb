@@ -21,6 +21,7 @@ import java.io.StringWriter;
 import java.util.Date;
 import java.util.List;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -147,7 +148,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       throw new OHttpRequestException(iSyntax);
 
     final String[] array = new String[parts.size()];
-    return parts.toArray(array);
+    return decodeParts(parts.toArray(array));
   }
 
   protected void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
@@ -216,5 +217,32 @@ public abstract class OServerCommandAbstract implements OServerCommand {
     }
 
     iRequest.channel.flush();
+  }
+
+  /**
+   * urldecode each request part return the same array instance
+   * 
+   * @param parts
+   * @return
+   */
+  private String[] decodeParts(final String[] parts) {
+    try {
+      if (parts == null)
+        return null;
+      for (int i = 0; i < parts.length; i++) {
+        String part = parts[i];
+        if (part == null)
+          continue;
+
+        if (part.indexOf('%') > -1) {
+          // NEEDS DECODING
+          part = java.net.URLDecoder.decode(part, "UTF-8");
+          parts[i] = part;
+        }
+      }
+      return parts;
+    } catch (Exception ex) {
+      throw new OException(ex);
+    }
   }
 }
