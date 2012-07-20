@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-  private final ReentrantLock lockRead    = new ReentrantLock(true);
+  private final ReentrantLock lockRead    = new ReentrantLock();
   private final ReentrantLock lockWrite   = new ReentrantLock();
   private boolean             channelRead = false;
   private byte                currentStatus;
