@@ -83,6 +83,9 @@ public class Orient extends OSharedResourceAbstract {
       // ACTIVATE RECORDING OF THE PROFILER
       OProfiler.getInstance().startRecording();
 
+    if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
+      OGlobalConfiguration.dumpConfiguration(System.out);
+
     memoryWatchDog = new OMemoryWatchDog();
 
     active = true;

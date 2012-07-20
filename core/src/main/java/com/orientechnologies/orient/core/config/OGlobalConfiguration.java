@@ -327,8 +327,6 @@ public enum OGlobalConfiguration {
   static {
     readConfiguration();
     autoConfig();
-    if (ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
-      dumpConfiguration(System.out);
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,

@@ -155,6 +155,11 @@ public class OServer {
     Orient.instance();
 
     loadConfiguration(iConfiguration);
+
+    if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
+      System.out.println("Dumping environment after server startup...");
+      OGlobalConfiguration.dumpConfiguration(System.out);
+    }
   }
 
   @SuppressWarnings("unchecked")
