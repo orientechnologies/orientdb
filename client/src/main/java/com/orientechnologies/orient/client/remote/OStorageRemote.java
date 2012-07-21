@@ -163,8 +163,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
 
     lock.acquireExclusiveLock();
-
     try {
+      
       connectionUserName = iUserName;
       connectionUserPassword = iUserPassword;
       connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
@@ -193,31 +193,38 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public void reload() {
     checkConnection();
 
-    do {
-      try {
-
-        OChannelBinaryClient network = null;
+    lock.acquireExclusiveLock();
+    try {
+      
+      do {
         try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELOAD);
-        } finally {
-          endRequest(network);
+
+          OChannelBinaryClient network = null;
+          try {
+            network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELOAD);
+          } finally {
+            endRequest(network);
+          }
+
+          try {
+            beginResponse(network);
+
+            readDatabaseInformation(network);
+            break;
+
+          } finally {
+            endResponse(network);
+          }
+
+        } catch (Exception e) {
+          handleException("Error on reloading database information", e);
+
         }
+      } while (true);
 
-        try {
-          beginResponse(network);
-
-          readDatabaseInformation(network);
-          break;
-
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException("Error on reloading database information", e);
-
-      }
-    } while (true);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public void create(final Map<String, Object> iOptions) {
@@ -231,10 +238,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void close(final boolean iForce) {
-    lock.acquireExclusiveLock();
-
     OChannelBinaryClient network = null;
+
+    lock.acquireExclusiveLock();
     try {
+      
       synchronized (networkPool) {
         if (networkPool.size() > 0) {
           try {
@@ -271,8 +279,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
       closeChannel(network);
+      
     } finally {
-
       lock.releaseExclusiveLock();
     }
   }
@@ -1272,8 +1280,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           // READ CLUSTER CONFIGURATION
           updateClusterConfiguration(network.readBytes());
-
-          defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
           status = STATUS.OPEN;
           return;
 
@@ -1537,7 +1543,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
     iNetwork.beginResponse(getSessionId());
 
-    if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
+    //if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
       synchronized (networkPool) {
         if (networkPool.size() < maxPool) {
           // CREATE NEW CONNECTION

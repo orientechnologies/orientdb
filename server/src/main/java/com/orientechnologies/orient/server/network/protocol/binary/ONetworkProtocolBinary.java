@@ -126,7 +126,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
-      if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+      if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
         shutdown();
         throw new OIOException("Found unknown session " + clientTxId);
       }
