@@ -36,6 +36,7 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
 		super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
 		socket = iSocket;
 		socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+    socket.setTcpNoDelay(true);
 	}
 
 	public void flush() throws IOException {

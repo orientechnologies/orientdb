@@ -109,7 +109,11 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           try {
             final long start = System.currentTimeMillis();
             wait(1000);
-            if (System.currentTimeMillis() - start >= 1000)
+            final long now = System.currentTimeMillis();
+            if (debug)
+              OLogManager.instance().debug(this, "Slept %dms, checking again from %s for session %d", (now - start),
+                  socket.getRemoteSocketAddress(), currentSessionId);
+            if (now - start >= 1000)
               unreadResponse++;
 
           } catch (InterruptedException e) {
