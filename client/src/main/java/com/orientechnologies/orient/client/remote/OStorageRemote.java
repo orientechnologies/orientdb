@@ -38,6 +38,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -164,7 +165,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     lock.acquireExclusiveLock();
     try {
-      
+
       connectionUserName = iUserName;
       connectionUserPassword = iUserPassword;
       connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
@@ -195,7 +196,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     lock.acquireExclusiveLock();
     try {
-      
+
       do {
         try {
 
@@ -242,7 +243,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     lock.acquireExclusiveLock();
     try {
-      
+
       synchronized (networkPool) {
         if (networkPool.size() > 0) {
           try {
@@ -279,7 +280,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);
       closeChannel(network);
-      
+
     } finally {
       lock.releaseExclusiveLock();
     }
@@ -1274,7 +1275,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           sessionId = network.readInt();
           setSessionId(sessionId);
 
-          OLogManager.instance().debug(null, "Client connected with session id: " + sessionId);
+          OLogManager.instance().debug(this, "Client connected with session id: " + sessionId);
 
           readDatabaseInformation(network);
 
@@ -1286,8 +1287,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } finally {
           endResponse(network);
         }
+      } catch (IOException e) {
+        OLogManager.instance().debug(this, "Error while reading response on creation of connection ", e);
+      } catch (OTimeoutException e) {
+        OLogManager.instance().debug(this, "Error while reading response on creation of connection ", e);
       } catch (Exception e) {
         handleException("Cannot create a connection to remote server address(es): " + serverURLs, e);
+      }
+
+      // CHECK AGAIN IF THERE ARE FREE CHANNELS
+      synchronized (networkPool) {
+        availableConnections = !networkPool.isEmpty();
       }
     }
 
@@ -1543,7 +1553,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
     iNetwork.beginResponse(getSessionId());
 
-    //if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
+    if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
       synchronized (networkPool) {
         if (networkPool.size() < maxPool) {
           // CREATE NEW CONNECTION
