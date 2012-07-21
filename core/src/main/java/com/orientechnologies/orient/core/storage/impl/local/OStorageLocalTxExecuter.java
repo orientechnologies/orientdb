@@ -49,7 +49,12 @@ public class OStorageLocalTxExecuter {
   }
 
   public void open() throws IOException {
-    txSegment.open();
+    try {
+      txSegment.open();
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Error on opening the txlog file '%s', reset it", e, txSegment.getFile());
+      create();
+    }
   }
 
   public void create() throws IOException {
