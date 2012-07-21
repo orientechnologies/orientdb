@@ -99,24 +99,42 @@ public class OChannelBinaryAsynch extends OChannelBinary {
         if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout)
           throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
 
-        if (unreadResponse > maxUnreadResponses)
-          clearInput();
+        if (unreadResponse > maxUnreadResponses) {
+          if (debug)
+            OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
+                maxUnreadResponses);
+
+          // CALL THE SUPER-METHOD TO AVOID LOCKING AGAIN
+          super.clearInput();
+        }
 
         lockRead.unlock();
+
+        final long start = System.currentTimeMillis();
 
         // WAIT 1 SECOND AND RETRY
         synchronized (this) {
           try {
-            final long start = System.currentTimeMillis();
+            if (debug)
+              OLogManager.instance().debug(this, "Session %d is going to sleep...", currentSessionId);
+
             wait(1000);
             final long now = System.currentTimeMillis();
+
             if (debug)
-              OLogManager.instance().debug(this, "Slept %dms, checking again from %s for session %d", (now - start),
+              OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
                   socket.getRemoteSocketAddress(), currentSessionId);
+
             if (now - start >= 1000)
               unreadResponse++;
 
           } catch (InterruptedException e) {
+            if (debug) {
+              final long now = System.currentTimeMillis();
+              OLogManager.instance().debug(this, "Waked up: signal received after %dms, checking again from %s for session %d",
+                  (now - start), socket.getRemoteSocketAddress(), currentSessionId);
+            }
+
             Thread.currentThread().interrupt();
           }
         }
@@ -156,7 +174,6 @@ public class OChannelBinaryAsynch extends OChannelBinary {
     synchronized (this) {
       notifyAll();
     }
-
     super.close();
   }
 
