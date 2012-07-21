@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-  private final ReentrantLock lockRead    = new ReentrantLock();
+  private final ReentrantLock lockRead    = new ReentrantLock(true);
   private final ReentrantLock lockWrite   = new ReentrantLock();
   private boolean             channelRead = false;
   private byte                currentStatus;
@@ -105,7 +106,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
                 maxUnreadResponses);
 
           // CALL THE SUPER-METHOD TO AVOID LOCKING AGAIN
-          super.clearInput();
+          //super.clearInput();
+          throw new OIOException("Timeout on reading response");
         }
 
         lockRead.unlock();
@@ -116,14 +118,14 @@ public class OChannelBinaryAsynch extends OChannelBinary {
         synchronized (this) {
           try {
             if (debug)
-              OLogManager.instance().debug(this, "Session %d is going to sleep...", currentSessionId);
+              OLogManager.instance().debug(this, "Session %d is going to sleep...", iRequesterId);
 
             wait(1000);
             final long now = System.currentTimeMillis();
 
             if (debug)
               OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
-                  socket.getLocalAddress(), currentSessionId);
+                  socket.getLocalAddress(), iRequesterId);
 
             if (now - start >= 1000)
               unreadResponse++;
