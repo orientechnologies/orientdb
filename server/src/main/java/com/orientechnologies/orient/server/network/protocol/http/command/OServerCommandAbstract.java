@@ -234,11 +234,9 @@ public abstract class OServerCommandAbstract implements OServerCommand {
         if (part == null)
           continue;
 
-        if (part.indexOf('%') > -1) {
-          // NEEDS DECODING
-          part = java.net.URLDecoder.decode(part, "UTF-8");
-          parts[i] = part;
-        }
+        // NEEDS DECODING
+        part = java.net.URLDecoder.decode(part, "UTF-8");
+        parts[i] = part;
       }
       return parts;
     } catch (Exception ex) {
