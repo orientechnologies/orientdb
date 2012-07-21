@@ -77,7 +77,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
             currentSessionId = readInt();
 
             if (debug)
-              OLogManager.instance().debug(this, "%s - Read response: %d-%d", socket.getRemoteSocketAddress(), (int) currentStatus,
+              OLogManager.instance().debug(this, "%s - Read response: %d-%d", socket.getLocalAddress(), (int) currentStatus,
                   currentSessionId);
 
           } catch (IOException e) {
@@ -93,7 +93,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           break;
 
         if (debug)
-          OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getInetAddress(), iRequesterId,
+          OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(), iRequesterId,
               currentSessionId);
 
         if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout)
@@ -123,7 +123,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
             if (debug)
               OLogManager.instance().debug(this, "Waked up: slept %dms, checking again from %s for session %d", (now - start),
-                  socket.getInetAddress(), currentSessionId);
+                  socket.getLocalAddress(), currentSessionId);
 
             if (now - start >= 1000)
               unreadResponse++;
@@ -135,7 +135,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
       } while (true);
 
       if (debug)
-        OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getInetAddress(), iRequesterId);
+        OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
       handleStatus(currentStatus, currentSessionId);
     } catch (InterruptedException e) {
