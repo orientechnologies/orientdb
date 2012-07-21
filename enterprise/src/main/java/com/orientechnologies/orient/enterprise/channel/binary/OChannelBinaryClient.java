@@ -23,16 +23,13 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-  final protected int       socketTimeout;                               // IN MS
-  final private short       srvProtocolVersion;
-  final private List<Short> srvProtocolVersions = new ArrayList<Short>();
+  final protected int socketTimeout;     // IN MS
+  final private short srvProtocolVersion;
 
   public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int iProtocolVersion) throws IOException {

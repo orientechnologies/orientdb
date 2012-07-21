@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -102,12 +101,13 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
         if (unreadResponse > maxUnreadResponses) {
           if (debug)
-            OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: close it...",
-                unreadResponse, maxUnreadResponses);
+            OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
+                maxUnreadResponses);
 
           // CALL THE SUPER-METHOD TO AVOID LOCKING AGAIN
           // super.clearInput();
           close();
+          throw new IOException("Timeout on reading response");
         }
 
         lockRead.unlock();
@@ -149,7 +149,11 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
   public void endResponse() {
     channelRead = false;
-    lockRead.unlock();
+    try {
+      lockRead.unlock();
+    } catch (IllegalMonitorStateException e) {
+      // IGNORE IT
+    }
 
     // WAKE UP ALL THE WAITING THREADS
     synchronized (this) {

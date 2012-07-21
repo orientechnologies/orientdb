@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -124,6 +125,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       setDataCommandInfo("Listening");
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
+    } else {
+      if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE)
+        throw new OIOException("Found unknown session " + clientTxId);
     }
 
     OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(connection, (byte) requestType);

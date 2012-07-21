@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 
 /**
  * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method does not close the
@@ -79,7 +80,10 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     checkOpeness();
     rollback();
 
-    getMetadata().close();
+    final OMetadata md = getMetadata();
+    if (md != null)
+      md.close();
+
     ((ODatabaseRaw) ((ODatabaseRecord) underlying).getUnderlying()).callOnCloseListeners();
     getLevel1Cache().clear();
 
