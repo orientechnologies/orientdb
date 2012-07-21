@@ -154,6 +154,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
+    if (t instanceof SocketException) {
+      // DON'T SEND TO THE CLIENT BECAUSE THE SOCKET HAS PROBLEMS
+      shutdown();
+      return;
+    }
+
     channel.acquireExclusiveLock();
 
     try {
