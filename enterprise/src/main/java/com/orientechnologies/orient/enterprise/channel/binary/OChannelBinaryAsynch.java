@@ -102,12 +102,12 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
         if (unreadResponse > maxUnreadResponses) {
           if (debug)
-            OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
-                maxUnreadResponses);
+            OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: close it...",
+                unreadResponse, maxUnreadResponses);
 
           // CALL THE SUPER-METHOD TO AVOID LOCKING AGAIN
-          //super.clearInput();
-          throw new OIOException("Timeout on reading response");
+          // super.clearInput();
+          close();
         }
 
         lockRead.unlock();
