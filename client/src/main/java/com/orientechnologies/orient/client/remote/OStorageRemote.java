@@ -424,6 +424,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               database.getLevel1Cache().updateRecord(record);
           }
           return buffer;
+
         } finally {
           endResponse(network);
         }
@@ -1164,11 +1165,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * @param iException
    */
   protected void handleException(final String iMessage, final Exception iException) {
-    if (iException instanceof OException)
+    if (iException instanceof OTimeoutException) {
+      // DO NOTHING
+    } else if (iException instanceof OException)
       // RE-THROW IT
       throw (OException) iException;
-
-    if (!(iException instanceof IOException))
+    else if (!(iException instanceof IOException))
       throw new OStorageException(iMessage, iException);
 
     if (status != STATUS.OPEN)
