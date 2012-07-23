@@ -110,12 +110,12 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           throw new IOException("Timeout on reading response");
         }
 
-        lockRead.unlock();
-
         final long start = System.currentTimeMillis();
 
         // WAIT 1 SECOND AND RETRY
         synchronized (this) {
+          lockRead.unlock();
+
           try {
             if (debug)
               OLogManager.instance().debug(this, "Session %d is going to sleep...", iRequesterId);
