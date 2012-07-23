@@ -928,6 +928,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
       final String... fields) {
 
+    try {
+      final INDEX_TYPE recognizedIdxType = INDEX_TYPE.valueOf(iType);
+      if (!recognizedIdxType.isAutomaticIndexable())
+        throw new IllegalArgumentException("Index type '" + iType + "' cannot be used as automatic index against properties");
+    } catch (IllegalArgumentException e) {
+      // IGNORE IT
+    }
+
     if (fields.length == 0) {
       throw new OIndexException("List of fields to index cannot be empty.");
     }

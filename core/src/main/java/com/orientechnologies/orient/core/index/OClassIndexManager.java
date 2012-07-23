@@ -381,7 +381,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return false;
   }
 
-  private static void deleteIndexKey(OIndex<?> index, ODocument iRecord, Object origValue) {
+  private static void deleteIndexKey(final OIndex<?> index, final ODocument iRecord, final Object origValue) {
     if (origValue instanceof Collection) {
       for (final Object valueItem : (Collection<?>) origValue) {
         if (valueItem != null)
