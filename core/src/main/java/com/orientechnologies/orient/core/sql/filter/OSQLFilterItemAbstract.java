@@ -165,18 +165,21 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
           } else if (operator == OSQLFilterFieldOperator.APPEND.id) {
             final Object v = getParameterValue(iRecord, op.value.get(0));
-            ioResult = ioResult != null ? ioResult.toString() + v : null;
+            if (v != null)
+              ioResult = ioResult != null ? ioResult.toString() + v : null;
 
           } else if (operator == OSQLFilterFieldOperator.PREFIX.id) {
             final Object v = getParameterValue(iRecord, op.value.get(0));
-            ioResult = ioResult != null ? v + ioResult.toString() : null;
+            if (v != null)
+              ioResult = ioResult != null ? v + ioResult.toString() : null;
 
           } else if (operator == OSQLFilterFieldOperator.FORMAT.id) {
             final Object v = getParameterValue(iRecord, op.value.get(0));
-            if (ioResult instanceof Date)
-              ioResult = new SimpleDateFormat(v.toString()).format(ioResult);
-            else
-              ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
+            if (v != null)
+              if (ioResult instanceof Date)
+                ioResult = new SimpleDateFormat(v.toString()).format(ioResult);
+              else
+                ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
           } else if (operator == OSQLFilterFieldOperator.LEFT.id) {
             final int len = Integer.parseInt(op.value.get(0));
             ioResult = ioResult != null ? ioResult.toString().substring(0,
