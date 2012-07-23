@@ -115,6 +115,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
         // WAIT 1 SECOND AND RETRY
         synchronized (this) {
           lockRead.unlock();
+          notifyAll();
 
           try {
             if (debug)
