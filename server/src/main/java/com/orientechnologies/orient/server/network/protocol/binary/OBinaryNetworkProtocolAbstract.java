@@ -121,10 +121,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       onAfterRequest();
 
-    } catch (EOFException e) {
-      handleConnectionError(channel, e);
-      sendShutdown();
-    } catch (SocketException e) {
+    } catch (IOException e) {
       handleConnectionError(channel, e);
       sendShutdown();
     } catch (OException e) {
