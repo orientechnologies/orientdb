@@ -240,7 +240,7 @@ public enum OGlobalConfiguration {
       Integer.class, 32736),
 
   NETWORK_BINARY_READ_RESPONSE_MAX_TIMES("network.binary.readResponse.maxTimes",
-      "Maximum times to wait until response will be read. Otherwise response will be dropped from chanel", Integer.class, 10),
+      "Maximum times to wait until response will be read. Otherwise response will be dropped from chanel", Integer.class, 20),
 
   NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false),
 
