@@ -5,11 +5,10 @@
 	<property environment="env" />
 	<property name="vendor"            value="NuvolaBase Ltd" />
 	<property name="product"           value="OrientDB" />
-	<property name="version"           value="1.1.0-SNAPSHOT" />
+	<property name="version"           value="1.1.0" />
 	<property name="global.release"    value="../releases/orientdb-${version}" />
 	<property name="db.release"        value="../releases/orientdb-${version}" />
 	<property name="graph.release"     value="../releases/orientdb-graphed-${version}" />
-	<property name="distrib.release"   value="../releases/orientdb-distributed-${version}" />
 	
 	<property name="env.ORIENTDB_HOME" value="${db.release}" />
 	
@@ -75,7 +74,6 @@
 	<mkdir dir="${db.release}" />
 	<mkdir dir="${db.release}/log" />
 	<mkdir dir="${graph.release}/log" />
-	<mkdir dir="${distrib.release}/log" />
 	<mkdir dir="${db.release}/databases" />
   </target>
 
@@ -100,7 +98,7 @@
              overview="overview.html">
 			<classpath>
 				<fileset dir=".">
-					<include name="object/lib/persistence-api-1.0.jar" />
+					<include name="object/lib/hibernate-jpa-2.0-api-1.0.0.Final.jar" />
 				</fileset>
 			</classpath>
 			<packageset dir="." defaultexcludes="yes">
@@ -141,7 +139,7 @@
 		<copy tofile="${db.release}/history.txt"      file="history.txt" />
 
 		<copy todir="${db.release}/bin/" flatten="true">
-		  <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat" />
+		  <fileset dir="." includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat distributed/script/*.sh distributed/script/*.bat" />
 		  <filterset>
 			<filter token="VERSION" value="${version}"/>
 			<filter token="BUILD" value="${build.number}"/>
@@ -154,6 +152,13 @@
 		
 		<copy todir="${db.release}/config/" flatten="true">
 		  <fileset dir="." includes="server/config/*" />
+		</copy>
+		<copy todir="${db.release}/config/" flatten="true">
+		  <fileset dir="." includes="distributed/config/*" />
+		</copy>
+
+		<copy todir="${db.release}/lib" flatten="true">
+		  <fileset dir="distributed/lib" includes="*.jar"/>
 		</copy>
 		
 		<copy todir="${db.release}/benchmarks" flatten="true">
@@ -206,40 +211,6 @@
 		</delete>
 	</target>
 
-	<target name="installd" depends="install">
-		<subant target="install">
-		  <property name="global.lib" value="../${distrib.release}/lib"/>
-		  <property name="version" value="${version}"/>
-		  
-			<fileset dir="distributed"      includes="build.xml" />
-		</subant>
-
-		<copy todir="${distrib.release}">
-		  <fileset dir="${db.release}">
-			<exclude name="**/*.log.*"/>
-		  </fileset>
-		</copy>
-	  
-		<copy todir="${distrib.release}/bin/" flatten="true" overwrite="true">
-		  <fileset dir="distributed/script" includes="*.sh *.bat" />
-		  <filterset>
-			<filter token="VERSION" value="${version}"/>
-		  </filterset>
-		</copy>
-
-		<copy todir="${distrib.release}/config" flatten="true" overwrite="true">
-		  <fileset dir="distributed/config" includes="*.xml *.json"/>
-		</copy>
-		
-		<copy todir="${distrib.release}/lib" flatten="true">
-		  <fileset dir="distributed/lib" includes="*.jar"/>
-		</copy>
-		
-		<delete includeEmptyDirs="true">
-		  <fileset dir="${distrib.release}/log/" includes="**/*"/>
-		</delete>
-	</target>
-	
 	<target name="md5" depends="init">
 		<checksum algorithm="MD5" fileext=".md5">
 		  <fileset dir="${db.release}/lib">
@@ -286,10 +257,6 @@
 		<mkdir dir="${graph.release}" />
 		<delete file="../releases/orientdb-graphed-${version}.zip" />
 		<zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-graphed-*/"  excludes="**/*.log.*" />
-		
-		<mkdir dir="${distrib.release}" />
-		<delete file="../releases/orientdb-clustered-${version}.zip" />
-		<zip destfile="../releases/orientdb-clustered-${version}.zip" basedir="../releases" level="9" update="false" includes="orientdb-clustered-*/"  excludes="**/*.log.*" />
 	</target>
     
 </project>
