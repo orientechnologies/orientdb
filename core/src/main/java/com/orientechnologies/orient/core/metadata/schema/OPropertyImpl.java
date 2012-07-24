@@ -454,7 +454,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       throw new IllegalArgumentException("attribute is null");
 
     final String stringValue = iValue != null ? iValue.toString() : null;
-    final boolean isNull = stringValue != null && stringValue.equalsIgnoreCase("NULL");
+    final boolean isNull = stringValue == null || stringValue.equalsIgnoreCase("NULL");
 
     switch (attribute) {
     case LINKEDCLASS:
@@ -616,18 +616,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("mandatory", mandatory);
       document.field("notNull", notNull);
 
-      if (min != null)
-        document.field("min", min);
-      if (max != null)
-        document.field("max", max);
-      if (regexp != null)
-        document.field("regexp", regexp);
-      if (linkedType != null)
-        document.field("linkedType", linkedType.id);
-      if (linkedClass != null || linkedClassName != null)
-        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-      if (customFields != null && customFields.size() > 0)
-        document.field("customFields", customFields, OType.EMBEDDEDMAP);
+      document.field("min", min);
+      document.field("max", max);
+      document.field("regexp", regexp);
+
+      document.field("linkedType", linkedType != null ? linkedType.id : null);
+      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);

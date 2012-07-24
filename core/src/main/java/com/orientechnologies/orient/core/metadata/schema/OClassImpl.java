@@ -411,8 +411,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     try {
       document.field("name", name);
-      if (shortName != null)
-        document.field("shortName", shortName);
+      document.field("shortName", shortName);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
       document.field("overSize", overSize);
@@ -426,8 +425,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         document.field("properties", props, OType.EMBEDDEDSET);
       }
 
-      if (superClass != null)
-        document.field("superClass", superClass.getName());
+      document.field("superClass", superClass != null ? superClass.getName() : null);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -775,7 +773,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new IllegalArgumentException("attribute is null");
 
     final String stringValue = iValue != null ? iValue.toString() : null;
-    final boolean isNull = stringValue != null && stringValue.equalsIgnoreCase("NULL");
+    final boolean isNull = stringValue == null || stringValue.equalsIgnoreCase("NULL");
 
     switch (attribute) {
     case NAME:
