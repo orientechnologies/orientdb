@@ -376,20 +376,22 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     if (iVertex1 != null && iVertex2 != null) {
       // CHECK OUT EDGES
       for (OIdentifiable e : getOutEdges(iVertex1)) {
-        final ODocument edge = (ODocument) e;
+        final ODocument edge = (ODocument) e.getRecord();
 
         if (checkEdge(edge, iLabels, iClassNames)) {
-          if (edge.<ODocument> field("in").equals(iVertex2))
+          final OIdentifiable in = edge.<ODocument> field("in");
+          if (in != null && in.equals(iVertex2))
             result.add(edge);
         }
       }
 
       // CHECK IN EDGES
       for (OIdentifiable e : getInEdges(iVertex1)) {
-        final ODocument edge = (ODocument) e;
+        final ODocument edge = (ODocument) e.getRecord();
 
         if (checkEdge(edge, iLabels, iClassNames)) {
-          if (edge.<ODocument> field("out").equals(iVertex2))
+          final OIdentifiable out = edge.<ODocument> field("out");
+          if (out != null && out.equals(iVertex2))
             result.add(edge);
         }
       }
