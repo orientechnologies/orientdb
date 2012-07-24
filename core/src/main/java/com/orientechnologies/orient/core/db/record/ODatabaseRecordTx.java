@@ -198,17 +198,20 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 		return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan);
 	}
 
-	@Override
+	@SuppressWarnings("unchecked")
+  @Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
 			final ORecordCallback<? extends Number> iCallback) {
 		return (RET) save(iContent, (String) null, iMode, iCallback);
 	}
 
+  @SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
 		return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
 	}
 
+  @SuppressWarnings("unchecked")
 	@Override
 	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
 		return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);

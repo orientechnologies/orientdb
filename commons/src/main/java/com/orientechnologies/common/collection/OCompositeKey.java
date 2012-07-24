@@ -33,7 +33,6 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
  * @see OMVRBTree.PartialSearchMode
  * @author Andrey lomakin, Artem Orobets
  */
-@SuppressWarnings("rawtypes")
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
   private static final long        serialVersionUID = 1L;
   /**
@@ -116,7 +115,6 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
       if (outKey instanceof OAlwaysLessKey)
         return 1;
 
-      @SuppressWarnings("unchecked")
       final int result = comparator.compare(inKey, outKey);
       if (result != 0)
         return result;

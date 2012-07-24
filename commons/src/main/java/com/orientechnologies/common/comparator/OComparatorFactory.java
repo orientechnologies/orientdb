@@ -51,6 +51,7 @@ public class OComparatorFactory {
    *          Class of object that is going to be compared.
    * @return {@link Comparator} instance if applicable one exist or <code>null</code> otherwise.
    */
+  @SuppressWarnings("unchecked")
   public <T> Comparator<T> getComparator(Class<T> clazz) {
     if (clazz.equals(byte[].class)) {
       if (unsafeWasDetected)

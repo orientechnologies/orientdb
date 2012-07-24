@@ -9,6 +9,8 @@ import com.orientechnologies.common.exception.OException;
  * @since 03.07.12
  */
 public class OModificationOperationProhibitedException extends OException {
+  private static final long serialVersionUID = 1L;
+
   public OModificationOperationProhibitedException() {
   }
 

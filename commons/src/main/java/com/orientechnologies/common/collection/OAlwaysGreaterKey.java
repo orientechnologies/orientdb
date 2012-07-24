@@ -22,8 +22,8 @@ package com.orientechnologies.common.collection;
  * @author Andrey Lomakin
  * @since 20.03.12
  */
-public final class OAlwaysGreaterKey implements Comparable<Comparable>{
-	public int compareTo(Comparable o) {
+public final class OAlwaysGreaterKey implements Comparable<Comparable<?>>{
+	public int compareTo(Comparable<?> o) {
 		return 1;
 	}
 }
