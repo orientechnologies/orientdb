@@ -31,6 +31,7 @@ VERSION 1.1.0 - (July, 24th 2012)
 - New distributed server architecture with balance of workload, full
   replication and management of failures
 - New MMAP manager optimized for 64bit OS
+- Index: new support for binary keys and collections in composite keys
 - Support for in-memory database replication
 - Object Database added support for attach/detach, ENUM and binary
   data (ORecordBytes)
