@@ -50,10 +50,16 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
       final String ordering = field.getValue();
 
       fieldValue1 = ((ODocument) iDoc1.getRecord()).field(fieldName);
+
+      fieldValue2 = ((ODocument) iDoc2.getRecord()).field(fieldName);
+
+      if (fieldValue1 == null && fieldValue2 == null) {
+          continue;
+      }
+
       if (fieldValue1 == null)
         return factor(Integer.MIN_VALUE, ordering);
 
-      fieldValue2 = ((ODocument) iDoc2.getRecord()).field(fieldName);
       if (fieldValue2 == null)
         return factor(Integer.MAX_VALUE, ordering);
 
