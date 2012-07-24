@@ -29,11 +29,13 @@ This document enlist the last changes to the OrientDB project.
 VERSION 1.1.0 - (July, 24th 2012)
 -------------------------------------------------------------------------------
 - New distributed server architecture with balance of workload, full
-  replication and management of node crash
+  replication and management of failures
 - New MMAP manager optimized for 64bit OS
 - Support for in-memory database replication
-- Object Database added support for ENUM and binary data (ORecordBytes)
-- SQL: new DROP CLUSTER command, INSERT now supports clusters
+- Object Database added support for attach/detach, ENUM and binary
+  data (ORecordBytes)
+- SQL: new DROP CLUSTER command, INSERT now supports clusters,
+  new CREATE VERTEX and CREATE EDGE commands
 - Support for Gephi visual tool
 - 50 bugs fixed
 
