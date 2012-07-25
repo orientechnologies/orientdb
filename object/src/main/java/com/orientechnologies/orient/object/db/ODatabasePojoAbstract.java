@@ -494,6 +494,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 					map.put(e.getKey(), convertParameter(e.getValue()));
 				}
 
+			} else if (iParameter != null && iParameter.getClass().isEnum()) {
+				return ((Enum<?>) iParameter).name();
 			} else if (iParameter != null && !OType.isSimpleType(iParameter)) {
 				final ORID rid = getIdentity(iParameter);
 				if (rid != null && rid.isValid())
