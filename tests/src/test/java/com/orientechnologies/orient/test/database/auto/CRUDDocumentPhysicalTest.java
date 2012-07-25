@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -29,24 +43,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
-  protected static final int  TOT_RECORDS = 100;
-  protected static final int TOT_RECORDS_COMPANY = 10;
+  protected static final int  TOT_RECORDS         = 100;
+  protected static final int  TOT_RECORDS_COMPANY = 10;
 
   protected long              startRecordNumber;
   private ODatabaseDocumentTx database;
@@ -97,7 +98,6 @@ public class CRUDDocumentPhysicalTest {
     try {
       startRecordNumber = database.countClusterElements("Account");
 
-
       byte[] binary = new byte[100];
       for (int b = 0; b < binary.length; ++b)
         binary[b] = (byte) b;
@@ -109,7 +109,7 @@ public class CRUDDocumentPhysicalTest {
       for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
         record.reset();
 
-		record.setClassName("Account");
+        record.setClassName("Account");
         record.field("id", i);
         record.field("name", "Gipsy");
         record.field("location", "Italy");
@@ -124,16 +124,16 @@ public class CRUDDocumentPhysicalTest {
         Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
       }
 
-        long startRecordNumberL = database.countClusterElements("Company");
-        final ODocument doc = new ODocument();
-        for (long i = startRecordNumberL; i < startRecordNumberL + TOT_RECORDS_COMPANY; ++i) {
-            doc.setClassName("Company");
-            doc.field("id", i);
-            doc.field("name", "Microsoft" + i);
-            doc.field("employees", (int) (100000 + i));
-            database.save(doc);
-            doc.reset();
-        }
+      long startRecordNumberL = database.countClusterElements("Company");
+      final ODocument doc = new ODocument();
+      for (long i = startRecordNumberL; i < startRecordNumberL + TOT_RECORDS_COMPANY; ++i) {
+        doc.setClassName("Company");
+        doc.field("id", i);
+        doc.field("name", "Microsoft" + i);
+        doc.field("employees", (int) (100000 + i));
+        database.save(doc);
+        doc.reset();
+      }
     } finally {
       database.close();
     }
@@ -711,7 +711,7 @@ public class CRUDDocumentPhysicalTest {
     database.close();
   }
 
-	@Test(dependsOnMethods = "testCreate")
+  @Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
@@ -733,7 +733,7 @@ public class CRUDDocumentPhysicalTest {
     database.close();
   }
 
-	@Test(dependsOnMethods = "testCreate")
+  @Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
@@ -822,5 +822,14 @@ public class CRUDDocumentPhysicalTest {
     } finally {
       database.close();
     }
+  }
+
+  public void testSerialization() {
+    final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"
+        .getBytes();
+    ODocument doc = new ODocument().fromStream(streamOrigin);
+    doc.field("out");
+    final byte[] streamDest = doc.toStream();
+    Assert.assertEquals(streamOrigin, streamDest);
   }
 }

@@ -946,7 +946,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         + cls.getDefaultClusterId() + ")");
     out.println("Supported cluster ids: " + Arrays.toString(cls.getClusterIds()));
 
-    if (cls.getBaseClasses() != null) {
+    if (cls.getBaseClasses().hasNext()) {
       out.print("Base classes.........: ");
       int i = 0;
       for (Iterator<OClass> it = cls.getBaseClasses(); it.hasNext();) {

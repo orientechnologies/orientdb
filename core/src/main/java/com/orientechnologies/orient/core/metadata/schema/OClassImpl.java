@@ -139,20 +139,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    */
   public OClass setSuperClass(final OClass iSuperClass) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-    final String cmd = String.format("alter class %s superclass %s", name, iSuperClass.getName());
+    final String cmd = String.format("alter class %s superclass %s", name, iSuperClass != null ? iSuperClass.getName() : null);
     getDatabase().command(new OCommandSQL(cmd)).execute();
     setSuperClassInternal(iSuperClass);
     return this;
   }
 
   public void setSuperClassInternal(final OClass iSuperClass) {
-    this.superClass = (OClassImpl) iSuperClass;
+    final OClassImpl cls = (OClassImpl) iSuperClass;
 
-    if (iSuperClass != null)
-      superClass.addBaseClasses(this);
-    else
+    if (cls != null)
+      cls.addBaseClasses(this);
+    else if (superClass != null)
       // REMOVE THE PREVIOUS ONE
       superClass.removeBaseClassInternal(this);
+
+    this.superClass = cls;
   }
 
   public String getName() {
@@ -527,7 +529,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public Iterator<OClass> getBaseClasses() {
     if (baseClasses == null || baseClasses.size() == 0)
-      return null;
+      return Collections.emptyIterator();
 
     return baseClasses.iterator();
   }

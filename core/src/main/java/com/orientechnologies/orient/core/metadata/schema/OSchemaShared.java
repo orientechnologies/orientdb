@@ -314,7 +314,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-      if (cls.getBaseClasses() != null)
+      if (cls.getBaseClasses().hasNext())
         throw new OSchemaException("Class " + iClassName
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -348,7 +348,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-      if (cls.getBaseClasses() != null)
+      if (cls.getBaseClasses().hasNext())
         throw new OSchemaException("Class " + iClassName
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 

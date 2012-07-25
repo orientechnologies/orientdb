@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -314,5 +315,49 @@ public class SchemaTest {
         "polygon");
 
     database.close();
+  }
+
+  @Test(dependsOnMethods = "createSchema")
+  public void alterAttributes() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+
+    OClass company = database.getMetadata().getSchema().getClass("Company");
+    OClass superClass = company.getSuperClass();
+
+    Assert.assertNotNull(superClass);
+    boolean found = false;
+    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
+      if (it.next().equals(company)) {
+        found = true;
+        break;
+      }
+    }
+    Assert.assertEquals(found, true);
+
+    company.setSuperClass(null);
+    Assert.assertNull(company.getSuperClass());
+    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
+      Assert.assertNotSame(it.next(), company);
+    }
+
+    database.command(new OCommandSQL("alter class " + company.getName() + " superclass " + superClass.getName())).execute();
+    
+    database.getMetadata().getSchema().reload();
+    company = database.getMetadata().getSchema().getClass("Company");
+    superClass = company.getSuperClass();
+    
+    Assert.assertNotNull(company.getSuperClass());
+    found = false;
+    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
+      if (it.next().equals(company)) {
+        found = true;
+        break;
+      }
+    }
+    Assert.assertEquals(found, true);
+
+    database.close();
+
   }
 }
