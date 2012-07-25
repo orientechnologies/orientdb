@@ -60,16 +60,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   protected OSchemaShared                owner;
   protected String                       name;
   protected Class<?>                     javaClass;
-  protected final Map<String, OProperty> properties = new HashMap<String, OProperty>();
+  protected final Map<String, OProperty> properties    = new HashMap<String, OProperty>();
 
   protected int[]                        clusterIds;
   protected int                          defaultClusterId;
   protected OClassImpl                   superClass;
   protected int[]                        polymorphicClusterIds;
   protected List<OClass>                 baseClasses;
-  protected float                        overSize   = 0f;
+  protected float                        overSize      = 0f;
   protected String                       shortName;
-  protected boolean                      strictMode = false;                           // @SINCE v1.0rc8
+  protected boolean                      strictMode    = false;                             // @SINCE v1.0rc8
+  private static final Iterator<OClass>  EMPTY_CLASSES = new ArrayList<OClass>().iterator();
 
   /**
    * Constructor used in unmarshalling.
@@ -529,7 +530,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public Iterator<OClass> getBaseClasses() {
     if (baseClasses == null || baseClasses.size() == 0)
-      return Collections.emptyIterator();
+      return EMPTY_CLASSES;
 
     return baseClasses.iterator();
   }
