@@ -680,6 +680,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public void checkVertexClass(final ODocument iVertex) {
+    // FORCE EARLY UNMARSHALLING
+    iVertex.deserializeFields();
+
     if (useCustomTypes && !iVertex.getSchemaClass().isSubClassOf(vertexBaseClass))
       throw new IllegalArgumentException("The document received is not a vertex. Found class '" + iVertex.getSchemaClass() + "'");
   }
@@ -706,6 +709,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public void checkEdgeClass(final ODocument iEdge) {
+    // FORCE EARLY UNMARSHALLING
+    iEdge.deserializeFields();
+
     if (useCustomTypes && !iEdge.getSchemaClass().isSubClassOf(edgeBaseClass))
       throw new IllegalArgumentException("The document received is not an edge. Found class '" + iEdge.getSchemaClass() + "'");
   }
