@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -30,75 +32,85 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  */
 public class ODatabaseFactory {
-	final WeakHashMap<ODatabaseComplex<?>, Thread>	instances	= new WeakHashMap<ODatabaseComplex<?>, Thread>();
+  final WeakHashMap<ODatabaseComplex<?>, Thread> instances = new WeakHashMap<ODatabaseComplex<?>, Thread>();
 
-	/**
-	 * Registers a database.
-	 * 
-	 * @param db
-	 * @return
-	 */
-	public synchronized ODatabaseComplex<?> register(final ODatabaseComplex<?> db) {
-		instances.put(db, Thread.currentThread());
-		return db;
-	}
+  public synchronized List<ODatabaseComplex<?>> getInstances(final String iDatabaseName) {
+    final List<ODatabaseComplex<?>> result = new ArrayList<ODatabaseComplex<?>>();
+    for (ODatabaseComplex<?> i : instances.keySet()) {
+      if (i != null && i.getName().equals(iDatabaseName))
+        result.add(i);
+    }
 
-	/**
-	 * Unregisters a database.
-	 * 
-	 * @param db
-	 */
-	public synchronized void unregister(final ODatabaseComplex<?> db) {
-		instances.remove(db);
-	}
+    return result;
+  }
 
-	/**
-	 * Unregisters all the database instances that share the storage received as argument.
-	 * 
-	 * @param iStorage
-	 */
-	public synchronized void unregister(final OStorage iStorage) {
-		for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
-			if (db != null && db.getStorage() == iStorage) {
-				db.close();
-				instances.remove(db);
-			}
-		}
-	}
+  /**
+   * Registers a database.
+   * 
+   * @param db
+   * @return
+   */
+  public synchronized ODatabaseComplex<?> register(final ODatabaseComplex<?> db) {
+    instances.put(db, Thread.currentThread());
+    return db;
+  }
 
-	/**
-	 * Closes all open databases.
-	 */
-	public synchronized void shutdown() {
-		if (instances.size() > 0) {
-			OLogManager.instance().debug(null,
-					"Found %d databases opened during OrientDB shutdown. Assure to always close database instances after usage",
-					instances.size());
+  /**
+   * Unregisters a database.
+   * 
+   * @param db
+   */
+  public synchronized void unregister(final ODatabaseComplex<?> db) {
+    instances.remove(db);
+  }
 
-			for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
-				if (db != null && !db.isClosed()) {
-					db.close();
-				}
-			}
-		}
-	}
+  /**
+   * Unregisters all the database instances that share the storage received as argument.
+   * 
+   * @param iStorage
+   */
+  public synchronized void unregister(final OStorage iStorage) {
+    for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
+      if (db != null && db.getStorage() == iStorage) {
+        db.close();
+        instances.remove(db);
+      }
+    }
+  }
 
-	public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
-		if ("graph".equals(iType))
-			return new OGraphDatabase(url);
-		else
-			return new ODatabaseDocumentTx(url);
-	}
+  /**
+   * Closes all open databases.
+   */
+  public synchronized void shutdown() {
+    if (instances.size() > 0) {
+      OLogManager.instance().debug(null,
+          "Found %d databases opened during OrientDB shutdown. Assure to always close database instances after usage",
+          instances.size());
 
-	public ODatabaseDocumentTx createObjectDatabase(final String url) {
-		return new ODatabaseDocumentTx(url);
-	}
+      for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
+        if (db != null && !db.isClosed()) {
+          db.close();
+        }
+      }
+    }
+  }
 
-	public OGraphDatabase createGraphDatabase(final String url) {
-		return new OGraphDatabase(url);
-	}
+  public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
+    if ("graph".equals(iType))
+      return new OGraphDatabase(url);
+    else
+      return new ODatabaseDocumentTx(url);
+  }
 
-	public ODatabaseDocumentTx createDocumentDatabase(final String url) {
-		return new ODatabaseDocumentTx(url);
-	}
+  public ODatabaseDocumentTx createObjectDatabase(final String url) {
+    return new ODatabaseDocumentTx(url);
+  }
+
+  public OGraphDatabase createGraphDatabase(final String url) {
+    return new OGraphDatabase(url);
+  }
+
+  public ODatabaseDocumentTx createDocumentDatabase(final String url) {
+    return new ODatabaseDocumentTx(url);
+  }
 }
