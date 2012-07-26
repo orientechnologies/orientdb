@@ -44,10 +44,10 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
 
 	public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
 		// TODO: HANDLE FACTORIES
-		return fromStream(iSource, null);
+		return fromStream(iSource, null, null);
 	}
 
-	public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields) {
 		ODocument record = (ODocument) iRecord;
 		if (iRecord == null)
 			record = new ODocument();

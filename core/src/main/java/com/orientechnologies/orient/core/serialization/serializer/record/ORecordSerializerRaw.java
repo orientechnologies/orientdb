@@ -27,7 +27,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
 		return new ORecordBytes(iSource);
 	}
 
-	public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord) {
+	public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, String[] iFields) {
 		final ORecordBytes record = (ORecordBytes) iRecord;
 		record.fromStream(iSource);
 		record.reset(iSource);

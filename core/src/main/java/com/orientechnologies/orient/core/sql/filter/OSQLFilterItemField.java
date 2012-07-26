@@ -32,93 +32,100 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
  * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
-	protected String	name;
+  protected String name;
 
-	public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
-		super(iQueryToParse, iName);
-	}
+  public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
+    super(iQueryToParse, iName);
+  }
 
-	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
-		if (iRecord == null)
-			throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+    if (iRecord == null)
+      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
 
-		return transformValue(iRecord, ODocumentHelper.getFieldValue((ODocument) iRecord.getRecord(), name));
-	}
+    final ODocument doc = (ODocument) iRecord.getRecord();
 
-	public String getRoot() {
-		return name;
-	}
+    // UNMARSHALL THE SINGLE FIELD
+    if (doc.deserializeFields(name))
+      // FIELD FOUND
+      return transformValue(iRecord, ODocumentHelper.getFieldValue(doc, name));
 
-	public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
-		this.name = iRoot;
-	}
+    return null;
+  }
 
-	/**
-	 * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
-	 * only field projections operators, if field item contains any other projection operator the method returns false. When filter
-	 * item does not contains any chain operator, it is also field chain consist of one field.
-	 * 
-	 * @return whether or not this filter item can be represented as chain of fields.
-	 */
-	public boolean isFieldChain() {
-		if (operationsChain == null) {
-			return true;
-		}
+  public String getRoot() {
+    return name;
+  }
 
-		for (OPair<Integer, List<String>> pair : operationsChain) {
-			if (!pair.getKey().equals(OSQLFilterFieldOperator.FIELD.id)) {
-				return false;
-			}
-		}
+  public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
+    this.name = iRoot;
+  }
 
-		return true;
-	}
+  /**
+   * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
+   * only field projections operators, if field item contains any other projection operator the method returns false. When filter
+   * item does not contains any chain operator, it is also field chain consist of one field.
+   * 
+   * @return whether or not this filter item can be represented as chain of fields.
+   */
+  public boolean isFieldChain() {
+    if (operationsChain == null) {
+      return true;
+    }
 
-	/**
-	 * Creates {@code FieldChain} in case when filter item can have such representation.
-	 * 
-	 * @return {@code FieldChain} representation of this filter item.
-	 * @throws IllegalStateException
-	 *           if this filter item cannot be represented as {@code FieldChain}.
-	 */
-	public FieldChain getFieldChain() {
-		if (!isFieldChain()) {
-			throw new IllegalStateException("Filter item field contains not only field operators");
-		}
+    for (OPair<Integer, List<String>> pair : operationsChain) {
+      if (!pair.getKey().equals(OSQLFilterFieldOperator.FIELD.id)) {
+        return false;
+      }
+    }
 
-		return new FieldChain();
-	}
+    return true;
+  }
 
-	/**
-	 * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
-	 */
-	public class FieldChain {
-		private FieldChain() {
-		}
+  /**
+   * Creates {@code FieldChain} in case when filter item can have such representation.
+   * 
+   * @return {@code FieldChain} representation of this filter item.
+   * @throws IllegalStateException
+   *           if this filter item cannot be represented as {@code FieldChain}.
+   */
+  public FieldChain getFieldChain() {
+    if (!isFieldChain()) {
+      throw new IllegalStateException("Filter item field contains not only field operators");
+    }
 
-		public String getItemName(int fieldIndex) {
-			if (fieldIndex == 0) {
-				return name;
-			} else {
-				return operationsChain.get(fieldIndex - 1).getValue().get(0);
-			}
-		}
+    return new FieldChain();
+  }
 
-		public int getItemCount() {
-			if (operationsChain == null) {
-				return 1;
-			} else {
-				return operationsChain.size() + 1;
-			}
-		}
+  /**
+   * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
+   */
+  public class FieldChain {
+    private FieldChain() {
+    }
 
-		/**
-		 * Field chain is considered as long chain if it contains more than one item.
-		 * 
-		 * @return true if this chain is long and false in another case.
-		 */
-		public boolean isLong() {
-			return operationsChain != null && operationsChain.size() > 0;
-		}
-	}
+    public String getItemName(int fieldIndex) {
+      if (fieldIndex == 0) {
+        return name;
+      } else {
+        return operationsChain.get(fieldIndex - 1).getValue().get(0);
+      }
+    }
+
+    public int getItemCount() {
+      if (operationsChain == null) {
+        return 1;
+      } else {
+        return operationsChain.size() + 1;
+      }
+    }
+
+    /**
+     * Field chain is considered as long chain if it contains more than one item.
+     * 
+     * @return true if this chain is long and false in another case.
+     */
+    public boolean isLong() {
+      return operationsChain != null && operationsChain.size() > 0;
+    }
+  }
 }

@@ -576,7 +576,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       callbackHooks(TYPE.BEFORE_READ, iRecord);
 
       iRecord.fromStream(recordBuffer.buffer);
-      iRecord.setInternalStatus(ORecordElement.STATUS.LOADED);
 
       callbackHooks(TYPE.AFTER_READ, iRecord);
 

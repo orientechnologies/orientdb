@@ -25,42 +25,42 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public interface ORecordElement {
-	/**
-	 * Available record statuses.
-	 */
-	public enum STATUS {
-		NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
-	}
+  /**
+   * Available record statuses.
+   */
+  public enum STATUS {
+    NOT_LOADED, LOADED, MARSHALLING, UNMARSHALLING
+  }
 
-	/**
-	 * Returns the current status of the record.
-	 * 
-	 * @return Current status as value between the defined values in the enum {@link STATUS}
-	 */
-	public STATUS getInternalStatus();
+  /**
+   * Returns the current status of the record.
+   * 
+   * @return Current status as value between the defined values in the enum {@link STATUS}
+   */
+  public STATUS getInternalStatus();
 
-	/**
-	 * Changes the current internal status.
-	 * 
-	 * @param iStatus
-	 *          status between the values defined in the enum {@link STATUS}
-	 */
-	public void setInternalStatus(STATUS iStatus);
+  /**
+   * Changes the current internal status.
+   * 
+   * @param iStatus
+   *          status between the values defined in the enum {@link STATUS}
+   */
+  public void setInternalStatus(STATUS iStatus);
 
-	/**
-	 * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
-	 * 
-	 * @return The object it self. Useful to call methods in chain.
-	 */
-	public <RET> RET setDirty();
+  /**
+   * Marks the instance as dirty. The dirty status could be propagated up if the implementation supports ownership concept.
+   * 
+   * @return The object it self. Useful to call methods in chain.
+   */
+  public <RET> RET setDirty();
 
-	/**
-	 * Internal only.
-	 */
-	public void onBeforeIdentityChanged(ORID iRID);
+  /**
+   * Internal only.
+   */
+  public void onBeforeIdentityChanged(ORID iRID);
 
-	/**
-	 * Internal only.
-	 */
-	public void onAfterIdentityChanged(ORecord<?> iRecord);
+  /**
+   * Internal only.
+   */
+  public void onAfterIdentityChanged(ORecord<?> iRecord);
 }

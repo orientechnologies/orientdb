@@ -68,11 +68,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private SimpleDateFormat                  dateFormat            = new SimpleDateFormat(DEF_DATE_FORMAT);
 
   @Override
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord) {
-    return fromString(iSource, iRecord, null);
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields) {
+    return fromString(iSource, iRecord, iFields, null);
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String iOptions) {
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions) {
     if (iSource == null)
       throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -226,7 +226,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       if (iNoMap || hasTypeField(fields)) {
         // OBJECT
-        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), iOptions);
+        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions);
         if (recordInternal instanceof ODocument)
           ((ODocument) recordInternal).addOwner(iRecord);
         return recordInternal;

@@ -49,7 +49,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 
-  public abstract ORecordInternal<?> fromString(final String iContent, final ORecordInternal<?> iRecord);
+  public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
     return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
@@ -66,14 +66,14 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public ORecordInternal<?> fromString(final String iSource) {
-    return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance());
+    return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
   }
 
-  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord) {
+  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, final String[] iFields) {
     final long timer = OProfiler.getInstance().startChrono();
 
     try {
-      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord);
+      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
     } finally {
 
       OProfiler.getInstance().stopChrono("ORecordSerializerStringAbstract.fromStream", timer);

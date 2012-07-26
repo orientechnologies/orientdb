@@ -69,11 +69,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   public OClass getSchemaClass() {
-    if (_clazz == null){
+    if (_clazz == null) {
       // DESERIALIZE ONLY IF THE CLASS IS NOT SETTED: THIS PREVENT TO
       // UNMARSHALL THE RECORD EVEN IF SETTED BY fromString()
       checkForLoading();
-      checkForFields();
+      checkForFields("@class");
     }
     return _clazz;
   }
@@ -126,19 +126,22 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
     throw new UnsupportedOperationException();
   }
 
-  protected void checkForFields() {
+  protected boolean checkForFields(final String... iFields) {
     if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
       // POPULATE FIELDS LAZY
-      deserializeFields();
+      return deserializeFields(iFields);
+    return true;
   }
 
-  public void deserializeFields() {
+  public boolean deserializeFields(final String... iFields) {
     if (_source == null)
-      return;
+      return false;
 
     _status = ORecordElement.STATUS.UNMARSHALLING;
-    _recordFormat.fromStream(_source, this);
+    _recordFormat.fromStream(_source, this, iFields);
     _status = ORecordElement.STATUS.LOADED;
+
+    return true;
   }
 
   protected void setClass(final OClass iClass) {

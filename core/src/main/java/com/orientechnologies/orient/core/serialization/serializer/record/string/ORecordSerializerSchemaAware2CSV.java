@@ -344,7 +344,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord) {
+  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord, final String[] iFields) {
     iContent = iContent.trim();
 
     if (iContent.length() == 0)
@@ -361,6 +361,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     } else
       record.setClassNameIfExists(null);
 
+    if (iFields != null && iFields.length == 1 && iFields[0].equals("@class"))
+      // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD
+      return iRecord;
+
     final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR);
 
     String field;
@@ -374,7 +378,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     // UNMARSHALL ALL THE FIELDS
     for (int i = 0; i < fields.size(); ++i) {
       field = fields.get(i).trim();
-
       boolean uncertainType = false;
 
       try {
@@ -383,8 +386,28 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           // GET THE FIELD NAME
           fieldName = field.substring(0, pos);
 
+          if (record.containsField(fieldName))
+            // ALREADY UNMARSHALLED: DON'T OVERWRITE IT
+            continue;
+
+          if (iFields != null && iFields.length > 0) {
+            // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
+            boolean found = false;
+            for (String f : iFields)
+              if (f.equals(fieldName)) {
+                found = true;
+                break;
+              }
+
+            if (!found)
+              // SKIP IT
+              continue;
+          }
+
           // GET THE FIELD VALUE
           fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
+
+          boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
           prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
@@ -397,6 +420,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           } else {
             // SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
             type = record.fieldType(fieldName);
+            if (type != null)
+              setFieldType = true;
             linkedClass = null;
             linkedType = null;
 
@@ -452,7 +477,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             }
           }
 
-          if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP || type == OType.EMBEDDED)
+          if (setFieldType || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP
+              || type == OType.EMBEDDED)
             // SAVE THE TYPE AS EMBEDDED
             record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
           else

@@ -209,7 +209,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
 
         if (!value.isEmpty()) {
-          doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc);
+          doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
 
           if (!doc.<Boolean> field("binary"))
             index.put(doc.field("key"), doc.<OIdentifiable> field("rid"));
@@ -562,7 +562,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     record = null;
     try {
-      record = ORecordSerializerJSON.INSTANCE.fromString(value, record);
+      record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null);
 
       if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
         // JUMP THE SCHEMA
@@ -728,7 +728,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
 
     final OIndexDefinition indexDefinition;
-    final ODocument indexDefinitionDoc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, null);
+    final ODocument indexDefinitionDoc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, null, null);
     try {
       final Class<?> indexDefClass = Class.forName(className);
       indexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();

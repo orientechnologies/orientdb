@@ -239,6 +239,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Copies all the fields into iDestination document.
    */
   public ODocument copy(final ODocument iDestination) {
+    // TODO: REMOVE THIS
     checkForFields();
 
     iDestination._ordered = _ordered;
@@ -490,9 +491,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return null;
 
     checkForLoading();
-    checkForFields();
-
-    if (_fieldValues.size() == 0)
+    if (!checkForFields(iFieldName))
       // NO FIELDS
       return null;
 
@@ -639,8 +638,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     checkForLoading();
     checkForFields();
-
-    _source = null;
 
     final boolean knownProperty = _fieldValues.containsKey(iFieldName);
     final Object oldValue = _fieldValues.get(iFieldName);
@@ -911,7 +908,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return false;
 
     checkForLoading();
-    checkForFields();
+    checkForFields(iFieldName);
     return _fieldValues.containsKey(iFieldName);
   }
 
@@ -1192,13 +1189,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   @Override
-  protected void checkForFields() {
+  protected boolean checkForFields(final String... iFields) {
     if (_fieldValues == null)
       _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
 
-    if (_status == ORecordElement.STATUS.LOADED && _fieldValues.size() == 0)
+    if (_status == ORecordElement.STATUS.LOADED && _source != null)
       // POPULATE FIELDS LAZY
-      deserializeFields();
+      return deserializeFields(iFields);
+    
+    return true;
   }
 
   /**
@@ -1255,10 +1254,67 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Initializes the object if has been unserialized
    */
   @Override
-  public void deserializeFields() {
+  public boolean deserializeFields(final String... iFields) {
+    if (_source == null)
+      // ALREADY UNMARSHALLED OR JUST EMPTY
+      return true;
+
+    if (iFields != null && iFields.length > 0) {
+      // EXTRACT REAL FIELD NAMES
+      for (int i = 0; i < iFields.length; ++i) {
+        final String f = iFields[i];
+        if (!f.startsWith("@")) {
+          int pos1 = f.indexOf('[');
+          int pos2 = f.indexOf('.');
+          if (pos1 > -1 || pos2 > -1) {
+            int pos = pos1 > -1 ? pos1 : pos2;
+            if (pos2 > -1 && pos2 < pos)
+              pos = pos2;
+
+            // REPLACE THE FIELD NAME
+            iFields[i] = f.substring(0, pos);
+          }
+        }
+      }
+
+      // CHECK IF HAS BEEN ALREADY UNMARSHALLED
+      if (_fieldValues != null && !_fieldValues.isEmpty()) {
+        boolean allFound = true;
+        for (String f : iFields)
+          if (!f.startsWith("@") && !_fieldValues.containsKey(f)) {
+            allFound = false;
+            break;
+          }
+
+        if (allFound)
+          // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLES, AVOID UNMARSHALLIGN
+          return true;
+      }
+    }
+
     if (_recordFormat == null)
       setup();
-    super.deserializeFields();
+
+    super.deserializeFields(iFields);
+
+    if (iFields != null && iFields.length > 0) {
+      if (iFields[0].startsWith("@"))
+        // ATTRIBUTE
+        return true;
+
+      // PARTIAL UNMARSHALLING
+      if (_fieldValues != null && !_fieldValues.isEmpty())
+        for (String f : iFields)
+          if (_fieldValues.containsKey(f))
+            return true;
+
+      // NO FIELDS FOUND
+      return false;
+    } else if (_source != null)
+      // FULL UNMARSHALLING
+      _source = null;
+
+    return true;
   }
 
   protected String checkFieldName(final String iFieldName) {

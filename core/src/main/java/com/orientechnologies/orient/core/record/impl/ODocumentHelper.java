@@ -452,7 +452,7 @@ public class ODocumentHelper {
 		}
 
 		final ODocument doc = ((ODocument) iCurrent.getRecord());
-		doc.checkForFields();
+		doc.checkForFields(iFieldName);
 		return doc._fieldValues.get(iFieldName);
 	}
 

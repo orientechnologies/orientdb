@@ -528,7 +528,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           iLinkedClass = OStringSerializerHelper.getRecordClassName(item, iLinkedClass);
 
           if (iLinkedClass != null)
-            objectToAdd = fromString(item, new ODocument(iLinkedClass.getName()));
+            objectToAdd = fromString(item, new ODocument(iLinkedClass.getName()), null);
           else
             // EMBEDDED OBJECT
             objectToAdd = fieldTypeFromStream(iDocument, OType.EMBEDDED, item);
