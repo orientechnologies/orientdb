@@ -159,9 +159,7 @@ public enum OGlobalConfiguration {
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, false),
 
-  FILE_DEFRAG_STRATEGY(
-      "file.defrag.strategy",
-      "Strategy to recycle free space. 0 = Recycles the first hole with enough size: fast, 1 = recycles the best hole: better usage of space but slower",
+  FILE_DEFRAG_STRATEGY("file.defrag.strategy", "Strategy to recycle free space: 0 = synchronous defrag, 1 = asynchronous defrag, ",
       Integer.class, 0),
 
   FILE_DEFRAG_HOLE_MAX_DISTANCE(
