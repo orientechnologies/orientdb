@@ -46,15 +46,35 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
-    final Set<OIdentifiable> result;
-    if (indexChanges == null || !indexChanges.cleared)
+    final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
+    if (indexChanges == null || !indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      result = new TreeSet<OIdentifiable>(super.get(iKey));
-    else
-      // BEGIN FROM EMPTY RESULT SET
-      result = new TreeSet<OIdentifiable>();
+      final Collection<OIdentifiable> subResult = super.get(iKey);
+      if (subResult != null)
+        for (OIdentifiable oid : subResult)
+          if (oid != null)
+            result.add(oid);
+    }
 
     return filterIndexChanges(indexChanges, iKey, result);
+  }
+
+  @Override
+  public boolean contains(final Object iKey) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
+    Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
+    if (indexChanges == null || !indexChanges.cleared) {
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      final Collection<OIdentifiable> subResult = super.get(iKey);
+      if (subResult != null)
+        for (OIdentifiable oid : subResult)
+          if (oid != null)
+            result.add(oid);
+    }
+
+    filterIndexChanges(indexChanges, iKey, result);
+    return !result.isEmpty();
   }
 
   @Override

@@ -69,6 +69,22 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
+  public boolean contains(final Object iKey) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
+    OIdentifiable result;
+    if (indexChanges == null || !indexChanges.cleared)
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      result = (OIdentifiable) super.get(iKey);
+    else
+      // BEGIN FROM EMPTY RESULT SET
+      result = null;
+
+    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
+    return filterIndexChanges(indexChanges, iKey, result, null) != null;
+  }
+
+  @Override
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
     final Collection<?> keys = new ArrayList<Object>(iKeys);
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
