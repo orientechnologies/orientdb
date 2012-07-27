@@ -2432,4 +2432,37 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage"), oldCompositeIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage.2"), oldCompositeIndexUsage2 + 1);
   }
+
+  @Test
+  public void testCountFunctionWithNotUniqueIndex() {
+    OClass klazz = database.getMetadata().getSchema().getOrCreateClass("test");
+    if (!klazz.existsProperty("a")) {
+      klazz.createProperty("a", OType.STRING);
+      klazz.createIndex("a", "NOTUNIQUE", "a");
+    }
+
+    ODocument doc = database.newInstance("test").field("a", "a").field("b", "b").save();
+
+    ODocument result = (ODocument) database.query(
+        new OSQLSynchQuery<ODocument>("select count(*) from test where a = 'a' and b = 'c'")).get(0);
+
+    Assert.assertEquals(result.field("count", Long.class), 0l);
+    doc.delete();
+  }
+
+  @Test
+  public void testCountFunctionWithUniqueIndex() {
+    OClass klazz = database.getMetadata().getSchema().getOrCreateClass("test");
+    if (!klazz.existsProperty("a")) {
+      klazz.createProperty("a", OType.STRING);
+      klazz.createIndex("a", "NOTUNIQUE", "a");
+    }
+
+    ODocument doc = database.newInstance("test").field("a", "a").field("b", "b").save();
+
+    ODocument result = (ODocument) database.query(new OSQLSynchQuery<ODocument>("select count(*) from test where a = 'a'")).get(0);
+
+    Assert.assertEquals(result.field("count", Long.class), 1l);
+    doc.delete();
+  }
 }

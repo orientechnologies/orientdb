@@ -415,9 +415,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (projections != null && projections.size() == 1) {
           final Object v = projections.values().iterator().next();
-          if (v instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) v).getFunction() instanceof OSQLFunctionCount)
-            // OPTIMIZATION: JUST COUNT IT
-            opType = INDEX_OPERATION_TYPE.COUNT;
+          if (v instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) v).getFunction() instanceof OSQLFunctionCount) {
+            if (!(compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition || compiledFilter.getRootCondition()
+                .getRight() instanceof OSQLFilterCondition))
+              // OPTIMIZATION: JUST COUNT IT
+              opType = INDEX_OPERATION_TYPE.COUNT;
+          }
         }
 
         if (opType == null)
