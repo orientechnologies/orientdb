@@ -236,7 +236,7 @@ public class SQLInsertTest {
     database.open("admin", "admin");
 
     OIdentifiable result = database.command(
-        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #7:0"))
+        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #2:0"))
         .execute();
     Assert.assertNotNull(result);
 
@@ -247,7 +247,7 @@ public class SQLInsertTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId("#7:0"));
+    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId("#2:0"));
 
     database.close();
   }
