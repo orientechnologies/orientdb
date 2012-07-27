@@ -70,7 +70,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               if (op.minArguments > 0) {
                 arguments = OStringSerializerHelper.getParameters(part);
                 if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
-                  throw new OQueryParsingException(iQueryToParse.text, "Syntax error: field operator '" + op.keyword + "' needs "
+                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + op.keyword + "' needs "
                       + (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
                       + " argument(s) while has been received " + arguments.size(), 0);
               } else
@@ -84,7 +84,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
           if (!operatorFound)
             // ERROR: OPERATOR NOT FOUND OR MISPELLED
-            throw new OQueryParsingException(iQueryToParse.text,
+            throw new OQueryParsingException(iQueryToParse.parserText,
                 "Syntax error: field operator not recognized between the supported ones: "
                     + Arrays.toString(OSQLFilterFieldOperator.OPERATORS), 0);
         } else {

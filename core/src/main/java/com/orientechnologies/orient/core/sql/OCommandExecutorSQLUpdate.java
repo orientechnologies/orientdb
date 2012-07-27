@@ -119,7 +119,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
-          + text.substring(parserGetCurrentPosition()), this);
+          + parserText.substring(parserGetCurrentPosition()), this);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 
@@ -371,7 +371,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(text, buffer, parserGetCurrentPosition(), -1,
+      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
           OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }

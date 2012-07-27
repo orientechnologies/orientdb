@@ -54,26 +54,26 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
+      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
     className = word.toString();
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Missed the class's attribute to change", text, oldPos);
+      throw new OCommandSQLParsingException("Missed the class's attribute to change", parserText, oldPos);
 
     final String attributeAsString = word.toString();
 
@@ -81,13 +81,13 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       attribute = OClass.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown class's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OClass.ATTRIBUTES.values()), text, oldPos);
+          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos);
     }
 
-    value = text.substring(pos + 1).trim();
+    value = parserText.substring(pos + 1).trim();
 
     if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", text, oldPos);
+      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText, oldPos);
 
     if (value.equalsIgnoreCase("null"))
       value = null;

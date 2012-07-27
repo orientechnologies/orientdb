@@ -64,12 +64,12 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (pos == -1)
       throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
 
-    int endPosition = text.length();
-    int endP = textUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
+    int endPosition = parserText.length();
+    int endP = parserTextUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
     if (endP > -1 && endP < endPosition)
       endPosition = endP;
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
+    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context);
     traverse.predicate(compiledFilter);
 
     optimize();
@@ -151,17 +151,17 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     int currentPos = 0;
     final StringBuilder word = new StringBuilder();
 
-    currentPos = nextWord(text, textUpperCase, currentPos, word, true);
+    currentPos = nextWord(parserText, parserTextUpperCase, currentPos, word, true);
     if (!word.toString().equals(KEYWORD_TRAVERSE))
       return -1;
 
-    int fromPosition = textUpperCase.indexOf(KEYWORD_FROM_2FIND, currentPos);
+    int fromPosition = parserTextUpperCase.indexOf(KEYWORD_FROM_2FIND, currentPos);
     if (fromPosition == -1)
-      throw new OQueryParsingException("Missed " + KEYWORD_FROM, text, currentPos);
+      throw new OQueryParsingException("Missed " + KEYWORD_FROM, parserText, currentPos);
 
     Set<String> fields = new HashSet<String>();
 
-    final String fieldString = text.substring(currentPos, fromPosition).trim();
+    final String fieldString = parserText.substring(currentPos, fromPosition).trim();
     if (fieldString.length() > 0) {
       // EXTRACT PROJECTIONS
       final List<String> items = OStringSerializerHelper.smartSplit(fieldString, ',');
@@ -169,7 +169,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       for (String field : items)
         fields.add(field.trim());
     } else
-      throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), text, currentPos);
+      throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), parserText, currentPos);
 
     currentPos = fromPosition + KEYWORD_FROM.length() + 1;
 

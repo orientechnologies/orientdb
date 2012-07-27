@@ -46,33 +46,33 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_GRANT))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_GRANT + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_GRANT + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid privilege", text, oldPos);
+      throw new OCommandSQLParsingException("Invalid privilege", parserText, oldPos);
 
     parsePrivilege(word, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_ON))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ON + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, text, pos, word, true);
+    pos = nextWord(parserText, parserText, pos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid resource", text, oldPos);
+      throw new OCommandSQLParsingException("Invalid resource", parserText, oldPos);
 
     resource = word.toString();
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, text, pos, word, true);
+    pos = nextWord(parserText, parserText, pos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid role", text, oldPos);
+      throw new OCommandSQLParsingException("Invalid role", parserText, oldPos);
 
     final String roleName = word.toString();
     role = getDatabase().getMetadata().getSecurity().getRole(roleName);

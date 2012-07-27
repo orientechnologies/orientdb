@@ -71,20 +71,20 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
     StringBuilder word = new StringBuilder();
 
-    int pos = nextWord(text, textUpperCase, 0, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, 0, word, true);
     if (pos == -1 || !word.toString().equals(OCommandExecutorSQLDelete.KEYWORD_DELETE))
       throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLDelete.KEYWORD_DELETE + " not found. Use "
-          + getSyntax(), text, 0);
+          + getSyntax(), parserText, 0);
 
     int oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(), text,
+      throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(), parserText,
           oldPos);
 
     final String subjectName = word.toString();
@@ -92,9 +92,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
       // INDEX
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-      compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(oldPos), context);
+      compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(oldPos), context);
     } else {
-      query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + text.substring(pos), this));
+      query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));
     }
 
     return this;

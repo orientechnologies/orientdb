@@ -55,45 +55,45 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>", text, oldPos);
+      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
     className = word.toString();
     if (className == null)
-      throw new OCommandSQLParsingException("Class " + className + " already exists", text, oldPos);
+      throw new OCommandSQLParsingException("Class " + className + " already exists", parserText, oldPos);
 
     oldPos = pos;
 
-    while ((pos = nextWord(text, textUpperCase, oldPos, word, true)) > -1) {
+    while ((pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true)) > -1) {
       final String k = word.toString();
       if (k.equals(KEYWORD_EXTENDS)) {
         oldPos = pos;
-        pos = nextWord(text, textUpperCase, oldPos, word, false);
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
         if (pos == -1)
           throw new OCommandSQLParsingException("Syntax error after EXTENDS for class " + className
-              + ". Expected the super-class name. Use " + getSyntax(), text, oldPos);
+              + ". Expected the super-class name. Use " + getSyntax(), parserText, oldPos);
 
         if (!database.getMetadata().getSchema().existsClass(word.toString()))
-          throw new OCommandSQLParsingException("Super-class " + word + " not exists", text, oldPos);
+          throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
 
         superClass = database.getMetadata().getSchema().getClass(word.toString());
       } else if (k.equals(KEYWORD_CLUSTER)) {
         oldPos = pos;
-        pos = nextWord(text, textUpperCase, oldPos, word, false, " =><()");
+        pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false, " =><()");
         if (pos == -1)
           throw new OCommandSQLParsingException("Syntax error after CLUSTER for class " + className
-              + ". Expected the cluster id or name. Use " + getSyntax(), text, oldPos);
+              + ". Expected the cluster id or name. Use " + getSyntax(), parserText, oldPos);
 
         final String[] clusterIdsAsStrings = word.toString().split(",");
         if (clusterIdsAsStrings.length > 0) {
@@ -107,7 +107,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               clusterIds[i] = database.getStorage().getClusterIdByName(clusterIdsAsStrings[i]);
 
             if (database.getStorage().getClusterById(clusterIds[i]) == null)
-              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", text, oldPos);
+              throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
           }
         }
       }

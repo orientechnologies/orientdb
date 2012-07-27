@@ -116,12 +116,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   protected void parseBracesFields() {
     final int beginFields = parserGetCurrentPosition();
 
-    final int endFields = text.indexOf(')', beginFields + 1);
+    final int endFields = parserText.indexOf(')', beginFields + 1);
     if (endFields == -1)
       throwSyntaxErrorException("Missed closed brace");
 
     final ArrayList<String> fieldNames = new ArrayList<String>();
-    parserSetCurrentPosition(OStringSerializerHelper.getParameters(text, beginFields, endFields, fieldNames));
+    parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNames));
     if (fieldNames.size() == 0)
       throwSyntaxErrorException("Set of fields is empty. Example: (name, surname)");
 
@@ -131,32 +131,32 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
     parserRequiredKeyword(KEYWORD_VALUES);
     parserSkipWhiteSpaces();
-    if (parserIsEnded() || text.charAt(parserGetCurrentPosition()) != '(') {
+    if (parserIsEnded() || parserText.charAt(parserGetCurrentPosition()) != '(') {
       throwParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)");
     }
 
-    final int textEnd = text.lastIndexOf(')');
+    final int textEnd = parserText.lastIndexOf(')');
 
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
     while (blockStart != textEnd) {
       // skip comma between records
-      blockStart = text.indexOf('(', blockStart - 1);
+      blockStart = parserText.indexOf('(', blockStart - 1);
 
-      blockEnd = OStringSerializerHelper.findEndBlock(text, '(', ')', blockStart);
+      blockEnd = OStringSerializerHelper.findEndBlock(parserText, '(', ')', blockStart);
       if (blockEnd == -1)
-        throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), text, blockStart);
+        throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
 
-      final List<String> values = OStringSerializerHelper.smartSplit(text, new char[] { ',' }, blockStart + 1, blockEnd - 1, true);
+      final List<String> values = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart + 1, blockEnd - 1, true);
 
       if (values.isEmpty()) {
-        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), text,
+        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), parserText,
             blockStart);
       }
 
       if (values.size() != fieldNames.size()) {
-        throw new OCommandSQLParsingException("Fields not match with values", text, blockStart);
+        throw new OCommandSQLParsingException("Fields not match with values", parserText, blockStart);
       }
 
       // TRANSFORM FIELD VALUES

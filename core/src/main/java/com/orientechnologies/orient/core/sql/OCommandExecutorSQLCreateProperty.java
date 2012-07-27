@@ -54,38 +54,38 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
     String[] parts = word.toString().split("\\.");
     if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", text, oldPos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
 
     className = parts[0];
     if (className == null)
-      throw new OCommandSQLParsingException("Class not found", text, oldPos);
+      throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
     fieldName = parts[1];
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Missed property type", text, oldPos);
+      throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
 
     type = OType.valueOf(word.toString());
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
     if (pos == -1)
       return this;
 

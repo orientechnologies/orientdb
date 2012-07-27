@@ -52,21 +52,21 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Expected <class>. Use " + getSyntax(), parserText, pos);
 
     className = word.toString();
     if (className == null)
-      throw new OCommandSQLParsingException("Class is null. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Class is null. Use " + getSyntax(), parserText, pos);
 
     return this;
   }

@@ -53,8 +53,8 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   public OSQLFilter(final String iText, final OCommandContext iContext) {
     super();
     context = iContext;
-    text = iText;
-    textUpperCase = iText.toUpperCase();
+    parserText = iText;
+    parserTextUpperCase = iText.toUpperCase();
 
     try {
       if (extractTargets()) {
@@ -64,13 +64,13 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
             OCommandExecutorSQLSelect.KEYWORD_ORDER, OCommandExecutorSQLSelect.KEYWORD_SKIP)) {
           if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
             final int lastPos = parserGetCurrentPosition();
-            final String lastText = text;
-            final String lastTextUpperCase = textUpperCase;
+            final String lastText = parserText;
+            final String lastTextUpperCase = parserTextUpperCase;
 
-            text(text.substring(lastPos));
+            text(parserText.substring(lastPos));
 
-            text = lastText;
-            textUpperCase = lastTextUpperCase;
+            parserText = lastText;
+            parserTextUpperCase = lastTextUpperCase;
             parserMoveCurrentPosition(lastPos);
 
           } else
@@ -80,11 +80,11 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), e);
+        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
 
       throw e;
     } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), t);
+      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
   }
 
@@ -100,7 +100,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     parserSkipWhiteSpaces();
 
     if (parserIsEnded())
-      throw new OQueryParsingException("No query target found", text, 0);
+      throw new OQueryParsingException("No query target found", parserText, 0);
 
     final char c = parserGetCurrentChar();
 
@@ -112,7 +112,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } else if (c == '(') {
       // SUB QUERY
       final StringBuilder subText = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(text, parserGetCurrentPosition(), -1, subText));
+      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText));
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
       final OCommandExecutor executor = OCommandManager.instance().getExecutor(subCommand);
@@ -135,7 +135,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
       // COLLECTION OF RIDS
       final List<String> rids = new ArrayList<String>();
-      parserSetCurrentPosition(OStringSerializerHelper.getCollection(text, parserGetCurrentPosition(), rids));
+      parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), rids));
 
       targetRecords = new ArrayList<OIdentifiable>();
       for (String rid : rids)
@@ -208,7 +208,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   public String toString() {
     if (rootCondition != null)
       return "Parsed: " + rootCondition.toString();
-    return "Unparsed: " + text;
+    return "Unparsed: " + parserText;
   }
 
 }

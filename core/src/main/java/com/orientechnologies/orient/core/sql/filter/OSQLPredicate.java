@@ -61,13 +61,13 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   }
 
   protected void throwSyntaxErrorException(final String iText) {
-    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), text, parserGetPreviousPosition());
+    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
   }
 
   public OSQLPredicate text(final String iText) {
     try {
-      text = iText;
-      textUpperCase = text.toUpperCase(Locale.ENGLISH);
+      parserText = iText;
+      parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
       parserSetCurrentPosition(0);
       parserSkipWhiteSpaces();
 
@@ -75,11 +75,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), e);
+        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
 
       throw e;
     } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", text, parserGetCurrentPosition(), t);
+      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
     return this;
   }
@@ -98,7 +98,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     if (words != null && words.length > 0 && (words[0].equalsIgnoreCase("SELECT") || words[0].equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
       final StringBuilder embedded = new StringBuilder();
-      OStringSerializerHelper.getEmbedded(text, oldPosition - 1, -1, embedded);
+      OStringSerializerHelper.getEmbedded(parserText, oldPosition - 1, -1, embedded);
       parserMoveCurrentPosition(embedded.length() + 1);
       return new OSQLSynchQuery<Object>(embedded.toString());
     }
@@ -189,7 +189,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         // CHECK FOR PARAMETERS
         if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.EMBEDDED_BEGIN) {
           int paramBeginPos = parserGetCurrentPosition() - (word.length() - op.keyword.length());
-          parserSetCurrentPosition(OStringSerializerHelper.getParameters(text, paramBeginPos, -1, params));
+          parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, paramBeginPos, -1, params));
         } else if (!word.equals(op.keyword))
           throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
 
@@ -201,7 +201,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       }
     }
 
-    throw new OQueryParsingException("Unknown operator " + word, text, parserGetCurrentPosition());
+    throw new OQueryParsingException("Unknown operator " + word, parserText, parserGetCurrentPosition());
   }
 
   private Object extractConditionItem(final boolean iAllowOperator, final int iExpectedWords) {
@@ -212,7 +212,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       if (words == null)
         break;
 
-      final int lastPosition = parserIsEnded() ? text.length() : parserGetCurrentPosition();
+      final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
       if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
@@ -233,7 +233,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         parserSetCurrentPosition(lastPosition - words[0].length());
 
         final List<String> stringItems = new ArrayList<String>();
-        parserSetCurrentPosition(OStringSerializerHelper.getCollection(text, parserGetCurrentPosition(), stringItems));
+        parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), stringItems));
 
         if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
 
@@ -370,20 +370,20 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
     int pos = parserGetCurrentPosition();
     if (pos == -1)
-      pos = text.length();
+      pos = parserText.length();
 
     if (escaped)
-      return new String[] { OStringSerializerHelper.decode(textUpperCase.substring(begin, pos)),
-          OStringSerializerHelper.decode(text.substring(begin, pos)) };
+      return new String[] { OStringSerializerHelper.decode(parserTextUpperCase.substring(begin, pos)),
+          OStringSerializerHelper.decode(parserText.substring(begin, pos)) };
     else
-      return new String[] { textUpperCase.substring(begin, pos), text.substring(begin, pos) };
+      return new String[] { parserTextUpperCase.substring(begin, pos), parserText.substring(begin, pos) };
   }
 
   @Override
   public String toString() {
     if (rootCondition != null)
       return "Parsed: " + rootCondition.toString();
-    return "Unparsed: " + text;
+    return "Unparsed: " + parserText;
   }
 
   /**

@@ -39,7 +39,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
-    text = ((OCommandRequestText) iRequest).getText();
+    parserText = ((OCommandRequestText) iRequest).getText();
     db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
     return (RET) this;
   }
@@ -48,7 +48,7 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
   public Object execute(final Map<Object, Object> iArgs) {
     parameters = iArgs;
     final List<Object> result = new ArrayList<Object>();
-    final Object scriptResult = OGremlinHelper.execute(db, text, parameters, new HashMap<Object, Object>(), result, null, null);
+    final Object scriptResult = OGremlinHelper.execute(db, parserText, parameters, new HashMap<Object, Object>(), result, null, null);
     return scriptResult != null ? scriptResult : result;
   }
 

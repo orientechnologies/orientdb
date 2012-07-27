@@ -103,12 +103,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (pos == -1)
       return this;
 
-    int endPosition = text.length();
+    int endPosition = parserText.length();
 
     if (context == null)
       context = new OBasicCommandContext();
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(text.substring(pos, endPosition), context);
+    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context);
 
     optimize();
 
@@ -573,12 +573,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int fromPosition = textUpperCase.indexOf(KEYWORD_FROM_2FIND, parserGetCurrentPosition());
+    int fromPosition = parserTextUpperCase.indexOf(KEYWORD_FROM_2FIND, parserGetCurrentPosition());
     if (fromPosition == -1)
       throwParsingException("Missed " + KEYWORD_FROM);
 
     Object projectionValue;
-    final String projectionString = text.substring(parserGetCurrentPosition(), fromPosition).trim();
+    final String projectionString = parserText.substring(parserGetCurrentPosition(), fromPosition).trim();
     if (projectionString.length() > 0 && !projectionString.equals("*")) {
       // EXTRACT PROJECTIONS
       projections = new LinkedHashMap<String, Object>();

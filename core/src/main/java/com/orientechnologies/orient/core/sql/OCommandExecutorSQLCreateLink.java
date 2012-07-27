@@ -69,83 +69,83 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
 
     if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
       // GET THE LINK NAME
       linkName = word.toString();
 
       if (OStringSerializerHelper.contains(linkName, ' '))
-        throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", text, oldPos);
+        throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", parserText, oldPos);
 
       oldPos = pos;
-      pos = nextWord(text, textUpperCase, oldPos, word, true);
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     }
 
     if (word.toString().equalsIgnoreCase(KEYWORD_TYPE)) {
       oldPos = pos;
-      pos = nextWord(text, textUpperCase, pos, word, true);
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
 
       if (pos == -1)
-        throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), text, oldPos);
+        throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), parserText, oldPos);
 
       linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
       oldPos = pos;
-      pos = nextWord(text, textUpperCase, pos, word, true);
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     }
 
     if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
     String[] parts = word.toString().split("\\.");
     if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
     sourceClassName = parts[0];
     if (sourceClassName == null)
-      throw new OCommandSQLParsingException("Class not found", text, pos);
+      throw new OCommandSQLParsingException("Class not found", parserText, pos);
     sourceField = parts[1];
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(text, textUpperCase, pos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
     parts = word.toString().split("\\.");
     if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
     destClassName = parts[0];
     if (destClassName == null)
-      throw new OCommandSQLParsingException("Class not found", text, pos);
+      throw new OCommandSQLParsingException("Class not found", parserText, pos);
     destField = parts[1];
 
-    pos = nextWord(text, textUpperCase, pos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1)
       return this;
 
     if (!word.toString().equalsIgnoreCase("INVERSE"))
-      throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), text, pos);
+      throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), parserText, pos);
 
     inverse = true;
 

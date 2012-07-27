@@ -49,24 +49,24 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, text, oldPos, word, true);
+    pos = nextWord(parserText, parserText, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
 
     clusterName = word.toString();
 
     if (database.getClusterIdByName(clusterName) == -1)
-      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", text, oldPos);
+      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
     return this;
   }
 

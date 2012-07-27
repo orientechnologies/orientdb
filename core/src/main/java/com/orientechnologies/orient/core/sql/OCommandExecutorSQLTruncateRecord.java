@@ -50,29 +50,29 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
     StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
-    int pos = nextWord(text, textUpperCase, oldPos, word, true);
+    int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, textUpperCase, oldPos, word, true);
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), parserText, oldPos);
 
     oldPos = pos;
-    pos = nextWord(text, text, oldPos, word, true);
+    pos = nextWord(parserText, parserText, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), parserText, oldPos);
 
     if (word.charAt(0) == '[')
       // COLLECTION
-      OStringSerializerHelper.getCollection(text, oldPos, records);
+      OStringSerializerHelper.getCollection(parserText, oldPos, records);
     else {
       records.add(word.toString());
     }
 
     if (records.isEmpty())
-      throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), text, oldPos);
+      throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), parserText, oldPos);
     return this;
   }
 

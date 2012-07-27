@@ -56,7 +56,7 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
 
     if (target.charAt(0) == '(') {
       subQuery = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(text, parserGetPreviousPosition(), -1, subQuery));
+      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetPreviousPosition(), -1, subQuery));
     } else {
       try {
         final ORecordId rid = new ORecordId(target);
@@ -65,14 +65,14 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
         recordIds.add(rid);
 
       } catch (IllegalArgumentException iae) {
-        throw new OCommandSQLParsingException("Error reading record Id", text, parserGetPreviousPosition(), iae);
+        throw new OCommandSQLParsingException("Error reading record Id", parserText, parserGetPreviousPosition(), iae);
       }
     }
 
     parserSkipWhiteSpaces();
     classList = parserOptionalWord(true);
     if (classList != null) {
-      classList = textUpperCase.substring(parserGetPreviousPosition());
+      classList = parserTextUpperCase.substring(parserGetPreviousPosition());
 
       if (!classList.startsWith("[") || !classList.endsWith("]")) {
         throwParsingException("Class list must be contained in []");

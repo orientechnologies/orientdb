@@ -43,7 +43,7 @@ public abstract class OCommandExecutorSQLPermissionAbstract extends OCommandExec
 		else if ("ALL".equals(privilegeName))
 			privilege = ORole.PERMISSION_ALL;
 		else
-			throw new OCommandSQLParsingException("Unrecognized privilege '" + privilegeName + "'", text, oldPos);
+			throw new OCommandSQLParsingException("Unrecognized privilege '" + privilegeName + "'", parserText, oldPos);
 	}
 
 }

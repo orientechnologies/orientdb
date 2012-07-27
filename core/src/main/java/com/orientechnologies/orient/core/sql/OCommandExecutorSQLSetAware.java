@@ -36,15 +36,19 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
     while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',')) {
       fieldName = parserRequiredWord(false, "Field name expected");
+      if (fieldName.equalsIgnoreCase(KEYWORD_WHERE)){
+        parserGoBack();
+        break;
+      }
+
       parserRequiredKeyword("=");
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
       if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
         final StringBuilder buffer = new StringBuilder();
-        parserSetCurrentPosition(OStringSerializerHelper.parse(text, buffer, parserGetPreviousPosition(), -1,
+        parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetPreviousPosition(), -1,
             OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
         fieldValue = buffer.toString();
-        parserSetLastSeparator(' ');
       }
 
       // INSERT TRANSFORMED FIELD VALUE

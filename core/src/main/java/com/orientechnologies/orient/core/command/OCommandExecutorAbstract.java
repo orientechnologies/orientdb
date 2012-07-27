@@ -36,13 +36,13 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected OCommandContext     context;
 
   public OCommandExecutorAbstract init(final String iText) {
-    text = iText;
+    parserText = iText;
     return this;
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " [text=" + text + "]";
+    return getClass().getSimpleName() + " [text=" + parserText + "]";
   }
 
   public OProgressListener getProgressListener() {
