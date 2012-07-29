@@ -70,7 +70,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
       }
     }
 
-    secondary.updateRecord(record);
+    if (record.getIdentity().getClusterId() != excludedCluster)
+      secondary.updateRecord(record);
   }
 
   /**
@@ -81,9 +82,13 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
    * @return record stored in cache if any, otherwise - {@code null}
    */
   public ORecordInternal<?> findRecord(final ORID rid) {
-    if (!isEnabled())
-      // DELEGATE TO THE 2nd LEVEL CACHE
-      return null; // secondary.retrieveRecord(rid);
+    if (!isEnabled()) {
+      if (rid.getClusterId() != excludedCluster)
+        return secondary.retrieveRecord(rid);
+      else
+        return null;
+    }
+    // DELEGATE TO THE 2nd LEVEL CACHE
 
     ORecordInternal<?> record;
     underlying.lock(rid);

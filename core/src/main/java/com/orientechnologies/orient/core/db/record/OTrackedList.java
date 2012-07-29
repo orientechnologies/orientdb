@@ -36,172 +36,174 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-	protected final ORecord<?>																			sourceRecord;
-	private STATUS																									status					= STATUS.NOT_LOADED;
-	protected Set<OMultiValueChangeListener<Integer, T>>	changeListeners	= Collections
-																																						.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
-	protected Class<?>																							genericClass;
+  protected final ORecord<?>                           sourceRecord;
+  private STATUS                                       status          = STATUS.NOT_LOADED;
+  protected Set<OMultiValueChangeListener<Integer, T>> changeListeners = Collections
+                                                                           .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
+  protected Class<?>                                   genericClass;
 
-	public OTrackedList(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
-		this(iRecord);
-		genericClass = iGenericClass;
-		if (iOrigin != null && !iOrigin.isEmpty())
-			addAll(iOrigin);
-	}
+  public OTrackedList(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
+    this(iRecord);
+    genericClass = iGenericClass;
+    if (iOrigin != null && !iOrigin.isEmpty())
+      addAll(iOrigin);
+  }
 
-	public OTrackedList(final ORecord<?> iSourceRecord) {
-		this.sourceRecord = iSourceRecord;
-	}
+  public OTrackedList(final ORecord<?> iSourceRecord) {
+    this.sourceRecord = iSourceRecord;
+  }
 
-	@Override
-	public boolean add(T element) {
-		final boolean result = super.add(element);
+  @Override
+  public boolean add(T element) {
+    final boolean result = super.add(element);
 
-		if (result)
-			fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1,
-					element));
+    if (result)
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1,
+          element));
 
-		return result;
-	}
+    return result;
+  }
 
-	@Override
-	public boolean addAll(final Collection<? extends T> c) {
-		for (T o : c) {
-			add(o);
-		}
-		return true;
-	}
+  @Override
+  public boolean addAll(final Collection<? extends T> c) {
+    for (T o : c) {
+      add(o);
+    }
+    return true;
+  }
 
-	@Override
-	public void add(int index, T element) {
-		super.add(index, element);
-		fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
-	}
+  @Override
+  public void add(int index, T element) {
+    super.add(index, element);
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
+  }
 
-	@Override
-	public T set(int index, T element) {
-		final T oldValue = super.set(index, element);
+  @Override
+  public T set(int index, T element) {
+    final T oldValue = super.set(index, element);
 
-		fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element,
-				oldValue));
-		return oldValue;
-	}
+    if (!oldValue.equals(element))
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element,
+          oldValue));
 
-	@Override
-	public T remove(int index) {
-		final T oldValue = super.remove(index);
-		fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
-				oldValue));
-		return oldValue;
-	}
+    return oldValue;
+  }
 
-	@Override
-	public boolean remove(Object o) {
-		final int index = indexOf(o);
-		if (index >= 0) {
-			remove(index);
-			return true;
-		}
-		return false;
-	}
+  @Override
+  public T remove(int index) {
+    final T oldValue = super.remove(index);
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
+        oldValue));
+    return oldValue;
+  }
 
-	@Override
-	public void clear() {
-		final List<T> origValues;
-		if (changeListeners.isEmpty())
-			origValues = null;
-		else
-			origValues = new ArrayList<T>(this);
+  @Override
+  public boolean remove(Object o) {
+    final int index = indexOf(o);
+    if (index >= 0) {
+      remove(index);
+      return true;
+    }
+    return false;
+  }
 
-		super.clear();
-		if (origValues != null)
-			for (int i = origValues.size() - 1; i >= 0; i--) {
-				fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
-						origValues.get(i)));
-			}
-		else
-			setDirty();
-	}
+  @Override
+  public void clear() {
+    final List<T> origValues;
+    if (changeListeners.isEmpty())
+      origValues = null;
+    else
+      origValues = new ArrayList<T>(this);
 
-	public void reset() {
-		super.clear();
-	}
+    super.clear();
+    if (origValues != null)
+      for (int i = origValues.size() - 1; i >= 0; i--) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
+            origValues.get(i)));
+      }
+    else
+      setDirty();
+  }
 
-	@SuppressWarnings("unchecked")
-	public <RET> RET setDirty() {
-		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
-			sourceRecord.setDirty();
-		return (RET) this;
-	}
+  public void reset() {
+    super.clear();
+  }
 
-	public void onBeforeIdentityChanged(ORID iRID) {
-	}
+  @SuppressWarnings("unchecked")
+  public <RET> RET setDirty() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+      sourceRecord.setDirty();
+    return (RET) this;
+  }
 
-	public void onAfterIdentityChanged(ORecord<?> iRecord) {
-	}
+  public void onBeforeIdentityChanged(ORID iRID) {
+  }
 
-	public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-		changeListeners.add(changeListener);
-	}
+  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  }
 
-	public void removeRecordChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
-		changeListeners.remove(changeListener);
-	}
+  public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
+    changeListeners.add(changeListener);
+  }
 
-	public List<T> returnOriginalState(final List<OMultiValueChangeEvent<Integer, T>> multiValueChangeEvents) {
-		final List<T> reverted = new ArrayList<T>(this);
+  public void removeRecordChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
+    changeListeners.remove(changeListener);
+  }
 
-		final ListIterator<OMultiValueChangeEvent<Integer, T>> listIterator = multiValueChangeEvents
-				.listIterator(multiValueChangeEvents.size());
+  public List<T> returnOriginalState(final List<OMultiValueChangeEvent<Integer, T>> multiValueChangeEvents) {
+    final List<T> reverted = new ArrayList<T>(this);
 
-		while (listIterator.hasPrevious()) {
-			final OMultiValueChangeEvent<Integer, T> event = listIterator.previous();
-			switch (event.getChangeType()) {
-			case ADD:
-				reverted.remove(event.getKey().intValue());
-				break;
-			case REMOVE:
-				reverted.add(event.getKey(), event.getOldValue());
-				break;
-			case UPDATE:
-				reverted.set(event.getKey(), event.getOldValue());
-				break;
-			default:
-				throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
-			}
-		}
+    final ListIterator<OMultiValueChangeEvent<Integer, T>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
 
-		return reverted;
-	}
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<Integer, T> event = listIterator.previous();
+      switch (event.getChangeType()) {
+      case ADD:
+        reverted.remove(event.getKey().intValue());
+        break;
+      case REMOVE:
+        reverted.add(event.getKey(), event.getOldValue());
+        break;
+      case UPDATE:
+        reverted.set(event.getKey(), event.getOldValue());
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+      }
+    }
 
-	protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
-		if (status == STATUS.UNMARSHALLING)
-			return;
+    return reverted;
+  }
 
-		setDirty();
-		for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
-			if (changeListener != null)
-				changeListener.onAfterRecordChanged(event);
-		}
-	}
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
+    if (status == STATUS.UNMARSHALLING)
+      return;
 
-	public STATUS getInternalStatus() {
-		return status;
-	}
+    setDirty();
+    for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
+  }
 
-	public void setInternalStatus(final STATUS iStatus) {
-		status = iStatus;
-	}
+  public STATUS getInternalStatus() {
+    return status;
+  }
 
-	public Class<?> getGenericClass() {
-		return genericClass;
-	}
+  public void setInternalStatus(final STATUS iStatus) {
+    status = iStatus;
+  }
 
-	public void setGenericClass(Class<?> genericClass) {
-		this.genericClass = genericClass;
-	}
+  public Class<?> getGenericClass() {
+    return genericClass;
+  }
 
-	private Object writeReplace() {
-		return new ArrayList<T>(this);
-	}
+  public void setGenericClass(Class<?> genericClass) {
+    this.genericClass = genericClass;
+  }
+
+  private Object writeReplace() {
+    return new ArrayList<T>(this);
+  }
 }

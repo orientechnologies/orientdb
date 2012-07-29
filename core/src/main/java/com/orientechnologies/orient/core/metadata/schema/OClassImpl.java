@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -697,7 +698,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     getDatabase().getStorage().callInLock(new Callable<Object>() {
       public Object call() throws Exception {
         for (int id : clusterIds) {
-          getDatabase().getStorage().getClusterById(id).truncate();
+          final OStorage storage = getDatabase().getStorage();
+          storage.getClusterById(id).truncate();
+          storage.getLevel2Cache().freeCluster(id);
         }
 
         for (OIndex<?> index : getClassIndexes()) {
