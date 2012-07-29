@@ -30,30 +30,19 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * 
  */
 public abstract class OQueryTargetOperator extends OQueryOperator {
-	protected OQueryTargetOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, false);
-	}
+  protected OQueryTargetOperator(final String iKeyword, final int iPrecedence, final boolean iLogical) {
+    super(iKeyword, iPrecedence, false);
+  }
 
-	public abstract Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
-			final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
+  public abstract Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
-	/**
-	 * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
-	 */
-	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		return true;
-	}
-
-	/**
-	 * Default State-less implementation: does not save parameters and just return itself
-	 * 
-	 * @param iParams
-	 * @return
-	 */
-	@Override
-	public OQueryTargetOperator configure(final List<String> iParams) {
-		return this;
-	}
+  /**
+   * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
+   */
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    return true;
+  }
 }

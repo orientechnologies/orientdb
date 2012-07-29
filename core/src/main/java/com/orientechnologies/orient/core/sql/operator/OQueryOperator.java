@@ -76,12 +76,14 @@ public abstract class OQueryOperator {
   public final int                  precedence;
   public final int                  expectedRightWords;
   public final boolean              unary;
+  public final boolean              expectsParameters;
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary) {
     keyword = iKeyword;
     precedence = iPrecedence;
     unary = iUnary;
     expectedRightWords = 1;
+    expectsParameters = false;
   }
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords) {
@@ -89,6 +91,16 @@ public abstract class OQueryOperator {
     precedence = iPrecedence;
     unary = iUnary;
     expectedRightWords = iExpectedRightWords;
+    expectsParameters = false;
+  }
+
+  protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords,
+      final boolean iExpectsParameters) {
+    keyword = iKeyword;
+    precedence = iPrecedence;
+    unary = iUnary;
+    expectedRightWords = iExpectedRightWords;
+    expectsParameters = iExpectsParameters;
   }
 
   public abstract Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
@@ -118,14 +130,16 @@ public abstract class OQueryOperator {
    * 
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
-   * @param iOperationType TODO
+   * @param iOperationType
+   *          TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
    * @param fetchLimit
    *          Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
    * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
    */
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, final List<Object> keyParams, final int fetchLimit) {
+  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, final List<Object> keyParams,
+      final int fetchLimit) {
     return null;
   }
 

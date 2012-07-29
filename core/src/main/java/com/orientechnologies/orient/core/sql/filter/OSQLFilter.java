@@ -112,7 +112,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } else if (c == '(') {
       // SUB QUERY
       final StringBuilder subText = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText));
+      parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
       final OCommandExecutor executor = OCommandManager.instance().getExecutor(subCommand);

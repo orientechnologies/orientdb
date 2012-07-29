@@ -173,6 +173,72 @@ public abstract class OBaseParser {
   }
 
   /**
+   * Parses the next sequence of chars.
+   * 
+   * @param iSeparators
+   *          Array of expected keywords
+   * @return The position of the word matched if any, otherwise -1 or an exception if iMandatory is true
+   */
+  protected int parserNextChars(final boolean iUpperCase, final boolean iMandatory, final String... iCandidateWords) {
+    parserPreviousPos = parserCurrentPos;
+    parserSkipWhiteSpaces();
+
+    parserLastWord.setLength(0);
+
+    final String[] processedWords = Arrays.copyOf(iCandidateWords, iCandidateWords.length);
+
+    // PARSE THE CHARS
+    final String text2Use = iUpperCase ? parserTextUpperCase : parserText;
+    final int max = text2Use.length();
+
+    // PARSE TILL 1 CHAR AFTER THE END TO SIMULATE A SEPARATOR AS EOF
+    for (int i = 0; parserCurrentPos <= max; ++i) {
+      final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';
+      final boolean separator = ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t' || ch == '(';
+      if (!separator)
+        parserLastWord.append(ch);
+
+      // CLEAR CANDIDATES
+      int candidatesWordsCount = 0;
+      int candidatesWordsPos = -1;
+      for (int c = 0; c < processedWords.length; ++c) {
+        final String w = processedWords[c];
+        if (w != null) {
+          final int wordSize = w.length();
+          if ((separator && wordSize > i) || (!separator && (i > wordSize - 1 || w.charAt(i) != ch)))
+            // DISCARD IT
+            processedWords[c] = null;
+          else {
+            candidatesWordsCount++;
+            if (candidatesWordsCount == 1)
+              // REMEMBER THE POSITION
+              candidatesWordsPos = c;
+          }
+        }
+      }
+
+      if (candidatesWordsCount == 1) {
+        // ONE RESULT, CHECKING IF FOUND
+        final String w = processedWords[candidatesWordsPos];
+        if (w.length() == i + (separator ? 0 : 1) && !Character.isLetter(ch))
+          // FOUND!
+          return candidatesWordsPos;
+      }
+
+      if (candidatesWordsCount == 0 || separator)
+        break;
+
+      parserCurrentPos++;
+    }
+
+    if (iMandatory)
+      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+          + Arrays.toString(iCandidateWords) + "'");
+
+    return -1;
+  }
+
+  /**
    * Parses optional keywords between the iWords. If a keyword is found but doesn't match with iWords then a SyntaxError is raised.
    * 
    * @param iWords
@@ -285,41 +351,97 @@ public abstract class OBaseParser {
     }
 
     try {
-      while (parserCurrentPos < text2Use.length()) {
+      int openParenthesis = 0;
+      int openBraket = 0;
+      int openGraph = 0;
+      boolean escape = false;
+
+      for (; parserCurrentPos < text2Use.length(); parserCurrentPos++) {
         final char c = text2Use.charAt(parserCurrentPos);
 
-        if (c == '\'' || c == '"') {
+        if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && !escape && c == '\\'
+            && ((parserCurrentPos + 1) < text2Use.length())) {
+          // ESCAPE CHARS
+          final char nextChar = text2Use.charAt(parserCurrentPos + 1);
+
+          if (nextChar == 'u') {
+            parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+          } else if (nextChar == 'n') {
+            parserLastWord.append("\n");
+            parserCurrentPos++;
+          } else if (nextChar == 'r') {
+            parserLastWord.append("\r");
+            parserCurrentPos++;
+          } else if (nextChar == 't') {
+            parserLastWord.append("\t");
+            parserCurrentPos++;
+          } else if (nextChar == 'f') {
+            parserLastWord.append("\f");
+            parserCurrentPos++;
+          } else
+            escape = true;
+
+          continue;
+        }
+
+        if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && !escape && (c == '\'' || c == '"')) {
           if (stringBeginChar != ' ') {
             // CLOSE THE STRING?
             if (stringBeginChar == c) {
               // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
               stringBeginChar = ' ';
             }
-          } else {
+          } else
             // START STRING
             stringBeginChar = c;
-          }
         } else if (stringBeginChar == ' ') {
-          for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
-            if (iSeparatorChars.charAt(sepIndex) == c && parserLastWord.length() > 0) {
-              // SEPARATOR (OUTSIDE A STRING): PUSH
-              parserLastSeparator = c;
-              return;
-            }
-          }
+          if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && parserCheckSeparator(c, iSeparatorChars)) {
+            // SEPARATOR FOUND!
+            break;
+          } else if (c == '(')
+            openParenthesis++;
+          else if (c == ')' && openParenthesis > 0)
+            openParenthesis--;
+          else if (c == '[')
+            openBraket++;
+          else if (c == ']' && openBraket > 0)
+            openBraket--;
+          else if (c == '{')
+            openGraph++;
+          else if (c == '}' && openGraph > 0)
+            openGraph--;
         }
 
         parserLastWord.append(c);
-        parserCurrentPos++;
+
+        if (escape)
+          escape = false;
       }
 
-      parserLastSeparator = ' ';
-
     } finally {
-      if (parserCurrentPos >= text2Use.length())
+      if (parserCurrentPos >= text2Use.length()) {
         // END OF TEXT
         parserCurrentPos = -1;
+        parserLastSeparator = ' ';
+      }
     }
+  }
+
+  /**
+   * Check for a separator
+   * 
+   * @param c
+   * @param iSeparatorChars
+   * @return
+   */
+  private boolean parserCheckSeparator(final char c, final String iSeparatorChars) {
+    for (int sepIndex = 0; sepIndex < iSeparatorChars.length(); ++sepIndex) {
+      if (iSeparatorChars.charAt(sepIndex) == c) {
+        parserLastSeparator = c;
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

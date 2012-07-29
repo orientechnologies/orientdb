@@ -27,21 +27,26 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  */
 public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEquality {
 
-	protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical) {
-		super(iKeyword, iPrecedence, iLogical);
-	}
+  protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical) {
+    super(iKeyword, iPrecedence, iLogical);
+  }
 
-	protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical,
-			final int iExpectedRightWords) {
-		super(iKeyword, iPrecedence, iLogical, iExpectedRightWords);
-	}
+  protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical,
+      final int iExpectedRightWords) {
+    super(iKeyword, iPrecedence, iLogical, iExpectedRightWords);
+  }
 
-	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		if (iLeft == null || iRight == null)
-			return false;
+  protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical,
+      final int iExpectedRightWords, final boolean iExpectsParameters) {
+    super(iKeyword, iPrecedence, iLogical, iExpectedRightWords, iExpectsParameters);
+  }
 
-		return super.evaluateRecord(iRecord, iCondition, iLeft, iRight, iContext);
-	}
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    if (iLeft == null || iRight == null)
+      return false;
+
+    return super.evaluateRecord(iRecord, iCondition, iLeft, iRight, iContext);
+  }
 }

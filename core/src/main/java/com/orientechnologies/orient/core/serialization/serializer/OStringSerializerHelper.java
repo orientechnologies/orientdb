@@ -472,7 +472,7 @@ public abstract class OStringSerializerHelper {
     if (buffer.length() == 0)
       return iBeginPosition;
 
-    final String t = buffer.substring(1, buffer.length() - 1);
+    final String t = buffer.substring(1, buffer.length() - 1).trim();
     final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true);
 
     for (int i = 0; i < pars.size(); ++i)
@@ -614,7 +614,8 @@ public abstract class OStringSerializerHelper {
 
   public static OClass getRecordClassName(final String iValue, OClass iLinkedClass) {
     // EXTRACT THE CLASS NAME
-    final int classSeparatorPos = OStringParser.indexOfOutsideStrings(iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0, -1);
+    final int classSeparatorPos = OStringParser.indexOfOutsideStrings(iValue, OStringSerializerHelper.CLASS_SEPARATOR.charAt(0), 0,
+        -1);
     if (classSeparatorPos > -1) {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();

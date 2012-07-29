@@ -43,6 +43,11 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
     super(iKeyword, iPrecedence, false, iExpectedRightWords);
   }
 
+  protected OQueryOperatorEquality(final String iKeyword, final int iPrecedence, final boolean iLogical,
+      final int iExpectedRightWords, final boolean iExpectsParameters) {
+    super(iKeyword, iPrecedence, iLogical, iExpectedRightWords, iExpectsParameters);
+  }
+
   protected abstract boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext);
 

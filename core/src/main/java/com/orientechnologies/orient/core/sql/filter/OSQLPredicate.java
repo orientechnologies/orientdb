@@ -61,7 +61,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   }
 
   protected void throwSyntaxErrorException(final String iText) {
-    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
+    final String syntax = getSyntax();
+    if (syntax.equals("?"))
+      throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
+
+    throw new OCommandSQLParsingException(iText + ". Use " + syntax, parserText, parserGetPreviousPosition());
   }
 
   public OSQLPredicate text(final String iText) {
@@ -93,9 +97,10 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   private Object extractConditions(final OSQLFilterCondition iParentCondition) {
     final int oldPosition = parserGetCurrentPosition();
-    final String[] words = nextValue(true);
+    parserNextWord(true, " )=><,\r\n");
+    final String word = parserGetLastWord();
 
-    if (words != null && words.length > 0 && (words[0].equalsIgnoreCase("SELECT") || words[0].equalsIgnoreCase("TRAVERSE"))) {
+    if (word.length() > 0 && (word.equalsIgnoreCase("SELECT") || word.equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
       final StringBuilder embedded = new StringBuilder();
       OStringSerializerHelper.getEmbedded(parserText, oldPosition - 1, -1, embedded);
@@ -177,48 +182,64 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       // FOUND ')': JUST RETURN
       return null;
 
-    parserNextWord(true, " 0123456789'\"");
-    final String word = parserGetLastWord();
+    final OQueryOperator[] operators = OSQLEngine.getInstance().getRecordOperators();
+    final String[] candidateOperators = new String[operators.length];
+    for (int i = 0; i < candidateOperators.length; ++i)
+      candidateOperators[i] = operators[i].keyword;
 
-    if (checkForEnd(word))
+    final int operatorPos = parserNextChars(true, false, candidateOperators);
+
+    if (operatorPos == -1) {
+      parserGoBack();
       return null;
-
-    for (OQueryOperator op : OSQLEngine.getInstance().getRecordOperators()) {
-      if (word.startsWith(op.keyword)) {
-        final List<String> params = new ArrayList<String>();
-        // CHECK FOR PARAMETERS
-        if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.EMBEDDED_BEGIN) {
-          int paramBeginPos = parserGetCurrentPosition() - (word.length() - op.keyword.length());
-          parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, paramBeginPos, -1, params));
-        } else if (!word.equals(op.keyword))
-          throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
-
-        try {
-          return op.configure(params);
-        } catch (Exception e) {
-          throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax());
-        }
-      }
     }
 
-    throw new OQueryParsingException("Unknown operator " + word, parserText, parserGetCurrentPosition());
+    final OQueryOperator op = operators[operatorPos];
+    if (op.expectsParameters) {
+      // PARSE PARAMETERS IF ANY
+      parserGoBack();
+
+      parserNextWord(true, " 0123456789'\"");
+      final String word = parserGetLastWord();
+
+      final List<String> params = new ArrayList<String>();
+      // CHECK FOR PARAMETERS
+      if (word.length() > op.keyword.length() && word.charAt(op.keyword.length()) == OStringSerializerHelper.EMBEDDED_BEGIN) {
+        int paramBeginPos = parserGetCurrentPosition() - (word.length() - op.keyword.length());
+        parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, paramBeginPos, -1, params));
+      } else if (!word.equals(op.keyword))
+        throw new OQueryParsingException("Malformed usage of operator '" + op.toString() + "'. Parsed operator is: " + word);
+
+      try {
+        // CONFIGURE COULD INSTANTIATE A NEW OBJECT: ACT AS A FACTORY
+        return op.configure(params);
+      } catch (Exception e) {
+        throw new OQueryParsingException("Syntax error using the operator '" + op.toString() + "'. Syntax is: " + op.getSyntax());
+      }
+    } else
+      parserMoveCurrentPosition(+1);
+    return op;
   }
 
   private Object extractConditionItem(final boolean iAllowOperator, final int iExpectedWords) {
     final Object[] result = new Object[iExpectedWords];
 
     for (int i = 0; i < iExpectedWords; ++i) {
-      final String[] words = nextValue(true);
-      if (words == null)
+      parserNextWord(false, " =><,\r\n");
+      String word = parserGetLastWord();
+
+      if (word.length() == 0)
         break;
+
+      final String uWord = word.toUpperCase();
 
       final int lastPosition = parserIsEnded() ? parserText.length() : parserGetCurrentPosition();
 
-      if (words[0].length() > 0 && words[0].charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
+      if (word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         braces++;
 
         // SUB-CONDITION
-        parserSetCurrentPosition(lastPosition - words[0].length() + 1);
+        parserSetCurrentPosition(lastPosition - word.length() + 1);
 
         final Object subCondition = extractConditions(null);
 
@@ -228,9 +249,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         parserMoveCurrentPosition(+1);
 
         result[i] = subCondition;
-      } else if (words[0].charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
+      } else if (word.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
         // COLLECTION OF ELEMENTS
-        parserSetCurrentPosition(lastPosition - words[0].length());
+        parserSetCurrentPosition(lastPosition - word.length());
 
         final List<String> stringItems = new ArrayList<String>();
         parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), stringItems));
@@ -253,40 +274,44 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
         parserMoveCurrentPosition(+1);
 
-      } else if (words[0].startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
+      } else if (uWord.startsWith(OSQLFilterItemFieldAll.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
 
-        result[i] = new OSQLFilterItemFieldAll(this, words[1]);
+        result[i] = new OSQLFilterItemFieldAll(this, word);
 
-      } else if (words[0].startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
+      } else if (uWord.startsWith(OSQLFilterItemFieldAny.NAME + OStringSerializerHelper.EMBEDDED_BEGIN)) {
 
-        result[i] = new OSQLFilterItemFieldAny(this, words[1]);
+        result[i] = new OSQLFilterItemFieldAny(this, word);
 
       } else {
 
-        if (words[0].equals("NOT")) {
+        if (uWord.equals("NOT")) {
           if (iAllowOperator)
             return new OQueryOperatorNot();
           else {
             // GET THE NEXT VALUE
-            final String[] nextWord = nextValue(true);
-            if (nextWord != null && nextWord.length == 2) {
-              words[1] = words[1] + " " + nextWord[1];
+            parserNextWord(false, " )=><,\r\n");
+            final String nextWord = parserGetLastWord();
 
-              if (words[1].endsWith(")"))
-                words[1] = words[1].substring(0, words[1].length() - 1);
+            if (nextWord.length() > 0) {
+              word += " " + nextWord;
+
+              if (word.endsWith(")"))
+                word = word.substring(0, word.length() - 1);
             }
           }
         }
 
-        if (words[1].endsWith(")")) {
-          final int openParenthesis = words[1].indexOf('(');
+        while (word.endsWith(")")) {
+          final int openParenthesis = word.indexOf('(');
           if (openParenthesis == -1) {
-            words[1] = words[1].substring(0, words[1].length() - 1);
+            // DISCARD END PARENTHESIS
+            word = word.substring(0, word.length() - 1);
             parserMoveCurrentPosition(-1);
-          }
+          } else
+            break;
         }
 
-        result[i] = OSQLHelper.parseValue(this, this, words[1], context);
+        result[i] = OSQLHelper.parseValue(this, this, word, context);
       }
     }
 
@@ -303,80 +328,6 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   public OSQLFilterCondition getRootCondition() {
     return rootCondition;
-  }
-
-  private String[] nextValue(final boolean iAdvanceWhenNotFound) {
-    if (!parserSkipWhiteSpaces())
-      return null;
-
-    int begin = parserGetCurrentPosition();
-    char c;
-    char stringBeginCharacter = ' ';
-    int openBraces = 0;
-    int openBraket = 0;
-    boolean escaped = false;
-    boolean escapingOn = false;
-
-    while (!parserIsEnded()) {
-      c = parserGetCurrentChar();
-
-      if (stringBeginCharacter == ' ' && (c == '"' || c == '\'')) {
-        // QUOTED STRING: GET UNTIL THE END OF QUOTING
-        stringBeginCharacter = c;
-      } else if (stringBeginCharacter != ' ') {
-        // INSIDE TEXT
-        if (c == '\\') {
-          escapingOn = true;
-          escaped = true;
-        } else {
-          if (c == stringBeginCharacter && !escapingOn) {
-            stringBeginCharacter = ' ';
-
-            if (openBraket == 0 && openBraces == 0) {
-              if (iAdvanceWhenNotFound)
-                parserMoveCurrentPosition(+1);
-              break;
-            }
-          }
-
-          if (escapingOn)
-            escapingOn = false;
-        }
-      } else if (c == '#' && parserGetCurrentPosition() == begin) {
-        // BEGIN OF RID
-      } else if (c == '(') {
-        openBraces++;
-      } else if (c == ')' && openBraces > 0) {
-        openBraces--;
-      } else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
-        openBraket++;
-      } else if (c == OStringSerializerHelper.COLLECTION_END) {
-        openBraket--;
-        if (openBraket == 0 && openBraces == 0) {
-          // currentPos++;
-          // break;
-        }
-      } else if (c == ' ' && openBraces == 0 && openBraket == 0) {
-        break;
-      } else if (!Character.isLetter(c) && !Character.isDigit(c) && c != '.' && c != '$' && c != ':' && c != '-' && c != '_'
-          && c != '+' && c != '@' && openBraces == 0 && openBraket == 0) {
-        if (iAdvanceWhenNotFound)
-          parserMoveCurrentPosition(+1);
-        break;
-      }
-
-      parserMoveCurrentPosition(+1);
-    }
-
-    int pos = parserGetCurrentPosition();
-    if (pos == -1)
-      pos = parserText.length();
-
-    if (escaped)
-      return new String[] { OStringSerializerHelper.decode(parserTextUpperCase.substring(begin, pos)),
-          OStringSerializerHelper.decode(parserText.substring(begin, pos)) };
-    else
-      return new String[] { parserTextUpperCase.substring(begin, pos), parserText.substring(begin, pos) };
   }
 
   @Override
