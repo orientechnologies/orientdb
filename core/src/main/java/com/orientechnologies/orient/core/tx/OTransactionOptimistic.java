@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -30,15 +39,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -210,101 +210,114 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
     }
 
-    if (iRecord.getIdentity().isTemporary())
-      temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
+    try {
+      if (iRecord.getIdentity().isTemporary())
+        temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
-    if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
-      // I'M COMMITTING: BYPASS LOCAL BUFFER
-      switch (iStatus) {
-      case ORecordOperation.CREATED:
-      case ORecordOperation.UPDATED:
-        database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), false,
-            OPERATION_MODE.SYNCHRONOUS, null);
-        break;
-      case ORecordOperation.DELETED:
-        database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, false, OPERATION_MODE.SYNCHRONOUS);
-        break;
-      }
-    } else {
-      final ORecordId rid = (ORecordId) iRecord.getIdentity();
-
-      if (!rid.isValid()) {
-        iRecord.onBeforeIdentityChanged(rid);
-
-        // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-        if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-          rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-        rid.clusterPosition = newObjectCounter--;
-
-        iRecord.onAfterIdentityChanged(iRecord);
-      } else
-        // REMOVE FROM THE DB'S CACHE
-        database.getLevel1Cache().freeRecord(rid);
-
-      ORecordOperation txEntry = getRecordEntry(rid);
-
-      if (txEntry == null) {
-        if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
-          // NEW ENTRY: JUST REGISTER IT
-          txEntry = new ORecordOperation(iRecord, iStatus);
-          recordEntries.put(rid, txEntry);
-        }
-      } else {
-        // UPDATE PREVIOUS STATUS
-        txEntry.record = iRecord;
-
-        switch (txEntry.type) {
-        case ORecordOperation.LOADED:
-          switch (iStatus) {
-          case ORecordOperation.UPDATED:
-            txEntry.type = ORecordOperation.UPDATED;
-            break;
-          case ORecordOperation.DELETED:
-            txEntry.type = ORecordOperation.DELETED;
-            break;
-          }
-          break;
+      if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
+        // I'M COMMITTING: BYPASS LOCAL BUFFER
+        switch (iStatus) {
+        case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
-          switch (iStatus) {
-          case ORecordOperation.DELETED:
-            txEntry.type = ORecordOperation.DELETED;
-            break;
-          }
+          database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), false,
+              OPERATION_MODE.SYNCHRONOUS, null);
           break;
         case ORecordOperation.DELETED:
-          break;
-        case ORecordOperation.CREATED:
-          switch (iStatus) {
-          case ORecordOperation.DELETED:
-            recordEntries.remove(rid);
-            break;
-          }
+          database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, false, OPERATION_MODE.SYNCHRONOUS);
           break;
         }
+      } else {
+        final ORecordId rid = (ORecordId) iRecord.getIdentity();
+
+        if (!rid.isValid()) {
+          iRecord.onBeforeIdentityChanged(rid);
+
+          // ASSIGN A UNIQUE SERIAL TEMPORARY ID
+          if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
+            rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
+          rid.clusterPosition = newObjectCounter--;
+
+          iRecord.onAfterIdentityChanged(iRecord);
+        } else
+          // REMOVE FROM THE DB'S CACHE
+          database.getLevel1Cache().freeRecord(rid);
+
+        ORecordOperation txEntry = getRecordEntry(rid);
+
+        if (txEntry == null) {
+          if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
+            // NEW ENTRY: JUST REGISTER IT
+            txEntry = new ORecordOperation(iRecord, iStatus);
+            recordEntries.put(rid, txEntry);
+          }
+        } else {
+          // UPDATE PREVIOUS STATUS
+          txEntry.record = iRecord;
+
+          switch (txEntry.type) {
+          case ORecordOperation.LOADED:
+            switch (iStatus) {
+            case ORecordOperation.UPDATED:
+              txEntry.type = ORecordOperation.UPDATED;
+              break;
+            case ORecordOperation.DELETED:
+              txEntry.type = ORecordOperation.DELETED;
+              break;
+            }
+            break;
+          case ORecordOperation.UPDATED:
+            switch (iStatus) {
+            case ORecordOperation.DELETED:
+              txEntry.type = ORecordOperation.DELETED;
+              break;
+            }
+            break;
+          case ORecordOperation.DELETED:
+            break;
+          case ORecordOperation.CREATED:
+            switch (iStatus) {
+            case ORecordOperation.DELETED:
+              recordEntries.remove(rid);
+              break;
+            }
+            break;
+          }
+        }
+      }
+
+      switch (iStatus) {
+      case ORecordOperation.CREATED:
+        database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
+        break;
+      case ORecordOperation.LOADED:
+        database.callbackHooks(TYPE.AFTER_READ, iRecord);
+        break;
+      case ORecordOperation.UPDATED:
+        database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+        break;
+      case ORecordOperation.DELETED:
+        database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
+        break;
+      }
+    } catch (Throwable t) {
+      switch (iStatus) {
+      case ORecordOperation.CREATED:
+        database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
+        break;
+      case ORecordOperation.UPDATED:
+        database.callbackHooks(TYPE.UPDATE_FAILED, iRecord);
+        break;
+      case ORecordOperation.DELETED:
+        database.callbackHooks(TYPE.DELETE_FAILED, iRecord);
+        break;
       }
     }
-
-    switch (iStatus) {
-    case ORecordOperation.CREATED:
-      database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
-      break;
-    case ORecordOperation.LOADED:
-      database.callbackHooks(TYPE.AFTER_READ, iRecord);
-      break;
-    case ORecordOperation.UPDATED:
-      database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
-      break;
-    case ORecordOperation.DELETED:
-      database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
-      break;
-    }
-
   }
 
   @Override
   public String toString() {
     return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
-        + indexEntries.size() + "]";
+        + indexEntries.size() + ']';
   }
 
   public boolean isUsingLog() {
