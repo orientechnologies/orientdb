@@ -130,7 +130,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           else if (w.equals(KEYWORD_SKIP))
             parseSkip(w);
           else
-            throw new OCommandSQLParsingException("Invalid keyword '" + w + "'");
+            throwParsingException("Invalid keyword '" + w + "'");
         }
       }
     }

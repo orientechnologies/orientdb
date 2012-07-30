@@ -104,7 +104,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       // SUB QUERY
       final StringBuilder embedded = new StringBuilder();
       OStringSerializerHelper.getEmbedded(parserText, oldPosition - 1, -1, embedded);
-      parserMoveCurrentPosition(embedded.length() + 1);
+      parserSetCurrentPosition(oldPosition + embedded.length() + 1);
       return new OSQLSynchQuery<Object>(embedded.toString());
     }
 
@@ -243,10 +243,10 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
         final Object subCondition = extractConditions(null);
 
-        if (!parserSkipWhiteSpaces() || parserGetCurrentChar() == ')')
+        if (!parserSkipWhiteSpaces() || parserGetCurrentChar() == ')') {
           braces--;
-
-        parserMoveCurrentPosition(+1);
+          parserMoveCurrentPosition(+1);
+        }
 
         result[i] = subCondition;
       } else if (word.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
