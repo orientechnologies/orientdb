@@ -34,7 +34,7 @@
 					<parameter name="network.http.charset" value="utf-8" />
 					<!-- Define additional HTTP headers to always send as response -->
 					<!-- Allow cross-site scripting -->
-					<!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin: *" /-->
+					<!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin: *;Access-Control-Allow-Credentials: true" /-->
 				</parameters>
 				<commands>
 					<command

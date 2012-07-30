@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -137,7 +139,7 @@ public class ODistributedStorage implements OStorage {
       iRecordId.clusterPosition = ((OPhysicalPosition) result).clusterPosition;
 
     } catch (ExecutionException e) {
-      throw new OStorageException("Cannot route CREATE_RECORD operation to the distributed node", e);
+      handleDistributedException("Cannot route CREATE_RECORD operation against %s to the distributed node", e, iRecordId);
     }
 
     return (OPhysicalPosition) result;
@@ -156,8 +158,9 @@ public class ODistributedStorage implements OStorage {
       return (ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new OReadRecordDistributedTask(
           dManager.getLocalNodeId(), wrapped.getName(), iRecordId));
     } catch (ExecutionException e) {
-      throw new OStorageException("Cannot route READ_RECORD operation to the distributed node", e);
+      handleDistributedException("Cannot route READ_RECORD operation against %s to the distributed node", e, iRecordId);
     }
+    return null;
   }
 
   public int updateRecord(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType,
@@ -173,7 +176,7 @@ public class ODistributedStorage implements OStorage {
           new OUpdateRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
               iVersion, iRecordType));
     } catch (ExecutionException e) {
-      throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
+      handleDistributedException("Cannot route UPDATE_RECORD operation against %s to the distributed node", e, iRecordId);
     }
 
     // UPDATE LOCALLY
@@ -192,7 +195,7 @@ public class ODistributedStorage implements OStorage {
       result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId,
           new ODeleteRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
     } catch (ExecutionException e) {
-      throw new OStorageException("Cannot route UPDATE_RECORD operation to the distributed node", e);
+      handleDistributedException("Cannot route DELETE_RECORD operation against %s to the distributed node", e, iRecordId);
     }
 
     // DELETE LOCALLY
@@ -390,5 +393,13 @@ public class ODistributedStorage implements OStorage {
 
   protected String getClusterNameFromRID(final ORecordId iRecordId) {
     return OStorageSynchronizer.getClusterNameByRID(wrapped, iRecordId);
+  }
+
+  protected void handleDistributedException(final String iMessage, ExecutionException e, Object... iParams) {
+    OLogManager.instance().error(this, iMessage, e, iParams);
+    final Throwable t = e.getCause();
+    if (t instanceof OException)
+      throw (OException) t;
+    throw new OStorageException(String.format(iMessage, iParams));
   }
 }
