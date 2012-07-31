@@ -180,7 +180,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			if (value == null) {
 				Object docValue = doc.field(fieldName, OType.getTypeByClass(getField(fieldName, self.getClass()).getType()));
 				if (docValue != null) {
-					value = lazyLoadField(self, fieldName, docValue);
+					value = lazyLoadField(self, fieldName, docValue, value);
 				}
 			} else {
 				if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OLazyObjectMultivalueElement))
@@ -225,7 +225,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				} else if (!loadedFields.containsKey(fieldName)) {
 					Object docValue = doc.field(fieldName);
 					if (docValue != null && !docValue.equals(value)) {
-						value = lazyLoadField(self, fieldName, docValue);
+						value = lazyLoadField(self, fieldName, docValue, value);
 					}
 				}
 			}
@@ -404,10 +404,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected Object lazyLoadField(Object self, final String fieldName, Object docValue) throws NoSuchMethodException,
-			IllegalAccessException, InvocationTargetException {
+	protected Object lazyLoadField(Object self, final String fieldName, Object docValue, Object currentValue)
+			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 		boolean customSerialization = false;
 		Field f = getField(fieldName, self.getClass());
+		if (f == null)
+			return currentValue;
 		if (OObjectEntitySerializer.isSerializedType(f)) {
 			customSerialization = true;
 		}
