@@ -47,7 +47,10 @@ function ODatabase(databasePath) {
 		if (this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
 			var parts = this.databaseName.split('/');
-			for (p in parts) {
+			for (var p in parts) {
+				if (!parts.hasOwnProperty(p)) {
+					continue;
+				}
 				if (this.encodedDatabaseName.length > 0)
 					this.encodedDatabaseName += '$';
 				this.encodedDatabaseName += parts[p];
@@ -685,9 +688,13 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getClass = function(className) {
-		for (cls in databaseInfo['classes']) {
-			if (databaseInfo['classes'][cls].name == className) {
-				return databaseInfo['classes'][cls];
+		var classes = databaseInfo['classes'];
+		for (var cls in classes) {
+			if (!classes.hasOwnProperty(cls)) {
+				continue;
+			}
+			if (classes[cls].name == className) {
+				return classes[cls];
 			}
 		}
 		return null;
@@ -749,8 +756,12 @@ function ODatabase(databasePath) {
 
 		if (configuration)
 			// OVERWRITE DEFAULT CONFIGURATION
-			for (c in configuration)
+			for (var c in configuration) {
+				if (!configuration.hasOwnProperty(c)) {
+					continue;
+				}
 				cfg[c] = configuration[c];
+			}
 
 		$.ajax({
 			type : "POST",
@@ -826,7 +837,10 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.createObjectsLinksMap = function(obj, linkMap) {
-		for (field in obj) {
+		for (var field in obj) {
+			if (!obj.hasOwnProperty(field)) {
+				continue;
+			}
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.createObjectsLinksMap(value, linkMap);
@@ -845,7 +859,10 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.putObjectInLinksMap = function(obj, linkMap) {
-		for (field in obj) {
+		for (var field in obj) {
+			if (!obj.hasOwnProperty(field)) {
+				continue;
+			}
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.putObjectInLinksMap(value, linkMap);
@@ -862,7 +879,10 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getObjectFromLinksMap = function(obj, linkMap) {
-		for (field in obj) {
+		for (var field in obj) {
+			if (!obj.hasOwnProperty(field)) {
+				continue;
+			}
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.getObjectFromLinksMap(value, linkMap);
@@ -889,7 +909,10 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj,
 			linkMap) {
-		for (field in obj) {
+		for (var field in obj) {
+			if (!obj.hasOwnProperty(field)) {
+				continue;
+			}
 			var value = obj[field];
 			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				if (value['@rid'] != null && value['@rid']) {
@@ -902,7 +925,10 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (i in value) {
+				for (var i in value) {
+					if (!value.hasOwnProperty(i)) {
+						continue;
+					}
 					var arrayValue = value[i];
 					if (arrayValue != null && typeof arrayValue == 'object') {
 						if (arrayValue['@rid'] != null && arrayValue['@rid']) {
@@ -922,7 +948,10 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesChangeObject = function(obj,
 			linkMap) {
-		for (field in obj) {
+		for (var field in obj) {
+			if (!obj.hasOwnProperty(field)) {
+				continue;
+			}
 			var value = obj[field];
 			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				var inspectObject = true;
@@ -943,7 +972,10 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (i in value) {
+				for (var i in value) {
+					if (!value.hasOwnProperty(i)) {
+						continue;
+					}
 					var arrayValue = value[i];
 					if (typeof arrayValue == 'object') {
 						var inspectObject = true;
