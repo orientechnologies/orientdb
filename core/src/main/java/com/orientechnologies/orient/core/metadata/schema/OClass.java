@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.index.OIndex;
  */
 public interface OClass extends Comparable<OClass> {
   public static enum ATTRIBUTES {
-    NAME, SHORTNAME, SUPERCLASS, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER
+    NAME, SHORTNAME, SUPERCLASS, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM
   }
 
   public static enum INDEX_TYPE {

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -30,7 +31,9 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -246,6 +249,13 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
     json.writeAttribute(3, true, "alias", cls.getShortName());
     json.writeAttribute(3, true, "clusters", cls.getClusterIds());
     json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
+    if (cls instanceof OClassImpl) {
+      final Map<String, String> custom = ((OClassImpl) cls).getCustomInternal();
+      if (custom != null && !custom.isEmpty()) {
+        json.writeAttribute(4, true, "custom", custom);
+      }
+    }
+
     try {
       json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
     } catch (OSecurityAccessException e) {
@@ -266,6 +276,14 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
         json.writeAttribute(4, true, "notNull", prop.isNotNull());
         json.writeAttribute(4, true, "min", prop.getMin());
         json.writeAttribute(4, true, "max", prop.getMax());
+
+        if (prop instanceof OPropertyImpl) {
+          final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();
+          if (custom != null && !custom.isEmpty()) {
+            json.writeAttribute(5, true, "custom", custom);
+          }
+        }
+
         json.endObject(3, true);
       }
       json.endCollection(1, true);

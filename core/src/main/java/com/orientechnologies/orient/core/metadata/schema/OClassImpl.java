@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -71,6 +72,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   protected float                        overSize      = 0f;
   protected String                       shortName;
   protected boolean                      strictMode    = false;                             // @SINCE v1.0rc8
+  protected Map<String, String>          customFields;
   private static final Iterator<OClass>  EMPTY_CLASSES = new ArrayList<OClass>().iterator();
 
   /**
@@ -114,6 +116,34 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
 
     return (T) javaClass.newInstance();
+  }
+
+  public String getCustom(final String iName) {
+    if (customFields == null)
+      return null;
+
+    return customFields.get(iName);
+  }
+
+  public void setCustomInternal(final String iName, final String iValue) {
+    if (customFields == null)
+      customFields = new HashMap<String, String>();
+
+    customFields.put(iName, iValue);
+  }
+
+  public OClassImpl setCustom(final String iName, final String iValue) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s custom %s=%s", getName(), iName, iValue);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    setCustomInternal(iName, iValue);
+    return this;
+  }
+
+  public Map<String, String> getCustomInternal() {
+    if (customFields != null)
+      return Collections.unmodifiableMap(customFields);
+    return null;
   }
 
   public void validateInstances() {
@@ -411,6 +441,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         prop.fromStream();
         properties.put(prop.getName().toLowerCase(), prop);
       }
+
+    customFields = document.field("customFields", OType.EMBEDDEDMAP);
   }
 
   @Override
@@ -435,6 +467,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       document.field("superClass", superClass != null ? superClass.getName() : null);
+      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -816,6 +849,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       removeClusterIdInternal(clId);
       break;
     }
+    case CUSTOM:
+      if (iValue.toString().indexOf("=") == -1)
+        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
+
+      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+      setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      break;
     }
 
     saveInternal();
@@ -865,6 +905,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (clId == -1)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
       removeClusterId(clId);
+      break;
+    case CUSTOM:
+      if (iValue.toString().indexOf("=") == -1)
+        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
+
+      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+      setCustom(words.get(0).trim(), words.get(1).trim());
       break;
     }
     return this;
