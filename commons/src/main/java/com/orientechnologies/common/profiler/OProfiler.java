@@ -27,6 +27,7 @@ import java.util.TimerTask;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
 
 /**
@@ -81,6 +82,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireExclusiveLock();
     try {
+      OLogManager.instance().info(this, "Profiler is recording metrics");
 
       timer.schedule(new TimerTask() {
         @Override
@@ -102,6 +104,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireExclusiveLock();
     try {
+      OLogManager.instance().config(this, "Profiler has stopped recording metrics");
 
       timer.cancel();
       recordingFrom = -1;

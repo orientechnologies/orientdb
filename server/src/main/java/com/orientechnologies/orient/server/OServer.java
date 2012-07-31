@@ -107,6 +107,9 @@ public class OServer {
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
+    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !OProfiler.getInstance().isRecording())
+      OProfiler.getInstance().startRecording();
+
     if (OProfiler.getInstance().isRecording())
       // REGISTER THE PROFILER
       mBeanServer.registerMBean(OProfiler.getInstance(), onProfiler);
