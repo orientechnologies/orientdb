@@ -269,12 +269,8 @@ public enum OGlobalConfiguration {
         }
       }),
 
-  PROFILER_AUTODUMP_RESET("profiler.autoDump.reset", "Resets the profiler at every auto dump", Boolean.class, true,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OProfiler.getInstance().setAutoDumpReset((Boolean) iNewValue);
-        }
-      }),
+  @Deprecated
+  PROFILER_AUTODUMP_RESET("profiler.autoDump.reset", "Resets the profiler at every auto dump", Boolean.class, true),
 
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {

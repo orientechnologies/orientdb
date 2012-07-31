@@ -1,48 +1,47 @@
+/*
+ * Copyright 1999-2005 Luca Garulli (l.garulli--at-orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.common.profiler;
 
 import java.util.Date;
 
 public interface OProfilerMBean {
 
-	// ----------------------------------------------------------------------------
-	public void updateCounter(String iStatName, long iPlus);
+  public void updateCounter(String iStatName, long iPlus);
 
-	// ----------------------------------------------------------------------------
-	public long getCounter(String iStatName);
+  public long getCounter(String iStatName);
 
-	public String dump();
+  public String dump();
 
-	public String dumpCounters();
+  public String dumpCounters();
 
-	// ----------------------------------------------------------------------------
-	/**
-	 * Resetta i contatori statistici e i chrono.
-	 */
-	public void reset();
+  public long startChrono();
 
-	// ----------------------------------------------------------------------------
-	/**
-	 * Fa partire un nuovo chrono.
-	 */
-	public long startChrono();
+  public long stopChrono(String iName, long iStartTime);
 
-	// ----------------------------------------------------------------------------
-	/**
-	 * Ferma un chrono con nome <iName>.
-	 */
-	public long stopChrono(String iName, long iStartTime);
+  public String dumpChronos();
 
-	public String dumpChronos();
+  public String[] getCountersAsString();
 
-	public String[] getCountersAsString();
+  public String[] getChronosAsString();
 
-	public String[] getChronosAsString();
+  public Date getLastReset();
 
-	public Date getLastReset();
+  public boolean isRecording();
 
-	public boolean isRecording();
+  public void startRecording();
 
-	public OProfilerMBean startRecording();
-
-	public OProfilerMBean stopRecording();
+  public void stopRecording();
 }

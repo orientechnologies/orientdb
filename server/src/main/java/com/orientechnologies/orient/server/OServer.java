@@ -108,7 +108,8 @@ public class OServer {
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
     // REGISTER PROFILER
-    mBeanServer.registerMBean(OProfiler.getInstance().startRecording(), onProfiler);
+    OProfiler.getInstance().startRecording();
+    mBeanServer.registerMBean(OProfiler.getInstance(), onProfiler);
 
     // REGISTER SERVER
     managedServer = new OrientServer();

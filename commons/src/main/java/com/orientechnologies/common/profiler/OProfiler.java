@@ -22,10 +22,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
+
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -36,102 +38,217 @@ import java.util.WeakHashMap;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OProfiler implements OProfilerMBean {
-  private long                            recording = -1;
-  private Map<String, Long>               counters;
-  private Map<String, OProfilerEntry>     chronos;
-  private Map<String, OProfilerEntry>     stats;
-  private Map<OProfilerHookValue, String> hooks;                      // REVERSE MAP TO USE THE WEAK HASH MAP
-  private Date                            lastReset;
+public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
+  protected long                            recordingFrom = -1;
+  protected Map<OProfilerHookValue, String> hooks         = new WeakHashMap<OProfiler.OProfilerHookValue, String>();
+  protected Date                            lastReset     = new Date();
 
-  private volatile Timer                  timer;
-  private volatile boolean                autoDumpReset;
+  protected OProfilerData                   realTime      = new OProfilerData();
+  protected OProfilerData                   lastSnapshot  = new OProfilerData();
+  protected List<OProfilerData>             snapshots     = new ArrayList<OProfilerData>();
+  protected List<OProfilerData>             summaries     = new ArrayList<OProfilerData>();
 
-  protected static final OProfiler        instance  = new OProfiler();
+  protected int                             elapsedToCreateSnapshot;
+  protected int                             maxSnapshots;
+  protected int                             maxSummaries;
+  protected final static Timer              timer         = new Timer(true);
+
+  protected static final OProfiler          instance      = new OProfiler();
 
   public interface OProfilerHookValue {
     public Object getValue();
   }
 
-  public class OProfilerEntry {
-    public String name    = null;
-    public long   items   = 0;
-    public long   last    = 0;
-    public long   min     = 999999999;
-    public long   max     = 0;
-    public long   average = 0;
-    public long   total   = 0;
-
-    @Override
-    public String toString() {
-      return "Chrono [average=" + average + ", items=" + items + ", last=" + last + ", max=" + max + ", min=" + min + ", name="
-          + name + ", total=" + total + "]";
-    }
-  }
-
   public OProfiler() {
-    init();
+    // SNAPSHOT EVERY MINUTE, A SUMMARY EVERY HOUR UP TO 48 HOURS
+    this(60000, 60, 48);
   }
 
-  public OProfiler(String iRecording) {
+  public OProfiler(final String iRecording) {
     if (iRecording.equalsIgnoreCase("true"))
       startRecording();
-
-    init();
   }
 
-  // ----------------------------------------------------------------------------
-  /*
-   * (non-Javadoc)
-   */
+  public OProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot, final int iMaxSumaries) {
+    elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
+    maxSnapshots = iMaxSnapshot;
+    maxSummaries = iMaxSumaries;
+  }
+
+  public void startRecording() {
+    if (recordingFrom > -1)
+      return;
+
+    acquireExclusiveLock();
+    try {
+
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          createSnapshot();
+        }
+      }, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
+
+      recordingFrom = System.currentTimeMillis();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void stopRecording() {
+    if (recordingFrom == -1)
+      return;
+
+    acquireExclusiveLock();
+    try {
+
+      timer.cancel();
+      recordingFrom = -1;
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public boolean isRecording() {
+    return recordingFrom > -1;
+  }
+
+  public void createSnapshot() {
+    final Map<String, Object> hookValuesSnapshots = archiveHooks();
+
+    acquireExclusiveLock();
+    try {
+
+      synchronized (snapshots) {
+        // ARCHIVE IT
+        lastSnapshot.setHookValues(hookValuesSnapshots);
+        lastSnapshot.endRecording();
+        snapshots.add(lastSnapshot);
+
+        lastSnapshot = new OProfilerData();
+
+        if (snapshots.size() >= maxSnapshots) {
+          // COPY ALL THE ARCHIVE AND RESET IT
+
+          // MERGE RESULTS IN A SUMMARY AND COLLECT IT
+          synchronized (summaries) {
+            final OProfilerData summary = new OProfilerData();
+            for (OProfilerData a : snapshots) {
+              summary.mergeWith(a);
+            }
+            summaries.add(summary);
+
+            if (summaries.size() > maxSummaries)
+              // REMOVE THE FIRST OLDEST
+              summaries.remove(0);
+
+          }
+          snapshots.clear();
+        }
+      }
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public void updateCounter(final String iStatName, final long iPlus) {
-    if (iStatName == null)
+    if (iStatName == null || recordingFrom < 0)
       return;
 
-    // CHECK IF STATISTICS ARE ACTIVED
-    if (recording < 0)
-      return;
-
-    synchronized (counters) {
-      Long stat = counters.get(iStatName);
-
-      long oldValue = stat == null ? 0 : stat.longValue();
-
-      stat = new Long(oldValue + iPlus);
-
-      counters.put(iStatName, stat);
+    acquireSharedLock();
+    try {
+      lastSnapshot.updateCounter(iStatName, iPlus);
+      realTime.updateCounter(iStatName, iPlus);
+    } finally {
+      releaseSharedLock();
     }
   }
 
-  // ----------------------------------------------------------------------------
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.common.profiler.ProfileMBean#getStatistic(java.lang.String)
-   */
   public long getCounter(final String iStatName) {
-    if (iStatName == null)
+    if (iStatName == null || recordingFrom < 0)
       return -1;
 
-    // CHECK IF STATISTICS ARE ACTIVED
-    if (recording < 0)
-      return -1;
-
-    synchronized (counters) {
-      Long stat = counters.get(iStatName);
-
-      if (stat == null)
-        return -1;
-
-      return stat.longValue();
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getCounter(iStatName);
+    } finally {
+      releaseSharedLock();
     }
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.common.profiler.ProfileMBean#dump()
-   */
+  public String toJSON(final String iQuery, final String iFrom, final String iTo) {
+    final StringBuilder buffer = new StringBuilder();
+
+    Map<String, Object> hookValuesSnapshots = null;
+    if (iQuery.equals("realtime"))
+      // GET LATETS HOOK VALUES
+      hookValuesSnapshots = archiveHooks();
+
+    buffer.append("{ \"" + iQuery + "\":");
+
+    acquireSharedLock();
+    try {
+      if (iQuery.equals("realtime")) {
+        realTime.setHookValues(hookValuesSnapshots);
+        realTime.toJSON(buffer);
+
+      } else if (iQuery.equals("last")) {
+        lastSnapshot.toJSON(buffer);
+
+      } else {
+        // GET THE RANGES
+        if (iFrom == null || iTo == null)
+          throw new IllegalArgumentException("Invalid range format. Use: <from> <to>, where * means any");
+
+        final long from = iFrom.equals("*") ? 0 : Long.parseLong(iFrom);
+        final long to = iTo.equals("*") ? Long.MAX_VALUE : Long.parseLong(iTo);
+
+        boolean firstItem = true;
+        buffer.append("[");
+        if (iQuery.equals("archive")) {
+          // ARCHIVE
+          for (int i = 0; i < snapshots.size(); ++i) {
+            final OProfilerData a = snapshots.get(i);
+            if (a.isInRange(from, to)) {
+              if (firstItem)
+                firstItem = false;
+              else
+                buffer.append(',');
+
+              a.toJSON(buffer);
+            }
+          }
+        } else if (iQuery.equals("summary")) {
+          // SUMMARY
+          for (int i = 0; i < summaries.size(); ++i) {
+            final OProfilerData a = summaries.get(i);
+            if (a.isInRange(from, to)) {
+              if (firstItem)
+                firstItem = false;
+              else
+                buffer.append(',');
+
+              a.toJSON(buffer);
+            }
+          }
+        } else
+          throw new IllegalArgumentException("Invalid archive query: use realtime|last|archive|summary");
+
+        buffer.append("]");
+      }
+
+      buffer.append("}");
+
+    } finally {
+      releaseSharedLock();
+    }
+
+    return buffer.toString();
+  }
+
   public String dump() {
     final float maxMem = Runtime.getRuntime().maxMemory() / 1000000f;
     final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
@@ -139,139 +256,133 @@ public class OProfiler implements OProfilerMBean {
 
     final long now = System.currentTimeMillis();
 
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nOrientDB profiler dump of ");
-    buffer.append(new Date(now));
-    buffer.append(" after ");
-    buffer.append((now - recording) / 1000);
-    buffer.append(" secs of profiling");
-    buffer.append(String.format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
-        freeMem, (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
-    buffer.append("\n");
-    buffer.append(dumpHookValues());
-    buffer.append("\n");
-    buffer.append(dumpCounters());
-    buffer.append("\n\n");
-    buffer.append(dumpStats());
-    buffer.append("\n\n");
-    buffer.append(dumpChronos());
-    return buffer.toString();
-  }
+    acquireSharedLock();
+    try {
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.common.profiler.ProfileMBean#reset()
-   */
-  public void reset() {
-    lastReset = new Date();
+      final StringBuilder buffer = new StringBuilder();
+      buffer.append("\nOrientDB profiler dump of ");
+      buffer.append(new Date(now));
+      buffer.append(" after ");
+      buffer.append((now - recordingFrom) / 1000);
+      buffer.append(" secs of profiling");
+      buffer.append(String.format("\nFree memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb - CPUs: %d",
+          freeMem, (freeMem * 100 / (float) maxMem), totMem, maxMem, Runtime.getRuntime().availableProcessors()));
+      buffer.append("\n");
+      buffer.append(dumpHookValues());
+      buffer.append("\n");
+      buffer.append(dumpCounters());
+      buffer.append("\n\n");
+      buffer.append(dumpStats());
+      buffer.append("\n\n");
+      buffer.append(dumpChronos());
+      return buffer.toString();
 
-    if (counters != null) {
-      synchronized (counters) {
-        counters.clear();
-      }
-    }
-
-    if (chronos != null) {
-      synchronized (chronos) {
-        chronos.clear();
-      }
-    }
-
-    if (stats != null) {
-      synchronized (stats) {
-        stats.clear();
-      }
+    } finally {
+      releaseSharedLock();
     }
   }
 
   public long startChrono() {
     // CHECK IF CHRONOS ARE ACTIVED
-    if (recording < 0)
+    if (recordingFrom < 0)
       return -1;
 
     return System.currentTimeMillis();
   }
 
   public long stopChrono(final String iName, final long iStartTime) {
-    return updateEntry(chronos, iName, System.currentTimeMillis() - iStartTime);
+    acquireSharedLock();
+    try {
+
+      realTime.stopChrono(iName, iStartTime);
+      return lastSnapshot.stopChrono(iName, iStartTime);
+
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public long updateStat(final String iName, final long iValue) {
-    return updateEntry(stats, iName, iValue);
+    acquireSharedLock();
+    try {
+
+      realTime.updateStat(iName, iValue);
+      return lastSnapshot.updateStat(iName, iValue);
+
+    } finally {
+      releaseSharedLock();
+    }
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.common.profiler.ProfileMBean#dumpStatistics()
-   */
   public String dumpCounters() {
     // CHECK IF STATISTICS ARE ACTIVED
-    if (recording < 0)
+    if (recordingFrom < 0)
       return "Counters: <no recording>";
 
-    final StringBuilder buffer = new StringBuilder();
-
-    synchronized (counters) {
-      buffer.append("DUMPING COUNTERS (last reset on: " + lastReset.toString() + ")...");
-
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-
-      final List<String> keys = new ArrayList<String>(counters.keySet());
-      Collections.sort(keys);
-
-      for (String k : keys) {
-        final Long stat = counters.get(k);
-        buffer.append(String.format("\n%-50s | %-65d |", k, stat));
-      }
+    acquireSharedLock();
+    try {
+      return lastSnapshot.dumpCounters();
+    } finally {
+      releaseSharedLock();
     }
-
-    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-    return buffer.toString();
   }
 
   public String dumpChronos() {
-    return dumpEntries(chronos, new StringBuilder("DUMPING CHRONOS (last reset on: " + lastReset.toString() + "). Times in ms..."));
+    acquireSharedLock();
+    try {
+      return lastSnapshot.dumpChronos();
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public String dumpStats() {
-    return dumpEntries(stats, new StringBuilder("DUMPING STATISTICS (last reset on: " + lastReset.toString() + "). Times in ms..."));
+    acquireSharedLock();
+    try {
+      return lastSnapshot.dumpStats();
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public String dumpHookValues() {
-    if (recording < 0)
+    if (recordingFrom < 0)
       return "HookValues: <no recording>";
 
     final StringBuilder buffer = new StringBuilder();
 
-    synchronized (hooks) {
-      if (hooks.size() == 0)
-        return "";
+    acquireSharedLock();
+    try {
 
-      buffer.append("HOOK VALUES:");
+      synchronized (hooks) {
+        if (hooks.size() == 0)
+          return "";
 
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+        buffer.append("HOOK VALUES:");
 
-      final List<String> names = new ArrayList<String>(hooks.values());
-      Collections.sort(names);
+        buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+        buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+        buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-      for (String k : names) {
-        for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-          if (v.getValue().equals(k)) {
-            final OProfilerHookValue hook = v.getKey();
-            if (hook != null) {
-              final Object hookValue = hook.getValue();
-              buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+        final List<String> names = new ArrayList<String>(hooks.values());
+        Collections.sort(names);
+
+        for (String k : names) {
+          for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
+            if (v.getValue().equals(k)) {
+              final OProfilerHookValue hook = v.getKey();
+              if (hook != null) {
+                final Object hookValue = hook.getValue();
+                buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+              }
+              break;
             }
-            break;
           }
         }
       }
+
+    } finally {
+      releaseSharedLock();
     }
 
     buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
@@ -279,51 +390,42 @@ public class OProfiler implements OProfilerMBean {
   }
 
   public Object getHookValue(final String iName) {
-    for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-      if (v.getValue().equals(iName)) {
-        final OProfilerHookValue h = v.getKey();
-        if (h != null)
-          return h.getValue();
+    synchronized (hooks) {
+      for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
+        if (v.getValue().equals(iName)) {
+          final OProfilerHookValue h = v.getKey();
+          if (h != null)
+            return h.getValue();
+        }
       }
     }
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.common.profiler.ProfileMBean#getStatistics()
-   */
   public String[] getCountersAsString() {
-    synchronized (counters) {
-      final String[] output = new String[counters.size()];
-      int i = 0;
-      for (Entry<String, Long> entry : counters.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getCountersAsString();
+    } finally {
+      releaseSharedLock();
     }
   }
 
   public String[] getChronosAsString() {
-    synchronized (chronos) {
-      final String[] output = new String[chronos.size()];
-      int i = 0;
-      for (Entry<String, OProfilerEntry> entry : chronos.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getChronosAsString();
+    } finally {
+      releaseSharedLock();
     }
   }
 
   public String[] getStatsAsString() {
-    synchronized (stats) {
-      final String[] output = new String[stats.size()];
-      int i = 0;
-      for (Entry<String, OProfilerEntry> entry : stats.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getStatsAsString();
+    } finally {
+      releaseSharedLock();
     }
   }
 
@@ -332,69 +434,34 @@ public class OProfiler implements OProfilerMBean {
   }
 
   public List<String> getCounters() {
-    synchronized (counters) {
-      final List<String> list = new ArrayList<String>(counters.keySet());
-      Collections.sort(list);
-      return list;
-    }
-  }
-
-  public List<String> getHooks() {
-    synchronized (hooks) {
-      final List<String> list = new ArrayList<String>(hooks.values());
-      Collections.sort(list);
-      return list;
-    }
-  }
-
-  public List<String> getChronos() {
-    synchronized (chronos) {
-      final List<String> list = new ArrayList<String>(chronos.keySet());
-      Collections.sort(list);
-      return list;
-    }
-  }
-
-  public List<String> getStats() {
-    synchronized (stats) {
-      final List<String> list = new ArrayList<String>(stats.keySet());
-      Collections.sort(list);
-      return list;
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getCounters();
+    } finally {
+      releaseSharedLock();
     }
   }
 
   public OProfilerEntry getStat(final String iStatName) {
-    synchronized (stats) {
-      return stats.get(iStatName);
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getStat(iStatName);
+    } finally {
+      releaseSharedLock();
     }
   }
 
   public OProfilerEntry getChrono(final String iChronoName) {
-    synchronized (chronos) {
-      return chronos.get(iChronoName);
+    acquireSharedLock();
+    try {
+      return lastSnapshot.getChrono(iChronoName);
+    } finally {
+      releaseSharedLock();
     }
   }
 
-  public boolean isRecording() {
-    return recording > -1;
-  }
-
-  public OProfilerMBean startRecording() {
-    recording = System.currentTimeMillis();
-    return this;
-  }
-
-  public OProfilerMBean stopRecording() {
-    recording = -1;
-    return this;
-  }
-
-  public static OProfiler getInstance() {
-    return instance;
-  }
-
   public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
-    if (recording < 0)
+    if (recordingFrom < 0)
       return;
 
     synchronized (hooks) {
@@ -410,7 +477,7 @@ public class OProfiler implements OProfilerMBean {
   }
 
   public void unregisterHookValue(final String iName) {
-    if (recording < 0)
+    if (recordingFrom < 0)
       return;
 
     synchronized (hooks) {
@@ -423,96 +490,41 @@ public class OProfiler implements OProfilerMBean {
     }
   }
 
-  private void init() {
-    counters = new HashMap<String, Long>();
-    chronos = new HashMap<String, OProfilerEntry>();
-    stats = new HashMap<String, OProfilerEntry>();
-    hooks = new WeakHashMap<OProfiler.OProfilerHookValue, String>();
-
-    lastReset = new Date();
-  }
-
-  private synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue) {
-    if (recording < 0)
-      return iValue;
-
-    synchronized (iValues) {
-      OProfilerEntry c = iValues.get(iName);
-
-      if (c == null) {
-        // CREATE NEW CHRONO
-        c = new OProfilerEntry();
-        iValues.put(iName, c);
-      }
-
-      c.name = iName;
-      c.items++;
-      c.last = iValue;
-      c.total += c.last;
-      c.average = c.total / c.items;
-
-      if (c.last < c.min)
-        c.min = c.last;
-
-      if (c.last > c.max)
-        c.max = c.last;
-
-      return c.last;
-    }
-  }
-
-  private synchronized String dumpEntries(final Map<String, OProfilerEntry> iValues, final StringBuilder iBuffer) {
-    // CHECK IF CHRONOS ARE ACTIVED
-    if (recording < 0)
-      return "<no recording>";
-
-    synchronized (iValues) {
-      if (iValues.size() == 0)
-        return "";
-
-      OProfilerEntry c;
-
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
-          "items"));
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-
-      final List<String> keys = new ArrayList<String>(iValues.keySet());
-      Collections.sort(keys);
-
-      for (String k : keys) {
-        c = iValues.get(k);
-        iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
-            c.items));
-      }
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      return iBuffer.toString();
-    }
+  public static OProfiler getInstance() {
+    return instance;
   }
 
   public void setAutoDump(final int iSeconds) {
-    if (timer != null) {
+    if (timer != null)
       timer.cancel();
-      timer = null;
-    }
 
     if (iSeconds > 0) {
       final int ms = iSeconds * 1000;
 
-      timer = new Timer(true);
       timer.scheduleAtFixedRate(new TimerTask() {
 
         @Override
         public void run() {
           System.out.println(OProfiler.getInstance().dump());
-          if (autoDumpReset)
-            reset();
         }
       }, ms, ms);
     }
   }
 
-  public void setAutoDumpReset(final boolean iNewValue) {
-    autoDumpReset = iNewValue;
+  /**
+   * Must be called inside a lock.
+   */
+  protected Map<String, Object> archiveHooks() {
+    final Map<String, Object> result = new HashMap<String, Object>();
+
+    final Map<OProfilerHookValue, String> copy = new HashMap<OProfiler.OProfilerHookValue, String>();
+    synchronized (hooks) {
+      copy.putAll(hooks);
+    }
+
+    for (Map.Entry<OProfilerHookValue, String> v : copy.entrySet())
+      result.put(v.getValue(), v.getKey().getValue());
+
+    return result;
   }
 }

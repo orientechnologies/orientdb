@@ -1521,9 +1521,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       out.println("Profiler is OFF now, use 'profiler on' to turn on.");
     } else if (iCommandName.equalsIgnoreCase("dump")) {
       out.println(OProfiler.getInstance().dump());
-    } else if (iCommandName.equalsIgnoreCase("reset")) {
-      OProfiler.getInstance().reset();
-      out.println("Profiler has been resetted");
     }
   }
 

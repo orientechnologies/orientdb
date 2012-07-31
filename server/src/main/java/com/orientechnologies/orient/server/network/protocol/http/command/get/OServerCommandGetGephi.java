@@ -147,6 +147,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     }
   }
 
+  @SuppressWarnings("unchecked")
   protected void generateGraphDbOutput(List<OIdentifiable> iRecords, final OJSONWriter json) throws IOException {
     final Set<OIdentifiable> edges = new LinkedHashSet<OIdentifiable>();
     for (OIdentifiable rec : iRecords) {

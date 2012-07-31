@@ -22,10 +22,10 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
@@ -39,6 +39,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetProfiler;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
@@ -79,6 +80,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     registerCommand(new OServerCommandGetIndex());
     registerCommand(new OServerCommandGetListDatabases());
     registerCommand(new OServerCommandGetExportDatabase());
+    registerCommand(new OServerCommandGetProfiler());
     registerCommand(new OServerCommandGetGephi());
 
     registerCommand(new OServerCommandPostClass());
