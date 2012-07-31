@@ -62,7 +62,7 @@
 		</exec>
 
 		<exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-            <env key="JAVA_OPTS" value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+            <env key="JAVA_OPTS" value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dprofiler.enabled=true"/>
 			<arg value="./server.sh" />
 		</exec>
 
