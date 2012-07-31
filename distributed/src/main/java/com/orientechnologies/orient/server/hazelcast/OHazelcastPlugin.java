@@ -218,8 +218,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           final OServerOfflineException exc = (OServerOfflineException) e.getCause();
 
           // RETRY
-          OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online (status=%s), retrying %d...", exc.getNodeId(), exc.getNodeStatus(),
-              retry + 1);
+          OLogManager.instance().warn(this, "DISTRIBUTED -> remote node %s is not online (status=%s), retrying %d...",
+              exc.getNodeId(), exc.getNodeStatus(), retry + 1);
           // WAIT A BIT
           try {
             Thread.sleep(200 + (retry * 50));
@@ -253,7 +253,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     String masterNodeId = getMasterNode(dbName, iClusterName, iKey);
 
     if (!masterNodeId.equals(localNodeId) && isOfflineNode(masterNodeId)) {
-      OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligning. Waiting for completition...", masterNodeId);
+      OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is offline (status=%s). Waiting for completition...", masterNodeId,
+          getRemoteNodeStatus(masterNodeId));
+
       while (isOfflineNode(masterNodeId)) {
         try {
           Thread.sleep(200);
@@ -261,7 +263,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           Thread.interrupted();
         }
         // RE-READ THE KEY OWNER (IT COULD BE CHANGED DURING THE PAUSE)
-        masterNodeId = getMasterNode(dbName, iClusterName, iKey);
+        final String newMasterNodeId = getMasterNode(dbName, iClusterName, iKey);
+
+        if (!newMasterNodeId.equals(masterNodeId)) {
+          OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is the new owner of the requested key set", masterNodeId,
+              getRemoteNodeStatus(masterNodeId));
+          masterNodeId = newMasterNodeId;
+        }
+
       }
       OLogManager.instance().warn(this, "DISTRIBUTED -> node %s is aligned. Flushing pending operations...", masterNodeId);
     }
@@ -647,6 +656,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void entryEvicted(EntryEvent<String, Object> event) {
+  }
+
+  public String getRemoteNodeStatus(final String iNodeId) {
+    final ODocument cfg = getNodeConfiguration(iNodeId);
+    return (String) (cfg != null ? cfg.field("status") : null);
   }
 
   public boolean isOfflineNode(final String iNodeId) {
