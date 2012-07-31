@@ -45,29 +45,29 @@ public class OProfilerData {
   private Map<String, Object>         hooks;
 
   public class OProfilerEntry {
-    public String name           = null;
-    public long   total          = 0;
-    public long   lastElapsed    = 0;
-    public long   minElapsed     = 999999999;
-    public long   maxElapsed     = 0;
-    public long   averageElapsed = 0;
-    public long   totalElapsed   = 0;
+    public String name    = null;
+    public long   entries = 0;
+    public long   last    = 0;
+    public long   min     = 999999999;
+    public long   max     = 0;
+    public long   average = 0;
+    public long   total   = 0;
 
     public void toJSON(final StringBuilder buffer) {
       buffer.append(String.format("\"%s\":{", name));
-      buffer.append(String.format("\"%s\":%d,", "total", total));
-      buffer.append(String.format("\"%s\":%d,", "lastElapsed", lastElapsed));
-      buffer.append(String.format("\"%s\":%d,", "minElapsed", minElapsed));
-      buffer.append(String.format("\"%s\":%d,", "maxElapsed", maxElapsed));
-      buffer.append(String.format("\"%s\":%d,", "averageElapsed", averageElapsed));
-      buffer.append(String.format("\"%s\":%d", "totalElapsed", totalElapsed));
+      buffer.append(String.format("\"%s\":%d,", "entries", entries));
+      buffer.append(String.format("\"%s\":%d,", "last", last));
+      buffer.append(String.format("\"%s\":%d,", "min", min));
+      buffer.append(String.format("\"%s\":%d,", "max", max));
+      buffer.append(String.format("\"%s\":%d,", "average", average));
+      buffer.append(String.format("\"%s\":%d", "total", total));
       buffer.append("}");
     }
 
     @Override
     public String toString() {
-      return String.format("Profiler entry [%s]: total=%d, average=%d, items=%d, last=%d, max=%d, min=%d", totalElapsed, name,
-          averageElapsed, total, lastElapsed, maxElapsed, minElapsed);
+      return String.format("Profiler entry [%s]: total=%d, average=%d, items=%d, last=%d, max=%d, min=%d", total, name, average,
+          entries, last, max, min);
     }
   }
 
@@ -410,18 +410,18 @@ public class OProfilerData {
       }
 
       c.name = iName;
-      c.total++;
-      c.lastElapsed = iValue;
-      c.totalElapsed += c.lastElapsed;
-      c.averageElapsed = c.totalElapsed / c.total;
+      c.entries++;
+      c.last = iValue;
+      c.total += c.last;
+      c.average = c.total / c.entries;
 
-      if (c.lastElapsed < c.minElapsed)
-        c.minElapsed = c.lastElapsed;
+      if (c.last < c.min)
+        c.min = c.last;
 
-      if (c.lastElapsed > c.maxElapsed)
-        c.maxElapsed = c.lastElapsed;
+      if (c.last > c.max)
+        c.max = c.last;
 
-      return c.lastElapsed;
+      return c.last;
     }
   }
 
@@ -443,8 +443,8 @@ public class OProfilerData {
 
       for (String k : keys) {
         c = iValues.get(k);
-        iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.lastElapsed, c.totalElapsed, c.minElapsed,
-            c.maxElapsed, c.averageElapsed, c.total));
+        iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
+            c.entries));
       }
       iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
       return iBuffer.toString();
@@ -459,12 +459,12 @@ public class OProfilerData {
         iMyEntries.put(entry.getKey(), currentValue);
       } else {
         // MERGE IT
+        currentValue.entries += entry.getValue().entries;
+        currentValue.last = entry.getValue().last;
+        currentValue.min = Math.min(currentValue.min, entry.getValue().min);
+        currentValue.max = Math.max(currentValue.max, entry.getValue().max);
+        currentValue.average = (currentValue.total + entry.getValue().total) / currentValue.entries;
         currentValue.total += entry.getValue().total;
-        currentValue.lastElapsed = entry.getValue().lastElapsed;
-        currentValue.minElapsed = Math.min(currentValue.minElapsed, entry.getValue().minElapsed);
-        currentValue.maxElapsed = Math.max(currentValue.maxElapsed, entry.getValue().maxElapsed);
-        currentValue.averageElapsed = (currentValue.totalElapsed + entry.getValue().totalElapsed) / currentValue.total;
-        currentValue.totalElapsed += entry.getValue().totalElapsed;
       }
     }
   }

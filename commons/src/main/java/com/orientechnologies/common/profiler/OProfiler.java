@@ -321,7 +321,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireSharedLock();
     try {
-      return lastSnapshot.dumpCounters();
+      return realTime.dumpCounters();
     } finally {
       releaseSharedLock();
     }
@@ -330,7 +330,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String dumpChronos() {
     acquireSharedLock();
     try {
-      return lastSnapshot.dumpChronos();
+      return realTime.dumpChronos();
     } finally {
       releaseSharedLock();
     }
@@ -339,7 +339,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String dumpStats() {
     acquireSharedLock();
     try {
-      return lastSnapshot.dumpStats();
+      return realTime.dumpStats();
     } finally {
       releaseSharedLock();
     }
