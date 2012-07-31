@@ -230,8 +230,10 @@ public class OServer {
 
       try {
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        mBeanServer.unregisterMBean(onProfiler);
-        mBeanServer.unregisterMBean(onServer);
+        if (mBeanServer.isRegistered(onProfiler))
+          mBeanServer.unregisterMBean(onProfiler);
+        if (mBeanServer.isRegistered(onServer))
+          mBeanServer.unregisterMBean(onServer);
       } catch (Exception e) {
         OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
       }
