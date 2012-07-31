@@ -33,7 +33,6 @@ function ODatabase(databasePath) {
 	this.removeObjectCircleReferences = true;
 	this.urlPrefix = "";
 	this.urlSuffix = "";
-	this.auth = "";
 
 	if (databasePath) {
 		var pos = databasePath.indexOf('orientdb_proxy', 8); // JUMP HTTP
@@ -48,10 +47,7 @@ function ODatabase(databasePath) {
 		if (this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
 			var parts = this.databaseName.split('/');
-			for (var p in parts) {
-				if (!parts.hasOwnProperty(p)) {
-					continue;
-				}
+			for (p in parts) {
 				if (this.encodedDatabaseName.length > 0)
 					this.encodedDatabaseName += '$';
 				this.encodedDatabaseName += parts[p];
@@ -60,18 +56,6 @@ function ODatabase(databasePath) {
 			this.encodedDatabaseName = this.databaseName;
 	}
 
-	ODatabase.prototype.getAuth = function() {
-		return this.auth;
-	}
-
-	ODatabase.prototype.setAuth = function(userName, userPass) {
-		if (typeof(btoa) == 'function') {
-			this.auth = "Basic " + btoa(userName + ':' + userPass)
-		} else {
-			this.auth = null;
-		}
-	}
-	
 	ODatabase.prototype.getDatabaseInfo = function() {
 		return this.databaseInfo;
 	}
@@ -167,8 +151,6 @@ function ODatabase(databasePath) {
 		if (userPass == null) {
 			userPass = '';
 		}
-		this.setAuth(userName, userPass);
-		
 		if (authProxy != null && authProxy != '') {
 			urlPrefix = this.databaseUrl + authProxy + "/";
 		} else
@@ -177,7 +159,7 @@ function ODatabase(databasePath) {
 		if (type == null || type == '') {
 			type = 'GET';
 		}
-		var ajaxArgs = {
+		$.ajax({
 			type : type,
 			url : urlPrefix + 'connect/' + this.encodedDatabaseName
 					+ this.urlSuffix,
@@ -185,8 +167,8 @@ function ODatabase(databasePath) {
 			contentType : "application/json; charset=utf-8",
 			processData : false,
 			async : false,
-			username: userName,
-			password: userPass,
+			username : userName,
+			password : userPass,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.setDatabaseInfo(this.transformResponse(msg));
@@ -194,21 +176,8 @@ function ODatabase(databasePath) {
 			error : function(msg, textStatus, errorThrown) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
 				this.setDatabaseInfo(null);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
-		};
-		// Firefox doesn't allow passing username+password in the URI for cross-domain XHR.
-		// The request will fail with error "Access to restricted URI denied code: 1012" 
-		if ($.support.cors) {
-			delete ajaxArgs.username;
-			delete ajaxArgs.password;
-		}
-		$.ajax(ajaxArgs);
+		});
 		return this.getDatabaseInfo();
 	}
 
@@ -245,12 +214,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
 				this.setDatabaseInfo(null);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getDatabaseInfo();
@@ -293,12 +256,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Query error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -334,12 +291,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Query error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -379,12 +330,6 @@ function ODatabase(databasePath) {
 				this.setErrorMessage('Save error: ' + msg.responseText);
 				if (errorCallback)
 					errorCallback(msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 
@@ -427,12 +372,6 @@ function ODatabase(databasePath) {
 				if (onerror) {
 					onerror();
 				}
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -467,12 +406,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Index put error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -497,12 +430,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Index get error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -551,12 +478,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -581,12 +502,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -623,12 +538,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -660,12 +569,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -690,12 +593,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -731,12 +628,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResponse();
@@ -760,12 +651,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -786,12 +671,6 @@ function ODatabase(databasePath) {
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Command error: ' + msg.responseText);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 		return this.getCommandResult();
@@ -806,13 +685,9 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getClass = function(className) {
-		var classes = databaseInfo['classes'];
-		for (var cls in classes) {
-			if (!classes.hasOwnProperty(cls)) {
-				continue;
-			}
-			if (classes[cls].name == className) {
-				return classes[cls];
+		for (cls in databaseInfo['classes']) {
+			if (databaseInfo['classes'][cls].name == className) {
+				return databaseInfo['classes'][cls];
 			}
 		}
 		return null;
@@ -852,13 +727,6 @@ function ODatabase(databasePath) {
 					this.handleResponse(null);
 					this.setErrorMessage('Command response: '
 							+ msg.responseText);
-				},
-				beforeSend : function(req) {
-					var auth = this.getAuth();
-					if (auth) {
-						req.withCredentials = true;
-						req.setRequestHeader('Authorization', this.getAuth());
-					}
 				}
 			});
 		}
@@ -881,12 +749,8 @@ function ODatabase(databasePath) {
 
 		if (configuration)
 			// OVERWRITE DEFAULT CONFIGURATION
-			for (var c in configuration) {
-				if (!configuration.hasOwnProperty(c)) {
-					continue;
-				}
+			for (c in configuration)
 				cfg[c] = configuration[c];
-			}
 
 		$.ajax({
 			type : "POST",
@@ -912,12 +776,6 @@ function ODatabase(databasePath) {
 				this.setErrorMessage('Import error: ' + msg.responseText);
 				if (errorCallback)
 					errorCallback(msg);
-			},
-			beforeSend : function(req) {
-				if (this.getAuth()) {
-					req.withCredentials = true;
-					req.setRequestHeader('Authorization', this.getAuth());
-				}
 			}
 		});
 	}
@@ -968,10 +826,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.createObjectsLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
-			if (!obj.hasOwnProperty(field)) {
-				continue;
-			}
+		for (field in obj) {
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.createObjectsLinksMap(value, linkMap);
@@ -990,10 +845,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.putObjectInLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
-			if (!obj.hasOwnProperty(field)) {
-				continue;
-			}
+		for (field in obj) {
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.putObjectInLinksMap(value, linkMap);
@@ -1010,10 +862,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getObjectFromLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
-			if (!obj.hasOwnProperty(field)) {
-				continue;
-			}
+		for (field in obj) {
 			var value = obj[field];
 			if (typeof value == 'object') {
 				this.getObjectFromLinksMap(value, linkMap);
@@ -1040,10 +889,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj,
 			linkMap) {
-		for (var field in obj) {
-			if (!obj.hasOwnProperty(field)) {
-				continue;
-			}
+		for (field in obj) {
 			var value = obj[field];
 			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				if (value['@rid'] != null && value['@rid']) {
@@ -1056,10 +902,7 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (var i in value) {
-					if (!value.hasOwnProperty(i)) {
-						continue;
-					}
+				for (i in value) {
 					var arrayValue = value[i];
 					if (arrayValue != null && typeof arrayValue == 'object') {
 						if (arrayValue['@rid'] != null && arrayValue['@rid']) {
@@ -1079,10 +922,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesChangeObject = function(obj,
 			linkMap) {
-		for (var field in obj) {
-			if (!obj.hasOwnProperty(field)) {
-				continue;
-			}
+		for (field in obj) {
 			var value = obj[field];
 			if (value != null && typeof value == 'object' && !$.isArray(value)) {
 				var inspectObject = true;
@@ -1103,10 +943,7 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (var i in value) {
-					if (!value.hasOwnProperty(i)) {
-						continue;
-					}
+				for (i in value) {
 					var arrayValue = value[i];
 					if (typeof arrayValue == 'object') {
 						var inspectObject = true;
