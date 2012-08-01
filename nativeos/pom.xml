@@ -34,6 +34,7 @@
     <properties>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
+        <jna.version>3.4.0</jna.version>
     </properties>
 
     <artifactId>orientdb-nativeos</artifactId>
@@ -42,7 +43,12 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>3.4.0</version>
+            <version>${jna.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>platform</artifactId>
+            <version>${jna.version}</version>
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
