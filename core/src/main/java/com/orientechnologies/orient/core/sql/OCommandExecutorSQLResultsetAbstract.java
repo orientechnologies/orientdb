@@ -197,9 +197,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       throwParsingException("Invalid LIMIT value setted to '" + word + "' but it should be a valid integer. Example: LIMIT 10");
     }
 
-    if (limit < 0)
-      throwParsingException("Invalid LIMIT value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: LIMIT 10");
+    if (limit == 0)
+      throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
 
     return limit;
   }
