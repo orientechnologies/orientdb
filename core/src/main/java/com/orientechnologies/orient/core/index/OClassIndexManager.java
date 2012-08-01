@@ -16,6 +16,9 @@
 
 package com.orientechnologies.orient.core.index;
 
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,13 +50,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
+
   @Override
   public boolean onRecordBeforeCreate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
-
-    checkIndexedPropertiesOnCreation(iRecord);
-
-    acquireModificationLock(iRecord);
+    checkIndexesAndAquireLock(iRecord, BEFORE_CREATE);
     return false;
   }
 
@@ -78,7 +79,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           index.put(key, rid);
       }
 
-      releaseModificationLock(iRecord);
+      releaseModificationLock(iRecord, indexes);
     }
   }
 
@@ -90,10 +91,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public boolean onRecordBeforeUpdate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
-
-    checkIndexedPropertiesOnUpdate(iRecord);
-
-    acquireModificationLock(iRecord);
+    checkIndexesAndAquireLock(iRecord, BEFORE_UPDATE);
     return false;
   }
 
@@ -120,7 +118,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     }
 
-    releaseModificationLock(iRecord);
+    releaseModificationLock(iRecord, indexes);
 
     if (iRecord.isTrackingChanges()) {
       iRecord.setTrackingChanges(false);
@@ -147,7 +145,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
                 + iDocument.getVersion() + " your=v" + version + ")", iDocument.getIdentity(), iDocument.getVersion(), version);
     }
 
-    acquireModificationLock(iDocument);
+    ;
+    acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
     return false;
   }
 
@@ -187,7 +186,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     }
 
-    releaseModificationLock(iRecord);
+    releaseModificationLock(iRecord, indexes);
 
     if (iRecord.isTrackingChanges()) {
       iRecord.setTrackingChanges(false);
@@ -419,13 +418,26 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return false;
   }
 
-  private static void checkIndexedPropertiesOnCreation(final ODocument iRecord) {
+  private void checkIndexesAndAquireLock(ODocument iRecord, TYPE hookType) {
     final OClass cls = iRecord.getSchemaClass();
-    if (cls == null)
-      return;
+    if (cls != null) {
+      final Collection<OIndex<?>> indexes = cls.getIndexes();
+      switch (hookType) {
+      case BEFORE_CREATE:
+        checkIndexedPropertiesOnCreation(iRecord, indexes);
+        break;
+      case BEFORE_UPDATE:
+        checkIndexedPropertiesOnUpdate(iRecord, indexes);
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid hook type: " + hookType);
+      }
+      acquireModificationLock(iRecord, indexes);
+    }
+  }
 
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-    for (final OIndex<?> index : indexes) {
+  private static void checkIndexedPropertiesOnCreation(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
+    for (final OIndex<?> index : iIndexes) {
       final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
       if (key instanceof Collection) {
         for (final Object keyItem : (Collection<?>) key) {
@@ -439,12 +451,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  private static void acquireModificationLock(final ODocument iRecord) {
-    final OClass cls = iRecord.getSchemaClass();
-    if (cls == null)
+  private static void acquireModificationLock(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
+    if (iIndexes == null)
       return;
-
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
 
     final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
       public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
@@ -452,35 +461,39 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     });
 
-    indexesToLock.addAll(indexes);
+    indexesToLock.addAll(iIndexes);
 
     for (final OIndex<?> index : indexesToLock) {
       index.getInternal().acquireModificationLock();
     }
   }
 
+  /**
+   * Releases the index modification lock. Incurs overhead of index retrieval: if you already have a list of indexes for the schema
+   * class of this record, use the overloaded method that takes a collection.
+   */
   private static void releaseModificationLock(final ODocument iRecord) {
     final OClass cls = iRecord.getSchemaClass();
-    if (cls == null)
-      return;
+    if (cls != null) {
+      releaseModificationLock(iRecord, cls.getIndexes());
+    }
+  }
 
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-    for (final OIndex<?> index : indexes) {
+  /**
+   * Releases the index modification lock. Avoids overhead of retrieving the schema class' indexes.
+   */
+  private static void releaseModificationLock(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
+    for (final OIndex<?> index : iIndexes) {
       index.getInternal().releaseModificationLock();
     }
   }
 
-  private static void checkIndexedPropertiesOnUpdate(final ODocument iRecord) {
-    final OClass cls = iRecord.getSchemaClass();
-    if (cls == null)
-      return;
-
+  private static void checkIndexedPropertiesOnUpdate(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
     final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iRecord.getDirtyFields()));
     if (dirtyFields.isEmpty())
       return;
 
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-    for (final OIndex<?> index : indexes) {
+    for (final OIndex<?> index : iIndexes) {
       final OIndexDefinition indexDefinition = index.getDefinition();
       final List<String> indexFields = indexDefinition.getFields();
       for (final String indexField : indexFields) {
