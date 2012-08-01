@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,22 +59,23 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
+  private static final long              serialVersionUID = 1L;
 
   protected OSchemaShared                owner;
   protected String                       name;
   protected Class<?>                     javaClass;
-  protected final Map<String, OProperty> properties    = new HashMap<String, OProperty>();
+  protected final Map<String, OProperty> properties       = new LinkedHashMap<String, OProperty>();
 
   protected int[]                        clusterIds;
   protected int                          defaultClusterId;
   protected OClassImpl                   superClass;
   protected int[]                        polymorphicClusterIds;
   protected List<OClass>                 baseClasses;
-  protected float                        overSize      = 0f;
+  protected float                        overSize         = 0f;
   protected String                       shortName;
-  protected boolean                      strictMode    = false;                             // @SINCE v1.0rc8
+  protected boolean                      strictMode       = false;                                 // @SINCE v1.0rc8
   protected Map<String, String>          customFields;
-  private static final Iterator<OClass>  EMPTY_CLASSES = new ArrayList<OClass>().iterator();
+  private static final Iterator<OClass>  EMPTY_CLASSES    = new ArrayList<OClass>().iterator();
 
   /**
    * Constructor used in unmarshalling.
