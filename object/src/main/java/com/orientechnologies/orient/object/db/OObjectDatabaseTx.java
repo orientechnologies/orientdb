@@ -205,6 +205,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		return (RET) OObjectEntitySerializer.detach(iPojo, this);
 	}
 
+	public <RET> RET detach(final Object iPojo, boolean returnNonProxiedInstance) {
+		return (RET) OObjectEntitySerializer.detach(iPojo, this, returnNonProxiedInstance);
+	}
+
 	public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
 		checkOpeness();
 		if (iPojo == null)

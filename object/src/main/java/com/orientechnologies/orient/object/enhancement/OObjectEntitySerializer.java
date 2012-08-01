@@ -147,19 +147,43 @@ public class OObjectEntitySerializer {
 	}
 
 	/**
-	 * Method that detaches all fields contained in the document to the given object
+	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
+	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
+	 * returnNonProxiedInstance)}
 	 * 
 	 * @param <T>
 	 * @param o
 	 *          :- the object to detach
 	 * @param db
 	 *          :- the database instance
-	 * @return the object serialized or with detached data
+	 * @return proxied instance: the object serialized or with detached data
 	 */
 	public static <T> T detach(T o, ODatabaseObject db) {
+		return detach(o, db, false);
+	}
+
+	/**
+	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
+	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
+	 * returnNonProxiedInstance)}
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @param db
+	 *          :- the database instance
+	 * @param returnNonProxiedInstance
+	 *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
+	 *          and @Version fields it could procude data replication
+	 * @return the object serialized or with detached data
+	 */
+	public static <T> T detach(T o, ODatabaseObject db, boolean returnNonProxiedInstance) {
 		if (o instanceof Proxy) {
 			OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
 			try {
+				if (returnNonProxiedInstance) {
+					o = getNonProxiedInstance(o);
+				}
 				handler.detach(o);
 			} catch (IllegalArgumentException e) {
 				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
@@ -171,8 +195,9 @@ public class OObjectEntitySerializer {
 				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
 			}
 			return o;
-		} else
+		} else if (!returnNonProxiedInstance)
 			return serializeObject(o, db);
+		return o;
 	}
 
 	/**
@@ -1056,6 +1081,18 @@ public class OObjectEntitySerializer {
 		}
 
 		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected static <T> T getNonProxiedInstance(T iObject) {
+		try {
+			return (T) iObject.getClass().getSuperclass().newInstance();
+		} catch (InstantiationException ie) {
+			OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+		} catch (IllegalAccessException ie) {
+			OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+		}
+		return null;
 	}
 
 	private static boolean isEmbeddedObject(Field f) {
