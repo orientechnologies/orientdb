@@ -19,8 +19,10 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * SQL UPDATE command.
@@ -40,13 +42,13 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
 
       delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
       if (delegate == null)
-        throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
+        throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
 
       delegate.setLimit(iCommand.getLimit());
       delegate.parse(iCommand);
       delegate.setProgressListener(progressListener);
     } else
-      throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
+      throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
     return this;
   }
 

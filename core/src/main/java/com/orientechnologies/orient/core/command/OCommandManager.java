@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.command;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -76,12 +77,12 @@ public class OCommandManager {
     final Class<? extends OCommandExecutor> executorClass = commandReqExecMap.get(iCommand.getClass());
 
     if (executorClass == null)
-      throw new IllegalArgumentException("Cannot find a command executor for the command request: " + iCommand);
+      throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
 
     try {
       return executorClass.newInstance();
     } catch (Exception e) {
-      throw new IllegalArgumentException("Cannot create the command executor of class " + executorClass
+      throw new OCommandExecutionException("Cannot create the command executor of class " + executorClass
           + " for the command request: " + iCommand, e);
     }
   }
