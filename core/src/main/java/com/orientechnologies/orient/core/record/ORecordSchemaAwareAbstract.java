@@ -79,6 +79,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   public String getClassName() {
+    if (_clazz != null)
+      return _clazz.getName();
+
+    // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
     checkForLoading();
     checkForFields();
     return _clazz != null ? _clazz.getName() : null;
