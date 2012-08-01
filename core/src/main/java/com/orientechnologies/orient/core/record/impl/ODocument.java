@@ -66,8 +66,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
-@SuppressWarnings({ "unchecked", "serial" })
+@SuppressWarnings({ "unchecked" })
 public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable {
+  private static final long                                              serialVersionUID = 1L;
+
   public static final byte                                               RECORD_TYPE      = 'd';
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
@@ -1196,7 +1198,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_status == ORecordElement.STATUS.LOADED && _source != null)
       // POPULATE FIELDS LAZY
       return deserializeFields(iFields);
-    
+
     return true;
   }
 

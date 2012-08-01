@@ -35,126 +35,128 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * content. Useful also to store multimedia contents and binary files. The object can be reused across calls to the database by
  * using the reset() at every re-use.
  */
-@SuppressWarnings({ "unchecked", "serial" })
+@SuppressWarnings({ "unchecked" })
 public class ORecordBytes extends ORecordAbstract<byte[]> {
+  private static final long   serialVersionUID = 1L;
 
-	public static final byte RECORD_TYPE = 'b';
-	private static final byte[] EMPTY_SOURCE = new byte[]{};
+  public static final byte    RECORD_TYPE      = 'b';
+  private static final byte[] EMPTY_SOURCE     = new byte[] {};
 
-	public ORecordBytes() {
-		setup();
-	}
+  public ORecordBytes() {
+    setup();
+  }
 
-	public ORecordBytes(final ODatabaseRecord iDatabase) {
-		setup();
-		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
-	}
+  public ORecordBytes(final ODatabaseRecord iDatabase) {
+    setup();
+    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+  }
 
-	public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
-		this(iSource);
-		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
-	}
+  public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
+    this(iSource);
+    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+  }
 
-	public ORecordBytes(final byte[] iSource) {
-		super(iSource);
-		_dirty = true;
-		setup();
-	}
+  public ORecordBytes(final byte[] iSource) {
+    super(iSource);
+    _dirty = true;
+    setup();
+  }
 
-	public ORecordBytes(final ORID iRecordId) {
-		_recordId = (ORecordId) iRecordId;
-		setup();
-	}
+  public ORecordBytes(final ORID iRecordId) {
+    _recordId = (ORecordId) iRecordId;
+    setup();
+  }
 
-	public ORecordBytes reset(final byte[] iSource) {
-		reset();
-		_source = iSource;
-		return this;
-	}
+  public ORecordBytes reset(final byte[] iSource) {
+    reset();
+    _source = iSource;
+    return this;
+  }
 
-	public ORecordBytes copy() {
-		return (ORecordBytes) copyTo(new ORecordBytes());
-	}
+  public ORecordBytes copy() {
+    return (ORecordBytes) copyTo(new ORecordBytes());
+  }
 
-	@Override
-	public ORecordBytes fromStream(final byte[] iRecordBuffer) {
-		_source = iRecordBuffer;
-		_status = ORecordElement.STATUS.LOADED;
-		return this;
-	}
+  @Override
+  public ORecordBytes fromStream(final byte[] iRecordBuffer) {
+    _source = iRecordBuffer;
+    _status = ORecordElement.STATUS.LOADED;
+    return this;
+  }
 
-	@Override
-	public byte[] toStream() {
-		return _source;
-	}
+  @Override
+  public byte[] toStream() {
+    return _source;
+  }
 
-	public byte getRecordType() {
-		return RECORD_TYPE;
-	}
+  public byte getRecordType() {
+    return RECORD_TYPE;
+  }
 
-	@Override
-	protected void setup() {
-		super.setup();
-		_recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
-	}
+  @Override
+  protected void setup() {
+    super.setup();
+    _recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerRaw.NAME);
+  }
 
-	/**
-	 * Reads the input stream in memory. This is less efficient than {@link #fromInputStream(InputStream, int)} because allocation is
-	 * made multiple times. If you already know the input size use {@link #fromInputStream(InputStream, int)}.
-	 * 
-	 * @param in
-	 *          Input Stream, use buffered input stream wrapper to speed up reading
-	 * @return Buffer read from the stream. It's also the internal buffer size in bytes
-	 * @throws IOException
-	 */
-	public int fromInputStream(final InputStream in) throws IOException {
-		final OMemoryStream out = new OMemoryStream();
-		try {
-			int b;
+  /**
+   * Reads the input stream in memory. This is less efficient than {@link #fromInputStream(InputStream, int)} because allocation is
+   * made multiple times. If you already know the input size use {@link #fromInputStream(InputStream, int)}.
+   * 
+   * @param in
+   *          Input Stream, use buffered input stream wrapper to speed up reading
+   * @return Buffer read from the stream. It's also the internal buffer size in bytes
+   * @throws IOException
+   */
+  public int fromInputStream(final InputStream in) throws IOException {
+    final OMemoryStream out = new OMemoryStream();
+    try {
+      int b;
       while ((b = in.read()) > -1) {
-				out.write(b);
-			}
-			out.flush();
-			_source = out.toByteArray();
-		} finally {
-			out.close();
-		}
-		_size = _source.length;
-		return _size;
-	}
+        out.write(b);
+      }
+      out.flush();
+      _source = out.toByteArray();
+    } finally {
+      out.close();
+    }
+    _size = _source.length;
+    return _size;
+  }
 
-	/**
-	 * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
-	 * {@link #fromInputStream(InputStream)} because allocation is made only once.
-	 * 
-	 * @param in
-	 *          Input Stream, use buffered input stream wrapper to speed up reading
-	 * @param iMaxSize
-	 *          Maximum size to read
-	 * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size in bytes
-	 * @throws IOException if an I/O error occurs.
-	 */
-	public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
-		final byte[] buffer = new byte[iMaxSize];
-		final int readBytesCount = in.read(buffer);
-		if (readBytesCount == -1) {
-			_source = EMPTY_SOURCE;
-			_size = 0;
-		} else if (readBytesCount == iMaxSize) {
-			_source = buffer;
-			_size = iMaxSize;
-		} else {
-			_source = Arrays.copyOf(buffer, readBytesCount);
-			_size = readBytesCount;
-		}
-		return _size;
-	}
+  /**
+   * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
+   * {@link #fromInputStream(InputStream)} because allocation is made only once.
+   * 
+   * @param in
+   *          Input Stream, use buffered input stream wrapper to speed up reading
+   * @param iMaxSize
+   *          Maximum size to read
+   * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size in bytes
+   * @throws IOException
+   *           if an I/O error occurs.
+   */
+  public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
+    final byte[] buffer = new byte[iMaxSize];
+    final int readBytesCount = in.read(buffer);
+    if (readBytesCount == -1) {
+      _source = EMPTY_SOURCE;
+      _size = 0;
+    } else if (readBytesCount == iMaxSize) {
+      _source = buffer;
+      _size = iMaxSize;
+    } else {
+      _source = Arrays.copyOf(buffer, readBytesCount);
+      _size = readBytesCount;
+    }
+    return _size;
+  }
 
-	public void toOutputStream(final OutputStream out) throws IOException {
-		checkForLoading();
+  public void toOutputStream(final OutputStream out) throws IOException {
+    checkForLoading();
 
-		if (_source.length > 0) {
-			out.write(_source);
-		}
-	}
+    if (_source.length > 0) {
+      out.write(_source);
+    }
+  }
 }

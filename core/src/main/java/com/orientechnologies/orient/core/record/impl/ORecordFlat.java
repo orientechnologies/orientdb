@@ -29,116 +29,116 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * It's schema less. Use this if you need to store Strings at low level. The object can be reused across calls to the database by
  * using the reset() at every re-use.
  */
-@SuppressWarnings({ "unchecked", "serial" })
+@SuppressWarnings({ "unchecked" })
 public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable {
-	protected String					value;
+  private static final long serialVersionUID = 1L;
+  public static final byte  RECORD_TYPE      = 'f';
+  protected String          value;
 
-	public static final byte	RECORD_TYPE	= 'f';
+  public ORecordFlat(ODatabaseFlat iDatabase) {
+    this();
+    ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
+  }
 
-	public ORecordFlat(ODatabaseFlat iDatabase) {
-		this();
-		ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
-	}
+  public ORecordFlat() {
+    setup();
+  }
 
-	public ORecordFlat() {
-		setup();
-	}
+  public ORecordFlat(final byte[] iSource) {
+    super(iSource);
+    setup();
+  }
 
-	public ORecordFlat(final byte[] iSource) {
-		super(iSource);
-		setup();
-	}
+  public ORecordFlat(final ODatabaseRecord iDatabase, final ORID iRID) {
+    _recordId = (ORecordId) iRID;
+  }
 
-	public ORecordFlat(final ODatabaseRecord iDatabase, final ORID iRID) {
-		_recordId = (ORecordId) iRID;
-	}
+  public ORecordFlat value(final String iValue) {
+    value = iValue;
+    setDirty();
+    return this;
+  }
 
-	public ORecordFlat value(final String iValue) {
-		value = iValue;
-		setDirty();
-		return this;
-	}
+  @Override
+  public void unsetDirty() {
+    super.unsetDirty();
+  }
 
-	@Override
-	public void unsetDirty() {
-		super.unsetDirty();
-	}
+  @Override
+  public ORecordFlat reset() {
+    super.reset();
+    value = null;
+    return this;
+  }
 
-	@Override
-	public ORecordFlat reset() {
-		super.reset();
-		value = null;
-		return this;
-	}
+  @Override
+  public ORecordFlat unload() {
+    super.unload();
+    value = null;
+    return this;
+  }
 
-	@Override
-	public ORecordFlat unload() {
-		super.unload();
-		value = null;
-		return this;
-	}
+  @Override
+  public ORecordFlat clear() {
+    super.clear();
+    value = null;
+    return this;
+  }
 
-	@Override
-	public ORecordFlat clear() {
-		super.clear();
-		value = null;
-		return this;
-	}
+  public ORecordFlat copy() {
+    ORecordFlat cloned = new ORecordFlat();
+    cloned._source = _source;
+    cloned.value = value;
+    cloned._recordId = _recordId.copy();
+    cloned._dirty = _dirty;
+    cloned._version = _version;
+    return cloned;
+  }
 
-	public ORecordFlat copy() {
-		ORecordFlat cloned = new ORecordFlat();
-		cloned._source = _source;
-		cloned.value = value;
-		cloned._recordId = _recordId.copy();
-		cloned._dirty = _dirty;
-		cloned._version = _version;
-		return cloned;
-	}
+  public String value() {
+    if (value == null) {
+      // LAZY DESERIALIZATION
+      if (_source == null && getIdentity() != null && getIdentity().isValid())
+        reload();
 
-	public String value() {
-		if (value == null) {
-			// LAZY DESERIALIZATION
-			if (_source == null && getIdentity() != null && getIdentity().isValid())
-				reload();
+      // LAZY LOADING: LOAD THE RECORD FIRST
+      value = OBinaryProtocol.bytes2string(_source);
+    }
 
-			// LAZY LOADING: LOAD THE RECORD FIRST
-			value = OBinaryProtocol.bytes2string(_source);
-		}
+    return value;
+  }
 
-		return value;
-	}
+  @Override
+  public String toString() {
+    return super.toString() + " " + value();
+  }
 
-	@Override
-	public String toString() {
-		return super.toString() + " " + value();
-	}
+  @Override
+  public ORecordInternal<String> reload() {
+    value = null;
+    return super.reload();
+  }
 
-	@Override
-	public ORecordInternal<String> reload() {
-		value = null;
-		return super.reload();
-	}
+  @Override
+  public ORecordAbstract<String> fromStream(final byte[] iRecordBuffer) {
+    super.fromStream(iRecordBuffer);
+    value = null;
+    return this;
+  }
 
-	@Override
-	public ORecordAbstract<String> fromStream(final byte[] iRecordBuffer) {
-		super.fromStream(iRecordBuffer);
-		value = null;
-		return this;
-	}
+  @Override
+  public byte[] toStream() {
+    if (_source == null && value != null)
+      _source = OBinaryProtocol.string2bytes(value);
+    return _source;
+  }
 
-	@Override
-	public byte[] toStream() {
-		if (_source == null && value != null)
-			_source = OBinaryProtocol.string2bytes(value);
-		return _source;
-	}
+  public int size() {
+    final String v = value();
+    return v != null ? v.length() : 0;
+  }
 
-	public int size() {
-		final String v = value();
-		return v != null ? v.length() : 0;
-	}
-
-	public byte getRecordType() {
-		return RECORD_TYPE;
-	}
+  public byte getRecordType() {
+    return RECORD_TYPE;
+  }
 }
