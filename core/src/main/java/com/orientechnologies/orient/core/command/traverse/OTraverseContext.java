@@ -94,6 +94,13 @@ public class OTraverseContext implements OCommandContext {
       nestedStack.setVariable(iName, iValue);
   }
 
+  public long updateMetric(final String iName, final long iValue) {
+    if (nestedStack != null)
+      // DELEGATE
+      return nestedStack.updateMetric(iName, iValue);
+    return -1;
+  }
+
   public Map<String, Object> getVariables() {
     final HashMap<String, Object> map = new HashMap<String, Object>();
     map.put("depth", depth);

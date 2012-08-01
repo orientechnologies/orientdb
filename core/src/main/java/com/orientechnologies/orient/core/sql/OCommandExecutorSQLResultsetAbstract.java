@@ -247,6 +247,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
             return false;
         }
+        context.updateMetric("documentReadsCompatibleClass", +1);
       }
     }
 

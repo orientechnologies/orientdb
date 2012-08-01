@@ -25,6 +25,7 @@ import java.util.Map;
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
+  private boolean             recordMetrics = false;
   private OCommandContext     inherited;
   private Map<String, Object> variables;
 
@@ -38,6 +39,20 @@ public class OBasicCommandContext implements OCommandContext {
   public void setVariable(final String iName, final Object iValue) {
     init();
     variables.put(iName, iValue);
+  }
+
+  public long updateMetric(final String iName, final long iValue) {
+    if (!recordMetrics)
+      return -1;
+
+    init();
+    Long value = (Long) variables.get(iName);
+    if (value == null)
+      value = iValue;
+    else
+      value = new Long(value.longValue() + iValue);
+    variables.put(iName, iValue);
+    return value.longValue();
   }
 
   /**

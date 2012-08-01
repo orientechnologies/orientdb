@@ -232,9 +232,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected boolean executeSearchRecord(final OIdentifiable id) {
     final ORecordInternal<?> record = id.getRecord();
 
+    context.updateMetric("recordReads", +1);
+
     if (record == null || record.getRecordType() != ODocument.RECORD_TYPE)
       // SKIP IT
       return true;
+
+    context.updateMetric("documentReads", +1);
 
     if (filter(record))
       if (!handleResult(record))
@@ -550,6 +554,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (indexResult instanceof Collection<?>) {
         Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
 
+        context.updateMetric("indexReads", indexResultSet.size());
+
         for (OIdentifiable identifiable : indexResultSet) {
           ORecord<?> record = identifiable.getRecord();
           if (record == null)
@@ -732,19 +738,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       Object value;
       for (Entry<String, Object> projection : projections.entrySet()) {
-        if (projection.getValue().equals("*")) {
+        final Object v = projection.getValue();
+
+        if (v.equals("*")) {
           doc.copy(result);
           value = null;
-        } else if (projection.getValue().toString().startsWith("$")) {
-          value = context != null ? context.getVariable(projection.getValue().toString().substring(1)) : null;
-        } else if (projection.getValue() instanceof OSQLFilterItemField)
-          value = ((OSQLFilterItemField) projection.getValue()).getValue(doc, null);
-        else if (projection.getValue() instanceof OSQLFunctionRuntime) {
-          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+        } else if (v.toString().startsWith("$")) {
+          // RETURN A VARIABLE FROM THE CONTEXT
+          value = context != null ? context.getVariable(v.toString().substring(1)) : null;
+        } else if (v instanceof OSQLFilterItemField)
+          value = ((OSQLFilterItemField) v).getValue(doc, null);
+        else if (v instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
           canExcludeResult = f.filterResult();
           value = f.execute(doc, this);
         } else
-          value = projection.getValue();
+          value = v;
 
         if (value != null)
           result.field(projection.getKey(), value);

@@ -24,11 +24,22 @@ import java.util.Map;
  * 
  */
 public interface OCommandContext {
-	public Object getVariable(final String iName);
+  public Object getVariable(final String iName);
 
-	public void setVariable(final String iName, final Object iValue);
+  public void setVariable(final String iName, final Object iValue);
 
-	public Map<String, Object> getVariables();
+  public Map<String, Object> getVariables();
 
-	public void merge(OCommandContext context);
+  public void merge(OCommandContext context);
+
+  /**
+   * Updates a counter. Used to record metrics.
+   * 
+   * @param iName
+   *          Metric's name
+   * @param iValue
+   *          delta to add or subtract
+   * @return 
+   */
+  public long updateMetric(String iName, long iValue);
 }
