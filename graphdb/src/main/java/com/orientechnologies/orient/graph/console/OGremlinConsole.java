@@ -19,6 +19,8 @@ import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
+import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 
@@ -30,58 +32,63 @@ import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
  */
 public class OGremlinConsole extends OConsoleDatabaseApp {
 
-	public OGremlinConsole(final String[] args) {
-		super(args);
-	}
+  public OGremlinConsole(final String[] args) {
+    super(args);
+  }
 
-	public static void main(final String[] args) {
-		try {
-			boolean tty = false;
-			try {
-				if (setTerminalToCBreak())
-					tty = true;
+  public static void main(final String[] args) {
+    try {
+      boolean tty = false;
+      try {
+        if (setTerminalToCBreak())
+          tty = true;
 
-			} catch (Exception e) {
-			}
+      } catch (Exception e) {
+      }
 
-			final OConsoleDatabaseApp console = new OGremlinConsole(args);
-			if (tty)
-				console.setReader(new TTYConsoleReader());
+      final OConsoleDatabaseApp console = new OGremlinConsole(args);
+      if (tty)
+        console.setReader(new TTYConsoleReader());
 
-			console.run();
+      console.run();
 
-		} finally {
-			try {
-				stty("echo");
-			} catch (Exception e) {
-			}
-		}
-	}
+    } finally {
+      try {
+        stty("echo");
+      } catch (Exception e) {
+      }
+    }
+  }
 
-	@Override
-	protected void onBefore() {
-		super.onBefore();
+  @Override
+  protected void onBefore() {
+    super.onBefore();
 
-		out.println("\nInstalling extensions for GREMLIN language v." + OGremlinHelper.getEngineVersion());
+    out.println("\nInstalling extensions for GREMLIN language v." + OGremlinHelper.getEngineVersion());
 
-		OGremlinHelper.global().create();
-	}
+    OGremlinHelper.global().create();
+  }
 
-	@ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
-	public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
-		checkForDatabase();
+  @ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
+  public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
+    checkForDatabase();
 
-		if (iScriptText == null || iScriptText.length() == 0)
-			return;
+    if (iScriptText == null || iScriptText.length() == 0)
+      return;
 
-		long start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
 
-		currentResultSet.clear();
+    currentResultSet.clear();
 
-		Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+    try {
+      Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+      out.println("\n" + result);
 
-		out.println("\n" + result);
-
-		out.printf("\nScript executed in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
-	}
+      out.printf("\nScript executed in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
+    } catch (OStorageException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof OCommandExecutorNotFoundException)
+        out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
+    }
+  }
 }
