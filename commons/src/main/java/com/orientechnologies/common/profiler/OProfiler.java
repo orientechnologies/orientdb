@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.WeakHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -41,7 +40,7 @@ import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
  */
 public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
   protected long                            recordingFrom = -1;
-  protected Map<OProfilerHookValue, String> hooks         = new WeakHashMap<OProfiler.OProfilerHookValue, String>();
+  protected Map<OProfilerHookValue, String> hooks         = new HashMap<OProfiler.OProfilerHookValue, String>();
   protected Date                            lastReset     = new Date();
 
   protected OProfilerData                   realTime      = new OProfilerData();
@@ -74,6 +73,13 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
     maxSnapshots = iMaxSnapshot;
     maxSummaries = iMaxSumaries;
+  }
+
+  public void shutdown() {
+    stopRecording();
+    hooks.clear();
+    snapshots.clear();
+    summaries.clear();
   }
 
   public void startRecording() {

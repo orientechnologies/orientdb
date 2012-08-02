@@ -52,6 +52,11 @@ public class OChannelText extends OChannel {
     return pos - iStartingPosition;
   }
 
+  public byte read() throws IOException {
+    updateMetricReceivedBytes(1);
+    return (byte) inStream.read();
+  }
+
   public byte[] readBytes(final int iTotal) throws IOException {
     final byte[] buffer = new byte[iTotal];
     updateMetricReceivedBytes(iTotal);

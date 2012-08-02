@@ -315,7 +315,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     final StringBuilder request = new StringBuilder();
 
     while (!channel.socket.isInputShutdown()) {
-      in = channel.inStream.read();
+      in = channel.read();
       if (in == -1)
         break;
 
@@ -370,7 +370,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         }
 
         // CONSUME /r or /n
-        in = channel.inStream.read();
+        in = channel.read();
         if (in == -1)
           break;
 
@@ -425,7 +425,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.socket.setSoTimeout(socketTimeout);
       connection.data.lastCommandReceived = -1;
 
-      char c = (char) channel.inStream.read();
+      char c = (char) channel.read();
 
       if (channel.inStream.available() == 0) {
         connectionClosed();
@@ -443,7 +443,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         requestContent.append(c);
 
       while (!channel.socket.isInputShutdown()) {
-        c = (char) channel.inStream.read();
+        c = (char) channel.read();
 
         if (c == '\r') {
           final String[] words = requestContent.toString().split(" ");
@@ -451,13 +451,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             OLogManager.instance().warn(this,
                 "->" + channel.socket.getInetAddress().getHostAddress() + ": Error on invalid content:\n" + requestContent);
             while (channel.inStream.available() > 0) {
-              channel.inStream.read();
+              channel.read();
             }
             break;
           }
 
           // CONSUME THE NEXT \n
-          channel.inStream.read();
+          channel.read();
 
           request.method = words[0];
           request.url = words[1].trim();

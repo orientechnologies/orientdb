@@ -283,6 +283,8 @@ public class Orient extends OSharedResourceAbstract {
 
       shutdownHook.cancel();
 
+      OProfiler.getInstance().shutdown();
+
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
