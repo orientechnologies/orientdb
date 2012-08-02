@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -416,6 +417,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         INDEX_OPERATION_TYPE opType = null;
+
+        if (context.isRecordMetrics()) {
+          Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+          if (idxNames == null) {
+            idxNames = new HashSet<String>();
+            context.setVariable("involvedIndexes", idxNames);
+          }
+          idxNames.add(index.getName());
+        }
 
         if (projections != null && projections.size() == 1) {
           final Object v = projections.values().iterator().next();

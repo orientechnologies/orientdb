@@ -78,6 +78,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
         OCommandExecutorSQLTruncateRecord.class);
     commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
+    commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }

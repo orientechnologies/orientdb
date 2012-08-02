@@ -39,7 +39,11 @@ public interface OCommandContext {
    *          Metric's name
    * @param iValue
    *          delta to add or subtract
-   * @return 
+   * @return
    */
   public long updateMetric(String iName, long iValue);
+
+  public boolean isRecordMetrics();
+
+  public void setRecordMetrics(boolean recordMetrics);
 }

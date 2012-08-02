@@ -51,7 +51,7 @@ public class OBasicCommandContext implements OCommandContext {
       value = iValue;
     else
       value = new Long(value.longValue() + iValue);
-    variables.put(iName, iValue);
+    variables.put(iName, value);
     return value.longValue();
   }
 
@@ -85,5 +85,13 @@ public class OBasicCommandContext implements OCommandContext {
   private void init() {
     if (variables == null)
       variables = new HashMap<String, Object>();
+  }
+
+  public boolean isRecordMetrics() {
+    return recordMetrics;
+  }
+
+  public void setRecordMetrics(boolean recordMetrics) {
+    this.recordMetrics = recordMetrics;
   }
 }
