@@ -19,52 +19,126 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceExternalTimeout;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public abstract class OChannel extends OSharedResourceExternalTimeout {
-	public Socket				socket;
+  public Socket                   socket;
 
-	public InputStream	inStream;
-	public OutputStream	outStream;
+  public InputStream              inStream;
+  public OutputStream             outStream;
 
-	public int					socketBufferSize;
+  public int                      socketBufferSize;
 
-	public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
-		super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
-		socket = iSocket;
-		socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+  private long                    metricTransmittedBytes       = 0;
+  private long                    metricReceivedBytes          = 0;
+  private long                    metricFlushes                = 0;
+
+  private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
+  private static final AtomicLong metricGlobalReceivedBytes    = new AtomicLong();
+  private static final AtomicLong metricGlobalFlushes          = new AtomicLong();
+
+  private String                  profilerMetric;
+
+  static {
+    final String profilerMetric = "system.network.channel.binary";
+
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricGlobalTransmittedBytes.get();
+      }
+    });
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricGlobalReceivedBytes.get();
+      }
+    });
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricGlobalFlushes.get();
+      }
+    });
+  }
+
+  public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+    super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
+    socket = iSocket;
+    socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);
-	}
+  }
 
-	public void flush() throws IOException {
-		outStream.flush();
-	}
+  public void flush() throws IOException {
+    outStream.flush();
+  }
 
-	public void close() {
-		try {
-			if (socket != null)
-				socket.close();
-		} catch (IOException e) {
-		}
+  public void close() {
+    OProfiler.getInstance().unregisterHookValue(profilerMetric + ".transmittedBytes");
+    OProfiler.getInstance().unregisterHookValue(profilerMetric + ".receivedBytes");
+    OProfiler.getInstance().unregisterHookValue(profilerMetric + ".flushes");
 
-		try {
-			if (inStream != null)
-				inStream.close();
-		} catch (IOException e) {
-		}
+    try {
+      if (socket != null)
+        socket.close();
+    } catch (IOException e) {
+    }
 
-		try {
-			if (outStream != null)
-				outStream.close();
-		} catch (IOException e) {
-		}
-	}
+    try {
+      if (inStream != null)
+        inStream.close();
+    } catch (IOException e) {
+    }
 
-	@Override
-	public String toString() {
-		return socket != null ? socket.getRemoteSocketAddress().toString() : "Not connected";
-	}
+    try {
+      if (outStream != null)
+        outStream.close();
+    } catch (IOException e) {
+    }
+  }
+
+  public void connected() {
+    profilerMetric = "system.network.channel.binary." + socket.getRemoteSocketAddress().toString() + socket.getLocalPort()
+        + "".replace('.', '_');
+
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricTransmittedBytes;
+      }
+    });
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricReceivedBytes;
+      }
+    });
+    OProfiler.getInstance().registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricFlushes;
+      }
+    });
+  }
+
+  @Override
+  public String toString() {
+    return socket != null ? socket.getRemoteSocketAddress().toString() : "Not connected";
+  }
+
+  protected void updateMetricTransmittedBytes(final int iDelta) {
+    metricGlobalTransmittedBytes.addAndGet(iDelta);
+    metricTransmittedBytes += iDelta;
+  }
+
+  protected void updateMetricReceivedBytes(final int iDelta) {
+    metricGlobalReceivedBytes.addAndGet(iDelta);
+    metricReceivedBytes += iDelta;
+  }
+
+  protected void updateMetricFlushes() {
+    metricGlobalFlushes.incrementAndGet();
+    metricFlushes++;
+  }
+
 }

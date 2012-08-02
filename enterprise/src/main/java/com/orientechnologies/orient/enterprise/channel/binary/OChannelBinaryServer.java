@@ -49,5 +49,6 @@ public class OChannelBinaryServer extends OChannelBinary {
 
 		out = new DataOutputStream(outStream);
 		in = new DataInputStream(inStream);
+		connected();
 	}
 }

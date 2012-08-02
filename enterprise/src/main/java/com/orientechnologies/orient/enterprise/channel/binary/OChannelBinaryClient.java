@@ -43,6 +43,7 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
     socket.setReceiveBufferSize(socketBufferSize);
     try {
       socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+      connected();
     } catch (java.net.SocketTimeoutException e) {
       throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
     }

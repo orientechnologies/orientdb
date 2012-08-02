@@ -23,42 +23,45 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 public class OChannelText extends OChannel {
 
-	public OChannelText(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
-		super(iSocket, iConfig);
-	}
+  public OChannelText(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+    super(iSocket, iConfig);
+  }
 
-	/**
-	 * 
-	 * @param iBuffer
-	 *          byte[] to fill
-	 * @param iStartingPosition
-	 *          Offset to start to fill the buffer
-	 * @param iContentLength
-	 *          Length of expected content to read
-	 * @return total of bytes read
-	 * @throws IOException
-	 */
-	public int read(final byte[] iBuffer, final int iStartingPosition, final int iContentLength) throws IOException {
-		int pos;
-		int read = 0;
-		pos = iStartingPosition;
+  /**
+   * 
+   * @param iBuffer
+   *          byte[] to fill
+   * @param iStartingPosition
+   *          Offset to start to fill the buffer
+   * @param iContentLength
+   *          Length of expected content to read
+   * @return total of bytes read
+   * @throws IOException
+   */
+  public int read(final byte[] iBuffer, final int iStartingPosition, final int iContentLength) throws IOException {
+    int pos;
+    int read = 0;
+    pos = iStartingPosition;
 
-		for (int required = iContentLength; required > 0; required -= read) {
-			read = inStream.read(iBuffer, pos, required);
-			pos += read;
-		}
+    for (int required = iContentLength; required > 0; required -= read) {
+      read = inStream.read(iBuffer, pos, required);
+      pos += read;
+    }
 
-		return read;
-	}
+    updateMetricReceivedBytes(read);
+    return pos - iStartingPosition;
+  }
 
-	public byte[] readBytes(final int iTotal) throws IOException {
-		byte[] buffer = new byte[iTotal];
-		inStream.read(buffer);
-		return buffer;
-	}
+  public byte[] readBytes(final int iTotal) throws IOException {
+    final byte[] buffer = new byte[iTotal];
+    updateMetricReceivedBytes(iTotal);
+    inStream.read(buffer);
+    return buffer;
+  }
 
-	public OChannelText writeBytes(final byte[] iContent) throws IOException {
-		outStream.write(iContent);
-		return this;
-	}
+  public OChannelText writeBytes(final byte[] iContent) throws IOException {
+    outStream.write(iContent);
+    updateMetricTransmittedBytes(iContent.length);
+    return this;
+  }
 }

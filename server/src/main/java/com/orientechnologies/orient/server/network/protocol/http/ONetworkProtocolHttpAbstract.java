@@ -87,6 +87,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     responseCharSet = iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_CONTENT_CHARSET);
 
     channel = new OChannelTextServer(iSocket, iConfiguration);
+    channel.connected();
 
     request = new OHttpRequest(this, channel, connection.data, iConfiguration);
 
