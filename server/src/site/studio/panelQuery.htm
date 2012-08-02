@@ -112,7 +112,14 @@
 
 		if (commandResult && commandResult.charAt(0) == '{') {
 			commandResponse = orientServer.transformResponse(commandResult);
-			$('#tabs-results').tabs('select', 0);
+			if (commandResponse != null && commandResponse.result != null)
+				// COLLECTION
+				$('#tabs-results').tabs('select', 0);
+			else {
+				// SINGLE OBJECT
+				selectedObject = commandResponse;
+				$('#tabs-results').tabs('select', 1);
+			}
 		} else {
 			commandResponse = commandResult;
 			$('#tabs-results').tabs('select', 1);

@@ -138,11 +138,9 @@ function ODocumentView(name, component, doc, options) {
 
 		var currentClass = orientServer.getClass(fieldValue);
 
-		var fieldValue;
-		if (this.doc != null)
+		var fieldValue = "-1:-1";
+		if (this.doc != null && this.doc['@rid'])
 			fieldValue = this.doc['@rid'].substring(1);
-		else
-			fieldValue = "-1:-1";
 
 		component += "<label>@rid</label><input id='doc__rid' style='width: 60px;' value='"
 				+ fieldValue + "'/>";
@@ -181,12 +179,13 @@ function ODocumentView(name, component, doc, options) {
 
 				fieldValue = this.doc[fieldName];
 				var fieldType = "string";
-				for (p in currentClass.properties) {
-					if (currentClass.properties[p].name == fieldName) {
-						fieldType = currentClass.properties[p].type;
-						break;
+				if (currentClass)
+					for (p in currentClass.properties) {
+						if (currentClass.properties[p].name == fieldName) {
+							fieldType = currentClass.properties[p].type;
+							break;
+						}
 					}
-				}
 				component += this.renderRow(fieldName, fieldValue, fieldType);
 			}
 		component += "</div>";

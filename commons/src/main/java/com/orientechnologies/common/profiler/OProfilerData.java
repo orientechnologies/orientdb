@@ -312,7 +312,8 @@ public class OProfilerData {
   public void setHookValues(final Map<String, Object> iHooks) {
     synchronized (hooks) {
       hooks.clear();
-      hooks.putAll(iHooks);
+      if (iHooks != null)
+        hooks.putAll(iHooks);
     }
   }
 

@@ -520,13 +520,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   protected Map<String, Object> archiveHooks() {
     final Map<String, Object> result = new HashMap<String, Object>();
 
-    final Map<OProfilerHookValue, String> copy = new HashMap<OProfiler.OProfilerHookValue, String>();
     synchronized (hooks) {
-      copy.putAll(hooks);
+      for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet())
+        result.put(v.getValue(), v.getKey().getValue());
     }
-
-    for (Map.Entry<OProfilerHookValue, String> v : copy.entrySet())
-      result.put(v.getValue(), v.getKey().getValue());
 
     return result;
   }
