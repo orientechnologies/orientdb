@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<name>OrientDB JDBC Driver</name>
 	<groupId>com.orientechnologies</groupId>
@@ -11,7 +12,7 @@
 		<url>http://www.orientechnologies.com</url>
 	</organization>
 	<properties>
-		<orient.version>1.1.0-SNAPSHOT</orient.version>
+		<orient.version>1.2.0-SNAPSHOT</orient.version>
 	</properties>
 	<distributionManagement>
 		<repository>
@@ -34,14 +35,6 @@
 			<releases>
 				<enabled>true</enabled>
 			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>tinkerpop-repository</id>
-			<name>TinkerPop Maven2 Repository</name>
-			<url>http://tinkerpop.com/maven2</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
@@ -95,6 +88,11 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.9</version>
+			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>

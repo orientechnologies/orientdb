@@ -134,10 +134,11 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 	}
 
 	public void setDate(int parameterIndex, Date x) throws SQLException {
-
+		params.put(parameterIndex, x.toString());
 	}
 
 	public void setTime(int parameterIndex, Time x) throws SQLException {
+		params.put(parameterIndex, x.toString());
 
 	}
 

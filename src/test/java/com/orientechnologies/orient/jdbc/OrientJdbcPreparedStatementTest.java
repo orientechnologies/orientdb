@@ -3,7 +3,10 @@ package com.orientechnologies.orient.jdbc;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Date;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -69,6 +72,9 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
 		assertThat(rs.getString("stringKey"), equalTo("1"));
 		assertThat(rs.getInt("intKey"), equalTo(1));
+
+		assertThat(rs.getDate("date").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
+		assertThat(rs.getDate("time").toString(), equalTo(new java.sql.Date(System.currentTimeMillis()).toString()));
 
 		stmt.close();
 		assertTrue(stmt.isClosed());
