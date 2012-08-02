@@ -78,4 +78,11 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       sendShutdown();
     }
   }
+
+  @Override
+  public void sendShutdown() {
+    super.sendShutdown();
+    if (network != null)
+      network.close();
+  }
 }

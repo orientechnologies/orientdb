@@ -262,7 +262,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // CLOSE THE CHANNEL
       if (serviceThread != null) {
         serviceThread.sendShutdown();
-        serviceThread.interrupt();
       }
 
       synchronized (networkPool) {
