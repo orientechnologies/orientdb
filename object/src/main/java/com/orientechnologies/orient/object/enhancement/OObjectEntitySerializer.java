@@ -590,6 +590,8 @@ public class OObjectEntitySerializer {
 			Class<?> fieldClass = iFieldValue.getClass();
 
 			if (fieldClass.isArray()) {
+				if (iType.equals(OType.BINARY))
+					return iFieldValue;
 				// ARRAY
 				final int arrayLength = Array.getLength(iFieldValue);
 				final List<Object> arrayList = new ArrayList<Object>();
@@ -785,6 +787,46 @@ public class OObjectEntitySerializer {
 		invokeCallback(iClass, iInstance, iDocument, OBeforeDeserialization.class);
 	}
 
+	public static OType getTypeByClass(final Class<?> iClass, final String fieldName) {
+		if (OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)) {
+			return OType.EMBEDDED;
+		} else {
+			Field f = getField(fieldName, iClass);
+			if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
+				Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
+				if (f.getType().isArray())
+					if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
+						return OType.BINARY;
+					} else {
+						return OType.getTypeByClass(f.getType());
+					}
+				else if (Collection.class.isAssignableFrom(f.getType())) {
+					if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName))
+						return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
+					else
+						return Set.class.isAssignableFrom(f.getType()) ? OType.LINKSET : OType.LINKLIST;
+				} else {
+					if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName))
+						return OType.EMBEDDEDMAP;
+					else
+						return OType.LINKMAP;
+				}
+			} else {
+				return OType.getTypeByClass(f.getType());
+			}
+		}
+	}
+
+	public static Field getField(String fieldName, Class<?> iClass) {
+		for (Field f : iClass.getDeclaredFields()) {
+			if (f.getName().equals(fieldName))
+				return f;
+		}
+		if (iClass.getSuperclass().equals(Object.class))
+			return null;
+		return getField(fieldName, iClass.getSuperclass());
+	}
+
 	/**
 	 * Serialize the user POJO to a ORecordDocument instance.
 	 * 
@@ -888,6 +930,7 @@ public class OObjectEntitySerializer {
 					fieldValue = serializeFieldValue(p.getType(), fieldValue);
 
 				schemaProperty = schemaClass != null ? schemaClass.getProperty(fieldName) : null;
+				OType fieldType = schemaProperty != null ? schemaProperty.getType() : getTypeByClass(currentClass, fieldName);
 
 				if (fieldValue != null) {
 					if (isEmbeddedObject(p)) {
@@ -906,9 +949,9 @@ public class OObjectEntitySerializer {
 					}
 				}
 
-				fieldValue = typeToStream(fieldValue, schemaProperty != null ? schemaProperty.getType() : null, db, iRecord);
+				fieldValue = typeToStream(fieldValue, fieldType, db, iRecord);
 
-				iRecord.field(fieldName, fieldValue);
+				iRecord.field(fieldName, fieldValue, fieldType);
 			}
 
 			currentClass = currentClass.getSuperclass();
