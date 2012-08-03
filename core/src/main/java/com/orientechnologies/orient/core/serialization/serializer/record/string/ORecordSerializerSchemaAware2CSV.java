@@ -313,9 +313,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       // NO OVERSIZE
       newSize = iOutput.length();
 
-    if (newSize > iOutput.length())
+    if (newSize > iOutput.length()){
+      iOutput.ensureCapacity(newSize);
       for (int b = iOutput.length(); b < newSize; ++b)
         iOutput.append(' ');
+    }
 
     return iOutput;
   }

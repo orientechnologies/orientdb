@@ -182,6 +182,7 @@ public abstract class OStringSerializerHelper {
 
     final char[] buffer = new char[max - beginIndex];
     iSource.getChars(beginIndex, max, buffer, 0);
+    iBuffer.ensureCapacity(max);
 
     // JUMP FIRST CHARS
     int i = 0;
