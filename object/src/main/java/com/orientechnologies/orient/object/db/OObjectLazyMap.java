@@ -188,6 +188,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAndDetachAll(nonProxiedInstance);
+
+	}
+
 	/**
 	 * Converts all the items
 	 */
@@ -198,6 +203,19 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 		for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
 			super.put(e.getKey(),
 					getDatabase().getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) e.getValue()).getRecord(), null));
+
+		converted = true;
+	}
+
+	protected void convertAndDetachAll(boolean nonProxiedInstance) {
+		if (converted || !convertToRecord)
+			return;
+
+		for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
+			Object o = getDatabase().getUserObjectByRecord((ORecordInternal<?>) ((OIdentifiable) e.getValue()).getRecord(), null);
+			o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance);
+			super.put(e.getKey(), o);
+		}
 
 		converted = true;
 	}

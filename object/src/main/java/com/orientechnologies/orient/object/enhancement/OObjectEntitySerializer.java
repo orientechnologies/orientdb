@@ -201,6 +201,44 @@ public class OObjectEntitySerializer {
 	}
 
 	/**
+	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
+	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
+	 * returnNonProxiedInstance)}
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @param db
+	 *          :- the database instance
+	 * @param returnNonProxiedInstance
+	 *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
+	 *          and @Version fields it could procude data replication
+	 * @return the object serialized or with detached data
+	 */
+	public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance) {
+		if (o instanceof Proxy) {
+			OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
+			try {
+				if (returnNonProxiedInstance) {
+					o = getNonProxiedInstance(o);
+				}
+				handler.detachAll(o, returnNonProxiedInstance);
+			} catch (IllegalArgumentException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (IllegalAccessException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (NoSuchMethodException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			} catch (InvocationTargetException e) {
+				throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
+			}
+			return o;
+		} else if (!returnNonProxiedInstance)
+			return serializeObject(o, db);
+		return o;
+	}
+
+	/**
 	 * Method that given a proxied entity returns the associated ODocument
 	 * 
 	 * @param proxiedObject
@@ -1120,7 +1158,7 @@ public class OObjectEntitySerializer {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected static <T> T getNonProxiedInstance(T iObject) {
+	public static <T> T getNonProxiedInstance(T iObject) {
 		try {
 			return (T) iObject.getClass().getSuperclass().newInstance();
 		} catch (InstantiationException ie) {

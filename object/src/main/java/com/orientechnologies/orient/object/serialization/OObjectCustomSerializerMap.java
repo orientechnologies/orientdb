@@ -153,6 +153,10 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	/**
 	 * Converts all the items
 	 */

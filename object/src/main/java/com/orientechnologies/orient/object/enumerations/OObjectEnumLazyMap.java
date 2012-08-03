@@ -155,6 +155,10 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	/**
 	 * Converts all the items
 	 */

@@ -199,6 +199,18 @@ public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 		convertAll();
 	}
 
+	public void detachAll() {
+		detach();
+	}
+
+	public void detach(boolean nonProxiedInstance) {
+		detach();
+	}
+
+	public void detachAll(boolean nonProxiedInstance) {
+		detach();
+	}
+
 	protected void convertAll() {
 		if (converted || !convertToRecord)
 			return;

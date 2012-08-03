@@ -30,6 +30,7 @@ import java.util.Set;
 
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -112,6 +113,34 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			Object value = getValue(self, fieldName, false, null);
 			if (value instanceof OLazyObjectMultivalueElement)
 				((OLazyObjectMultivalueElement) value).detach();
+			OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()), self, value);
+		}
+		OObjectEntitySerializer.setIdField(self.getClass(), self, doc.getIdentity());
+		OObjectEntitySerializer.setVersionField(self.getClass(), self, doc.getVersion());
+	}
+
+	/**
+	 * Method that detaches all fields contained in the document to the given object
+	 * 
+	 * @param self
+	 *          :- The object containing this handler instance
+	 * @throws InvocationTargetException
+	 * @throws IllegalAccessException
+	 * @throws NoSuchMethodException
+	 */
+	public void detachAll(Object self, boolean nonProxiedInstance) throws NoSuchMethodException, IllegalAccessException,
+			InvocationTargetException {
+		for (String fieldName : doc.fieldNames()) {
+			Object value = getValue(self, fieldName, false, null);
+			if (value instanceof OLazyObjectMultivalueElement)
+				((OLazyObjectMultivalueElement) value).detachAll(nonProxiedInstance);
+			else if (value instanceof Proxy) {
+				OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) value).getHandler();
+				if (nonProxiedInstance) {
+					value = OObjectEntitySerializer.getNonProxiedInstance(value);
+				}
+				handler.detachAll(value, nonProxiedInstance);
+			}
 			OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()), self, value);
 		}
 		OObjectEntitySerializer.setIdField(self.getClass(), self, doc.getIdentity());

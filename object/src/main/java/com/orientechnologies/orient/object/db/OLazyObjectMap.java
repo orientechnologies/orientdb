@@ -29,7 +29,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Deprecated
-public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement, OLazyObjectMapInterface<TYPE> {
+public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement,
+		OLazyObjectMapInterface<TYPE> {
 	private static final long					serialVersionUID	= 4146521893082733694L;
 
 	private final ORecord<?>					sourceRecord;
@@ -176,6 +177,14 @@ public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Ser
 
 	public void detach() {
 		convertAll();
+	}
+
+	public void detach(boolean nonProxiedInstance) {
+		detach();
+	}
+
+	public void detachAll(boolean nonProxiedInstance) {
+		detach();
 	}
 
 	/**

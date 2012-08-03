@@ -24,4 +24,6 @@ public interface OLazyObjectMultivalueElement {
 
 	public void detach();
 
+	public void detachAll(boolean nonProxiedInstance);
+
 }

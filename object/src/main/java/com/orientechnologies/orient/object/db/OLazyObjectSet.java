@@ -165,6 +165,14 @@ public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLaz
 		convertAll();
 	}
 
+	public void detach(boolean nonProxiedInstance) {
+		detach();
+	}
+
+	public void detachAll(boolean nonProxiedInstance) {
+		detach();
+	}
+
 	public boolean isConverted() {
 		return converted;
 	}
@@ -179,7 +187,8 @@ public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLaz
 		for (Object e : copy) {
 			if (e != null) {
 				if (e instanceof ORID)
-					add(database.getUserObjectByRecord((ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+					add(database.getUserObjectByRecord(
+							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
 				else

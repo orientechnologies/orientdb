@@ -205,6 +205,10 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjec
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	protected void convertAll() {
 		if (converted)
 			return;

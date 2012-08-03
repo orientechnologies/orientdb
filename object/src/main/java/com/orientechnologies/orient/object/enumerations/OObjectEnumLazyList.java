@@ -210,6 +210,10 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OL
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	protected void convertAll() {
 		if (converted)
 			return;

@@ -148,6 +148,10 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	protected void convertAll() {
 		if (converted)
 			return;

@@ -175,6 +175,10 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAndDetachAll(nonProxiedInstance);
+	}
+
 	protected void convertAll() {
 		if (converted || !convertToRecord)
 			return;
@@ -190,6 +194,30 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
 				else
+					add(e);
+			}
+		}
+
+		converted = true;
+	}
+
+	protected void convertAndDetachAll(boolean nonProxiedInstance) {
+		if (converted || !convertToRecord)
+			return;
+
+		final Set<Object> copy = new HashSet<Object>(this);
+		underlying.clear();
+		final ODatabasePojoAbstract<TYPE> database = getDatabase();
+		for (Object e : copy) {
+			if (e != null) {
+				if (e instanceof ORID) {
+					e = database.getUserObjectByRecord(
+							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan);
+					e = ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance);
+				} else if (e instanceof ODocument) {
+					e = database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan);
+					e = ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance);
+				} else
 					add(e);
 			}
 		}

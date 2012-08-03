@@ -150,6 +150,10 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 		convertAll();
 	}
 
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
+
 	protected void convertAll() {
 		if (converted)
 			return;
