@@ -127,7 +127,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
     parameters = iArgs;
 
-    if (iArgs != null && iArgs.size() == 0) {
+    if (iArgs != null && iArgs.size() > 0) {
       compiledFilter.bindParameters(iArgs);
     }
 
