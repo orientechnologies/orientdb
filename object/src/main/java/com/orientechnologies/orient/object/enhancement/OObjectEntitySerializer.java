@@ -934,17 +934,10 @@ public class OObjectEntitySerializer {
 
 				if (fieldValue != null) {
 					if (isEmbeddedObject(p)) {
-						// AUTO CREATE SCHEMA PROPERTY
+						// AUTO CREATE SCHEMA CLASS
 						if (iRecord.getSchemaClass() == null) {
 							db.getMetadata().getSchema().createClass(iPojo.getClass());
 							iRecord.setClassNameIfExists(iPojo.getClass().getSimpleName());
-						}
-
-						if (schemaProperty == null) {
-							OType t = OType.getTypeByClass(fieldValue.getClass());
-							if (t == null)
-								t = OType.EMBEDDED;
-							schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, t);
 						}
 					}
 				}
