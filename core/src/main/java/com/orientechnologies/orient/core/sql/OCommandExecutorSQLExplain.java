@@ -39,7 +39,7 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
 
   @Override
   public Object execute(Map<Object, Object> iArgs) {
-    delegate.getContext().setRecordMetrics(true);
+    delegate.getContext().setRecordingMetrics(true);
 
     final long startTime = System.currentTimeMillis();
 

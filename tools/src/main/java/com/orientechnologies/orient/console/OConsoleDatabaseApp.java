@@ -494,6 +494,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     reloadRecordInternal(iRecordId, null);
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Explain how a command is executed profiling it")
+  public void explain(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s).\n", true);
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
   public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("insert", iCommandText, "\nInserted record '%s' in %f sec(s).\n", true);

@@ -135,12 +135,12 @@ public class OTraverseContext implements OCommandContext {
     return getVariables().toString();
   }
 
-  public boolean isRecordMetrics() {
-    return nestedStack != null ? nestedStack.isRecordMetrics() : false;
+  public boolean isRecordingMetrics() {
+    return nestedStack != null ? nestedStack.isRecordingMetrics() : false;
   }
 
-  public void setRecordMetrics(boolean recordMetrics) {
+  public void setRecordingMetrics(boolean recordMetrics) {
     if (nestedStack != null)
-      nestedStack.setRecordMetrics(recordMetrics);
+      nestedStack.setRecordingMetrics(recordMetrics);
   }
 }

@@ -43,7 +43,7 @@ public interface OCommandContext {
    */
   public long updateMetric(String iName, long iValue);
 
-  public boolean isRecordMetrics();
+  public boolean isRecordingMetrics();
 
-  public void setRecordMetrics(boolean recordMetrics);
+  public void setRecordingMetrics(boolean recordMetrics);
 }

@@ -418,7 +418,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         INDEX_OPERATION_TYPE opType = null;
 
-        if (context.isRecordMetrics()) {
+        if (context.isRecordingMetrics()) {
           Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
           if (idxNames == null) {
             idxNames = new HashSet<String>();

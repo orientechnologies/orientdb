@@ -127,8 +127,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
     parameters = iArgs;
 
-    // TODO: SUPPORT MULTIPLE CLASSES LIKE A SQL JOIN
-    compiledFilter.bindParameters(iArgs);
+    if (iArgs != null && iArgs.size() == 0) {
+      compiledFilter.bindParameters(iArgs);
+    }
 
     if (target == null)
       if (compiledFilter.getTargetClasses() != null)
@@ -246,7 +247,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
             return false;
         }
-        context.updateMetric("documentReadsCompatibleClass", +1);
+        context.updateMetric("documentAnalyzedCompatibleClass", +1);
       }
     }
 

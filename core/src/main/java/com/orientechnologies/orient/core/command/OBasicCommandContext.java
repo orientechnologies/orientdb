@@ -87,11 +87,11 @@ public class OBasicCommandContext implements OCommandContext {
       variables = new HashMap<String, Object>();
   }
 
-  public boolean isRecordMetrics() {
+  public boolean isRecordingMetrics() {
     return recordMetrics;
   }
 
-  public void setRecordMetrics(boolean recordMetrics) {
+  public void setRecordingMetrics(boolean recordMetrics) {
     this.recordMetrics = recordMetrics;
   }
 }
