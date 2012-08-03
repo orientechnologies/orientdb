@@ -200,6 +200,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		OObjectEntitySerializer.attach(iPojo, this);
 	}
 
+	public void attachAndSave(final Object iPojo) {
+		attach(iPojo);
+		save(iPojo);
+	}
+
 	@Override
 	public <RET> RET detach(final Object iPojo) {
 		return (RET) OObjectEntitySerializer.detach(iPojo, this);
