@@ -27,50 +27,68 @@ import com.orientechnologies.orient.core.id.ORecordId;
  */
 public class OConcurrentModificationException extends ONeedRetryException {
 
-	private static final String	MESSAGE_RECORD_VERSION	= "your=v";
-	private static final String	MESSAGE_DB_VERSION			= "db=v";
+  private static final String MESSAGE_RECORD_VERSION = "your=v";
+  private static final String MESSAGE_DB_VERSION     = "db=v";
 
-	private static final long		serialVersionUID				= 1L;
+  private static final long   serialVersionUID       = 1L;
 
-	private final ORID					rid;
-	private final int						databaseVersion;
-	private final int						recordVersion;
+  private ORID                rid;
+  private int                 databaseVersion;
+  private int                 recordVersion;
 
-	/**
-	 * Rebuilds the original exception from the message.
-	 */
-	public OConcurrentModificationException(final String message) {
-		super(message);
-		int beginPos = message.indexOf(ORID.PREFIX);
-		int endPos = message.indexOf(' ', beginPos);
-		rid = new ORecordId(message.substring(beginPos, endPos));
+  /**
+   * Default constructor for OFastConcurrentModificationException
+   */
+  protected OConcurrentModificationException() {
+    rid = new ORecordId();
+    databaseVersion = 0;
+    recordVersion = 0;
+  }
 
-		beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
-		endPos = message.indexOf(' ', beginPos);
-		databaseVersion = Integer.parseInt(message.substring(beginPos, endPos));
+  public OConcurrentModificationException(final String message) {
+    int beginPos = message.indexOf(ORID.PREFIX);
+    int endPos = message.indexOf(' ', beginPos);
+    rid = new ORecordId(message.substring(beginPos, endPos));
 
-		beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
-		endPos = message.indexOf(')', beginPos);
-		recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
-	}
+    beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
+    endPos = message.indexOf(' ', beginPos);
+    databaseVersion = Integer.parseInt(message.substring(beginPos, endPos));
 
-	public OConcurrentModificationException(final String message, final ORID iRID, final int iDatabaseVersion,
-			final int iRecordVersion) {
-		super(message);
-		rid = iRID;
-		databaseVersion = iDatabaseVersion;
-		recordVersion = iRecordVersion;
-	}
+    beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
+    endPos = message.indexOf(')', beginPos);
+    recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
+  }
 
-	public int getDatabaseVersion() {
-		return databaseVersion;
-	}
+  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion) {
+    if (OFastConcurrentModificationException.enabled())
+      throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
-	public int getRecordVersion() {
-		return recordVersion;
-	}
+    rid = iRID;
+    databaseVersion = iDatabaseVersion;
+    recordVersion = iRecordVersion;
+  }
 
-	public ORID getRid() {
-		return rid;
-	}
+  public int getDatabaseVersion() {
+    return databaseVersion;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
+  public ORID getRid() {
+    return rid;
+  }
+
+  public String getMessage() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cannot delete the record ");
+    sb.append(rid);
+    sb.append(" because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v");
+    sb.append(databaseVersion);
+    sb.append(" your=v");
+    sb.append(recordVersion);
+    sb.append(")");
+    return sb.toString();
+  }
 }

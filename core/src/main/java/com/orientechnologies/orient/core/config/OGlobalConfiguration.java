@@ -87,6 +87,11 @@ public enum OGlobalConfiguration {
 
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
+  DB_MVCC_THROWFAST(
+      "db.mvcc.throwfast",
+      "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available, use where these exceptions are handled and the detail is not neccessary",
+      Boolean.class, false),
+
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE

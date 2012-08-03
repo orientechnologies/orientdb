@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -138,14 +139,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
       if (version > -1 && iDocument.getVersion() != version) // check for record version errors
-        throw new OConcurrentModificationException(
-            "Cannot delete the record "
-                + iDocument.getIdentity()
-                + " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-                + iDocument.getVersion() + " your=v" + version + ")", iDocument.getIdentity(), iDocument.getVersion(), version);
+        if (OFastConcurrentModificationException.enabled())
+          throw OFastConcurrentModificationException.instance();
+        else
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version);
     }
 
-    ;
     acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
     return false;
   }

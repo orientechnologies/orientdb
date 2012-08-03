@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -371,11 +372,10 @@ public class OStorageMemory extends OStorageEmbedded {
           if (iVersion > -1) {
             // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
             if (iVersion != ppos.recordVersion)
-              throw new OConcurrentModificationException(
-                  "Cannot update record "
-                      + iRid
-                      + " because the version is not the latest. Probably you are updating an old record or it has been modified by another user (db=v"
-                      + ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
+              if (OFastConcurrentModificationException.enabled())
+                throw OFastConcurrentModificationException.instance();
+              else
+                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
 
             ++ppos.recordVersion;
           } else
@@ -423,11 +423,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
         if (iVersion > -1 && ppos.recordVersion != iVersion)
-          throw new OConcurrentModificationException(
-              "Cannot delete record "
-                  + iRid
-                  + " because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v"
-                  + ppos.recordVersion + " your=v" + iVersion + ")", iRid, ppos.recordVersion, iVersion);
+          if (OFastConcurrentModificationException.enabled())
+            throw OFastConcurrentModificationException.instance();
+          else
+            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
 
         cluster.removePhysicalPosition(iRid.clusterPosition);
 
