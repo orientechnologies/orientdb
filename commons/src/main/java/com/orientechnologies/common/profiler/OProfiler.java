@@ -300,6 +300,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public long stopChrono(final String iName, final long iStartTime) {
+    // CHECK IF CHRONOS ARE ACTIVED
+    if (recordingFrom < 0)
+      return -1;
+
     acquireSharedLock();
     try {
 
@@ -312,6 +316,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public long updateStat(final String iName, final long iValue) {
+    // CHECK IF CHRONOS ARE ACTIVED
+    if (recordingFrom < 0)
+      return -1;
+
     acquireSharedLock();
     try {
 
