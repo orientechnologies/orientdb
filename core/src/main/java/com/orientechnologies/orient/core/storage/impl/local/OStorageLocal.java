@@ -1156,7 +1156,8 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       for (ODataLocal d : dataSegments)
-        holes.addAll(d.getHolesList());
+        if (d != null)
+          holes.addAll(d.getHolesList());
 
       return holes;
 
@@ -1176,7 +1177,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
       long holes = 0;
       for (ODataLocal d : dataSegments)
-        holes += d.getHoles();
+        if (d != null)
+          holes += d.getHoles();
       return holes;
 
     } finally {
