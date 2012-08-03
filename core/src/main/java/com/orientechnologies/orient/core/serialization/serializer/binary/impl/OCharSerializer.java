@@ -19,41 +19,38 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 
 /**
- *
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OCharSerializer implements OBinarySerializer<Character> {
-	/**
-	 * size of char value in bytes
-	 */
-	public static final int CHAR_SIZE = 2;
+  /**
+   * size of char value in bytes
+   */
+  public static final int       CHAR_SIZE = 2;
 
-	public static OCharSerializer INSTANCE = new OCharSerializer();
-	public static final byte ID = 3;
+  public static OCharSerializer INSTANCE  = new OCharSerializer();
+  public static final byte      ID        = 3;
 
-	public int getObjectSize(Character object) {
-		return CHAR_SIZE;
-	}
+  public int getObjectSize(final Character object) {
+    return CHAR_SIZE;
+  }
 
-	public void serialize(Character object, byte[] stream, int startPosition) {
-		stream[startPosition] = (byte) (object >>> 8);
-		stream[startPosition + 1] = (byte) (object.charValue());
-	}
+  public void serialize(final Character object, final byte[] stream, final int startPosition) {
+    stream[startPosition] = (byte) (object >>> 8);
+    stream[startPosition + 1] = (byte) (object.charValue());
+  }
 
-	public Character deserialize(byte[] stream, int startPosition) {
-		return (char) (
-						((stream[startPosition] & 0xFF) << 8) +
-										(stream[startPosition + 1] & 0xFF)
-		);
-	}
+  public Character deserialize(final byte[] stream, final int startPosition) {
+    return (char) (((stream[startPosition] & 0xFF) << 8) + (stream[startPosition + 1] & 0xFF));
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return CHAR_SIZE;
-	}
+  public int getObjectSize(final byte[] stream, final int startPosition) {
+    return CHAR_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
 
 }

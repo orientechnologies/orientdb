@@ -16,52 +16,50 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2int;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.int2bytes;
 
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#STRING}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#STRING}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {
 
-	public static OStringSerializer INSTANCE = new  OStringSerializer();
-	public static final byte ID = 13;
+  public static final OStringSerializer INSTANCE = new OStringSerializer();
+  public static final byte              ID       = 13;
 
-	public int getObjectSize(String object) {
-		return object.length() * 2 + OIntegerSerializer.INT_SIZE;
-	}
+  public int getObjectSize(final String object) {
+    return object.length() * 2 + OIntegerSerializer.INT_SIZE;
+  }
 
-	public void serialize(String object, byte[] stream, int startPosition) {
-		OCharSerializer charSerializer = new OCharSerializer();
-		int length = object.length();
-		int2bytes(length, stream, startPosition);
-		for(int i = 0; i < length; i++) {
-			charSerializer.serialize(object.charAt(i), stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2);
-		}
-	}
+  public void serialize(final String object, final byte[] stream, final int startPosition) {
+    final OCharSerializer charSerializer = OCharSerializer.INSTANCE;
+    final int length = object.length();
+    int2bytes(length, stream, startPosition);
+    for (int i = 0; i < length; i++) {
+      charSerializer.serialize(object.charAt(i), stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2);
+    }
+  }
 
-	public String deserialize(byte[] stream, int startPosition) {
-		OCharSerializer charSerializer = new OCharSerializer();
-		int len = bytes2int(stream, startPosition);
-		StringBuilder stringBuilder = new StringBuilder();
-		for(int i = 0; i < len; i++) {
-			stringBuilder.append(charSerializer.deserialize(stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2));
-		}
-		return stringBuilder.toString();
-	}
+  public String deserialize(final byte[] stream, final int startPosition) {
+    final OCharSerializer charSerializer = OCharSerializer.INSTANCE;
+    final int len = bytes2int(stream, startPosition);
+    final StringBuilder stringBuilder = new StringBuilder();
+    for (int i = 0; i < len; i++) {
+      stringBuilder.append(charSerializer.deserialize(stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2));
+    }
+    return stringBuilder.toString();
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return bytes2int(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return bytes2int(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
 }
-
-
