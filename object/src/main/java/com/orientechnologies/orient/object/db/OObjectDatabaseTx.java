@@ -206,14 +206,49 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 	}
 
 	@Override
+	/**
+	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
+	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
+	 * returnNonProxiedInstance)}
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @return the detached object
+	 */
 	public <RET> RET detach(final Object iPojo) {
 		return (RET) OObjectEntitySerializer.detach(iPojo, this);
 	}
 
+	/**
+	 * Method that detaches all fields contained in the document to the given object.
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @param db
+	 *          :- the database instance
+	 * @param returnNonProxiedInstance
+	 *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
+	 *          and @Version fields it could procude data replication
+	 * @return the object serialized or with detached data
+	 */
 	public <RET> RET detach(final Object iPojo, boolean returnNonProxiedInstance) {
 		return (RET) OObjectEntitySerializer.detach(iPojo, this, returnNonProxiedInstance);
 	}
 
+	/**
+	 * Method that detaches all fields contained in the document to the given object and recursively all object tree. This may throw a
+	 * {@link StackOverflowError} with big objects tree. To avoid it set the stack size with -Xss java option
+	 * 
+	 * @param <T>
+	 * @param o
+	 *          :- the object to detach
+	 * @param returnNonProxiedInstance
+	 *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
+	 *          and @Version fields it could procude data replication
+	 * @return the object serialized or with detached data
+	 */
 	public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
 		return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance);
 	}

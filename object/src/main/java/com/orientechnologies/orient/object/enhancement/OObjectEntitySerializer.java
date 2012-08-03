@@ -163,9 +163,7 @@ public class OObjectEntitySerializer {
 	}
 
 	/**
-	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
-	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
-	 * returnNonProxiedInstance)}
+	 * Method that detaches all fields contained in the document to the given object.
 	 * 
 	 * @param <T>
 	 * @param o
@@ -201,9 +199,8 @@ public class OObjectEntitySerializer {
 	}
 
 	/**
-	 * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
-	 * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
-	 * returnNonProxiedInstance)}
+	 * Method that detaches all fields contained in the document to the given object and recursively all object tree. This may throw a
+	 * {@link StackOverflowError} with big objects tree. To avoid it set the stack size with -Xss java option
 	 * 
 	 * @param <T>
 	 * @param o
