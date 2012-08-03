@@ -788,32 +788,32 @@ public class OObjectEntitySerializer {
 	}
 
 	public static OType getTypeByClass(final Class<?> iClass, final String fieldName) {
-		if (OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)) {
+		Field f = getField(fieldName, iClass);
+		if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
+			Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
+			if (f.getType().isArray())
+				if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
+					return OType.BINARY;
+				} else {
+					return OType.getTypeByClass(f.getType());
+				}
+			else if (Collection.class.isAssignableFrom(f.getType())) {
+				if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+						|| OReflectionHelper.isJavaType(genericMultiValueType))
+					return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
+				else
+					return Set.class.isAssignableFrom(f.getType()) ? OType.LINKSET : OType.LINKLIST;
+			} else {
+				if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+						|| OReflectionHelper.isJavaType(genericMultiValueType))
+					return OType.EMBEDDEDMAP;
+				else
+					return OType.LINKMAP;
+			}
+		} else if (OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)) {
 			return OType.EMBEDDED;
 		} else {
-			Field f = getField(fieldName, iClass);
-			if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
-				Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
-				if (f.getType().isArray())
-					if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
-						return OType.BINARY;
-					} else {
-						return OType.getTypeByClass(f.getType());
-					}
-				else if (Collection.class.isAssignableFrom(f.getType())) {
-					if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName))
-						return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
-					else
-						return Set.class.isAssignableFrom(f.getType()) ? OType.LINKSET : OType.LINKLIST;
-				} else {
-					if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName))
-						return OType.EMBEDDEDMAP;
-					else
-						return OType.LINKMAP;
-				}
-			} else {
-				return OType.getTypeByClass(f.getType());
-			}
+			return OType.getTypeByClass(f.getType());
 		}
 	}
 

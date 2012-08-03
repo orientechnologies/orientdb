@@ -46,6 +46,8 @@ public class JavaComplexTestClass {
 	private ODocument							document;
 	private ORecordBytes					byteArray;
 	private String								name;
+	private Map<String, String>		stringMap	= new HashMap<String, String>();
+	private Set<Child>						set				= new HashSet<Child>();
 	private Map<String, Child>		children	= new HashMap<String, Child>();
 	private List<EnumTest>				enumList	= new ArrayList<EnumTest>();
 	private Set<EnumTest>					enumSet		= new HashSet<EnumTest>();
@@ -129,5 +131,21 @@ public class JavaComplexTestClass {
 
 	public void setDocument(ODocument document) {
 		this.document = document;
+	}
+
+	public Set<Child> getSet() {
+		return set;
+	}
+
+	public void setSet(Set<Child> set) {
+		this.set = set;
+	}
+
+	public Map<String, String> getStringMap() {
+		return stringMap;
+	}
+
+	public void setStringMap(Map<String, String> stringMap) {
+		this.stringMap = stringMap;
 	}
 }
