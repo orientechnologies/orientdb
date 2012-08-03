@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -297,15 +298,29 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           for (int i = 0; i < iFields.length; i += 2)
             edge.field(iFields[i].toString(), iFields[i + 1]);
 
-      OMVRBTreeRIDSet out = ((OMVRBTreeRIDSet) iOutVertex.field(VERTEX_FIELD_OUT));
-      if (out == null) {
+      // OUT FIELD
+      final Object outField = iOutVertex.field(VERTEX_FIELD_OUT);
+      final OMVRBTreeRIDSet out;
+      if (outField instanceof OMVRBTreeRIDSet) {
+        out = (OMVRBTreeRIDSet) outField;
+      } else if (outField instanceof Collection<?>) {
+        out = new OMVRBTreeRIDSet(iOutVertex, (Collection<OIdentifiable>) outField);
+        iOutVertex.field(VERTEX_FIELD_OUT, out);
+      } else {
         out = new OMVRBTreeRIDSet(iOutVertex);
         iOutVertex.field(VERTEX_FIELD_OUT, out);
       }
       out.add(edge);
 
-      OMVRBTreeRIDSet in = ((OMVRBTreeRIDSet) iInVertex.field(VERTEX_FIELD_IN));
-      if (in == null) {
+      // IN FIELD
+      final Object inField = iInVertex.field(VERTEX_FIELD_IN);
+      final OMVRBTreeRIDSet in;
+      if (inField instanceof OMVRBTreeRIDSet) {
+        in = (OMVRBTreeRIDSet) inField;
+      } else if (inField instanceof Collection<?>) {
+        in = new OMVRBTreeRIDSet(iInVertex, (Collection<OIdentifiable>) inField);
+        iInVertex.field(VERTEX_FIELD_IN, in);
+      } else {
         in = new OMVRBTreeRIDSet(iInVertex);
         iInVertex.field(VERTEX_FIELD_IN, in);
       }
