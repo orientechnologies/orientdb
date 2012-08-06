@@ -282,7 +282,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     String fieldName;
     String fieldValue;
 
-    while (!parserIsEnded() && (addEntries.size() == 0 || parserGetLastSeparator() == ',')
+    while (!parserIsEnded() && (addEntries.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
@@ -291,6 +291,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
       // INSERT TRANSFORMED FIELD VALUE
       addEntries.add(new OPair<String, Object>(fieldName, getFieldValueCountingParameters(fieldValue)));
+      parserSkipWhiteSpaces();
     }
 
     if (addEntries.size() == 0)
@@ -302,7 +303,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     String fieldKey;
     String fieldValue;
 
-    while (!parserIsEnded() && (setEntries.size() == 0 || parserGetLastSeparator() == ',')
+    while (!parserIsEnded() && (setEntries.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
@@ -313,6 +314,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       // INSERT TRANSFORMED FIELD VALUE
       putEntries.put(fieldName, new OPair<String, Object>((String) getFieldValueCountingParameters(fieldKey),
           getFieldValueCountingParameters(fieldValue)));
+      parserSkipWhiteSpaces();
     }
 
     if (putEntries.size() == 0)
@@ -324,7 +326,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     String fieldValue;
     Object value;
 
-    while (!parserIsEnded() && (removeEntries.size() == 0 || parserGetLastSeparator() == ',')
+    while (!parserIsEnded() && (removeEntries.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
@@ -337,6 +339,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
       // INSERT FIELD NAME TO BE REMOVED
       removeEntries.add(new OPair<String, Object>(fieldName, value));
+      parserSkipWhiteSpaces();
     }
 
     if (removeEntries.size() == 0)
@@ -356,6 +359,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
       // INSERT TRANSFORMED FIELD VALUE
       incrementEntries.put(fieldName, (Number) getFieldValueCountingParameters(fieldValue));
+      parserSkipWhiteSpaces();
     }
 
     if (incrementEntries.size() == 0)

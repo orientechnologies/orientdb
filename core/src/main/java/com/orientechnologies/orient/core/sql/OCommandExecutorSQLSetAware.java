@@ -18,8 +18,6 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
 /**
  * @author luca.molino
  * 
@@ -34,7 +32,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     String fieldName;
     String fieldValue;
 
-    while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',')) {
+    while (!parserIsEnded() && (fields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
       fieldName = parserRequiredWord(false, "Field name expected");
       if (fieldName.equalsIgnoreCase(KEYWORD_WHERE)) {
         parserGoBack();
@@ -46,6 +44,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
 
       // INSERT TRANSFORMED FIELD VALUE
       fields.put(fieldName, getFieldValueCountingParameters(fieldValue));
+      parserSkipWhiteSpaces();
     }
 
     if (fields.size() == 0)

@@ -327,7 +327,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     String fieldOrdering = null;
 
     orderedFields = new ArrayList<OPair<String, String>>();
-    while (!parserIsEnded() && (orderedFields.size() == 0 || parserGetLastSeparator() == ',')) {
+    while (!parserIsEnded() && (orderedFields.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')) {
       final String fieldName = parserRequiredWord(false, "Field name expected");
 
       parserOptionalWord(true);
@@ -351,6 +351,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
       orderedFields.add(new OPair<String, String>(fieldName, fieldOrdering));
+      parserSkipWhiteSpaces();
     }
 
     if (orderedFields.size() == 0)
