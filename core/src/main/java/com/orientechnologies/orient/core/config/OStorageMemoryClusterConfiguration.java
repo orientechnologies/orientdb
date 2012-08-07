@@ -16,7 +16,8 @@
 package com.orientechnologies.orient.core.config;
 
 public class OStorageMemoryClusterConfiguration extends OAbstractStorageClusterConfiguration {
-	public OStorageMemoryClusterConfiguration(final String name, final int id, final int iDataSegmentId) {
-		super(name, id, iDataSegmentId);
-	}
+  public OStorageMemoryClusterConfiguration(final String name, final int id, final int iDataSegmentId) {
+    super(name, id, iDataSegmentId);
+  }
+
 }

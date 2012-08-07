@@ -179,13 +179,13 @@ public class OStorageConfiguration implements OSerializableStream {
 
       if (clusterType.equals("p")) {
         // PHYSICAL CLUSTER
-        final OStoragePhysicalClusterConfiguration phyCluster = new OStoragePhysicalClusterConfiguration(this, clusterId,
-            targetDataSegmentId);
-        phyCluster.name = clusterName;
-        index = phySegmentFromStream(values, index, phyCluster);
-        phyCluster.setHoleFile(new OStorageClusterHoleConfiguration(phyCluster, read(values[index++]), read(values[index++]),
-            read(values[index++])));
-        currentCluster = phyCluster;
+        final OStoragePhysicalClusterConfigurationLocal phyClusterLocal = new OStoragePhysicalClusterConfigurationLocal(this,
+            clusterId, targetDataSegmentId);
+        phyClusterLocal.name = clusterName;
+        index = phySegmentFromStream(values, index, phyClusterLocal);
+        phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
+            read(values[index++]), read(values[index++])));
+        currentCluster = phyClusterLocal;
       } else if (clusterType.equals("m"))
         // MEMORY CLUSTER
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
@@ -260,11 +260,11 @@ public class OStorageConfiguration implements OSerializableStream {
       write(buffer, c.getName());
       write(buffer, c.getDataSegmentId());
 
-      if (c instanceof OStoragePhysicalClusterConfiguration) {
+      if (c instanceof OStoragePhysicalClusterConfigurationLocal) {
         // PHYSICAL
         write(buffer, "p");
-        phySegmentToStream(buffer, (OStoragePhysicalClusterConfiguration) c);
-        fileToStream(buffer, ((OStoragePhysicalClusterConfiguration) c).getHoleFile());
+        phySegmentToStream(buffer, (OStoragePhysicalClusterConfigurationLocal) c);
+        fileToStream(buffer, ((OStoragePhysicalClusterConfigurationLocal) c).getHoleFile());
       } else if (c instanceof OStorageMemoryClusterConfiguration) {
         // MEMORY
         write(buffer, "m");

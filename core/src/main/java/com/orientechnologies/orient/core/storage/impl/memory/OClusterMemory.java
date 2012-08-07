@@ -68,10 +68,6 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     return new OClusterPositionIterator(this);
   }
 
-  public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
-    return new OClusterPositionIterator(this, iBeginRange, iEndRange);
-  }
-
   public void close() {
     acquireExclusiveLock();
     try {
@@ -142,6 +138,10 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     }
   }
 
+  public boolean generatePositionBeforeCreation() {
+    return false;
+  }
+
   public long getRecordsSize() {
     acquireSharedLock();
     try {
@@ -198,7 +198,7 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     }
   }
 
-  public void addPhysicalPosition(final OPhysicalPosition iPPosition) {
+  public boolean addPhysicalPosition(final OPhysicalPosition iPPosition) {
     acquireExclusiveLock();
     try {
 
@@ -220,6 +220,8 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     } finally {
       releaseExclusiveLock();
     }
+
+    return true;
   }
 
   protected long allocateRecord(final OPhysicalPosition iPPosition) {

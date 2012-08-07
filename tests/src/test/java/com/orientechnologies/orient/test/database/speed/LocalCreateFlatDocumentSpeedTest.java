@@ -20,6 +20,7 @@ import java.util.Date;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -29,46 +30,56 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
-	private Date							date	= new Date();
+  private ODatabaseDocument database;
+  private ODocument         record;
+  private Date              date = new Date();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateFlatDocumentSpeedTest test = new LocalCreateFlatDocumentSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateFlatDocumentSpeedTest test = new LocalCreateFlatDocumentSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateFlatDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateFlatDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  @Test(enabled = false)
+  public void init() {
+    OGlobalConfiguration.USE_LHPEPS_CLUSTER.setValue(true);
 
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    OProfiler.getInstance().startRecording();
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    if (!database.exists())
+      database.create();
+    else
+      database.open("admin", "admin");
 
-	@Override
-	public void cycle() {
-		record.reset();
-		record.setClassName("Account");
-		record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date.getTime()
-				+ "d,salary:" + 3000f + data.getCyclesDone()));
-		record.save();
+    record = database.newInstance();
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-	@Override
-	public void deinit() {
-		if (database != null)
-			database.close();
-		super.deinit();
-	}
+  @Override
+  @Test(enabled = false)
+  public void cycle() {
+    record.reset();
+    record.setClassName("Account");
+    record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:"
+        + date.getTime() + "d,salary:" + 3000f + data.getCyclesDone()));
+    record.save();
+
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void deinit() {
+    if (database != null)
+      database.drop();
+    super.deinit();
+  }
 }

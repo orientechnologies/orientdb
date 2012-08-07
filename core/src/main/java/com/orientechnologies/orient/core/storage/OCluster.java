@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
@@ -65,7 +66,7 @@ public interface OCluster {
   /**
    * Adds a new entry.
    */
-  public void addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
+  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
   /**
    * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
@@ -124,17 +125,7 @@ public interface OCluster {
    */
   public long getRecordsSize();
 
-  public OClusterPositionIterator absoluteIterator();
+  public boolean generatePositionBeforeCreation();
 
-  /**
-   * Creates an iterator setting a range.
-   * 
-   * @param iBeginRange
-   *          Lower range
-   * @param iEndRange
-   *          Upper range
-   * @return
-   * @throws IOException
-   */
-  public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException;
+  public Iterator<Long> absoluteIterator();
 }

@@ -220,6 +220,9 @@ public enum OGlobalConfiguration {
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
+
+  USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
+      + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 

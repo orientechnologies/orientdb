@@ -142,9 +142,9 @@ public class OClusterRemote implements OCluster {
    * com.orientechnologies.orient.core.storage.OCluster#addPhysicalPosition(com.orientechnologies.orient.core.storage.OPhysicalPosition
    * )
    */
-  public void addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
+  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     // TODO Auto-generated method stub
-
+    return false;
   }
 
   /*
@@ -288,22 +288,16 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
+  public boolean generatePositionBeforeCreation() {
+    return false;
+  }
+
   /*
    * (non-Javadoc)
    * 
    * @see com.orientechnologies.orient.core.storage.OCluster#absoluteIterator()
    */
   public OClusterPositionIterator absoluteIterator() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#absoluteIterator(long, long)
-   */
-  public OClusterPositionIterator absoluteIterator(long iBeginRange, long iEndRange) throws IOException {
     // TODO Auto-generated method stub
     return null;
   }

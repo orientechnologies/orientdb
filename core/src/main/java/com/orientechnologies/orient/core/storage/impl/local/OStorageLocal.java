@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -41,18 +43,17 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -74,7 +75,9 @@ public class OStorageLocal extends OStorageEmbedded {
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId    = -1;
 
-  private static String[]               ALL_FILE_EXTENSIONS = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx" };
+  private static String[]               ALL_FILE_EXTENSIONS = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco", ".ocs" };
+
+  private final MersenneTwisterFast     positionGenerator   = new MersenneTwisterFast();
 
   private OModificationLock             modificationLock    = new OModificationLock();
 
@@ -94,6 +97,8 @@ public class OStorageLocal extends OStorageEmbedded {
     variableParser = new OStorageVariableParser(storagePath);
     configuration = new OStorageConfigurationSegment(this);
     txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
+
+    positionGenerator.setSeed(System.nanoTime());
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -124,19 +129,10 @@ public class OStorageLocal extends OStorageEmbedded {
       pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME, 0, getStoragePath()));
       dataSegments[pos].open();
 
-      pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, clusters.length, 0,
-          OStorage.CLUSTER_INTERNAL_NAME));
-      clusters[pos].open();
-
-      configuration.load();
-
-      pos = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, clusters.length, 0,
-          OStorage.CLUSTER_INDEX_NAME));
-      clusters[pos].open();
-
-      defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfiguration(configuration, clusters.length, 0,
-          OStorage.CLUSTER_DEFAULT_NAME));
-      clusters[defaultClusterId].open();
+      if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+        addLHPEPSDefaultClusters();
+      else
+        addDefaultClusters();
 
       // REGISTER DATA SEGMENT
       for (int i = 0; i < configuration.dataSegments.size(); ++i) {
@@ -168,7 +164,7 @@ public class OStorageLocal extends OStorageEmbedded {
               // OPENED
               clusters[i].close();
               clusters[i] = Orient.instance().getClusterFactory().createCluster(OClusterLocal.TYPE);
-              clusters[i].configure(this, (OStoragePhysicalClusterConfiguration) clusterConfig);
+              clusters[i].configure(this, clusterConfig);
               clusterMap.put(clusters[i].getName(), clusters[i]);
               clusters[i].open();
             } else {
@@ -202,6 +198,40 @@ public class OStorageLocal extends OStorageEmbedded {
 
       OProfiler.getInstance().stopChrono("db." + name + ".open", timer);
     }
+  }
+
+  private void addDefaultClusters() throws IOException {
+    int pos;
+    pos = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OStorage.CLUSTER_INTERNAL_NAME));
+    clusters[pos].open();
+
+    configuration.load();
+
+    pos = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OStorage.CLUSTER_INDEX_NAME));
+    clusters[pos].open();
+
+    defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OStorage.CLUSTER_DEFAULT_NAME));
+    clusters[defaultClusterId].open();
+  }
+
+  private void addLHPEPSDefaultClusters() throws IOException {
+    int pos;
+    pos = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OStorage.CLUSTER_INTERNAL_NAME));
+    clusters[pos].open();
+
+    configuration.load();
+
+    pos = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OStorage.CLUSTER_INDEX_NAME));
+    clusters[pos].open();
+
+    defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OStorage.CLUSTER_DEFAULT_NAME));
+    clusters[defaultClusterId].open();
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -409,7 +439,7 @@ public class OStorageLocal extends OStorageEmbedded {
         formatMessage(iVerbose, iListener, "\n- data-cluster #%-5d %s -> ", c.getId(), c.getName());
 
         // BROWSE ALL THE RECORDS
-        for (final OClusterPositionIterator it = c.absoluteIterator(); it.hasNext();) {
+        for (final Iterator<Long> it = c.absoluteIterator(); it.hasNext();) {
           ppos.clusterPosition = it.next();
           totalRecors++;
           try {
@@ -1157,8 +1187,7 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       for (ODataLocal d : dataSegments)
-        if (d != null)
-          holes.addAll(d.getHolesList());
+        holes.addAll(d.getHolesList());
 
       return holes;
 
@@ -1178,8 +1207,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
       long holes = 0;
       for (ODataLocal d : dataSegments)
-        if (d != null)
-          holes += d.getHoles();
+        holes += d.getHoles();
       return holes;
 
     } finally {
@@ -1450,8 +1478,12 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
       final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
 
-      iClusterSegment.addPhysicalPosition(ppos);
-      iRid.clusterPosition = ppos.clusterPosition;
+      if (!iClusterSegment.generatePositionBeforeCreation()) {
+        iClusterSegment.addPhysicalPosition(ppos);
+        iRid.clusterPosition = ppos.clusterPosition;
+      } else {
+        iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+      }
 
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       try {
@@ -1459,13 +1491,22 @@ public class OStorageLocal extends OStorageEmbedded {
         ppos.dataSegmentId = iDataSegment.getId();
         ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
 
-        // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-        iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
+        if (!iClusterSegment.generatePositionBeforeCreation()) {
+          // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
+          iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-        if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion) {
-          // OVERWRITE THE VERSION
-          iClusterSegment.updateVersion(iRid.clusterPosition, iRecordVersion);
+          if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion) {
+            // OVERWRITE THE VERSION
+            iClusterSegment.updateVersion(iRid.clusterPosition, iRecordVersion);
+            ppos.recordVersion = iRecordVersion;
+          }
+        } else {
           ppos.recordVersion = iRecordVersion;
+          ppos.clusterPosition = iRid.clusterPosition;
+          while (!iClusterSegment.addPhysicalPosition(ppos)) {
+            iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+            ppos.clusterPosition = iRid.clusterPosition;
+          }
         }
 
         return ppos;
@@ -1487,7 +1528,7 @@ public class OStorageLocal extends OStorageEmbedded {
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
     if (iRid.clusterPosition < 0)
-      throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name + "'");
+      throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name + '\'');
 
     // NOT FOUND: SEARCH IT IN THE STORAGE
     final long timer = OProfiler.getInstance().startChrono();
@@ -1502,17 +1543,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
       try {
-
-        final long lastPos = iClusterSegment.getLastEntryPosition();
-
-        if (lastPos < 0)
-          throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. The cluster '"
-              + iClusterSegment.getName() + "' is empty in storage '" + name + "'");
-
-        if (iRid.clusterPosition > lastPos)
-          throw new ORecordNotFoundException("Record " + iRid + " is outside cluster range. Valid range for cluster '"
-              + iClusterSegment.getName() + "' is 0-" + lastPos + " in storage '" + name + "'");
-
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
         if (ppos == null || !checkForRecordValidity(ppos))
           // DELETED
@@ -1527,7 +1557,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
     } catch (IOException e) {
 
-      OLogManager.instance().error(this, "Error on reading record " + iRid + " (cluster: " + iClusterSegment + ")", e);
+      OLogManager.instance().error(this, "Error on reading record " + iRid + " (cluster: " + iClusterSegment + ')', e);
       return null;
 
     } finally {

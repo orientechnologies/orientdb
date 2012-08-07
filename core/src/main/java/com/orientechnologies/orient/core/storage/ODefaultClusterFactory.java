@@ -18,11 +18,14 @@ package com.orientechnologies.orient.core.storage;
 import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocalLHPEPS;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 
 public class ODefaultClusterFactory implements OClusterFactory {
@@ -30,7 +33,7 @@ public class ODefaultClusterFactory implements OClusterFactory {
 
   public OCluster createCluster(final String iType) {
     if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
-      return new OClusterLocal();
+      return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean() ? new OClusterLocalLHPEPS() : new OClusterLocal();
     else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
       return new OClusterMemory();
     else
@@ -41,8 +44,10 @@ public class ODefaultClusterFactory implements OClusterFactory {
   }
 
   public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
-    if (iConfig instanceof OStoragePhysicalClusterConfiguration)
+    if (iConfig instanceof OStoragePhysicalClusterConfigurationLocal)
       return new OClusterLocal();
+    else if (iConfig instanceof OStoragePhysicalClusterLHPEPSConfiguration)
+      return new OClusterLocalLHPEPS();
     else if (iConfig instanceof OStorageMemoryClusterConfiguration)
       return new OClusterMemory();
     else

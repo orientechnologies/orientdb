@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -47,33 +48,33 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * </code><br/>
  */
 public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
-  public static final int                      RECORD_SIZE     = 15;
-  public static final String                   TYPE            = "PHYSICAL";
-  private static final String                  DEF_EXTENSION   = ".ocl";
-  private static final int                     DEF_SIZE        = 1000000;
-  private OMultiFileSegment                    fileSegment;
+  public static final int                           RECORD_SIZE     = 15;
+  public static final String                        TYPE            = "PHYSICAL";
+  private static final String                       DEF_EXTENSION   = ".ocl";
+  private static final int                          DEF_SIZE        = 1000000;
+  private OMultiFileSegment                         fileSegment;
 
-  private int                                  id;
-  private long                                 beginOffsetData = -1;
-  private long                                 endOffsetData   = -1;        // end of data offset. -1 = latest
+  private int                                       id;
+  private long                                      beginOffsetData = -1;
+  private long                                      endOffsetData   = -1;        // end of data offset. -1 = latest
 
-  protected OClusterLocalHole                  holeSegment;
-  private OStoragePhysicalClusterConfiguration config;
-  private OStorageLocal                        storage;
-  private String                               name;
+  protected OClusterLocalHole                       holeSegment;
+  private OStoragePhysicalClusterConfigurationLocal config;
+  private OStorageLocal                             storage;
+  private String                                    name;
 
   public OClusterLocal() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
   }
 
   public void configure(final OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
-    config = (OStoragePhysicalClusterConfiguration) iConfig;
+    config = (OStoragePhysicalClusterConfigurationLocal) iConfig;
     init(iStorage, config.getId(), config.getName(), config.getLocation(), config.getDataSegmentId());
   }
 
   public void configure(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
       final int iDataSegmentId, final Object... iParameters) throws IOException {
-    config = new OStoragePhysicalClusterConfiguration(iStorage.getConfiguration(), iId, iDataSegmentId);
+    config = new OStoragePhysicalClusterConfigurationLocal(iStorage.getConfiguration(), iId, iDataSegmentId);
     config.name = iClusterName;
     init(iStorage, iId, iClusterName, iLocation, iDataSegmentId);
   }
@@ -330,7 +331,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
    * 
    * @throws IOException
    */
-  public void addPhysicalPosition(final OPhysicalPosition iPPosition) throws IOException {
+  public boolean addPhysicalPosition(final OPhysicalPosition iPPosition) throws IOException {
     final long[] pos;
     final boolean recycled;
     long offset;
@@ -372,6 +373,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     } finally {
       releaseExclusiveLock();
     }
+
+    return true;
   }
 
   /**
@@ -425,10 +428,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return new OClusterPositionIterator(this);
   }
 
-  public OClusterPositionIterator absoluteIterator(final long iBeginRange, final long iEndRange) throws IOException {
-    return new OClusterPositionIterator(this, iBeginRange, iEndRange);
-  }
-
   public long getSize() {
     acquireSharedLock();
     try {
@@ -466,6 +465,10 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
   public String getType() {
     return TYPE;
+  }
+
+  public boolean generatePositionBeforeCreation() {
+    return false;
   }
 
   public long getRecordsSize() {
@@ -630,9 +633,9 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   protected void init(final OStorage iStorage, final int iId, final String iClusterName, final String iLocation,
       final int iDataSegmentId, final Object... iParameters) throws IOException {
     OFileUtils.checkValidName(iClusterName);
-    
+
     storage = (OStorageLocal) iStorage;
-    ((OStoragePhysicalClusterConfiguration) config).setDataSegmentId(iDataSegmentId);
+    config.setDataSegmentId(iDataSegmentId);
     config.id = iId;
     config.name = iClusterName;
     name = iClusterName;

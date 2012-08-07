@@ -149,8 +149,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           if (cluster instanceof OClusterLocal) {
             json.writeAttribute(3, false, "size", ((OClusterLocal) cluster).getSize());
             json.writeAttribute(3, false, "filled", ((OClusterLocal) cluster).getFilledUpTo());
-            json.writeAttribute(3, false, "maxSize", ((OClusterLocal) cluster).getConfig().maxSize);
-            json.writeAttribute(3, false, "files", Arrays.toString(((OClusterLocal) cluster).getConfig().infoFiles));
+            json.writeAttribute(3, false, "maxSize", ((OClusterLocal) cluster).getConfig().getMaxSize());
+            json.writeAttribute(3, false, "files", Arrays.toString(((OClusterLocal) cluster).getConfig().getInfoFiles()));
           } else {
             json.writeAttribute(3, false, "size", "-");
             json.writeAttribute(3, false, "filled", "-");
