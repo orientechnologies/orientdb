@@ -391,18 +391,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final OStorageLocal storage = (OStorageLocal) currentDatabase.getStorage();
 
-    out.println("List of holes in database " + currentDatabaseName + "...");
-
-    out.println("--------------------------------------------------");
-    out.println("Position             Size");
-    out.println("--------------------------------------------------");
-
     final List<ODataHoleInfo> result = storage.getHolesList();
 
+    out.println("Found " + result.size() + " holes in database " + currentDatabaseName + ":");
+
+    out.println("+----------------------+----------------------+");
+    out.println("| Position             | Size (in bytes)      |");
+    out.println("+----------------------+----------------------+");
+
+    long size = 0;
     for (ODataHoleInfo ppos : result) {
-      out.printf("%20d %11d\n", ppos.dataOffset, ppos.size);
+      out.printf("| %20d | %20d |\n", ppos.dataOffset, ppos.size);
+      size += ppos.size;
     }
-    out.println("--------------------------------------------------");
+    out.println("+----------------------+----------------------+");
+    out.printf("| %20s | %20s |\n", "Total hole size", OFileUtils.getSizeAsString(size));
+    out.println("+----------------------+----------------------+");
   }
 
   @ConsoleCommand(description = "Begins a transaction. All the changes will remain local")
@@ -496,7 +500,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Explain how a command is executed profiling it")
   public void explain(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s).\n", true);
+    Object result = sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s):\n", false);
+    if (result != null && result instanceof ODocument) {
+      out.printf(((ODocument) result).toJSON());
+    }
   }
 
   @ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
