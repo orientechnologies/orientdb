@@ -71,7 +71,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   private Map<Long, Integer>                                    mainBucketOverflowInfoByIndex;
   private Map<Long, Integer>                                    groupBucketOverflowInfoByIndex;
 
-  @SuppressWarnings("unchecked")
   private Map<Long, Integer>[]                                  groupBucketOverflowInfoByChainLength;
   private int                                                   maxChainIndex;
 
@@ -542,14 +541,12 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     return size;
   }
 
-  @Override
   public long getFirstEntryPosition() {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    return 0;
   }
 
-  @Override
   public long getLastEntryPosition() {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    return 0;
   }
 
   public void lock() {
@@ -1367,6 +1364,9 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       splittedBuckets = (BitSet) objectInputStream.readObject();
     } catch (ClassNotFoundException e) {
       throw new OStorageException("Error during opening cluster " + name, e);
+    } finally {
+      objectInputStream.close();
+      byteArrayInputStream.close();
     }
 
     pos += serializedBitSet.length;
