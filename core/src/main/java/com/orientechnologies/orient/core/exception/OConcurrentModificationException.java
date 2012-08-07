@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 
@@ -35,6 +36,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
   private ORID                rid;
   private int                 databaseVersion;
   private int                 recordVersion;
+private int recordOperation;
 
   /**
    * Default constructor for OFastConcurrentModificationException
@@ -59,13 +61,14 @@ public class OConcurrentModificationException extends ONeedRetryException {
     recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
   }
 
-  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion) {
-    if (OFastConcurrentModificationException.enabled())
+  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion, final int iRecordOperation) {
+	if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
     rid = iRID;
     databaseVersion = iDatabaseVersion;
     recordVersion = iRecordVersion;
+    recordOperation = iRecordOperation;
   }
 
   public int getDatabaseVersion() {
@@ -82,7 +85,9 @@ public class OConcurrentModificationException extends ONeedRetryException {
 
   public String getMessage() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Cannot delete the record ");
+    sb.append("Cannot ");
+    sb.append(ORecordOperation.getName(recordOperation));
+    sb.append(" the record ");
     sb.append(rid);
     sb.append(" because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v");
     sb.append(databaseVersion);

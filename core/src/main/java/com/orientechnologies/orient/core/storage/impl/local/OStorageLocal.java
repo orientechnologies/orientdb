@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -1607,7 +1608,7 @@ public class OStorageLocal extends OStorageEmbedded {
               if (OFastConcurrentModificationException.enabled())
                 throw OFastConcurrentModificationException.instance();
               else
-                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
+                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
             ++ppos.recordVersion;
             iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
           } else {
@@ -1674,7 +1675,7 @@ public class OStorageLocal extends OStorageEmbedded {
           if (OFastConcurrentModificationException.enabled())
             throw OFastConcurrentModificationException.instance();
           else
-            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
+            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
         if (ppos.dataSegmentPos > -1)
           getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);

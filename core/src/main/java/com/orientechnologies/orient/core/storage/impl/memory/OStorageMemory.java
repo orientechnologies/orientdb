@@ -375,7 +375,7 @@ public class OStorageMemory extends OStorageEmbedded {
               if (OFastConcurrentModificationException.enabled())
                 throw OFastConcurrentModificationException.instance();
               else
-                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
+                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
 
             ++ppos.recordVersion;
           } else
@@ -426,7 +426,7 @@ public class OStorageMemory extends OStorageEmbedded {
           if (OFastConcurrentModificationException.enabled())
             throw OFastConcurrentModificationException.instance();
           else
-            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion);
+            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
         cluster.removePhysicalPosition(iRid.clusterPosition);
 

@@ -25,8 +25,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public class OFastConcurrentModificationException extends OConcurrentModificationException {
   private static final long                                 serialVersionUID = 1L;
-  private static final boolean                              ENABLED          = OGlobalConfiguration.DB_MVCC_THROWFAST
-                                                                                 .getValueAsBoolean();
+
+  private static final OGlobalConfiguration                 CONFIG           = OGlobalConfiguration.DB_MVCC_THROWFAST;
+  private static final boolean                              ENABLED          = CONFIG.getValueAsBoolean();
+  private static final String                               MESSAGE          = "This is a fast-thrown exception. Disable " + CONFIG.getKey() + " to see full exception stacktrace and message.";
+
   private static final OFastConcurrentModificationException INSTANCE         = new OFastConcurrentModificationException();
 
   public OFastConcurrentModificationException() {
@@ -38,5 +41,9 @@ public class OFastConcurrentModificationException extends OConcurrentModificatio
 
   public static OFastConcurrentModificationException instance() {
     return INSTANCE;
+  }
+
+  public String getMessage() {
+	  return MESSAGE;
   }
 }

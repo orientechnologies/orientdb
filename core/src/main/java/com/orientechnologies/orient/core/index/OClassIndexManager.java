@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
@@ -142,7 +143,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version);
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version, ORecordOperation.DELETED);
     }
 
     acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
