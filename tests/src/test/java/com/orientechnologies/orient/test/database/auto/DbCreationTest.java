@@ -22,9 +22,9 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -43,7 +43,7 @@ public class DbCreationTest {
   @Parameters(value = "url")
   public DbCreationTest(String iURL) {
     url = iURL;
-    OProfiler.getInstance().startRecording();
+    Orient.instance().getProfiler().startRecording();
   }
 
   public void testDbCreationNoSecurity() throws IOException {

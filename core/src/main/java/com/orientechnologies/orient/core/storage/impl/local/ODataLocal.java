@@ -22,7 +22,7 @@ import java.util.List;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
@@ -305,7 +305,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
         // USE THE OLD SPACE SINCE SIZE ISN'T CHANGED
         file.write(pos[1] + RECORD_FIX_SIZE, iContent);
 
-        OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_ALL, +1);
+        Orient.instance().getProfiler().updateCounter(PROFILER_UPDATE_REUSED_ALL, +1);
         return iPosition;
       } else if (recordSize - contentLength > RECORD_FIX_SIZE + 50) {
         // USE THE OLD SPACE BUT UPDATE THE CURRENT SIZE. IT'S PREFEREABLE TO USE THE SAME INSTEAD OF FINDING A BEST SUITED FOR IT
@@ -315,7 +315,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
         // CREATE A HOLE WITH THE DIFFERENCE OF SPACE
         createHole(iPosition + RECORD_FIX_SIZE + contentLength, recordSize - contentLength - RECORD_FIX_SIZE);
 
-        OProfiler.getInstance().updateCounter(PROFILER_UPDATE_REUSED_PARTIAL, +1);
+        Orient.instance().getProfiler().updateCounter(PROFILER_UPDATE_REUSED_PARTIAL, +1);
       } else {
         // CREATE A HOLE FOR THE ENTIRE OLD RECORD
         createHole(iPosition, recordSize);
@@ -324,7 +324,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
         pos = getFreeSpace(contentLength + RECORD_FIX_SIZE);
         writeRecord(pos, iRid.clusterId, iRid.clusterPosition, iContent);
 
-        OProfiler.getInstance().updateCounter(PROFILER_UPDATE_NOT_REUSED, +1);
+        Orient.instance().getProfiler().updateCounter(PROFILER_UPDATE_NOT_REUSED, +1);
       }
 
       return getAbsolutePosition(pos);
@@ -402,7 +402,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     long holePositionOffset = iRecordOffset;
     int holeSize = iRecordSize + RECORD_FIX_SIZE;
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
 
       long[] pos = getRelativePosition(iRecordOffset);
@@ -410,7 +410,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
       final ODataHoleInfo closestHole = getCloserHole(iRecordOffset, iRecordSize, file, pos);
 
-      OProfiler.getInstance().stopChrono(PROFILER_HOLE_FIND_CLOSER, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_FIND_CLOSER, timer);
 
       if (closestHole == null)
         // CREATE A NEW ONE
@@ -441,13 +441,13 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
       files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
 
     } finally {
-      OProfiler.getInstance().stopChrono(PROFILER_HOLE_CREATE, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_CREATE, timer);
     }
   }
 
   private void defrag(OFile file, final long iRecordOffset, final int iRecordSize, final ODataHoleInfo closestHole)
       throws IOException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     int holeSize = iRecordSize + RECORD_FIX_SIZE;
 
@@ -539,7 +539,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     final long[] pos = getRelativePosition(holePositionOffset);
     files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
 
-    OProfiler.getInstance().stopChrono(PROFILER_HOLE_CREATE, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_CREATE, timer);
   }
 
   private ODataHoleInfo getCloserHole(final long iRecordOffset, final int iRecordSize, final OFile file, final long[] pos) {
@@ -582,7 +582,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
       // FOUND HOLE
       return -1;
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final int clusterId = file.readShort(pos[1] + OBinaryProtocol.SIZE_INT);
     final long clusterPosition = file.readLong(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT);
@@ -606,7 +606,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
     writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);
 
-    OProfiler.getInstance().stopChrono(PROFILER_MOVE_RECORD, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_MOVE_RECORD, timer);
 
     return recordSize + RECORD_FIX_SIZE;
   }

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.cache;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_STRATEGY;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
@@ -107,7 +107,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       record = underlying.remove(iRID);
 
       if (record == null || record.isDirty()) {
-        OProfiler.getInstance().updateCounter(CACHE_MISS, 1);
+        Orient.instance().getProfiler().updateCounter(CACHE_MISS, 1);
         return null;
       }
 
@@ -122,7 +122,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       underlying.unlock(iRID);
     }
 
-    OProfiler.getInstance().updateCounter(CACHE_HIT, 1);
+    Orient.instance().getProfiler().updateCounter(CACHE_HIT, 1);
     return record;
   }
 

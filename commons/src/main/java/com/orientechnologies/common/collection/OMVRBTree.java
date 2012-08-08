@@ -35,7 +35,6 @@ import java.util.SortedSet;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 
 /**
  * Base abstract class of MVRB-Tree algorithm.
@@ -261,25 +260,19 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     OMVRBTreeEntry<K, V> entry = null;
 
-    final long timer = OProfiler.getInstance().startChrono();
+    // TRY TO GET LATEST SEARCH
+    final OMVRBTreeEntry<K, V> node = getLastSearchNodeForSameKey(key);
+    if (node != null) {
+      // SAME SEARCH OF PREVIOUS ONE: REUSE LAST RESULT?
+      if (lastSearchFound)
+        // REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
+        return node.getValue(lastSearchIndex);
+    } else
+      // SEARCH THE ITEM
+      entry = getEntry(key, PartialSearchMode.NONE);
 
-    try {
-      // TRY TO GET LATEST SEARCH
-      final OMVRBTreeEntry<K, V> node = getLastSearchNodeForSameKey(key);
-      if (node != null) {
-        // SAME SEARCH OF PREVIOUS ONE: REUSE LAST RESULT?
-        if (lastSearchFound)
-          // REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
-          return node.getValue(lastSearchIndex);
-      } else
-        // SEARCH THE ITEM
-        entry = getEntry(key, PartialSearchMode.NONE);
+    return entry == null ? null : entry.getValue();
 
-      return entry == null ? null : entry.getValue();
-
-    } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTree.get", timer);
-    }
   }
 
   public Comparator<? super K> comparator() {
@@ -397,12 +390,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     OMVRBTreeEntry<K, V> prevNode = null;
     OMVRBTreeEntry<K, V> tmpNode;
     int beginKey = -1;
-    int steps = -1;
 
     try {
       while (p != null && p.getSize() > 0) {
         searchNodeCallback();
-        steps++;
 
         lastNode = p;
 
@@ -482,8 +473,6 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       }
     } finally {
       checkTreeStructure(p);
-
-      OProfiler.getInstance().updateStat("[OMVRBTree.getEntry] Steps of search", steps);
     }
 
     return setLastSearchNode(key, null);

@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.Orient;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -248,7 +248,7 @@ public class OMemoryStream extends OutputStream {
     final int bufferLength = localBuffer.length;
 
     if (bufferLength < capacity) {
-      OProfiler.getInstance().updateCounter("system.memory.stream.resize", +1);
+      Orient.instance().getProfiler().updateCounter("system.memory.stream.resize", +1);
 
       final byte[] newbuf = new byte[Math.max(bufferLength << 1, capacity)];
 

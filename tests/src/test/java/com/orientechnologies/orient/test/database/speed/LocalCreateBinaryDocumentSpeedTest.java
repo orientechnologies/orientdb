@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -47,7 +47,7 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
 
   @Override
   public void init() {
-    OProfiler.getInstance().startRecording();
+    Orient.instance().getProfiler().startRecording();
 
     database = new ODatabaseDocumentTx(System.getProperty("url"));
     if (database.exists()) {

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.metadata;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -47,7 +47,7 @@ public class OMetadata {
   }
 
   public void load() {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       init(true);
@@ -55,7 +55,7 @@ public class OMetadata {
       if (schemaClusterId == -1 || getDatabase().countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
         return;
     } finally {
-      OProfiler.getInstance().stopChrono("OMetadata.load", timer);
+      Orient.instance().getProfiler().stopChrono("OMetadata.load", timer);
     }
   }
 

@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -352,12 +353,12 @@ public class OIndexProxy<T> implements OIndex<T> {
    *          which usage is registering.
    */
   private void updateStatistic(OIndex<?> index) {
-    if (OProfiler.getInstance().isRecording()) {
-      OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
+    if (Orient.instance().getProfiler().isRecording()) {
+      Orient.instance().getProfiler().updateCounter("Query.indexUsage", 1);
       final int paramCount = index.getDefinition().getParamCount();
       if (paramCount > 1) {
-        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage", 1);
-        OProfiler.getInstance().updateCounter("Query.compositeIndexUsage." + paramCount, 1);
+        Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage", 1);
+        Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage." + paramCount, 1);
       }
     }
   }

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -31,60 +31,60 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 
 @Test(groups = "db")
 public class DbImportExportTest implements OCommandOutputListener {
-	public static final String	EXPORT_FILE_PATH	= "target/db.export.gz";
-	public static final String	NEW_DB_PATH				= "target/test-import";
-	public static final String	NEW_DB_URL				= "target/test-import";
+  public static final String EXPORT_FILE_PATH = "target/db.export.gz";
+  public static final String NEW_DB_PATH      = "target/test-import";
+  public static final String NEW_DB_URL       = "target/test-import";
 
-	private String							url;
-	private String							testPath;
+  private String             url;
+  private String             testPath;
 
-	@Parameters(value = { "url", "testPath" })
-	public DbImportExportTest(String iURL, String iTestPath) {
-		url = iURL;
-		testPath = iTestPath;
-		OProfiler.getInstance().startRecording();
-	}
+  @Parameters(value = { "url", "testPath" })
+  public DbImportExportTest(String iURL, String iTestPath) {
+    url = iURL;
+    testPath = iTestPath;
+    Orient.instance().getProfiler().startRecording();
+  }
 
-	@Test
-	public void testDbExport() throws IOException {
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-		database.open("admin", "admin");
+  @Test
+  public void testDbExport() throws IOException {
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    database.open("admin", "admin");
 
-		ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this);
-		export.exportDatabase();
-		export.close();
+    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    export.exportDatabase();
+    export.close();
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "testDbExport")
-	public void testDbImport() throws IOException {
-		final File importDir = new File(testPath + "/" + NEW_DB_PATH);
-		if (importDir.exists())
-			for (File f : importDir.listFiles())
-				f.delete();
-		else
-			importDir.mkdir();
+  @Test(dependsOnMethods = "testDbExport")
+  public void testDbImport() throws IOException {
+    final File importDir = new File(testPath + "/" + NEW_DB_PATH);
+    if (importDir.exists())
+      for (File f : importDir.listFiles())
+        f.delete();
+    else
+      importDir.mkdir();
 
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
-		database.create();
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
+    database.create();
 
-		ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
-		// UNREGISTER ALL THE HOOKS
-		for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
-			database.unregisterHook(hook);
-		}
+    // UNREGISTER ALL THE HOOKS
+    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
+      database.unregisterHook(hook);
+    }
 
-		impor.importDatabase();
-		impor.close();
+    impor.importDatabase();
+    impor.close();
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(enabled = false)
-	public void onMessage(final String iText) {
-		System.out.print(iText);
-		System.out.flush();
-	}
+  @Test(enabled = false)
+  public void onMessage(final String iText) {
+    System.out.print(iText);
+    System.out.flush();
+  }
 }

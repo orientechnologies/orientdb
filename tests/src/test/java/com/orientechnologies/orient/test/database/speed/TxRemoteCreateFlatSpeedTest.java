@@ -17,47 +17,47 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class TxRemoteCreateFlatSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
-	private ORecordFlat					record;
+  private ODatabaseFlat database;
+  private ORecordFlat   record;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		TxRemoteCreateFlatSpeedTest test = new TxRemoteCreateFlatSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    TxRemoteCreateFlatSpeedTest test = new TxRemoteCreateFlatSpeedTest();
+    test.data.go(test);
+  }
 
-	public TxRemoteCreateFlatSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public TxRemoteCreateFlatSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    Orient.instance().getProfiler().startRecording();
 
-		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		database.begin();
-	}
+    database.begin();
+  }
 
-	@Override
-	public void cycle() {
-		record.value(
-				"{id:" + data.getCyclesDone() + ",name:'Gipsy',type:'Cat',race:'European',country:'Italy',price:"
-						+ (data.getCyclesDone() + 300) + ".00}").save("Animal");
-	}
+  @Override
+  public void cycle() {
+    record.value(
+        "{id:" + data.getCyclesDone() + ",name:'Gipsy',type:'Cat',race:'European',country:'Italy',price:"
+            + (data.getCyclesDone() + 300) + ".00}").save("Animal");
+  }
 
-	@Override
-	public void deinit() {
-		database.commit();
+  @Override
+  public void deinit() {
+    database.commit();
 
-		database.close();
-		super.deinit();
-	}
+    database.close();
+    super.deinit();
+  }
 }

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -64,7 +64,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     K k = keys[iIndex];
     if (k == null)
       try {
-        OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.unserializeKey", 1);
+        Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.unserializeKey", 1);
 
         k = (K) keyFromStream(iIndex);
 
@@ -85,7 +85,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     V v = values[iIndex];
     if (v == null)
       try {
-        OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.unserializeValue", 1);
+        Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.unserializeValue", 1);
 
         v = (V) valueFromStream(iIndex);
 
@@ -262,7 +262,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   }
 
   public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
       // @COMPATIBILITY BEFORE 1.0
       if (OIntegerSerializer.INSTANCE.deserialize(iStream, 0) >= 0) {
@@ -287,12 +287,12 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Can not unmarshall tree node with id ", e);
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreeMapEntry.fromStream", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapEntry.fromStream", timer);
     }
   }
 
   public byte[] toStream() throws OSerializationException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
       if (((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
         toStreamUsingBinarySerializer();
@@ -305,7 +305,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Cannot marshall RB+Tree node", e);
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreeMapEntry.toStream", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapEntry.toStream", timer);
     }
   }
 
@@ -403,7 +403,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final OBinarySerializer<V> valueSerializer = (OBinarySerializer<V>) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
 
     if (serializedValues[i] <= 0) {
-      OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
+      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
       valueSerializer.serialize(values[i], newBuffer, offset);
       offset += valueSerializer.getObjectSize(values[i]);
     } else {
@@ -418,7 +418,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   private int serializeKey(byte[] newBuffer, int offset, int i) {
     final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
     if (serializedKeys[i] <= 0) {
-      OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.serializeKey", 1);
+      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeKey", 1);
       keySerializer.serialize(keys[i], newBuffer, offset);
       offset += keySerializer.getObjectSize(keys[i]);
     } else {
@@ -544,7 +544,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   protected byte[] serializeStreamValue(final int iIndex) throws IOException {
     if (serializedValues[iIndex] <= 0) {
       // NEW OR MODIFIED: MARSHALL CONTENT
-      OProfiler.getInstance().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
+      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
       return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.toStream(values[iIndex]);
     }
     // RETURN ORIGINAL CONTENT

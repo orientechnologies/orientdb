@@ -28,7 +28,7 @@ import java.util.TreeMap;
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -195,7 +195,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   @Override
   public void clear() {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       recordsToCommit.clear();
@@ -213,7 +213,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.clear", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.clear", timer);
     }
   }
 
@@ -226,7 +226,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
    * Unload all the in-memory nodes. This is called on transaction rollback.
    */
   public void unload() {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       // DISCONNECT ALL THE NODES
@@ -243,7 +243,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.unload", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.unload", timer);
     }
   }
 
@@ -271,7 +271,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     // SET OPTIMIZATION STATUS AS RUNNING
     optimization = -1;
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       if (root == null)
@@ -369,7 +369,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
           checkTreeStructure(root);
       }
 
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.optimize", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.optimize", timer);
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
@@ -436,7 +436,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   @Override
   public V put(final K key, final V value) {
     optimize();
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       final V v = internalPut(key, value);
@@ -444,13 +444,13 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       return v;
     } finally {
 
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.put", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.put", timer);
     }
   }
 
   @Override
   public void putAll(final Map<? extends K, ? extends V> map) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       for (Entry<? extends K, ? extends V> entry : map.entrySet())
@@ -459,14 +459,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       commitChanges();
 
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.putAll", timer);
     }
   }
 
   @Override
   public V remove(final Object key) {
     optimize();
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
@@ -486,14 +486,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         }
       }
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.remove", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.remove", timer);
     }
 
     throw new OLowMemoryException("OMVRBTreePersistent.remove()");
   }
 
   public int commitChanges() {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     int totalCommitted = 0;
     try {
@@ -534,7 +534,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     } finally {
 
-      OProfiler.getInstance().stopChrono("OMVRBTreePersistent.commitChanges", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.commitChanges", timer);
     }
 
     return totalCommitted;
@@ -554,16 +554,22 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   @Override
   public V get(final Object iKey) {
-    for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
-      try {
-        return super.get(iKey);
-      } catch (OLowMemoryException e) {
-        OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
-        freeMemory(i);
+    final long timer = Orient.instance().getProfiler().startChrono();
+    try {
+      
+      for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
+        try {
+          return super.get(iKey);
+        } catch (OLowMemoryException e) {
+          OLogManager.instance().debug(this, "Optimization required during node search %d/%d", i, OPTIMIZE_MAX_RETRY);
+          freeMemory(i);
+        }
       }
-    }
 
-    throw new OLowMemoryException("OMVRBTreePersistent.get()");
+      throw new OLowMemoryException("OMVRBTreePersistent.get()");
+    } finally {
+      Orient.instance().getProfiler().stopChrono("OMVRBTree.get", timer);
+    }
   }
 
   @Override

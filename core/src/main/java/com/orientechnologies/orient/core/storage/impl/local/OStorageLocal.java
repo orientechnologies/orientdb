@@ -33,7 +33,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.common.util.OArrays;
@@ -108,7 +107,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -197,7 +196,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + ".open", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".open", timer);
     }
   }
 
@@ -236,7 +235,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public void create(final Map<String, Object> iProperties) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -280,7 +279,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + ".create", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".create", timer);
     }
   }
 
@@ -297,7 +296,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   @Override
   public void close(final boolean iForce) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -337,7 +336,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + ".close", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".close", timer);
     }
   }
 
@@ -361,7 +360,7 @@ public class OStorageLocal extends OStorageEmbedded {
       OLogManager.instance().error(this, "Cannot unregister storage", e);
     }
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     // GET REAL DIRECTORY
     File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(url));
@@ -412,7 +411,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + ".delete", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".delete", timer);
     }
   }
 
@@ -1126,7 +1125,7 @@ public class OStorageLocal extends OStorageEmbedded {
   public void synch() {
     checkOpeness();
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -1147,14 +1146,14 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + ".synch", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", timer);
     }
   }
 
   protected void synchRecordUpdate(final OCluster cluster, final OPhysicalPosition ppos) {
     checkOpeness();
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -1172,7 +1171,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono("db." + name + "record.synch", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + "record.synch", timer);
     }
   }
 
@@ -1473,7 +1472,7 @@ public class OStorageLocal extends OStorageEmbedded {
     if (iContent == null)
       throw new IllegalArgumentException("Record is null");
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -1522,7 +1521,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono(PROFILER_CREATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, timer);
     }
   }
 
@@ -1532,7 +1531,7 @@ public class OStorageLocal extends OStorageEmbedded {
       throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name + '\'');
 
     // NOT FOUND: SEARCH IT IN THE STORAGE
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     // GET LOCK ONLY IF IT'S IN ATOMIC-MODE (SEE THE PARAMETER iAtomicLock)
     // USUALLY BROWSING OPERATIONS (QUERY) AVOID ATOMIC LOCKING
@@ -1565,7 +1564,7 @@ public class OStorageLocal extends OStorageEmbedded {
       if (iAtomicLock)
         lock.releaseSharedLock();
 
-      OProfiler.getInstance().stopChrono(PROFILER_READ_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, timer);
     }
   }
 
@@ -1574,7 +1573,7 @@ public class OStorageLocal extends OStorageEmbedded {
     if (iClusterSegment == null)
       throw new OStorageException("Cluster not defined for record: " + iRid);
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -1649,14 +1648,14 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, timer);
     }
 
     return null;
   }
 
   protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
@@ -1694,19 +1693,19 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      OProfiler.getInstance().stopChrono(PROFILER_DELETE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, timer);
     }
 
     return null;
   }
 
   private void installProfilerHooks() {
-    OProfiler.getInstance().registerHookValue("db." + name + ".data.holes", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("db." + name + ".data.holes", new OProfilerHookValue() {
       public Object getValue() {
         return getHoles();
       }
     });
-    OProfiler.getInstance().registerHookValue("db." + name + ".data.holeSize", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("db." + name + ".data.holeSize", new OProfilerHookValue() {
       public Object getValue() {
         return getHoleSize();
       }

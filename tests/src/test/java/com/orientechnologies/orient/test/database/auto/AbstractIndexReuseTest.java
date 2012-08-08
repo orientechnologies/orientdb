@@ -12,10 +12,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public abstract class AbstractIndexReuseTest {
@@ -69,7 +69,7 @@ public abstract class AbstractIndexReuseTest {
 			final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
 			return JMX.newMBeanProxy(mbsc, onProfiler, OProfilerMBean.class, false);
 		} else {
-			return OProfiler.getInstance();
+      return Orient.instance().getProfiler();
 		}
 	}
 }

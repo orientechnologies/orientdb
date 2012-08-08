@@ -19,7 +19,7 @@ import java.util.Date;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -48,7 +48,7 @@ public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadTest {
   public void init() {
     OGlobalConfiguration.USE_LHPEPS_CLUSTER.setValue(true);
 
-    OProfiler.getInstance().startRecording();
+    Orient.instance().getProfiler().startRecording();
 
     database = new ODatabaseDocumentTx(System.getProperty("url"));
     if (!database.exists())

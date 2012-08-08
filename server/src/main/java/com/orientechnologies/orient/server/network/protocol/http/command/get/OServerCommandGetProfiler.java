@@ -17,7 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.StringWriter;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -42,7 +42,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
       final String to = parts.length > 2 ? parts[2] : null;
       final String from = parts.length > 3 ? parts[3] : null;
-      json.append(OProfiler.getInstance().toJSON(parts[1], from, to));
+      json.append(Orient.instance().getProfiler().toJSON(parts[1], from, to));
 
       sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
     } catch (Exception e) {

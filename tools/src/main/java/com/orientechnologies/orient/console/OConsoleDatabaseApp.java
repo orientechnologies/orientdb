@@ -39,7 +39,6 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -1526,13 +1525,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void profiler(
       @ConsoleParameter(name = "profiler command", description = "command to execute against the profiler") final String iCommandName) {
     if (iCommandName.equalsIgnoreCase("on")) {
-      OProfiler.getInstance().startRecording();
+      Orient.instance().getProfiler().startRecording();
       out.println("Profiler is ON now, use 'profiler off' to turn off.");
     } else if (iCommandName.equalsIgnoreCase("off")) {
-      OProfiler.getInstance().stopRecording();
+      Orient.instance().getProfiler().stopRecording();
       out.println("Profiler is OFF now, use 'profiler on' to turn on.");
     } else if (iCommandName.equalsIgnoreCase("dump")) {
-      out.println(OProfiler.getInstance().dump());
+      out.println(Orient.instance().getProfiler().dump());
     }
   }
 

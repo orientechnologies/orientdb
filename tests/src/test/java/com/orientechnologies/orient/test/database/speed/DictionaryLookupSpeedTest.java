@@ -21,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -36,7 +37,7 @@ public class DictionaryLookupSpeedTest extends OrientMonoThreadTest {
 
 	public DictionaryLookupSpeedTest() {
 		super(100000);
-		OProfiler.getInstance().startRecording();
+		Orient.instance().getProfiler().startRecording();
 		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 	}
 

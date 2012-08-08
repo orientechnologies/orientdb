@@ -29,8 +29,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManager {
@@ -61,25 +61,25 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
     setOverlapStrategy(OGlobalConfiguration.FILE_MMAP_OVERLAP_STRATEGY.getValueAsInteger());
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.totalMemory", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.totalMemory", new OProfilerHookValue() {
       public Object getValue() {
         return totalMemory;
       }
     });
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.maxMemory", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.maxMemory", new OProfilerHookValue() {
       public Object getValue() {
         return maxMemory;
       }
     });
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.blockSize", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.blockSize", new OProfilerHookValue() {
       public Object getValue() {
         return blockSize;
       }
     });
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.blocks", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.blocks", new OProfilerHookValue() {
       public Object getValue() {
         lock.readLock().lock();
         try {
@@ -90,13 +90,13 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
       }
     });
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.alloc.strategy", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.alloc.strategy", new OProfilerHookValue() {
       public Object getValue() {
         return lastStrategy;
       }
     });
 
-    OProfiler.getInstance().registerHookValue("system.file.mmap.overlap.strategy", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.overlap.strategy", new OProfilerHookValue() {
       public Object getValue() {
         return overlapStrategy;
       }
@@ -159,7 +159,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
         // CHECK IF THERE IS A BUFFER THAT OVERLAPS
         if (!allocIfOverlaps(iBeginOffset, iSize, fileEntries, p)) {
-          OProfiler.getInstance().updateCounter("system.file.mmap.usedChannel", 1);
+          Orient.instance().getProfiler().updateCounter("system.file.mmap.usedChannel", 1);
           return null;
         }
 
@@ -168,7 +168,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         if (totalMemory + bufferSize > maxMemory
             && (iStrategy == OMMapManager.ALLOC_STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OMMapManager.OPERATION_TYPE.READ
                 && iStrategy == OMMapManager.ALLOC_STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL)) {
-          OProfiler.getInstance().updateCounter("system.file.mmap.usedChannel", 1);
+          Orient.instance().getProfiler().updateCounter("system.file.mmap.usedChannel", 1);
           return null;
         }
 
@@ -278,7 +278,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
         if (e.isValid() && e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
           // FOUND: USE IT
-          OProfiler.getInstance().updateCounter("OMMapManager.reusedPageBetweenLast", 1);
+          Orient.instance().getProfiler().updateCounter("OMMapManager.reusedPageBetweenLast", 1);
           e.counter++;
           return e;
         }
@@ -448,11 +448,11 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
   }
 
   private static OMMapBufferEntry mapBuffer(final OFileMMap iFile, final long iBeginOffset, final int iSize) throws IOException {
-    long timer = OProfiler.getInstance().startChrono();
+    long timer = Orient.instance().getProfiler().startChrono();
     try {
       return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
     } finally {
-      OProfiler.getInstance().stopChrono("OMMapManager.loadPage", timer);
+      Orient.instance().getProfiler().stopChrono("OMMapManager.loadPage", timer);
     }
   }
 
@@ -489,7 +489,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
       if (iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
         // FOUND: USE IT
-        OProfiler.getInstance().updateCounter("OMMapManager.reusedPage", 1);
+        Orient.instance().getProfiler().updateCounter("OMMapManager.reusedPage", 1);
         e.counter++;
         return mid;
       }
@@ -534,7 +534,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
     if (overlaps) {
       // READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
-      OProfiler.getInstance().updateCounter("system.file.mmap.overlappedPageUsingChannel", 1);
+      Orient.instance().getProfiler().updateCounter("system.file.mmap.overlappedPageUsingChannel", 1);
       if (overlapStrategy == OVERLAP_STRATEGY.NO_OVERLAP_FLUSH_AND_USE_CHANNEL)
         entry.flush();
       return false;

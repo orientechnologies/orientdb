@@ -19,7 +19,7 @@ import java.util.Date;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,7 +44,7 @@ public class LocalCreateGraphSchemaSpeedTest extends OrientMonoThreadTest {
 
 	@Override
 	public void init() {
-		OProfiler.getInstance().startRecording();
+		Orient.instance().getProfiler().startRecording();
 
 		database = new OGraphDatabase(System.getProperty("url")).open("admin", "admin");
 
@@ -78,7 +78,7 @@ public class LocalCreateGraphSchemaSpeedTest extends OrientMonoThreadTest {
 	@Override
 	public void deinit() {
 
-		System.out.println(OProfiler.getInstance().dump());
+		System.out.println(Orient.instance().getProfiler().dump());
 
 		if (database != null)
 			database.close();

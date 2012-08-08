@@ -24,7 +24,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
@@ -120,7 +120,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 	}
 
 	public void putAll(final Collection<OIdentifiable> coll) {
-		final long timer = OProfiler.getInstance().startChrono();
+		final long timer = Orient.instance().getProfiler().startChrono();
 
 		try {
 			for (OIdentifiable rid : coll)
@@ -129,7 +129,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 			commitChanges();
 
 		} finally {
-			OProfiler.getInstance().stopChrono("OMVRBTreePersistent.putAll", timer);
+			Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.putAll", timer);
 		}
 	}
 

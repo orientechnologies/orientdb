@@ -43,7 +43,6 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
@@ -1481,14 +1480,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final long startToWait = System.currentTimeMillis();
             try {
               networkPool.wait(5000);
-              OProfiler.getInstance().updateCounter("system.network.connectionPool.timeout", +1);
+              Orient.instance().getProfiler().updateCounter("system.network.connectionPool.timeout", +1);
             } catch (InterruptedException e) {
               // THREAD INTERRUPTED: RETURN EXCEPTION
               Thread.currentThread().interrupt();
               throw new OStorageException("Cannot acquire a connection because the thread has been interrupted");
             }
 
-            final long elapsed = OProfiler.getInstance().stopChrono("system.network.connectionPool.waitingTime", startToWait);
+            final long elapsed = Orient.instance().getProfiler()
+                .stopChrono("system.network.connectionPool.waitingTime", startToWait);
 
             if (debug)
               System.out.println("Waiting for connection = elapsed: " + elapsed);

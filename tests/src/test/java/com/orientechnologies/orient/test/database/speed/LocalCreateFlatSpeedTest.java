@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -26,45 +26,45 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
-	private ORecordFlat		record;
-	private long					date	= System.currentTimeMillis();
+  private ODatabaseFlat database;
+  private ORecordFlat   record;
+  private long          date = System.currentTimeMillis();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateFlatSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateFlatSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    Orient.instance().getProfiler().startRecording();
 
-		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-	@Override
-	public void cycle() {
-		record.reset();
-		record.value(
-				"Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date + "salary:"
-						+ (data.getCyclesDone() + 3000) + ".00").save("flat");
+  @Override
+  public void cycle() {
+    record.reset();
+    record.value(
+        "Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date + "salary:"
+            + (data.getCyclesDone() + 3000) + ".00").save("flat");
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
-	}
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
+  }
 
-	@Override
-	public void deinit() {
-		if (database != null)
-			database.close();
-		super.deinit();
-	}
+  @Override
+  public void deinit() {
+    if (database != null)
+      database.close();
+    super.deinit();
+  }
 }

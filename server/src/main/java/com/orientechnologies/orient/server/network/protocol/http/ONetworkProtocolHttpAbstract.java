@@ -29,7 +29,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -99,7 +98,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   public void service() throws ONetworkProtocolException, IOException {
-    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".requests", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".requests", +1);
 
     ++connection.data.totalRequests;
     connection.data.commandInfo = null;
@@ -433,7 +432,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       }
 
       channel.socket.setSoTimeout(socketTimeout);
-      connection.data.lastCommandReceived = OProfiler.getInstance().startChrono();
+      connection.data.lastCommandReceived = Orient.instance().getProfiler().startChrono();
 
       requestContent.setLength(0);
       request.isMultipart = false;
@@ -507,22 +506,22 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       readAllContent(request);
     } finally {
       if (connection.data.lastCommandReceived > -1)
-        OProfiler.getInstance().stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
+        Orient.instance().getProfiler().stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
     }
   }
 
   protected void connectionClosed() {
-    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".closed", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", +1);
     sendShutdown();
   }
 
   protected void timeout() {
-    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".timeout", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".timeout", +1);
     sendShutdown();
   }
 
   protected void connectionError() {
-    OProfiler.getInstance().updateCounter("server.http." + listeningAddress + ".error", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".error", +1);
     sendShutdown();
   }
 

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OClusterFactory;
 import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
@@ -69,6 +70,7 @@ public class Orient extends OSharedResourceAbstract {
   protected static Orient                               instance             = new Orient();
 
   private final OMemoryWatchDog                         memoryWatchDog;
+  private final OProfiler                               profiler;
   private static AtomicInteger                          serialId             = new AtomicInteger();
 
   protected List<Class<? extends ODatabasePoolBase<?>>> pools;
@@ -79,9 +81,10 @@ public class Orient extends OSharedResourceAbstract {
     registerEngine(new OEngineMemory());
     registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
+    profiler = new OJVMProfiler();
     if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
       // ACTIVATE RECORDING OF THE PROFILER
-      OProfiler.getInstance().startRecording();
+      profiler.startRecording();
 
     if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
       OGlobalConfiguration.dumpConfiguration(System.out);
@@ -282,8 +285,7 @@ public class Orient extends OSharedResourceAbstract {
       active = false;
 
       shutdownHook.cancel();
-
-      OProfiler.getInstance().shutdown();
+      profiler.shutdown();
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
@@ -416,5 +418,9 @@ public class Orient extends OSharedResourceAbstract {
 
   public void setClusterFactory(OClusterFactory clusterFactory) {
     this.clusterFactory = clusterFactory;
+  }
+
+  public OProfiler getProfiler() {
+    return profiler;
   }
 }

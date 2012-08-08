@@ -40,7 +40,6 @@ import javax.management.ObjectName;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -107,12 +106,12 @@ public class OServer {
 
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !OProfiler.getInstance().isRecording())
-      OProfiler.getInstance().startRecording();
+    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording())
+      Orient.instance().getProfiler().startRecording();
 
-    if (OProfiler.getInstance().isRecording())
+    if (Orient.instance().getProfiler().isRecording())
       // REGISTER THE PROFILER
-      mBeanServer.registerMBean(OProfiler.getInstance(), onProfiler);
+      mBeanServer.registerMBean(Orient.instance().getProfiler(), onProfiler);
 
     // REGISTER SERVER
     managedServer = new OrientServer();

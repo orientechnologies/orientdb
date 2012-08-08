@@ -31,8 +31,8 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -363,7 +363,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
     if (searchForIndexes(cls))
-      OProfiler.getInstance().updateCounter("Query.indexUsage", 1);
+      Orient.instance().getProfiler().updateCounter("Query.indexUsage", 1);
     else
       super.searchInClasses();
   }

@@ -21,7 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,49 +30,49 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "query", sequential = true)
 public class FetchPlanTest {
-	private ODatabaseDocument	database;
+  private ODatabaseDocument database;
 
-	@Parameters(value = "url")
-	public FetchPlanTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public FetchPlanTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void queryNoFetchPlan() {
-		database.open("admin", "admin");
+  @Test
+  public void queryNoFetchPlan() {
+    database.open("admin", "admin");
 
-		final long times = OProfiler.getInstance().getCounter("Cache.reused");
+    final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
 
-		database.getLevel1Cache().clear();
-		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
-		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
+    database.getLevel1Cache().clear();
+    List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
+    Assert.assertEquals(Orient.instance().getProfiler().getCounter("Cache.reused"), times);
 
-		ORID linked;
-		for (ODocument d : resultset) {
-			linked = ((ORID) d.field("location", ORID.class));
-			if (linked != null)
-				Assert.assertNull(database.getLevel1Cache().findRecord(linked));
-		}
+    ORID linked;
+    for (ODocument d : resultset) {
+      linked = ((ORID) d.field("location", ORID.class));
+      if (linked != null)
+        Assert.assertNull(database.getLevel1Cache().findRecord(linked));
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "queryNoFetchPlan")
-	public void queryWithFetchPlan() {
-		database.open("admin", "admin");
-		database.getLevel1Cache().setEnable(true);
+  @Test(dependsOnMethods = "queryNoFetchPlan")
+  public void queryWithFetchPlan() {
+    database.open("admin", "admin");
+    database.getLevel1Cache().setEnable(true);
 
-		final long times = OProfiler.getInstance().getCounter("Cache.reused");
-		List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
-		Assert.assertEquals(OProfiler.getInstance().getCounter("Cache.reused"), times);
+    final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
+    List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
+    Assert.assertEquals(Orient.instance().getProfiler().getCounter("Cache.reused"), times);
 
-		ODocument linked;
-		for (ODocument d : resultset) {
-			linked = ((ODocument) d.field("location"));
-			if (linked != null)
-				Assert.assertNotNull(database.getLevel1Cache().findRecord(linked.getIdentity()));
-		}
+    ODocument linked;
+    for (ODocument d : resultset) {
+      linked = ((ODocument) d.field("location"));
+      if (linked != null)
+        Assert.assertNotNull(database.getLevel1Cache().findRecord(linked.getIdentity()));
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 }

@@ -19,7 +19,7 @@ import java.util.Date;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -47,7 +47,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
   @Override
   public void init() {
-    OProfiler.getInstance().startRecording();
+    Orient.instance().getProfiler().startRecording();
 
     database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
     record = database.newInstance();
@@ -89,7 +89,7 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
     final long endRecords = database.countClass("Account");
     System.out.println("Total accounts: " + endRecords + ". Expected: " + (beginRecords + data.getCycles()));
 
-    System.out.println(OProfiler.getInstance().dump());
+    System.out.println(Orient.instance().getProfiler().dump());
 
     if (database != null)
       database.close();

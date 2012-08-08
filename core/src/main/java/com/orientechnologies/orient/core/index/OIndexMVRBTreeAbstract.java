@@ -32,7 +32,6 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
@@ -711,7 +710,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   protected void installHooks(final ODatabaseRecord iDatabase) {
-    OProfiler.getInstance().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
       public Object getValue() {
         acquireSharedLock();
         try {
@@ -722,19 +721,19 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       }
     });
 
-    OProfiler.getInstance().registerHookValue("index." + name + ".entryPointSize", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("index." + name + ".entryPointSize", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getEntryPointSize() : "-";
       }
     });
 
-    OProfiler.getInstance().registerHookValue("index." + name + ".maxUpdateBeforeSave", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("index." + name + ".maxUpdateBeforeSave", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getMaxUpdatesBeforeSave() : "-";
       }
     });
 
-    OProfiler.getInstance().registerHookValue("index." + name + ".optimizationThreshold", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue("index." + name + ".optimizationThreshold", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getOptimizeThreshold() : "-";
       }
@@ -745,10 +744,10 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   protected void uninstallHooks(final ODatabaseRecord iDatabase) {
-    OProfiler.getInstance().unregisterHookValue("index." + name + ".items");
-    OProfiler.getInstance().unregisterHookValue("index." + name + ".entryPointSize");
-    OProfiler.getInstance().unregisterHookValue("index." + name + ".maxUpdateBeforeSave");
-    OProfiler.getInstance().unregisterHookValue("index." + name + ".optimizationThreshold");
+    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".items");
+    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".entryPointSize");
+    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".maxUpdateBeforeSave");
+    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".optimizationThreshold");
     Orient.instance().getMemoryWatchDog().removeListener(watchDog);
     iDatabase.unregisterListener(this);
   }

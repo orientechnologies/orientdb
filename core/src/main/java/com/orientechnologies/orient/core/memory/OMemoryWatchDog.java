@@ -23,7 +23,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 
@@ -32,108 +31,108 @@ import com.orientechnologies.orient.core.Orient;
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-	private final Set<Listener>				listeners			= new HashSet<Listener>(128);
-	private int												alertTimes		= 0;
-	protected ReferenceQueue<Object>	monitorQueue	= new ReferenceQueue<Object>();
-	protected SoftReference<Object>		monitorRef		= new SoftReference<Object>(new Object(), monitorQueue);
+  private final Set<Listener>      listeners    = new HashSet<Listener>(128);
+  private int                      alertTimes   = 0;
+  protected ReferenceQueue<Object> monitorQueue = new ReferenceQueue<Object>();
+  protected SoftReference<Object>  monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
 
-	public interface Listener {
-		/**
-		 * Execute a soft free of memory resources.
-		 * 
-		 * @param iType
-		 *          OS or JVM
-		 * @param iFreeMemory
-		 *          Current used memory
-		 * @param iFreeMemoryPercentage
-		 *          Max memory
-		 */
-		public void memoryUsageLow(long iFreeMemory, long iFreeMemoryPercentage);
-	}
+  public static interface Listener {
+    /**
+     * Execute a soft free of memory resources.
+     * 
+     * @param iType
+     *          OS or JVM
+     * @param iFreeMemory
+     *          Current used memory
+     * @param iFreeMemoryPercentage
+     *          Max memory
+     */
+    public void memoryUsageLow(long iFreeMemory, long iFreeMemoryPercentage);
+  }
 
-	/**
-	 * Create the memory watch dog with the default memory threshold.
-	 * 
-	 * @param iThreshold
-	 */
-	public OMemoryWatchDog() {
-		super(Orient.getThreadGroup(), "OrientDB MemoryWatchDog");
+  /**
+   * Create the memory watch dog with the default memory threshold.
+   * 
+   * @param iThreshold
+   */
+  public OMemoryWatchDog() {
+    super("OrientDB MemoryWatchDog");
 
-		OProfiler.getInstance().registerHookValue("system.memory.alerts", new OProfilerHookValue() {
-			public Object getValue() {
-				return alertTimes;
-			}
-		});
+    setDaemon(true);
+    start();
+  }
 
-		setDaemon(true);
-		start();
-	}
+  public void run() {
+    Orient.instance().getProfiler().registerHookValue("system.memory.alerts", new OProfilerHookValue() {
+      public Object getValue() {
+        return alertTimes;
+      }
+    });
 
-	public void run() {
-		while (true) {
-			try {
-				// WAITS FOR THE GC FREE
-				monitorQueue.remove();
+    while (true) {
+      try {
+        // WAITS FOR THE GC FREE
+        monitorQueue.remove();
 
-				// GC is freeing memory!
-				alertTimes++;
-				long maxMemory = Runtime.getRuntime().maxMemory();
-				long freeMemory = Runtime.getRuntime().freeMemory();
-				int freeMemoryPer = (int) (freeMemory * 100 / maxMemory);
+        // GC is freeing memory!
+        alertTimes++;
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        long freeMemory = Runtime.getRuntime().freeMemory();
+        int freeMemoryPer = (int) (freeMemory * 100 / maxMemory);
 
-				if (OLogManager.instance().isDebugEnabled())
-					OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
-							OFileUtils.getSizeAsString(freeMemory), OFileUtils.getSizeAsString(maxMemory), freeMemoryPer);
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
+              OFileUtils.getSizeAsString(freeMemory), OFileUtils.getSizeAsString(maxMemory), freeMemoryPer);
 
-				final long timer = OProfiler.getInstance().startChrono();
+        final long timer = Orient.instance().getProfiler().startChrono();
 
-				synchronized (listeners) {
-					for (Listener listener : listeners) {
-						try {
-							listener.memoryUsageLow(freeMemory, freeMemoryPer);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
+        synchronized (listeners) {
+          for (Listener listener : listeners) {
+            try {
+              listener.memoryUsageLow(freeMemory, freeMemoryPer);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }
 
-				OProfiler.getInstance().stopChrono("OMemoryWatchDog.freeResources", timer);
+        Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", timer);
 
-			} catch (Exception e) {
-			} finally {
-				// RE-INSTANTIATE THE MONITOR REF
-				monitorRef = new SoftReference<Object>(new Object(), monitorQueue);
-			}
-		}
-	}
+      } catch (Exception e) {
+      } finally {
+        // RE-INSTANTIATE THE MONITOR REF
+        monitorRef = new SoftReference<Object>(new Object(), monitorQueue);
+      }
+    }
+  }
 
-	public Collection<Listener> getListeners() {
-		synchronized (listeners) {
-			return listeners;
-		}
-	}
+  public Collection<Listener> getListeners() {
+    synchronized (listeners) {
+      return listeners;
+    }
+  }
 
-	public Listener addListener(final Listener listener) {
-		synchronized (listeners) {
-			listeners.add(listener);
-		}
-		return listener;
-	}
+  public Listener addListener(final Listener listener) {
+    synchronized (listeners) {
+      listeners.add(listener);
+    }
+    return listener;
+  }
 
-	public boolean removeListener(final Listener listener) {
-		synchronized (listeners) {
-			return listeners.remove(listener);
-		}
-	}
+  public boolean removeListener(final Listener listener) {
+    synchronized (listeners) {
+      return listeners.remove(listener);
+    }
+  }
 
-	public static void freeMemory(final long iDelayTime) {
-		// INVOKE GC AND WAIT A BIT
-		System.gc();
-		if (iDelayTime > 0)
-			try {
-				Thread.sleep(iDelayTime);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-	}
+  public static void freeMemory(final long iDelayTime) {
+    // INVOKE GC AND WAIT A BIT
+    System.gc();
+    if (iDelayTime > 0)
+      try {
+        Thread.sleep(iDelayTime);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+  }
 }

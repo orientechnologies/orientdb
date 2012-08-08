@@ -27,7 +27,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -280,7 +279,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
       final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
     try {
@@ -303,7 +302,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono(PROFILER_CREATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, timer);
     }
   }
 
@@ -313,7 +312,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
 
@@ -345,13 +344,13 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono(PROFILER_READ_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, timer);
     }
   }
 
   public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
       ORecordCallback<Integer> iCallback) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
@@ -398,12 +397,12 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono(PROFILER_UPDATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, timer);
     }
   }
 
   public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
@@ -447,7 +446,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      OProfiler.getInstance().stopChrono(PROFILER_DELETE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, timer);
     }
   }
 

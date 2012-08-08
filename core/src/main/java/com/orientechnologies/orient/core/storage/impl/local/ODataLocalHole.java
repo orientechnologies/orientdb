@@ -21,7 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OMVRBTreeMemory;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -96,7 +96,7 @@ public class ODataLocalHole extends OSingleFileSegment {
    * @throws IOException
    */
   public synchronized void createHole(final long iRecordOffset, final int iRecordSize) throws IOException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     // IN MEMORY
     final int recycledPosition;
@@ -126,7 +126,7 @@ public class ODataLocalHole extends OSingleFileSegment {
     file.writeLong(p, iRecordOffset);
     file.writeInt(p + OBinaryProtocol.SIZE_LONG, iRecordSize);
 
-    OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_CREATE, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_HOLE_CREATE, timer);
   }
 
   public synchronized ODataHoleInfo getCloserHole(final long iHolePosition, final int iHoleSize, final long iLowerRange,
@@ -176,7 +176,7 @@ public class ODataLocalHole extends OSingleFileSegment {
       // DON'T BROWSE: NO ONE HOLE WITH THIS SIZE IS AVAILABLE
       return -1;
 
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     if (!availableHolesBySize.isEmpty()) {
       cursor.size = iRecordSize;
@@ -185,7 +185,7 @@ public class ODataLocalHole extends OSingleFileSegment {
       ODataHoleInfo hole = availableHolesBySize.get(cursor);
       if (hole != null && hole.size == iRecordSize) {
         // PERFECT MATCH: DELETE THE HOLE
-        OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
+        Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
         final long pos = hole.dataOffset;
         deleteHole(hole.holeOffset);
         return pos;
@@ -196,13 +196,13 @@ public class ODataLocalHole extends OSingleFileSegment {
       if (hole.size > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
         // GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
         final long pos = hole.dataOffset;
-        OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, timer);
+        Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, timer);
         updateHole(hole, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
         return pos;
       }
     }
 
-    OProfiler.getInstance().stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, timer);
 
     return -1;
   }
@@ -229,7 +229,7 @@ public class ODataLocalHole extends OSingleFileSegment {
    */
   public synchronized void updateHole(final ODataHoleInfo iHole, final long iNewDataOffset, final int iNewRecordSize)
       throws IOException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final boolean offsetChanged = iNewDataOffset != iHole.dataOffset;
     final boolean sizeChanged = iNewRecordSize != iHole.size;
@@ -260,7 +260,7 @@ public class ODataLocalHole extends OSingleFileSegment {
     if (sizeChanged)
       file.writeInt(holePosition + OBinaryProtocol.SIZE_LONG, iNewRecordSize);
 
-    OProfiler.getInstance().stopChrono(PROFILER_DATA_HOLE_UPDATE, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_HOLE_UPDATE, timer);
   }
 
   /**

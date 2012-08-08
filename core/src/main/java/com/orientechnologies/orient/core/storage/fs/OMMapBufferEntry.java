@@ -20,7 +20,7 @@ import java.nio.MappedByteBuffer;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
@@ -69,7 +69,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
     acquireExclusiveLock();
     try {
 
-      final long timer = OProfiler.getInstance().startChrono();
+      final long timer = Orient.instance().getProfiler().startChrono();
 
       // FORCE THE WRITE OF THE BUFFER
       for (int i = 0; i < FORCE_RETRY; ++i) {
@@ -87,9 +87,9 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
       if (dirty)
         OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
       else
-        OProfiler.getInstance().updateCounter("system.file.mmap.pagesCommitted", 1);
+        Orient.instance().getProfiler().updateCounter("system.file.mmap.pagesCommitted", 1);
 
-      OProfiler.getInstance().stopChrono("system.file.mmap.commitPages", timer);
+      Orient.instance().getProfiler().stopChrono("system.file.mmap.commitPages", timer);
 
       return !dirty;
 

@@ -24,7 +24,7 @@ import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -104,7 +104,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       return;
     }
 
-    final long startTime = OProfiler.getInstance().startChrono();
+    final long startTime = Orient.instance().getProfiler().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
@@ -114,7 +114,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze(throwException);
 
-    OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.freeze", startTime);
   }
 
   @Override
@@ -126,7 +126,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       return;
     }
 
-    final long startTime = OProfiler.getInstance().startChrono();
+    final long startTime = Orient.instance().getProfiler().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
@@ -136,7 +136,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze();
 
-    OProfiler.getInstance().stopChrono("document.database.freeze", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.freeze", startTime);
   }
 
   @Override
@@ -147,14 +147,14 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       return;
     }
 
-    final long startTime = OProfiler.getInstance().startChrono();
+    final long startTime = Orient.instance().getProfiler().startChrono();
 
     super.release();
 
     Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     releaseIndexes(indexes);
 
-    OProfiler.getInstance().stopChrono("document.database.release", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.release", startTime);
   }
 
   /**

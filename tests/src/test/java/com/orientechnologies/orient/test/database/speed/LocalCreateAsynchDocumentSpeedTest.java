@@ -19,7 +19,7 @@ import java.util.Date;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -31,55 +31,55 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateAsynchDocumentSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
-	private Date							date	= new Date();
+  private ODatabaseDocument database;
+  private ODocument         record;
+  private Date              date = new Date();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateAsynchDocumentSpeedTest test = new LocalCreateAsynchDocumentSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateAsynchDocumentSpeedTest test = new LocalCreateAsynchDocumentSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateAsynchDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateAsynchDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		OProfiler.getInstance().startRecording();
+  @Override
+  public void init() {
+    Orient.instance().getProfiler().startRecording();
 
-		OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE.setValue(10000000);
+    OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE.setValue(10000000);
 
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		database.declareIntent(new OIntentMassiveInsert());
-		database.begin(TXTYPE.NOTX);
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+    database.begin(TXTYPE.NOTX);
+  }
 
-	@Override
-	public void cycle() {
-		record.reset();
+  @Override
+  public void cycle() {
+    record.reset();
 
-		record.setClassName("Account");
-		record.field("id", data.getCyclesDone());
-		record.field("name", "Luca");
-		record.field("surname", "Garulli");
-		record.field("birthDate", date);
-		record.field("salary", 3000f + data.getCyclesDone());
+    record.setClassName("Account");
+    record.field("id", data.getCyclesDone());
+    record.field("name", "Luca");
+    record.field("surname", "Garulli");
+    record.field("birthDate", date);
+    record.field("salary", 3000f + data.getCyclesDone());
 
-		database.save(record, OPERATION_MODE.ASYNCHRONOUS, null);
+    database.save(record, OPERATION_MODE.ASYNCHRONOUS, null);
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
-	}
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      database.commit();
+  }
 
-	@Override
-	public void deinit() {
-		System.out.println(OProfiler.getInstance().dump());
+  @Override
+  public void deinit() {
+    System.out.println(Orient.instance().getProfiler().dump());
 
-		if (database != null)
-			database.close();
-		super.deinit();
-	}
+    if (database != null)
+      database.close();
+    super.deinit();
+  }
 }

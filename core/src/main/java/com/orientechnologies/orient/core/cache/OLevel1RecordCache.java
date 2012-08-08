@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.cache;
 
 import static com.orientechnologies.orient.core.storage.OStorage.CLUSTER_INDEX_NAME;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -107,7 +107,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
       underlying.unlock(rid);
     }
 
-    OProfiler.getInstance().updateCounter(record != null ? CACHE_HIT : CACHE_MISS, 1L);
+    Orient.instance().getProfiler().updateCounter(record != null ? CACHE_HIT : CACHE_MISS, 1L);
 
     return record;
   }

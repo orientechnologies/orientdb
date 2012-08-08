@@ -25,8 +25,8 @@ import java.util.logging.Level;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
@@ -263,9 +263,9 @@ public enum OGlobalConfiguration {
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
           if ((Boolean) iNewValue)
-            OProfiler.getInstance().startRecording();
+            Orient.instance().getProfiler().startRecording();
           else
-            OProfiler.getInstance().stopRecording();
+            Orient.instance().getProfiler().stopRecording();
         }
       }),
 
@@ -273,7 +273,7 @@ public enum OGlobalConfiguration {
       "Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          OProfiler.getInstance().setAutoDump((Integer) iNewValue);
+          Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
         }
       }),
 

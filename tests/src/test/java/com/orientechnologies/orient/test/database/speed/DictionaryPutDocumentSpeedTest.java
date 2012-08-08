@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -42,12 +42,12 @@ public class DictionaryPutDocumentSpeedTest extends OrientMonoThreadTest {
     String url = System.getProperty("url");
 
     database = new ODatabaseDocumentTx(url).open("admin", "admin");
-    for (OIndex idx : database.getMetadata().getSchema().getClass("Account").getIndexes()) {
+    for (OIndex<?> idx : database.getMetadata().getSchema().getClass("Account").getIndexes()) {
       System.out.println("Deleting existent index: " + idx);
       idx.delete();
     }
 
-    OProfiler.getInstance().startRecording();
+    Orient.instance().getProfiler().startRecording();
 
     startNum = database.getDictionary().size();
 

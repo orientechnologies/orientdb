@@ -17,21 +17,21 @@ package com.orientechnologies.orient.test.database.base;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.Orient;
 
 @Test(enabled = false)
 public abstract class OrientMonoThreadTest extends SpeedTestMonoThread {
-	public OrientMonoThreadTest(int iCycles) {
-		super(iCycles);
-	}
+  public OrientMonoThreadTest(int iCycles) {
+    super(iCycles);
+  }
 
-	public OrientMonoThreadTest() {
-		super(1);
-	}
+  public OrientMonoThreadTest() {
+    super(1);
+  }
 
-	@Override
-	public void deinit() {
-		System.out.println(OProfiler.getInstance().dump());
-	}
+  @Override
+  public void deinit() {
+    System.out.println(Orient.instance().getProfiler().dump());
+  }
 }

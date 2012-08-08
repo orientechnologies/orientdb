@@ -28,7 +28,6 @@ import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -82,7 +81,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @throws IOException
    */
   public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-    OProfiler.getInstance().updateCounter("server.connections.actives", +1);
+    Orient.instance().getProfiler().updateCounter("server.connections.actives", +1);
 
     final OClientConnection connection;
 
@@ -128,7 +127,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    OProfiler.getInstance().updateCounter("server.connections.actives", -1);
+    Orient.instance().getProfiler().updateCounter("server.connections.actives", -1);
 
     acquireExclusiveLock();
     try {
@@ -151,7 +150,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public void disconnect(final OClientConnection connection) {
-    OProfiler.getInstance().updateCounter("server.connections.actives", -1);
+    Orient.instance().getProfiler().updateCounter("server.connections.actives", -1);
 
     connection.close();
 

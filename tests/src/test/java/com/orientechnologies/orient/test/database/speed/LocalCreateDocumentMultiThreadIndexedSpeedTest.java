@@ -20,7 +20,7 @@ import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -53,7 +53,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 	public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
 		super(tot, threads, CreateObjectsThread.class);
 
-		OProfiler.getInstance().startRecording();
+		Orient.instance().getProfiler().startRecording();
 	}
 
 	@Override
@@ -140,7 +140,7 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 		if (database != null)
 			database.close();
 
-		System.out.println(OProfiler.getInstance().dump());
+		System.out.println(Orient.instance().getProfiler().dump());
 
 	}
 }

@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.type.tree.provider;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -90,7 +90,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
   }
 
   public byte[] toStream() throws OSerializationException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     try {
       stream.jump(0);
@@ -114,13 +114,13 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       return result;
 
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreeMapProvider.toStream", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapProvider.toStream", timer);
     }
   }
 
   @SuppressWarnings("unchecked")
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    final long timer = OProfiler.getInstance().startChrono();
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
       stream.setSource(iStream);
       byte protocolVersion = stream.peek();
@@ -172,7 +172,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
           OSerializationException.class, root);
     } finally {
-      OProfiler.getInstance().stopChrono("OMVRBTreeMapProvider.fromStream", timer);
+      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapProvider.fromStream", timer);
     }
     return this;
   }

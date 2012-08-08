@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -23,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-import org.testng.annotations.Test;
 
 @Test(enabled = false)
 public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
@@ -41,7 +42,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadTest {
 
 	@Override
 	public void init() {
-		OProfiler.getInstance().startRecording();
+	  Orient.instance().getProfiler().startRecording();
 
 		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 		record = database.newInstance();

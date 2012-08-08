@@ -17,54 +17,54 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.intent.OIntentMassiveRead;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.graph.ODatabaseGraphTx;
 import com.orientechnologies.orient.object.db.graph.OGraphEdge;
 import com.orientechnologies.orient.object.db.graph.OGraphVertex;
 
-@Test(sequential = true)
+@Test()
 public class LocalReadGraphVariableDensityTest {
-	private static ODatabaseGraphTx	database;
+  private static ODatabaseGraphTx database;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		OProfiler.getInstance().startRecording();
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    Orient.instance().getProfiler().startRecording();
 
-		database = new ODatabaseGraphTx(System.getProperty("url")).open("admin", "admin");
+    database = new ODatabaseGraphTx(System.getProperty("url")).open("admin", "admin");
 
-		database.declareIntent(new OIntentMassiveRead());
-		database.begin(TXTYPE.NOTX);
+    database.declareIntent(new OIntentMassiveRead());
+    database.begin(TXTYPE.NOTX);
 
-		long time = System.currentTimeMillis();
+    long time = System.currentTimeMillis();
 
-		int count = readSubNodes(database.getRoot("HighDensityGraph"));
+    int count = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read of the entire graph. Total " + count + " nodes in " + ((System.currentTimeMillis() - time) / 1000f)
-				+ " sec.");
+    System.out.println("Read of the entire graph. Total " + count + " nodes in " + ((System.currentTimeMillis() - time) / 1000f)
+        + " sec.");
 
-		System.out.println("Repeating the same operation but with hot cache");
+    System.out.println("Repeating the same operation but with hot cache");
 
-		time = System.currentTimeMillis();
+    time = System.currentTimeMillis();
 
-		count = readSubNodes(database.getRoot("HighDensityGraph"));
+    count = readSubNodes(database.getRoot("HighDensityGraph"));
 
-		System.out.println("Read using the cache of the entire graph. Total " + count + " nodes in "
-				+ ((System.currentTimeMillis() - time) / 1000f) + " sec.");
+    System.out.println("Read using the cache of the entire graph. Total " + count + " nodes in "
+        + ((System.currentTimeMillis() - time) / 1000f) + " sec.");
 
-		database.close();
-	}
+    database.close();
+  }
 
-	private static int readSubNodes(final OGraphVertex iNode) {
-		int i = 0;
-		for (OGraphEdge e : iNode.getOutEdges()) {
-			// System.out.print(v.get("id") + " - ");
-			++i;
+  private static int readSubNodes(final OGraphVertex iNode) {
+    int i = 0;
+    for (OGraphEdge e : iNode.getOutEdges()) {
+      // System.out.print(v.get("id") + " - ");
+      ++i;
 
-			if (i % 10000 == 0)
-				System.out.print(".");
-		}
+      if (i % 10000 == 0)
+        System.out.print(".");
+    }
 
-		return i;
-	}
+    return i;
+  }
 }

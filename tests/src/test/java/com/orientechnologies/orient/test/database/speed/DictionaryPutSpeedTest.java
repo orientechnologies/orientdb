@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -46,7 +46,7 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 		record = database.newInstance();
 		startNum = 0;// database.countClusterElements("Animal");
 
-		OProfiler.getInstance().startRecording();
+		 Orient.instance().getProfiler().startRecording();
 
 		System.out.println("Total element in the dictionary: " + startNum);
 

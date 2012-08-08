@@ -18,8 +18,8 @@ package com.orientechnologies.orient.core.cache;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -136,19 +136,19 @@ public abstract class OAbstractRecordCache {
   public void startup() {
     underlying.startup();
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + "enabled", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "enabled", new OProfilerHookValue() {
       public Object getValue() {
         return isEnabled();
       }
     });
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + "current", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "current", new OProfilerHookValue() {
       public Object getValue() {
         return getSize();
       }
     });
 
-    OProfiler.getInstance().registerHookValue(profilerPrefix + "max", new OProfilerHookValue() {
+    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "max", new OProfilerHookValue() {
       public Object getValue() {
         return getMaxSize();
       }

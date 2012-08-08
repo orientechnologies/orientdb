@@ -53,8 +53,6 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   protected int                             maxSummaries;
   protected final static Timer              timer         = new Timer(true);
 
-  protected static final OProfiler          instance      = new OProfiler();
-
   public interface OProfilerHookValue {
     public Object getValue();
   }
@@ -75,11 +73,29 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     maxSummaries = iMaxSumaries;
   }
 
+  /**
+   * Frees the memory removing profiling information
+   */
+  public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+    acquireExclusiveLock();
+    try {
+      snapshots.clear();
+      summaries.clear();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public void shutdown() {
-    stopRecording();
-    hooks.clear();
-    snapshots.clear();
-    summaries.clear();
+    acquireExclusiveLock();
+    try {
+      stopRecording();
+      hooks.clear();
+      snapshots.clear();
+      summaries.clear();
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   public void startRecording() {
@@ -507,10 +523,6 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     }
   }
 
-  public static OProfiler getInstance() {
-    return instance;
-  }
-
   public void setAutoDump(final int iSeconds) {
     if (timer != null)
       timer.cancel();
@@ -522,7 +534,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
         @Override
         public void run() {
-          System.out.println(OProfiler.getInstance().dump());
+          System.out.println(dump());
         }
       }, ms, ms);
     }

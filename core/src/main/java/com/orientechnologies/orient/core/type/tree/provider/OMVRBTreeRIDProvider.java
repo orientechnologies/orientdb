@@ -21,7 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
 import com.orientechnologies.common.collection.OMVRBTree;
-import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -101,7 +101,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 	}
 
 	public OStringBuilderSerializable toStream(final StringBuilder iBuffer) throws OSerializationException {
-		final long timer = OProfiler.getInstance().startChrono();
+		final long timer = Orient.instance().getProfiler().startChrono();
 
 		if (buffer.length() > 0 && getDatabase().getTransaction().isActive() && buffer.indexOf("-") > -1) {
 			// IN TRANSACTION: UNMARSHALL THE BUFFER TO AVOID TO STORE TEMP RIDS
@@ -158,7 +158,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
 			} finally {
 				marshalling = false;
-				OProfiler.getInstance().stopChrono("OMVRBTreeRIDProvider.toStream", timer);
+				Orient.instance().getProfiler().stopChrono("OMVRBTreeRIDProvider.toStream", timer);
 			}
 
 		iBuffer.append(buffer);
