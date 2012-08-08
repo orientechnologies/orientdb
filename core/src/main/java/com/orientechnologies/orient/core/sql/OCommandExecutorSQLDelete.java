@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  */
 public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements
     OCommandDistributedConditionalReplicateRequest, OCommandResultListener {
+  public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
 
@@ -84,8 +85,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(), parserText,
-          oldPos);
+      throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(),
+          parserText, oldPos);
 
     final String subjectName = word.toString();
 
@@ -94,7 +95,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
       compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(oldPos), context);
     } else {
-      query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));
+      query = database
+          .command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));
     }
 
     return this;

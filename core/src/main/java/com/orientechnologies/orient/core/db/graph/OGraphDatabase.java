@@ -227,25 +227,32 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   @SuppressWarnings("unchecked")
-  public void removeEdge(final ODocument iEdge) {
+  public boolean removeEdge(final OIdentifiable iEdge) {
+    if (iEdge == null)
+      return false;
+
+    final ODocument edge = iEdge.getRecord();
+    if (edge == null)
+      return false;
+
     final boolean safeMode = beginBlock();
 
     try {
-      final ODocument outVertex = iEdge.field(EDGE_FIELD_OUT);
+      final ODocument outVertex = edge.field(EDGE_FIELD_OUT);
       if (outVertex != null) {
         final Set<ODocument> out = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT));
         if (out != null)
-          out.remove(iEdge);
+          out.remove(edge);
       }
 
-      final ODocument inVertex = iEdge.field(EDGE_FIELD_IN);
+      final ODocument inVertex = edge.field(EDGE_FIELD_IN);
       if (inVertex != null) {
         final Set<ODocument> in = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN));
         if (in != null)
-          in.remove(iEdge);
+          in.remove(edge);
       }
 
-      delete(iEdge);
+      delete(edge);
 
       if (outVertex != null)
         save(outVertex);
@@ -258,6 +265,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       rollbackBlock(safeMode);
       throw e;
     }
+    return true;
   }
 
   public ODocument createEdge(final ODocument iSourceVertex, final ODocument iDestVertex) {
@@ -350,7 +358,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    *          Second Vertex
    * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
    */
-  public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(final OIdentifiable iVertex1, final OIdentifiable iVertex2) {
     return getEdgesBetweenVertexes(iVertex1, iVertex2, null, null);
   }
 
@@ -365,7 +373,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    *          Array of strings with the labels to get as filter
    * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
    */
-  public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2, final String[] iLabels) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(final OIdentifiable iVertex1, final OIdentifiable iVertex2,
+      final String[] iLabels) {
     return getEdgesBetweenVertexes(iVertex1, iVertex2, iLabels, null);
   }
 
@@ -383,10 +392,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    *          Array of strings with the name of the classes to get as filter
    * @return The Set with the common Edges between the two vertexes. If edges aren't found the set is empty
    */
-  public Set<ODocument> getEdgesBetweenVertexes(final ODocument iVertex1, final ODocument iVertex2, final String[] iLabels,
-      final String[] iClassNames) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(final OIdentifiable iVertex1, final OIdentifiable iVertex2,
+      final String[] iLabels, final String[] iClassNames) {
 
-    final Set<ODocument> result = new HashSet<ODocument>();
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
     if (iVertex1 != null && iVertex2 != null) {
       // CHECK OUT EDGES
