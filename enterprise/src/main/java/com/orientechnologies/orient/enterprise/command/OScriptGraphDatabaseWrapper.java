@@ -406,11 +406,11 @@ public class OScriptGraphDatabaseWrapper {
     return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
   }
 
-  public Set<ODocument> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2) {
     return database.getEdgesBetweenVertexes(iVertex1, iVertex2);
   }
 
-  public Set<ODocument> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels) {
     return database.getEdgesBetweenVertexes(iVertex1, iVertex2, iLabels);
   }
 
@@ -419,7 +419,7 @@ public class OScriptGraphDatabaseWrapper {
     return database.save(iRecord, iClusterName, iMode, iCallback);
   }
 
-  public Set<ODocument> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels, String[] iClassNames) {
+  public Set<OIdentifiable> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels, String[] iClassNames) {
     return database.getEdgesBetweenVertexes(iVertex1, iVertex2, iLabels, iClassNames);
   }
 
