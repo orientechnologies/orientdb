@@ -58,12 +58,10 @@
 			orientServer.close();
 			orientServer = null;
 		}
-		$('#header').hide();
-		$("#navigation").hide();
 		$("#buttonDisconnect").hide();
 		$("#buttonConnect").show();
 
-		controller.loadFragment('panelHome.htm');
+		controller.loadFragment('panelHome.htm', null, null, 'mainPanel');
 	}
 
 	function displayDocument(selObject, database) {
@@ -75,62 +73,24 @@
 		selectedObject = selObject;
 		controller.loadFragment("panelGraph.htm");
 	}
+
+	function clearOutput() {
+		$("#output").val("");
+	}
 </script>
 </head>
 <body>
 	<div class="container">
-		<div class="row-fluid" id="header">
-			<div class="span2">
-				<div class="row-fluid">
-					<div class="span12">
-						<a href="."><img border="0" src="images/orient_db.png" /></a>
-					</div>
-				</div>
-			</div>
-			<div class="span2">
-				<div class="row-fluid">
-					<div class="span12">
-						<label class="control-label">Database:</label>
-					</div>
-					<div class="span12">
-						<input id="header-server" value="" readonly type="hidden" /> <input id="header-database" value="demo" class="input-small" readonly />
-					</div>
-				</div>
-			</div>
-			<div class="span8" align="right">
-				<div id="navigation-bar" class="btn-group" align="right">
-					<button class="btn" onclick="javascript:controller.loadFragment('panelDatabase.htm')">
-						<img src='images/menu-database.png' /><br>Database
-					</button>
-					<button class="btn" onclick="javascript:controller.loadFragment('panelQuery.htm')">
-						<img src='images/menu-query.png' /><br>Query
-					</button>
-					<button class="btn" onclick="javascript:controller.loadFragment('panelDocument.htm')">
-						<img src='images/menu-document.png' /><br>Document
-					</button>
-					<button class="btn" onclick="javascript:controller.loadFragment('panelGraph.htm')">
-						<img src='images/menu-graph.png' /><br>Graph
-					</button>
-					<button class="btn" onclick="javascript:controller.loadFragment('panelRaw.htm')">
-						<img src='images/menu-raw.png' /><br>Raw access
-					</button>
-					<button class="btn" onclick="javascript:controller.loadFragment('panelServer.htm')">
-						<img src='images/menu-server.png' /><br>Server
-					</button>
-					<a class="btn" href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help"><img src='images/help.png' /><br>Help</a>
-					<button class="btn" onclick="javascript:disconnect()">
-						<img src='images/disconnect.png' /><br>Disconnect
-					</button>
-				</div>
-			</div>
+		<div class="row-fluid">
+			<div id="mainPanel"></div>
 		</div>
 		<div class="row-fluid">
-			<div id="panel" class="span12"></div>
-		</div>
-		<div class="row-fluid">
-			<div class="span1">Output:</div>
-			<div class="span11">
-				<textarea style="width: 100%;" id="output" rows="3" title="value" readonly="readonly"></textarea>
+			<div class="span12">
+				<form class="form-inline">
+					<label>Last output: </label> <a href="#" onclick="javascript:clearOutput()"> <i class="icon-remove"></i>
+					</a>
+					<textarea style="width: 100%;" id="output" rows="3" title="value" readonly="readonly"></textarea>
+				</form>
 			</div>
 		</div>
 		<div class="row-fluid">

@@ -31,7 +31,7 @@ function ODatabase(databasePath) {
 	this.evalResponse = true;
 	this.parseResponseLink = true;
 	this.removeObjectCircleReferences = true;
-	this.urlPrefix = "";
+	this.urlPrefix = "/";
 	this.urlSuffix = "";
 
 	if (databasePath) {
@@ -42,12 +42,18 @@ function ODatabase(databasePath) {
 			pos = databasePath.indexOf('/', 8);
 		}
 
-		this.databaseUrl = databasePath.substring(0, pos + 1);
-		this.databaseName = databasePath.substring(pos + 1);
-		if (this.databaseName.indexOf('/') > -1) {
+		if (pos > -1) {
+			this.databaseUrl = databasePath.substring(0, pos + 1);
+			this.databaseName = databasePath.substring(pos + 1);
+		} else {
+			this.databaseUrl = databasePath;
+			this.databaseName = null;
+		}
+
+		if (this.databaseName != null && this.databaseName.indexOf('/') > -1) {
 			this.encodedDatabaseName = "";
 			var parts = this.databaseName.split('/');
-			for (var p in parts) {
+			for ( var p in parts) {
 				if (!parts.hasOwnProperty(p)) {
 					continue;
 				}
@@ -155,16 +161,16 @@ function ODatabase(databasePath) {
 			userPass = '';
 		}
 		if (authProxy != null && authProxy != '') {
-			urlPrefix = this.databaseUrl + authProxy + "/";
+			this.urlPrefix = this.databaseUrl + authProxy + "/";
 		} else
-			urlPrefix = this.databaseUrl;
+			this.urlPrefix = this.databaseUrl;
 
 		if (type == null || type == '') {
 			type = 'GET';
 		}
 		$.ajax({
 			type : type,
-			url : urlPrefix + 'connect/' + this.encodedDatabaseName
+			url : this.urlPrefix + 'connect/' + this.encodedDatabaseName
 					+ this.urlSuffix,
 			context : this,
 			contentType : "application/json; charset=utf-8",
@@ -195,14 +201,14 @@ function ODatabase(databasePath) {
 		if (databaseType == null)
 			databaseType = 'document';
 
-		urlPrefix = this.databaseUrl;
+		this.urlPrefix = this.databaseUrl;
 
 		if (type == null || type == '') {
 			type = 'local';
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'database/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'database/' + this.encodedDatabaseName + '/'
 					+ type + '/' + databaseType + this.urlSuffix,
 			context : this,
 			contentType : "application/json; charset=utf-8",
@@ -244,7 +250,7 @@ function ODatabase(databasePath) {
 		iFetchPlan = this.URLEncode(iFetchPlan);
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
+			url : this.urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
 					+ iQuery + iLimit + iFetchPlan + this.urlSuffix,
 			context : this,
 			async : false,
@@ -281,7 +287,7 @@ function ODatabase(databasePath) {
 		iRID = this.URLEncode(iRID);
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'document/' + this.encodedDatabaseName + '/'
 					+ iRID + iFetchPlan + this.urlSuffix,
 			context : this,
 			contentType : "application/json; charset=utf-8",
@@ -309,7 +315,7 @@ function ODatabase(databasePath) {
 		if (this.removeObjectCircleReferences && typeof obj == 'object') {
 			this.removeCircleReferences(obj, {});
 		}
-		var url = urlPrefix + 'document/' + this.encodedDatabaseName;
+		var url = this.urlPrefix + 'document/' + this.encodedDatabaseName;
 		if (rid)
 			url += '/' + this.URLEncode(rid);
 
@@ -356,7 +362,7 @@ function ODatabase(databasePath) {
 		rid = this.URLEncode(rid);
 		$.ajax({
 			type : "DELETE",
-			url : urlPrefix + 'document/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'document/' + this.encodedDatabaseName + '/'
 					+ rid + this.urlSuffix,
 			contentType : "application/json; charset=utf-8",
 			processData : false,
@@ -384,7 +390,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo == null)
 			this.open();
 
-		var req = urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+		var req = this.urlPrefix + 'index/' + this.encodedDatabaseName + '/'
 				+ iIndexName + "/" + iKey;
 
 		var content;
@@ -420,7 +426,7 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'index/' + this.encodedDatabaseName + '/'
 					+ iIndexName + "/" + iKey + this.urlSuffix,
 			context : this,
 			async : false,
@@ -445,7 +451,7 @@ function ODatabase(databasePath) {
 		$
 				.ajax({
 					type : "DELETE",
-					url : urlPrefix + 'index/' + this.encodedDatabaseName + '/'
+					url : this.urlPrefix + 'index/' + this.encodedDatabaseName + '/'
 							+ iIndexName + "/" + iKey + this.urlSuffix,
 					context : this,
 					async : false,
@@ -468,7 +474,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'class/' + this.encodedDatabaseName + '/'
 					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
@@ -492,7 +498,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'class/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'class/' + this.encodedDatabaseName + '/'
 					+ iClassName + this.urlSuffix,
 			context : this,
 			async : false,
@@ -527,7 +533,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'property/' + this.encodedDatabaseName + '/'
 					+ iClassName + '/' + iPropertyName + iPropertyType
 					+ iLinkedType + this.urlSuffix,
 			contentType : "application/json; charset=utf-8",
@@ -558,7 +564,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'property/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'property/' + this.encodedDatabaseName + '/'
 					+ iClassName + this.urlSuffix,
 			context : this,
 			data : jsonData,
@@ -583,7 +589,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'cluster/' + this.encodedDatabaseName + '/'
 					+ iClassName + this.urlSuffix,
 			context : this,
 			contentType : "application/json; charset=utf-8",
@@ -616,7 +622,7 @@ function ODatabase(databasePath) {
 		iCommand = this.URLEncode(iCommand);
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'command/' + this.encodedDatabaseName + '/'
+			url : this.urlPrefix + 'command/' + this.encodedDatabaseName + '/'
 					+ iLanguage + '/' + iCommand + "/" + iLimit
 					+ this.urlSuffix,
 			context : this,
@@ -637,12 +643,32 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.serverInfo = function() {
-		if (this.databaseInfo == null) {
-			this.open();
-		}
 		$.ajax({
 			type : "GET",
-			url : urlPrefix + 'server' + this.urlSuffix,
+			url : this.urlPrefix + 'server' + this.urlSuffix,
+			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
+	ODatabase.prototype.profiler = function(type, from, to) {
+		if (!type)
+			type = 'realtime';
+
+		$.ajax({
+			type : "GET",
+			url : this.urlPrefix + 'profiler/' + this.urlSuffix,
 			context : this,
 			contentType : "application/json; charset=utf-8",
 			processData : false,
@@ -689,7 +715,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.getClass = function(className) {
 		var classes = databaseInfo['classes'];
-		for (var cls in classes) {
+		for ( var cls in classes) {
 			if (!classes.hasOwnProperty(cls)) {
 				continue;
 			}
@@ -720,7 +746,7 @@ function ODatabase(databasePath) {
 		if (this.databaseInfo != null) {
 			$.ajax({
 				type : 'GET',
-				url : urlPrefix + 'disconnect' + this.urlSuffix,
+				url : this.urlPrefix + 'disconnect' + this.urlSuffix,
 				dataType : "json",
 				contentType : "application/json; charset=utf-8",
 				processData : false,
@@ -756,7 +782,7 @@ function ODatabase(databasePath) {
 
 		if (configuration)
 			// OVERWRITE DEFAULT CONFIGURATION
-			for (var c in configuration) {
+			for ( var c in configuration) {
 				if (!configuration.hasOwnProperty(c)) {
 					continue;
 				}
@@ -765,7 +791,7 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "POST",
-			url : urlPrefix + 'importRecords/' + $('#header-database').val()
+			url : this.urlPrefix + 'importRecords/' + $('#header-database').val()
 					+ '/' + cfg["format"] + '/' + cfg["class"] + '/'
 					+ cfg["separator"] + '/' + cfg["stringDelimiter"]
 					+ cfg["decimalSeparator"] + '/' + cfg["thousandsSeparator"]
@@ -837,7 +863,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.createObjectsLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
+		for ( var field in obj) {
 			if (!obj.hasOwnProperty(field)) {
 				continue;
 			}
@@ -859,7 +885,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.putObjectInLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
+		for ( var field in obj) {
 			if (!obj.hasOwnProperty(field)) {
 				continue;
 			}
@@ -879,7 +905,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getObjectFromLinksMap = function(obj, linkMap) {
-		for (var field in obj) {
+		for ( var field in obj) {
 			if (!obj.hasOwnProperty(field)) {
 				continue;
 			}
@@ -909,7 +935,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesPopulateMap = function(obj,
 			linkMap) {
-		for (var field in obj) {
+		for ( var field in obj) {
 			if (!obj.hasOwnProperty(field)) {
 				continue;
 			}
@@ -925,7 +951,7 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (var i in value) {
+				for ( var i in value) {
 					if (!value.hasOwnProperty(i)) {
 						continue;
 					}
@@ -948,7 +974,7 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.removeCircleReferencesChangeObject = function(obj,
 			linkMap) {
-		for (var field in obj) {
+		for ( var field in obj) {
 			if (!obj.hasOwnProperty(field)) {
 				continue;
 			}
@@ -972,7 +998,7 @@ function ODatabase(databasePath) {
 				}
 			} else if (value != null && typeof value == 'object'
 					&& $.isArray(value)) {
-				for (var i in value) {
+				for ( var i in value) {
 					if (!value.hasOwnProperty(i)) {
 						continue;
 					}

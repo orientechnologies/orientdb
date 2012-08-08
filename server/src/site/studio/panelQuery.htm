@@ -1,5 +1,5 @@
-<div id="tab-query">
-	<div>
+<div id="tab-query" class="row-fluid">
+	<div class="span12">
 		<div class="row-fluid">
 			<div class="span12" style="border: 1px solid gray;">
 				<textarea id="queryText" title="value"></textarea>
@@ -12,7 +12,7 @@
 				</button>
 			</div>
 			<div class="span5">
-				History: <select style="width: 400px;" id="savedQueries"></select>
+				History: <select style="width: 350px;" id="savedQueries"></select>
 			</div>
 			<div class="span2">
 				Limit: <input id="limit" class="input-mini" size="1" value="20" />
@@ -26,13 +26,13 @@
 				<a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a>
 			</div>
 		</div>
-		<div>
-			<div id="tabs-results" class="noborder">
+		<div class="row-fluid">
+			<div id="tabs-results" class="span12 noborder">
 				<ul>
 					<li><a href="#tab-table"><span>Table</span> </a></li>
 					<li><a href="#tab-output"><span>Output</span> </a></li>
 				</ul>
-				<div id="tab-table" class="noborder">
+				<div id="tab-table" class="row-fluid noborder">
 					<div class="row">
 						<div class="offset8 span4 btn-group">
 							<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
@@ -61,7 +61,6 @@
 			</div>
 		</div>
 	</div>
-</div>
 </div>
 
 <script>

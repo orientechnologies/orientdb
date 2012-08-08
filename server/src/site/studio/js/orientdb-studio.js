@@ -115,18 +115,9 @@ $(document).ready(function() {
 		$("#output").val("Error: " + request.responseText);
 	});
 
-	$('#header').hide();
-	$("#navigation").hide();
-	$("#buttonDisconnect").hide();
-
 	$("#database").blur(function() {
 		$('#rawDatabase').val($("#database").val());
 	});
 
-	$("#output").val($.trim($("#output").val()));
-
-	$("#tabs-main").hide();
-	$("#buttonDisconnect").hide();
-
-	controller.loadFragment('panelHome.htm');
+	controller.loadFragment('panelHome.htm', null, null, 'mainPanel');
 });
