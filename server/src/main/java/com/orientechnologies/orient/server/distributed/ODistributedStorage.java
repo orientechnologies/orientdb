@@ -400,6 +400,6 @@ public class ODistributedStorage implements OStorage {
     final Throwable t = e.getCause();
     if (t instanceof OException)
       throw (OException) t;
-    throw new OStorageException(String.format(iMessage, iParams));
+    throw new OStorageException(String.format(iMessage, iParams), e);
   }
 }
