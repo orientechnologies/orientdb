@@ -123,7 +123,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware {
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>) TO <rid>|(<query>) [SET <field> = <expression>[,]*]";
+    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>";
   }
 
 }
