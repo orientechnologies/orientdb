@@ -21,10 +21,16 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class RemoteGremlinTest {
-  private final OServer  server;
-  private OGraphDatabase graphDatabase;
+  /**
+   * 
+   */
+  private static final String URL = "remote:localhost/tinkerpop";
+  private final OServer       server;
+  private OGraphDatabase      graphDatabase;
 
   public RemoteGremlinTest() throws Exception {
     if (System.getProperty("ORIENTDB_HOME") == null) {
@@ -53,7 +59,7 @@ public class RemoteGremlinTest {
       stg.close(true);
     }
 
-    graphDatabase = new OGraphDatabase("remote:localhost/tinkerpop");
+    graphDatabase = new OGraphDatabase(URL);
     graphDatabase.open("admin", "admin");
   }
 
@@ -99,6 +105,30 @@ public class RemoteGremlinTest {
     result = graphDatabase.command(new OCommandSQL("select gremlin('current.out.filter{ it.performances > par1 }') from V"))
         .execute(params);
     System.out.println("Command result: " + result);
+  }
+
+  @Test
+  public void testGremlinAgainstBlueprints() {
+    OGremlinHelper.global().create();
+
+    OrientGraph graph = new OrientGraph(URL);
+
+    final int NUM_ITERS = 1000;
+
+    long start = System.currentTimeMillis();
+    try {
+      for (int i = NUM_ITERS; i > 0; i--) {
+        List<Vertex> r = graph.getRawGraph().command(new OCommandGremlin("g.V[1].out.out.in")).execute();
+        System.out.println(r.size());
+      }
+
+      System.out.println("Total: " + (System.currentTimeMillis() - start) + " ms AVG: "
+          + ((System.currentTimeMillis() - start) / (float) NUM_ITERS));
+
+    } catch (Exception x) {
+      x.printStackTrace();
+      System.out.println(graph.getRawGraph().isClosed());
+    }
   }
 
 }
