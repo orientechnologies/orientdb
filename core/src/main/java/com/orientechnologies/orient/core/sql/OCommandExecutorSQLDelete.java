@@ -181,7 +181,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID||cluster:<cluster [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [WHERE <condition>*]";
   }
 
   private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
