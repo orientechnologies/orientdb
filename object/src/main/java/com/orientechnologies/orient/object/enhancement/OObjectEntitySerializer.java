@@ -340,8 +340,8 @@ public class OObjectEntitySerializer {
    *          :- the Class<?> to register
    */
   @SuppressWarnings("unchecked")
-  public static synchronized void registerClass(Class<?> iClass) {
-    if (classes.contains(iClass))
+  public static synchronized void registerClass(final Class<?> iClass) {
+    if (Proxy.class.isAssignableFrom(iClass) || classes.contains(iClass))
       return;
 
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
