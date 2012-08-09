@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 
@@ -35,8 +36,15 @@ public class OMemoryStream extends OutputStream {
   private int              position;
 
   private static final int NATIVE_COPY_THRESHOLD = 9;
+  private static long      metricResize          = 0;
 
-  // private int fixedSize = 0;
+  static {
+    Orient.instance().getProfiler().registerHookValue("system.memory.stream.resize", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricResize;
+      }
+    });
+  }
 
   public OMemoryStream() {
     this(DEF_SIZE);
@@ -248,7 +256,7 @@ public class OMemoryStream extends OutputStream {
     final int bufferLength = localBuffer.length;
 
     if (bufferLength < capacity) {
-      Orient.instance().getProfiler().updateCounter("system.memory.stream.resize", +1);
+      metricResize++;
 
       final byte[] newbuf = new byte[Math.max(bufferLength << 1, capacity)];
 

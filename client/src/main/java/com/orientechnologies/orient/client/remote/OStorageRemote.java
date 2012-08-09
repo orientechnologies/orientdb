@@ -1518,7 +1518,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final long startToWait = System.currentTimeMillis();
             try {
               networkPool.wait(5000);
-              Orient.instance().getProfiler().updateCounter("system.network.connectionPool.timeout", +1);
             } catch (InterruptedException e) {
               // THREAD INTERRUPTED: RETURN EXCEPTION
               Thread.currentThread().interrupt();

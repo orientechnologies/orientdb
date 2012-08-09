@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OByteBufferUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -45,13 +46,37 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * <br/>
  */
 public class OFileMMap extends OAbstractFile {
-  public final static String                 NAME       = "mmap";
-  protected int                              filledUpTo;                                          // PART OF HEADER (4 bytes)
+  public final static String                 NAME                      = "mmap";
+  protected int                              filledUpTo;                                                         // PART OF HEADER
+                                                                                                                  // (4
+                                                                                                                  // bytes)
   protected MappedByteBuffer                 headerBuffer;
-  protected static final Queue<ByteBuffer>   bufferPool = new ConcurrentLinkedQueue<ByteBuffer>();
+  protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
   private static int                         BYTEBUFFER_POOLABLE_SIZE;
   private static OMMapManager.ALLOC_STRATEGY strategy;
+
+  private static long                        metricPooledBufferCreated = 0;
+  private static long                        metricPooledBufferUsed    = 0;
+  private static long                        metricNonPooledBufferUsed = 0;
+
+  static {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.pooledBufferCreated", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricPooledBufferCreated;
+      }
+    });
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.pooledBufferUsed", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricPooledBufferUsed;
+      }
+    });
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.nonPooledBufferUsed", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricNonPooledBufferUsed;
+      }
+    });
+  }
 
   @Override
   public void delete() throws IOException {
@@ -451,7 +476,7 @@ public class OFileMMap extends OAbstractFile {
   protected ByteBuffer acquireByteBuffer(final int iSize) {
     if (iSize > BYTEBUFFER_POOLABLE_SIZE) {
       try {
-        Orient.instance().getProfiler().updateStat("MMap.extraBufferSize", iSize);
+        metricNonPooledBufferUsed++;
         // CREATE A BUFFER AT THE FLY. IT WILL BE DISCARDED WHEN FINISHED
         return ByteBuffer.allocate(iSize);
       } catch (OutOfMemoryError e) {
@@ -464,10 +489,10 @@ public class OFileMMap extends OAbstractFile {
     // POP THE FIRST AVAILABLE
     ByteBuffer buffer = bufferPool.poll();
     if (buffer != null)
-      Orient.instance().getProfiler().updateCounter("system.file.mmap.pooledBuffers", -1);
+      metricPooledBufferUsed++;
     else {
+      metricPooledBufferCreated++;
       buffer = ByteBuffer.allocateDirect(BYTEBUFFER_POOLABLE_SIZE);
-      Orient.instance().getProfiler().updateStat("system.file.mmap.pooledBufferSize", BYTEBUFFER_POOLABLE_SIZE);
     }
 
     buffer.limit(iSize);
@@ -484,7 +509,6 @@ public class OFileMMap extends OAbstractFile {
 
     // PUSH INTO THE POOL
     bufferPool.add(iBuffer);
-    Orient.instance().getProfiler().updateCounter("MMap.pooledBuffers", +1);
   }
 
   @Override

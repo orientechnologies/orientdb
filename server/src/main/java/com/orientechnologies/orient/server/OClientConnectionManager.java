@@ -28,6 +28,7 @@ import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -38,10 +39,12 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OClientConnectionManager extends OSharedResourceAbstract {
-  protected Map<Integer, OClientConnection>     connections      = new HashMap<Integer, OClientConnection>();
-  protected int                                 connectionSerial = 0;
+  protected Map<Integer, OClientConnection>     connections             = new HashMap<Integer, OClientConnection>();
+  protected int                                 connectionSerial        = 0;
 
-  private static final OClientConnectionManager instance         = new OClientConnectionManager();
+  private long                                  metricActiveConnections = 0;
+
+  private static final OClientConnectionManager instance                = new OClientConnectionManager();
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -70,6 +73,12 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
         }
       }
     }, delay, delay);
+
+    Orient.instance().getProfiler().registerHookValue("server.connections.actives", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricActiveConnections;
+      }
+    });
   }
 
   /**
@@ -81,7 +90,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @throws IOException
    */
   public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-    Orient.instance().getProfiler().updateCounter("server.connections.actives", +1);
+    metricActiveConnections++;
 
     final OClientConnection connection;
 
@@ -127,7 +136,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    Orient.instance().getProfiler().updateCounter("server.connections.actives", -1);
+    metricActiveConnections--;
 
     acquireExclusiveLock();
     try {
@@ -150,7 +159,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public void disconnect(final OClientConnection connection) {
-    Orient.instance().getProfiler().updateCounter("server.connections.actives", -1);
+    metricActiveConnections--;
 
     connection.close();
 
