@@ -617,11 +617,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Fills a document passing the field names/values as a Map<String,Object> where the keys are the field names and the values are
    * the field values.
    */
-  public void fields(final Map<String, Object> iMap) {
+  public ODocument fields(final Map<String, Object> iMap) {
     if (iMap != null) {
       for (Entry<String, Object> entry : iMap.entrySet())
         field(entry.getKey(), entry.getValue());
     }
+    return this;
   }
 
   /**

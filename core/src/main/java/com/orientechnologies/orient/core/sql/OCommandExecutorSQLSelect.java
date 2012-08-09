@@ -728,6 +728,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   finalResult.add(list.get(i).getRecord());
               }
             }
+          } else if (fieldValue instanceof Map<?, ?>) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
+              final Object o = entry.getValue();
+
+              if (o instanceof OIdentifiable)
+                finalResult.add(((OIdentifiable) o).getRecord());
+              else if (o instanceof List) {
+                List<OIdentifiable> list = (List<OIdentifiable>) o;
+                for (int i = 0; i < list.size(); i++)
+                  finalResult.add(list.get(i).getRecord());
+              }
+            }
           } else
             finalResult.add((OIdentifiable) fieldValue);
       }
