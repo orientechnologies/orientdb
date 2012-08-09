@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigura
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
@@ -203,6 +203,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
     acquireSharedLock();
     try {
+      if (iPPosition.clusterPosition < 0 || iPPosition.clusterPosition > getLastEntryPosition())
+        return null;
 
       final long[] pos = fileSegment.getRelativePosition(filePosition);
 
@@ -218,6 +220,15 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
+    OPhysicalPosition ppos = getPhysicalPosition(new OPhysicalPosition(entryPosition));
+    if (ppos == null)
+      return new OPhysicalPosition[0];
+
+    return new OPhysicalPosition[] { ppos };
   }
 
   /**
@@ -424,8 +435,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return id;
   }
 
-  public OClusterPositionIterator absoluteIterator() {
-    return new OClusterPositionIterator(this);
+  public OClusterEntryIterator absoluteIterator() {
+    return new OClusterEntryIterator(this);
   }
 
   public long getSize() {
@@ -476,7 +487,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     try {
 
       long size = fileSegment.getFilledUpTo();
-      final OClusterPositionIterator it = absoluteIterator();
+      final OClusterEntryIterator it = absoluteIterator();
       final OPhysicalPosition pos = new OPhysicalPosition();
       while (it.hasNext()) {
         pos.clusterPosition = it.next();

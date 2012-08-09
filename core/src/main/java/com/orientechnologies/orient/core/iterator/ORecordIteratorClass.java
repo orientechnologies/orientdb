@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -29,9 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * the database the iterator could be invalid and throw exception of cluster not found.
  * 
  * @author Luca Garulli
- * 
- * @param <T>
- *          Record Type
  */
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
@@ -54,13 +52,20 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   @SuppressWarnings("unchecked")
   @Override
   public REC next() {
-    return (REC) super.next().getRecord();
+    final OIdentifiable rec = super.next();
+    if (rec == null)
+      return null;
+    return (REC) rec.getRecord();
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public REC previous() {
-    return (REC) super.previous().getRecord();
+    final OIdentifiable rec = super.previous();
+    if (rec == null)
+      return null;
+
+    return (REC) rec.getRecord();
   }
 
   @Override

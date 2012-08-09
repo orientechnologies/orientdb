@@ -599,6 +599,44 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
+  @Override
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+    checkConnection();
+
+    do {
+      try {
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_POSITIONS);
+
+          network.writeShort((short) currentClusterId);
+          network.writeLong(entry);
+
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          final int length = network.readInt();
+          final long[] result = new long[length];
+
+          for (int i = 0; i < length; i++)
+            result[i] = network.readLong();
+
+          return result;
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error on getting positions list from cluster : " + currentClusterId + " and entry : " + entry, e);
+      }
+    } while (true);
+
+  }
+
   public long getSize() {
     checkConnection();
 

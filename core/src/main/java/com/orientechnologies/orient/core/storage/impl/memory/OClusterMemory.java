@@ -23,7 +23,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -64,8 +64,8 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     }
   }
 
-  public OClusterPositionIterator absoluteIterator() {
-    return new OClusterPositionIterator(this);
+  public OClusterEntryIterator absoluteIterator() {
+    return new OClusterEntryIterator(this);
   }
 
   public void close() {
@@ -253,12 +253,23 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
     acquireSharedLock();
     try {
+      if (iPPosition.clusterPosition < 0 || iPPosition.clusterPosition > getLastEntryPosition())
+        return null;
 
       return entries.get((int) iPPosition.clusterPosition);
 
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
+    OPhysicalPosition ppos = getPhysicalPosition(new OPhysicalPosition(entryPosition));
+    if (ppos == null)
+      return new OPhysicalPosition[0];
+
+    return new OPhysicalPosition[] { ppos };
   }
 
   public void removePhysicalPosition(final long iPosition) {

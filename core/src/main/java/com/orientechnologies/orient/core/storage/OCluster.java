@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
@@ -127,5 +126,7 @@ public interface OCluster {
 
   public boolean generatePositionBeforeCreation();
 
-  public Iterator<Long> absoluteIterator();
+  public OClusterEntryIterator absoluteIterator();
+
+  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException;
 }

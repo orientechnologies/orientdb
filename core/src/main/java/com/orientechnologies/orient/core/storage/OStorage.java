@@ -201,6 +201,8 @@ public interface OStorage extends OSharedContainer {
 
   public boolean dropDataSegment(String iName);
 
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry);
+
   /**
    * Returns the current storage's status
    * 

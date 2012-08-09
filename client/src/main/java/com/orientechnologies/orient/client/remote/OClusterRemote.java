@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterPositionIterator;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -292,12 +292,17 @@ public class OClusterRemote implements OCluster {
     return false;
   }
 
+  @Override
+  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
+    return new OPhysicalPosition[0];
+  }
+
   /*
    * (non-Javadoc)
    * 
    * @see com.orientechnologies.orient.core.storage.OCluster#absoluteIterator()
    */
-  public OClusterPositionIterator absoluteIterator() {
+  public OClusterEntryIterator absoluteIterator() {
     // TODO Auto-generated method stub
     return null;
   }

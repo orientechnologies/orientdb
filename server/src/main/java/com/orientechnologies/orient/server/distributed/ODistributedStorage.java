@@ -391,6 +391,11 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getStatus();
   }
 
+  @Override
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+    return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
+  }
+
   protected String getClusterNameFromRID(final ORecordId iRecordId) {
     return OStorageSynchronizer.getClusterNameByRID(wrapped, iRecordId);
   }

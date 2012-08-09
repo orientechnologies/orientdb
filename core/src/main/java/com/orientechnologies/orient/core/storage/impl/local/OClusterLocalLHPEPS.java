@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +28,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OIntegerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLongSerializer;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
@@ -318,8 +318,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
         while (true) {
           for (int n = 0; n < bucket.getSize(); n++) {
-            OPhysicalPosition ppos = new OPhysicalPosition();
-            ppos = getPhysicalPosition(ppos);
+            final OPhysicalPosition ppos = bucket.getPhysicalPosition(n);
             if (storage.checkForRecordValidity(ppos))
               storage.getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
             localSize--;
@@ -415,6 +414,27 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
         return null;
 
       return bucketInfo.bucket.getPhysicalPosition(bucketInfo.index);
+    } finally {
+      clearCache();
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
+    acquireSharedLock();
+    try {
+      if (entryPosition < 0 || entryPosition > mainBucketsSize)
+        return new OPhysicalPosition[0];
+
+      final OClusterLocalLHPEBucket bucket = loadMainBucket(entryPosition);
+
+      final OPhysicalPosition[] result = new OPhysicalPosition[bucket.getSize()];
+      for (int i = 0; i < result.length; i++)
+        result[i] = bucket.getPhysicalPosition(i);
+
+      return result;
+
     } finally {
       clearCache();
       releaseSharedLock();
@@ -546,7 +566,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public long getLastEntryPosition() {
-    return 0;
+    return mainBucketsSize;
   }
 
   public void lock() {
@@ -634,8 +654,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
   }
 
-  public Iterator<Long> absoluteIterator() {
-    return null; // TODO
+  public OClusterEntryIterator absoluteIterator() {
+    return new OClusterEntryIterator(this);
   }
 
   private long calcPositionToMerge() {
@@ -1283,10 +1303,11 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
     objectOutputStream.writeObject(splittedBuckets);
 
+    byte[] serializedBitSet = byteArrayOutputStream.toByteArray();
+
     objectOutputStream.flush();
     objectOutputStream.close();
 
-    byte[] serializedBitSet = byteArrayOutputStream.toByteArray();
     objectOutputStream = null;
     byteArrayOutputStream = null;
 

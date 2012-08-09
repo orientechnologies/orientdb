@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -27,7 +29,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 /**
  * Interface for embedded storage.
  * 
- * @see OStorageLocal, OStorageMemory
+ * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal, OStorageMemory
  * @author Luca Garulli
  * 
  */
@@ -96,5 +98,29 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected void checkOpeness() {
     if (status != STATUS.OPEN)
       throw new OStorageException("Storage " + name + " is not opened.");
+  }
+
+  @Override
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+    if (currentClusterId == -1)
+      throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'');
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(currentClusterId);
+      final OPhysicalPosition[] physicalPositions = cluster.getPositionsByEntryPos(entry);
+      final long[] positions = new long[physicalPositions.length];
+
+      for (int i = 0; i < positions.length; i++)
+        positions[i] = physicalPositions[i].clusterPosition;
+
+      return positions;
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 }

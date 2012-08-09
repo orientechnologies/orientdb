@@ -46,6 +46,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DATACLUSTER_COUNT     = 12;
   public static final byte  REQUEST_DATACLUSTER_DATARANGE = 13;
   public static final byte  REQUEST_DATACLUSTER_COPY      = 14;
+  public static final byte  REQUEST_DATACLUSTER_POSITIONS = 15; // since 1.2.0
 
   public static final byte  REQUEST_DATASEGMENT_ADD       = 20;
   public static final byte  REQUEST_DATASEGMENT_DROP      = 21;

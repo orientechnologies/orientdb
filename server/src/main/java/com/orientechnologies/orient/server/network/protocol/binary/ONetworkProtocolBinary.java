@@ -226,6 +226,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       rangeCluster();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_POSITIONS:
+      clusterPositionsByEntry();
+      break;
+
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
       addCluster();
       break;
@@ -431,6 +435,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       channel.writeLong(pos[0]);
       channel.writeLong(pos[1]);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void clusterPositionsByEntry() throws IOException {
+    setDataCommandInfo("Get list of cluster positions which are contained in given cluster entry");
+
+    checkDatabase();
+
+    final int clusterId = channel.readShort();
+    final long entry = channel.readLong();
+
+    long[] pos = connection.database.getStorage().getClusterPositionsForEntry(clusterId, entry);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      channel.writeInt(pos.length);
+      for (long position : pos)
+        channel.writeLong(position);
+
     } finally {
       endResponse();
     }
