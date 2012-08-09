@@ -5,7 +5,7 @@
 				<a href="."><img border="0" src="images/orient_db.png" /></a>
 			</div>
 			<div class="span3 form-inline">
-				<label>Database:</label> <input id="header-database" value="demo" class="input" readonly />
+				<label>Database:</label> <input id="header-database" value="" class="input" readonly />
 			</div>
 			<div class="span7" align="right">
 				<div id="navigation-bar" class="btn-group" align="right">
@@ -37,5 +37,6 @@
 </div>
 
 <script>
+	$('#header-database').val(orientServer.getDatabaseName());
 	controller.loadFragment('panelDatabase.htm');
 </script>

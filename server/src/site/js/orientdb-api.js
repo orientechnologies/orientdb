@@ -65,6 +65,9 @@ function ODatabase(databasePath) {
 			this.encodedDatabaseName = this.databaseName;
 	}
 
+	ODatabase.prototype.getDatabaseName = function() {
+		return this.databaseName;
+	}
 	ODatabase.prototype.getDatabaseInfo = function() {
 		return this.databaseInfo;
 	}
