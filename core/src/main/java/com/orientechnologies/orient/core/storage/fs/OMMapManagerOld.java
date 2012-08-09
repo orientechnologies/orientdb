@@ -35,16 +35,21 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManager {
 
-  private static final long                             MIN_MEMORY        = 50000000;
+  private static final long                             MIN_MEMORY                       = 50000000;
   private static OMMapManagerOld.OVERLAP_STRATEGY       overlapStrategy;
   private static OMMapManager.ALLOC_STRATEGY            lastStrategy;
   private static int                                    blockSize;
   private static long                                   maxMemory;
   private static long                                   totalMemory;
-  private static final ReadWriteLock                    lock              = new ReentrantReadWriteLock();
+  private static final ReadWriteLock                    lock                             = new ReentrantReadWriteLock();
 
-  private static List<OMMapBufferEntry>                 bufferPoolLRU     = new ArrayList<OMMapBufferEntry>();
-  private static Map<OFileMMap, List<OMMapBufferEntry>> bufferPoolPerFile = new HashMap<OFileMMap, List<OMMapBufferEntry>>();
+  private static long                                   metricUsedChannel                = 0;
+  private static long                                   metricReusedPagesBetweenLast     = 0;
+  private static long                                   metricReusedPages                = 0;
+  private static long                                   metricOverlappedPageUsingChannel = 0;
+
+  private static List<OMMapBufferEntry>                 bufferPoolLRU                    = new ArrayList<OMMapBufferEntry>();
+  private static Map<OFileMMap, List<OMMapBufferEntry>> bufferPoolPerFile                = new HashMap<OFileMMap, List<OMMapBufferEntry>>();
 
   /**
    * Strategy that determine what should manager do if mmapped files overlaps.
@@ -99,6 +104,28 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     Orient.instance().getProfiler().registerHookValue("system.file.mmap.overlap.strategy", new OProfilerHookValue() {
       public Object getValue() {
         return overlapStrategy;
+      }
+    });
+
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.usedChannel", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricUsedChannel;
+      }
+    });
+
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPagesBetweenLast", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricReusedPagesBetweenLast;
+      }
+    });
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPages", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricReusedPages;
+      }
+    });
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.overlappedPageUsingChannel", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricOverlappedPageUsingChannel;
       }
     });
   }
@@ -159,7 +186,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
         // CHECK IF THERE IS A BUFFER THAT OVERLAPS
         if (!allocIfOverlaps(iBeginOffset, iSize, fileEntries, p)) {
-          Orient.instance().getProfiler().updateCounter("system.file.mmap.usedChannel", 1);
+          metricUsedChannel++;
           return null;
         }
 
@@ -168,7 +195,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         if (totalMemory + bufferSize > maxMemory
             && (iStrategy == OMMapManager.ALLOC_STRATEGY.MMAP_ONLY_AVAIL_POOL || iOperationType == OMMapManager.OPERATION_TYPE.READ
                 && iStrategy == OMMapManager.ALLOC_STRATEGY.MMAP_WRITE_ALWAYS_READ_IF_AVAIL_POOL)) {
-          Orient.instance().getProfiler().updateCounter("system.file.mmap.usedChannel", 1);
+          metricUsedChannel++;
           return null;
         }
 
@@ -278,7 +305,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
         if (e.isValid() && e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
           // FOUND: USE IT
-          Orient.instance().getProfiler().updateCounter("OMMapManager.reusedPageBetweenLast", 1);
+          metricReusedPagesBetweenLast++;
           e.counter++;
           return e;
         }
@@ -489,7 +516,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
       if (iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
         // FOUND: USE IT
-        Orient.instance().getProfiler().updateCounter("OMMapManager.reusedPage", 1);
+        metricReusedPages++;
         e.counter++;
         return mid;
       }
@@ -534,7 +561,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
     if (overlaps) {
       // READ NOT IN BUFFER POOL: RETURN NULL TO LET TO THE CALLER TO EXECUTE A DIRECT READ WITHOUT MMAP
-      Orient.instance().getProfiler().updateCounter("system.file.mmap.overlappedPageUsingChannel", 1);
+      metricOverlappedPageUsingChannel++;
       if (overlapStrategy == OVERLAP_STRATEGY.NO_OVERLAP_FLUSH_AND_USE_CHANNEL)
         entry.flush();
       return false;

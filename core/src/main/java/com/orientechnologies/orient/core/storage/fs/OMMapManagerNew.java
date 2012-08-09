@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
@@ -42,11 +44,20 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
                                                                                                       .getValueAsBoolean(),
                                                                                                   OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                                       .getValueAsInteger());
+  private long                                                        metricMappedPages       = 0;
+  private long                                                        metricReusedPages       = 0;
 
-  /**
-   * {@inheritDoc} In this realization init is redundant. Does not perform any work.
-   */
   public void init() {
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.mappedPages", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricMappedPages;
+      }
+    });
+    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPages", new OProfilerHookValue() {
+      public Object getValue() {
+        return metricReusedPages;
+      }
+    });
   }
 
   /**
@@ -79,6 +90,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
       final OMMapBufferEntry lastEntry = foundEntries[foundEntries.length - 1];
       if (lastEntry.beginOffset + lastEntry.size >= iBeginOffset + iSize) {
         acquireLocksOnEntries(foundEntries, iOperationType);
+        metricReusedPages++;
         return foundEntries;
       }
     }
@@ -326,6 +338,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
    *           is thrown if mapping is unsuccessfully.
    */
   private OMMapBufferEntry mapNew(final OFileMMap file, final long beginOffset) throws IOException {
+    metricMappedPages++;
     return new OMMapBufferEntry(file, file.map(beginOffset, file.getFileSize() - (int) beginOffset), beginOffset,
         file.getFileSize() - (int) beginOffset);
   }
