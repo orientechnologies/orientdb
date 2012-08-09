@@ -141,10 +141,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void createSnapshot() {
-    final Map<String, Object> hookValuesSnapshots = archiveHooks();
-
     acquireExclusiveLock();
     try {
+      final Map<String, Object> hookValuesSnapshots = archiveHooks();
 
       synchronized (snapshots) {
         // ARCHIVE IT
@@ -207,17 +206,12 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String toJSON(final String iQuery, final String iFrom, final String iTo) {
     final StringBuilder buffer = new StringBuilder();
 
-    Map<String, Object> hookValuesSnapshots = null;
-    if (iQuery.equals("realtime"))
-      // GET LATETS HOOK VALUES
-      hookValuesSnapshots = archiveHooks();
-
-    buffer.append("{ \"" + iQuery + "\":");
-
     acquireSharedLock();
     try {
+      buffer.append("{ \"" + iQuery + "\":");
+
       if (iQuery.equals("realtime")) {
-        realTime.setHookValues(hookValuesSnapshots);
+        realTime.setHookValues(archiveHooks());
         realTime.toJSON(buffer);
 
       } else if (iQuery.equals("last")) {
