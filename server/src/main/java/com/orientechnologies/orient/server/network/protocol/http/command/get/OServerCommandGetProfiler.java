@@ -40,8 +40,8 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       StringWriter jsonBuffer = new StringWriter();
       OJSONWriter json = new OJSONWriter(jsonBuffer);
 
-      final String to = parts.length > 2 ? parts[2] : null;
-      final String from = parts.length > 3 ? parts[3] : null;
+      final String from = parts.length > 2 ? parts[2] : null;
+      final String to = parts.length > 3 ? parts[3] : null;
       json.append(Orient.instance().getProfiler().toJSON(parts[1], from, to));
 
       sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
