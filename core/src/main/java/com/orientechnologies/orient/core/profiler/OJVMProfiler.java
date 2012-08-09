@@ -30,16 +30,34 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  */
 public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener {
 
+  public OJVMProfiler() {
+  }
+
+  public String getSystemMetrics(final String iDatabaseName, final String iMetricName) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("system.");
+    buffer.append(iMetricName);
+    return buffer.toString();
+  }
+
+  public String getDatabaseMetrics(final String iDatabaseName, final String iMetricName) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("db.");
+    buffer.append(iDatabaseName);
+    buffer.append('.');
+    buffer.append(iMetricName);
+    return buffer.toString();
+  }
+
   /**
    * Frees the memory removing profiling information
    */
   public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
-    acquireExclusiveLock();
-    try {
+    synchronized (snapshots) {
       snapshots.clear();
+    }
+    synchronized (summaries) {
       summaries.clear();
-    } finally {
-      releaseExclusiveLock();
     }
   }
 }

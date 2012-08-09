@@ -269,6 +269,13 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<>", Integer.class, 0,
+      new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+          Orient.instance().getProfiler().configure(iNewValue.toString());
+        }
+      }),
+
   PROFILER_AUTODUMP_INTERVAL("profiler.autoDump.interval",
       "Dumps the profiler values at regular intervals. Time is expressed in seconds", Integer.class, 0,
       new OConfigurationChangeCallback() {

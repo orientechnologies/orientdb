@@ -70,7 +70,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 	@Test
 	public void testNotUniqueUniqueNotUniqueEqualsUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -80,13 +80,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(result.size(), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testNotUniqueUniqueUniqueEqualsUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -96,13 +96,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(result.size(), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testNotUniqueUniqueNotUniqueEqualsLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -112,13 +112,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(result.size(), 1);
 		assertTrue(Arrays.asList("Jane Smith", "James Bell", "Roger Connor").contains((String) result.get(0).field("name")));
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testNotUniqueUniqueUniqueMinorUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -130,13 +130,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testNotUniqueUniqueUniqueMinorLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -150,13 +150,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 			assertTrue(expectedNames.contains((String) aResult.field("name")));
 		}
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testUniqueNotUniqueMinorEqualsUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -166,13 +166,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueNotUniqueMinorEqualsLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -182,13 +182,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(result.size(), 1);
 		assertTrue(Arrays.asList("John Smith", "James Bell").contains((String) result.get(0).field("name")));
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testNotUniqueUniqueUniqueMajorUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -198,13 +198,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(result.size(), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testNotUniqueUniqueUniqueMajorLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -217,13 +217,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 			assertTrue(expectedNames.contains((String) aResult.field("name")));
 		}
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 3);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 3);
 	}
 
 	@Test
 	public void testUniqueUniqueBetweenUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -234,13 +234,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueUniqueBetweenLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -254,13 +254,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 			assertTrue(expectedNames.contains((String) aResult.field("name")));
 		}
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueUniqueInUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -271,13 +271,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueUniqueInLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -291,13 +291,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 			assertTrue(expectedNames.contains((String) aResult.field("name")));
 		}
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueFulltextContainsTextUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -308,13 +308,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 		assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
 		assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+		assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	@Test
 	public void testUniqueFulltextContainsTextLimitUsing() throws Exception {
 
-		long oldIndexUsage = profiler.getCounter("Query.indexUsage");
+		long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
 		if (oldIndexUsage == -1) {
 			oldIndexUsage = 0;
 		}
@@ -327,7 +327,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 			assertTrue(expectedNames.contains((String) aResult.field("name")));
 		}
 
-		assertEquals(profiler.getCounter("Query.indexUsage") - oldIndexUsage, 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed") - oldIndexUsage, 2);
 	}
 
 	private void fillDataSet() {

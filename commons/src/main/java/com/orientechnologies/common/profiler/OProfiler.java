@@ -39,38 +39,43 @@ import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
  * @copyrights Orient Technologies.com
  */
 public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
-  protected long                            recordingFrom = -1;
-  protected Map<OProfilerHookValue, String> hooks         = new HashMap<OProfiler.OProfilerHookValue, String>();
-  protected Date                            lastReset     = new Date();
+  protected long                            recordingFrom           = -1;
+  protected Map<OProfilerHookValue, String> hooks                   = new HashMap<OProfiler.OProfilerHookValue, String>();
+  protected Date                            lastReset               = new Date();
 
-  protected OProfilerData                   realTime      = new OProfilerData();
-  protected OProfilerData                   lastSnapshot  = new OProfilerData();
-  protected List<OProfilerData>             snapshots     = new ArrayList<OProfilerData>();
-  protected List<OProfilerData>             summaries     = new ArrayList<OProfilerData>();
+  protected OProfilerData                   realTime                = new OProfilerData();
+  protected OProfilerData                   lastSnapshot;
+  protected List<OProfilerData>             snapshots               = new ArrayList<OProfilerData>();
+  protected List<OProfilerData>             summaries               = new ArrayList<OProfilerData>();
 
-  protected int                             elapsedToCreateSnapshot;
-  protected int                             maxSnapshots;
-  protected int                             maxSummaries;
-  protected final static Timer              timer         = new Timer(true);
+  protected int                             elapsedToCreateSnapshot = 0;
+  protected int                             maxSnapshots            = 0;
+  protected int                             maxSummaries            = 0;
+  protected final static Timer              timer                   = new Timer(true);
 
   public interface OProfilerHookValue {
     public Object getValue();
   }
 
   public OProfiler() {
-    // SNAPSHOT EVERY MINUTE, A SUMMARY EVERY HOUR UP TO 48 HOURS
-    this(60000, 60, 48);
-  }
-
-  public OProfiler(final String iRecording) {
-    if (iRecording.equalsIgnoreCase("true"))
-      startRecording();
   }
 
   public OProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot, final int iMaxSumaries) {
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
     maxSnapshots = iMaxSnapshot;
     maxSummaries = iMaxSumaries;
+  }
+
+  public void configure(final String iConfiguration) {
+    if (iConfiguration == null || iConfiguration.length() == 0)
+      return;
+
+    final String[] parts = iConfiguration.split(",");
+    elapsedToCreateSnapshot = Integer.parseInt(parts[0].trim());
+    maxSnapshots = Integer.parseInt(parts[1].trim());
+    maxSummaries = Integer.parseInt(parts[2].trim());
+
+    startRecording();
   }
 
   /**
@@ -106,12 +111,16 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     try {
       OLogManager.instance().info(this, "Profiler is recording metrics");
 
-      timer.schedule(new TimerTask() {
-        @Override
-        public void run() {
-          createSnapshot();
-        }
-      }, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
+      if (elapsedToCreateSnapshot > 0) {
+        lastSnapshot = new OProfilerData();
+
+        timer.schedule(new TimerTask() {
+          @Override
+          public void run() {
+            createSnapshot();
+          }
+        }, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
+      }
 
       recordingFrom = System.currentTimeMillis();
 
@@ -129,10 +138,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
       OLogManager.instance().config(this, "Profiler has stopped recording metrics");
 
       timer.cancel();
-      
-      lastSnapshot.clear();
+
+      lastSnapshot = null;
       realTime.clear();
-      
+
       recordingFrom = -1;
 
     } finally {
@@ -145,6 +154,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void createSnapshot() {
+    if (lastSnapshot == null)
+      return;
+
     final Map<String, Object> hookValuesSnapshots = archiveHooks();
 
     acquireExclusiveLock();
@@ -158,7 +170,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
         lastSnapshot = new OProfilerData();
 
-        if (snapshots.size() >= maxSnapshots) {
+        if (snapshots.size() >= maxSnapshots && maxSnapshots > 0) {
           // COPY ALL THE ARCHIVE AND RESET IT
 
           // MERGE RESULTS IN A SUMMARY AND COLLECT IT
@@ -189,7 +201,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireSharedLock();
     try {
-      lastSnapshot.updateCounter(iStatName, iPlus);
+      if (lastSnapshot != null)
+        lastSnapshot.updateCounter(iStatName, iPlus);
       realTime.updateCounter(iStatName, iPlus);
     } finally {
       releaseSharedLock();
@@ -202,7 +215,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireSharedLock();
     try {
-      return lastSnapshot.getCounter(iStatName);
+      return realTime.getCounter(iStatName);
     } finally {
       releaseSharedLock();
     }
@@ -225,7 +238,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
         realTime.toJSON(buffer);
 
       } else if (iQuery.equals("last")) {
-        lastSnapshot.toJSON(buffer);
+        if (lastSnapshot != null)
+          lastSnapshot.toJSON(buffer);
 
       } else {
         // GET THE RANGES
@@ -327,8 +341,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     acquireSharedLock();
     try {
 
-      realTime.stopChrono(iName, iStartTime);
-      return lastSnapshot.stopChrono(iName, iStartTime);
+      if (lastSnapshot != null)
+        lastSnapshot.stopChrono(iName, iStartTime);
+      return realTime.stopChrono(iName, iStartTime);
 
     } finally {
       releaseSharedLock();
@@ -343,8 +358,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     acquireSharedLock();
     try {
 
-      realTime.updateStat(iName, iValue);
-      return lastSnapshot.updateStat(iName, iValue);
+      if (lastSnapshot != null)
+        lastSnapshot.updateStat(iName, iValue);
+      return realTime.updateStat(iName, iValue);
 
     } finally {
       releaseSharedLock();
@@ -442,7 +458,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String[] getCountersAsString() {
     acquireSharedLock();
     try {
-      return lastSnapshot.getCountersAsString();
+      return realTime.getCountersAsString();
     } finally {
       releaseSharedLock();
     }
@@ -451,7 +467,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String[] getChronosAsString() {
     acquireSharedLock();
     try {
-      return lastSnapshot.getChronosAsString();
+      return realTime.getChronosAsString();
     } finally {
       releaseSharedLock();
     }
@@ -460,7 +476,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String[] getStatsAsString() {
     acquireSharedLock();
     try {
-      return lastSnapshot.getStatsAsString();
+      return realTime.getStatsAsString();
     } finally {
       releaseSharedLock();
     }
@@ -473,7 +489,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public List<String> getCounters() {
     acquireSharedLock();
     try {
-      return lastSnapshot.getCounters();
+      return realTime.getCounters();
     } finally {
       releaseSharedLock();
     }
@@ -482,7 +498,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public OProfilerEntry getStat(final String iStatName) {
     acquireSharedLock();
     try {
-      return lastSnapshot.getStat(iStatName);
+      return realTime.getStat(iStatName);
     } finally {
       releaseSharedLock();
     }
@@ -491,7 +507,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public OProfilerEntry getChrono(final String iChronoName) {
     acquireSharedLock();
     try {
-      return lastSnapshot.getChrono(iChronoName);
+      return realTime.getChrono(iChronoName);
     } finally {
       releaseSharedLock();
     }

@@ -17,10 +17,13 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
@@ -79,19 +82,11 @@ public abstract class OQueryOperator {
   public final boolean              expectsParameters;
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary) {
-    keyword = iKeyword;
-    precedence = iPrecedence;
-    unary = iUnary;
-    expectedRightWords = 1;
-    expectsParameters = false;
+    this(iKeyword, iPrecedence, iUnary, 1, false);
   }
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords) {
-    keyword = iKeyword;
-    precedence = iPrecedence;
-    unary = iUnary;
-    expectedRightWords = iExpectedRightWords;
-    expectsParameters = false;
+    this(iKeyword, iPrecedence, iUnary, iExpectedRightWords, false);
   }
 
   protected OQueryOperator(final String iKeyword, final int iPrecedence, final boolean iUnary, final int iExpectedRightWords,
@@ -128,6 +123,8 @@ public abstract class OQueryOperator {
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
    * 
+   * @param iContext
+   *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
    * @param iOperationType
@@ -136,10 +133,11 @@ public abstract class OQueryOperator {
    *          Parameters of query is used to calculate query result.
    * @param fetchLimit
    *          Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
+   * 
    * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
    */
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, final List<Object> keyParams,
-      final int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      final List<Object> keyParams, final int fetchLimit) {
     return null;
   }
 
@@ -207,4 +205,23 @@ public abstract class OQueryOperator {
     return ORDER.EQUAL;
   }
 
+  protected void updateProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
+      final OIndexDefinition indexDefinition) {
+    if (iContext.isRecordingMetrics())
+      iContext.updateMetric("compositeIndexUsed", +1);
+
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      profiler.updateCounter(profiler.getDatabaseMetrics(index.getDatabaseName(), "query.indexUsed"), +1);
+
+      int params = indexDefinition.getParamCount();
+      if (params > 1) {
+        final String profiler_prefix = profiler.getDatabaseMetrics(index.getDatabaseName(), "query.compositeIndexUsed");
+
+        profiler.updateCounter(profiler_prefix, 1);
+        profiler.updateCounter(profiler_prefix + "." + params, 1);
+        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), 1);
+      }
+    }
+  }
 }

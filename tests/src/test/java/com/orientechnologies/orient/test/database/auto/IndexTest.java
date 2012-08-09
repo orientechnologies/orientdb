@@ -113,7 +113,7 @@ public class IndexTest {
         Orient.instance().getProfiler().startRecording();
       }
 
-      indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+      indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
       if (indexQueries < 0) {
         indexQueries = 0;
       }
@@ -138,7 +138,7 @@ public class IndexTest {
     Assert.assertEquals(expectedSurnames.size(), 0);
 
     if (localStorage) {
-      final long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+      final long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
       Assert.assertEquals(newIndexQueries, indexQueries + 1);
     }
   }
@@ -477,7 +477,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -496,7 +496,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -512,7 +512,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -532,7 +532,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -548,7 +548,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -567,7 +567,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -583,7 +583,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -602,7 +602,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -618,7 +618,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -637,7 +637,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -653,7 +653,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -674,7 +674,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries + 1);
   }
 
@@ -690,7 +690,7 @@ public class IndexTest {
       Orient.instance().getProfiler().startRecording();
     }
 
-    long indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     if (indexQueries < 0) {
       indexQueries = 0;
     }
@@ -714,7 +714,7 @@ public class IndexTest {
     }
 
     Assert.assertEquals(expectedNicks.size(), 0);
-    long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+    long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
     Assert.assertEquals(newIndexQueries, indexQueries);
   }
 
@@ -773,7 +773,7 @@ public class IndexTest {
         Orient.instance().getProfiler().startRecording();
       }
 
-      indexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+      indexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
       if (indexQueries < 0) {
         indexQueries = 0;
       }
@@ -798,7 +798,7 @@ public class IndexTest {
     Assert.assertEquals(expectedSurnames.size(), 0);
 
     if (localStorage) {
-      final long newIndexQueries = Orient.instance().getProfiler().getCounter("Query.indexUsage");
+      final long newIndexQueries = Orient.instance().getProfiler().getCounter("db.demo.query.indexUsed");
       Assert.assertEquals(newIndexQueries, indexQueries + 1);
     }
   }

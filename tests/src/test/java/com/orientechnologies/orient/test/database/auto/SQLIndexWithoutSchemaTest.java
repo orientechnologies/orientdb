@@ -120,13 +120,13 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
   @Test(dependsOnMethods = "testDeleteFromIndex")
   public void testReuseIndexInSelect() {
-    final long oldIndexUsage = Math.max(profiler.getCounter("Query.indexUsage"), 0);
+    final long oldIndexUsage = Math.max(profiler.getCounter("db.demo.query.indexUsed"), 0);
 
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + TEST_CLASS + " WHERE prop2 < 50"));
 
     Assert.assertEquals(result.size(), 2);
 
-    Assert.assertEquals(profiler.getCounter("Query.indexUsage"), oldIndexUsage + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
   }
 
   @Test(dependsOnMethods = { "testCreateIndex", "testPutInIndex", "testDeleteFromIndex", "testReuseIndexInSelect" })
@@ -206,9 +206,9 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
   @Test(dependsOnMethods = "testDeleteFromCompositeIndex")
   public void testReuseCompositeIndexInSelect() {
-    final long oldIndexUsage = Math.max(profiler.getCounter("Query.indexUsage"), 0);
-    final long oldCompositeIndexUsage = Math.max(profiler.getCounter("Query.compositeIndexUsage"), 0);
-    final long oldCompositeIndexUsage2 = Math.max(profiler.getCounter("Query.compositeIndexUsage.2"), 0);
+    final long oldIndexUsage = Math.max(profiler.getCounter("db.demo.query.indexUsed"), 0);
+    final long oldCompositeIndexUsage = Math.max(profiler.getCounter("db.demo.query.compositeIndexUsed"), 0);
+    final long oldCompositeIndexUsage2 = Math.max(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), 0);
 
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + TEST_CLASS
         + " WHERE cp2 = 70 and cp3 = 700"));
@@ -216,9 +216,9 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(result.get(0).field("cp1"), 7);
 
-    Assert.assertEquals(profiler.getCounter("Query.indexUsage"), oldIndexUsage + 1);
-    Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage"), oldCompositeIndexUsage + 1);
-    Assert.assertEquals(profiler.getCounter("Query.compositeIndexUsage.2"), oldCompositeIndexUsage2 + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldCompositeIndexUsage + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldCompositeIndexUsage2 + 1);
   }
 
   @Test(dependsOnMethods = { "testCreateCompositeIndex", "testPutInCompositeIndex", "testDeleteFromCompositeIndex",

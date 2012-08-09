@@ -76,6 +76,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   protected OMVRBTreeDatabaseLazySave<Object, T> map;
   protected Set<String>                          clustersToIndex  = new LinkedHashSet<String>();
   protected OIndexDefinition                     indexDefinition;
+  protected final String                         databaseName;
 
   @ODocumentInstance
   protected ODocument                            configuration;
@@ -84,6 +85,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   public OIndexMVRBTreeAbstract(final String iType) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
+
+    databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
 
     type = iType;
     watchDog = new Listener() {
@@ -904,5 +907,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   @Override
   public int hashCode() {
     return name.hashCode();
+  }
+
+  public String getDatabaseName() {
+    return databaseName;
   }
 }

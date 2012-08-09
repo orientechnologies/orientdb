@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -362,9 +363,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected void searchInClasses() {
     final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
-    if (searchForIndexes(cls))
-      Orient.instance().getProfiler().updateCounter("Query.indexUsage", 1);
-    else
+    if (searchForIndexes(cls)) {
+//      final OJVMProfiler profiler = Orient.instance().getProfiler();
+//      profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
+    } else
       super.searchInClasses();
   }
 
@@ -441,7 +443,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (opType == null)
           opType = INDEX_OPERATION_TYPE.GET;
 
-        Object result = operator.executeIndexQuery(index, opType, keyParams, fetchLimit);
+        Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
         if (result == null)
           continue;
 

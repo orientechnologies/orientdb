@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -70,7 +69,7 @@ public class Orient extends OSharedResourceAbstract {
   protected static Orient                               instance             = new Orient();
 
   private final OMemoryWatchDog                         memoryWatchDog;
-  private final OProfiler                               profiler;
+  private final OJVMProfiler                            profiler;
   private static AtomicInteger                          serialId             = new AtomicInteger();
 
   protected List<Class<? extends ODatabasePoolBase<?>>> pools;
@@ -420,7 +419,7 @@ public class Orient extends OSharedResourceAbstract {
     this.clusterFactory = clusterFactory;
   }
 
-  public OProfiler getProfiler() {
+  public OJVMProfiler getProfiler() {
     return profiler;
   }
 }

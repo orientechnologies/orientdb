@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -86,9 +85,10 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
-    final Collection<OIdentifiable> result;
+    final Object result;
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
@@ -107,6 +107,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
         result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);
+
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -145,9 +146,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
-      updateProfiler(index, keyParams, indexDefinition);
     }
 
+    updateProfiler(iContext, index, keyParams, indexDefinition);
     return result;
   }
 

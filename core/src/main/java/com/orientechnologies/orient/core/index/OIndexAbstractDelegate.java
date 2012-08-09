@@ -15,17 +15,18 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
@@ -34,7 +35,7 @@ import java.util.Set;
  * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
-  protected OIndex<T> delegate;
+  protected OIndex<T>    delegate;
 
   public OIndexAbstractDelegate(final OIndex<T> iDelegate) {
     this.delegate = iDelegate;
@@ -260,5 +261,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public long getKeySize() {
     return delegate.getKeySize();
+  }
+
+  public String getDatabaseName() {
+    return delegate.getDatabaseName();
   }
 }

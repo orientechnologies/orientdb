@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,6 +27,7 @@ import com.orientechnologies.orient.core.index.OIndexOneValue;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
@@ -80,6 +82,10 @@ public class OIndexProxy<T> implements OIndex<T> {
     this.index = index;
     this.indexChain = Collections.unmodifiableList(indexChain);
     lastIndex = indexChain.get(indexChain.size() - 1);
+  }
+
+  public String getDatabaseName() {
+    return index.getDatabaseName();
   }
 
   /**
@@ -353,12 +359,16 @@ public class OIndexProxy<T> implements OIndex<T> {
    *          which usage is registering.
    */
   private void updateStatistic(OIndex<?> index) {
-    if (Orient.instance().getProfiler().isRecording()) {
-      Orient.instance().getProfiler().updateCounter("Query.indexUsage", 1);
+
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      Orient.instance().getProfiler().updateCounter(profiler.getDatabaseMetrics(index.getDatabaseName(), "query.indexUsed"), 1);
+
       final int paramCount = index.getDefinition().getParamCount();
       if (paramCount > 1) {
-        Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage", 1);
-        Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage." + paramCount, 1);
+        final String profiler_prefix = profiler.getDatabaseMetrics(index.getDatabaseName(), "query.compositeIndexUsed");
+        profiler.updateCounter(profiler_prefix, 1);
+        profiler.updateCounter(profiler_prefix + "." + paramCount, 1);
       }
     }
   }

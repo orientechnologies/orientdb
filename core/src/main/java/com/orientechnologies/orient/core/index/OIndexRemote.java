@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 public abstract class OIndexRemote<T> implements OIndex<T> {
   private final String          wrappedType;
   private final ORID            rid;
+  protected final String        databaseName;
   protected OIndexDefinition    indexDefinition;
   protected String              name;
   protected ODocument           configuration;
@@ -94,6 +95,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.indexDefinition = iIndexDefinition;
     this.configuration = iConfiguration;
     this.clustersToIndex = new HashSet<String>(clustersToIndex);
+    this.databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
   }
 
   public OIndexRemote<T> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
@@ -108,6 +110,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     // final OCommandRequest cmd = formatCommand(QUERY_DROP, name);
     // database.command(cmd).execute();
     return this;
+  }
+
+  public String getDatabaseName() {
+    return databaseName;
   }
 
   public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {

@@ -15,13 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.List;
-
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
@@ -99,14 +94,4 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // SINGLE SIMPLE ITEM
       return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
   }
-
-  protected void updateProfiler(OIndex<?> index, List<Object> keyParams, final OIndexDefinition indexDefinition) {
-    if (Orient.instance().getProfiler().isRecording()) {
-      Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage", 1);
-      Orient.instance().getProfiler().updateCounter("Query.compositeIndexUsage." + indexDefinition.getParamCount(), 1);
-      Orient.instance().getProfiler().updateCounter(
-          "Query.compositeIndexUsage." + indexDefinition.getParamCount() + '.' + keyParams.size(), 1);
-    }
-  }
-
 }

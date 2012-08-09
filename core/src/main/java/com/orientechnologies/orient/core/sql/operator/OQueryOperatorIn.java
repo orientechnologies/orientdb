@@ -99,7 +99,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Collection<OIdentifiable> result;
 
@@ -132,6 +133,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     } else
       return null;
 
+    updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
     return result;
   }
 

@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
 import java.util.List;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -63,14 +61,15 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
 
-    final Collection<OIdentifiable> result;
+    final Object result;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
@@ -107,10 +106,9 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
         result = index.getValuesBetween(keyOne, true, keyTwo, false, fetchLimit);
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, false);
-
-      updateProfiler(index, keyParams, indexDefinition);
     }
 
+    updateProfiler(iContext, index, keyParams, indexDefinition);
     return result;
   }
 

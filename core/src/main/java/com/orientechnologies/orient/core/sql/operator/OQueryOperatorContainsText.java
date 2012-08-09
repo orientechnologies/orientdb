@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,10 +29,6 @@ import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * CONTAINS KEY operator.
@@ -100,25 +101,31 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
     return OIndexReuseType.INDEX_METHOD;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      List<Object> keyParams, int fetchLimit) {
+
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
       return null;
 
     final OIndex<?> internalIndex = index.getInternal();
 
+    final Object result;
+
     if (internalIndex instanceof OIndexFullText) {
       final Object indexResult = index.get(indexDefinition.createValue(keyParams));
       if (indexResult instanceof Collection)
-        return (Collection<OIdentifiable>) indexResult;
+        result = indexResult;
+      else if (indexResult == null)
+        result = Collections.emptyList();
+      else
+        result = Collections.singletonList((OIdentifiable) indexResult);
+    } else
+      return null;
 
-			if(indexResult == null)
-				return Collections.emptyList();
-			return  Collections.singletonList((OIdentifiable) indexResult);
-		}
-    return null;
+    updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
+    return result;
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -93,7 +94,7 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * @return {@code true} if given index can be used to calculate result of
    *         {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    * 
-   * @see com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals#executeIndexQuery(OIndex, INDEX_OPERATION_TYPE, java.util.List, int)
+   * @see com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals#executeIndexQuery(OCommandContext, OIndex, INDEX_OPERATION_TYPE, java.util.List, int)
    */
   public boolean canBeUsedInEqualityOperators();
 

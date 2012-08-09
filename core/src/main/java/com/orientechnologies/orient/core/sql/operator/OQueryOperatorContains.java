@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -116,12 +115,15 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OIndex<?> index, INDEX_OPERATION_TYPE iOperationType, List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
+      List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
+
+    final Object result;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -135,11 +137,11 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       final Object indexResult = index.get(key);
       if (indexResult instanceof Collection)
-        return (Collection<OIdentifiable>) indexResult;
-
-      if (indexResult == null)
-        return Collections.emptyList();
-      return Collections.singletonList((OIdentifiable) indexResult);
+        result = (Collection<OIdentifiable>) indexResult;
+      else if (indexResult == null)
+        result = Collections.emptyList();
+      else
+        result = Collections.singletonList((OIdentifiable) indexResult);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -153,16 +155,14 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-      final Collection<OIdentifiable> result;
       if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
-      updateProfiler(index, keyParams, indexDefinition);
-
-      return result;
     }
+
+    updateProfiler(iContext, index, keyParams, indexDefinition);
+    return result;
   }
 
   @Override
