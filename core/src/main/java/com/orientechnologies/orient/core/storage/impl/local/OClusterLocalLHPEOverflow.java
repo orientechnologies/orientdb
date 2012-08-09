@@ -64,9 +64,6 @@ public class OClusterLocalLHPEOverflow extends OSingleFileSegment {
 
     file.write(filePos, serializedDataSegment);
     file.write(filePos + serializedDataSegment.length, serializedDataPosition);
-
-    file.writeInt(filePos, iDataSegmentId);
-    file.writeLong(filePos + 8, iDataPosition);
   }
 
   public void updateRecordType(OClusterLocalLHPEBucket bucket, int index, byte iRecordType) throws IOException {

@@ -33,7 +33,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -77,7 +76,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
   private static String[]               ALL_FILE_EXTENSIONS = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco", ".ocs" };
 
-  private final MersenneTwisterFast     positionGenerator   = new MersenneTwisterFast();
+  // private final MersenneTwisterFast positionGenerator = new MersenneTwisterFast();
+  private long                          positionGenerator   = 0;
 
   private OModificationLock             modificationLock    = new OModificationLock();
 
@@ -98,7 +98,7 @@ public class OStorageLocal extends OStorageEmbedded {
     configuration = new OStorageConfigurationSegment(this);
     txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
 
-    positionGenerator.setSeed(System.nanoTime());
+    // positionGenerator.setSeed(System.nanoTime());
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -1488,7 +1488,8 @@ public class OStorageLocal extends OStorageEmbedded {
         iClusterSegment.addPhysicalPosition(ppos);
         iRid.clusterPosition = ppos.clusterPosition;
       } else {
-        iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+        // iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+        iRid.clusterPosition = positionGenerator++;
       }
 
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1510,7 +1511,8 @@ public class OStorageLocal extends OStorageEmbedded {
           ppos.recordVersion = iRecordVersion;
           ppos.clusterPosition = iRid.clusterPosition;
           while (!iClusterSegment.addPhysicalPosition(ppos)) {
-            iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+            // iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+            iRid.clusterPosition = positionGenerator++;
             ppos.clusterPosition = iRid.clusterPosition;
           }
         }

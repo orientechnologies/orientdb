@@ -81,8 +81,6 @@ public class MultipleDBTest {
             }
             tx.getEntityManager().registerEntityClass(DummyObject.class);
 
-            // System.out.println("(" +getDbId( tx ) + ") " + "Registered: " + DummyObject.class);
-            // System.out.println("(" +getDbId( tx ) + ") " + "Calling: " + operations + " operations");
             long start = System.currentTimeMillis();
             for (int j = 0; j < operations_write; j++) {
               DummyObject dummy = new DummyObject("name" + j);

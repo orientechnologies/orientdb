@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -15,301 +17,343 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class IndexTxAwareMultiValueGetEntriesTest {
-	private ODatabaseDocumentTx	database;
-
-	@Parameters(value = "url")
-	public IndexTxAwareMultiValueGetEntriesTest(final String iURL) {
-		this.database = new ODatabaseDocumentTx(iURL);
-	}
-
-	@BeforeClass
-	public void beforeClass() {
-		database.open("admin", "admin");
-		database.getMetadata().getIndexManager()
-				.createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
-		database.close();
-	}
+  private ODatabaseDocumentTx database;
 
-	@BeforeMethod
-	public void beforeMethod() {
-		database.open("admin", "admin");
-	}
+  @Parameters(value = "url")
+  public IndexTxAwareMultiValueGetEntriesTest(final String iURL) {
+    this.database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@AfterMethod
-	public void afterMethod() {
-		database.command(new OCommandSQL("delete from index:idxTxAwareMultiValueGetEntriesTest")).execute();
-		database.close();
-	}
+  @BeforeClass
+  public void beforeClass() {
+    database.open("admin", "admin");
+    database.getMetadata().getIndexManager()
+        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    database.close();
+  }
 
-	@Test
-	public void testPut() {
-		database.begin();
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+  @BeforeMethod
+  public void beforeMethod() {
+    database.open("admin", "admin");
+  }
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 0));
-		index.put(1, new ORecordId(clusterId, 1));
+  @AfterMethod
+  public void afterMethod() {
+    database.command(new OCommandSQL("delete from index:idxTxAwareMultiValueGetEntriesTest")).execute();
+    database.close();
+  }
 
-		index.put(2, new ORecordId(clusterId, 2));
-		database.commit();
+  @Test
+  public void testPut() {
+    database.begin();
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultOne.size(), 3);
+    final int clusterId = database.getDefaultClusterId();
 
-		database.begin();
+    final List<Long> positions = getValidPositions(clusterId);
 
-		index.put(2, new ORecordId(clusterId, 3));
+    index.put(1, new ORecordId(clusterId, positions.get(0)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultTwo.size(), 4);
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+    database.commit();
 
-		database.rollback();
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultOne.size(), 3);
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultThree.size(), 3);
-	}
+    database.begin();
 
-	@Test
-	public void testClear() {
-		database.begin();
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    index.put(2, new ORecordId(clusterId, positions.get(3)));
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 0));
-		index.put(1, new ORecordId(clusterId, 1));
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultTwo.size(), 4);
 
-		index.put(2, new ORecordId(clusterId, 2));
-		database.commit();
+    database.rollback();
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultOne.size(), 3);
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultThree.size(), 3);
+  }
 
-		database.begin();
+  @Test
+  public void testClear() {
+    database.begin();
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		index.clear();
+    final int clusterId = database.getDefaultClusterId();
+    final List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultTwo.size(), 0);
+    index.put(1, new ORecordId(clusterId, positions.get(0)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
 
-		database.rollback();
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultThree.size(), 3);
-	}
+    database.commit();
 
-	@Test
-	public void testClearAndPut() {
-		database.begin();
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultOne.size(), 3);
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 0));
-		index.put(1, new ORecordId(clusterId, 1));
+    database.begin();
 
-		index.put(2, new ORecordId(clusterId, 2));
-		database.commit();
+    index.clear();
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultOne.size(), 3);
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultTwo.size(), 0);
 
-		database.begin();
+    database.rollback();
 
-		index.clear();
-		index.put(2, new ORecordId(clusterId, 3));
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultThree.size(), 3);
+  }
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultTwo.size(), 1);
+  @Test
+  public void testClearAndPut() {
+    database.begin();
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		database.rollback();
+    final int clusterId = database.getDefaultClusterId();
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultThree.size(), 3);
-	}
+    final List<Long> positions = getValidPositions(clusterId);
 
-	@Test
-	public void testRemove() {
-		database.begin();
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    index.put(1, new ORecordId(clusterId, positions.get(0)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 0));
-		index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+    database.commit();
 
-		index.put(2, new ORecordId(clusterId, 2));
-		database.commit();
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultOne.size(), 3);
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultOne.size(), 3);
+    database.begin();
 
-		database.begin();
+    index.clear();
+    index.put(2, new ORecordId(clusterId, 3));
 
-		index.remove(1);
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultTwo.size(), 1);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultTwo.size(), 1);
+    database.rollback();
 
-		database.rollback();
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultThree.size(), 3);
+  }
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultThree.size(), 3);
-	}
+  @Test
+  public void testRemove() {
+    database.begin();
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-	@Test
-	public void testRemoveOne() {
-		database.begin();
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    final int clusterId = database.getDefaultClusterId();
 
-		final int clusterId = database.getDefaultClusterId();
-		final ORecordId firstRecordId = new ORecordId(clusterId, 0);
-		index.put(1, firstRecordId);
-		index.put(1, new ORecordId(clusterId, 1));
+    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
-		index.put(2, new ORecordId(clusterId, 2));
-		database.commit();
+    final List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultOne = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultOne.size(), 3);
+    index.put(1, new ORecordId(clusterId, positions.get(0)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
 
-		database.begin();
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+    database.commit();
 
-		index.remove(1, firstRecordId);
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultOne.size(), 3);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultTwo.size(), 2);
+    database.begin();
 
-		database.rollback();
+    index.remove(1);
 
-		Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		final Collection<?> resultThree = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
-		Assert.assertEquals(resultThree.size(), 3);
-	}
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultTwo.size(), 1);
 
-	@Test
-	public void testMultiPut() {
-		database.begin();
+    database.rollback();
 
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultThree.size(), 3);
+  }
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(2, new ORecordId(clusterId, 2));
+  @Test
+  public void testRemoveOne() {
+    database.begin();
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    final int clusterId = database.getDefaultClusterId();
 
-		database.commit();
+    final List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
-	}
+    final ORecordId firstRecordId = new ORecordId(clusterId, positions.get(0));
+    index.put(1, firstRecordId);
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
 
-	@Test
-	public void testPutAfterTransaction() {
-		database.begin();
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+    database.commit();
 
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultOne = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultOne.size(), 3);
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(2, new ORecordId(clusterId, 2));
+    database.begin();
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
-		database.commit();
+    index.remove(1, firstRecordId);
 
-		index.put(1, new ORecordId(clusterId, 3));
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultTwo = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultTwo.size(), 2);
 
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 3);
-	}
+    database.rollback();
 
-	@Test
-	public void testRemoveOneWithinTransaction() {
-		database.begin();
+    Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    final Collection<?> resultThree = index.getEntries(Arrays.asList(1, 2));
+    Assert.assertEquals(resultThree.size(), 3);
+  }
 
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+  @Test
+  public void testMultiPut() {
+    database.begin();
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(2, new ORecordId(clusterId, 2));
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		index.remove(1, new ORecordId(clusterId, 1));
+    final int clusterId = database.getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
 
-		database.commit();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
 
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
-	}
+    database.commit();
 
-	@Test
-	public void testRemoveAllWithinTransaction() {
-		database.begin();
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+  }
 
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+  @Test
+  public void testPutAfterTransaction() {
+    database.begin();
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(2, new ORecordId(clusterId, 2));
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		index.remove(1, null);
+    final int clusterId = database.getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
 
-		database.commit();
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    database.commit();
 
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
-	}
+    index.put(1, new ORecordId(clusterId, positions.get(3)));
 
-	@Test
-	public void testPutAfterRemove() {
-		database.begin();
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 3);
+  }
 
-		final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
-		Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+  @Test
+  public void testRemoveOneWithinTransaction() {
+    database.begin();
 
-		final int clusterId = database.getDefaultClusterId();
-		index.put(1, new ORecordId(clusterId, 1));
-		index.put(2, new ORecordId(clusterId, 2));
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
-		index.remove(1, new ORecordId(clusterId, 1));
-		index.put(1, new ORecordId(clusterId, 1));
+    final int clusterId = database.getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
 
-		Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
 
-		database.commit();
+    index.remove(1, new ORecordId(clusterId, positions.get(1)));
 
-		Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
-	}
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+
+    database.commit();
+
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+  }
+
+  @Test
+  public void testRemoveAllWithinTransaction() {
+    database.begin();
+
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+
+    final int clusterId = database.getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
+
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+
+    index.remove(1, null);
+
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+
+    database.commit();
+
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+  }
+
+  @Test
+  public void testPutAfterRemove() {
+    database.begin();
+
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareMultiValueGetEntriesTest");
+    Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
+
+    final int clusterId = database.getDefaultClusterId();
+    List<Long> positions = getValidPositions(clusterId);
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(2, new ORecordId(clusterId, positions.get(2)));
+
+    index.remove(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(1, new ORecordId(clusterId, positions.get(1)));
+
+    Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+
+    database.commit();
+
+    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 7; i++) {
+      iteratorCluster.hasNext();
+      ORecord doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
+  }
 
 }

@@ -296,8 +296,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
     roundCapacity = pageSize;
 
-    size = nextPageSize;
-    mainBucketsSize = size;
+    size = 0;
+    mainBucketsSize = nextPageSize;
 
     splittedBuckets = new BitSet((int) pageSize);
 
@@ -319,9 +319,10 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
         while (true) {
           for (int n = 0; n < bucket.getSize(); n++) {
             final OPhysicalPosition ppos = bucket.getPhysicalPosition(n);
-            if (storage.checkForRecordValidity(ppos))
+            if (storage.checkForRecordValidity(ppos)) {
               storage.getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
-            localSize--;
+              localSize--;
+            }
           }
           if (bucket.getOverflowBucket() < 0)
             break;
@@ -336,6 +337,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       overflowStatistic.truncate();
 
       initState();
+      fileSegment.allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
+
     } finally {
       releaseExclusiveLock();
     }
@@ -424,7 +427,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
     acquireSharedLock();
     try {
-      if (entryPosition < 0 || entryPosition > mainBucketsSize)
+      if (entryPosition < 0 || entryPosition > mainBucketsSize - 1)
         return new OPhysicalPosition[0];
 
       final OClusterLocalLHPEBucket bucket = loadMainBucket(entryPosition);
@@ -488,7 +491,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
             size--;
 
-            mergeBucketsIfNeeded();
+            // mergeBucketsIfNeeded();
             compressChain(mainBucket, position, offset);
 
           }
@@ -562,11 +565,15 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public long getFirstEntryPosition() {
+    if (size == 0)
+      return -1;
     return 0;
   }
 
   public long getLastEntryPosition() {
-    return mainBucketsSize;
+    if (size == 0)
+      return -1;
+    return mainBucketsSize - 1;
   }
 
   public void lock() {

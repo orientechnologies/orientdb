@@ -205,7 +205,7 @@ public class OStorageLocalTxExecuter {
       // AVOID TO COMMIT INDEX STUFF
       return;
 
-    if (!(cluster instanceof OClusterLocal))
+    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalLHPEPS))
       // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
       return;
 

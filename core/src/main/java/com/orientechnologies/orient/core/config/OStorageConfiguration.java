@@ -80,8 +80,6 @@ public class OStorageConfiguration implements OSerializableStream {
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
    * 
-   * @param iRequesterId
-   * 
    * @compatibility 0.9.25
    * @return
    * @throws OSerializationException
@@ -189,7 +187,20 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (clusterType.equals("m"))
         // MEMORY CLUSTER
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
-      else
+      else if (clusterType.equals("h")) {
+        final OStoragePhysicalClusterLHPEPSConfiguration phyClusterLocal = new OStoragePhysicalClusterLHPEPSConfiguration(this,
+            clusterId, targetDataSegmentId);
+        phyClusterLocal.name = clusterName;
+
+        index = phySegmentFromStream(values, index, phyClusterLocal);
+
+        phyClusterLocal.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(phyClusterLocal, read(values[index++]),
+            read(values[index++]), read(values[index++])));
+        phyClusterLocal.setOverflowStatisticsFile(new OStorageClusterLocalLHPEStatisticConfiguration(phyClusterLocal,
+            read(values[index++]), read(values[index++]), read(values[index++])));
+
+        currentCluster = phyClusterLocal;
+      } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
       // MAKE ROOMS, EVENTUALLY FILLING EMPTIES ENTRIES
@@ -268,6 +279,11 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (c instanceof OStorageMemoryClusterConfiguration) {
         // MEMORY
         write(buffer, "m");
+      } else if (c instanceof OStoragePhysicalClusterLHPEPSConfiguration) {
+        write(buffer, "h");
+        phySegmentToStream(buffer, (OStoragePhysicalClusterLHPEPSConfiguration) c);
+        fileToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowFile());
+        fileToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowStatisticsFile());
       }
     }
 

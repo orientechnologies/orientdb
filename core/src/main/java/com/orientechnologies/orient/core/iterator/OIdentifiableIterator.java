@@ -87,7 +87,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     if (current.clusterPosition <= -2)
       noPhysicalRecordToBrowse = true;
     else
-      noPhysicalRecordToBrowse = lastClusterEntry > -1 && lastClusterEntry == currentEntry
+      noPhysicalRecordToBrowse = lastClusterEntry > -1 && lastClusterEntry <= currentEntry
           && (currentPositionIndex >= currentPositions.length || currentPositions.length == 0);
 
     if (noPhysicalRecordToBrowse && txEntries != null) {

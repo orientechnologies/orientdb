@@ -32,12 +32,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -503,7 +505,10 @@ public class SQLSelectTest {
 
   @Test
   public void queryWhereRidDirectMatching() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where roles in #3:0")).execute();
+    List<Long> positions = getValidPositions(3);
+
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select * from OUser where roles in #3:" + positions.get(0))).execute();
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -735,39 +740,46 @@ public class SQLSelectTest {
   @Test
   public void queryRecordTargetRid() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from " + profileClusterId + ":0")).execute();
+    List<Long> positions = getValidPositions(profileClusterId);
+
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select from " + profileClusterId + ":" + positions.get(0))).execute();
 
     Assert.assertEquals(result.size(), 1);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
+      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
     }
   }
 
   @Test
   public void queryRecordTargetRids() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+    List<Long> positions = getValidPositions(profileClusterId);
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>(" select from [" + profileClusterId + ":0, " + profileClusterId + ":1]")).execute();
+        new OSQLSynchQuery<ODocument>(" select from [" + profileClusterId + ":" + positions.get(0) + ", " + profileClusterId + ":"
+            + positions.get(1) + "]")).execute();
 
     Assert.assertEquals(result.size(), 2);
 
-    Assert.assertEquals(result.get(0).getIdentity().toString(), "#" + profileClusterId + ":0");
-    Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":1");
+    Assert.assertEquals(result.get(0).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(0));
+    Assert.assertEquals(result.get(1).getIdentity().toString(), "#" + profileClusterId + ":" + positions.get(1));
   }
 
   @Test
   public void queryRecordAttribRid() {
+
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
+    List<Long> postions = getValidPositions(profileClusterId);
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select from Profile where @rid = #" + profileClusterId + ":0")).execute();
+        new OSQLSynchQuery<ODocument>("select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0))).execute();
 
     Assert.assertEquals(result.size(), 1);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":0");
+      Assert.assertEquals(d.getIdentity().toString(), "#" + profileClusterId + ":" + postions.get(0));
     }
   }
 
@@ -905,6 +917,9 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationAndRidInWhere() {
+    if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+      return;
+
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
         "select from Profile where @rid between #11:2 and #11:30 LIMIT 3");
     ORID last = new ORecordId();
@@ -1337,12 +1352,34 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithTwoRidInWhere() {
+    List<Long> positions = getValidPositions(11);
+
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select @rid.trim() as oid, name from Profile where (@rid in [#11:5] or @rid in [#11:25]) AND @rid > ? LIMIT 10000");
-    List<ODocument> resultset = database.query(query, new ORecordId(11, 7));
+        "select @rid.trim() as oid, name from Profile where (@rid in [#11:" + positions.get(5) + "] or @rid in [#11:"
+            + positions.get(25) + "]) AND @rid > ? LIMIT 10000");
+
+    final long minPos = Math.min(positions.get(5), positions.get(25));
+    final long maxPos = Math.max(positions.get(5), positions.get(25));
+
+    List<ODocument> resultset = database.query(query, new ORecordId(11, minPos));
 
     Assert.assertEquals(resultset.size(), 1);
 
-    Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(11, 25).toString());
+    Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(11, maxPos).toString());
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 100; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+
+      ODocument doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }

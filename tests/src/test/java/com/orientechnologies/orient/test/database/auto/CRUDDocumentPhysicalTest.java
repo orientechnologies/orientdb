@@ -83,7 +83,8 @@ public class CRUDDocumentPhysicalTest {
 
       // DELETE ALL THE RECORDS IN THE CLUSTER
       for (ODocument rec : database.browseCluster("Account"))
-        rec.delete();
+        if (rec != null)
+          rec.delete();
 
       Assert.assertEquals(database.countClusterElements("Account"), 0);
     } finally {
@@ -158,28 +159,34 @@ public class CRUDDocumentPhysicalTest {
     try {
       // BROWSE IN THE OPPOSITE ORDER
       byte[] binary;
-      int i = 0;
+
+      Set<Integer> ids = new HashSet<Integer>();
+
+      for (int i = 0; i < TOT_RECORDS; i++)
+        ids.add(i);
+
       ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
       for (it.last(); it.hasPrevious();) {
         ODocument rec = it.previous();
 
-        Assert.assertEquals(((Number) rec.field("id")).intValue(), i);
-        Assert.assertEquals(rec.field("name"), "Gipsy");
-        Assert.assertEquals(rec.field("location"), "Italy");
-        Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
-        Assert.assertEquals(((Number) rec.field("salary")).intValue(), i + 300);
-        Assert.assertNotNull(rec.field("extra"));
-        Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
+        if (rec != null) {
+          int id = ((Number) rec.field("id")).intValue();
+          Assert.assertTrue(ids.remove(id));
+          Assert.assertEquals(rec.field("name"), "Gipsy");
+          Assert.assertEquals(rec.field("location"), "Italy");
+          Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
+          Assert.assertEquals(((Number) rec.field("salary")).intValue(), id + 300);
+          Assert.assertNotNull(rec.field("extra"));
+          Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
 
-        binary = rec.field("binary", OType.BINARY);
+          binary = rec.field("binary", OType.BINARY);
 
-        for (int b = 0; b < binary.length; ++b)
-          Assert.assertEquals(binary[b], (byte) b);
-
-        i++;
+          for (int b = 0; b < binary.length; ++b)
+            Assert.assertEquals(binary[b], (byte) b);
+        }
       }
 
-      Assert.assertEquals(i, TOT_RECORDS);
+      Assert.assertTrue(ids.isEmpty());
 
     } finally {
       database.close();
@@ -214,17 +221,14 @@ public class CRUDDocumentPhysicalTest {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
     try {
-      int i = 0;
       for (ODocument rec : database.browseCluster("Account")) {
+        int price = ((Number) rec.field("price")).intValue();
+        Assert.assertTrue(price - 100 >= 0);
 
-        if (i % 2 == 0)
+        if ((price - 100) % 2 == 0)
           Assert.assertEquals(rec.field("location"), "Spain");
         else
           Assert.assertEquals(rec.field("location"), "Italy");
-
-        Assert.assertEquals(((Number) rec.field("price")).intValue(), i + 100);
-
-        i++;
       }
 
     } finally {
@@ -814,10 +818,11 @@ public class CRUDDocumentPhysicalTest {
       }
       db.close();
 
-      for (ODocument d : database.browseClass("Account")) {
-        if (d.field("name").equals("Asynch insertion test"))
-          d.delete();
-      }
+      while (database.countClusterElements("Account") > 0)
+        for (ODocument d : database.browseClass("Account")) {
+          if (d.field("name").equals("Asynch insertion test"))
+            d.delete();
+        }
 
     } finally {
       database.close();

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -27,8 +28,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -98,16 +98,20 @@ public class SQLUpdateTest {
 
     List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 
+    List<Long> positions = getValidPositions(12);
+
     for (ODocument doc : docs) {
 
       final int records = (Integer) database.command(
-          new OCommandSQL("update Account set addresses = [#12:0, #12:1,#12:2] where @rid = " + doc.getIdentity())).execute();
+          new OCommandSQL("update Account set addresses = [#12:" + positions.get(0) + ", #12:" + positions.get(1) + ",#12:"
+              + positions.get(2) + "] where @rid = " + doc.getIdentity())).execute();
 
       Assert.assertEquals(records, 1);
 
       ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
       Assert.assertEquals(((List<?>) loadedDoc.field("addresses")).size(), 3);
-      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#12:0");
+      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#12:"
+          + positions.get(0));
       loadedDoc.field("addresses", doc.field("addresses"));
       database.save(loadedDoc);
     }
@@ -292,5 +296,18 @@ public class SQLUpdateTest {
     Assert.assertEquals(expectedName, oDoc.field("name"));
     Assert.assertEquals(expectedCity, oDoc.field("city"));
     Assert.assertEquals(expectedGender, oDoc.field("gender"));
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 7; i++) {
+      iteratorCluster.hasNext();
+      ODocument doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }

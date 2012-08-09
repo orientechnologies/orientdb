@@ -15,19 +15,20 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Handles the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
@@ -341,9 +342,9 @@ public class OTxSegment extends OSingleFileSegment {
   private void recoverTransactionEntry(final byte iStatus, final byte iOperation, final int iTxId, final ORecordId iRid,
       final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
 
-    final OClusterLocal cluster = (OClusterLocal) storage.getClusterById(iRid.clusterId);
+    final OCluster cluster = storage.getClusterById(iRid.clusterId);
 
-    if (!(cluster instanceof OClusterLocal))
+    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalLHPEPS))
       return;
 
     OLogManager.instance().debug(this, "Recovering tx <%d>. Operation <%d> was in status <%d> on record %s size=%d...", iTxId,

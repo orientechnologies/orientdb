@@ -533,7 +533,7 @@ public class TransactionConsistencyTest {
       db.begin();
       System.out.println("vector size = " + v.size());
       for (int i = 0; i < v.size(); i++) {
-        db.delete((ODocument) v.elementAt(i));
+        db.delete(v.elementAt(i));
       }
       System.out.println("delete commit");
       db.commit();
