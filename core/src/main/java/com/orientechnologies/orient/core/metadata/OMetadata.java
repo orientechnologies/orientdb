@@ -33,21 +33,23 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 public class OMetadata {
-  protected int                schemaClusterId;
+  protected int                       schemaClusterId;
 
-  protected OSchemaProxy       schema;
-  protected OSecurity          security;
-  protected OIndexManagerProxy indexManager;
+  protected OSchemaProxy              schema;
+  protected OSecurity                 security;
+  protected OIndexManagerProxy        indexManager;
+  protected static final OJVMProfiler PROFILER = Orient.instance().getProfiler();
 
   public OMetadata() {
   }
 
   public void load() {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       init(true);
@@ -55,7 +57,7 @@ public class OMetadata {
       if (schemaClusterId == -1 || getDatabase().countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
         return;
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMetadata.load", timer);
+      PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), timer);
     }
   }
 

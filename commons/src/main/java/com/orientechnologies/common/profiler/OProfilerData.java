@@ -157,7 +157,15 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
-      buffer.append(String.format("\"%s\":\"%s\"", k, value != null ? value.toString() : "null"));
+
+      if (value == null)
+        buffer.append(String.format("\"%s\":null", k));
+      else if (value instanceof Number)
+        buffer.append(String.format("\"%s\":%d", k, value));
+      else if (value instanceof Boolean)
+        buffer.append(String.format("\"%s\":%s", k, value));
+      else
+        buffer.append(String.format("\"%s\":\"%s\"", k, value.toString()));
     }
     buffer.append("}");
 

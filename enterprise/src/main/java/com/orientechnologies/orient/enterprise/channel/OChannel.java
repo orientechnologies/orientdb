@@ -26,39 +26,45 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
 public abstract class OChannel extends OSharedResourceExternalTimeout {
-  public Socket                   socket;
+  /**
+   * 
+   */
+  private static final OJVMProfiler PROFILER                     = Orient.instance().getProfiler();
 
-  public InputStream              inStream;
-  public OutputStream             outStream;
+  public Socket                     socket;
 
-  public int                      socketBufferSize;
+  public InputStream                inStream;
+  public OutputStream               outStream;
 
-  private long                    metricTransmittedBytes       = 0;
-  private long                    metricReceivedBytes          = 0;
-  private long                    metricFlushes                = 0;
+  public int                        socketBufferSize;
 
-  private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
-  private static final AtomicLong metricGlobalReceivedBytes    = new AtomicLong();
-  private static final AtomicLong metricGlobalFlushes          = new AtomicLong();
+  private long                      metricTransmittedBytes       = 0;
+  private long                      metricReceivedBytes          = 0;
+  private long                      metricFlushes                = 0;
 
-  private String                  profilerMetric;
+  private static final AtomicLong   metricGlobalTransmittedBytes = new AtomicLong();
+  private static final AtomicLong   metricGlobalReceivedBytes    = new AtomicLong();
+  private static final AtomicLong   metricGlobalFlushes          = new AtomicLong();
+
+  private String                    profilerMetric;
 
   static {
-    final String profilerMetric = "system.network.channel.binary";
+    final String profilerMetric = PROFILER.getProcessMetric("network.channel.binary");
 
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
       public Object getValue() {
         return metricGlobalTransmittedBytes.get();
       }
     });
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
       public Object getValue() {
         return metricGlobalReceivedBytes.get();
       }
     });
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
       public Object getValue() {
         return metricGlobalFlushes.get();
       }
@@ -77,9 +83,9 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
   }
 
   public void close() {
-    Orient.instance().getProfiler().unregisterHookValue(profilerMetric + ".transmittedBytes");
-    Orient.instance().getProfiler().unregisterHookValue(profilerMetric + ".receivedBytes");
-    Orient.instance().getProfiler().unregisterHookValue(profilerMetric + ".flushes");
+    PROFILER.unregisterHookValue(profilerMetric + ".transmittedBytes");
+    PROFILER.unregisterHookValue(profilerMetric + ".receivedBytes");
+    PROFILER.unregisterHookValue(profilerMetric + ".flushes");
 
     try {
       if (socket != null)
@@ -101,20 +107,20 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
   }
 
   public void connected() {
-    profilerMetric = "system.network.channel.binary." + socket.getRemoteSocketAddress().toString() + socket.getLocalPort()
-        + "".replace('.', '_');
+    profilerMetric = PROFILER.getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString()
+        + socket.getLocalPort() + "".replace('.', '_'));
 
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
       public Object getValue() {
         return metricTransmittedBytes;
       }
     });
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
       public Object getValue() {
         return metricReceivedBytes;
       }
     });
-    Orient.instance().getProfiler().registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
+    PROFILER.registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
       public Object getValue() {
         return metricFlushes;
       }

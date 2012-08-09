@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,9 +42,10 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
-  private static final char   DECIMAL_SEPARATOR     = '.';
-  private static final String MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
-  private static final int    MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
+  protected static final OJVMProfiler PROFILER              = Orient.instance().getProfiler();
+  private static final char           DECIMAL_SEPARATOR     = '.';
+  private static final String         MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
+  private static final int            MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta,
@@ -70,25 +72,25 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, final String[] iFields) {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
     } finally {
 
-      Orient.instance().getProfiler().stopChrono("ORecordSerializerStringAbstract.fromStream", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.fromStream"), timer);
     }
   }
 
   public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
           OSerializationThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
-      Orient.instance().getProfiler().stopChrono("ORecordSerializerStringAbstract.toStream", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), timer);
     }
   }
 
@@ -150,7 +152,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     if (iValue == null)
       return;
 
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     if (iType == null) {
       if (iValue instanceof ORID)
@@ -162,62 +164,62 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     switch (iType) {
     case STRING:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.string2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.string2string"), timer);
       break;
 
     case BOOLEAN:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.bool2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.bool2string"), timer);
       break;
 
     case INTEGER:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.int2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.int2string"), timer);
       break;
 
     case FLOAT:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.float2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.float2string"), timer);
       break;
 
     case DECIMAL:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.decimal2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.decimal2string"), timer);
       break;
 
     case LONG:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.long2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.long2string"), timer);
       break;
 
     case DOUBLE:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.double2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.double2string"), timer);
       break;
 
     case SHORT:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.short2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.short2string"), timer);
       break;
 
     case BYTE:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.byte2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.byte2string"), timer);
       break;
 
     case BINARY:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.binary2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.binary2string"), timer);
       break;
 
     case DATE:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.date2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.date2string"), timer);
       break;
 
     case DATETIME:
       simpleValueToStream(iBuffer, iType, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.datetime2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.datetime2string"), timer);
       break;
 
     case LINK:
@@ -225,35 +227,35 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         ((ORecordId) iValue).toString(iBuffer);
       else
         ((ORecord<?>) iValue).getIdentity().toString(iBuffer);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.link2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), timer);
       break;
 
     case EMBEDDEDSET:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
           null, iBuffer, null, null, iValue, null, true);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.embedSet2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), timer);
       break;
 
     case EMBEDDEDLIST:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
           null, iBuffer, null, null, iValue, null, true);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.embedList2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"), timer);
       break;
 
     case EMBEDDEDMAP:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
           iBuffer, null, null, iValue, null, true);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.embedMap2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), timer);
       break;
 
     case EMBEDDED:
       OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.embed2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), timer);
       break;
 
     case CUSTOM:
       OStringSerializerAnyStreamable.INSTANCE.toStream(iBuffer, iValue);
-      Orient.instance().getProfiler().stopChrono("serializer.rec.str.custom2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.custom2string"), timer);
       break;
 
     default:

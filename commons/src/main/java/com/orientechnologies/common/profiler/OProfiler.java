@@ -52,6 +52,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   protected int                             maxSnapshots            = 0;
   protected int                             maxSummaries            = 0;
   protected final static Timer              timer                   = new Timer(true);
+  private TimerTask                         archiverTask;
 
   public interface OProfilerHookValue {
     public Object getValue();
@@ -74,6 +75,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     elapsedToCreateSnapshot = Integer.parseInt(parts[0].trim());
     maxSnapshots = Integer.parseInt(parts[1].trim());
     maxSummaries = Integer.parseInt(parts[2].trim());
+
+    if (isRecording())
+      stopRecording();
 
     startRecording();
   }
@@ -114,12 +118,16 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
       if (elapsedToCreateSnapshot > 0) {
         lastSnapshot = new OProfilerData();
 
-        timer.schedule(new TimerTask() {
+        if (archiverTask != null)
+          archiverTask.cancel();
+
+        archiverTask = new TimerTask() {
           @Override
           public void run() {
             createSnapshot();
           }
-        }, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
+        };
+        timer.schedule(archiverTask, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
       }
 
       recordingFrom = System.currentTimeMillis();
@@ -137,10 +145,11 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     try {
       OLogManager.instance().config(this, "Profiler has stopped recording metrics");
 
-      timer.cancel();
-
       lastSnapshot = null;
       realTime.clear();
+
+      if (archiverTask != null)
+        archiverTask.cancel();
 
       recordingFrom = -1;
 
@@ -514,9 +523,6 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
-    if (recordingFrom < 0)
-      return;
-
     synchronized (hooks) {
       for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
         if (entry.getValue().equals(iName)) {
@@ -544,13 +550,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void setAutoDump(final int iSeconds) {
-    if (timer != null)
-      timer.cancel();
-
     if (iSeconds > 0) {
       final int ms = iSeconds * 1000;
 
-      timer.scheduleAtFixedRate(new TimerTask() {
+      timer.schedule(new TimerTask() {
 
         @Override
         public void run() {
@@ -564,6 +567,9 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
    * Must be not called inside a lock.
    */
   protected Map<String, Object> archiveHooks() {
+    if (!isRecording())
+      return null;
+
     final Map<String, Object> result = new HashMap<String, Object>();
 
     synchronized (hooks) {

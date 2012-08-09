@@ -23,18 +23,20 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
 public class OMMapBufferEntry extends OSharedResourceAbstract implements Comparable<OMMapBufferEntry> {
-  private static final int  FORCE_DELAY;
-  private static final int  FORCE_RETRY;
+  private static final OJVMProfiler PROFILER = Orient.instance().getProfiler();
+  private static final int          FORCE_DELAY;
+  private static final int          FORCE_RETRY;
 
-  static Class<?>           sunClass = null;
-  volatile OFileMMap        file;
-  volatile MappedByteBuffer buffer;
-  final long                beginOffset;
-  final int                 size;
-  volatile long             counter;
-  volatile boolean          dirty;
+  static Class<?>                   sunClass = null;
+  volatile OFileMMap                file;
+  volatile MappedByteBuffer         buffer;
+  final long                        beginOffset;
+  final int                         size;
+  volatile long                     counter;
+  volatile boolean                  dirty;
 
   static {
     FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -69,7 +71,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
     acquireExclusiveLock();
     try {
 
-      final long timer = Orient.instance().getProfiler().startChrono();
+      final long timer = PROFILER.startChrono();
 
       // FORCE THE WRITE OF THE BUFFER
       for (int i = 0; i < FORCE_RETRY; ++i) {
@@ -87,9 +89,9 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
       if (dirty)
         OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
       else
-        Orient.instance().getProfiler().updateCounter("system.file.mmap.pagesCommitted", 1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("file.mmap.pagesCommitted"), +1);
 
-      Orient.instance().getProfiler().stopChrono("system.file.mmap.commitPages", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("file.mmap.commitPages"), timer);
 
       return !dirty;
 

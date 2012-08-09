@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.profiler;
 
+import java.io.File;
+
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
@@ -29,18 +31,82 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  * @copyrights Orient Technologies.com
  */
 public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener {
+  private final int metricProcessors = Runtime.getRuntime().availableProcessors();
 
   public OJVMProfiler() {
+    registerHookValue(getSystemMetric("config.cpus"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return metricProcessors;
+      }
+    });
+    registerHookValue(getProcessMetric("runtime.availableMemory"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return Runtime.getRuntime().freeMemory();
+      }
+    });
+    registerHookValue(getProcessMetric("runtime.maxMemory"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return Runtime.getRuntime().maxMemory();
+      }
+    });
+    registerHookValue(getProcessMetric("runtime.totalMemory"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return Runtime.getRuntime().totalMemory();
+      }
+    });
+
+    final File[] roots = File.listRoots();
+    for (final File root : roots) {
+      String volumeName = root.getAbsolutePath();
+      int pos = volumeName.indexOf(":\\");
+      if (pos > -1)
+        volumeName = volumeName.substring(0, pos);
+
+      final String metricPrefix = "system.disk." + volumeName;
+
+      registerHookValue(metricPrefix + ".totalSpace", new OProfilerHookValue() {
+        @Override
+        public Object getValue() {
+          return root.getTotalSpace();
+        }
+      });
+
+      registerHookValue(metricPrefix + ".freeSpace", new OProfilerHookValue() {
+        @Override
+        public Object getValue() {
+          return root.getFreeSpace();
+        }
+      });
+
+      registerHookValue(metricPrefix + ".usableSpace", new OProfilerHookValue() {
+        @Override
+        public Object getValue() {
+          return root.getUsableSpace();
+        }
+      });
+    }
+
   }
 
-  public String getSystemMetrics(final String iDatabaseName, final String iMetricName) {
+  public String getSystemMetric(final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("system.");
     buffer.append(iMetricName);
     return buffer.toString();
   }
 
-  public String getDatabaseMetrics(final String iDatabaseName, final String iMetricName) {
+  public String getProcessMetric(final String iMetricName) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("process.");
+    buffer.append(iMetricName);
+    return buffer.toString();
+  }
+
+  public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");
     buffer.append(iDatabaseName);

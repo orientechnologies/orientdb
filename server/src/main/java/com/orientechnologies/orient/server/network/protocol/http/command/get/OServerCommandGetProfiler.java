@@ -32,19 +32,41 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
   @Override
   public boolean execute(final OHttpRequest iRequest) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<query>/[<from>/<to>]");
+    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<command>/[<config>]|[<from>/<to>]");
 
     iRequest.data.commandInfo = "Profiler information";
 
     try {
-      StringWriter jsonBuffer = new StringWriter();
-      OJSONWriter json = new OJSONWriter(jsonBuffer);
 
-      final String from = parts.length > 2 ? parts[2] : null;
-      final String to = parts.length > 3 ? parts[3] : null;
-      json.append(Orient.instance().getProfiler().toJSON(parts[1], from, to));
+      final String command = parts[1];
+      if (command.equalsIgnoreCase("start")) {
+        Orient.instance().getProfiler().startRecording();
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording started");
 
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
+      } else if (command.equalsIgnoreCase("stop")) {
+        Orient.instance().getProfiler().stopRecording();
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording stopped");
+
+      } else if (command.equalsIgnoreCase("configure")) {
+        Orient.instance().getProfiler().configure(parts[2]);
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Profiler configured with: "
+            + parts[2]);
+
+      } else if (command.equalsIgnoreCase("status")) {
+        final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, status);
+
+      } else {
+        final String from = parts.length > 2 ? parts[2] : null;
+        final String to = parts.length > 3 ? parts[3] : null;
+
+        StringWriter jsonBuffer = new StringWriter();
+        OJSONWriter json = new OJSONWriter(jsonBuffer);
+        json.append(Orient.instance().getProfiler().toJSON(command, from, to));
+
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
+      }
+
     } catch (Exception e) {
       sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
           OHttpUtils.CONTENT_TEXT_PLAIN, e);

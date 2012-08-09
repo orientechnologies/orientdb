@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
@@ -60,6 +61,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected float                                          optimizeEntryPointsFactor;
   private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints;
   private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache              = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+  protected static final OJVMProfiler                      PROFILER           = Orient.instance().getProfiler();
 
   private static final int                                 OPTIMIZE_MAX_RETRY = 10;
 
@@ -195,7 +197,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   @Override
   public void clear() {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       recordsToCommit.clear();
@@ -213,7 +215,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.clear", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), timer);
     }
   }
 
@@ -226,7 +228,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
    * Unload all the in-memory nodes. This is called on transaction rollback.
    */
   public void unload() {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       // DISCONNECT ALL THE NODES
@@ -243,7 +245,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.unload", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.unload"), timer);
     }
   }
 
@@ -271,7 +273,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     // SET OPTIMIZATION STATUS AS RUNNING
     optimization = -1;
 
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       if (root == null)
@@ -369,7 +371,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
           checkTreeStructure(root);
       }
 
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.optimize", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.optimize"), timer);
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
@@ -436,7 +438,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   @Override
   public V put(final K key, final V value) {
     optimize();
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       final V v = internalPut(key, value);
@@ -444,13 +446,13 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       return v;
     } finally {
 
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.put", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.put"), timer);
     }
   }
 
   @Override
   public void putAll(final Map<? extends K, ? extends V> map) {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       for (Entry<? extends K, ? extends V> entry : map.entrySet())
@@ -459,14 +461,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       commitChanges();
 
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.putAll", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.putAll"), timer);
     }
   }
 
   @Override
   public V remove(final Object key) {
     optimize();
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     try {
       for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
@@ -486,14 +488,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         }
       }
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.remove", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.remove"), timer);
     }
 
     throw new OLowMemoryException("OMVRBTreePersistent.remove()");
   }
 
   public int commitChanges() {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     int totalCommitted = 0;
     try {
@@ -534,7 +536,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     } finally {
 
-      Orient.instance().getProfiler().stopChrono("OMVRBTreePersistent.commitChanges", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.commitChanges"), timer);
     }
 
     return totalCommitted;
@@ -554,9 +556,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   @Override
   public V get(final Object iKey) {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
     try {
-      
+
       for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
         try {
           return super.get(iKey);
@@ -568,7 +570,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
       throw new OLowMemoryException("OMVRBTreePersistent.get()");
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTree.get", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.get"), timer);
     }
   }
 

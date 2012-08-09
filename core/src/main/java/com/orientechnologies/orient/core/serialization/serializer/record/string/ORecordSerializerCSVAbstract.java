@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -230,7 +229,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     if (iValue == null)
       return;
 
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
 
     switch (iType) {
 
@@ -244,7 +243,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (link != null)
           // OVERWRITE CONTENT
           iRecord.field(iName, link);
-        Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.link2string", timer);
+        PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), timer);
       }
       break;
     }
@@ -254,7 +253,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       if (iValue instanceof ORecordLazyList && ((ORecordLazyList) iValue).getStreamedContent() != null) {
         iOutput.append(((ORecordLazyList) iValue).getStreamedContent());
-        Orient.instance().getProfiler().updateCounter("system.serializer.rec.str.linkList2string.cached", +1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("serializer.record.string.linkList2string.cached"), +1);
       } else {
         final ORecordLazyList coll;
         final Iterator<OIdentifiable> it;
@@ -272,7 +271,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           if (coll.getStreamedContent() != null) {
             // APPEND STREAMED CONTENT
             iOutput.append(coll.getStreamedContent());
-            Orient.instance().getProfiler().updateCounter("system.serializer.rec.str.linkList2string.cached", +1);
+            PROFILER.updateCounter(PROFILER.getProcessMetric("serializer.record.string.linkList2string.cached"), +1);
             it = coll.newItemsIterator();
           } else
             it = coll.rawIterator();
@@ -301,7 +300,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       }
 
       iOutput.append(OStringSerializerHelper.COLLECTION_END);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.linkList2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkList2string"), timer);
       break;
     }
 
@@ -319,7 +318,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         coll = (OMVRBTreeRIDSet) iValue;
 
       linkSetToStream(iOutput, iRecord, coll);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.linkSet2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), timer);
       break;
     }
 
@@ -365,7 +364,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       }
 
       iOutput.append(OStringSerializerHelper.MAP_END);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.linkMap2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkMap2string"), timer);
       break;
     }
 
@@ -376,22 +375,22 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue != null)
         iOutput.append(iValue.toString());
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.embed2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), timer);
       break;
 
     case EMBEDDEDLIST:
       embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.embedList2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"), timer);
       break;
 
     case EMBEDDEDSET:
       embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.embedSet2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), timer);
       break;
 
     case EMBEDDEDMAP: {
       embeddedMapToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
-      Orient.instance().getProfiler().stopChrono("system.serializer.rec.str.embedMap2string", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), timer);
       break;
     }
 

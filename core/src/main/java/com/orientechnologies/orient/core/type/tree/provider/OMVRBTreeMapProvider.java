@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -90,7 +91,8 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
   }
 
   public byte[] toStream() throws OSerializationException {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final long timer = profiler.startChrono();
 
     try {
       stream.jump(0);
@@ -114,13 +116,15 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       return result;
 
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapProvider.toStream", timer);
+      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.toStream"), timer);
     }
   }
 
   @SuppressWarnings("unchecked")
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final long timer = profiler.startChrono();
+
     try {
       stream.setSource(iStream);
       byte protocolVersion = stream.peek();
@@ -172,7 +176,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
           OSerializationException.class, root);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapProvider.fromStream", timer);
+      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.fromStream"), timer);
     }
     return this;
   }

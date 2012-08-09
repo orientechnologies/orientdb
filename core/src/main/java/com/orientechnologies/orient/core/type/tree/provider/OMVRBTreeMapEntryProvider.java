@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
@@ -38,15 +39,16 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
    * Current version of serialization format for single MVRBTree node. Versions have negative numbers for backward compatibility
    * with previous format that does not have version number, but first value in serialized content was non-negative integer.
    */
-  private static final int  CURRENT_VERSION  = -1;
+  private static final int          CURRENT_VERSION  = -1;
+  private static final OJVMProfiler PROFILER         = Orient.instance().getProfiler();
 
-  private static final long serialVersionUID = 1L;
-  protected K[]             keys;
-  protected V[]             values;
-  protected int[]           serializedKeys;
-  protected int[]           serializedValues;
+  private static final long         serialVersionUID = 1L;
+  protected K[]                     keys;
+  protected V[]                     values;
+  protected int[]                   serializedKeys;
+  protected int[]                   serializedValues;
 
-  private byte[]            buffer;
+  private byte[]                    buffer;
 
   public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider) {
     super(iTreeDataProvider, OMemoryStream.DEF_SIZE);
@@ -64,7 +66,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     K k = keys[iIndex];
     if (k == null)
       try {
-        Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.unserializeKey", 1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeKey"), 1);
 
         k = (K) keyFromStream(iIndex);
 
@@ -85,7 +87,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     V v = values[iIndex];
     if (v == null)
       try {
-        Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.unserializeValue", 1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeValue"), 1);
 
         v = (V) valueFromStream(iIndex);
 
@@ -262,7 +264,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   }
 
   public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
     try {
       // @COMPATIBILITY BEFORE 1.0
       if (OIntegerSerializer.INSTANCE.deserialize(iStream, 0) >= 0) {
@@ -287,12 +289,12 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Can not unmarshall tree node with id ", e);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapEntry.fromStream", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), timer);
     }
   }
 
   public byte[] toStream() throws OSerializationException {
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer = PROFILER.startChrono();
     try {
       if (((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
         toStreamUsingBinarySerializer();
@@ -305,7 +307,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Cannot marshall RB+Tree node", e);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMVRBTreeMapEntry.toStream", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.toStream"), timer);
     }
   }
 
@@ -403,7 +405,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final OBinarySerializer<V> valueSerializer = (OBinarySerializer<V>) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
 
     if (serializedValues[i] <= 0) {
-      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), 1);
       valueSerializer.serialize(values[i], newBuffer, offset);
       offset += valueSerializer.getObjectSize(values[i]);
     } else {
@@ -418,7 +420,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   private int serializeKey(byte[] newBuffer, int offset, int i) {
     final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
     if (serializedKeys[i] <= 0) {
-      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeKey", 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeKey"), 1);
       keySerializer.serialize(keys[i], newBuffer, offset);
       offset += keySerializer.getObjectSize(keys[i]);
     } else {
@@ -544,7 +546,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   protected byte[] serializeStreamValue(final int iIndex) throws IOException {
     if (serializedValues[iIndex] <= 0) {
       // NEW OR MODIFIED: MARSHALL CONTENT
-      Orient.instance().getProfiler().updateCounter("OMVRBTreeMapEntry.serializeValue", 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), 1);
       return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.toStream(values[iIndex]);
     }
     // RETURN ORIGINAL CONTENT

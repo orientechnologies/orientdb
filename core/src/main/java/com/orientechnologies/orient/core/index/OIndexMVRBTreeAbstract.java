@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog.Listener;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -713,7 +714,10 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   protected void installHooks(final ODatabaseRecord iDatabase) {
-    Orient.instance().getProfiler().registerHookValue("index." + name + ".items", new OProfilerHookValue() {
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getName(), "index." + name + '.');
+
+    profiler.registerHookValue(profilerPrefix + "items", new OProfilerHookValue() {
       public Object getValue() {
         acquireSharedLock();
         try {
@@ -724,19 +728,19 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       }
     });
 
-    Orient.instance().getProfiler().registerHookValue("index." + name + ".entryPointSize", new OProfilerHookValue() {
+    profiler.registerHookValue(profilerPrefix + "entryPointSize", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getEntryPointSize() : "-";
       }
     });
 
-    Orient.instance().getProfiler().registerHookValue("index." + name + ".maxUpdateBeforeSave", new OProfilerHookValue() {
+    profiler.registerHookValue(profilerPrefix + "maxUpdateBeforeSave", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getMaxUpdatesBeforeSave() : "-";
       }
     });
 
-    Orient.instance().getProfiler().registerHookValue("index." + name + ".optimizationThreshold", new OProfilerHookValue() {
+    profiler.registerHookValue(profilerPrefix + "optimizationThreshold", new OProfilerHookValue() {
       public Object getValue() {
         return map != null ? map.getOptimizeThreshold() : "-";
       }
