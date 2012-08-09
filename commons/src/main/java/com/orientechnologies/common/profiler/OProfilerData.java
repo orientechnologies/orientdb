@@ -79,6 +79,13 @@ public class OProfilerData {
     recordingFrom = System.currentTimeMillis();
   }
 
+  public void clear() {
+    counters.clear();
+    chronos.clear();
+    stats.clear();
+    hooks.clear();
+  }
+
   public long endRecording() {
     recordingTo = System.currentTimeMillis();
     return recordingTo;

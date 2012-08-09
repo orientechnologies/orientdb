@@ -77,24 +77,24 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
    * Frees the memory removing profiling information
    */
   public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
-    acquireExclusiveLock();
-    try {
+    synchronized (snapshots) {
       snapshots.clear();
+    }
+    synchronized (summaries) {
       summaries.clear();
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
   public void shutdown() {
-    acquireExclusiveLock();
-    try {
-      stopRecording();
+    stopRecording();
+    synchronized (hooks) {
       hooks.clear();
+    }
+    synchronized (snapshots) {
       snapshots.clear();
+    }
+    synchronized (summaries) {
       summaries.clear();
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
@@ -129,6 +129,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
       OLogManager.instance().config(this, "Profiler has stopped recording metrics");
 
       timer.cancel();
+      
+      lastSnapshot.clear();
+      realTime.clear();
+      
       recordingFrom = -1;
 
     } finally {
@@ -141,9 +145,10 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void createSnapshot() {
+    final Map<String, Object> hookValuesSnapshots = archiveHooks();
+
     acquireExclusiveLock();
     try {
-      final Map<String, Object> hookValuesSnapshots = archiveHooks();
 
       synchronized (snapshots) {
         // ARCHIVE IT
@@ -206,12 +211,17 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   public String toJSON(final String iQuery, final String iFrom, final String iTo) {
     final StringBuilder buffer = new StringBuilder();
 
+    Map<String, Object> hookValuesSnapshots = null;
+    if (iQuery.equals("realtime"))
+      // GET LATETS HOOK VALUES
+      hookValuesSnapshots = archiveHooks();
+
+    buffer.append("{ \"" + iQuery + "\":");
+
     acquireSharedLock();
     try {
-      buffer.append("{ \"" + iQuery + "\":");
-
       if (iQuery.equals("realtime")) {
-        realTime.setHookValues(archiveHooks());
+        realTime.setHookValues(hookValuesSnapshots);
         realTime.toJSON(buffer);
 
       } else if (iQuery.equals("last")) {
@@ -535,7 +545,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   /**
-   * Must be called inside a lock.
+   * Must be not called inside a lock.
    */
   protected Map<String, Object> archiveHooks() {
     final Map<String, Object> result = new HashMap<String, Object>();
