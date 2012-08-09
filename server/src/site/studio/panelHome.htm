@@ -153,12 +153,6 @@
 		return false;
 	});
 
-	$('#createDatabase').click(
-			function() {
-				controller.loadFragment("panelCreateDatabase.htm");
-				return false;
-			});
-
 	$('#user').val(getRequestParam('user'));
 	$('#password').val(getRequestParam('password'));
 	$('#server').change(formatServerURL);
@@ -173,7 +167,7 @@
 	}
 
 	function createDatabase() {
-		controller.loadFragment("panelCreateDatabase.htm");
+		controller.loadFragment("panelCreateDatabase.htm", null, null, "mainPanel");
 		return false;
 	}
 </script>
