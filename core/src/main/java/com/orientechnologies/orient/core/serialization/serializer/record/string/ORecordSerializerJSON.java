@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.fetch.json.OJSONFetchContext;
 import com.orientechnologies.orient.core.fetch.json.OJSONFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -163,8 +164,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             }
           } else {
             if (iRecord instanceof ODocument) {
-              final Object v = getValue((ODocument) iRecord, fieldName, fieldValue, fieldValueAsString, null, null, fieldTypes,
-                  noMap, iOptions);
+              final ODocument doc = ((ODocument) iRecord);
+
+              // DETERMINE THE TYPE FROM THE SCHEMA
+              OType type = null;
+              final OClass cls = doc.getSchemaClass();
+              if (cls != null) {
+                final OProperty prop = cls.getProperty(fieldName);
+                if (prop != null)
+                  type = prop.getType();
+              }
+
+              final Object v = getValue(doc, fieldName, fieldValue, fieldValueAsString, type, null, fieldTypes, noMap, iOptions);
 
               if (v != null)
                 if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
@@ -174,21 +185,28 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     ((OMVRBTreeRIDSet) v).setAutoConvert(false);
 
                   // CHECK IF THE COLLECTION IS EMBEDDED
-                  Object first = ((Collection<?>) v).iterator().next();
-                  if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
-                    ((ODocument) iRecord).field(fieldName, v, v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST);
+                  if (type == null) {
+                    // TRY TO UNDERSTAND BY FIRST ITEM
+                    Object first = ((Collection<?>) v).iterator().next();
+                    if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid())
+                      type = v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
+                  }
+
+                  if (type != null) {
+                    // TREAT IT AS EMBEDDED
+                    doc.field(fieldName, v, type);
                     continue;
                   }
                 } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
                   // CHECK IF THE MAP IS EMBEDDED
                   Object first = ((Map<?, ?>) v).values().iterator().next();
                   if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
-                    ((ODocument) iRecord).field(fieldName, v, OType.EMBEDDEDMAP);
+                    doc.field(fieldName, v, OType.EMBEDDEDMAP);
                     continue;
                   }
                 }
 
-              ((ODocument) iRecord).field(fieldName, v);
+              doc.field(fieldName, v);
             }
           }
         }
@@ -227,7 +245,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       if (iNoMap || hasTypeField(fields)) {
         // OBJECT
         final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions);
-        if (recordInternal instanceof ODocument)
+        if (iType != null && iType.isLink()) {
+        } else if (recordInternal instanceof ODocument)
           ((ODocument) recordInternal).addOwner(iRecord);
         return recordInternal;
       } else {
@@ -277,7 +296,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
               iOptions);
 
-          if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
+          if (iType != null && iType.isLink()) {
+            // LINK
+          } else if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
             // SET THE OWNER
             ((ODocument) collectionItem).addOwner(iRecord);
 

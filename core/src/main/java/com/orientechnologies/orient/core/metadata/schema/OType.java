@@ -480,4 +480,8 @@ public enum OType {
     throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
         + b.getClass() + ")");
   }
+
+  public boolean isLink() {
+    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
+  }
 }
