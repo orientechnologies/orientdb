@@ -100,33 +100,10 @@ function ODocumentView(name, component, doc, options) {
 
 		// BEGIN COMMANDS
 		component = "<div id='" + this.componentId + "_header' class='row'>";
-		component += "<div class='offset5 span7 btn-group'>"
-
-				+ this.generateButton('doc_graph', 'Graph', 'icon-picture',
-						"btn", "ODocumentView.graph('" + this.name + "')")
-
-				+ this.generateButton('doc_create', 'Create', 'icon-plus',
-						"btn", "ODocumentView.create('" + this.name + "')")
-
-				+ this.generateButton('doc_delete', 'Delete', 'icon-remove',
-						"btn", "ODocumentView.remove('" + this.name + "')")
-
-				+ this.generateButton('doc_reload', 'Reload', 'icon-refresh',
-						"btn", "ODocumentView.reload('" + this.name + "')")
-
-				+ this.generateButton('doc_copy', 'Copy', 'icon-lock', "btn",
-						"ODocumentView.copy('" + this.name + "')")
-
-				+ this.generateButton('doc_undo', 'Undo', 'icon.repeat', "btn",
-						"ODocumentView.undo('" + this.name + "')")
-
-				+ this.generateButton('doc_clear', 'Clear', 'icon-trash',
-						"btn", "ODocumentView.clear('" + this.name + "')");
-		component += "</div></div>";
 		// END COMMANDS
 
 		// BEGIN RECORD ATTRIBUTES
-		component += "<div class='row'>";
+		component += "<div class='row-fluid'>";
 		component += "<div class='span6'><form class='form-inline'>";
 
 		var fieldValue
@@ -153,10 +130,35 @@ function ODocumentView(name, component, doc, options) {
 		component += "<label>@version</label><input id='doc__version' style='width: 40px;' disabled value='"
 				+ fieldValue + "'/>";
 
-		component += "</form></div></div>";
+		component += "</form></div>";
+		component += "<div class='span6 btn-group'>"
+
+			+ this.generateButton('doc_graph', 'Graph', 'icon-picture',
+					"btn", "ODocumentView.graph('" + this.name + "')")
+
+			+ this.generateButton('doc_create', 'Create', 'icon-plus',
+					"btn", "ODocumentView.create('" + this.name + "')")
+
+			+ this.generateButton('doc_delete', 'Delete', 'icon-remove',
+					"btn", "ODocumentView.remove('" + this.name + "')")
+
+			+ this.generateButton('doc_reload', 'Reload', 'icon-refresh',
+					"btn", "ODocumentView.reload('" + this.name + "')")
+
+			+ this.generateButton('doc_copy', 'Copy', 'icon-lock', "btn",
+					"ODocumentView.copy('" + this.name + "')")
+
+			+ this.generateButton('doc_undo', 'Undo', 'icon.repeat', "btn",
+					"ODocumentView.undo('" + this.name + "')")
+
+			+ this.generateButton('doc_clear', 'Clear', 'icon-trash',
+					"btn", "ODocumentView.clear('" + this.name + "')");
+	component += "</div></div>";
+
+				"</div></div>";
 
 		// FIELD BIG BLOCK
-		component += "<div class='row-fluid'><div class='well noborder'><div class='row noborder'><div class='span12'><div class='row-fluid noborder'>";
+		component += "<div class='row-fluid'><div class='well noborder'><div class='row-fluid noborder'><div class='span12'><div class='row-fluid noborder'>";
 
 		// HEADER
 		component += "<div class='span2 noborder'>"
@@ -198,7 +200,7 @@ function ODocumentView(name, component, doc, options) {
 				+ "</div>";
 		// END ADD BUTTON
 
-		component += "</div><div>"
+		component += "</div></div><div>"
 				+ this.generateButton('doc_save', 'Save', 'icon-ok',
 						"btn btn-large btn-primary", "ODocumentView.save('"
 								+ this.name + "')") + "</div>";
