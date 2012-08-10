@@ -171,8 +171,8 @@ public class SQLFunctionsTest {
     database.open("admin", "admin");
     List<ODocument> result = database
         .command(
-								new OSQLSynchQuery<ODocument>(
-												"select MIN(id) as min, max(id) as max, AVG(id) as average, count(id) as total from Account")).execute();
+            new OSQLSynchQuery<ODocument>(
+                "select MIN(id) as min, max(id) as max, AVG(id) as average, count(id) as total from Account")).execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {

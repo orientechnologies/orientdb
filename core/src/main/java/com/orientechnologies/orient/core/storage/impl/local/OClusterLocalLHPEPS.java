@@ -139,7 +139,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       overflowSegment.create((iStartSize * 20) / 100);
       overflowStatistic.create(-1);
 
-      fileSegment.allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
+      allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
 
     } finally {
       releaseExclusiveLock();
@@ -337,7 +337,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       overflowStatistic.truncate();
 
       initState();
-      fileSegment.allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
+      allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
 
     } finally {
       releaseExclusiveLock();
@@ -670,7 +670,10 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   private void mergeBucketsIfNeeded() throws IOException {
-    double currentCapacity = 1.0 * size / (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_CAPACITY);
+    if (mainBucketsSize <= 2)
+      return;
+
+    final double currentCapacity = 1.0 * size / (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_CAPACITY);
     if (currentCapacity < storageMergeOverflow)
       mergeBuckets();
   }
@@ -805,7 +808,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       final long filledUpTo = fileSegment.getFilledUpTo();
       final long endPos = mainBucket.getFilePosition() + OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES;
       if (endPos > filledUpTo)
-        fileSegment.allocateSpace((int) (endPos - filledUpTo));
+        allocateSpace((int) (endPos - filledUpTo));
 
       mainBucket.serialize();
 
@@ -845,7 +848,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       final long requiredSpace = (positionToAdd + 1) * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES;
 
       if (requiredSpace > fileSegment.getFilledUpTo())
-        fileSegment.allocateSpace((int) (requiredSpace - fileSegment.getFilledUpTo()));
+        allocateSpace((int) (requiredSpace - fileSegment.getFilledUpTo()));
 
       mainBucketsSize = positionToAdd + 1;
     }
@@ -874,9 +877,9 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
           long bucketKey = currentBucket.getKey(i);
 
           long position = calculatePageIndex(bucketKey)[0];
-          OClusterLocalLHPEBucket bucketToAdd = bucketMap.get(position);
-
           if (currentBucketPosition != position) {
+            OClusterLocalLHPEBucket bucketToAdd = bucketMap.get(position);
+
             while (bucketToAdd.getSize() >= OClusterLocalLHPEBucket.BUCKET_CAPACITY && bucketToAdd.getOverflowBucket() > -1)
               bucketToAdd = loadOverflowBucket(bucketToAdd.getOverflowBucket());
 
@@ -1419,6 +1422,25 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
 
     rebuildGroupOverflowChain();
+  }
+
+  private void allocateSpace(int size) throws IOException {
+    long[] pos = fileSegment.allocateSpace(size);
+    byte[] buffer = new byte[1024];
+
+    for (int i = (int) pos[0]; i < fileSegment.files.length; i++) {
+      final OFile file = fileSegment.files[i];
+
+      for (long j = pos[1]; j < pos[1] + size; j += 1024) {
+        if (j + 1024 < pos[1] + size)
+          file.write(j, buffer);
+        else {
+          buffer = new byte[(int) (pos[1] + size - j)];
+          file.write(j, buffer);
+        }
+      }
+    }
+
   }
 
   private static final class BucketInfo {

@@ -1304,7 +1304,8 @@ public class SQLSelectTest {
   @Test
   public void subQuery() {
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select from Account where name in ( select name from Account limit 1 )")).execute();
+        new OSQLSynchQuery<ODocument>(
+            "select from Account where name in ( select name from Account where name is not null limit 1 )")).execute();
 
     Assert.assertTrue(result.size() != 0);
   }

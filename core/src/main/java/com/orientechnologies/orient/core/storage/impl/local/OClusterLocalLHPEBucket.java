@@ -111,9 +111,10 @@ public final class OClusterLocalLHPEBucket {
     if (buffer[0] > 0) {
       setKey(getKey(buffer[0]), index);
       positions[index] = getPhysicalPosition(buffer[0]);
-    }
 
-    keysToUpdate[index] = true;
+      keysToUpdate[index] = true;
+      positionsToUpdate[index] = true;
+    }
 
     addToStoreList();
   }
