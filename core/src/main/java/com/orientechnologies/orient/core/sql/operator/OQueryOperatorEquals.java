@@ -147,7 +147,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (fetchLimit > -1)
+      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType)) {
+        result = (long) index.getValuesBetween(keyOne, true, keyTwo, true).size();
+      } else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);

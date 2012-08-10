@@ -135,7 +135,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      final Object indexResult = index.get(key);
+      final Object indexResult;
+      if (iOperationType == INDEX_OPERATION_TYPE.GET)
+        indexResult = index.get(key);
+      else {
+        return index.count(key);
+      }
+
       if (indexResult instanceof Collection)
         result = (Collection<OIdentifiable>) indexResult;
       else if (indexResult == null)
