@@ -193,8 +193,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
             delete(edge);
           }
         }
-        edges.clear();
-        iVertex.field(VERTEX_FIELD_OUT, edges);
       }
 
       // REMOVE IN EDGES
@@ -211,8 +209,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
             delete(edge);
           }
         }
-        edges.clear();
-        iVertex.field(VERTEX_FIELD_IN, edges);
       }
 
       // DELETE VERTEX AS DOCUMENT
