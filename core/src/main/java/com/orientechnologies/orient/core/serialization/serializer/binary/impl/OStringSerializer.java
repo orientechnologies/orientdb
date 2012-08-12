@@ -19,6 +19,8 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2int;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.int2bytes;
 
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
 import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
@@ -28,9 +30,10 @@ import com.orientechnologies.common.types.OBinarySerializer;
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static final OStringSerializer INSTANCE = new OStringSerializer();
-  public static final byte              ID       = 13;
+  public static final OStringSerializer INSTANCE  = new OStringSerializer();
+  public static final byte              ID        = 13;
 
   public int getObjectSize(final String object) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;
@@ -68,22 +71,27 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public void serializeNative(String object, byte[] stream, int startPosition) {
-    OCharSerializer charSerializer = new OCharSerializer();
     int length = object.length();
-    OIntegerSerializer.INSTANCE.serializeNative(length, stream, startPosition);
+    CONVERTER.putInt(stream, startPosition, length);
+
+    int pos = startPosition + OIntegerSerializer.INT_SIZE;
     for (int i = 0; i < length; i++) {
-      charSerializer.serializeNative(object.charAt(i), stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2);
+      final char strChar = object.charAt(i);
+      CONVERTER.putChar(stream, pos, strChar);
+      pos += 2;
     }
   }
 
   public String deserializeNative(byte[] stream, int startPosition) {
-    OCharSerializer charSerializer = new OCharSerializer();
-    int len = OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
-    StringBuilder stringBuilder = new StringBuilder();
+    int len = CONVERTER.getInt(stream, startPosition);
+    char[] buffer = new char[len];
+
+    int pos = startPosition + OIntegerSerializer.INT_SIZE;
     for (int i = 0; i < len; i++) {
-      stringBuilder.append(charSerializer.deserializeNative(stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2));
+      buffer[i] = CONVERTER.getChar(stream, pos);
+      pos += 2;
     }
-    return stringBuilder.toString();
+    return new String(buffer);
   }
 
   public boolean isFixedLength() {

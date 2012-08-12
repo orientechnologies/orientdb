@@ -115,6 +115,9 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
   }
 
   public E remove(int index) {
+    if (size == 0)
+      return null;
+
     rangeCheck(index);
 
     E oldValue = getData(elementData, index);
@@ -137,6 +140,9 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
   }
 
   public boolean remove(Object o) {
+    if (size == 0)
+      return false;
+
     if (o == null) {
       for (int index = 0; index < size; index++)
         if (getData(elementData, index) == null) {
@@ -187,7 +193,7 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
 
       elementData = allocateSpace(newCapacity);
 
-      memory.copyData(oldData, 0, elementData, 0, oldCapacity);
+      copyData(oldData, 0, elementData, 0, oldCapacity);
     }
   }
 
@@ -196,6 +202,13 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
     final int toOffset = toIndex * 4 + 4;
 
     memory.copyData(ptr, fromOffset, ptr, toOffset, len * 4);
+  }
+
+  private void copyData(int fromPtr, int fromIndex, int toPtr, int toIndex, int len) {
+    final int fromOffset = fromIndex * 4 + 4;
+    final int toOffset = toIndex * 4 + 4;
+
+    memory.copyData(fromPtr, fromOffset, toPtr, toOffset, len * 4);
   }
 
   private void rangeCheck(int index) {
@@ -216,13 +229,13 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
 
   private void setData(int ptr, int index, E data) {
     final int dataPtr;
-    if (data != null)
+    if (data != null) {
       dataPtr = memory.allocate(serializer.getObjectSize(data));
-    else
+      if (dataPtr == ODirectMemory.NULL_POINTER)
+        throw new IllegalStateException("There is no enough memory to allocate for item " + data);
+      memory.set(dataPtr, 0, data, serializer);
+    } else
       dataPtr = ODirectMemory.NULL_POINTER;
-
-    if (dataPtr == ODirectMemory.NULL_POINTER)
-      throw new IllegalStateException("There is no enough memory to allocate for item " + data);
 
     final int offset = index * 4 + 4;
 
@@ -246,7 +259,7 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
 
     int pos = 4;
     for (int i = 0; i < capacity; i++) {
-      memory.setInt(ptr, pos, 0);
+      memory.setInt(ptr, pos, ODirectMemory.NULL_POINTER);
       pos += 4;
     }
 
