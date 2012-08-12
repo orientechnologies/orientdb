@@ -24,7 +24,8 @@ import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
- * Implementation of list which is used
+ * Implementation of list which uses {@link ODirectMemory} to store data.
+ * 
  * 
  * @author Andrey Lomakin
  * @since 12.08.12
