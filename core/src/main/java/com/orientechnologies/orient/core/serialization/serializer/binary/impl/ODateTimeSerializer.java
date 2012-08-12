@@ -19,42 +19,67 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#DATETIME}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#DATETIME}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
-	public static ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
-	public static final byte ID = 5;
+  public static ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
+  public static final byte          ID       = 5;
 
-	public int getObjectSize(Date object) {
-		return OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(Date object) {
+    return OLongSerializer.LONG_SIZE;
+  }
 
-	public void serialize(Date object, byte[] stream, int startPosition) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(object);
-		OLongSerializer longSerializer = OLongSerializer.INSTANCE;
-		longSerializer.serialize(calendar.getTimeInMillis(), stream, startPosition);
-	}
+  public void serialize(Date object, byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    OLongSerializer longSerializer = OLongSerializer.INSTANCE;
+    longSerializer.serialize(calendar.getTimeInMillis(), stream, startPosition);
+  }
 
-	public Date deserialize(byte[] stream, int startPosition) {
-		Calendar calendar = Calendar.getInstance();
-		OLongSerializer longSerializer = OLongSerializer.INSTANCE;
-		calendar.setTimeInMillis(longSerializer.deserialize(stream, startPosition));
-		return calendar.getTime();
-	}
+  public Date deserialize(byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    OLongSerializer longSerializer = OLongSerializer.INSTANCE;
+    calendar.setTimeInMillis(longSerializer.deserialize(stream, startPosition));
+    return calendar.getTime();
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return OLongSerializer.LONG_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
 
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  public void serializeNative(Date object, byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    OLongSerializer longSerializer = OLongSerializer.INSTANCE;
+    longSerializer.serializeNative(calendar.getTimeInMillis(), stream, startPosition);
+  }
+
+  public Date deserializeNative(byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    OLongSerializer longSerializer = OLongSerializer.INSTANCE;
+    calendar.setTimeInMillis(longSerializer.deserializeNative(stream, startPosition));
+    return calendar.getTime();
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return OLongSerializer.LONG_SIZE;
+  }
 }

@@ -16,46 +16,67 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2int;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.int2bytes;
 
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.types.OBinarySerializer;
+
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#FLOAT}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#FLOAT}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
-	public static OFloatSerializer INSTANCE = new OFloatSerializer();
-	public static final byte ID = 7;
+  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
 
-	/**
-	 * size of float value in bytes
-	 */
-	public static final int FLOAT_SIZE = 4;
+  public static OFloatSerializer        INSTANCE   = new OFloatSerializer();
+  public static final byte              ID         = 7;
 
-	public int getObjectSize(Float object) {
-		return FLOAT_SIZE;
-	}
+  /**
+   * size of float value in bytes
+   */
+  public static final int               FLOAT_SIZE = 4;
 
-	public void serialize(Float object, byte[] stream, int startPosition) {
-		int2bytes(Float.floatToIntBits(object), stream, startPosition);
-	}
+  public int getObjectSize(Float object) {
+    return FLOAT_SIZE;
+  }
 
-	public Float deserialize(byte[] stream, int startPosition) {
-		return Float.intBitsToFloat(bytes2int(stream, startPosition));
-	}
+  public void serialize(Float object, byte[] stream, int startPosition) {
+    int2bytes(Float.floatToIntBits(object), stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return FLOAT_SIZE;
-	}
+  public Float deserialize(byte[] stream, int startPosition) {
+    return Float.intBitsToFloat(bytes2int(stream, startPosition));
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return FLOAT_SIZE;
+  }
 
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return FLOAT_SIZE;
+  }
+
+  public void serializeNative(Float object, byte[] stream, int startPosition) {
+    CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object));
+  }
+
+  public Float deserializeNative(byte[] stream, int startPosition) {
+    return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition));
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return FLOAT_SIZE;
+  }
 }
-
-

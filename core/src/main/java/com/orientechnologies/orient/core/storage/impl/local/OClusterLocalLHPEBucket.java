@@ -162,7 +162,7 @@ public final class OClusterLocalLHPEBucket {
 
     physicalPosition.clusterPosition = getKey(index);
 
-    physicalPosition.dataSegmentId = CONVERTER.getInt(buffer, position, 0);
+    physicalPosition.dataSegmentId = CONVERTER.getInt(buffer, position);
     position += 4;
 
     physicalPosition.dataSegmentPos = CONVERTER.getLong(buffer, position);
@@ -171,7 +171,7 @@ public final class OClusterLocalLHPEBucket {
     physicalPosition.recordType = buffer[position];
     position += 1;
 
-    physicalPosition.recordVersion = CONVERTER.getInt(buffer, position, 0);
+    physicalPosition.recordVersion = CONVERTER.getInt(buffer, position);
 
     return physicalPosition;
   }
@@ -182,7 +182,7 @@ public final class OClusterLocalLHPEBucket {
 
   public static byte[] serializeDataSegmentId(int dataSegmentId) {
     final byte[] serializedDataSegmentId = new byte[4];
-    CONVERTER.putInt(serializedDataSegmentId, 0, 0, dataSegmentId);
+    CONVERTER.putInt(serializedDataSegmentId, 0, dataSegmentId);
 
     return serializedDataSegmentId;
   }
@@ -204,7 +204,7 @@ public final class OClusterLocalLHPEBucket {
 
   public static byte[] serializeVersion(int version) {
     final byte[] serializedVersion = new byte[4];
-    CONVERTER.putInt(serializedVersion, 0, 0, version);
+    CONVERTER.putInt(serializedVersion, 0, version);
 
     return serializedVersion;
   }
@@ -232,7 +232,7 @@ public final class OClusterLocalLHPEBucket {
       if (positionsToUpdate[i]) {
         OPhysicalPosition physicalPosition = positions[i];
 
-        CONVERTER.putInt(buffer, position, 0, physicalPosition.dataSegmentId);
+        CONVERTER.putInt(buffer, position, physicalPosition.dataSegmentId);
         position += 4;
 
         CONVERTER.putLong(buffer, position, physicalPosition.dataSegmentPos);
@@ -241,7 +241,7 @@ public final class OClusterLocalLHPEBucket {
         buffer[position] = physicalPosition.recordType;
         position += 1;
 
-        CONVERTER.putInt(buffer, position, 0, physicalPosition.recordVersion);
+        CONVERTER.putInt(buffer, position, physicalPosition.recordVersion);
         position += 4;
 
         positionsToUpdate[i] = false;

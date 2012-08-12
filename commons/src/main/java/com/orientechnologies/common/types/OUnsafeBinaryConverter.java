@@ -39,13 +39,13 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
     return theUnsafe.getShort(buffer, index + BYTE_ARRAY_OFFSET);
   }
 
-  public void putInt(byte[] buffer, int pointer, int offset, int value) {
-    final long position = pointer + offset + BYTE_ARRAY_OFFSET;
+  public void putInt(byte[] buffer, int pointer, int value) {
+    final long position = pointer + BYTE_ARRAY_OFFSET;
     theUnsafe.putInt(buffer, position, value);
   }
 
-  public int getInt(byte[] buffer, int pointer, int offset) {
-    final long position = pointer + offset + BYTE_ARRAY_OFFSET;
+  public int getInt(byte[] buffer, int pointer) {
+    final long position = pointer + BYTE_ARRAY_OFFSET;
     return theUnsafe.getInt(buffer, position);
   }
 

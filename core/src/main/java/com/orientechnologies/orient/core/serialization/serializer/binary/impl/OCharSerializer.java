@@ -16,7 +16,9 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
  * 
@@ -24,13 +26,15 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * @since 18.01.12
  */
 public class OCharSerializer implements OBinarySerializer<Character> {
+  private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
+
   /**
    * size of char value in bytes
    */
-  public static final int       CHAR_SIZE = 2;
+  public static final int               CHAR_SIZE        = 2;
 
-  public static OCharSerializer INSTANCE  = new OCharSerializer();
-  public static final byte      ID        = 3;
+  public static OCharSerializer         INSTANCE         = new OCharSerializer();
+  public static final byte              ID               = 3;
 
   public int getObjectSize(final Character object) {
     return CHAR_SIZE;
@@ -53,4 +57,23 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return ID;
   }
 
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return CHAR_SIZE;
+  }
+
+  public void serializeNative(Character object, byte[] stream, int startPosition) {
+    BINARY_CONVERTER.putChar(stream, startPosition, object);
+  }
+
+  public Character deserializeNative(byte[] stream, int startPosition) {
+    return BINARY_CONVERTER.getChar(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return CHAR_SIZE;
+  }
 }

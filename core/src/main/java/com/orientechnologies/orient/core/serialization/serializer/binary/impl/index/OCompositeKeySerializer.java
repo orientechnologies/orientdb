@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OIntegerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -141,5 +141,69 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
   public String getName() {
     return NAME;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
+  }
+
+  public void serializeNative(OCompositeKey compositeKey, byte[] stream, int startPosition) {
+    final List<Object> keys = compositeKey.getKeys();
+    final int keysSize = keys.size();
+
+    final int oldStartPosition = startPosition;
+
+    startPosition += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(keysSize, stream, startPosition);
+
+    startPosition += OIntegerSerializer.INT_SIZE;
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
+
+    for (final Object key : keys) {
+      final OType type = OType.getTypeByClass(key.getClass());
+      @SuppressWarnings("unchecked")
+      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(type);
+
+      stream[startPosition] = binarySerializer.getId();
+      startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+      binarySerializer.serializeNative(key, stream, startPosition);
+      startPosition += binarySerializer.getObjectSize(key);
+    }
+
+    OIntegerSerializer.INSTANCE.serializeNative((startPosition - oldStartPosition), stream, oldStartPosition);
+  }
+
+  public OCompositeKey deserializeNative(byte[] stream, int startPosition) {
+    final OCompositeKey compositeKey = new OCompositeKey();
+
+    startPosition += OIntegerSerializer.INT_SIZE;
+
+    final int keysSize = OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
+    startPosition += OIntegerSerializer.INSTANCE.getObjectSize(keysSize);
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
+    for (int i = 0; i < keysSize; i++) {
+      final byte serializerId = stream[startPosition];
+      startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
+      final Object key = binarySerializer.deserializeNative(stream, startPosition);
+      compositeKey.addKey(key);
+
+      startPosition += binarySerializer.getObjectSize(key);
+    }
+
+    return compositeKey;
+  }
+
+  public boolean isFixedLength() {
+    return false;
+  }
+
+  public int getFixedLength() {
+    return 0;
   }
 }

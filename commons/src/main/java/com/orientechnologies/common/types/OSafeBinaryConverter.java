@@ -9,16 +9,12 @@ public class OSafeBinaryConverter implements OBinaryConverter {
     return bytes2short(buffer, index);
   }
 
-  public void putInt(byte[] buffer, int pointer, int offset, int value) {
-    final int position = pointer + offset;
-
-    int2bytes(value, buffer, position);
+  public void putInt(byte[] buffer, int pointer, int value) {
+    int2bytes(value, buffer, pointer);
   }
 
-  public int getInt(byte[] buffer, int pointer, int offset) {
-    final int position = pointer + offset;
-
-    return bytes2int(buffer, position);
+  public int getInt(byte[] buffer, int pointer) {
+    return bytes2int(buffer, pointer);
   }
 
   public void putLong(byte[] buffer, int index, long value) {

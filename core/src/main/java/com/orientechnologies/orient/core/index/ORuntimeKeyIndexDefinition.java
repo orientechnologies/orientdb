@@ -19,11 +19,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 

@@ -16,8 +16,8 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
@@ -85,5 +85,36 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   protected void init(byte serializerId) {
     if (binarySerializer == null)
       binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(serializerId);
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    final byte serializerId = stream[startPosition];
+    init(serializerId);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeNative(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+  }
+
+  public void serializeNative(T key, byte[] stream, int startPosition) {
+    init(key);
+    stream[startPosition] = binarySerializer.getId();
+    startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+    binarySerializer.serializeNative(key, stream, startPosition);
+    startPosition += binarySerializer.getObjectSize(key);
+  }
+
+  public T deserializeNative(byte[] stream, int startPosition) {
+    final byte typeId = stream[startPosition];
+    startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+    init(typeId);
+    return (T) binarySerializer.deserializeNative(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return binarySerializer.isFixedLength();
+  }
+
+  public int getFixedLength() {
+    return binarySerializer.getFixedLength() + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
   }
 }

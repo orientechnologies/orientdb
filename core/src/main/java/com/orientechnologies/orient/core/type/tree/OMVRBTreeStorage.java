@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;

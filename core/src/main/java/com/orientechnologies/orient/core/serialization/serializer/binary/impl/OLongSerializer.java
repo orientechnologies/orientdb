@@ -16,46 +16,67 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2long;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.long2bytes;
 
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.types.OBinarySerializer;
+
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#LONG}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#LONG}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-	public static OLongSerializer INSTANCE = new  OLongSerializer();
-	public static final byte ID = 10;
+  public static OLongSerializer         INSTANCE  = new OLongSerializer();
+  public static final byte              ID        = 10;
 
-	/**
-	 * size of long value in bytes
-	 */
-	public static final int LONG_SIZE = 8;
+  /**
+   * size of long value in bytes
+   */
+  public static final int               LONG_SIZE = 8;
 
-	public int getObjectSize(Long object) {
-		return LONG_SIZE;
-	}
+  public int getObjectSize(Long object) {
+    return LONG_SIZE;
+  }
 
-	public void serialize(Long object, byte[] stream, int startPosition) {
-		long2bytes(object, stream, startPosition);
-	}
+  public void serialize(Long object, byte[] stream, int startPosition) {
+    long2bytes(object, stream, startPosition);
+  }
 
-	public Long deserialize(byte[] stream, int startPosition) {
-		return bytes2long(stream, startPosition);
-	}
+  public Long deserialize(byte[] stream, int startPosition) {
+    return bytes2long(stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return LONG_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return LONG_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return LONG_SIZE;
+  }
+
+  public void serializeNative(Long object, byte[] stream, int startPosition) {
+    CONVERTER.putLong(stream, startPosition, object);
+  }
+
+  public Long deserializeNative(byte[] stream, int startPosition) {
+    return CONVERTER.getLong(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return LONG_SIZE;
+  }
 }
-
-

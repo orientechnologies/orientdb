@@ -16,46 +16,63 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#BOOLEAN} .
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#BOOLEAN} .
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OBooleanSerializer implements OBinarySerializer<Boolean> {
-	/**
-	 * size of boolean value in bytes
-	 */
-	public static final int BOOLEAN_SIZE = 1;
+  /**
+   * size of boolean value in bytes
+   */
+  public static final int          BOOLEAN_SIZE = 1;
 
-	public static OBooleanSerializer INSTANCE = new OBooleanSerializer();
-	public static final byte ID = 1;
+  public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
+  public static final byte         ID           = 1;
 
+  public int getObjectSize(Boolean object) {
+    return BOOLEAN_SIZE;
+  }
 
-	public int getObjectSize(Boolean object) {
-		return BOOLEAN_SIZE;
-	}
+  public void serialize(Boolean object, byte[] stream, int startPosition) {
+    if (object)
+      stream[startPosition] = (byte) 1;
+    else
+      stream[startPosition] = (byte) 0;
+  }
 
-	public void serialize(Boolean object, byte[] stream, int startPosition) {
-		if(object)
-			stream[startPosition] = (byte) 1;
-		else
-			stream[startPosition] = (byte) 0;
-	}
+  public Boolean deserialize(byte[] stream, int startPosition) {
+    return stream[startPosition] == 1;
+  }
 
-	public Boolean deserialize(byte[] stream, int startPosition) {
-		return stream[startPosition] == 1;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return BOOLEAN_SIZE;
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return BOOLEAN_SIZE;
-	}
+  public byte getId() {
+    return ID;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return BOOLEAN_SIZE;
+  }
+
+  public void serializeNative(Boolean object, byte[] stream, int startPosition) {
+    serialize(object, stream, startPosition);
+  }
+
+  public Boolean deserializeNative(byte[] stream, int startPosition) {
+    return deserialize(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return BOOLEAN_SIZE;
+  }
 }
-
-

@@ -5,9 +5,9 @@ package com.orientechnologies.common.types;
  * @since 26.07.12
  */
 public interface OBinaryConverter {
-  void putInt(byte[] buffer, int pointer, int offset, int value);
+  void putInt(byte[] buffer, int index, int value);
 
-  int getInt(byte[] buffer, int pointer, int offset);
+  int getInt(byte[] buffer, int index);
 
   void putShort(byte[] buffer, int index, short value);
 

@@ -21,10 +21,10 @@ import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.by
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.long2bytes;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
 
 /**
  * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#LINK}
@@ -34,28 +34,53 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  */
 public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
 
-	public static OLinkSerializer	INSTANCE	= new OLinkSerializer();
-	public static final byte			ID				= 9;
+  public static OLinkSerializer INSTANCE = new OLinkSerializer();
+  public static final byte      ID       = 9;
+  public static final int       RID_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
 
-	public int getObjectSize(final OIdentifiable rid) {
-		return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(final OIdentifiable rid) {
+    return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
+  }
 
-	public void serialize(final OIdentifiable rid, final byte[] stream, final int startPosition) {
-		ORID r = rid.getIdentity();
-		short2bytes((short) r.getClusterId(), stream, startPosition);
-		long2bytes(r.getClusterPosition(), stream, startPosition + OShortSerializer.SHORT_SIZE);
-	}
+  public void serialize(final OIdentifiable rid, final byte[] stream, final int startPosition) {
+    ORID r = rid.getIdentity();
+    short2bytes((short) r.getClusterId(), stream, startPosition);
+    long2bytes(r.getClusterPosition(), stream, startPosition + OShortSerializer.SHORT_SIZE);
+  }
 
-	public ORecordId deserialize(final byte[] stream, final int startPosition) {
-		return new ORecordId(bytes2short(stream, startPosition), bytes2long(stream, startPosition + OShortSerializer.SHORT_SIZE));
-	}
+  public ORecordId deserialize(final byte[] stream, final int startPosition) {
+    return new ORecordId(bytes2short(stream, startPosition), bytes2long(stream, startPosition + OShortSerializer.SHORT_SIZE));
+  }
 
-	public int getObjectSize(final byte[] stream, final int startPosition) {
-		return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(final byte[] stream, final int startPosition) {
+    return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
+  }
+
+  public void serializeNative(OIdentifiable rid, byte[] stream, int startPosition) {
+    ORID r = rid.getIdentity();
+    OShortSerializer.INSTANCE.serializeNative((short) r.getClusterId(), stream, startPosition);
+    OLongSerializer.INSTANCE.serializeNative(r.getClusterPosition(), stream, startPosition + OShortSerializer.SHORT_SIZE);
+  }
+
+  public ORecordId deserializeNative(byte[] stream, int startPosition) {
+    int clusterId = OShortSerializer.INSTANCE.deserializeNative(stream, startPosition);
+    long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition + OShortSerializer.SHORT_SIZE);
+    return new ORecordId(clusterId, clusterPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return RID_SIZE;
+  }
 }

@@ -19,45 +19,72 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#DATE} .
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#DATE} .
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
 public class ODateSerializer implements OBinarySerializer<Date> {
 
-	public static ODateSerializer INSTANCE = new ODateSerializer();
-	public static final byte ID = 4;
+  public static ODateSerializer INSTANCE = new ODateSerializer();
+  public static final byte      ID       = 4;
 
-	public int getObjectSize(Date object) {
-		return OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(Date object) {
+    return OLongSerializer.LONG_SIZE;
+  }
 
-	public void serialize(Date object, byte[] stream, int startPosition) {
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(object);
-		calendar.set(Calendar.HOUR_OF_DAY, 0);
-		calendar.set(Calendar.MINUTE, 0);
-		calendar.set(Calendar.SECOND, 0);
-		calendar.set(Calendar.MILLISECOND, 0);
-		ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
-		dateTimeSerializer.serialize(calendar.getTime(), stream, startPosition);
-	}
+  public void serialize(Date object, byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    dateTimeSerializer.serialize(calendar.getTime(), stream, startPosition);
+  }
 
-	public Date deserialize(byte[] stream, int startPosition) {
-		ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
-		return dateTimeSerializer.deserialize(stream, startPosition);
-	}
+  public Date deserialize(byte[] stream, int startPosition) {
+    ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    return dateTimeSerializer.deserialize(stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return OLongSerializer.LONG_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return OLongSerializer.LONG_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
 
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return OLongSerializer.LONG_SIZE;
+  }
+
+  public void serializeNative(Date object, byte[] stream, int startPosition) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(object);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    dateTimeSerializer.serializeNative(calendar.getTime(), stream, startPosition);
+  }
+
+  public Date deserializeNative(byte[] stream, int startPosition) {
+    ODateTimeSerializer dateTimeSerializer = ODateTimeSerializer.INSTANCE;
+    return dateTimeSerializer.deserializeNative(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return OLongSerializer.LONG_SIZE;
+  }
 }

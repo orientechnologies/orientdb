@@ -16,46 +16,67 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.types.OBinarySerializer;
+
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#SHORT}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#SHORT}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
+  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
 
-	public static OShortSerializer INSTANCE = new  OShortSerializer();
-	public static final byte ID = 12;
+  public static OShortSerializer        INSTANCE   = new OShortSerializer();
+  public static final byte              ID         = 12;
 
-	/**
-	 * size of short value in bytes
-	 */
-	public static final int SHORT_SIZE = 2;
+  /**
+   * size of short value in bytes
+   */
+  public static final int               SHORT_SIZE = 2;
 
-	public int getObjectSize(Short object) {
-		return SHORT_SIZE;
-	}
+  public int getObjectSize(Short object) {
+    return SHORT_SIZE;
+  }
 
-	public void serialize(Short object, byte[] stream, int startPosition) {
-		short2bytes(object, stream, startPosition);
-	}
+  public void serialize(Short object, byte[] stream, int startPosition) {
+    short2bytes(object, stream, startPosition);
+  }
 
-	public Short deserialize(byte[] stream, int startPosition) {
-		return bytes2short(stream, startPosition);
-	}
+  public Short deserialize(byte[] stream, int startPosition) {
+    return bytes2short(stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return SHORT_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return SHORT_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return SHORT_SIZE;
+  }
+
+  public void serializeNative(Short object, byte[] stream, int startPosition) {
+    CONVERTER.putShort(stream, startPosition, object);
+  }
+
+  public Short deserializeNative(byte[] stream, int startPosition) {
+    return CONVERTER.getShort(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return SHORT_SIZE;
+  }
 }
-
-

@@ -16,44 +16,67 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
-
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2long;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.long2bytes;
 
+import com.orientechnologies.common.types.OBinaryConverter;
+import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.types.OBinarySerializer;
+
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#DOUBLE}
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#DOUBLE}
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 17.01.12
  */
 public class ODoubleSerializer implements OBinarySerializer<Double> {
-	public static ODoubleSerializer INSTANCE = new ODoubleSerializer();
-	public static final byte ID = 6;
+  private static final OBinaryConverter CONVERTER   = OBinaryConverterFactory.getConverter();
 
-	/**
-	 * size of double value in bytes
-	 */
-	public static final int DOUBLE_SIZE = 8;
+  public static ODoubleSerializer       INSTANCE    = new ODoubleSerializer();
+  public static final byte              ID          = 6;
 
-	public int getObjectSize(Double object) {
-		return DOUBLE_SIZE;
-	}
+  /**
+   * size of double value in bytes
+   */
+  public static final int               DOUBLE_SIZE = 8;
 
-	public void serialize(Double object, byte[] stream, int startPosition) {
-		long2bytes(Double.doubleToLongBits(object), stream, startPosition);
-	}
+  public int getObjectSize(Double object) {
+    return DOUBLE_SIZE;
+  }
 
-	public Double deserialize(byte[] stream, int startPosition) {
-		return Double.longBitsToDouble(bytes2long(stream, startPosition));
-	}
+  public void serialize(Double object, byte[] stream, int startPosition) {
+    long2bytes(Double.doubleToLongBits(object), stream, startPosition);
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return DOUBLE_SIZE;
-	}
+  public Double deserialize(byte[] stream, int startPosition) {
+    return Double.longBitsToDouble(bytes2long(stream, startPosition));
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return DOUBLE_SIZE;
+  }
 
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return DOUBLE_SIZE;
+  }
+
+  public void serializeNative(Double object, byte[] stream, int startPosition) {
+    CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object));
+  }
+
+  public Double deserializeNative(byte[] stream, int startPosition) {
+    return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition));
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return DOUBLE_SIZE;
+  }
 }

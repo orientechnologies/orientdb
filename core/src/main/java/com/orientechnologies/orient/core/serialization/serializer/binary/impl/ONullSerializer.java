@@ -16,37 +16,55 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
  * Serialize and deserialize null values
- *
+ * 
  * <a href="mailto:gmandnepr@gmail.com">Evgeniy Degtiarenko</a>
  */
 public class ONullSerializer implements OBinarySerializer<Object> {
 
-	public static ONullSerializer INSTANCE = new  ONullSerializer();
-	public static final byte ID = 11;
+  public static ONullSerializer INSTANCE = new ONullSerializer();
+  public static final byte      ID       = 11;
 
-	public int getObjectSize(final Object object) {
-		return 0;
-	}
+  public int getObjectSize(final Object object) {
+    return 0;
+  }
 
-	public void serialize(final Object object, final byte[] stream, final int startPosition) {
-		//nothing to serialize
-	}
+  public void serialize(final Object object, final byte[] stream, final int startPosition) {
+    // nothing to serialize
+  }
 
-	public Object deserialize(final byte[] stream, final int startPosition) {
-		//nothing to deserialize
-		return null;
-	}
+  public Object deserialize(final byte[] stream, final int startPosition) {
+    // nothing to deserialize
+    return null;
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return 0;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return 0;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return 0;
+  }
+
+  public void serializeNative(Object object, byte[] stream, int startPosition) {
+  }
+
+  public Object deserializeNative(byte[] stream, int startPosition) {
+    return null;
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return 0;
+  }
 }
-

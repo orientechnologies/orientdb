@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBooleanSerializer;

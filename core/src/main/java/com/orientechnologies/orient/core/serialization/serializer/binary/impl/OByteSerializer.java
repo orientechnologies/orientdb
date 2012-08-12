@@ -16,41 +16,60 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializer;
+import com.orientechnologies.common.types.OBinarySerializer;
 
 /**
- * Serializer for  {@link com.orientechnologies.orient.core.metadata.schema.OType#BOOLEAN} .
- *
+ * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#BOOLEAN} .
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OByteSerializer implements OBinarySerializer<Byte> {
-	/**
-	 * size of byte value in bytes
-	 */
-	public static final int BYTE_SIZE = 1;
+  /**
+   * size of byte value in bytes
+   */
+  public static final int       BYTE_SIZE = 1;
 
-	public static OByteSerializer INSTANCE = new OByteSerializer();
-	public static final byte ID = 2;
+  public static OByteSerializer INSTANCE  = new OByteSerializer();
+  public static final byte      ID        = 2;
 
-	public int getObjectSize(Byte object) {
-		return BYTE_SIZE;
-	}
+  public int getObjectSize(Byte object) {
+    return BYTE_SIZE;
+  }
 
-	public void serialize(Byte object, byte[] stream, int startPosition) {
-		stream[startPosition] = object;
-	}
+  public void serialize(Byte object, byte[] stream, int startPosition) {
+    stream[startPosition] = object;
+  }
 
-	public Byte deserialize(byte[] stream, int startPosition) {
-		return stream[startPosition];
-	}
+  public Byte deserialize(byte[] stream, int startPosition) {
+    return stream[startPosition];
+  }
 
-	public int getObjectSize(byte[] stream, int startPosition) {
-		return BYTE_SIZE;
-	}
+  public int getObjectSize(byte[] stream, int startPosition) {
+    return BYTE_SIZE;
+  }
 
-	public byte getId() {
-		return ID;
-	}
+  public byte getId() {
+    return ID;
+  }
+
+  public int getObjectSizeNative(byte[] stream, int startPosition) {
+    return getObjectSize(stream, startPosition);
+  }
+
+  public void serializeNative(Byte object, byte[] stream, int startPosition) {
+    serialize(object, stream, startPosition);
+  }
+
+  public Byte deserializeNative(byte[] stream, int startPosition) {
+    return deserialize(stream, startPosition);
+  }
+
+  public boolean isFixedLength() {
+    return true;
+  }
+
+  public int getFixedLength() {
+    return BYTE_SIZE;
+  }
 }
-
