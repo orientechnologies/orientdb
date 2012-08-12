@@ -18,13 +18,20 @@ package com.orientechnologies.orient.test.java.collection;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public abstract class CollectionBaseAbstractSpeedTest extends SpeedTestMonoThread {
-	protected Object	searchedValue;
-	protected int			collectionSize;
+  protected Object searchedValue;
+  protected int    collectionSize;
 
-	@Override
-	public CollectionBaseAbstractSpeedTest config(Object... iParameters) {
-		searchedValue = iParameters[0];
-		collectionSize = ((Integer) iParameters[1]).intValue();
-		return this;
-	}
+  protected CollectionBaseAbstractSpeedTest() {
+  }
+
+  protected CollectionBaseAbstractSpeedTest(long iCycles) {
+    super(iCycles);
+  }
+
+  @Override
+  public CollectionBaseAbstractSpeedTest config(Object... iParameters) {
+    searchedValue = iParameters[0];
+    collectionSize = ((Integer) iParameters[1]).intValue();
+    return this;
+  }
 }

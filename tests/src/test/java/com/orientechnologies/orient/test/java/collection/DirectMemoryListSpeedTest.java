@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 1999-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.test.java.collection;
 
-import java.util.ArrayList;
+import com.orientechnologies.common.directmemory.OBuddyMemory;
+import com.orientechnologies.common.directmemory.collections.ODirectMemoryList;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OStringSerializer;
 
+/**
+ * @author Andrey Lomakin
+ * @since 12.08.12
+ */
+public class DirectMemoryListSpeedTest extends CollectionBaseAbstractSpeedTest {
+  private ODirectMemoryList<String> arrayList;
 
-public class ArrayListSpeedTest extends CollectionBaseAbstractSpeedTest {
-  private ArrayList<String> arrayList;
-
-  public ArrayListSpeedTest() {
+  public DirectMemoryListSpeedTest() {
     super(10000000);
   }
 
@@ -35,7 +41,7 @@ public class ArrayListSpeedTest extends CollectionBaseAbstractSpeedTest {
 
   @Override
   public void init() {
-    arrayList = new ArrayList<String>();
+    arrayList = new ODirectMemoryList<String>(new OBuddyMemory(100 * 1024 * 1024, 32), OStringSerializer.INSTANCE);
     for (int i = 0; i < collectionSize; ++i) {
       arrayList.add(String.valueOf(i));
     }
