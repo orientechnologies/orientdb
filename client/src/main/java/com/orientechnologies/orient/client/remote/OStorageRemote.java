@@ -725,6 +725,68 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
+  @Override
+  public void changeRecordIdentity(ORID originalId, ORID newId) {
+    checkConnection();
+
+    do {
+      try {
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY);
+
+          network.writeShort((short) originalId.getClusterId());
+          network.writeLong(originalId.getClusterPosition());
+
+          network.writeShort((short) newId.getClusterId());
+          network.writeLong(newId.getClusterPosition());
+
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+          return;
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error during changing identity of  " + originalId + " record to " + newId, e);
+      }
+    } while (true);
+  }
+
+  @Override
+  public boolean isLHClustersAreUsed() {
+    checkConnection();
+
+    do {
+      try {
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          final boolean isLHClustersAreUsed = network.readByte() > 0;
+          return isLHClustersAreUsed;
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error during requesting of cluster persistence mode", e);
+      }
+    } while (true);
+
+  }
+
   /**
    * Execute the command remotely and get the results back.
    */

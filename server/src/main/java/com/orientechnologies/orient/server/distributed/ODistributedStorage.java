@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -389,6 +390,16 @@ public class ODistributedStorage implements OStorage {
 
   public STATUS getStatus() {
     return wrapped.getStatus();
+  }
+
+  @Override
+  public void changeRecordIdentity(ORID originalId, ORID newId) {
+    wrapped.changeRecordIdentity(originalId, newId);
+  }
+
+  @Override
+  public boolean isLHClustersAreUsed() {
+    return wrapped.isLHClustersAreUsed();
   }
 
   @Override

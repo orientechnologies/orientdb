@@ -60,6 +60,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   protected long                        currentEntry           = -1;
 
+  public long                           totalLength            = 0;
+
   public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
@@ -259,6 +261,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
           currentEntry++;
           currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
         } while (currentPositions.length == 0 && currentEntry <= lastClusterEntry);
+
+        totalLength += currentPositions.length;
 
         if (currentEntry > lastClusterEntry)
           return false;

@@ -43,10 +43,12 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -209,8 +211,10 @@ public class IndexTest {
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
-    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:0)")).execute();
-    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:1)")).execute();
+    final List<Long> positions = getValidPositions(3);
+
+    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
+    database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
 
     List<ODocument> result = database.command(new OCommandSQL("select from index:IDX")).execute();
     Assert.assertNotNull(result);
@@ -220,9 +224,9 @@ public class IndexTest {
       Assert.assertTrue(d.containsField("rid"));
 
       if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:0"));
+        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
       else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:1"));
+        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
       else
         Assert.assertTrue(false);
     }
@@ -235,9 +239,9 @@ public class IndexTest {
       Assert.assertTrue(d.containsField("rid"));
 
       if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:0"));
+        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
       else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId("#3:1"));
+        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
       else
         Assert.assertTrue(false);
     }
@@ -1430,5 +1434,21 @@ public class IndexTest {
     }
 
     Assert.assertEquals(idx.getSize(), 99);
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<?> iteratorCluster = database.getUnderlying()
+        .browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 7; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+
+      ORecord doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }

@@ -63,13 +63,14 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  private Map<OPropertyImpl, String> linkedClasses   = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, String>        superClasses    = new HashMap<OClass, String>();
+  private Map<OPropertyImpl, String> linkedClasses     = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, String>        superClasses      = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
   private ORecordInternal<?>         record;
-  private List<String>               recordToDelete  = new ArrayList<String>();
-  private boolean                    schemaImported  = false;
-  private int                        exporterVersion = -1;
+  private List<String>               recordToDelete    = new ArrayList<String>();
+  private boolean                    schemaImported    = false;
+  private int                        exporterVersion   = -1;
+  private boolean                    lhClustersAreUsed = false;
 
   public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -108,6 +109,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.getLevel2Cache().setEnable(false);
       database.setMVCC(false);
       database.setValidationEnabled(false);
+
+      lhClustersAreUsed = database.getStorage().isLHClustersAreUsed();
 
       database.setStatus(STATUS.IMPORTING);
 
@@ -596,39 +599,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
       final String rid = record.getIdentity().toString();
 
-      long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
-
-      // SAVE THE RECORD
-      if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
-        // REWRITE PREVIOUS RECORD WITH THE SAME VERSION, SO USE A NEGATIVE NUMBER
-        record.setVersion(Integer.MIN_VALUE + record.getVersion());
-
-        if (record instanceof ODocument)
-          record.save();
-        else
-          ((ODatabaseRecord) database.getUnderlying()).save(record);
-      } else {
-        String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
-
-        if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
-          // CREATE HOLES
-          int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
-
-          ODocument tempRecord = new ODocument();
-          for (int i = 0; i < holes; ++i) {
-            tempRecord.reset();
-            ((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
-            recordToDelete.add(tempRecord.getIdentity().toString());
-          }
-        }
-
-        // APPEND THE RECORD
-        record.setIdentity(-1, -1);
-        if (record instanceof ODocument)
-          record.save(clusterName);
-        else
-          ((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
-      }
+      if (!lhClustersAreUsed)
+        storeLocalClusterRecord();
+      else
+        storeLHClusterRecord(new ORecordId(rid));
 
       if (!record.getIdentity().toString().equals(rid))
         throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
@@ -646,6 +620,60 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return record.getIdentity();
+  }
+
+  private void storeLocalClusterRecord() {
+    long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
+
+    // SAVE THE RECORD
+    if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
+      // REWRITE PREVIOUS RECORD WITH THE SAME VERSION, SO USE A NEGATIVE NUMBER
+      record.setVersion(Integer.MIN_VALUE + record.getVersion());
+
+      if (record instanceof ODocument)
+        record.save();
+      else
+        ((ODatabaseRecord) database.getUnderlying()).save(record);
+    } else {
+      String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
+
+      if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
+        // CREATE HOLES
+        int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
+
+        ODocument tempRecord = new ODocument();
+        for (int i = 0; i < holes; ++i) {
+          tempRecord.reset();
+          ((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
+          recordToDelete.add(tempRecord.getIdentity().toString());
+        }
+      }
+
+      // APPEND THE RECORD
+      record.setIdentity(-1, -1);
+      if (record instanceof ODocument)
+        record.save(clusterName);
+      else
+        ((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
+    }
+  }
+
+  private void storeLHClusterRecord(final ORecordId rid) {
+    ORecordInternal<?> recordInternal = database.load(rid);
+    if (recordInternal != null)
+      recordInternal.delete();
+
+    String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
+    record.setIdentity(-1, -1);
+    if (record instanceof ODocument)
+      record.save(clusterName);
+    else
+      ((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
+
+    if (!record.getIdentity().equals(rid))
+      database.getStorage().changeRecordIdentity(record.getIdentity(), rid);
+
+    record.setIdentity(rid);
   }
 
   private void importIndexes() throws IOException, ParseException {

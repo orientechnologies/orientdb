@@ -230,6 +230,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       clusterPositionsByEntry();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED:
+      isLHClustersAreUsed();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY:
+      changeRecordIdentity();
+      break;
+
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
       addCluster();
       break;
@@ -458,6 +466,44 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       for (long position : pos)
         channel.writeLong(position);
 
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void changeRecordIdentity() throws IOException {
+    setDataCommandInfo("Move record from one cluster and cluster position to other");
+
+    checkDatabase();
+
+    final int originalClusterId = channel.readShort();
+    final long originalClusterPosition = channel.readLong();
+
+    final int destinationClusterId = channel.readShort();
+    final long destinationClusterPosition = channel.readLong();
+
+    connection.database.getStorage().changeRecordIdentity(new ORecordId(originalClusterId, originalClusterPosition),
+        new ORecordId(destinationClusterId, destinationClusterPosition));
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void isLHClustersAreUsed() throws IOException {
+    setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");
+
+    checkDatabase();
+
+    final boolean isLHClustersAreUsed = connection.database.getStorage().isLHClustersAreUsed();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeByte(isLHClustersAreUsed ? (byte) 1 : 0);
     } finally {
       endResponse();
     }

@@ -236,7 +236,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing data segment '" + iName + "'", e, OStorageException.class);
+      OLogManager.instance().exception("Error while removing data segment '" + iName + '\'', e, OStorageException.class);
 
     } finally {
       lock.releaseExclusiveLock();
@@ -598,7 +598,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public ODataSegment getDataSegmentById(int iDataId) {
+  public ODataSegmentMemory getDataSegmentById(int iDataId) {
     lock.acquireSharedLock();
     try {
 
@@ -684,6 +684,22 @@ public class OStorageMemory extends OStorageEmbedded {
       lock.releaseSharedLock();
     }
     return size;
+  }
+
+  @Override
+  public void changeRecordIdentity(ORID originalId, ORID newId) {
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    lock.acquireExclusiveLock();
+    try {
+      moveRecord(originalId, newId);
+    } catch (IOException ioe) {
+      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, ioe);
+    } finally {
+      lock.releaseExclusiveLock();
+
+      Orient.instance().getProfiler().stopChrono("db." + name + ".changeRecordIdentity", timer);
+    }
   }
 
   @Override
@@ -773,5 +789,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public void setDefaultClusterId(int defaultClusterId) {
     this.defaultClusterId = defaultClusterId;
+  }
+
+  @Override
+  public boolean isLHClustersAreUsed() {
+    return false;
   }
 }

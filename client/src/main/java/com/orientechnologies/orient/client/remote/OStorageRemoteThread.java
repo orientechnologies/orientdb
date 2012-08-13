@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -318,6 +319,18 @@ public class OStorageRemoteThread implements OStorageProxy {
   public String getName() {
     delegate.setSessionId(sessionId);
     return delegate.getName();
+  }
+
+  @Override
+  public void changeRecordIdentity(ORID originalId, ORID newId) {
+    delegate.setSessionId(sessionId);
+    delegate.changeRecordIdentity(originalId, newId);
+  }
+
+  @Override
+  public boolean isLHClustersAreUsed() {
+    delegate.setSessionId(sessionId);
+    return delegate.isLHClustersAreUsed();
   }
 
   public String getURL() {

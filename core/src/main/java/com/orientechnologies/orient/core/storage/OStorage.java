@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -209,4 +210,23 @@ public interface OStorage extends OSharedContainer {
    * @return
    */
   public STATUS getStatus();
+
+  /**
+   * Changes record identity from one to another.
+   * 
+   * Second level cache is changed accordingly, but not first level one.
+   * 
+   * Important ! This method for internal use only. Do not call it if you not sure, otherwise your data consistency will be broken.
+   * 
+   * @param originalId
+   *          Id of record which identity should be changed.
+   * @param newId
+   *          New record identity.
+   */
+  public void changeRecordIdentity(final ORID originalId, final ORID newId);
+
+  /**
+   * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
+   */
+  public boolean isLHClustersAreUsed();
 }

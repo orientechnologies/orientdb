@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -278,6 +279,25 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
     } finally {
       releaseSharedLock();
+    }
+  }
+
+  public void setRecordRid(final long iPosition, final ORID rid) throws IOException {
+    if (iPosition < 0)
+      return;
+
+    acquireExclusiveLock();
+    try {
+      final long[] fpos = getRelativePosition(iPosition);
+      final OFile file = files[(int) fpos[0]];
+      long pos = fpos[1] + OBinaryProtocol.SIZE_INT;
+
+      file.writeShort(pos, (short) rid.getClusterId());
+      pos += OBinaryProtocol.SIZE_SHORT;
+
+      file.writeLong(pos, rid.getClusterPosition());
+    } finally {
+      releaseExclusiveLock();
     }
   }
 

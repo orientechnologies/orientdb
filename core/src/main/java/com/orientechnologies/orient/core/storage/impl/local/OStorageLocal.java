@@ -1508,12 +1508,19 @@ public class OStorageLocal extends OStorageEmbedded {
             ppos.recordVersion = iRecordVersion;
           }
         } else {
-          ppos.recordVersion = iRecordVersion;
+          if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion)
+            ppos.recordVersion = iRecordVersion;
+
           ppos.clusterPosition = iRid.clusterPosition;
           while (!iClusterSegment.addPhysicalPosition(ppos)) {
             // iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
+            lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+
             iRid.clusterPosition = positionGenerator++;
             ppos.clusterPosition = iRid.clusterPosition;
+
+            lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+            iDataSegment.setRecordRid(ppos.dataSegmentPos, iRid);
           }
         }
 
@@ -1531,6 +1538,32 @@ public class OStorageLocal extends OStorageEmbedded {
 
       Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, timer);
     }
+  }
+
+  @Override
+  public void changeRecordIdentity(ORID originalId, ORID newId) {
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    lock.acquireExclusiveLock();
+    try {
+      final OPhysicalPosition ppos = moveRecord(originalId, newId);
+
+      final ODataLocal dataLocal = getDataSegmentById(ppos.dataSegmentId);
+      dataLocal.setRecordRid(ppos.dataSegmentPos, newId);
+
+    } catch (IOException e) {
+
+      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, e);
+    } finally {
+      lock.releaseExclusiveLock();
+
+      Orient.instance().getProfiler().stopChrono("db." + name + ".changeRecordIdentity", timer);
+    }
+  }
+
+  @Override
+  public boolean isLHClustersAreUsed() {
+    return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }
 
   @Override

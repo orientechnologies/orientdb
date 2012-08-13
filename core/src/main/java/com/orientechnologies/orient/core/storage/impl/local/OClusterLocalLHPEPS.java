@@ -381,6 +381,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
           break;
       }
 
+      iPPosition.recordVersion = 0;
       if (currentBucket.getSize() < OClusterLocalLHPEBucket.BUCKET_CAPACITY)
         currentBucket.addPhysicalPosition(iPPosition);
       else {
@@ -493,7 +494,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
             // mergeBucketsIfNeeded();
             compressChain(mainBucket, position, offset);
-
           }
         }
 
@@ -665,6 +665,22 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     return new OClusterEntryIterator(this);
   }
 
+  private long getBucketsSize() throws IOException {
+    long sum = 0;
+    for (long i = 0; i < mainBucketsSize; i++) {
+      OClusterLocalLHPEBucket bucket = loadMainBucket(i);
+      sum += bucket.getSize();
+
+      while (bucket.getOverflowBucket() > 0) {
+        bucket = loadOverflowBucket(bucket.getOverflowBucket());
+        sum += bucket.getSize();
+      }
+    }
+
+    clearCache();
+    return sum;
+  }
+
   private long calcPositionToMerge() {
     return mainBucketsSize - pageSize * g - 1;
   }
@@ -756,6 +772,22 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
 
     recordSplitPointer = splittedBuckets.nextClearBit(0);
+
+    OClusterLocalLHPEBucket bucketToMerge = bucketMap.get(bucketsToMerge.get(bucketsToMerge.size() - 1));
+    mainBucketsSize--;
+
+    mainBucketsToStore.remove(bucketToMerge);
+
+    final byte[] empty = new byte[OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES];
+
+    final long filePos = bucketToMerge.getFilePosition();
+
+    final long[] pos = fileSegment.getRelativePosition(filePos);
+
+    final OFile file = fileSegment.files[(int) pos[0]];
+    long p = pos[1];
+
+    file.write(p, empty);
   }
 
   private void clearCache() {
@@ -1031,22 +1063,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     updateMainBucketOverflowChainLength(index, chainLength);
     updateBucketGroupOverflowChainLength(offset, chainLength - prevChainLength);
 
-    if (index == mainBucketsSize - 1 && mainBucket.getSize() == 0 && chainLength == 0) {
-      mainBucketsSize--;
-
-      mainBucketsToStore.remove(mainBucket);
-
-      final byte[] empty = new byte[OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES];
-
-      final long filePos = mainBucket.getFilePosition();
-
-      final long[] pos = fileSegment.getRelativePosition(filePos);
-
-      final OFile file = fileSegment.files[(int) pos[0]];
-      long p = pos[1];
-
-      file.write(p, empty);
-    }
   }
 
   private void putBucketToOverflowList(OClusterLocalLHPEBucket bucket, long index) throws IOException {

@@ -32,7 +32,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -917,7 +916,7 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationAndRidInWhere() {
-    if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+    if (database.getStorage().isLHClustersAreUsed())
       return;
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
