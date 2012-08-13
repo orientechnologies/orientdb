@@ -17,7 +17,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
-import com.orientechnologies.common.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -25,7 +26,6 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import org.testng.Assert;

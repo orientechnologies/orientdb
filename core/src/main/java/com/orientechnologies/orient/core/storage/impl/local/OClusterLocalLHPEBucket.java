@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.types.OBinaryConverter;
-import com.orientechnologies.common.types.OBinaryConverterFactory;
+import com.orientechnologies.common.serialization.OBinaryConverter;
+import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 /**

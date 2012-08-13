@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;

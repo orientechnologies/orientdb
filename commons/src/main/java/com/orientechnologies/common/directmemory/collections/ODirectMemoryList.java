@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.RandomAccess;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 
 /**
  * Implementation of list which uses {@link ODirectMemory} to store data.

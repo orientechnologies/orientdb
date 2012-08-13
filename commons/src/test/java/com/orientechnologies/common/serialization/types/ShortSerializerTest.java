@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
-
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.orient.core.id.ORecordId;
+package com.orientechnologies.common.serialization.types;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -26,30 +22,27 @@ import org.testng.annotations.Test;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
- * @since 07.02.12
+ * @since 18.01.12
  */
-public class LinkSerializerTest {
-  private static final int  FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
-  private ORecordId         OBJECT;
-  private static final int  clusterId  = 5;
-  private static final long position   = 100500L;
-  private OLinkSerializer   linkSerializer;
-  byte[]                    stream     = new byte[FIELD_SIZE];
+public class ShortSerializerTest {
+  private static final int   FIELD_SIZE = 2;
+  private static final Short OBJECT     = 1;
+  private OShortSerializer   shortSerializer;
+  byte[]                     stream     = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
-    OBJECT = new ORecordId(clusterId, position);
-    linkSerializer = new OLinkSerializer();
+    shortSerializer = new OShortSerializer();
   }
 
   @Test
   public void testFieldSize() {
-    Assert.assertEquals(linkSerializer.getObjectSize(null), FIELD_SIZE);
+    Assert.assertEquals(shortSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
   @Test
   public void testSerialize() {
-    linkSerializer.serialize(OBJECT, stream, 0);
-    Assert.assertEquals(linkSerializer.deserialize(stream, 0), OBJECT);
+    shortSerializer.serialize(OBJECT, stream, 0);
+    Assert.assertEquals(shortSerializer.deserialize(stream, 0), OBJECT);
   }
 }

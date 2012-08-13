@@ -16,7 +16,7 @@
 
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 
 /**
  * Abstraction of different kind of implementations of non-GC memory, memory that managed not by GC but directly by application.

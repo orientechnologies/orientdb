@@ -18,9 +18,9 @@ package com.orientechnologies.common.directmemory;
 
 import java.util.Arrays;
 
-import com.orientechnologies.common.types.OBinaryConverter;
-import com.orientechnologies.common.types.OBinaryConverterFactory;
-import com.orientechnologies.common.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.OBinaryConverter;
+import com.orientechnologies.common.serialization.OBinaryConverterFactory;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 
 /**
  * Buddy memory allocation algorithm.

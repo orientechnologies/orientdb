@@ -18,7 +18,7 @@ package com.orientechnologies.orient.test.java.collection;
 
 import com.orientechnologies.common.directmemory.OBuddyMemory;
 import com.orientechnologies.common.directmemory.collections.ODirectMemoryList;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OStringSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
 
 /**
  * @author Andrey Lomakin

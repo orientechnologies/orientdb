@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
+package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.orient.core.id.ORecordId;
+import java.util.Random;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -26,30 +24,35 @@ import org.testng.annotations.Test;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
- * @since 07.02.12
+ * @since 19.01.12
  */
-public class LinkSerializerTest {
-  private static final int  FIELD_SIZE = OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
-  private ORecordId         OBJECT;
-  private static final int  clusterId  = 5;
-  private static final long position   = 100500L;
-  private OLinkSerializer   linkSerializer;
-  byte[]                    stream     = new byte[FIELD_SIZE];
+public class StringSerializerTest {
+  private int               FIELD_SIZE;
+  private String            OBJECT;
+  private OStringSerializer stringSerializer;
+  byte[]                    stream;
 
   @BeforeClass
   public void beforeClass() {
-    OBJECT = new ORecordId(clusterId, position);
-    linkSerializer = new OLinkSerializer();
+    stringSerializer = new OStringSerializer();
+    Random random = new Random();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      sb.append((char) random.nextInt());
+    }
+    OBJECT = sb.toString();
+    FIELD_SIZE = OBJECT.length() * 2 + 4;
+    stream = new byte[FIELD_SIZE];
   }
 
   @Test
   public void testFieldSize() {
-    Assert.assertEquals(linkSerializer.getObjectSize(null), FIELD_SIZE);
+    Assert.assertEquals(stringSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
   @Test
   public void testSerialize() {
-    linkSerializer.serialize(OBJECT, stream, 0);
-    Assert.assertEquals(linkSerializer.deserialize(stream, 0), OBJECT);
+    stringSerializer.serialize(OBJECT, stream, 0);
+    Assert.assertEquals(stringSerializer.deserialize(stream, 0), OBJECT);
   }
 }
