@@ -264,7 +264,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
-      if (compareEntriesForAutomaticIndexes || !indexOne.isAutomatic()) {
+      if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
         final Iterator<Map.Entry<Object, Object>> indexIteratorOne = makeDbCall(databaseDocumentTxOne,
             new ODbRelatedCall<Iterator<Map.Entry<Object, Object>>>() {
               public Iterator<Map.Entry<Object, Object>> call() {

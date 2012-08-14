@@ -47,9 +47,11 @@ public class SQLUpdateTest {
   public void updateWithWhereOperator() {
     database.open("admin", "admin");
 
+    List<Long> positions = getValidPositions(3);
+
     Integer records = (Integer) database.command(
-        new OCommandSQL("update Profile set salary = 120.30, location = 3:2, salary_cloned = salary where surname = 'Obama'"))
-        .execute();
+        new OCommandSQL("update Profile set salary = 120.30, location = 3:" + positions.get(2)
+            + ", salary_cloned = salary where surname = 'Obama'")).execute();
 
     Assert.assertEquals(records.intValue(), 3);
 
@@ -304,7 +306,8 @@ public class SQLUpdateTest {
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 7; i++) {
-      iteratorCluster.hasNext();
+      if (!iteratorCluster.hasNext())
+        break;
       ODocument doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }

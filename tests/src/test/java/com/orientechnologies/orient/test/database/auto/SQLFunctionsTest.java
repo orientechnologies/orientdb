@@ -183,8 +183,9 @@ public class SQLFunctionsTest {
 
       Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
       Assert.assertTrue(((Number) d.field("average")).longValue() >= ((Number) d.field("min")).longValue());
-      Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
-          "Total " + d.field("total") + " max " + d.field("max"));
+      if (!database.getStorage().isLHClustersAreUsed())
+        Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
+            "Total " + d.field("total") + " max " + d.field("max"));
     }
 
     database.close();

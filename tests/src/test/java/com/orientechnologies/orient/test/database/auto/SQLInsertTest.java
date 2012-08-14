@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -45,20 +48,22 @@ public class SQLInsertTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
+    List<Long> positions = getValidPositions(addressId);
+
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
-            + ":3, 'hooray')")).execute();
+            + ":" + positions.get(3) + ", 'hooray')")).execute();
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(doc.field("name"), "Luca");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     doc = (ODocument) database.command(
-        new OCommandSQL("insert into Profile SET name = 'Luca', surname = 'Smith', salary = 109.9, location = #" + addressId
-            + ":3, dummy =  'hooray'")).execute();
+        new OCommandSQL("insert into Profile SET name = 'Luca', surname = 'Smith', salary = 109.9, location = #" + addressId + ":"
+            + positions.get(3) + ", dummy =  'hooray'")).execute();
 
     database.delete(doc);
 
@@ -66,7 +71,7 @@ public class SQLInsertTest {
     Assert.assertEquals(doc.field("name"), "Luca");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.close();
@@ -78,28 +83,30 @@ public class SQLInsertTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
+    List<Long> positions = getValidPositions(addressId);
+
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
-        "Smith", 120.0, new ORecordId(addressId, 3), "hooray");
+        "Smith", 120.0, new ORecordId(addressId, positions.get(3)), "hooray");
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(doc.field("name"), "Marc");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.delete(doc);
 
     doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile SET name = ?, surname = ?, salary = ?, location = ?, dummy = ?")).execute("Marc",
-        "Smith", 120.0, new ORecordId(addressId, 3), "hooray");
+        "Smith", 120.0, new ORecordId(addressId, positions.get(3)), "hooray");
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(doc.field("name"), "Marc");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, 3));
+    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.close();
@@ -250,5 +257,19 @@ public class SQLInsertTest {
     Assert.assertEquals(record.field("user", OType.LINK), new ORecordId("#2:0"));
 
     database.close();
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 100; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+      ORecord doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }
