@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 
-@Test(groups = "db")
+@Test(groups = { "db", "import-export" })
 public class DbImportExportTest implements OCommandOutputListener {
   public static final String EXPORT_FILE_PATH = "target/db.export.gz";
   public static final String NEW_DB_PATH      = "target/test-import";
