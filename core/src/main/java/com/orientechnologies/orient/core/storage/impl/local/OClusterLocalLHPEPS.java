@@ -112,16 +112,26 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   public void configure(OStorage iStorage, int iId, String iClusterName, String iLocation, int iDataSegmentId,
       Object... iParameters) throws IOException {
-    storage = (OStorageLocal) iStorage;
-    config = new OStoragePhysicalClusterLHPEPSConfiguration(iStorage.getConfiguration(), iId, iDataSegmentId);
-    config.name = iClusterName;
-    init(iStorage, iId, iClusterName, iDataSegmentId);
+    acquireExclusiveLock();
+    try {
+      storage = (OStorageLocal) iStorage;
+      config = new OStoragePhysicalClusterLHPEPSConfiguration(iStorage.getConfiguration(), iId, iDataSegmentId);
+      config.name = iClusterName;
+      init(iStorage, iId, iClusterName, iDataSegmentId);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
-    config = (OStoragePhysicalClusterLHPEPSConfiguration) iConfig;
-    storage = (OStorageLocal) iStorage;
-    init(iStorage, config.getId(), config.getName(), config.getDataSegmentId());
+    acquireExclusiveLock();
+    try {
+      config = (OStoragePhysicalClusterLHPEPSConfiguration) iConfig;
+      storage = (OStorageLocal) iStorage;
+      init(iStorage, config.getId(), config.getName(), config.getDataSegmentId());
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   public void create(int iStartSize) throws IOException {
@@ -155,6 +165,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
       deserializeState();
 
+      clearCache();
     } finally {
       releaseExclusiveLock();
     }
@@ -431,11 +442,33 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       if (entryPosition < 0 || entryPosition > mainBucketsSize - 1)
         return new OPhysicalPosition[0];
 
-      final OClusterLocalLHPEBucket bucket = loadMainBucket(entryPosition);
+      OClusterLocalLHPEBucket bucket = loadMainBucket(entryPosition);
 
-      final OPhysicalPosition[] result = new OPhysicalPosition[bucket.getSize()];
-      for (int i = 0; i < result.length; i++)
-        result[i] = bucket.getPhysicalPosition(i);
+      int sum = 0;
+      while (true) {
+        sum += bucket.getSize();
+
+        if (bucket.getOverflowBucket() > -1)
+          bucket = loadOverflowBucket(bucket.getOverflowBucket());
+        else
+          break;
+      }
+
+      OPhysicalPosition[] result = new OPhysicalPosition[sum];
+      int pos = 0;
+      bucket = loadMainBucket(entryPosition);
+
+      while (true) {
+        for (int i = 0; i < bucket.getSize(); i++) {
+          result[pos] = bucket.getPhysicalPosition(i);
+          pos++;
+        }
+
+        if (bucket.getOverflowBucket() > -1)
+          bucket = loadOverflowBucket(bucket.getOverflowBucket());
+        else
+          break;
+      }
 
       return result;
 
@@ -491,9 +524,10 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
             currentBucket.removePhysicalPosition(i);
 
             size--;
-
-            // mergeBucketsIfNeeded();
+            mergeBucketsIfNeeded();
             compressChain(mainBucket, position, offset);
+
+            break;
           }
         }
 
@@ -561,19 +595,34 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public long getEntries() {
-    return size;
+    acquireSharedLock();
+    try {
+      return size;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public long getFirstEntryPosition() {
-    if (size == 0)
-      return -1;
-    return 0;
+    acquireSharedLock();
+    try {
+      if (size == 0)
+        return -1;
+      return 0;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public long getLastEntryPosition() {
-    if (size == 0)
-      return -1;
-    return mainBucketsSize - 1;
+    acquireSharedLock();
+    try {
+      if (size == 0)
+        return -1;
+      return mainBucketsSize - 1;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public void lock() {
@@ -663,22 +712,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   public OClusterEntryIterator absoluteIterator() {
     return new OClusterEntryIterator(this);
-  }
-
-  private long getBucketsSize() throws IOException {
-    long sum = 0;
-    for (long i = 0; i < mainBucketsSize; i++) {
-      OClusterLocalLHPEBucket bucket = loadMainBucket(i);
-      sum += bucket.getSize();
-
-      while (bucket.getOverflowBucket() > 0) {
-        bucket = loadOverflowBucket(bucket.getOverflowBucket());
-        sum += bucket.getSize();
-      }
-    }
-
-    clearCache();
-    return sum;
   }
 
   private long calcPositionToMerge() {

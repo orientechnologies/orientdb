@@ -111,6 +111,8 @@
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <arg value="./shutdown.sh"/>
         </exec>
+
+        <sleep seconds="10"/>
     </target>
 
     <target name="test-remote-lh" depends="test-init" if="${fullTest}">
@@ -153,6 +155,7 @@
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <arg value="./shutdown.sh"/>
         </exec>
+        <sleep seconds="10"/>
     </target>
 
 

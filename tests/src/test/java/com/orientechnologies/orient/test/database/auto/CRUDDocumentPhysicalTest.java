@@ -82,9 +82,10 @@ public class CRUDDocumentPhysicalTest {
       startRecordNumber = database.countClusterElements("Account");
 
       // DELETE ALL THE RECORDS IN THE CLUSTER
-      for (ODocument rec : database.browseCluster("Account"))
-        if (rec != null)
-          rec.delete();
+      while (database.countClusterElements("Account") > 0)
+        for (ODocument rec : database.browseCluster("Account"))
+          if (rec != null)
+            rec.delete();
 
       Assert.assertEquals(database.countClusterElements("Account"), 0);
     } finally {

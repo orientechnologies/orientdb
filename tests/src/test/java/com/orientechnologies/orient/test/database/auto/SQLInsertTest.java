@@ -242,9 +242,11 @@ public class SQLInsertTest {
   public void updateMultipleFields() {
     database.open("admin", "admin");
 
+    List<Long> positions = getValidPositions(2);
+
     OIdentifiable result = database.command(
-        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #2:0"))
-        .execute();
+        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #2:"
+            + positions.get(0))).execute();
     Assert.assertNotNull(result);
 
     ODocument record = result.getRecord();
@@ -254,7 +256,7 @@ public class SQLInsertTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId("#2:0"));
+    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(2, +positions.get(0)));
 
     database.close();
   }
