@@ -79,7 +79,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
     if (!parserIsEnded()) {
       if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP)) {
-        final String w = tempResult.toString();
+        final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
         else if (w.equals(KEYWORD_SKIP))
