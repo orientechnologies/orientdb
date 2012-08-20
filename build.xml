@@ -41,43 +41,43 @@
         <fileset dir="tests" includes="build.xml"/>
       </subant>
 
-      <echo>___ ___ ____ _</echo>
-      <echo>.' `.|_ ||_ _| | |</echo>
-      <echo>/ .-. \ | |_/ / | |</echo>
-      <echo>| | | | | __'. |_|</echo>
-      <echo>\ `-' /_| | \ \_ _</echo>
-      <echo>`.___.'|____||____| (_)</echo>
+      <echo>   ___   ___  ____    _  </echo>  
+   		<echo> .'   `.|_  ||_  _|  | | </echo>
+  		<echo>/  .-.  \ | |_/ /    | | </echo>
+  		<echo>| |   | | |  __'.    |_| </echo>
+  		<echo>\  `-'  /_| |  \ \_   _  </echo>
+  		<echo> `.___.'|____||____| (_) </echo>
     </sequential>
-
+    
   </macrodef>
-
-  <target name="init">
-    <echo>.</echo>
-    <echo>.` `</echo>
-    <echo>, `:.</echo>
-    <echo>`,` ,:`</echo>
-    <echo>.,. :,,</echo>
-    <echo>.,, ,,,</echo>
-    <echo>. .,.::::: ````</echo>
-    <echo>,` .::,,,,::.,,,,,,`;; .:</echo>
-    <echo>`,. ::,,,,,,,:.,,.` ` .:</echo>
-    <echo>,,:,:,,,,,,,,::. ` ` `` .:</echo>
-    <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` ::::</echo>
-    <echo>,:,,,,,,,,,,::,: ,, :. : :: : .:</echo>
-    <echo>:,,,,,,,,,,:,:: ,, : : : : .:</echo>
-    <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .:</echo>
-    <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .:</echo>
-    <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .:</echo>
-    <echo>...,::,,,,::.. `: .,, :, : : : .:</echo>
-    <echo>,::::,,,. `: ,, ::::: : : .:</echo>
-    <echo>,,:` `,,.</echo>
-    <echo>,,, .,`</echo>
-    <echo>,,. `, D A T A B A S E</echo>
-    <echo>`` `.</echo>
-    <echo>``</echo>
-    <echo>`</echo>
-    <echo></echo>
-
+  
+	<target name="init">
+    <echo>           .                                              </echo>
+    <echo>          .`        `                                     </echo>
+    <echo>          ,      `:.                                      </echo>
+    <echo>         `,`    ,:`                                       </echo>
+    <echo>         .,.   :,,                                        </echo>
+    <echo>         .,,  ,,,                                         </echo>
+    <echo>    .    .,.:::::  ````                                   </echo>
+    <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:      </echo>
+    <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:      </echo>
+    <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:      </echo>
+    <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     </echo>
+    <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      </echo>
+    <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      </echo>
+    <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      </echo>
+    <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      </echo>
+    <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      </echo>
+    <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      </echo>
+    <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:      </echo>
+    <echo>           ,,:` `,,.                                      </echo>
+    <echo>          ,,,    .,`                                      </echo>
+    <echo>         ,,.     `,                 D A T A B A S E       </echo>
+    <echo>       ``        `.                                       </echo>
+    <echo>                 ``                                       </echo>
+    <echo>                 `                                        </echo>
+    <echo>                                                          </echo>
+  
     <mkdir dir="${global.release}"/>
     <mkdir dir="${db.release}"/>
     <mkdir dir="${db.release}/log"/>
