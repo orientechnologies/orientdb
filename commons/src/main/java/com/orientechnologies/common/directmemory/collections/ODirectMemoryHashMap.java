@@ -40,20 +40,19 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 13.08.12
  */
 public class ODirectMemoryHashMap<K, V> {
-  private static final int           SEED                     = 362498820;
+  private static final int           SEED             = 362498820;
 
-  private static int                 BUCKET_SIZE              = 8;
-  private static final int           INITIAL_CAPACITY         = 1024;
+  private static int                 BUCKET_SIZE      = 8;
+  private static final int           INITIAL_CAPACITY = 1024;
 
-  private static final int           HASH_LINE_POINTER_OFFSET = OIntegerSerializer.INT_SIZE + BUCKET_SIZE
-                                                                  * (OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
-  private static final int           HASH_LINE_SIZE           = BUCKET_SIZE
-                                                                  * (OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE)
-                                                                  + 2 * OIntegerSerializer.INT_SIZE;
+  private final int                  hashLineSize;
 
   private final ODirectMemory        memory;
   private final OBinarySerializer<V> valueSerializer;
   private final OBinarySerializer<K> keySerializer;
+
+  private final int                  bucketSize;
+  private final int                  hashLinePointerOffset;
 
   private long                       size;
   private long                       capacity;
@@ -62,16 +61,22 @@ public class ODirectMemoryHashMap<K, V> {
   private int                        entries;
 
   public ODirectMemoryHashMap(ODirectMemory memory, OBinarySerializer<V> valueSerializer, OBinarySerializer<K> keySerializer) {
-    this(memory, valueSerializer, keySerializer, INITIAL_CAPACITY);
+    this(memory, valueSerializer, keySerializer, INITIAL_CAPACITY, BUCKET_SIZE);
   }
 
   public ODirectMemoryHashMap(ODirectMemory memory, OBinarySerializer<V> valueSerializer, OBinarySerializer<K> keySerializer,
-      long initialCapacity) {
+      long initialCapacity, int bucketSize) {
     this.memory = memory;
     this.valueSerializer = valueSerializer;
     this.keySerializer = keySerializer;
 
     size = 0;
+
+    this.bucketSize = bucketSize;
+    this.hashLinePointerOffset = OIntegerSerializer.INT_SIZE + bucketSize
+        * (OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+    this.hashLineSize = bucketSize * (OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE) + 2
+        * OIntegerSerializer.INT_SIZE;
 
     capacity = initialCapacity;
     nextThreshold = (long) (capacity * 0.75);
@@ -81,15 +86,15 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private boolean allocateInitialMemory(long capacity) {
-    final long hashAllocationSize = capacity * HASH_LINE_SIZE;
+    final long hashAllocationSize = capacity * hashLineSize;
 
     final int entriesPtr = memory.allocate((int) hashAllocationSize);
     if (entriesPtr == ODirectMemory.NULL_POINTER)
       return false;
 
     for (long i = 0; i < capacity; i++) {
-      memory.setInt(entriesPtr, (int) i * HASH_LINE_SIZE, 0);
-      memory.setInt(entriesPtr, (int) (i * HASH_LINE_SIZE + HASH_LINE_POINTER_OFFSET), ODirectMemory.NULL_POINTER);
+      memory.setInt(entriesPtr, (int) i * hashLineSize, 0);
+      memory.setInt(entriesPtr, (int) (i * hashLineSize + hashLinePointerOffset), ODirectMemory.NULL_POINTER);
     }
 
     entries = entriesPtr;
@@ -128,7 +133,7 @@ public class ODirectMemoryHashMap<K, V> {
       hashLineLoop: for (int i = 0; i < hashLineSize; i++) {
         final long currentHash = getHashCodeFromHashLine(hashLinePtr, i);
         if (currentHash == hashCode) {
-          final byte[] currentKey = getKeyFromHashLine(entries, i);
+          final byte[] currentKey = getKeyFromHashLine(hashLinePtr, i);
           if (currentKey.length != serializedKey.length)
             continue;
 
@@ -185,7 +190,7 @@ public class ODirectMemoryHashMap<K, V> {
       hashLineLoop: for (int i = 0; i < hashLineSize; i++) {
         final long currentHash = getHashCodeFromHashLine(hashLinePtr, i);
         if (currentHash == hashCode) {
-          final byte[] currentKey = getKeyFromHashLine(entries, i);
+          final byte[] currentKey = getKeyFromHashLine(hashLinePtr, i);
           if (currentKey.length != serializedKey.length)
             continue;
 
@@ -199,7 +204,7 @@ public class ODirectMemoryHashMap<K, V> {
 
           memory.set(valuePtr, 0, value, valueSerializer);
 
-          return replaceValueInHashLine(entries, i, valuePtr);
+          return replaceValueInHashLine(hashLinePtr, i, valuePtr);
         }
       }
 
@@ -362,7 +367,7 @@ public class ODirectMemoryHashMap<K, V> {
     if (currentHashLinePtr == ODirectMemory.NULL_POINTER) {
       int hashLineSize = getHashLineSize(entries, index);
 
-      if (hashLineSize < BUCKET_SIZE)
+      if (hashLineSize < bucketSize)
         addEntry(entries, index, hashLineSize, hashCode, keyPtr, valuePtr);
       else {
         int hashLinePtr = addHashLine(entries, index);
@@ -375,7 +380,7 @@ public class ODirectMemoryHashMap<K, V> {
     } else {
       int hashLineSize = getHashLineSizeFromHashLine(currentHashLinePtr);
 
-      if (hashLineSize < BUCKET_SIZE)
+      if (hashLineSize < bucketSize)
         addEntryInHashLine(currentHashLinePtr, hashLineSize, hashCode, keyPtr, valuePtr);
       else {
         int hashLinePtr = addHashLineInHashLine(currentHashLinePtr);
@@ -394,7 +399,7 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private int getHashLineSize(int ptr, long index) {
-    final long memoryOffset = index * HASH_LINE_SIZE;
+    final long memoryOffset = index * hashLineSize;
     return memory.getInt(ptr, (int) memoryOffset);
   }
 
@@ -403,50 +408,50 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private long getHashCode(int ptr, long index, int offset) {
-    final long memoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + offset * OLongSerializer.LONG_SIZE;
+    final long memoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + offset * OLongSerializer.LONG_SIZE;
     return memory.getLong(ptr, (int) memoryOffset);
   }
 
   private long getHashCodeFromHashLine(int hashLinePtr, long offset) {
     final long memoryOffset = OIntegerSerializer.INT_SIZE + offset * OLongSerializer.LONG_SIZE;
-    return memory.getInt(hashLinePtr, (int) memoryOffset);
+    return memory.getLong(hashLinePtr, (int) memoryOffset);
   }
 
   private int getNextHashLinePtr(int ptr, long index) {
-    final long memoryOffset = index * HASH_LINE_SIZE + HASH_LINE_POINTER_OFFSET;
+    final long memoryOffset = index * hashLineSize + hashLinePointerOffset;
 
     return memory.getInt(ptr, (int) memoryOffset);
   }
 
   private int getNextHashLinePtrFromHashLine(int hashLinePtr) {
-    final long memoryOffset = HASH_LINE_POINTER_OFFSET;
+    final long memoryOffset = hashLinePointerOffset;
     return memory.getInt(hashLinePtr, (int) memoryOffset);
   }
 
   private int addHashLine(int ptr, long index) {
-    final int hashLinePtr = memory.allocate(HASH_LINE_SIZE);
+    final int hashLinePtr = memory.allocate(hashLineSize);
 
     if (hashLinePtr == ODirectMemory.NULL_POINTER)
       return hashLinePtr;
 
     memory.setInt(hashLinePtr, 0, 0);
-    memory.setInt(hashLinePtr, HASH_LINE_POINTER_OFFSET, ODirectMemory.NULL_POINTER);
+    memory.setInt(hashLinePtr, hashLinePointerOffset, ODirectMemory.NULL_POINTER);
 
-    memory.setInt(ptr, (int) (index * HASH_LINE_SIZE + HASH_LINE_POINTER_OFFSET), hashLinePtr);
+    memory.setInt(ptr, (int) (index * hashLineSize + hashLinePointerOffset), hashLinePtr);
 
     return hashLinePtr;
   }
 
   private int addHashLineInHashLine(int ptr) {
-    final int hashLinePtr = memory.allocate(HASH_LINE_SIZE);
+    final int hashLinePtr = memory.allocate(hashLineSize);
 
     if (hashLinePtr == ODirectMemory.NULL_POINTER)
       return hashLinePtr;
 
     memory.setInt(hashLinePtr, 0, 0);
-    memory.setInt(hashLinePtr, HASH_LINE_POINTER_OFFSET, ODirectMemory.NULL_POINTER);
+    memory.setInt(hashLinePtr, hashLinePointerOffset, ODirectMemory.NULL_POINTER);
 
-    memory.setInt(ptr, HASH_LINE_POINTER_OFFSET, hashLinePtr);
+    memory.setInt(ptr, hashLinePointerOffset, hashLinePtr);
 
     return hashLinePtr;
   }
@@ -459,7 +464,7 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private int getKeyPtr(int ptr, long index, int offset) {
-    final long memoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2
+    final long memoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2
         * offset * OIntegerSerializer.INT_SIZE;
 
     return memory.getInt(ptr, (int) memoryOffset);
@@ -473,7 +478,7 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private int getKeyPtrFromHashLine(int ptr, int offset) {
-    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2 * offset
+    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2 * offset
         * OIntegerSerializer.INT_SIZE;
 
     return memory.getInt(ptr, (int) memoryOffset);
@@ -486,7 +491,7 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private int getValuePtr(int ptr, long index, int offset) {
-    final long memoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2
+    final long memoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2
         * offset * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
 
     return memory.getInt(ptr, (int) memoryOffset);
@@ -499,14 +504,14 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private int getValuePtrFromHashLine(int ptr, int offset) {
-    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2 * offset
+    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2 * offset
         * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
 
     return memory.getInt(ptr, (int) memoryOffset);
   }
 
   private boolean replaceValue(int ptr, long index, int offset, int valuePtr) {
-    final long memoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2
+    final long memoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2
         * offset * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
 
     final int oldValuePtr = memory.getInt(ptr, (int) memoryOffset);
@@ -518,7 +523,7 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private boolean replaceValueInHashLine(int ptr, int offset, int valuePtr) {
-    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + 2 * offset
+    final long memoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + 2 * offset
         * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
 
     final int oldValuePtr = memory.getInt(ptr, (int) memoryOffset);
@@ -530,22 +535,22 @@ public class ODirectMemoryHashMap<K, V> {
   }
 
   private void addEntry(int ptr, long index, int offset, long hashCode, int keyPtr, int valuePtr) {
-    final long hashCodeMemoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * offset;
+    final long hashCodeMemoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * offset;
 
-    final long keyMemoryOffset = index * HASH_LINE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE
+    final long keyMemoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize
         + offset * 2 * OIntegerSerializer.INT_SIZE;
     final long valueMemoryOffset = keyMemoryOffset + OIntegerSerializer.INT_SIZE;
 
     memory.setLong(ptr, (int) hashCodeMemoryOffset, hashCode);
     memory.setInt(ptr, (int) keyMemoryOffset, keyPtr);
     memory.setInt(ptr, (int) valueMemoryOffset, valuePtr);
-    memory.setInt(ptr, (int) index * HASH_LINE_SIZE, offset + 1);
+    memory.setInt(ptr, (int) index * hashLineSize, offset + 1);
   }
 
   private void addEntryInHashLine(int hashLinePtr, int offset, long hashCode, int keyPtr, int valuePtr) {
     final long hashCodeMemoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * offset;
 
-    final long keyMemoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * BUCKET_SIZE + offset * 2
+    final long keyMemoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + offset * 2
         * OIntegerSerializer.INT_SIZE;
     final long valueMemoryOffset = keyMemoryOffset + OIntegerSerializer.INT_SIZE;
 

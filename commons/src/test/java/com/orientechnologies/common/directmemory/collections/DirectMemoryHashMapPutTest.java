@@ -40,7 +40,7 @@ public class DirectMemoryHashMapPutTest {
   @BeforeMethod
   public void setUp() {
     memory = new OBuddyMemory(16000000, 32);
-    hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 2);
+    hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 2, 2);
   }
 
   public void testAddOneItem() {
@@ -139,9 +139,9 @@ public class DirectMemoryHashMapPutTest {
     final Random random = new Random();
 
     for (int i = 0; i < 10000; i++) {
-      int clusterId = random.nextInt(32767);
+      int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
-        clusterId = random.nextInt(32767);
+        clusterId = random.nextInt();
 
       final int pointer = random.nextInt();
 
@@ -160,9 +160,9 @@ public class DirectMemoryHashMapPutTest {
     final Random random = new Random();
 
     for (int i = 0; i < 10000; i++) {
-      int clusterId = random.nextInt(32767);
+      int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
-        clusterId = random.nextInt(32767);
+        clusterId = random.nextInt();
 
       final int pointer = random.nextInt();
 
