@@ -303,7 +303,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     String fieldKey;
     String fieldValue;
 
-    while (!parserIsEnded() && (setEntries.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')
+    while (!parserIsEnded() && (putEntries.size() == 0 || parserGetLastSeparator() == ',' || parserGetCurrentChar() == ',')
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");

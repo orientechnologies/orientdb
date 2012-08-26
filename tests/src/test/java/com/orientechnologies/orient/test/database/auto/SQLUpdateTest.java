@@ -155,6 +155,39 @@ public class SQLUpdateTest {
     database.close();
   }
 
+    @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
+    public void updateMapsWithPutOperatorAndWhere() {
+      database.open("admin", "admin");
+
+      ODocument doc = (ODocument) database
+          .command(
+              new OCommandSQL(
+                  "insert into cluster:default (equaledges, name, properties) values ('no', 'updateMapsWithPutOperatorAndWhere', {} )"))
+          .execute();
+
+      Integer records = (Integer) database.command(
+          new OCommandSQL("update " + doc.getIdentity()
+              + " put properties = 'one', 'two' where name = 'updateMapsWithPutOperatorAndWhere'")).execute();
+
+      Assert.assertEquals(records.intValue(), 1);
+
+      ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
+
+      Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
+
+      @SuppressWarnings("unchecked")
+      Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
+      Assert.assertEquals(entries.size(), 1);
+
+      Assert.assertNull(entries.get("round"));
+      Assert.assertNull(entries.get("blaaa"));
+
+      Assert.assertEquals(entries.get("one"), "two");
+
+      database.close();
+    }
+
+
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateAllOperator() {
     database.open("admin", "admin");
