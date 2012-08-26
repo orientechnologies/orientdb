@@ -236,7 +236,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     if (errorReason == null) {
       errorReason = OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION;
-      OLogManager.instance().error(this, "Internal server error", e);
+      OLogManager.instance().error(this, "Internal server error:\n%s", errorMessage);
     }
 
     try {
@@ -506,7 +506,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       readAllContent(request);
     } finally {
       if (connection.data.lastCommandReceived > -1)
-        Orient.instance().getProfiler().stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
+        Orient.instance().getProfiler()
+            .stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
     }
   }
 
