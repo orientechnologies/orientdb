@@ -39,7 +39,7 @@ public class DirectMemoryHashMapRemoveTest {
 
   @BeforeMethod
   public void setUp() {
-    memory = new OBuddyMemory(160000000, 32);
+    memory = new OBuddyMemory(16000000, 32);
     hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 8, 2);
   }
 
@@ -168,11 +168,11 @@ public class DirectMemoryHashMapRemoveTest {
     Assert.assertEquals(2, hashMap.size());
   }
 
-  public void testRemove100000RandomItems() {
+  public void testRemove10000RandomItems() {
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 1000; i++) {
       int clusterId = random.nextInt(32767);
       while (addedItems.containsKey(clusterId))
         clusterId = random.nextInt(32767);
@@ -190,11 +190,11 @@ public class DirectMemoryHashMapRemoveTest {
     Assert.assertEquals(0, hashMap.size());
   }
 
-  public void testAdd100000RandomItemsRemoveHalf() {
+  public void testAdd10000RandomItemsRemoveHalf() {
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 1000; i++) {
       int clusterId = random.nextInt(32767);
       while (addedItems.containsKey(clusterId))
         clusterId = random.nextInt(32767);

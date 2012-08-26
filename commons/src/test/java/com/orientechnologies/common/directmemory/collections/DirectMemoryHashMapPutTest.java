@@ -39,7 +39,7 @@ public class DirectMemoryHashMapPutTest {
 
   @BeforeMethod
   public void setUp() {
-    memory = new OBuddyMemory(160000000, 32);
+    memory = new OBuddyMemory(16000000, 32);
     hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 2, 2);
   }
 
@@ -134,11 +134,11 @@ public class DirectMemoryHashMapPutTest {
     Assert.assertEquals(4, hashMap.size());
   }
 
-  public void testAdd100000RandomItems() {
+  public void testAdd10000RandomItems() {
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 10000; i++) {
       int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
         clusterId = random.nextInt();
@@ -152,14 +152,14 @@ public class DirectMemoryHashMapPutTest {
     for (Map.Entry<Integer, Integer> addedItem : addedItems.entrySet())
       Assert.assertEquals(addedItem.getValue().intValue(), (int) hashMap.get(addedItem.getKey()));
 
-    Assert.assertEquals(100000, hashMap.size());
+    Assert.assertEquals(10000, hashMap.size());
   }
 
-  public void testAdd100000RandomItemsUpdateHalf() {
+  public void testAdd10000RandomItemsUpdateHalf() {
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 10000; i++) {
       int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
         clusterId = random.nextInt();
@@ -178,6 +178,6 @@ public class DirectMemoryHashMapPutTest {
     for (Map.Entry<Integer, Integer> addedItem : addedItems.entrySet())
       Assert.assertEquals(addedItem.getValue().intValue(), (int) hashMap.get(addedItem.getKey()));
 
-    Assert.assertEquals(100000, hashMap.size());
+    Assert.assertEquals(10000, hashMap.size());
   }
 }
