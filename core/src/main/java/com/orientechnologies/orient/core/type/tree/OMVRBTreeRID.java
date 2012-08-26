@@ -17,10 +17,16 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
@@ -28,6 +34,9 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,12 +49,15 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * Persistent MVRB-Tree Set implementation.
  * 
  */
-public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> {
-  private IdentityHashMap<ORecord<?>, Object> newEntries;
-  private boolean                             autoConvertToRecord = true;
+public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements
+    OTrackedMultiValue<OIdentifiable, OIdentifiable> {
+  private IdentityHashMap<ORecord<?>, Object>                          newEntries;
+  private boolean                                                      autoConvertToRecord = true;
+  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
+                                                                                               .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
-  private static final Object                 NEWMAP_VALUE        = new Object();
-  private static final long                   serialVersionUID    = 1L;
+  private static final Object                                          NEWMAP_VALUE        = new Object();
+  private static final long                                            serialVersionUID    = 1L;
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
     this();
@@ -87,6 +99,12 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   @Override
+  public OMVRBTreePersistent<OIdentifiable, OIdentifiable> setOwner(final ORecord<?> owner) {
+    super.setOwner(owner);
+    return this;
+  }
+
+  @Override
   public OMVRBTreePersistent<OIdentifiable, OIdentifiable> load() {
     newEntries = null;
     super.load();
@@ -115,7 +133,13 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       return null;
     }
 
-    return super.internalPut(e, null);
+    final OIdentifiable oldValue = super.internalPut(e, null);
+
+    if (oldValue != null)
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+          e, v, oldValue));
+
+    return oldValue;
   }
 
   public void putAll(final Collection<OIdentifiable> coll) {
@@ -150,6 +174,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       } else
         removed = null;
     }
+
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
+        (OIdentifiable) o, null, (OIdentifiable) o));
 
     return removed;
   }
@@ -198,7 +225,21 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       newEntries = null;
     }
     setDirty();
+
+    final Map<OIdentifiable, OIdentifiable> origValues;
+    if (changeListeners.isEmpty())
+      origValues = null;
+    else
+      origValues = new HashMap<OIdentifiable, OIdentifiable>(this);
+
     super.clear();
+
+    if (origValues != null) {
+      for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet())
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
+    } else
+      setDirty();
   }
 
   public boolean detach() {
@@ -451,5 +492,55 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   public IdentityHashMap<ORecord<?>, Object> getTemporaryEntries() {
     return newEntries;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    setDirty();
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
+  }
+
+  @Override
+  public void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    changeListeners.add(changeListener);
+  }
+
+  @Override
+  public void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    changeListeners.remove(changeListener);
+  }
+
+  @Override
+  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> changeEvents) {
+    final Map<OIdentifiable, OIdentifiable> reverted = new HashMap<OIdentifiable, OIdentifiable>(this);
+
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = changeEvents.listIterator(changeEvents
+        .size());
+
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
+      switch (event.getChangeType()) {
+      case ADD:
+        reverted.remove(event.getKey());
+        break;
+      case REMOVE:
+        reverted.put(event.getKey(), event.getOldValue());
+        break;
+      case UPDATE:
+        reverted.put(event.getKey(), event.getOldValue());
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+      }
+    }
+
+    return reverted;
+  }
+
+  @Override
+  public Class<?> getGenericClass() {
+    return null;
   }
 }

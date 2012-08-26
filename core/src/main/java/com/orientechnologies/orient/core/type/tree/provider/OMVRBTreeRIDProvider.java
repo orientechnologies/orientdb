@@ -209,7 +209,6 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
         setEmbeddedStreaming(false);
         value = firstChar == OStringSerializerHelper.EMBEDDED_BEGIN ? value.substring(1, value.length() - 1) : value.toString();
         fromStream(value.getBytes());
-        tree.load();
       }
     } finally {
       marshalling = false;
@@ -291,6 +290,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     if (iDocument.field("keySize") != null)
       keySize = iDocument.<Integer> field("keySize");
 
+    tree.load();
+    
     final Collection<OIdentifiable> tempEntries = iDocument.field("tempEntries");
     if (tempEntries != null && !tempEntries.isEmpty())
       for (OIdentifiable entry : tempEntries)

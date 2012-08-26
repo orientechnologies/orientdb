@@ -930,12 +930,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               iTx.clearRecordEntries();
 
-              if (tmpEntries.size() > 0)
+              if (tmpEntries.size() > 0){
                 for (ORecordOperation txEntry : tmpEntries) {
                   commitEntry(network, txEntry);
                   committedEntries.add(txEntry);
                 }
-
+                tmpEntries.clear();
+              }
             }
           } else if (committedEntries.size() > 0) {
             for (ORecordOperation txEntry : committedEntries)
