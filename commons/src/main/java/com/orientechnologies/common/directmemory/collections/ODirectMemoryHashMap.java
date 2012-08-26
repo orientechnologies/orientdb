@@ -150,6 +150,168 @@ public class ODirectMemoryHashMap<K, V> {
     return null;
   }
 
+  public V remove(K key) {
+    final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+    keySerializer.serialize(key, serializedKey, 0);
+
+    final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
+    final long index = index(hashCode);
+
+    int hashLineSize = getHashLineSize(entries, index);
+
+    mainHashLoop: for (int i = 0; i < hashLineSize; i++) {
+      final long currentHash = getHashCode(entries, index, i);
+
+      if (currentHash == hashCode) {
+        final byte[] currentKey = getKey(entries, index, i);
+        if (currentKey.length != serializedKey.length)
+          continue;
+
+        for (int j = 0; j < currentKey.length; j++)
+          if (serializedKey[j] != currentKey[j])
+            continue mainHashLoop;
+
+        V removedValue = getValue(entries, index, i);
+
+        final int removedKeyPtr = getKeyPtr(entries, index, i);
+        final int removedValuePtr = getValuePtr(entries, index, i);
+
+        memory.free(removedValuePtr);
+        memory.free(removedKeyPtr);
+
+        int prevPrevLastHashLinePtr = ODirectMemory.NULL_POINTER;
+        int prevLastHashLinePtr = ODirectMemory.NULL_POINTER;
+        int lastHashLinePtr = getNextHashLinePtr(entries, index);
+        while (lastHashLinePtr != ODirectMemory.NULL_POINTER) {
+          prevPrevLastHashLinePtr = prevLastHashLinePtr;
+          prevLastHashLinePtr = lastHashLinePtr;
+          lastHashLinePtr = getNextHashLinePtrFromHashLine(lastHashLinePtr);
+        }
+
+        lastHashLinePtr = prevLastHashLinePtr;
+        prevLastHashLinePtr = prevPrevLastHashLinePtr;
+
+        if (lastHashLinePtr != ODirectMemory.NULL_POINTER) {
+          final int lastHashLineSize = getHashLineSizeFromHashLine(lastHashLinePtr);
+
+          final long replaceHashCode = getHashCodeFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+          final int keyPtr = getKeyPtrFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+          final int valuePtr = getValuePtrFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+
+          replaceEntry(entries, index, i, replaceHashCode, keyPtr, valuePtr);
+          setSizeInHashLine(lastHashLinePtr, lastHashLineSize - 1);
+
+          if (lastHashLineSize == 1) {
+            memory.free(lastHashLinePtr);
+
+            if (prevLastHashLinePtr != ODirectMemory.NULL_POINTER)
+              clearHashLinePtrInHashLine(prevLastHashLinePtr);
+            else
+              clearHashLinePtr(entries, index);
+          }
+        } else {
+          if (hashLineSize == 1)
+            setSize(entries, index, 0);
+          else {
+            if (hashLineSize - 1 != i) {
+              final int keyPtr = getKeyPtr(entries, index, hashLineSize - 1);
+              final int valuePtr = getValuePtr(entries, index, hashLineSize - 1);
+              final long replaceHashCode = getHashCode(entries, index, hashLineSize - 1);
+
+              setSize(entries, index, hashLineSize - 1);
+              replaceEntry(entries, index, i, replaceHashCode, keyPtr, valuePtr);
+            } else
+              setSize(entries, index, hashLineSize - 1);
+          }
+        }
+
+        size--;
+        return removedValue;
+      }
+    }
+
+    int prevHashLine = ODirectMemory.NULL_POINTER;
+    int hashLinePtr = getNextHashLinePtr(entries, index);
+    while (hashLinePtr != ODirectMemory.NULL_POINTER) {
+      hashLineSize = getHashLineSizeFromHashLine(hashLinePtr);
+
+      hashLineLoop: for (int i = 0; i < hashLineSize; i++) {
+        final long currentHash = getHashCodeFromHashLine(hashLinePtr, i);
+
+        if (currentHash == hashCode) {
+          final byte[] currentKey = getKeyFromHashLine(hashLinePtr, i);
+          if (currentKey.length != serializedKey.length)
+            continue;
+
+          for (int j = 0; j < currentKey.length; j++)
+            if (serializedKey[j] != currentKey[j])
+              continue hashLineLoop;
+
+          V removedValue = getValueFromHashLine(hashLinePtr, i);
+
+          final int removedKeyPtr = getKeyPtrFromHashLine(hashLinePtr, i);
+          final int removedValuePtr = getValuePtrFromHashLine(hashLinePtr, i);
+
+          memory.free(removedValuePtr);
+          memory.free(removedKeyPtr);
+
+          int prevPrevLastHashLinePtr = ODirectMemory.NULL_POINTER;
+          int prevLastHashLinePtr = ODirectMemory.NULL_POINTER;
+          int lastHashLinePtr = getNextHashLinePtr(entries, index);
+
+          while (lastHashLinePtr != ODirectMemory.NULL_POINTER) {
+            prevPrevLastHashLinePtr = prevLastHashLinePtr;
+            prevLastHashLinePtr = lastHashLinePtr;
+            lastHashLinePtr = getNextHashLinePtrFromHashLine(lastHashLinePtr);
+          }
+
+          lastHashLinePtr = prevLastHashLinePtr;
+          prevLastHashLinePtr = prevPrevLastHashLinePtr;
+
+          if (lastHashLinePtr != hashLinePtr) {
+            final int lastHashLineSize = getHashLineSizeFromHashLine(lastHashLinePtr);
+
+            final long replaceHashCode = getHashCodeFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+            final int keyPtr = getKeyPtrFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+            final int valuePtr = getValuePtrFromHashLine(lastHashLinePtr, lastHashLineSize - 1);
+
+            replaceEntryInHashLine(hashLinePtr, i, replaceHashCode, keyPtr, valuePtr);
+            setSizeInHashLine(lastHashLinePtr, lastHashLineSize - 1);
+
+            if (lastHashLineSize == 1)
+              clearHashLinePtrInHashLine(prevLastHashLinePtr);
+          } else {
+            if (hashLineSize == 1) {
+              memory.free(hashLinePtr);
+              if (prevHashLine != ODirectMemory.NULL_POINTER)
+                clearHashLinePtrInHashLine(prevHashLine);
+              else
+                clearHashLinePtr(entries, index);
+            } else {
+              if (i != hashLineSize - 1) {
+                final int keyPtr = getKeyPtrFromHashLine(hashLinePtr, hashLineSize - 1);
+                final int valuePtr = getValuePtrFromHashLine(hashLinePtr, hashLineSize - 1);
+                final long replaceHashCode = getHashCodeFromHashLine(hashLinePtr, hashLineSize - 1);
+
+                setSizeInHashLine(hashLinePtr, hashLineSize - 1);
+                replaceEntryInHashLine(hashLinePtr, i, replaceHashCode, keyPtr, valuePtr);
+              } else
+                setSizeInHashLine(hashLinePtr, hashLineSize - 1);
+            }
+          }
+
+          size--;
+          return removedValue;
+        }
+      }
+
+      prevHashLine = hashLinePtr;
+      hashLinePtr = getNextHashLinePtrFromHashLine(hashLinePtr);
+    }
+
+    return null;
+  }
+
   public boolean put(K key, V value) {
     final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
     keySerializer.serialize(key, serializedKey, 0);
@@ -259,6 +421,8 @@ public class ODirectMemoryHashMap<K, V> {
         if (!rehashEntry(oldHashCode, oldKeyPtr, oldValuePtr)) {
           clearLines(entries, capacity);
 
+          memory.free(entries);
+
           entries = oldEntries;
           capacity = oldCapacity;
         }
@@ -277,6 +441,8 @@ public class ODirectMemoryHashMap<K, V> {
           if (!rehashEntry(oldHashCode, oldKeyPtr, oldValuePtr)) {
             clearLines(entries, capacity);
 
+            memory.free(entries);
+
             entries = oldEntries;
             capacity = oldCapacity;
           }
@@ -288,6 +454,7 @@ public class ODirectMemoryHashMap<K, V> {
 
     nextThreshold = (long) (capacity * 0.75);
     clearLines(oldEntries, oldCapacity);
+    memory.free(oldEntries);
   }
 
   public long size() {
@@ -330,6 +497,7 @@ public class ODirectMemoryHashMap<K, V> {
   protected void finalize() throws Throwable {
     super.finalize();
     clear();
+    memory.free(entries);
   }
 
   private void clearLines(int ptr, long len) {
@@ -345,8 +513,6 @@ public class ODirectMemoryHashMap<K, V> {
 
     for (int hashLinePtr : hashLinePointers)
       memory.free(hashLinePtr);
-
-    memory.free(ptr);
   }
 
   private boolean rehashEntry(final long hashCode, final int keyPtr, int valuePtr) {
@@ -559,5 +725,45 @@ public class ODirectMemoryHashMap<K, V> {
     memory.setInt(hashLinePtr, (int) valueMemoryOffset, valuePtr);
 
     memory.setInt(hashLinePtr, 0, offset + 1);
+  }
+
+  private void replaceEntry(int ptr, long index, int offset, long hashCode, int keyPtr, int valuePtr) {
+    final long hashCodeMemoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * offset;
+
+    final long keyMemoryOffset = index * hashLineSize + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize
+        + offset * 2 * OIntegerSerializer.INT_SIZE;
+    final long valueMemoryOffset = keyMemoryOffset + OIntegerSerializer.INT_SIZE;
+
+    memory.setLong(ptr, (int) hashCodeMemoryOffset, hashCode);
+    memory.setInt(ptr, (int) keyMemoryOffset, keyPtr);
+    memory.setInt(ptr, (int) valueMemoryOffset, valuePtr);
+  }
+
+  private void replaceEntryInHashLine(int hashLinePtr, int offset, long hashCode, int keyPtr, int valuePtr) {
+    final long hashCodeMemoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * offset;
+
+    final long keyMemoryOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE * bucketSize + offset * 2
+        * OIntegerSerializer.INT_SIZE;
+    final long valueMemoryOffset = keyMemoryOffset + OIntegerSerializer.INT_SIZE;
+
+    memory.setLong(hashLinePtr, (int) hashCodeMemoryOffset, hashCode);
+    memory.setInt(hashLinePtr, (int) keyMemoryOffset, keyPtr);
+    memory.setInt(hashLinePtr, (int) valueMemoryOffset, valuePtr);
+  }
+
+  private void setSize(int ptr, long index, int size) {
+    memory.setInt(ptr, (int) index * hashLineSize, size);
+  }
+
+  private void setSizeInHashLine(int ptr, int size) {
+    memory.setInt(ptr, 0, size);
+  }
+
+  private void clearHashLinePtr(int ptr, long index) {
+    memory.setInt(ptr, (int) (index * hashLineSize + hashLinePointerOffset), ODirectMemory.NULL_POINTER);
+  }
+
+  private void clearHashLinePtrInHashLine(int ptr) {
+    memory.setInt(ptr, hashLinePointerOffset, ODirectMemory.NULL_POINTER);
   }
 }
