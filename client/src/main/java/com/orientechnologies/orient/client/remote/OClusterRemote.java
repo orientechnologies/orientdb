@@ -258,34 +258,18 @@ public class OClusterRemote implements OCluster {
     return id;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#synch()
-   */
   public void synch() throws IOException {
   }
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getName()
-   */
   public String getName() {
     return name;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getRecordsSize()
-   */
   public long getRecordsSize() {
-    // TODO Auto-generated method stub
-    return 0;
+    throw new UnsupportedOperationException("getRecordsSize()");
   }
 
   public boolean generatePositionBeforeCreation() {
@@ -297,14 +281,8 @@ public class OClusterRemote implements OCluster {
     return new OPhysicalPosition[0];
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#absoluteIterator()
-   */
   public OClusterEntryIterator absoluteIterator() {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException("getRecordsSize()");
   }
 
   public void setType(String type) {
