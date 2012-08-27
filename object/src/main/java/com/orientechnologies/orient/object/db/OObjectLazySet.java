@@ -64,7 +64,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 	}
 
 	public Iterator<TYPE> iterator() {
-		return (Iterator<TYPE>) new OObjectLazyIterator<TYPE>(getDatabase(), sourceRecord, underlying.iterator(), convertToRecord);
+		return (Iterator<TYPE>) new OObjectLazyIterator<TYPE>(getDatabase(), sourceRecord, (!converted ? underlying.iterator()
+				: super.iterator()), convertToRecord);
 	}
 
 	public int size() {
@@ -91,11 +92,11 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		return a;
 	}
 
-	public boolean add(final Object e) {
+	public boolean add(final TYPE e) {
 		if (converted && e instanceof ORID)
 			converted = false;
 		setDirty();
-		return underlying.add(getDatabase().getRecordByUserObject(e, true));
+		return super.add(e) && underlying.add(getDatabase().getRecordByUserObject(e, true));
 	}
 
 	public boolean remove(final Object o) {
@@ -113,9 +114,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 	}
 
 	public boolean addAll(final Collection<? extends TYPE> c) {
-		boolean modified = false;
 		setDirty();
 		final ODatabasePojoAbstract<TYPE> database = getDatabase();
+		boolean modified = super.addAll(c);
 		for (Object o : c)
 			if (!underlying.add(database.getRecordByUserObject(o, false)))
 				modified = true;
@@ -134,8 +135,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
 	public boolean removeAll(final Collection<?> c) {
 		setDirty();
-		boolean modified = false;
 		final ODatabasePojoAbstract<TYPE> database = getDatabase();
+		boolean modified = super.removeAll(c);
 		for (Object o : c)
 			if (!underlying.remove(database.getRecordByUserObject(o, false)))
 				modified = true;
@@ -185,8 +186,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		if (converted || !convertToRecord)
 			return;
 
-		final Set<Object> copy = new HashSet<Object>(this);
-		underlying.clear();
+		final Set<Object> copy = new HashSet<Object>(underlying);
+		this.clear();
 		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object e : copy) {
 			if (e != null) {
@@ -196,7 +197,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 				else if (e instanceof ODocument)
 					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
 				else
-					add(e);
+					add((TYPE) e);
 			}
 		}
 
@@ -207,8 +208,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		if (converted || !convertToRecord)
 			return;
 
-		final Set<Object> copy = new HashSet<Object>(this);
-		underlying.clear();
+		final Set<Object> copy = new HashSet<Object>(underlying);
+		this.clear();
 		final ODatabasePojoAbstract<TYPE> database = getDatabase();
 		for (Object e : copy) {
 			if (e != null) {
@@ -220,7 +221,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 					e = database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan);
 					e = ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance);
 				} else
-					add(e);
+					add((TYPE) e);
 			}
 		}
 

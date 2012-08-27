@@ -47,6 +47,7 @@ public class JavaComplexTestClass {
 	private ORecordBytes					byteArray;
 	private String								name;
 	private Map<String, String>		stringMap	= new HashMap<String, String>();
+	private List<Child>						list			= new ArrayList<Child>();
 	private Set<Child>						set				= new HashSet<Child>();
 	private Map<String, Child>		children	= new HashMap<String, Child>();
 	private List<EnumTest>				enumList	= new ArrayList<EnumTest>();
@@ -147,5 +148,13 @@ public class JavaComplexTestClass {
 
 	public void setStringMap(Map<String, String> stringMap) {
 		this.stringMap = stringMap;
+	}
+
+	public List<Child> getList() {
+		return list;
+	}
+
+	public void setList(List<Child> list) {
+		this.list = list;
 	}
 }
