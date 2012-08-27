@@ -313,6 +313,7 @@ public class ObjectDetachingTest {
 		attach.byteSimple = (byte) 1;
 		attach.flagSimple = true;
 		attach.enumeration = EnumTest.ENUM1;
+		attach.testTransient = "11";
 		Child c = database.newInstance(Child.class);
 		c.setName("Jesus");
 
@@ -332,6 +333,8 @@ public class ObjectDetachingTest {
 		attach.enumMap.put("2", EnumTest.ENUM3);
 		database.attach(attach);
 		ODocument doc = database.getRecordByUserObject(attach, false);
+		Assert.assertTrue(!doc.containsField("testStatic"));
+		Assert.assertTrue(!doc.containsField("testTransient"));
 		Assert.assertEquals(doc.field("text"), "test");
 		Assert.assertEquals(doc.field("numberSimple"), 12345);
 		Assert.assertEquals(doc.field("doubleSimple"), 12.34d);

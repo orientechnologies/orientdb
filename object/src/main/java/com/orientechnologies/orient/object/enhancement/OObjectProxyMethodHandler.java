@@ -69,6 +69,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
 	protected ODocument							doc;
 
+	protected ProxyObject						parentObject;
+
 	protected Map<String, Integer>	loadedFields;
 
 	public OObjectProxyMethodHandler(ODocument iDocument) {
@@ -84,6 +86,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
 	public void setDoc(ODocument iDoc) {
 		doc = iDoc;
+	}
+
+	public ProxyObject getParentObject() {
+		return parentObject;
+	}
+
+	public void setParentObject(ProxyObject parentDoc) {
+		this.parentObject = parentDoc;
 	}
 
 	public Object invoke(Object self, Method m, Method proceed, Object[] args) throws Throwable {
@@ -166,6 +176,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				continue;
 			}
 			for (Field f : currentClass.getDeclaredFields()) {
+				if (OObjectEntitySerializer.isTransientField(f.getDeclaringClass(), f.getName()))
+					continue;
 				Object value = OObjectEntitySerializer.getFieldValue(f, self);
 				value = setValue(self, f.getName(), value);
 				OObjectEntitySerializer.setFieldValue(f, self, value);
@@ -177,6 +189,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				// ODOCUMENT FIELDS
 				currentClass = Object.class;
 		}
+	}
+
+	public void setDirty() {
+		doc.setDirty();
+		if (parentObject != null)
+			((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
 	}
 
 	protected Object manageGetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
@@ -245,9 +263,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 							setMethod.invoke(self, value);
 						} else if ((value instanceof Set || value instanceof Map) && loadedFields.get(fieldName).intValue() < doc.getVersion()) {
 							if (value instanceof Set)
-								value = new OObjectLazySet(doc, (Set<?>) docValue);
+								value = new OObjectLazySet(self, (Set<?>) docValue);
 							else
-								value = new OObjectLazyMap(doc, (Map<?, ?>) docValue);
+								value = new OObjectLazyMap(self, (Map<?, ?>) docValue);
 							Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
 							setMethod.invoke(self, value);
 						}
@@ -271,9 +289,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			customSerialization = true;
 		}
 		if (value instanceof Collection<?>) {
-			value = manageCollectionSave(f, (Collection<?>) value, customSerialization);
+			value = manageCollectionSave(self, f, (Collection<?>) value, customSerialization);
 		} else if (value instanceof Map<?, ?>) {
-			value = manageMapSave(f, (Map<?, ?>) value, customSerialization);
+			value = manageMapSave(self, f, (Map<?, ?>) value, customSerialization);
 		} else if (value.getClass().isArray()) {
 			value = manageArraySave(fieldName, (Object[]) value);
 		}
@@ -365,7 +383,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Object manageMapSave(Field f, Map<?, ?> value, boolean customSerialization) {
+	protected Object manageMapSave(Object self, Field f, Map<?, ?> value, boolean customSerialization) {
 		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (customSerialization) {
 			Map<Object, Object> map = new HashMap<Object, Object>();
@@ -382,13 +400,13 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				docMap = new ORecordLazyMap(doc);
 				doc.field(f.getName(), docMap, OType.LINKMAP);
 			}
-			value = new OObjectLazyMap(doc, docMap, value);
+			value = new OObjectLazyMap(self, docMap, value);
 		}
 		return value;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Object manageCollectionSave(Field f, Collection<?> value, boolean customSerialization) {
+	protected Object manageCollectionSave(Object self, Field f, Collection<?> value, boolean customSerialization) {
 		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (customSerialization) {
 			if (value instanceof List<?>) {
@@ -418,14 +436,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 					docList = new ORecordLazyList(doc);
 					doc.field(f.getName(), docList, OType.LINKLIST);
 				}
-				value = new OObjectLazyList(doc, docList, value);
+				value = new OObjectLazyList(self, docList, value);
 			} else if (value instanceof Set) {
 				Set<OIdentifiable> docSet = doc.field(f.getName(), OType.LINKSET);
 				if (docSet == null) {
 					docSet = new ORecordLazySet(doc);
 					doc.field(f.getName(), docSet, OType.LINKSET);
 				}
-				value = new OObjectLazySet(doc, docSet, (Set<?>) value);
+				value = new OObjectLazySet(self, docSet, (Set<?>) value);
 			}
 		}
 		if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
@@ -454,7 +472,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 					return docValue;
 				}
 			} else {
-				docValue = convertDocumentToObject((ODocument) ((OIdentifiable) docValue).getRecord());
+				docValue = convertDocumentToObject((ODocument) ((OIdentifiable) docValue).getRecord(), self);
 			}
 		} else if (docValue instanceof Collection<?>) {
 			docValue = manageCollectionLoad(f, self, docValue, customSerialization);
@@ -496,7 +514,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	protected Object manageMapLoad(Field f, Object self, Object value, boolean customSerialization) {
 		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (value instanceof ORecordLazyMap) {
-			value = new OObjectLazyMap(doc, (ORecordLazyMap) value);
+			value = new OObjectLazyMap(self, (ORecordLazyMap) value);
 		} else if (customSerialization) {
 			value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);
 		} else if (genericType.isEnum()) {
@@ -509,9 +527,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 	protected Object manageCollectionLoad(Field f, Object self, Object value, boolean customSerialization) {
 		final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
 		if (value instanceof ORecordLazyList) {
-			value = new OObjectLazyList(doc, (ORecordLazyList) value);
+			value = new OObjectLazyList(self, (ORecordLazyList) value);
 		} else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet) {
-			value = new OObjectLazySet(doc, (Set) value);
+			value = new OObjectLazySet(self, (Set) value);
 		} else if (customSerialization) {
 			if (value instanceof List<?>) {
 				value = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), doc, (List<Object>) value);
@@ -544,8 +562,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 			return value;
 	}
 
-	protected Object convertDocumentToObject(ODocument value) {
-		return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value);
+	protected Object convertDocumentToObject(ODocument value, Object self) {
+		return OObjectEntityEnhancer.getInstance().getProxiedInstance(value.getClassName(), getDatabase().getEntityManager(), value,
+				(self instanceof ProxyObject ? (ProxyObject) self : null));
 	}
 
 	protected Object manageSetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
@@ -580,14 +599,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 							if (OObjectEntitySerializer.isSerializedType(f)) {
 								customSerialization = true;
 							}
-							valueToSet = manageCollectionSave(f, (Collection<?>) valueToSet, customSerialization);
+							valueToSet = manageCollectionSave(self, f, (Collection<?>) valueToSet, customSerialization);
 						} else if (valueToSet instanceof Map<?, ?>) {
 							boolean customSerialization = false;
 							Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
 							if (OObjectEntitySerializer.isSerializedType(f)) {
 								customSerialization = true;
 							}
-							valueToSet = manageMapSave(f, (Map<?, ?>) valueToSet, customSerialization);
+							valueToSet = manageMapSave(self, f, (Map<?, ?>) valueToSet, customSerialization);
 						} else if (valueToSet.getClass().isArray()) {
 							valueToSet = manageArraySave(fieldName, (Object[]) valueToSet);
 						}
@@ -627,6 +646,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 				}
 			}
 			loadedFields.put(fieldName, doc.getVersion());
+			setDirty();
 		} else {
 			OLogManager.instance().warn(this,
 					"Setting property '%s' in proxied class '%s' with an anonymous class '%s'. The document won't have this property.",

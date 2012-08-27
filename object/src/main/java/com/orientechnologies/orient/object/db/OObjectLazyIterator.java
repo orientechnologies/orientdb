@@ -18,12 +18,14 @@ package com.orientechnologies.orient.object.db;
 import java.io.Serializable;
 import java.util.Iterator;
 
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 /**
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
@@ -36,13 +38,13 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 	private static final long									serialVersionUID	= -4012483076050044405L;
 
-	private final ORecord<?>									sourceRecord;
+	private final ProxyObject									sourceRecord;
 	private final ODatabasePojoAbstract<TYPE>	database;
 	private final Iterator<? extends Object>	underlying;
 	private String														fetchPlan;
 	final private boolean											autoConvert2Object;
 
-	public OObjectLazyIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
+	public OObjectLazyIterator(final ODatabasePojoAbstract<TYPE> database, final ProxyObject iSourceRecord,
 			final Iterator<? extends Object> iIterator, final boolean iConvertToRecord) {
 		this.database = database;
 		this.sourceRecord = iSourceRecord;
@@ -60,11 +62,16 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 		if (value == null)
 			return null;
 
-		if (value instanceof ORID && autoConvert2Object)
-			return database.getUserObjectByRecord(
+		if (value instanceof ORID && autoConvert2Object) {
+			TYPE o = database.getUserObjectByRecord(
 					(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
-		else if (value instanceof ODocument && autoConvert2Object)
-			return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
+			((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
+			return o;
+		} else if (value instanceof ODocument && autoConvert2Object) {
+			TYPE o = database.getUserObjectByRecord((ODocument) value, iFetchPlan);
+			((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
+			return o;
+		}
 
 		if (OObjectEntitySerializer.isToSerialize(value.getClass()))
 			return (TYPE) OObjectEntitySerializer.deserializeFieldValue(value.getClass(), value);
@@ -78,7 +85,7 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 	public void remove() {
 		underlying.remove();
 		if (sourceRecord != null)
-			sourceRecord.setDirty();
+			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
 	}
 
 	public String getFetchPlan() {

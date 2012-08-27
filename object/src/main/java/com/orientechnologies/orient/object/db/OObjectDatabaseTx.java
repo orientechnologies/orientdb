@@ -112,7 +112,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
 		try {
 			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-					iEnclosingClass, underlying.newInstance(iClassName), iArgs);
+					iEnclosingClass, underlying.newInstance(iClassName), null, iArgs);
 			return (RET) enhanced;
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
@@ -132,7 +132,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
 		try {
 			RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-					iEnclosingClass, iDocument, iArgs);
+					iEnclosingClass, iDocument, null, iArgs);
 			return (RET) enhanced;
 		} catch (Exception e) {
 			OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
@@ -292,7 +292,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 				return null;
 		}
 
-		return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record);
+		return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record, null);
 	}
 
 	/**
@@ -614,7 +614,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 				} else
 					return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
 			} else
-				return OObjectEntityEnhancer.getInstance().getProxiedInstance(iRecord.getClassName(), entityManager, iRecord);
+				return OObjectEntityEnhancer.getInstance().getProxiedInstance(iRecord.getClassName(), entityManager, iRecord, null);
 		} else if (!(iPojo instanceof Proxy))
 			return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
 		else
@@ -663,7 +663,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 		if (record == null)
 			record = (ODocument) iRecord;
 
-		Object pojo = OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), getEntityManager(), record);
+		Object pojo = OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), getEntityManager(), record, null);
 
 		return pojo;
 	}

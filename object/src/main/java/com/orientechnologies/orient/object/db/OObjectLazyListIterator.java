@@ -19,7 +19,9 @@ import java.io.Serializable;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.record.ORecord;
+import javassist.util.proxy.ProxyObject;
+
+import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 /**
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
@@ -32,13 +34,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OObjectLazyListIterator<TYPE> implements Iterator<TYPE>, Serializable {
 	private static final long						serialVersionUID	= 3714399452499077452L;
 
-	private final ORecord<?>						sourceRecord;
+	private final ProxyObject						sourceRecord;
 	private final OObjectLazyList<TYPE>	list;
 	private String											fetchPlan;
 	private int													cursor						= 0;
 	private int													lastRet						= -1;
 
-	public OObjectLazyListIterator(final OObjectLazyList<TYPE> iSourceList, final ORecord<?> iSourceRecord) {
+	public OObjectLazyListIterator(final OObjectLazyList<TYPE> iSourceList, final ProxyObject iSourceRecord) {
 		this.list = iSourceList;
 		this.sourceRecord = iSourceRecord;
 	}
@@ -69,7 +71,7 @@ public class OObjectLazyListIterator<TYPE> implements Iterator<TYPE>, Serializab
 			throw new ConcurrentModificationException();
 		}
 		if (sourceRecord != null)
-			sourceRecord.setDirty();
+			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
 	}
 
 	public String getFetchPlan() {

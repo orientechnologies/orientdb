@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Id;
+import javax.persistence.Transient;
 import javax.persistence.Version;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,6 +36,9 @@ import com.orientechnologies.orient.test.domain.business.Child;
  * 
  */
 public class JavaAttachDetachTestClass {
+	public static final String		testStatic		= "10";
+	@Transient
+	public String									testTransient;
 	@Id
 	public Object									id;
 	@Version

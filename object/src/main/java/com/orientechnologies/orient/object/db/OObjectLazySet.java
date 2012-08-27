@@ -21,15 +21,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 /**
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -43,20 +45,20 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 		Serializable {
 	private static final long					serialVersionUID	= 1793910544017627989L;
 
-	private final ORecord<?>					sourceRecord;
+	private final ProxyObject					sourceRecord;
 	private final Set<OIdentifiable>	underlying;
 	private String										fetchPlan;
 	private boolean										converted					= false;
 	private boolean										convertToRecord		= true;
 
-	public OObjectLazySet(final ORecord<?> iSourceRecord, final Set<OIdentifiable> iRecordSource) {
-		this.sourceRecord = iSourceRecord;
+	public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource) {
+		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
 		this.underlying = iRecordSource;
 	}
 
-	public OObjectLazySet(final ORecord<?> iSourceRecord, final Set<OIdentifiable> iRecordSource,
+	public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource,
 			final Set<? extends TYPE> iSourceCollection) {
-		this.sourceRecord = iSourceRecord;
+		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
 		this.underlying = iRecordSource;
 		addAll(iSourceCollection);
 	}
@@ -168,7 +170,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
 	public void setDirty() {
 		if (sourceRecord != null)
-			sourceRecord.setDirty();
+			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
 	}
 
 	public void detach() {

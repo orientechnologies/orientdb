@@ -21,34 +21,37 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.print.attribute.standard.MediaSize.ISO;
+
 import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement,
 		OLazyObjectMapInterface<TYPE> {
 	private static final long									serialVersionUID	= -7071023580831419958L;
 
-	private final ORecord<?>									sourceRecord;
+	private final ProxyObject									sourceRecord;
 	private final Map<Object, OIdentifiable>	underlying;
 	private String														fetchPlan;
 	private boolean														converted					= false;
 	private boolean														convertToRecord		= true;
 
-	public OObjectLazyMap(final ORecord<?> iSourceRecord, final Map<Object, OIdentifiable> iRecordMap) {
+	public OObjectLazyMap(final Object iSourceRecord, final Map<Object, OIdentifiable> iRecordMap) {
 		super();
-		this.sourceRecord = iSourceRecord;
+		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
 		this.underlying = iRecordMap;
 		converted = iRecordMap.isEmpty();
 	}
 
-	public OObjectLazyMap(final ORecord<?> iSourceRecord, final Map<Object, OIdentifiable> iRecordMap,
+	public OObjectLazyMap(final Object iSourceRecord, final Map<Object, OIdentifiable> iRecordMap,
 			final Map<Object, Object> iSourceMap) {
 		this(iSourceRecord, iRecordMap);
 		putAll(iSourceMap);
@@ -164,7 +167,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
 	public void setDirty() {
 		if (sourceRecord != null)
-			sourceRecord.setDirty();
+			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
 	}
 
 	public Map<Object, OIdentifiable> getUnderlying() {
@@ -180,8 +183,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
 		if (super.containsKey(iKey))
 			return;
-
-		super.put(iKey, getDatabase().getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null));
+		TYPE o = getDatabase().getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null);
+		((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
+		super.put(iKey, o);
 	}
 
 	public void detach() {

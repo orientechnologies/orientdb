@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -31,32 +32,32 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 @SuppressWarnings({ "unchecked" })
 public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement, Serializable {
 	private static final long					serialVersionUID	= -1665952780303555865L;
-	private ORecord<?>								sourceRecord;
+	private ProxyObject								sourceRecord;
 	private final List<OIdentifiable>	recordList;
 	private final ArrayList<Object>		list							= new ArrayList<Object>();
 	private String										fetchPlan;
 	private boolean										converted					= false;
 	private boolean										convertToRecord		= true;
 
-	public OObjectLazyList(final ORecord<?> iSourceRecord, final List<OIdentifiable> iRecordList) {
-		this.sourceRecord = iSourceRecord;
+	public OObjectLazyList(final Object iSourceRecord, final List<OIdentifiable> iRecordList) {
+		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
 		this.recordList = iRecordList;
 		for (int i = 0; i < iRecordList.size(); i++) {
 			list.add(i, null);
 		}
 	}
 
-	public OObjectLazyList(final ORecord<?> iSourceRecord, final List<OIdentifiable> iRecordList,
+	public OObjectLazyList(final Object iSourceRecord, final List<OIdentifiable> iRecordList,
 			final Collection<? extends TYPE> iSourceList) {
-		this.sourceRecord = iSourceRecord;
+		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
 		this.recordList = iRecordList;
 		for (int i = 0; i < iRecordList.size(); i++) {
 			list.add(i, null);
@@ -118,7 +119,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 		if (o == null) {
 			OIdentifiable record = (OIdentifiable) recordList.get(index);
 			o = (TYPE) OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
-					getDatabase().getEntityManager(), (ODocument) record.getRecord());
+					getDatabase().getEntityManager(), (ODocument) record.getRecord(), sourceRecord);
 			list.set(index, o);
 		}
 		return o;
@@ -250,7 +251,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 			element = (TYPE) list.remove(index);
 		} else {
 			element = (TYPE) OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
-					getDatabase().getEntityManager(), (ODocument) record.getRecord());
+					getDatabase().getEntityManager(), (ODocument) record.getRecord(), sourceRecord);
 		}
 		setDirty();
 		return element;
@@ -305,7 +306,7 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 
 	public void setDirty() {
 		if (sourceRecord != null)
-			sourceRecord.setDirty();
+			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
 	}
 
 	/**
@@ -330,8 +331,10 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 			} else {
 				doc = (ODocument) o;
 			}
-			list.set(iIndex,
-					OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc));
+			list.set(
+					iIndex,
+					OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc,
+							sourceRecord));
 		}
 	}
 
@@ -365,7 +368,8 @@ public class OObjectLazyList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 			} else {
 				doc = (ODocument) o;
 			}
-			o = OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc);
+			o = OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc,
+					sourceRecord);
 			o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance);
 			list.set(iIndex, o);
 		}

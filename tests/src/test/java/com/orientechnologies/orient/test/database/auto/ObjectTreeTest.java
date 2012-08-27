@@ -44,6 +44,8 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerContex
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.JavaCascadeDeleteTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
+import com.orientechnologies.orient.test.domain.base.Planet;
+import com.orientechnologies.orient.test.domain.base.Satellite;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -295,6 +297,32 @@ public class ObjectTreeTest {
 			}
 		}
 	}
+
+	// @Test(dependsOnMethods = "testQueryMultiCircular")
+	// public void testSetFieldSize() {
+	// JavaComplexTestClass test = database.newInstance(JavaComplexTestClass.class);
+	// for (int i = 0; i < 100; i++) {
+	// Child child = database.newInstance(Child.class);
+	// child.setName(String.valueOf(i));
+	// test.getSet().add(child);
+	// }
+	// Assert.assertNotNull(test.getSet());
+	// Assert.assertEquals(test.getSet().size(), 100);
+	// database.save(test);
+	// ORID rid = database.getIdentity(test);
+	// close();
+	// open();
+	// test = database.load(rid);
+	// Assert.assertNotNull(test.getSet());
+	// Assert.assertEquals(test.getSet().size(), 100);
+	// Iterator<Child> it = test.getSet().iterator();
+	// for (int i = 0; i < 100; i++) {
+	// Child child = it.next();
+	// Assert.assertNotNull(child.getName());
+	// Assert.assertTrue(Integer.valueOf(child.getName()) < 100);
+	// Assert.assertTrue(Integer.valueOf(child.getName()) >= 0);
+	// }
+	// }
 
 	@Test(dependsOnMethods = "testQueryMultiCircular")
 	public void testCascadeDeleteSimpleObject() {
@@ -549,5 +577,66 @@ public class ObjectTreeTest {
 		} finally {
 			database.close();
 		}
+	}
+
+	@Test(dependsOnMethods = "testEnumListWithCustomTypes")
+	public void childUpdateTest() {
+		OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		Planet p = database.newInstance(Planet.class);
+		Satellite sat = database.newInstance(Satellite.class);
+		sat.setDiameter(50);
+		p.addSatellite(sat);
+		database.save(p);
+		ORID rid = database.getIdentity(p);
+		database.close();
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		p = database.load(rid);
+		sat = p.getSatellites().get(0);
+		Assert.assertEquals(sat.getDiameter(), 50);
+		sat.setDiameter(500);
+		// p.addSatellite(new Satellite("Moon", 70));
+		// db.save(sat);
+		database.save(p);
+		database.close();
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		p = database.load(rid);
+		sat = p.getSatellites().get(0);
+		Assert.assertEquals(sat.getDiameter(), 500);
+		database.close();
+	}
+
+	@Test(dependsOnMethods = "childUpdateTest")
+	public void childNLevelUpdateTest() {
+		OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		Planet p = database.newInstance(Planet.class);
+		Planet near = database.newInstance(Planet.class);
+		Satellite sat = database.newInstance(Satellite.class);
+		Satellite satNear = database.newInstance(Satellite.class);
+		sat.setDiameter(50);
+		sat.setNear(near);
+		satNear.setDiameter(10);
+		near.addSatellite(satNear);
+		p.addSatellite(sat);
+		database.save(p);
+		ORID rid = database.getIdentity(p);
+		database.close();
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		p = database.load(rid);
+		sat = p.getSatellites().get(0);
+		near = sat.getNear();
+		satNear = near.getSatellites().get(0);
+		Assert.assertEquals(satNear.getDiameter(), 10);
+		satNear.setDiameter(100);
+		// p.addSatellite(new Satellite("Moon", 70));
+		// db.save(sat);
+		database.save(p);
+		database.close();
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+		p = database.load(rid);
+		sat = p.getSatellites().get(0);
+		near = sat.getNear();
+		satNear = near.getSatellites().get(0);
+		Assert.assertEquals(satNear.getDiameter(), 100);
+		database.close();
 	}
 }
