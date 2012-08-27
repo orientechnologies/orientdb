@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 
 /**
  * Comparator implementation class used by ODocumentSorter class to sort documents following dynamic criteria.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class ODocumentComparator implements Comparator<OIdentifiable> {
   private List<OPair<String, String>> orderCriteria;
@@ -58,10 +58,10 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
       }
 
       if (fieldValue1 == null)
-        return factor(Integer.MIN_VALUE, ordering);
+        return factor(-1, ordering);
 
       if (fieldValue2 == null)
-        return factor(Integer.MAX_VALUE, ordering);
+        return factor(1, ordering);
 
       if (!(fieldValue1 instanceof Comparable<?>))
         throw new IllegalArgumentException("Cannot sort documents because the field '" + fieldName + "' is not comparable");
