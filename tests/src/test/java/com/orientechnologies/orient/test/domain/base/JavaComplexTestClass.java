@@ -36,125 +36,134 @@ import com.orientechnologies.orient.test.domain.business.Child;
  * 
  */
 public class JavaComplexTestClass {
-	@Id
-	private String								id;
-	@Version
-	private Object								version;
+  @Id
+  private String                    id;
+  @Version
+  private Object                    version;
 
-	@Embedded
-	private ODocument							embeddedDocument;
-	private ODocument							document;
-	private ORecordBytes					byteArray;
-	private String								name;
-	private Map<String, String>		stringMap	= new HashMap<String, String>();
-	private List<Child>						list			= new ArrayList<Child>();
-	private Set<Child>						set				= new HashSet<Child>();
-	private Map<String, Child>		children	= new HashMap<String, Child>();
-	private List<EnumTest>				enumList	= new ArrayList<EnumTest>();
-	private Set<EnumTest>					enumSet		= new HashSet<EnumTest>();
-	private Map<String, EnumTest>	enumMap		= new HashMap<String, EnumTest>();
+  @Embedded
+  private ODocument                 embeddedDocument;
+  private ODocument                 document;
+  private ORecordBytes              byteArray;
+  private String                    name;
+  private Map<String, String>       stringMap     = new HashMap<String, String>();
+  private Map<String, List<String>> stringListMap = new HashMap<String, List<String>>();
+  private List<Child>               list          = new ArrayList<Child>();
+  private Set<Child>                set           = new HashSet<Child>();
+  private Map<String, Child>        children      = new HashMap<String, Child>();
+  private List<EnumTest>            enumList      = new ArrayList<EnumTest>();
+  private Set<EnumTest>             enumSet       = new HashSet<EnumTest>();
+  private Map<String, EnumTest>     enumMap       = new HashMap<String, EnumTest>();
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public Map<String, Child> getChildren() {
-		return children;
-	}
+  public Map<String, Child> getChildren() {
+    return children;
+  }
 
-	public void setChildren(Map<String, Child> children) {
-		this.children = children;
-	}
+  public void setChildren(Map<String, Child> children) {
+    this.children = children;
+  }
 
-	public String getId() {
-		return id;
-	}
+  public String getId() {
+    return id;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	public Object getVersion() {
-		return version;
-	}
+  public Object getVersion() {
+    return version;
+  }
 
-	public void setVersion(Object version) {
-		this.version = version;
-	}
+  public void setVersion(Object version) {
+    this.version = version;
+  }
 
-	public List<EnumTest> getEnumList() {
-		return enumList;
-	}
+  public List<EnumTest> getEnumList() {
+    return enumList;
+  }
 
-	public void setEnumList(List<EnumTest> enumList) {
-		this.enumList = enumList;
-	}
+  public void setEnumList(List<EnumTest> enumList) {
+    this.enumList = enumList;
+  }
 
-	public Map<String, EnumTest> getEnumMap() {
-		return enumMap;
-	}
+  public Map<String, EnumTest> getEnumMap() {
+    return enumMap;
+  }
 
-	public void setEnumMap(Map<String, EnumTest> enumMap) {
-		this.enumMap = enumMap;
-	}
+  public void setEnumMap(Map<String, EnumTest> enumMap) {
+    this.enumMap = enumMap;
+  }
 
-	public Set<EnumTest> getEnumSet() {
-		return enumSet;
-	}
+  public Set<EnumTest> getEnumSet() {
+    return enumSet;
+  }
 
-	public void setEnumSet(Set<EnumTest> enumSet) {
-		this.enumSet = enumSet;
-	}
+  public void setEnumSet(Set<EnumTest> enumSet) {
+    this.enumSet = enumSet;
+  }
 
-	public ODocument getEmbeddedDocument() {
-		return embeddedDocument;
-	}
+  public ODocument getEmbeddedDocument() {
+    return embeddedDocument;
+  }
 
-	public void setEmbeddedDocument(ODocument embeddedDocument) {
-		this.embeddedDocument = embeddedDocument;
-	}
+  public void setEmbeddedDocument(ODocument embeddedDocument) {
+    this.embeddedDocument = embeddedDocument;
+  }
 
-	public ORecordBytes getByteArray() {
-		return byteArray;
-	}
+  public ORecordBytes getByteArray() {
+    return byteArray;
+  }
 
-	public void setByteArray(ORecordBytes byteArray) {
-		this.byteArray = byteArray;
-	}
+  public void setByteArray(ORecordBytes byteArray) {
+    this.byteArray = byteArray;
+  }
 
-	public ODocument getDocument() {
-		return document;
-	}
+  public ODocument getDocument() {
+    return document;
+  }
 
-	public void setDocument(ODocument document) {
-		this.document = document;
-	}
+  public void setDocument(ODocument document) {
+    this.document = document;
+  }
 
-	public Set<Child> getSet() {
-		return set;
-	}
+  public Set<Child> getSet() {
+    return set;
+  }
 
-	public void setSet(Set<Child> set) {
-		this.set = set;
-	}
+  public void setSet(Set<Child> set) {
+    this.set = set;
+  }
 
-	public Map<String, String> getStringMap() {
-		return stringMap;
-	}
+  public Map<String, String> getStringMap() {
+    return stringMap;
+  }
 
-	public void setStringMap(Map<String, String> stringMap) {
-		this.stringMap = stringMap;
-	}
+  public void setStringMap(Map<String, String> stringMap) {
+    this.stringMap = stringMap;
+  }
 
-	public List<Child> getList() {
-		return list;
-	}
+  public Map<String, List<String>> getStringListMap() {
+    return stringListMap;
+  }
 
-	public void setList(List<Child> list) {
-		this.list = list;
-	}
+  public void setStringListMap(Map<String, List<String>> stringListMap) {
+    this.stringListMap = stringListMap;
+  }
+
+  public List<Child> getList() {
+    return list;
+  }
+
+  public void setList(List<Child> list) {
+    this.list = list;
+  }
 }
