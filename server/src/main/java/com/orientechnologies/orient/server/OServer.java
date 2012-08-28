@@ -301,7 +301,7 @@ public class OServer {
 
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageName = storage.getName();
-      if (!storages.containsKey(storageName))
+      if (storage.exists() && !storages.containsKey(storageName))
         storages.put(storageName, storage.getURL());
     }
 

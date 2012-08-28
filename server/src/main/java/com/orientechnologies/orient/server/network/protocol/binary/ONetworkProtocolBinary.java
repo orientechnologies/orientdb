@@ -772,7 +772,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   protected void existsDatabase() throws IOException {
     setDataCommandInfo("Exists database");
-    String dbName = channel.readString();
+    final String dbName = channel.readString();
 
     checkServerAccess("database.exists");
 
