@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -191,8 +193,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void connect(
       @ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect to in the format '<mode>:<path>'") String iURL,
       @ConsoleParameter(name = "user", description = "User name") String iUserName,
-      @ConsoleParameter(name = "password", description = "User password") String iUserPassword) throws IOException {
+      @ConsoleParameter(name = "password", description = "User password", optional = true) String iUserPassword) throws IOException {
     disconnect();
+
+    if (iUserPassword == null) {
+      out.print("Enter password: ");
+      final BufferedReader br = new BufferedReader(new InputStreamReader(this.in));
+      iUserPassword = br.readLine();
+      out.println();
+    }
 
     currentDatabaseUserName = iUserName;
     currentDatabaseUserPassword = iUserPassword;
