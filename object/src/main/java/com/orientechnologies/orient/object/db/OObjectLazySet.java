@@ -42,193 +42,199 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
  */
 @SuppressWarnings("unchecked")
 public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLazyObjectMultivalueElement,
-		Serializable {
-	private static final long					serialVersionUID	= 1793910544017627989L;
+    Serializable {
+  private static final long        serialVersionUID = 1793910544017627989L;
 
-	private final ProxyObject					sourceRecord;
-	private final Set<OIdentifiable>	underlying;
-	private String										fetchPlan;
-	private boolean										converted					= false;
-	private boolean										convertToRecord		= true;
+  private final ProxyObject        sourceRecord;
+  private final Set<OIdentifiable> underlying;
+  private String                   fetchPlan;
+  private boolean                  converted        = false;
+  private boolean                  convertToRecord  = true;
 
-	public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource) {
-		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
-		this.underlying = iRecordSource;
-	}
+  public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource) {
+    this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
+    this.underlying = iRecordSource;
+  }
 
-	public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource,
-			final Set<? extends TYPE> iSourceCollection) {
-		this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
-		this.underlying = iRecordSource;
-		addAll(iSourceCollection);
-	}
+  public OObjectLazySet(final Object iSourceRecord, final Set<OIdentifiable> iRecordSource,
+      final Set<? extends TYPE> iSourceCollection) {
+    this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
+    this.underlying = iRecordSource;
+    addAll(iSourceCollection);
+  }
 
-	public Iterator<TYPE> iterator() {
-		return (Iterator<TYPE>) new OObjectLazyIterator<TYPE>(getDatabase(), sourceRecord, (!converted ? underlying.iterator()
-				: super.iterator()), convertToRecord);
-	}
+  public Iterator<TYPE> iterator() {
+    return (Iterator<TYPE>) new OObjectLazyIterator<TYPE>(getDatabase(), sourceRecord, (!converted ? underlying.iterator()
+        : super.iterator()), convertToRecord);
+  }
 
-	public int size() {
-		return underlying.size();
-	}
+  public int size() {
+    return underlying.size();
+  }
 
-	public boolean isEmpty() {
-		return underlying.isEmpty();
-	}
+  public boolean isEmpty() {
+    return super.isEmpty() && underlying.isEmpty();
+  }
 
-	public boolean contains(final Object o) {
-		return underlying.contains(getDatabase().getRecordByUserObject(o, false));
-	}
+  public boolean contains(final Object o) {
+    return super.contains(o) || underlying.contains(getDatabase().getRecordByUserObject(o, false));
+  }
 
-	public Object[] toArray() {
-		return toArray(new Object[size()]);
-	}
+  public Object[] toArray() {
+    return toArray(new Object[size()]);
+  }
 
-	public <T> T[] toArray(final T[] a) {
-		underlying.toArray(a);
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		for (int i = 0; i < a.length; ++i)
-			a[i] = (T) database.getUserObjectByRecord((OIdentifiable) a[i], fetchPlan);
-		return a;
-	}
+  public <T> T[] toArray(final T[] a) {
+    convertAll();
+    return super.toArray(a);
+  }
 
-	public boolean add(final TYPE e) {
-		if (converted && e instanceof ORID)
-			converted = false;
-		setDirty();
-		return super.add(e) && underlying.add(getDatabase().getRecordByUserObject(e, true));
-	}
+  public boolean add(final TYPE e) {
+    if (converted && e instanceof ORID)
+      converted = false;
+    setDirty();
+    return super.add(e) && underlying.add(getDatabase().getRecordByUserObject(e, true));
+  }
 
-	public boolean remove(final Object o) {
-		setDirty();
-		return underlying.remove(getDatabase().getRecordByUserObject(o, false));
-	}
+  public boolean remove(final Object o) {
+    setDirty();
+    return super.remove(o) && underlying.remove(getDatabase().getRecordByUserObject(o, false));
+  }
 
-	public boolean containsAll(final Collection<?> c) {
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		for (Object o : c)
-			if (!underlying.contains(database.getRecordByUserObject(o, false)))
-				return false;
+  public boolean containsAll(final Collection<?> c) {
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    for (Object o : c)
+      if (!underlying.contains(database.getRecordByUserObject(o, false)))
+        return false;
 
-		return true;
-	}
+    return true;
+  }
 
-	public boolean addAll(final Collection<? extends TYPE> c) {
-		setDirty();
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		boolean modified = super.addAll(c);
-		for (Object o : c)
-			if (!underlying.add(database.getRecordByUserObject(o, false)))
-				modified = true;
-		return modified;
-	}
+  public boolean addAll(final Collection<? extends TYPE> c) {
+    setDirty();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    boolean modified = super.addAll(c);
+    for (Object o : c)
+      if (!underlying.add(database.getRecordByUserObject(o, false)))
+        modified = true;
+    return modified;
+  }
 
-	public boolean retainAll(final Collection<?> c) {
-		setDirty();
-		return underlying.retainAll(c);
-	}
+  public boolean retainAll(final Collection<?> c) {
+    setDirty();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    boolean modified = super.retainAll(c);
+    Set<Object> toRetain = new HashSet<Object>();
+    for (Object o : c) {
+      toRetain.add(database.getRecordByUserObject(o, false));
+      if (underlying.retainAll(toRetain))
+        modified = true;
+    }
+    return modified;
+  }
 
-	public void clear() {
-		setDirty();
-		underlying.clear();
-	}
+  public void clear() {
+    setDirty();
+    super.clear();
+    underlying.clear();
+  }
 
-	public boolean removeAll(final Collection<?> c) {
-		setDirty();
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		boolean modified = super.removeAll(c);
-		for (Object o : c)
-			if (!underlying.remove(database.getRecordByUserObject(o, false)))
-				modified = true;
-		return modified;
-	}
+  public boolean removeAll(final Collection<?> c) {
+    setDirty();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    boolean modified = super.removeAll(c);
+    for (Object o : c)
+      if (!underlying.remove(database.getRecordByUserObject(o, false)))
+        modified = true;
+    return modified;
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public boolean isConverted() {
-		return converted;
-	}
+  public boolean isConverted() {
+    return converted;
+  }
 
-	public OObjectLazySet<TYPE> setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-		return this;
-	}
+  public OObjectLazySet<TYPE> setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+    return this;
+  }
 
-	public boolean isConvertToRecord() {
-		return convertToRecord;
-	}
+  public boolean isConvertToRecord() {
+    return convertToRecord;
+  }
 
-	public void setConvertToRecord(boolean convertToRecord) {
-		this.convertToRecord = convertToRecord;
-	}
+  public void setConvertToRecord(boolean convertToRecord) {
+    this.convertToRecord = convertToRecord;
+  }
 
-	@Override
-	public String toString() {
-		return underlying.toString();
-	}
+  @Override
+  public String toString() {
+    return super.size() == underlying.size() ? super.toString() : underlying.toString();
+  }
 
-	public void setDirty() {
-		if (sourceRecord != null)
-			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
-	}
+  public void setDirty() {
+    if (sourceRecord != null)
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+  }
 
-	public void detach() {
-		convertAll();
-	}
+  public void detach() {
+    convertAll();
+  }
 
-	public void detachAll(boolean nonProxiedInstance) {
-		convertAndDetachAll(nonProxiedInstance);
-	}
+  public void detachAll(boolean nonProxiedInstance) {
+    convertAndDetachAll(nonProxiedInstance);
+  }
 
-	protected void convertAll() {
-		if (converted || !convertToRecord)
-			return;
+  protected void convertAll() {
+    if (converted || !convertToRecord)
+      return;
 
-		final Set<Object> copy = new HashSet<Object>(underlying);
-		this.clear();
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		for (Object e : copy) {
-			if (e != null) {
-				if (e instanceof ORID)
-					add(database.getUserObjectByRecord(
-							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
-				else if (e instanceof ODocument)
-					add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
-				else
-					add((TYPE) e);
-			}
-		}
+    final Set<Object> copy = new HashSet<Object>(underlying);
+    super.clear();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    for (Object e : copy) {
+      if (e != null) {
+        if (e instanceof ORID)
+          add(database.getUserObjectByRecord(
+              (ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+        else if (e instanceof ODocument)
+          add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+        else
+          add((TYPE) e);
+      }
+    }
 
-		converted = true;
-	}
+    converted = true;
+  }
 
-	protected void convertAndDetachAll(boolean nonProxiedInstance) {
-		if (converted || !convertToRecord)
-			return;
+  protected void convertAndDetachAll(boolean nonProxiedInstance) {
+    if (converted || !convertToRecord)
+      return;
 
-		final Set<Object> copy = new HashSet<Object>(underlying);
-		this.clear();
-		final ODatabasePojoAbstract<TYPE> database = getDatabase();
-		for (Object e : copy) {
-			if (e != null) {
-				if (e instanceof ORID) {
-					e = database.getUserObjectByRecord(
-							(ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan);
-					e = ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance);
-				} else if (e instanceof ODocument) {
-					e = database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan);
-					e = ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance);
-				} else
-					add((TYPE) e);
-			}
-		}
+    final Set<Object> copy = new HashSet<Object>(underlying);
+    super.clear();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    for (Object e : copy) {
+      if (e != null) {
+        if (e instanceof ORID) {
+          e = database.getUserObjectByRecord(
+              (ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan);
+          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance));
+        } else if (e instanceof ODocument) {
+          e = database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan);
+          super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance));
+        } else
+          add((TYPE) e);
+      }
+    }
 
-		converted = true;
-	}
+    converted = true;
+  }
 
-	protected ODatabasePojoAbstract<TYPE> getDatabase() {
-		return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
-	}
+  protected ODatabasePojoAbstract<TYPE> getDatabase() {
+    return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+  }
 }
