@@ -916,6 +916,8 @@ public class OObjectEntitySerializer {
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
       }
+      if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent())
+        iRecord.reload();
     }
 
     // CHECK FOR VERSION BINDING

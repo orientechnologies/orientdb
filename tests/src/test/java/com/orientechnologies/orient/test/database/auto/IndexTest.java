@@ -1436,6 +1436,38 @@ public class IndexTest {
     Assert.assertEquals(idx.getSize(), 99);
   }
 
+  @Test
+  public void testIndexRebuildDuringNonProxiedObjectDelete() {
+    Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
+    profile = database.save(profile);
+
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    OIndex<?> nickIndex = idxManager.getIndex("Profile.nick");
+
+    Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
+
+    final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
+    database.delete(database.detach(loadedProfile, true));
+
+    Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
+  }
+
+  @Test(dependsOnMethods = "testIndexRebuildDuringNonProxiedObjectDelete")
+  public void testIndexRebuildDuringDetachAllNonProxiedObjectDelete() {
+    Profile profile = new Profile("NonProxiedObjectToDelete", "NonProxiedObjectToDelete", "NonProxiedObjectToDelete", null);
+    profile = database.save(profile);
+
+    OIndexManager idxManager = database.getMetadata().getIndexManager();
+    OIndex<?> nickIndex = idxManager.getIndex("Profile.nick");
+
+    Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
+
+    final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
+    database.delete(database.detachAll(loadedProfile, true));
+
+    Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
+  }
+
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 
