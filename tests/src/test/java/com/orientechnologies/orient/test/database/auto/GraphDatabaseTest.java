@@ -27,6 +27,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -502,5 +506,39 @@ public class GraphDatabaseTest {
       Assert.assertTrue(result.get(i).containsField("lat"));
       Assert.assertTrue(result.get(i).containsField("distance"));
     }
+  }
+
+  public void testFlattenBlankDatabase() throws IOException {
+    String iUrl = url;
+    iUrl.replace("\\", "/");
+    if (iUrl.endsWith("/"))
+      iUrl = iUrl.substring(0, iUrl.length() - 1);
+    if (iUrl.contains("/")) {
+      iUrl = iUrl.substring(0, iUrl.lastIndexOf("/") + 1) + "flattenTest";
+    } else {
+      iUrl = iUrl.substring(0, iUrl.indexOf(":") + 1) + "flattenTest";
+    }
+    ODatabaseDocument db = new ODatabaseDocumentTx(iUrl);
+
+    ODatabaseHelper.createDatabase(db, iUrl);
+    db.close();
+    OGraphDatabase database = new OGraphDatabase(iUrl);
+    database.open("admin", "admin");
+
+    ODocument playerDoc = database.createVertex().field("surname", "Torres").save();
+    ODocument teamDoc = database.createVertex().field("team", "Chelsea").save();
+    database.createEdge(playerDoc, teamDoc).field("label", "player").save();
+
+    String query = "select flatten(out[label='player'].in) from V where surname = 'Torres'";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    for (int i = 0; i < result.size(); i++) {
+      Assert.assertTrue(result.get(i).containsField("team"));
+      Assert.assertTrue(result.get(i).field("team").equals("Chelsea"));
+    }
+    database.removeVertex(playerDoc);
+    database.removeVertex(teamDoc);
+
+    ODatabaseHelper.deleteDatabase(database);
+    database.close();
   }
 }

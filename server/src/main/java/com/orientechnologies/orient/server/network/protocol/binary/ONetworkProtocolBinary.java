@@ -966,7 +966,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
             try {
               channel.writeByte((byte) 1); // ONE MORE RECORD
-              writeIdentifiable((ORecordInternal<?>) iRecord);
+              writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
 
               if (fetchPlan != null && iRecord instanceof ODocument) {
                 final ODocument doc = (ODocument) iRecord;
