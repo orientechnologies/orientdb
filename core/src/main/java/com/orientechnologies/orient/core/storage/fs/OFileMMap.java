@@ -100,6 +100,58 @@ public class OFileMMap extends OAbstractFile {
     return filledUpTo;
   }
 
+  public void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
+    byte[] source = new byte[iLength];
+    read(iOffset, source, iLength);
+    System.arraycopy(source, 0, iData, iArrayOffset, iLength);
+  }
+
+  public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
+    if (iData == null || iData.length == 0 || iSize == 0)
+      return;
+
+    assert iOffset > -1;
+    assert iArrayOffset > -1;
+
+    iOffset = checkRegions(iOffset, iSize);
+
+    try {
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSize,
+          OMMapManager.OPERATION_TYPE.WRITE, strategy);
+      if (entries != null) {
+        // MMAP WRITE
+        try {
+
+          int position = (int) (iOffset - entries[0].beginOffset);
+
+          int remaining;
+          final int iLength = iSize;
+          int remainingLength = iLength;
+          for (OMMapBufferEntry entry : entries) {
+            entry.buffer.position(position);
+            remaining = entry.buffer.remaining();
+            int toWrite = Math.min(remaining, remainingLength);
+            entry.buffer.put(iData, iArrayOffset + iLength - remainingLength, toWrite);
+            position = 0;
+            remainingLength -= toWrite;
+          }
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+        }
+      } else {
+        // DIRECT WRITE
+        final ByteBuffer buffer = acquireByteBuffer(iSize);
+        buffer.put(iData, iArrayOffset, iSize);
+        buffer.rewind();
+        channel.write(buffer, iOffset + HEADER_SIZE);
+        releaseByteBuffer(buffer);
+      }
+    } catch (BufferOverflowException e) {
+      OLogManager.instance().error(this, "Error on write in the range " + iOffset + "-" + (iOffset + iSize) + "." + toString(), e,
+          OIOException.class);
+    }
+  }
+
   @Override
   public void read(long iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
     iOffset = checkRegions(iOffset, iLenght);

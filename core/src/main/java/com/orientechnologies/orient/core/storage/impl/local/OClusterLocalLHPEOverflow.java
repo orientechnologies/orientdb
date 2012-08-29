@@ -1,50 +1,37 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 
 /**
  * @author Andrey Lomakin
  * @since 26.07.12
  */
-public class OClusterLocalLHPEOverflow extends OSingleFileSegment {
+public class OClusterLocalLHPEOverflow extends OMultiFileSegment {
+  private static final String       OVERFLOW_EXTENSION = ".oco";
+
   private final OClusterLocalLHPEPS clusterLocal;
 
-  public OClusterLocalLHPEOverflow(OStorageLocal iStorage, OStorageFileConfiguration iConfig, OClusterLocalLHPEPS clusterLocal)
-      throws IOException {
-    super(iStorage, iConfig);
+  public OClusterLocalLHPEOverflow(OStorageLocal iStorage, OStorageSegmentConfiguration iConfig, OClusterLocalLHPEPS clusterLocal,
+      int iRoundMaxSize) throws IOException {
+    super(iStorage, iConfig, OVERFLOW_EXTENSION, iRoundMaxSize);
     this.clusterLocal = clusterLocal;
   }
 
   public OClusterLocalLHPEBucket createBucket() throws IOException {
-    final long position = file.allocateSpace(OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
+    final long position = this.allocateSpaceContinuously(OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
 
     return new OClusterLocalLHPEBucket(clusterLocal, position, true);
   }
 
-  public void rename(String iOldName, String iNewName) {
-    final String osFileName = file.getName();
-    if (osFileName.startsWith(iOldName)) {
-      final File newFile = new File(storage.getStoragePath() + '/' + iNewName
-          + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
-      boolean renamed = file.renameTo(newFile);
-      while (!renamed) {
-        OMemoryWatchDog.freeMemory(100);
-        renamed = file.renameTo(newFile);
-      }
-    }
-  }
-
   public void updateBucket(OClusterLocalLHPEBucket bucket) throws IOException {
-    file.write(bucket.getFilePosition(), bucket.getBuffer());
+    this.writeContinuously(bucket.getFilePosition(), bucket.getBuffer());
   }
 
   public OClusterLocalLHPEBucket loadBucket(long position) throws IOException {
     final byte[] buffer = new byte[OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES];
-    file.read(position, buffer, OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
+    this.readContinuously(position, buffer, OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
 
     return new OClusterLocalLHPEBucket(buffer, clusterLocal, position, true);
   }
@@ -62,8 +49,8 @@ public class OClusterLocalLHPEOverflow extends OSingleFileSegment {
     final byte[] serializedDataSegment = OClusterLocalLHPEBucket.serializeDataSegmentId(iDataSegmentId);
     final byte[] serializedDataPosition = OClusterLocalLHPEBucket.serializeDataPosition(iDataPosition);
 
-    file.write(filePos, serializedDataSegment);
-    file.write(filePos + serializedDataSegment.length, serializedDataPosition);
+    this.writeContinuously(filePos, serializedDataSegment);
+    this.writeContinuously(filePos + serializedDataSegment.length, serializedDataPosition);
   }
 
   public void updateRecordType(OClusterLocalLHPEBucket bucket, int index, byte iRecordType) throws IOException {
@@ -71,7 +58,12 @@ public class OClusterLocalLHPEOverflow extends OSingleFileSegment {
 
     final long filePos = bucket.getFilePosition() + recordTypeOffset;
 
-    file.writeByte(filePos, iRecordType);
+    long[] position = getRelativePosition(filePos);
+
+    int pos = (int) position[0];
+    int offset = (int) position[1];
+
+    files[pos].writeByte(offset, iRecordType);
   }
 
   public void updateVersion(OClusterLocalLHPEBucket bucket, int index, int iVersion) throws IOException {
@@ -80,6 +72,6 @@ public class OClusterLocalLHPEOverflow extends OSingleFileSegment {
 
     final long filePos = bucket.getFilePosition() + versionOffset;
 
-    file.write(filePos, serializedVersion);
+    this.writeContinuously(filePos, serializedVersion);
   }
 }

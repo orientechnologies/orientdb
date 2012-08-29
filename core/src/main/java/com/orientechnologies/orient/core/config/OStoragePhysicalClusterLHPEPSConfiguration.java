@@ -7,11 +7,11 @@ package com.orientechnologies.orient.core.config;
 public class OStoragePhysicalClusterLHPEPSConfiguration extends OStorageSegmentConfiguration implements
     OStoragePhysicalClusterConfiguration {
 
-  private static final String       START_SIZE = "7Mb";
+  private static final String          START_SIZE = "7Mb";
 
-  private int                       dataSegmentId;
-  private OStorageFileConfiguration overflowFile;
-  private OStorageFileConfiguration overflowStatisticsFile;
+  private int                          dataSegmentId;
+  private OStorageSegmentConfiguration overflowFile;
+  private OStorageFileConfiguration    overflowStatisticsFile;
 
   public OStoragePhysicalClusterLHPEPSConfiguration(OStorageConfiguration iRoot, int iId, int dataSegmentId) {
     super(iRoot, null, iId);
@@ -50,11 +50,11 @@ public class OStoragePhysicalClusterLHPEPSConfiguration extends OStorageSegmentC
     this.dataSegmentId = dataSegmentId;
   }
 
-  public OStorageFileConfiguration getOverflowFile() {
+  public OStorageSegmentConfiguration getOverflowSegment() {
     return overflowFile;
   }
 
-  public void setOverflowFile(OStorageFileConfiguration overflowFile) {
+  public void setOverflowFile(OStorageSegmentConfiguration overflowFile) {
     this.overflowFile = overflowFile;
   }
 
@@ -69,7 +69,7 @@ public class OStoragePhysicalClusterLHPEPSConfiguration extends OStorageSegmentC
   @Override
   public void setRoot(final OStorageConfiguration root) {
     super.setRoot(root);
-    overflowFile.parent = this;
+    overflowFile.root = root;
     overflowStatisticsFile.parent = this;
   }
 }

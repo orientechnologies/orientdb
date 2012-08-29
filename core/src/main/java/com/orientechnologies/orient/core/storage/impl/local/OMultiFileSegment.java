@@ -35,7 +35,7 @@ public class OMultiFileSegment extends OSegment {
   @SuppressWarnings("unused")
   private final String                   defrag;
   private int                            fileStartSize;
-  private int                            fileMaxSize;
+  final private int                      fileMaxSize;
   private final int                      fileIncrementSize;
 
   public OMultiFileSegment(final OStorageLocal iStorage, final OStorageSegmentConfiguration iConfig, final String iFileExtension,
@@ -48,13 +48,14 @@ public class OMultiFileSegment extends OSegment {
     defrag = iConfig.defrag;
     maxSize = OFileUtils.getSizeAsNumber(iConfig.maxSize);
     fileStartSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileStartSize);
-    fileMaxSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileMaxSize);
+    final int tmpFileMaxSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileMaxSize);
     fileIncrementSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileIncrementSize);
 
     if (iRoundMaxSize > 0)
       // ROUND THE FILE SIZE TO AVOID ERRORS ON ROUNDING BY DIVIDING FOR FIXED RECORD SIZE
-      fileMaxSize = (fileMaxSize / iRoundMaxSize) * iRoundMaxSize;
-
+      fileMaxSize = (tmpFileMaxSize / iRoundMaxSize) * iRoundMaxSize;
+    else
+      fileMaxSize = tmpFileMaxSize;
     // INSTANTIATE ALL THE FILES
     int perFileMaxSize;
 
@@ -246,15 +247,15 @@ public class OMultiFileSegment extends OSegment {
 
     final int fileNum = (int) (iPosition / fileMaxSize);
 
-    if (fileNum >= files.length)
+    if (fileNum >= files.length && fileNum < 0)
       throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum
           + " that is out of limit (files range 0-" + (files.length - 1) + ")");
 
     final int fileRec = (int) (iPosition % fileMaxSize);
 
-    if (fileRec >= files[fileNum].getFilledUpTo())
+    if (fileRec >= files[fileNum].getFilledUpTo() && fileRec < 0)
       throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum + " but the position #"
-          + files[fileNum].getFilledUpTo() + " is out of file size");
+          + fileRec + " is out of file size " + files[fileNum].getFilledUpTo());
 
     return new long[] { fileNum, fileRec };
   }
@@ -264,7 +265,7 @@ public class OMultiFileSegment extends OSegment {
 
     final OFile file = OFileFactory.instance().create(type, config.getLocation() + "/" + name + "." + num + fileExtension,
         storage.getMode());
-    file.setMaxSize((int) OFileUtils.getSizeAsNumber(config.root.fileTemplate.fileMaxSize));
+    file.setMaxSize(fileMaxSize);
     file.create(fileStartSize);
     files[num] = file;
 
@@ -286,5 +287,130 @@ public class OMultiFileSegment extends OSegment {
 
     config.infoFiles[config.infoFiles.length - 1] = new OStorageFileConfiguration(config, fileNameToStore, template.fileType,
         template.fileMaxSize, template.fileIncrementSize);
+  }
+
+  public long allocateSpaceContinuously(final int iSize) throws IOException {
+    // IT'S PREFERABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
+    OFile file;
+    int remainingSize = iSize;
+    // IF SOME FILES ALREADY CREATED
+    int offset = -1;
+    int fileNumber = -1;
+    if (files.length > 0) {
+      // CHECK IF THERE IS FREE SPACE IN LAST FILE IN CHAIN
+
+      file = files[files.length - 1];
+
+      if (file.getFreeSpace() > 0) {
+        fileNumber = files.length - 1;
+        if (remainingSize > file.getFreeSpace()) {
+          remainingSize -= file.getFreeSpace();
+          offset = file.allocateSpace(file.getFreeSpace());
+        } else {
+          return (long) (files.length - 1) * fileMaxSize + file.allocateSpace(remainingSize);
+        }
+      }
+
+      // NOT FOUND FREE SPACE: CHECK IF CAN OVERSIZE LAST FILE
+
+      final int oversize = fileMaxSize - file.getFileSize();
+      if (oversize > 0 && remainingSize > 0) {
+        fileNumber = files.length - 1;
+        if (remainingSize > oversize) {
+          remainingSize -= oversize;
+          int newOffset = file.allocateSpace(oversize);
+          // SAVE OFFSET IF IT WASN'T SAVED EARLIER
+          if (offset == -1)
+            offset = newOffset;
+        } else {
+          int newOffset = file.allocateSpace(remainingSize);
+          if (offset == -1)
+            offset = newOffset;
+          if (fileNumber == -1) {
+            fileNumber = files.length - 1;
+          }
+          return (long) fileNumber * fileMaxSize + offset;
+        }
+      }
+    }
+
+    // CREATE NEW FILE BECAUSE THERE IS NO FILES OR WE CANNOT ENLARGE EXISTING ENOUGH
+    if (remainingSize > 0) {
+      if (maxSize > 0 && getSize() >= maxSize)
+        // OUT OF MAX SIZE
+        throw new OStorageException("Unable to allocate the requested space of " + iSize
+            + " bytes because the segment is full: max-Size=" + maxSize + ", currentSize=" + getFilledUpTo());
+
+      // COPY THE OLD ARRAY TO THE NEW ONE
+      OFile[] newFiles = new OFile[files.length + 1];
+      for (int i = 0; i < files.length; ++i)
+        newFiles[i] = files[i];
+      files = newFiles;
+
+      // CREATE THE NEW FILE AND PUT IT AS LAST OF THE ARRAY
+      file = createNewFile();
+      file.allocateSpace(iSize);
+
+      config.root.update();
+
+      if (fileNumber == -1) {
+        fileNumber = files.length - 1;
+      }
+
+      if (offset == -1)
+        offset = 0;
+    }
+
+    return (long) fileNumber * fileMaxSize + offset;
+  }
+
+  public void writeContinuously(long iPosition, byte[] iData) throws IOException {
+    long[] pos = getRelativePosition(iPosition);
+
+    // IT'S PREFERABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
+    OFile file;
+    int remainingSize = iData.length;
+    long offset = pos[1];
+
+    for (int i = (int) pos[0]; remainingSize > 0; ++i) {
+      file = files[i];
+      if (remainingSize > file.getFilledUpTo() - offset) {
+        if (file.getFilledUpTo() < offset) {
+          throw new ODatabaseException("range check! " + file.getFilledUpTo() + " " + offset);
+        }
+        file.write(offset, iData, (int) (file.getFilledUpTo() - offset), iData.length - remainingSize);
+        remainingSize -= (file.getFilledUpTo() - offset);
+      } else {
+        file.write(offset, iData, remainingSize, iData.length - remainingSize);
+        remainingSize = 0;
+      }
+      offset = 0;
+    }
+  }
+
+  public void readContinuously(final long iPosition, byte[] iBuffer, final int iSize) throws IOException {
+    long[] pos = getRelativePosition(iPosition);
+
+    // IT'S PREFERABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
+    OFile file;
+    int remainingSize = iSize;
+    long offset = pos[1];
+    assert offset < Integer.MAX_VALUE;
+    assert offset > -1;
+    for (int i = (int) pos[0]; remainingSize > 0; ++i) {
+      file = files[i];
+      if (remainingSize > file.getFilledUpTo() - offset) {
+        if (file.getFilledUpTo() < offset) {
+          throw new ODatabaseException("range check! " + file.getFilledUpTo() + " " + offset);
+        }
+        int toRead = file.getFilledUpTo() - (int) offset;
+        file.read(offset, iBuffer, toRead, iSize - remainingSize);
+        remainingSize -= toRead;
+      } else {
+        file.read(offset, iBuffer, remainingSize, iSize - remainingSize);
+        remainingSize = 0;
+      }
+      offset = 0;
+    }
   }
 }

@@ -76,12 +76,25 @@ public class OFileClassic extends OAbstractFile {
     return size;
   }
 
+  public void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
+    iOffset = checkRegions(iOffset, iLength);
+
+    ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
+    channel.read(buffer, iOffset);
+  }
+
+  public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
+    if (iData != null) {
+      iOffset += HEADER_SIZE;
+      ByteBuffer byteBuffer = ByteBuffer.wrap(iData, iArrayOffset, iSize);
+      channel.write(byteBuffer, iOffset);
+      setDirty();
+    }
+  }
+
   @Override
   public void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
-    iOffset = checkRegions(iOffset, iLenght);
-
-    ByteBuffer buffer = ByteBuffer.wrap(iDestBuffer);
-    channel.read(buffer, iOffset);
+    read(iOffset, iDestBuffer, iLenght, 0);
   }
 
   @Override
@@ -147,9 +160,7 @@ public class OFileClassic extends OAbstractFile {
   @Override
   public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
     if (iSourceBuffer != null) {
-      iOffset += HEADER_SIZE;
-      channel.write(ByteBuffer.wrap(iSourceBuffer), iOffset);
-      setDirty();
+      write(iOffset, iSourceBuffer, iSourceBuffer.length, 0);
     }
   }
 

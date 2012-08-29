@@ -194,8 +194,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
         index = phySegmentFromStream(values, index, phyClusterLocal);
 
-        phyClusterLocal.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(phyClusterLocal, read(values[index++]),
-            read(values[index++]), read(values[index++])));
+        phyClusterLocal.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(this, phyClusterLocal.name, clusterId));
         phyClusterLocal.setOverflowStatisticsFile(new OStorageClusterLocalLHPEStatisticConfiguration(phyClusterLocal,
             read(values[index++]), read(values[index++]), read(values[index++])));
 
@@ -282,7 +281,8 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (c instanceof OStoragePhysicalClusterLHPEPSConfiguration) {
         write(buffer, "h");
         phySegmentToStream(buffer, (OStoragePhysicalClusterLHPEPSConfiguration) c);
-        fileToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowFile());
+        // TODO in this place we need serialize info about overflow bucket but it seems that there is no such info
+        // fileSegmentConfigurationToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowSegment());
         fileToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowStatisticsFile());
       }
     }

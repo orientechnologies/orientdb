@@ -104,6 +104,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   private OStorageLocal                                         storage;
 
+  private static final int                                      DEFAULT_BUFFER_SIZE    = 1024;
+
   public OClusterLocalLHPEPS() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
@@ -184,13 +186,13 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     if (fileSegment == null) {
       fileSegment = new OMultiFileSegment(storage, config, DEF_EXTENSION, OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
 
-      config.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(config, OStorageVariableParser.DB_PATH_VARIABLE
-          + '/' + config.name, config.fileType, config.fileMaxSize));
+      config.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(storage.getConfiguration(), config.name, iId));
 
       config.setOverflowStatisticsFile(new OStorageClusterLocalLHPEStatisticConfiguration(config,
           OStorageVariableParser.DB_PATH_VARIABLE + '/' + config.name, config.fileType, config.fileMaxSize));
 
-      overflowSegment = new OClusterLocalLHPEOverflow(storage, config.getOverflowFile(), this);
+      overflowSegment = new OClusterLocalLHPEOverflow(storage, config.getOverflowSegment(), this,
+          OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
       overflowStatistic = new OClusterLocalLHPEStatistic(storage, config.getOverflowStatisticsFile());
     }
   }
@@ -275,7 +277,24 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
     config.name = iNewName;
 
-    overflowSegment.rename(name, iNewName);
+    for (int i = 0; i < overflowSegment.files.length; i++) {
+      final String osFileName = overflowSegment.files[i].getName();
+      if (osFileName.startsWith(name)) {
+        final File newFile = new File(storage.getStoragePath() + '/' + iNewName
+            + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
+        for (OStorageFileConfiguration conf : config.infoFiles) {
+          if (conf.parent.name.equals(name))
+            conf.parent.name = iNewName;
+          if (conf.path.endsWith(osFileName))
+            conf.path = conf.path.replace(osFileName, newFile.getName());
+        }
+        boolean renamed = overflowSegment.files[i].renameTo(newFile);
+        while (!renamed) {
+          OMemoryWatchDog.freeMemory(100);
+          renamed = overflowSegment.files[i].renameTo(newFile);
+        }
+      }
+    }
     overflowStatistic.rename(name, iNewName);
 
     storage.renameCluster(name, iNewName);
@@ -488,16 +507,11 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
         final long filePos = bucketInfo.bucket.getFilePosition() + idOffset;
 
-        final long[] pos = fileSegment.getRelativePosition(filePos);
-
-        final OFile file = fileSegment.files[(int) pos[0]];
-        long p = pos[1];
-
         final byte[] serializedDataSegment = OClusterLocalLHPEBucket.serializeDataSegmentId(iDataSegmentId);
         final byte[] serializedDataPosition = OClusterLocalLHPEBucket.serializeDataPosition(iDataPosition);
 
-        file.write(p, serializedDataSegment);
-        file.write(p + serializedDataSegment.length, serializedDataPosition);
+        fileSegment.writeContinuously(filePos, serializedDataSegment);
+        fileSegment.writeContinuously(filePos + serializedDataSegment.length, serializedDataPosition);
       } else
         overflowSegment.updateDataSegmentPosition(bucketInfo.bucket, bucketInfo.index, iDataSegmentId, iDataPosition);
     } finally {
@@ -580,12 +594,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
         final long filePos = bucketInfo.bucket.getFilePosition() + versionOffset;
 
-        final long[] pos = fileSegment.getRelativePosition(filePos);
-
-        final OFile file = fileSegment.files[(int) pos[0]];
-        long p = pos[1];
-
-        file.write(p, serializedVersion);
+        fileSegment.writeContinuously(filePos, serializedVersion);
       } else
         overflowSegment.updateVersion(bucketInfo.bucket, bucketInfo.index, iVersion);
     } finally {
@@ -815,12 +824,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
     final long filePos = bucketToMerge.getFilePosition();
 
-    final long[] pos = fileSegment.getRelativePosition(filePos);
-
-    final OFile file = fileSegment.files[(int) pos[0]];
-    long p = pos[1];
-
-    file.write(p, empty);
+    fileSegment.writeContinuously(filePos, empty);
   }
 
   private void clearCache() {
@@ -837,13 +841,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
     final long filePos = position * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES;
 
-    final long[] pos = fileSegment.getRelativePosition(filePos);
-
-    final OFile file = fileSegment.files[(int) pos[0]];
-    long p = pos[1];
-
     final byte[] buffer = new byte[OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES];
-    file.read(p, buffer, OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
+    fileSegment.readContinuously(filePos, buffer, OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES);
 
     clusterBucket = new OClusterLocalLHPEBucket(buffer, this, filePos, false);
 
@@ -879,12 +878,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
       final long filePos = mainBucket.getFilePosition();
 
-      final long[] pos = fileSegment.getRelativePosition(filePos);
-
-      final OFile file = fileSegment.files[(int) pos[0]];
-      long p = pos[1];
-
-      file.write(p, mainBucket.getBuffer());
+      fileSegment.writeContinuously(filePos, mainBucket.getBuffer());
     }
 
     mainBucketsToStore.clear();
@@ -911,13 +905,17 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
     if (mainBucketsSize - 1 < positionToAdd) {
       final long requiredSpace = (positionToAdd + 1) * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES;
-
       if (requiredSpace > fileSegment.getFilledUpTo())
         allocateSpace((int) (requiredSpace - fileSegment.getFilledUpTo()));
 
       mainBucketsSize = positionToAdd + 1;
     }
 
+    // Empty bucket
+    fileSegment.writeContinuously(positionToAdd * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES,
+        new byte[OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES]);
+
+    // TODO discuss if we need load main bucket or just empty file and construct new bucket
     OClusterLocalLHPEBucket addedBucket = loadMainBucket(positionToAdd);
 
     Map<Long, OClusterLocalLHPEBucket> bucketMap = new HashMap<Long, OClusterLocalLHPEBucket>(g);
@@ -1473,23 +1471,19 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     rebuildGroupOverflowChain();
   }
 
-  private void allocateSpace(int size) throws IOException {
-    long[] pos = fileSegment.allocateSpace(size);
-    byte[] buffer = new byte[1024];
+  private void allocateSpace(int iSize) throws IOException {
+    int remainingSize = iSize;
+    final long offset = fileSegment.allocateSpaceContinuously(iSize);
 
-    for (int i = (int) pos[0]; i < fileSegment.files.length; i++) {
-      final OFile file = fileSegment.files[i];
+    final long upToPosition = offset + iSize;
 
-      for (long j = pos[1]; j < pos[1] + size; j += 1024) {
-        if (j + 1024 < pos[1] + size)
-          file.write(j, buffer);
-        else {
-          buffer = new byte[(int) (pos[1] + size - j)];
-          file.write(j, buffer);
-        }
-      }
+    byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+    while (remainingSize > DEFAULT_BUFFER_SIZE) {
+      fileSegment.writeContinuously(upToPosition - remainingSize, buffer);
+      remainingSize -= DEFAULT_BUFFER_SIZE;
     }
 
+    fileSegment.writeContinuously(upToPosition - remainingSize, new byte[remainingSize]);
   }
 
   private static final class BucketInfo {

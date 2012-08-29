@@ -161,4 +161,8 @@ public interface OFile {
   public abstract boolean isFailCheck();
 
   public abstract void setFailCheck(boolean failCheck);
+
+  void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException;
+
+  void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException;
 }
