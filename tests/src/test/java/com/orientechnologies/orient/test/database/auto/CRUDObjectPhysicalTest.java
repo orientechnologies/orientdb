@@ -381,6 +381,19 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
+    loaded.getStringMap().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getStringMap());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
     database.delete(loaded);
 
     // TEST WITH OBJECT DATABASE NEW INSTANCE AND MAP DIRECT SET
@@ -401,6 +414,19 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
     }
+    loaded.getStringMap().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getStringMap());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
     database.delete(loaded);
 
     // TEST WITH JAVA CONSTRUCTOR
@@ -414,6 +440,19 @@ public class CRUDObjectPhysicalTest {
 
     p = database.save(p);
     rid = database.getIdentity(p);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getStringMap());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
+    loaded.getStringMap().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getStringMap().get(referenceRelativ));
+    }
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);

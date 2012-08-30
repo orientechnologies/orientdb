@@ -199,6 +199,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       ((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
   }
 
+  public void updateLoadedFieldMap() {
+    for (String key : loadedFields.keySet()) {
+      loadedFields.put(key, doc.getVersion());
+    }
+  }
+
   protected Object manageGetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
       InvocationTargetException, NoSuchMethodException, SecurityException, IllegalArgumentException, NoSuchFieldException {
     final String fieldName;
