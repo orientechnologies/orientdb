@@ -16,18 +16,33 @@
  */
 package com.orientechnologies.orient.test.domain.business;
 
+import javax.persistence.Id;
+import javax.persistence.Version;
+
 /**
  * @author luca.molino
  * 
  */
 public class Child {
-	private String	name;
+  @Id
+  private Object id;
+  @Version
+  private Object version;
+  private String name;
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public Object getId() {
+    return id;
+  }
+
+  public void setId(Object id) {
+    this.id = id;
+  }
 }

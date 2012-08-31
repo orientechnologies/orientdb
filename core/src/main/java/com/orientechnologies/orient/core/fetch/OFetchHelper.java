@@ -356,17 +356,19 @@ public class OFetchHelper {
     iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
     for (String key : (linked).keySet()) {
       ODocument d = linked.get(key);
-      // GO RECURSIVELY
-      final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
-      if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
-        removeParsedFromMap(parsedRecords, d);
-        iContext.onBeforeDocument(iRootRecord, d, key, iUserObject);
-        final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key, d, iContext);
-        processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-            iFieldPathFromRoot, iListener, iContext);
-        iContext.onAfterDocument(iRootRecord, d, key, iUserObject);
-      } else {
-        iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, key, iContext);
+      if (d != null) {
+        // GO RECURSIVELY
+        final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
+        if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
+          removeParsedFromMap(parsedRecords, d);
+          iContext.onBeforeDocument(iRootRecord, d, key, iUserObject);
+          final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key, d, iContext);
+          processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
+              iFieldPathFromRoot, iListener, iContext);
+          iContext.onAfterDocument(iRootRecord, d, key, iUserObject);
+        } else {
+          iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, key, iContext);
+        }
       }
     }
     iContext.onAfterMap(iRootRecord, fieldName, iUserObject);

@@ -101,10 +101,6 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       return manageSetMethod(self, m, proceed, args);
     } else if (isGetterMethod(m.getName(), m)) {
       return manageGetMethod(self, m, proceed, args);
-    } else if (m.getName().equals("equals") && args[0] != null && args[0] instanceof Proxy) {
-      return ((Boolean) proceed.invoke(self, args)) && doc.equals(OObjectEntitySerializer.getDocument((Proxy) args[0]));
-    } else if (m.getName().equals("hashCode")) {
-      return doc.hashCode() + ((Integer) proceed.invoke(self, args)).intValue();
     }
     return proceed.invoke(self, args);
   }
@@ -403,7 +399,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       doc.field(f.getName(), map, OType.EMBEDDEDMAP);
       value = new OObjectEnumLazyMap(genericType, doc, map, (Map<Object, Object>) value);
     } else if (!(value instanceof OLazyObjectMultivalueElement)) {
-      Map<Object, OIdentifiable> docMap = doc.field(f.getName());
+      Map<Object, OIdentifiable> docMap = doc.field(f.getName(), OType.LINKMAP);
       if (docMap == null) {
         docMap = new ORecordLazyMap(doc);
         doc.field(f.getName(), docMap, OType.LINKMAP);

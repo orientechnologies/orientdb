@@ -356,6 +356,144 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapObjectsTest")
+  public void mapObjectsUpdateDatabaseNewInstanceTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    // TEST WITH NEW INSTANCE
+    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Fringe");
+
+    Child c = database.newInstance(Child.class);
+    c.setName("Peter");
+    Child c1 = database.newInstance(Child.class);
+    c1.setName("Walter");
+    Child c2 = database.newInstance(Child.class);
+    c2.setName("Olivia");
+    Child c3 = database.newInstance(Child.class);
+    c3.setName("Astrid");
+
+    p.getChildren().put(c.getName(), c);
+    p.getChildren().put(c1.getName(), c1);
+    p.getChildren().put(c2.getName(), c2);
+    p.getChildren().put(c3.getName(), c3);
+
+    // database.begin();
+    database.save(p);
+    // database.commit();
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    for (String key : loaded.getChildren().keySet()) {
+      Assert.assertTrue(key.equals("Peter") || key.equals("Walter") || key.equals("Olivia") || key.equals("Astrid"));
+      Assert.assertTrue(loaded.getChildren().get(key) instanceof Child);
+      Assert.assertTrue(loaded.getChildren().get(key).getName().equals(key));
+      if (key.equals("Peter")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Peter"));
+      } else if (key.equals("Walter")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Walter"));
+      } else if (key.equals("Olivia")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Olivia"));
+      } else if (key.equals("Astrid")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Astrid"));
+      }
+    }
+
+    database.setLazyLoading(false);
+    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+      database.reload(reloaded);
+
+      Child c4 = database.newInstance(Child.class);
+      c4.setName("The Observer");
+
+      reloaded.getChildren().put(c4.getName(), c4);
+      database.save(reloaded);
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+      database.reload(reloaded);
+      Assert.assertTrue(reloaded.getChildren().containsKey("The Observer"));
+      Assert.assertTrue(reloaded.getChildren().get("The Observer") != null);
+      Assert.assertEquals(reloaded.getChildren().get("The Observer").getName(), "The Observer");
+      Assert.assertTrue(database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent()
+          && database.getIdentity(reloaded.getChildren().get("The Observer")).isValid());
+    }
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsUpdateDatabaseNewInstanceTest")
+  public void mapObjectsUpdateJavaNewInstanceTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    // TEST WITH NEW INSTANCE
+    JavaComplexTestClass p = new JavaComplexTestClass();
+    p.setName("Fringe");
+
+    Child c = new Child();
+    c.setName("Peter");
+    Child c1 = new Child();
+    c1.setName("Walter");
+    Child c2 = new Child();
+    c2.setName("Olivia");
+    Child c3 = new Child();
+    c3.setName("Astrid");
+
+    p.getChildren().put(c.getName(), c);
+    p.getChildren().put(c1.getName(), c1);
+    p.getChildren().put(c2.getName(), c2);
+    p.getChildren().put(c3.getName(), c3);
+
+    p = database.save(p);
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    for (String key : loaded.getChildren().keySet()) {
+      Assert.assertTrue(key.equals("Peter") || key.equals("Walter") || key.equals("Olivia") || key.equals("Astrid"));
+      Assert.assertTrue(loaded.getChildren().get(key) instanceof Child);
+      Assert.assertTrue(loaded.getChildren().get(key).getName().equals(key));
+      if (key.equals("Peter")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Peter"));
+      } else if (key.equals("Walter")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Walter"));
+      } else if (key.equals("Olivia")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Olivia"));
+      } else if (key.equals("Astrid")) {
+        Assert.assertTrue(loaded.getChildren().get(key).getName().equals("Astrid"));
+      }
+    }
+
+    database.setLazyLoading(false);
+    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+      database.reload(reloaded);
+
+      Child c4 = new Child();
+      c4.setName("The Observer");
+
+      reloaded.getChildren().put(c4.getName(), c4);
+      database.save(reloaded);
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    for (JavaComplexTestClass reloaded : database.browseClass(JavaComplexTestClass.class).setFetchPlan("*:-1")) {
+      database.reload(reloaded);
+      Assert.assertTrue(reloaded.getChildren().containsKey("The Observer"));
+      Assert.assertTrue(reloaded.getChildren().get("The Observer") != null);
+      Assert.assertEquals(reloaded.getChildren().get("The Observer").getName(), "The Observer");
+      Assert.assertTrue(database.getIdentity(reloaded.getChildren().get("The Observer")).isPersistent()
+          && database.getIdentity(reloaded.getChildren().get("The Observer")).isValid());
+    }
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsUpdateJavaNewInstanceTest")
   public void mapStringTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     Map<String, String> relatives = new HashMap<String, String>();
