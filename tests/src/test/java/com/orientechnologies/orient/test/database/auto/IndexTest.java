@@ -26,12 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
@@ -57,6 +51,12 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -1348,6 +1348,12 @@ public class IndexTest {
     idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
 
+    ODocument v0 = new ODocument("ManualIndexTxClass");
+    v0.field("counter", 0);
+    v0.save();
+    idx.put(0, v0);
+    Assert.assertTrue(idx.contains(0));
+
     db.begin(OTransaction.TXTYPE.OPTIMISTIC);
     ODocument v = new ODocument("ManualIndexTxClass");
     v.field("counter", 52);
@@ -1367,6 +1373,55 @@ public class IndexTest {
     Assert.assertFalse(idx.contains(0));
     Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
     Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
+  }
+
+  @Test
+  public void testManualIndexInTxRecursiveStore() {
+    ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
+
+    database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass");
+
+    OIndexManager idxManager = db.getMetadata().getIndexManager();
+    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+
+    OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
+
+    ODocument v0 = new ODocument("ManualIndexTxRecursiveStoreClass");
+    v0.field("counter", 0);
+    v0.save();
+    idx.put(0, v0);
+    Assert.assertTrue(idx.contains(0));
+
+    db.begin(OTransaction.TXTYPE.OPTIMISTIC);
+    ODocument v = new ODocument("ManualIndexTxRecursiveStoreClass");
+    v.field("counter", 52);
+
+    ODocument v2 = new ODocument("ManualIndexTxRecursiveStoreClass");
+    v2.field("counter", 54);
+    v2.field("link", v);
+    v2.save();
+
+    v.field("link", v2);
+    v.save();
+
+    Assert.assertNotNull(idx);
+    idx.remove(0);
+
+    idx.put(52, v);
+    idx.put(54, v2);
+
+    db.commit();
+
+    Assert.assertTrue(idx.contains(52));
+    Assert.assertTrue(idx.contains(54));
+
+    Assert.assertFalse(idx.contains(0));
+
+    Assert.assertTrue(idx.get(52).getIdentity().isPersistent());
+    Assert.assertEquals(idx.get(52).getIdentity(), v.getIdentity());
+
+    Assert.assertTrue(idx.get(54).getIdentity().isPersistent());
+    Assert.assertEquals(idx.get(54).getIdentity(), v2.getIdentity());
   }
 
   public void testIndexCountPlusCondition() {
@@ -1478,7 +1533,7 @@ public class IndexTest {
       if (!iteratorCluster.hasNext())
         break;
 
-      ORecord doc = iteratorCluster.next();
+      ORecord<?> doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

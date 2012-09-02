@@ -937,9 +937,13 @@ public class OStorageLocal extends OStorageEmbedded {
     modificationLock.requestModificationLock();
     try {
       if (txManager.isCommitting()) {
+        final ORID oldRid = iRid.copy();
+
         ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent,
             iRecordVersion, iRecordType, iDataSegmentId);
         iRid.clusterPosition = ppos.clusterPosition;
+
+        txManager.getCurrentTransaction().updateIndexIdentityAfterCommit(oldRid, iRid);
       } else {
         ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
         if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
