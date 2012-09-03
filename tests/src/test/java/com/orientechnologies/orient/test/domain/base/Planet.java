@@ -17,7 +17,9 @@
 package com.orientechnologies.orient.test.domain.base;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Id;
 import javax.persistence.Version;
@@ -28,72 +30,90 @@ import javax.persistence.Version;
  */
 public class Planet {
 
-	@Id
-	private String					id;
+  @Id
+  private String                 id;
 
-	@Version
-	private Integer					version;
+  @Version
+  private Integer                version;
 
-	private String					name;
+  private String                 name;
 
-	private int							distanceSun;
+  private int                    distanceSun;
 
-	private List<Satellite>	satellites	= new ArrayList<Satellite>();
+  private List<Satellite>        satellites    = new ArrayList<Satellite>();
 
-	public Planet() {
-	}
+  private Map<String, Satellite> satellitesMap = new HashMap<String, Satellite>();
 
-	Planet(String iName, int iDistance) {
-		name = iName;
-		distanceSun = iDistance;
-	}
+  public Planet() {
+  }
 
-	public String getId() {
-		return id;
-	}
+  Planet(String iName, int iDistance) {
+    name = iName;
+    distanceSun = iDistance;
+  }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+  public String getId() {
+    return id;
+  }
 
-	public Integer getVersion() {
-		return version;
-	}
+  public void setId(String id) {
+    this.id = id;
+  }
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
+  public Integer getVersion() {
+    return version;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public int getDistanceSun() {
-		return distanceSun;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public void setDistanceSun(int distanceSun) {
-		this.distanceSun = distanceSun;
-	}
+  public int getDistanceSun() {
+    return distanceSun;
+  }
 
-	public List<Satellite> getSatellites() {
-		return satellites;
-	}
+  public void setDistanceSun(int distanceSun) {
+    this.distanceSun = distanceSun;
+  }
 
-	public void setSatellites(List<Satellite> satellites) {
-		this.satellites = satellites;
-	}
+  public List<Satellite> getSatellites() {
+    return satellites;
+  }
 
-	public void addSatellite(Satellite satellite) {
-		getSatellites().add(satellite);
-	}
+  public void setSatellites(List<Satellite> satellites) {
+    this.satellites = satellites;
+  }
 
-	public void removeSatellite(Satellite satellite) {
-		getSatellites().remove(satellite);
-	}
+  public Map<String, Satellite> getSatellitesMap() {
+    return satellitesMap;
+  }
+
+  public void setSatellitesMap(Map<String, Satellite> satellitesMap) {
+    this.satellitesMap = satellitesMap;
+  }
+
+  public void addSatelliteMap(Satellite satellite) {
+    getSatellitesMap().put(satellite.getName(), satellite);
+  }
+
+  public void removeSatelliteMap(Satellite satellite) {
+    getSatellitesMap().remove(satellite.getName());
+  }
+
+  public void addSatellite(Satellite satellite) {
+    getSatellites().add(satellite);
+  }
+
+  public void removeSatellite(Satellite satellite) {
+    getSatellites().remove(satellite);
+  }
 
 }

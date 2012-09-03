@@ -139,7 +139,7 @@ public class CRUDObjectPhysicalTest {
     javaObj.setEnumeration(EnumTest.ENUM1);
 
     JavaSimpleTestClass savedJavaObj = database.save(javaObj);
-    ORecordId id = (ORecordId) savedJavaObj.getId();
+    ORID id = database.getIdentity(savedJavaObj);
     database.close();
 
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");

@@ -138,9 +138,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public ORecordAbstract<T> setDirty() {
-    if (!_dirty && _status != STATUS.UNMARSHALLING)
+    if (!_dirty && _status != STATUS.UNMARSHALLING) {
       _dirty = true;
-    _source = null;
+      _source = null;
+    }
     return this;
   }
 

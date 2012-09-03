@@ -275,7 +275,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             }
           }
         } else if (!loadedFields.containsKey(fieldName)) {
-          Object docValue = doc.field(fieldName);
+          Object docValue = doc.field(fieldName, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
           if (docValue != null && !docValue.equals(value)) {
             value = lazyLoadField(self, fieldName, docValue, value);
           }
