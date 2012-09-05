@@ -196,9 +196,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   public void updateLoadedFieldMap() {
-    for (String key : loadedFields.keySet()) {
+    Set<String> fields = new HashSet<String>(loadedFields.keySet());
+    for (String key : fields) {
       loadedFields.put(key, doc.getVersion());
     }
+    fields.clear();
+    fields = null;
   }
 
   protected Object manageGetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
