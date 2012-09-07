@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Artem Loginov
  */
 public class ClusterLocalLHPEPSTest {
-  private static final String PATH_TO_FILE = "123";
+  private static final String PATH_TO_FILE = "target/databases/123";
   private static final String FILE_NAME    = "name";
   private static final int    KEYS_COUNT   = 100000;
 
