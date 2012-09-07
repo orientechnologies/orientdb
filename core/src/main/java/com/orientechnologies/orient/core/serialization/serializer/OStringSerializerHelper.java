@@ -56,7 +56,7 @@ public abstract class OStringSerializerHelper {
   public static final char                ENTRY_SEPARATOR         = ':';
   public static final char                PARAMETER_NAMED         = ':';
   public static final char                PARAMETER_POSITIONAL    = '?';
-  public static final char[]              PARAMETER_SEPARATOR     = new char[] { ',', ')' };
+  public static final char[]              PARAMETER_SEPARATOR     = new char[] { ',' };
   public static final char[]              PARAMETER_EXT_SEPARATOR = new char[] { ' ', '.' };
   public static final char[]              DEFAULT_IGNORE_CHARS    = new char[] { '\n', '\r', ' ' };
   public static final char[]              DEFAULT_FIELD_SEPARATOR = new char[] { ',', ' ' };
@@ -211,12 +211,12 @@ public abstract class OStringSerializerHelper {
         } else if (c == EMBEDDED_BEGIN) {
           insideParenthesis++;
         } else if (c == EMBEDDED_END) {
-          if (!isCharPresent(c, iRecordSeparator)) {
-            if (insideParenthesis == 0)
-              throw new OSerializationException("Found invalid " + EMBEDDED_END
-                  + " character. Ensure it is opened and closed correctly.");
-            insideParenthesis--;
-          }
+          // if (!isCharPresent(c, iRecordSeparator)) {
+          if (insideParenthesis == 0)
+            throw new OSerializationException("Found invalid " + EMBEDDED_END
+                + " character. Ensure it is opened and closed correctly.");
+          // }
+          insideParenthesis--;
 
         } else if (c == MAP_BEGIN) {
           insideMap++;
