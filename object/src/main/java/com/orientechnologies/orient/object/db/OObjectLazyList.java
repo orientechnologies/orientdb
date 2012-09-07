@@ -46,19 +46,22 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   private String                    fetchPlan;
   private boolean                   converted        = false;
   private boolean                   convertToRecord  = true;
+  private final boolean             orphanRemoval;
 
-  public OObjectLazyList(final Object iSourceRecord, final List<OIdentifiable> iRecordList) {
+  public OObjectLazyList(final Object iSourceRecord, final List<OIdentifiable> iRecordList, final boolean orphanRemoval) {
     this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
     this.recordList = iRecordList;
+    this.orphanRemoval = orphanRemoval;
     for (int i = 0; i < iRecordList.size(); i++) {
       super.add(i, null);
     }
   }
 
   public OObjectLazyList(final Object iSourceRecord, final List<OIdentifiable> iRecordList,
-      final Collection<? extends TYPE> iSourceList) {
+      final Collection<? extends TYPE> iSourceList, final boolean orphanRemoval) {
     this.sourceRecord = iSourceRecord instanceof ProxyObject ? (ProxyObject) iSourceRecord : null;
     this.recordList = iRecordList;
+    this.orphanRemoval = orphanRemoval;
     for (int i = 0; i < iRecordList.size(); i++) {
       super.add(i, null);
     }
@@ -165,11 +168,23 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     setDirty();
     if (o instanceof OIdentifiable) {
       int elementIndex = recordList.indexOf(o);
-      if (indexLoaded(elementIndex))
+      elementIndex = elementIndex > -1 ? elementIndex : recordList.indexOf(((OIdentifiable) o).getRecord());
+      if (elementIndex > -1 && indexLoaded(elementIndex))
         super.remove(elementIndex);
+      if (orphanRemoval)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(((OIdentifiable) o).getIdentity());
       return recordList.remove(o);
-    } else if (o instanceof Proxy)
-      recordList.remove((OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) o));
+    } else if (o instanceof Proxy) {
+      OIdentifiable record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) o);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+      recordList.remove(record);
+    } else {
+      OIdentifiable record = getDatabase().getRecordByUserObject(o, false);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+      recordList.remove(record);
+    }
     return super.remove(o);
   }
 
@@ -225,6 +240,9 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
 
   public void clear() {
     setDirty();
+    if (orphanRemoval)
+      for (OIdentifiable value : recordList)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
     recordList.clear();
     super.clear();
   }
@@ -248,8 +266,12 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     TYPE element;
     OIdentifiable record = recordList.remove(index);
     if (indexLoaded(index)) {
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
       element = (TYPE) super.remove(index);
     } else {
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
       element = (TYPE) OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
           getDatabase().getEntityManager(), (ODocument) record.getRecord(), sourceRecord);
     }

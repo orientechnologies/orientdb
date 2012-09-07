@@ -21,6 +21,7 @@ import java.util.Iterator;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,63 +37,69 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
  */
 @SuppressWarnings({ "unchecked" })
 public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
-	private static final long									serialVersionUID	= -4012483076050044405L;
+  private static final long                 serialVersionUID = -4012483076050044405L;
 
-	private final ProxyObject									sourceRecord;
-	private final ODatabasePojoAbstract<TYPE>	database;
-	private final Iterator<? extends Object>	underlying;
-	private String														fetchPlan;
-	final private boolean											autoConvert2Object;
+  private final ProxyObject                 sourceRecord;
+  private final ODatabasePojoAbstract<TYPE> database;
+  private final Iterator<? extends Object>  underlying;
+  private String                            fetchPlan;
+  final private boolean                     autoConvert2Object;
+  private OIdentifiable                     currentElement;
 
-	public OObjectLazyIterator(final ODatabasePojoAbstract<TYPE> database, final ProxyObject iSourceRecord,
-			final Iterator<? extends Object> iIterator, final boolean iConvertToRecord) {
-		this.database = database;
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iIterator;
-		autoConvert2Object = iConvertToRecord;
-	}
+  public OObjectLazyIterator(final ODatabasePojoAbstract<TYPE> database, final ProxyObject iSourceRecord,
+      final Iterator<? extends Object> iIterator, final boolean iConvertToRecord) {
+    this.database = database;
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iIterator;
+    autoConvert2Object = iConvertToRecord;
+  }
 
-	public TYPE next() {
-		return next(fetchPlan);
-	}
+  public TYPE next() {
+    return next(fetchPlan);
+  }
 
-	public TYPE next(final String iFetchPlan) {
-		final Object value = underlying.next();
+  public TYPE next(final String iFetchPlan) {
+    final Object value = underlying.next();
 
-		if (value == null)
-			return null;
+    if (value == null)
+      return null;
 
-		if (value instanceof ORID && autoConvert2Object) {
-			TYPE o = database.getUserObjectByRecord(
-					(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
-			((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
-			return o;
-		} else if (value instanceof ODocument && autoConvert2Object) {
-			TYPE o = database.getUserObjectByRecord((ODocument) value, iFetchPlan);
-			((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
-			return o;
-		}
+    if (value instanceof ORID && autoConvert2Object) {
+      currentElement = (OIdentifiable) value;
+      TYPE o = database.getUserObjectByRecord(
+          (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
+      ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
+      return o;
+    } else if (value instanceof ODocument && autoConvert2Object) {
+      currentElement = (OIdentifiable) value;
+      TYPE o = database.getUserObjectByRecord((ODocument) value, iFetchPlan);
+      ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
+      return o;
+    } else {
+      currentElement = database.getRecordByUserObject(value, false);
+    }
 
-		if (OObjectEntitySerializer.isToSerialize(value.getClass()))
-			return (TYPE) OObjectEntitySerializer.deserializeFieldValue(value.getClass(), value);
-		return (TYPE) value;
-	}
+    if (OObjectEntitySerializer.isToSerialize(value.getClass()))
+      return (TYPE) OObjectEntitySerializer.deserializeFieldValue(value.getClass(), value);
+    return (TYPE) value;
+  }
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public void remove() {
-		underlying.remove();
-		if (sourceRecord != null)
-			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
-	}
+  public void remove() {
+    ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
+    underlying.remove();
+    if (sourceRecord != null)
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public void setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-	}
+  public void setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+  }
 }

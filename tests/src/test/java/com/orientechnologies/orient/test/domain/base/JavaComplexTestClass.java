@@ -46,11 +46,13 @@ public class JavaComplexTestClass {
   private ODocument                 document;
   private ORecordBytes              byteArray;
   private String                    name;
+  private EnumTest                  enumField;
   private Map<String, String>       stringMap     = new HashMap<String, String>();
   private Map<String, List<String>> stringListMap = new HashMap<String, List<String>>();
   private List<Child>               list          = new ArrayList<Child>();
   private Set<Child>                set           = new HashSet<Child>();
   private Map<String, Child>        children      = new HashMap<String, Child>();
+  private Map<String, Object>       mapObject     = new HashMap<String, Object>();
   private List<EnumTest>            enumList      = new ArrayList<EnumTest>();
   private Set<EnumTest>             enumSet       = new HashSet<EnumTest>();
   private Map<String, EnumTest>     enumMap       = new HashMap<String, EnumTest>();
@@ -165,5 +167,21 @@ public class JavaComplexTestClass {
 
   public void setList(List<Child> list) {
     this.list = list;
+  }
+
+  public void setMapObject(Map<String, Object> mapObject) {
+    this.mapObject = mapObject;
+  }
+
+  public Map<String, Object> getMapObject() {
+    return mapObject;
+  }
+
+  public EnumTest getEnumField() {
+    return enumField;
+  }
+
+  public void setEnumField(EnumTest enumField) {
+    this.enumField = enumField;
   }
 }

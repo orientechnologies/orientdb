@@ -73,6 +73,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   protected Map<String, Integer> loadedFields;
 
+  protected Set<ORID>            orphans = new HashSet<ORID>();
+
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
     if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
@@ -94,6 +96,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   public void setParentObject(ProxyObject parentDoc) {
     this.parentObject = parentDoc;
+  }
+
+  public Set<ORID> getOrphans() {
+    return orphans;
   }
 
   public Object invoke(Object self, Method m, Method proceed, Object[] args) throws Throwable {
@@ -270,9 +276,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               setMethod.invoke(self, value);
             } else if ((value instanceof Set || value instanceof Map) && loadedFields.get(fieldName).intValue() < doc.getVersion()) {
               if (value instanceof Set)
-                value = new OObjectLazySet(self, (Set<?>) docValue);
+                value = new OObjectLazySet(self, (Set<?>) docValue, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+                    fieldName));
               else
-                value = new OObjectLazyMap(self, (Map<?, ?>) docValue);
+                value = new OObjectLazyMap(self, (Map<?, ?>) docValue, OObjectEntitySerializer.isCascadeDeleteField(
+                    self.getClass(), fieldName));
               Method setMethod = getSetMethod(self.getClass().getSuperclass(), getSetterFieldName(fieldName), value);
               setMethod.invoke(self, value);
             }
@@ -407,7 +415,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         docMap = new ORecordLazyMap(doc);
         doc.field(f.getName(), docMap, OType.LINKMAP);
       }
-      value = new OObjectLazyMap(self, docMap, value);
+      value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
     }
     return value;
   }
@@ -443,14 +451,16 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           docList = new ORecordLazyList(doc);
           doc.field(f.getName(), docList, OType.LINKLIST);
         }
-        value = new OObjectLazyList(self, docList, value);
+        value = new OObjectLazyList(self, docList, value,
+            OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
       } else if (value instanceof Set) {
         Set<OIdentifiable> docSet = doc.field(f.getName(), OType.LINKSET);
         if (docSet == null) {
           docSet = new ORecordLazySet(doc);
           doc.field(f.getName(), docSet, OType.LINKSET);
         }
-        value = new OObjectLazySet(self, docSet, (Set<?>) value);
+        value = new OObjectLazySet(self, docSet, (Set<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+            f.getName()));
       }
     }
     if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
@@ -521,7 +531,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageMapLoad(Field f, Object self, Object value, boolean customSerialization) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
     if (value instanceof ORecordLazyMap) {
-      value = new OObjectLazyMap(self, (ORecordLazyMap) value);
+      value = new OObjectLazyMap(self, (ORecordLazyMap) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+          f.getName()));
     } else if (customSerialization) {
       value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);
     } else if (genericType.isEnum()) {
@@ -534,9 +545,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageCollectionLoad(Field f, Object self, Object value, boolean customSerialization) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
     if (value instanceof ORecordLazyList) {
-      value = new OObjectLazyList(self, (ORecordLazyList) value);
+      value = new OObjectLazyList(self, (ORecordLazyList) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+          f.getName()));
     } else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet) {
-      value = new OObjectLazySet(self, (Set) value);
+      value = new OObjectLazySet(self, (Set) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
     } else if (customSerialization) {
       if (value instanceof List<?>) {
         value = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), doc, (List<Object>) value);
@@ -582,18 +594,28 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     return proceed.invoke(self, args);
   }
 
+  @SuppressWarnings("rawtypes")
   protected Object setValue(Object self, final String fieldName, Object valueToSet) {
     if (valueToSet == null) {
+      Object oldValue = doc.field(fieldName);
+      if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
+        orphans.add(((OIdentifiable) oldValue).getIdentity());
       doc.field(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
     } else if (!valueToSet.getClass().isAnonymousClass()) {
       if (valueToSet instanceof Proxy) {
         ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
         if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
           docToSet.addOwner(doc);
+        Object oldValue = doc.field(fieldName);
+        if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
+          orphans.add(((OIdentifiable) oldValue).getIdentity());
         doc.field(fieldName, docToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
       } else if (valueToSet instanceof OIdentifiable) {
         if (valueToSet instanceof ODocument && OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
           ((ODocument) valueToSet).addOwner(doc);
+        Object oldValue = doc.field(fieldName);
+        if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
+          orphans.add(((OIdentifiable) oldValue).getIdentity());
         doc.field(fieldName, valueToSet);
       } else if (((valueToSet instanceof Collection<?> || valueToSet instanceof Map<?, ?>)) || valueToSet.getClass().isArray()) {
         Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(fieldName,

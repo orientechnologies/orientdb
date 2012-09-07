@@ -364,6 +364,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
         if (!saveOnlyDirty || record.isDirty()) {
           // REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
           // registerUserObject(iPojo, record);
+          deleteOrphans((((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler())));
 
           underlying.save(record, iClusterName, iMode, iCallback);
 
@@ -376,6 +377,12 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       }
       return (RET) proxiedObject;
     }
+  }
+
+  protected void deleteOrphans(OObjectProxyMethodHandler handler) {
+    for (ORID orphan : handler.getOrphans())
+      underlying.delete(orphan);
+    handler.getOrphans().clear();
   }
 
   public ODatabaseObject delete(final Object iPojo) {
@@ -410,32 +417,39 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       return this;
 
     ODocument record = iRID.getRecord();
-    Object iPojo = getUserObjectByRecord(record, null);
+    if (record != null) {
+      Object iPojo = getUserObjectByRecord(record, null);
 
-    deleteCascade(record);
+      deleteCascade(record);
 
-    underlying.delete(record);
+      underlying.delete(record);
 
-    if (getTransaction() instanceof OTransactionNoTx)
-      unregisterPojo(iPojo, record);
+      if (getTransaction() instanceof OTransactionNoTx)
+        unregisterPojo(iPojo, record);
 
+    }
     return this;
   }
 
   protected void deleteCascade(ODocument record) {
+    if (record == null)
+      return;
     List<String> toDeleteCascade = OObjectEntitySerializer.getCascadeDeleteFields(record.getClassName());
     if (toDeleteCascade != null) {
       for (String field : toDeleteCascade) {
         Object toDelete = record.field(field);
         if (toDelete instanceof OIdentifiable) {
-          delete(((OIdentifiable) toDelete).getIdentity());
+          if (toDelete != null)
+            delete(((OIdentifiable) toDelete).getIdentity());
         } else if (toDelete instanceof Collection) {
           for (OIdentifiable cascadeRecord : ((Collection<OIdentifiable>) toDelete)) {
-            delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null)
+              delete(((OIdentifiable) cascadeRecord).getIdentity());
           }
         } else if (toDelete instanceof Map) {
           for (OIdentifiable cascadeRecord : ((Map<Object, OIdentifiable>) toDelete).values()) {
-            delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null)
+              delete(((OIdentifiable) cascadeRecord).getIdentity());
           }
         }
       }

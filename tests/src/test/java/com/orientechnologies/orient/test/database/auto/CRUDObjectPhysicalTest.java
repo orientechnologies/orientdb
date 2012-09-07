@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
@@ -279,7 +280,7 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapEnumAndInternalObjects")
-  public void mapObjectsTest() {
+  public void mapObjectsLinkTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
@@ -355,8 +356,72 @@ public class CRUDObjectPhysicalTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = "mapObjectsTest")
-  public void mapObjectsUpdateDatabaseNewInstanceTest() {
+  @Test(dependsOnMethods = "mapObjectsLinkTest")
+  public void enumQueryTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    JavaComplexTestClass testEnum1 = database.newInstance(JavaComplexTestClass.class);
+    testEnum1.setName("Silvester");
+
+    JavaComplexTestClass testEnum2 = database.newInstance(JavaComplexTestClass.class);
+    testEnum1.setName("Silvester");
+
+    testEnum1.setEnumField(EnumTest.ENUM1);
+
+    testEnum1.getEnumList().add(EnumTest.ENUM1);
+    testEnum1.getEnumList().add(EnumTest.ENUM2);
+
+    testEnum1.getEnumSet().add(EnumTest.ENUM1);
+    testEnum1.getEnumSet().add(EnumTest.ENUM3);
+
+    testEnum1.getEnumMap().put("1", EnumTest.ENUM2);
+    testEnum1.getEnumMap().put("2", EnumTest.ENUM3);
+
+    testEnum2.setEnumField(EnumTest.ENUM2);
+
+    testEnum2.getEnumList().add(EnumTest.ENUM2);
+    testEnum2.getEnumList().add(EnumTest.ENUM3);
+
+    testEnum2.getEnumSet().add(EnumTest.ENUM1);
+    testEnum2.getEnumSet().add(EnumTest.ENUM2);
+
+    database.save(testEnum1);
+    database.save(testEnum2);
+
+    ORID enum1Rid = database.getIdentity(testEnum1);
+    ORID enum2Rid = database.getIdentity(testEnum2);
+
+    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
+        "select from JavaComplexTestClass where enumField = :enumField");
+
+    Map<String, Object> enum1Config = new HashMap<String, Object>();
+    Map<String, Object> enum2Config = new HashMap<String, Object>();
+    enum1Config.put("enumField", EnumTest.ENUM1);
+    enum2Config.put("enumField", EnumTest.ENUM2);
+    List<JavaComplexTestClass> result = database.query(enumFieldQuery, enum1Config);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum1Rid);
+
+    result = database.query(enumFieldQuery, enum2Config);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum2Rid);
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    result = database.query(enumFieldQuery, enum1Config);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum1Rid);
+
+    result = database.query(enumFieldQuery, enum2Config);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), enum2Rid);
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsLinkTest")
+  public void mapObjectsLinkUpdateDatabaseNewInstanceTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     // TEST WITH NEW INSTANCE
@@ -425,8 +490,8 @@ public class CRUDObjectPhysicalTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = "mapObjectsUpdateDatabaseNewInstanceTest")
-  public void mapObjectsUpdateJavaNewInstanceTest() {
+  @Test(dependsOnMethods = "mapObjectsLinkUpdateDatabaseNewInstanceTest")
+  public void mapObjectsLinkUpdateJavaNewInstanceTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     // TEST WITH NEW INSTANCE
@@ -493,7 +558,7 @@ public class CRUDObjectPhysicalTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = "mapObjectsUpdateJavaNewInstanceTest")
+  @Test(dependsOnMethods = "mapObjectsLinkUpdateJavaNewInstanceTest")
   public void mapStringTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     Map<String, String> relatives = new HashMap<String, String>();
@@ -711,6 +776,115 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapStringListTest")
+  public void mapStringObjectTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    Map<String, Object> relatives = new HashMap<String, Object>();
+    relatives.put("father", "Mike");
+    relatives.put("mother", "Julia");
+
+    // TEST WITH OBJECT DATABASE NEW INSTANCE AND HANDLER MANAGEMENT
+    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Chuck");
+    p.getMapObject().put("father", "Mike");
+    p.getMapObject().put("mother", "Julia");
+
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), p.getMapObject().get(referenceRelativ));
+    }
+
+    database.save(p);
+    ORID rid = database.getIdentity(p);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    loaded.getMapObject().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.delete(loaded);
+
+    // TEST WITH OBJECT DATABASE NEW INSTANCE AND MAP DIRECT SET
+    p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Chuck");
+    p.setMapObject(relatives);
+
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), p.getMapObject().get(referenceRelativ));
+    }
+
+    database.save(p);
+    rid = database.getIdentity(p);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    loaded.getMapObject().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.delete(loaded);
+
+    // TEST WITH JAVA CONSTRUCTOR
+    p = new JavaComplexTestClass();
+    p.setName("Chuck");
+    p.setMapObject(relatives);
+
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), p.getMapObject().get(referenceRelativ));
+    }
+
+    p = database.save(p);
+    rid = database.getIdentity(p);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    loaded.getMapObject().put("brother", "Nike");
+    relatives.put("brother", "Nike");
+    database.save(loaded);
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    loaded = database.load(rid);
+    Assert.assertNotNull(loaded.getMapObject());
+    for (String referenceRelativ : relatives.keySet()) {
+      Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
+    }
+    database.delete(loaded);
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapStringObjectTest")
   public void oidentifableFieldsTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
