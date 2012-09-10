@@ -97,7 +97,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
       converted = false;
     setDirty();
     boolean thisModified = super.add(e);
-    boolean underlyingModified = underlying.add(getDatabase().getRecordByUserObject(e, true));
+    OIdentifiable record = getDatabase().getRecordByUserObject(e, false);
+    ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+    boolean underlyingModified = underlying.add(record);
     return thisModified || underlyingModified;
   }
 
@@ -124,9 +126,12 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     setDirty();
     final ODatabasePojoAbstract<TYPE> database = getDatabase();
     boolean modified = super.addAll(c);
-    for (Object o : c)
-      if (!underlying.add(database.getRecordByUserObject(o, false)))
+    for (Object o : c) {
+      OIdentifiable record = database.getRecordByUserObject(o, false);
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      if (!underlying.add(record))
         modified = true;
+    }
     return modified;
   }
 
@@ -135,11 +140,23 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     final ODatabasePojoAbstract<TYPE> database = getDatabase();
     boolean modified = super.retainAll(c);
     Set<Object> toRetain = new HashSet<Object>();
+    Set<Object> toRemove = new HashSet<Object>();
     for (Object o : c) {
-      toRetain.add(database.getRecordByUserObject(o, false));
-      if (underlying.retainAll(toRetain))
-        modified = true;
+      OIdentifiable record = database.getRecordByUserObject(o, false);
+      toRetain.add(record);
     }
+    for (OIdentifiable underlyingRec : underlying) {
+      if (toRetain.contains(underlyingRec)) {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(underlyingRec.getIdentity());
+      } else {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(underlyingRec.getIdentity());
+        toRemove.add(underlyingRec);
+        modified = true;
+      }
+    }
+    underlying.removeAll(toRemove);
+    toRemove.clear();
+    toRetain.clear();
     return modified;
   }
 

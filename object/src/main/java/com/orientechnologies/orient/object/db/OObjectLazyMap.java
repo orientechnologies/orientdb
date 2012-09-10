@@ -84,21 +84,29 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   @Override
   public Object put(final Object iKey, final Object e) {
     try {
+      OIdentifiable record;
       if (e instanceof OIdentifiable) {
+        record = (OIdentifiable) e;
         converted = false;
-        OIdentifiable o = underlying.put(iKey, (OIdentifiable) e);
-        if (orphanRemoval && o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity()))
-          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(o.getIdentity());
+        OIdentifiable o = underlying.put(iKey, record);
+        if (orphanRemoval) {
+          if (record != null)
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+          if (o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity()))
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(o.getIdentity());
+        }
         return o;
       } else {
-        OIdentifiable newValue = e != null ? getDatabase().getRecordByUserObject(e, true) : null;
+        record = e != null ? getDatabase().getRecordByUserObject(e, true) : null;
         // OIdentifiable oldValue = get(iKey) != null ? getDatabase().getRecordByUserObject(get(iKey), true) : null;
         OIdentifiable oldValue = underlying.get(iKey);
-        underlying.put(iKey, newValue);
-        if (orphanRemoval
-            && ((newValue == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(
-                newValue.getIdentity()))))
-          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(oldValue.getIdentity());
+        underlying.put(iKey, record);
+        if (orphanRemoval) {
+          if (record != null)
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+          if (((record == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity()))))
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(oldValue.getIdentity());
+        }
         return super.put(iKey, e);
       }
     } finally {

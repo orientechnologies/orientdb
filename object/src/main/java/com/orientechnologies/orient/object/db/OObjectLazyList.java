@@ -83,18 +83,28 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
 
   public boolean add(TYPE element) {
     boolean dirty = false;
+    OIdentifiable record;
     if (element instanceof OIdentifiable) {
+      record = (OIdentifiable) element;
       if (converted)
         converted = false;
-      if (recordList.add((OIdentifiable) element)) {
+      if (recordList.add(record)) {
         setDirty();
+        if (orphanRemoval && record != null)
+          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
         return true;
       }
-    } else if (element instanceof Proxy)
-      dirty = recordList.add((OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element));
-    else {
+    } else if (element instanceof Proxy) {
+      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      dirty = recordList.add(record);
+    } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
-      dirty = recordList.add((OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element));
+      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      dirty = recordList.add(record);
     }
     if (dirty)
       setDirty();
@@ -103,16 +113,26 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
 
   public void add(int index, TYPE element) {
     setDirty();
+    OIdentifiable record;
     if (element instanceof OIdentifiable) {
+      record = (OIdentifiable) element;
       if (converted)
         converted = false;
-      recordList.add(index, (OIdentifiable) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.add(index, record);
       return;
-    } else if (element instanceof Proxy)
-      recordList.add(OObjectEntitySerializer.getDocument((Proxy) element));
-    else {
+    } else if (element instanceof Proxy) {
+      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.add(record);
+    } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
-      recordList.add(index, OObjectEntitySerializer.getDocument((Proxy) element));
+      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.add(record);
     }
     super.add(index, element);
   }
@@ -248,15 +268,25 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   }
 
   public TYPE set(int index, TYPE element) {
+    OIdentifiable record;
     if (element instanceof OIdentifiable) {
+      record = (OIdentifiable) element;
       if (converted)
         converted = false;
-      recordList.set(index, (OIdentifiable) element);
-    } else if (element instanceof Proxy)
-      recordList.set(index, OObjectEntitySerializer.getDocument((Proxy) element));
-    else {
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.set(index, record);
+    } else if (element instanceof Proxy) {
+      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.set(index, record);
+    } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
-      recordList.add(index, OObjectEntitySerializer.getDocument((Proxy) element));
+      record = getDatabase().getRecordByUserObject(element, false);
+      if (orphanRemoval && record != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      recordList.add(index, record);
     }
     setDirty();
     return (TYPE) super.set(index, element);

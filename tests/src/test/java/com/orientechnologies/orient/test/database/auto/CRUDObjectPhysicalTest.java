@@ -791,6 +791,8 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), p.getMapObject().get(referenceRelativ));
     }
+    
+    p.getMapObject().keySet().size();
 
     database.save(p);
     ORID rid = database.getIdentity(p);
@@ -801,12 +803,14 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
@@ -826,6 +830,7 @@ public class CRUDObjectPhysicalTest {
     }
 
     database.save(p);
+    p.getMapObject().keySet().size();
     rid = database.getIdentity(p);
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -834,12 +839,14 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
@@ -847,6 +854,7 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     database.delete(loaded);
 
     // TEST WITH JAVA CONSTRUCTOR
@@ -859,6 +867,7 @@ public class CRUDObjectPhysicalTest {
     }
 
     p = database.save(p);
+    p.getMapObject().keySet().size();
     rid = database.getIdentity(p);
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -867,6 +876,7 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));
     }
+    loaded.getMapObject().keySet().size();
     loaded.getMapObject().put("brother", "Nike");
     relatives.put("brother", "Nike");
     database.save(loaded);
@@ -876,6 +886,7 @@ public class CRUDObjectPhysicalTest {
     database.close();
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     loaded = database.load(rid);
+    loaded.getMapObject().keySet().size();
     Assert.assertNotNull(loaded.getMapObject());
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), loaded.getMapObject().get(referenceRelativ));

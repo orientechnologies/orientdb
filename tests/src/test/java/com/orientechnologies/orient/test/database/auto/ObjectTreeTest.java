@@ -44,7 +44,6 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.JavaCascadeDeleteTestClass;
-import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.Planet;
 import com.orientechnologies.orient.test.domain.base.Satellite;
@@ -436,6 +435,9 @@ public class ObjectTreeTest {
     listChild3 = database.newInstance(Child.class);
     listChild3.setName("list3");
     test.getList().add(listChild3);
+    Child listChild4 = database.newInstance(Child.class);
+    listChild4.setName("list4");
+    test.getList().add(listChild4);
 
     setChild1 = database.newInstance(Child.class);
     setChild1.setName("set1");
@@ -446,41 +448,55 @@ public class ObjectTreeTest {
     setChild3 = database.newInstance(Child.class);
     setChild3.setName("set3");
     test.getSet().add(setChild3);
+    Child setChild4 = database.newInstance(Child.class);
+    setChild4.setName("set4");
+    test.getSet().add(setChild4);
 
     database.save(test);
     testRid = database.getRecordByUserObject(test, false).getIdentity();
     list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
     list2Rid = database.getRecordByUserObject(listChild2, false).getIdentity();
     list3Rid = database.getRecordByUserObject(listChild3, false).getIdentity();
+    ORID list4Rid = database.getRecordByUserObject(listChild4, false).getIdentity();
     set1Rid = database.getRecordByUserObject(setChild1, false).getIdentity();
     set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
     set3Rid = database.getRecordByUserObject(setChild3, false).getIdentity();
+    ORID set4Rid = database.getRecordByUserObject(setChild4, false).getIdentity();
     close();
     open();
     test = database.load(testRid);
+    test.getList().remove(listChild4);
     test.getList().remove(0);
     test.getList().remove(listChild3);
+    test.getList().add(listChild4);
     Iterator<Child> it = test.getList().iterator();
     it.next();
     it.remove();
     test.getSet().remove(setChild1);
+    test.getSet().remove(setChild4);
     Assert.assertFalse(test.getSet().contains(setChild1));
+    Assert.assertFalse(test.getSet().contains(setChild4));
     it = test.getSet().iterator();
     it.next();
     it.remove();
     Assert.assertTrue((!test.getSet().contains(setChild2) || !test.getSet().contains(setChild3)));
+    test.getSet().add(setChild4);
     database.save(test);
     listChild1 = database.load(list1Rid);
     listChild2 = database.load(list2Rid);
     listChild3 = database.load(list3Rid);
+    listChild4 = database.load(list4Rid);
     setChild1 = database.load(set1Rid);
     setChild2 = database.load(set2Rid);
     setChild3 = database.load(set3Rid);
+    setChild4 = database.load(set4Rid);
     Assert.assertNull(listChild1);
     Assert.assertNull(listChild2);
     Assert.assertNull(listChild3);
+    Assert.assertNotNull(listChild4);
     Assert.assertNull(setChild1);
     Assert.assertTrue((setChild3 != null && setChild2 == null) || (setChild3 == null && setChild2 != null));
+    Assert.assertNotNull(setChild4);
     database.delete(test);
   }
 
@@ -530,6 +546,9 @@ public class ObjectTreeTest {
     Child mapChild4 = database.newInstance(Child.class);
     mapChild4.setName("map4");
     test.getChildren().put("4", mapChild4);
+    Child mapChild5 = database.newInstance(Child.class);
+    mapChild5.setName("map5");
+    test.getChildren().put("5", mapChild5);
 
     database.save(test);
     testRid = database.getIdentity(test);
@@ -537,6 +556,7 @@ public class ObjectTreeTest {
     map2Rid = database.getRecordByUserObject(mapChild2, false).getIdentity();
     map3Rid = database.getRecordByUserObject(mapChild3, false).getIdentity();
     ORID map4Rid = database.getRecordByUserObject(mapChild4, false).getIdentity();
+    ORID map5Rid = database.getRecordByUserObject(mapChild5, false).getIdentity();
     close();
     open();
     test = database.load(testRid);
@@ -544,19 +564,24 @@ public class ObjectTreeTest {
     Assert.assertNotNull(test.getChildren().get("2"));
     Assert.assertNotNull(test.getChildren().get("3"));
     Assert.assertNotNull(test.getChildren().get("4"));
+    Assert.assertNotNull(test.getChildren().get("5"));
+    test.getChildren().remove("5");
     test.getChildren().put("1", mapChild1);
     test.getChildren().put("2", mapChild1);
     test.getChildren().put("3", null);
     test.getChildren().remove("4");
+    test.getChildren().put("3", mapChild5);
     database.save(test);
     mapChild1 = database.load(map1Rid);
     mapChild2 = database.load(map2Rid);
     mapChild3 = database.load(map3Rid);
     mapChild4 = database.load(map4Rid);
+    mapChild5 = database.load(map5Rid);
     Assert.assertNotNull(mapChild1);
     Assert.assertNull(mapChild2);
     Assert.assertNull(mapChild3);
     Assert.assertNull(mapChild4);
+    Assert.assertNotNull(mapChild5);
     database.delete(test);
   }
 
