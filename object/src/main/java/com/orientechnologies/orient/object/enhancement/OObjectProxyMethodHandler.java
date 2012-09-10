@@ -103,9 +103,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   public Object invoke(Object self, Method m, Method proceed, Object[] args) throws Throwable {
-    if (isSetterMethod(m.getName(), m)) {
+    OObjectMethodFilter filter = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass());
+    if (filter.isSetterMethod(m.getName(), m)) {
       return manageSetMethod(self, m, proceed, args);
-    } else if (isGetterMethod(m.getName(), m)) {
+    } else if (filter.isGetterMethod(m.getName(), m)) {
       return manageGetMethod(self, m, proceed, args);
     }
     return proceed.invoke(self, args);
@@ -213,7 +214,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageGetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
       InvocationTargetException, NoSuchMethodException, SecurityException, IllegalArgumentException, NoSuchFieldException {
     final String fieldName;
-    fieldName = getFieldName(m);
+    fieldName = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
     boolean idOrVersionField = false;
     if (OObjectEntitySerializer.isIdField(m.getDeclaringClass(), fieldName)) {
       idOrVersionField = true;
@@ -589,7 +590,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageSetMethod(Object self, Method m, Method proceed, Object[] args) throws IllegalAccessException,
       InvocationTargetException {
     final String fieldName;
-    fieldName = getFieldName(m);
+    fieldName = OObjectEntityEnhancer.getInstance().getMethodFilter(self.getClass()).getFieldName(m);
     args[0] = setValue(self, fieldName, args[0]);
     return proceed.invoke(self, args);
   }
@@ -682,51 +683,6 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           fieldName, self.getClass().getName(), valueToSet.getClass().getName());
     }
     return valueToSet;
-  }
-
-  protected boolean isSetterMethod(String fieldName, Method m) {
-    if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set"))
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
-      return false;
-    return true;
-  }
-
-  protected boolean isGetterMethod(String fieldName, Method m) {
-    int prefixLength;
-    if (fieldName.startsWith("get") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "get"))
-      prefixLength = "get".length();
-    else if (fieldName.startsWith("is") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "is"))
-      prefixLength = "is".length();
-    else
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length > 0)
-      return false;
-    if (fieldName.length() <= prefixLength)
-      return false;
-    return true;
-  }
-
-  protected boolean checkIfFirstCharAfterPrefixIsUpperCase(String methodName, String prefix) {
-    return methodName.length() > prefix.length() ? Character.isUpperCase(methodName.charAt(prefix.length())) : false;
-  }
-
-  protected String getFieldName(Method m) {
-    if (m.getName().startsWith("get"))
-      return getFieldName(m.getName(), "get");
-    else if (m.getName().startsWith("set"))
-      return getFieldName(m.getName(), "set");
-    else
-      return getFieldName(m.getName(), "is");
-  }
-
-  protected String getFieldName(String methodName, String prefix) {
-    StringBuffer fieldName = new StringBuffer();
-    fieldName.append(Character.toLowerCase(methodName.charAt(prefix.length())));
-    for (int i = (prefix.length() + 1); i < methodName.length(); i++) {
-      fieldName.append(methodName.charAt(i));
-    }
-    return fieldName.toString();
   }
 
   protected String getSetterFieldName(String fieldName) {

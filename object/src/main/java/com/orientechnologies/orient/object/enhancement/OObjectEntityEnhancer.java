@@ -19,7 +19,6 @@ package com.orientechnologies.orient.object.enhancement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
@@ -50,9 +48,11 @@ import com.orientechnologies.orient.object.serialization.OObjectCustomSerializer
  */
 public class OObjectEntityEnhancer {
 
-  private static final OObjectEntityEnhancer instance              = new OObjectEntityEnhancer();
+  private static final OObjectEntityEnhancer       instance              = new OObjectEntityEnhancer();
+  private final Map<Class<?>, OObjectMethodFilter> customMethodFilters   = new HashMap<Class<?>, OObjectMethodFilter>();
+  private final OObjectMethodFilter                defaultMethodFilter   = new OObjectMethodFilter();
 
-  public static final String                 ENHANCER_CLASS_PREFIX = "orientdb_";
+  public static final String                       ENHANCER_CLASS_PREFIX = "orientdb_";
 
   public OObjectEntityEnhancer() {
   }
@@ -89,20 +89,11 @@ public class OObjectEntityEnhancer {
     } else {
       ProxyFactory f = new ProxyFactory();
       f.setSuperclass(iClass);
-      f.setFilter(new MethodFilter() {
-        public boolean isHandled(Method m) {
-          final String methodName = m.getName();
-          try {
-            return (isSetterMethod(methodName, m) || isGetterMethod(methodName, m));
-          } catch (NoSuchFieldException nsfe) {
-            OLogManager.instance().warn(this, "Error handling the method %s in class %s", nsfe, m.getName(), iClass.getName());
-            return false;
-          } catch (SecurityException se) {
-            OLogManager.instance().warn(this, "", se, m.getName(), iClass.getName());
-            return false;
-          }
-        }
-      });
+      if (customMethodFilters.get(iClass) != null) {
+        f.setFilter(customMethodFilters.get(iClass));
+      } else {
+        f.setFilter(defaultMethodFilter);
+      }
       c = f.createClass();
     }
     MethodHandler mi = new OObjectProxyMethodHandler(doc);
@@ -180,53 +171,25 @@ public class OObjectEntityEnhancer {
     return null;
   }
 
+  public OObjectMethodFilter getMethodFilter(Class<?> iClass) {
+    if (Proxy.class.isAssignableFrom(iClass))
+      iClass = iClass.getSuperclass();
+    OObjectMethodFilter filter = customMethodFilters.get(iClass);
+    if (filter == null)
+      filter = defaultMethodFilter;
+    return filter;
+  }
+
+  public void registerClassMethodFilter(Class<?> iClass, OObjectMethodFilter iMethodFilter) {
+    customMethodFilters.put(iClass, iMethodFilter);
+  }
+
+  public void deregisterClassMethodFilter(Class<?> iClass) {
+    customMethodFilters.remove(iClass);
+  }
+
   public static synchronized OObjectEntityEnhancer getInstance() {
     return instance;
-  }
-
-  private boolean isSetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {
-    if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set"))
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
-      return false;
-    return !OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m));
-  }
-
-  private boolean isGetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {
-    int prefixLength;
-    if (fieldName.startsWith("get") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "get"))
-      prefixLength = "get".length();
-    else if (fieldName.startsWith("is") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "is"))
-      prefixLength = "is".length();
-    else
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length > 0)
-      return false;
-    if (fieldName.length() <= prefixLength)
-      return false;
-    return !OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m));
-  }
-
-  protected String getFieldName(Method m) {
-    if (m.getName().startsWith("get"))
-      return getFieldName(m.getName(), "get");
-    else if (m.getName().startsWith("set"))
-      return getFieldName(m.getName(), "set");
-    else
-      return getFieldName(m.getName(), "is");
-  }
-
-  protected String getFieldName(String methodName, String prefix) {
-    StringBuffer fieldName = new StringBuffer();
-    fieldName.append(Character.toLowerCase(methodName.charAt(prefix.length())));
-    for (int i = (prefix.length() + 1); i < methodName.length(); i++) {
-      fieldName.append(methodName.charAt(i));
-    }
-    return fieldName.toString();
-  }
-
-  private boolean checkIfFirstCharAfterPrefixIsUpperCase(String methodName, String prefix) {
-    return methodName.length() > prefix.length() ? Character.isUpperCase(methodName.charAt(prefix.length())) : false;
   }
 
   private boolean isPrimitiveParameterCorrect(Class<?> primitiveClass, Object parameterValue) {
