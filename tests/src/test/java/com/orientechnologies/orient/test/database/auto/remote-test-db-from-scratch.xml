@@ -137,6 +137,7 @@
             <!-- <class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest" /> -->
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest" />
         </classes>
     </test>
     <test name="DbTools">

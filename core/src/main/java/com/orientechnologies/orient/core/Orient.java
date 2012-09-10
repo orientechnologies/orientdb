@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -71,6 +72,8 @@ public class Orient extends OSharedResourceAbstract {
   private final OMemoryWatchDog                         memoryWatchDog;
   private final OJVMProfiler                            profiler;
   private static AtomicInteger                          serialId             = new AtomicInteger();
+
+  public ODatabaseThreadLocalFactory                    databaseThreadFactory;
 
   protected List<Class<? extends ODatabasePoolBase<?>>> pools;
 
@@ -344,6 +347,10 @@ public class Orient extends OSharedResourceAbstract {
     return threadGroup;
   }
 
+  public ODatabaseThreadLocalFactory getDatabaseThreadFactory() {
+    return databaseThreadFactory;
+  }
+
   public OMemoryWatchDog getMemoryWatchDog() {
     return memoryWatchDog;
   }
@@ -421,5 +428,9 @@ public class Orient extends OSharedResourceAbstract {
 
   public OJVMProfiler getProfiler() {
     return profiler;
+  }
+
+  public void registerDatabaseFactory(ODatabaseThreadLocalFactory iDatabaseFactory) {
+    databaseThreadFactory = iDatabaseFactory;
   }
 }

@@ -15,26 +15,40 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
-	public static ODatabaseRecordThreadLocal	INSTANCE	= new ODatabaseRecordThreadLocal();
 
-	@Override
-	public ODatabaseRecord get() {
-		final ODatabaseRecord db = super.get();
-		if (db == null)
-			throw new ODatabaseException(
-					"Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
-		return db;
-	}
+  public static ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
 
-	public ODatabaseRecord getIfDefined() {
-		return super.get();
-	}
+  @Override
+  public ODatabaseRecord get() {
+    ODatabaseRecord db = super.get();
+    if (db == null) {
+      if (Orient.instance().getDatabaseThreadFactory() == null) {
+        throw new ODatabaseException(
+            "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+      } else {
+        db = Orient.instance().getDatabaseThreadFactory().getDb();
+        if (db == null) {
+          throw new ODatabaseException(
+              "Database instance is not set in current thread. Assure to set it with: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+        } else {
+          set(db);
+        }
+      }
+    }
+    return db;
+  }
 
-	public boolean isDefined() {
-		return super.get() != null;
-	}
+  public ODatabaseRecord getIfDefined() {
+    return super.get();
+  }
+
+  public boolean isDefined() {
+    return super.get() != null;
+  }
+
 }
