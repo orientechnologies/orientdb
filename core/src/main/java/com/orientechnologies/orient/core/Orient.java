@@ -430,7 +430,7 @@ public class Orient extends OSharedResourceAbstract {
     return profiler;
   }
 
-  public void registerDatabaseFactory(ODatabaseThreadLocalFactory iDatabaseFactory) {
+  public void registerThreadDatabaseFactory(ODatabaseThreadLocalFactory iDatabaseFactory) {
     databaseThreadFactory = iDatabaseFactory;
   }
 }

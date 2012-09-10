@@ -60,7 +60,7 @@ public class DatabaseThreadFactoryTest {
 
   @Test(dependsOnMethods = "testNoFactory")
   public void testFactory() {
-    Orient.instance().registerDatabaseFactory(new ODatabaseThreadLocalFactory() {
+    Orient.instance().registerThreadDatabaseFactory(new ODatabaseThreadLocalFactory() {
 
       @Override
       public ODatabaseRecord getDb() {
