@@ -63,7 +63,7 @@ public class DatabaseThreadFactoryTest {
     Orient.instance().registerThreadDatabaseFactory(new ODatabaseThreadLocalFactory() {
 
       @Override
-      public ODatabaseRecord getDb() {
+      public ODatabaseRecord getThreadDatabase() {
         return ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
       }
     });
