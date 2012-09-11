@@ -45,6 +45,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest" />
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
         </classes>
     </test>
