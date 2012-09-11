@@ -71,9 +71,11 @@ public class OConsoleApplication {
     this.args = iArgs;
   }
 
-  public void run() {
+  public int run() {
     interactiveMode = isInteractiveMode(args);
     onBefore();
+
+    int result = 0;
 
     if (interactiveMode) {
       // EXECUTE IN INTERACTIVE MODE
@@ -94,10 +96,12 @@ public class OConsoleApplication {
       }
     } else {
       // EXECUTE IN BATCH MODE
-      executeBatch(getCommandLine(args));
+      result = executeBatch(getCommandLine(args)) ? 0 : 1;
     }
 
     onAfter();
+
+    return result;
   }
 
   protected boolean isInteractiveMode(String[] args) {
@@ -254,6 +258,7 @@ public class OConsoleApplication {
           onException(e.getCause());
         else
           e.printStackTrace();
+        return false;
       }
       return true;
     }

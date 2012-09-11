@@ -105,6 +105,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   public static void main(final String[] args) {
+    int result = 0;
+    
     try {
       boolean tty = false;
       try {
@@ -128,7 +130,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (tty)
         console.setReader(new TTYConsoleReader());
 
-      console.run();
+      result = console.run();
 
     } finally {
       try {
@@ -136,6 +138,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       } catch (Exception e) {
       }
     }
+    
+    System.exit(result);
   }
 
   @Override
