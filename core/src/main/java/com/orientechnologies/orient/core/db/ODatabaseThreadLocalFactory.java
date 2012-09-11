@@ -24,6 +24,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 public interface ODatabaseThreadLocalFactory {
 
-  public ODatabaseRecord getDb();
+  public ODatabaseRecord getThreadDatabase();
 
 }
