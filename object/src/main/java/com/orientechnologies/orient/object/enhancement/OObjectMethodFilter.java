@@ -30,7 +30,10 @@ public class OObjectMethodFilter implements MethodFilter {
 
   public boolean isHandled(Method m) {
     final String methodName = m.getName();
+    final String fieldName = getFieldName(m);
     try {
+      if (!OObjectEntitySerializer.isClassField(m.getDeclaringClass(), fieldName))
+        return false;
       return (isSetterMethod(methodName, m) || isGetterMethod(methodName, m));
     } catch (NoSuchFieldException nsfe) {
       OLogManager.instance().warn(this, "Error handling the method %s in class %s", nsfe, m.getName(),

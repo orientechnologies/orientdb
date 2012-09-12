@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
@@ -711,6 +712,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       if (rid.isValid())
         rid2Records.remove(rid);
     }
+  }
+
+  public void registerClassMethodFilter(Class<?> iClass, OObjectMethodFilter iMethodFilter) {
+    OObjectEntityEnhancer.getInstance().registerClassMethodFilter(iClass, iMethodFilter);
+  }
+
+  public void deregisterClassMethodFilter(Class<?> iClass) {
+    OObjectEntityEnhancer.getInstance().deregisterClassMethodFilter(iClass);
   }
 
 }

@@ -16,6 +16,8 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
+import java.util.List;
+
 /**
  * @author luca.molino
  * 
@@ -50,6 +52,14 @@ public class CustomMethodFilterTestClass {
 
   public void setTransientNotDefinedField(String transientNotDefinedField) {
     this.transientNotDefinedField = transientNotDefinedField;
+  }
+
+  public List<String> getStandardFieldAsList() {
+    return null;
+  }
+
+  public List<String> getStandardFieldAsMap() {
+    return null;
   }
 
 }

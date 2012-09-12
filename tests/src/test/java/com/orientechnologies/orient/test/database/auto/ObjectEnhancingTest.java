@@ -46,6 +46,8 @@ public class ObjectEnhancingTest {
     testClass.setStandardField("testStandard");
     testClass.setUPPERCASEFIELD("testUpperCase");
     testClass.setTransientNotDefinedField("testTransient");
+    Assert.assertNull(testClass.getStandardFieldAsList());
+    Assert.assertNull(testClass.getStandardFieldAsMap());
     database.save(testClass);
     ORID rid = database.getIdentity(testClass);
     database.close();
@@ -53,6 +55,8 @@ public class ObjectEnhancingTest {
     testClass = database.load(rid);
     Assert.assertEquals(testClass.getStandardField(), "testStandard");
     Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");
+    Assert.assertNull(testClass.getStandardFieldAsList());
+    Assert.assertNull(testClass.getStandardFieldAsMap());
     ODocument doc = database.getRecordByUserObject(testClass, false);
     Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
     database.close();

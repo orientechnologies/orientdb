@@ -80,6 +80,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectEntitySerializer {
 
   private static final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
+  private static final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         embeddedFields      = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         directAccessFields  = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
@@ -268,6 +269,18 @@ public class OObjectEntitySerializer {
     return getDocument(proxiedObject).getVersion();
   }
 
+  public static boolean isClassField(Class<?> iClass, String iField) {
+    checkClassRegistration(iClass);
+    boolean isClassField = false;
+    for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
+        && !currentClass.equals(ODocument.class) && !isClassField;) {
+      List<String> allClassFields = allFields.get(currentClass);
+      isClassField = allClassFields != null && allClassFields.contains(iField);
+      currentClass = currentClass.getSuperclass();
+    }
+    return isClassField;
+  }
+
   public static boolean isTransientField(Class<?> iClass, String iField) {
     checkClassRegistration(iClass);
     boolean isTransientField = false;
@@ -356,6 +369,13 @@ public class OObjectEntitySerializer {
         for (Field f : currentClass.getDeclaredFields()) {
           final String fieldName = f.getName();
           final int fieldModifier = f.getModifiers();
+
+          List<String> allClassFields = allFields.get(currentClass);
+          if (allClassFields == null)
+            allClassFields = new ArrayList<String>();
+          allClassFields.add(fieldName);
+          allFields.put(currentClass, allClassFields);
+
           if (Modifier.isStatic(fieldModifier) || Modifier.isFinal(fieldModifier) || Modifier.isNative(fieldModifier)
               || Modifier.isTransient(fieldModifier)) {
             List<String> classTransientFields = transientFields.get(currentClass);
