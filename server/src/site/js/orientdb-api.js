@@ -717,7 +717,7 @@ function ODatabase(databasePath) {
 	}
 
 	ODatabase.prototype.getClass = function(className) {
-		var classes = databaseInfo['classes'];
+		var classes = this.databaseInfo['classes'];
 		for ( var cls in classes) {
 			if (!classes.hasOwnProperty(cls)) {
 				continue;
