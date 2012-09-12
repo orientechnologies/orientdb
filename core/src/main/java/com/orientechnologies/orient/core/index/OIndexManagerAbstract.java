@@ -23,11 +23,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -55,7 +55,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public static final String                                  DICTIONARY_NAME    = "dictionary";
   protected Map<String, OIndexInternal<?>>                    indexes            = new ConcurrentHashMap<String, OIndexInternal<?>>();
   protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
-  protected String                                            defaultClusterName = OStorage.CLUSTER_INDEX_NAME;
+  protected String                                            defaultClusterName = OMetadata.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName  = OMetadata.CLUSTER_MANUAL_INDEX_NAME;
 
   protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
@@ -126,7 +127,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public void create() {
     acquireExclusiveLock();
     try {
-      save(OStorage.CLUSTER_INTERNAL_NAME);
+      save(OMetadata.CLUSTER_INTERNAL_NAME);
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
       getDatabase().getStorage().getConfiguration().update();
 

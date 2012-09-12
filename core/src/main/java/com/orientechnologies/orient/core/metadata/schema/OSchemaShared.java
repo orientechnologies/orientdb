@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -556,7 +557,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public void create() {
     final ODatabaseRecord db = getDatabase();
-    super.save(OStorage.CLUSTER_INTERNAL_NAME);
+    super.save(OMetadata.CLUSTER_INTERNAL_NAME);
     db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
     db.getStorage().getConfiguration().update();
   }

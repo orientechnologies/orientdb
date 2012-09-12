@@ -75,7 +75,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     try {
       final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);
 
-      index.create(iName, indexDefinition, getDatabase(), defaultClusterName, iClusterIdsToIndex, iProgressListener);
+      // decide which cluster to use ("index" - for automatic and "manindex" for manual)
+      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ?
+          defaultClusterName : manualClusterName;
+
+      index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, iProgressListener);
       addIndexInternal(index);
 
       setDirty();

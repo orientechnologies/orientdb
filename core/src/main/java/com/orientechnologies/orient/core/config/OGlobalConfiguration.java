@@ -99,6 +99,10 @@ public enum OGlobalConfiguration {
       "Executes a synch against the file-system at every record operation. This slows down records updates "
           + "but guarantee reliability on unreliable drives", Boolean.class, Boolean.FALSE),
 
+  NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
+      "List of clusters to sync immediately after update separated by commas. Can be useful for manual index",
+      String.class, "manindex"),
+
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
       true),
@@ -120,10 +124,15 @@ public enum OGlobalConfiguration {
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
-  MVRBTREE_LAZY_UPDATES(
-      "mvrbtree.lazyUpdates",
-      "Configure the TreeMaps (indexes and dictionaries) as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
-      Integer.class, 5000),
+  INDEX_AUTO_LAZY_UPDATES(
+      "index.auto.lazyUpdates",
+      "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
+      Integer.class, 10000),
+
+  INDEX_MANUAL_LAZY_UPDATES(
+      "index.manual.lazyUpdates",
+      "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
+      Integer.class, 1),
 
   MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
       "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),

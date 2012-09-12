@@ -47,6 +47,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+/**
+ * If some of the tests start to fail then check cluster number
+ * in queries, e.g #7:1. It can be because the order of clusters
+ * could be affected due to adding or removing cluster from storage.
+ */
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
 public class SQLSelectTest {
@@ -504,10 +509,10 @@ public class SQLSelectTest {
 
   @Test
   public void queryWhereRidDirectMatching() {
-    List<Long> positions = getValidPositions(3);
+    List<Long> positions = getValidPositions(4);
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select * from OUser where roles in #3:" + positions.get(0))).execute();
+        new OSQLSynchQuery<ODocument>("select * from OUser where roles in #4:" + positions.get(0))).execute();
 
     Assert.assertEquals(result.size(), 1);
   }
@@ -920,12 +925,12 @@ public class SQLSelectTest {
       return;
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select from Profile where @rid between #11:2 and #11:30 LIMIT 3");
+        "select from Profile where @rid between #12:2 and #12:30 LIMIT 3");
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query);
 
-    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(11, 2));
+    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(12, 2));
 
     int iterationCount = 0;
     while (!resultset.isEmpty()) {
@@ -942,7 +947,7 @@ public class SQLSelectTest {
       resultset = database.query(query);
     }
 
-    Assert.assertEquals(last, new ORecordId(11, 30));
+    Assert.assertEquals(last, new ORecordId(12, 30));
     Assert.assertTrue(iterationCount > 1);
   }
 
@@ -1352,20 +1357,20 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithTwoRidInWhere() {
-    List<Long> positions = getValidPositions(11);
+    List<Long> positions = getValidPositions(12);
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-        "select @rid.trim() as oid, name from Profile where (@rid in [#11:" + positions.get(5) + "] or @rid in [#11:"
+        "select @rid.trim() as oid, name from Profile where (@rid in [#12:" + positions.get(5) + "] or @rid in [#12:"
             + positions.get(25) + "]) AND @rid > ? LIMIT 10000");
 
     final long minPos = Math.min(positions.get(5), positions.get(25));
     final long maxPos = Math.max(positions.get(5), positions.get(25));
 
-    List<ODocument> resultset = database.query(query, new ORecordId(11, minPos));
+    List<ODocument> resultset = database.query(query, new ORecordId(12, minPos));
 
     Assert.assertEquals(resultset.size(), 1);
 
-    Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(11, maxPos).toString());
+    Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(12, maxPos).toString());
   }
 
   private List<Long> getValidPositions(int clusterId) {

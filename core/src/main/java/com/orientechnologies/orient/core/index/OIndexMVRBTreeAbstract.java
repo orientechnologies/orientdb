@@ -78,6 +78,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   protected Set<String>                          clustersToIndex  = new LinkedHashSet<String>();
   protected OIndexDefinition                     indexDefinition;
   protected final String                         databaseName;
+  protected int                                  maxUpdatesBeforeSave;
 
   @ODocumentInstance
   protected ODocument                            configuration;
@@ -121,6 +122,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       configuration = new ODocument();
 
       indexDefinition = iIndexDefinition;
+      maxUpdatesBeforeSave = lazyUpdates();
 
       if (iClusterIdsToIndex != null)
         for (final int id : iClusterIdsToIndex)
@@ -129,7 +131,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       if (indexDefinition != null) {
         if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
           map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName,
-              ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1);
+              ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer(), iValueSerializer, 1, maxUpdatesBeforeSave);
         } else {
           final OBinarySerializer<?> keySerializer;
           if (indexDefinition.getTypes().length > 1) {
@@ -138,10 +140,10 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
             keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
           }
           map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, (OBinarySerializer<Object>) keySerializer,
-              iValueSerializer, indexDefinition.getTypes().length);
+              iValueSerializer, indexDefinition.getTypes().length, maxUpdatesBeforeSave);
         }
       } else
-        map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1);
+        map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1, maxUpdatesBeforeSave);
 
       installHooks(iDatabase);
 
@@ -221,12 +223,13 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       }
 
       clustersToIndex.clear();
+      maxUpdatesBeforeSave = lazyUpdates();
 
       final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
       if (clusters != null)
         clustersToIndex.addAll(clusters);
 
-      map = new OMVRBTreeDatabaseLazySave<Object, T>(getDatabase(), rid);
+      map = new OMVRBTreeDatabaseLazySave<Object, T>(getDatabase(), rid, maxUpdatesBeforeSave);
       try {
         map.load();
       } catch (Exception e) {
@@ -857,7 +860,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         return;
 
       indexDefinition = new OSimpleKeyIndexDefinition(type);
-
+      maxUpdatesBeforeSave = lazyUpdates();
       updateConfiguration();
     }
   }
@@ -915,5 +918,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   public String getDatabaseName() {
     return databaseName;
+  }
+
+  private int lazyUpdates() {
+    return isAutomatic() ?
+        OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.getValueAsInteger() :
+        OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
   }
 }

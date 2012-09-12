@@ -37,10 +37,8 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * 
  */
 public interface OStorage extends OSharedContainer {
-  public static final String CLUSTER_INTERNAL_NAME = "internal";
-  public static final String CLUSTER_INDEX_NAME    = "index";
-  public static final String CLUSTER_DEFAULT_NAME  = "default";
-  public static final String DATA_DEFAULT_NAME     = "default";
+  public static final String DATA_DEFAULT_NAME         = "default";
+  public static final String CLUSTER_DEFAULT_NAME      = "default";
 
   public enum CLUSTER_TYPE {
     PHYSICAL, MEMORY

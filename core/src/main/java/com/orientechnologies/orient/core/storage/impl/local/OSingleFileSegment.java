@@ -28,6 +28,7 @@ public class OSingleFileSegment {
   protected OStorageLocal             storage;
   protected OFile                     file;
   protected OStorageFileConfiguration config;
+  private boolean                     wasSoftlyClosedAtPreviousTime = true;
 
   public OSingleFileSegment(final String iPath, final String iType) throws IOException {
     file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
@@ -51,6 +52,7 @@ public class OSingleFileSegment {
     if (!softClosed) {
       // LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
       OLogManager.instance().warn(this, "segment file '%s' was not closed correctly last time", OFileUtils.getPath(file.getName()));
+      wasSoftlyClosedAtPreviousTime = false;
     }
 
     return softClosed;
@@ -101,5 +103,9 @@ public class OSingleFileSegment {
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
     file.setSoftlyClosed(softlyClosed);
+  }
+
+  public boolean wasSoftlyClosedAtPreviousTime() {
+    return wasSoftlyClosedAtPreviousTime;
   }
 }

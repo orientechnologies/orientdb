@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -65,21 +66,23 @@ public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
 
-  private final Map<String, OCluster>   clusterMap          = new LinkedHashMap<String, OCluster>();
-  private OCluster[]                    clusters            = new OCluster[0];
-  private ODataLocal[]                  dataSegments        = new ODataLocal[0];
+  private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
+  private OCluster[]                    clusters                  = new OCluster[0];
+  private ODataLocal[]                  dataSegments              = new ODataLocal[0];
 
   private final OStorageLocalTxExecuter txManager;
   private String                        storagePath;
   private final OStorageVariableParser  variableParser;
-  private int                           defaultClusterId    = -1;
+  private int                           defaultClusterId          = -1;
 
-  private static String[]               ALL_FILE_EXTENSIONS = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco", ".ocs" };
+  private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco", ".ocs" };
 
   // private final MersenneTwisterFast positionGenerator = new MersenneTwisterFast();
-  private long                          positionGenerator   = 0;
+  private long                          positionGenerator         = 0;
 
-  private OModificationLock             modificationLock    = new OModificationLock();
+  private OModificationLock             modificationLock          = new OModificationLock();
+
+  private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -102,6 +105,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
+
+    final String[] clustersToSync = OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY
+        .getValueAsString().trim().split("\\s*,\\s*");
+    clustersToSyncImmediately.addAll(Arrays.asList(clustersToSync));
 
     installProfilerHooks();
   }
@@ -168,7 +175,7 @@ public class OStorageLocal extends OStorageEmbedded {
               clusterMap.put(clusters[i].getName(), clusters[i]);
               clusters[i].open();
             } else {
-              if (clusterConfig.getName().equals(OStorage.CLUSTER_DEFAULT_NAME))
+              if (clusterConfig.getName().equals(CLUSTER_DEFAULT_NAME))
                 defaultClusterId = pos;
 
               clusters[pos].open();
@@ -201,37 +208,33 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   private void addDefaultClusters() throws IOException {
-    int pos;
-    pos = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OStorage.CLUSTER_INTERNAL_NAME));
-    clusters[pos].open();
-
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_INTERNAL_NAME));
     configuration.load();
 
-    pos = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OStorage.CLUSTER_INDEX_NAME));
-    clusters[pos].open();
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_INDEX_NAME));
+
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
 
     defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OStorage.CLUSTER_DEFAULT_NAME));
-    clusters[defaultClusterId].open();
+        CLUSTER_DEFAULT_NAME));
   }
 
   private void addLHPEPSDefaultClusters() throws IOException {
-    int pos;
-    pos = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
-        OStorage.CLUSTER_INTERNAL_NAME));
-    clusters[pos].open();
-
+    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_INTERNAL_NAME));
     configuration.load();
 
-    pos = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
-        OStorage.CLUSTER_INDEX_NAME));
-    clusters[pos].open();
+    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_INDEX_NAME));
+
+    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
 
     defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
-        OStorage.CLUSTER_DEFAULT_NAME));
-    clusters[defaultClusterId].open();
+        CLUSTER_DEFAULT_NAME));
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -257,14 +260,18 @@ public class OStorageLocal extends OStorageEmbedded {
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INTERNAL_NAME, null, null);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_INDEX_NAME, null, null);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null);
+
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
+      // INDEXING
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null);
 
       // ADD THE DEFAULT CLUSTER
-      defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null);
+      defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null);
 
       configuration.create();
 
@@ -783,14 +790,14 @@ public class OStorageLocal extends OStorageEmbedded {
       } else
         cluster = null;
 
-      registerCluster(cluster);
+      final int clusterId = registerCluster(cluster);
 
       if (cluster != null) {
         cluster.create(-1);
         configuration.update();
       }
 
-      return cluster.getId();
+      return clusterId;
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
@@ -946,7 +953,7 @@ public class OStorageLocal extends OStorageEmbedded {
         txManager.getCurrentTransaction().updateIndexIdentityAfterCommit(oldRid, iRid);
       } else {
         ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
-        if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+        if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster.getName()))
           synchRecordUpdate(cluster, ppos);
         if (iCallback != null)
           iCallback.call(iRid, ppos.clusterPosition);
@@ -977,7 +984,8 @@ public class OStorageLocal extends OStorageEmbedded {
       } else {
         final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
-        if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+        if (ppos != null &&
+            (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster.getName())))
           synchRecordUpdate(cluster, ppos);
 
         final int returnValue = (int) (ppos != null ? ppos.recordVersion : -1);
@@ -1003,7 +1011,9 @@ public class OStorageLocal extends OStorageEmbedded {
         return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
       } else {
         final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
-        if (ppos != null && OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean())
+
+        if (ppos != null &&
+            (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster.getName())))
           synchRecordUpdate(cluster, ppos);
 
         final boolean returnValue = ppos != null;
@@ -1185,7 +1195,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Returns the list of holes as pair of position & ODataHoleInfo
-   * 
+   *
    * @throws IOException
    */
   public List<ODataHoleInfo> getHolesList() {
@@ -1207,7 +1217,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Returns the total number of holes.
-   * 
+   *
    * @throws IOException
    */
   public long getHoles() {
@@ -1227,7 +1237,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Returns the total size used by holes
-   * 
+   *
    * @throws IOException
    */
   public long getHoleSize() {
@@ -1419,7 +1429,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Create the cluster by reading the configuration received as argument and register it assigning it the higher serial id.
-   * 
+   *
    * @param iConfig
    *          A OStorageClusterConfiguration implementation, namely physical or logical
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
@@ -1444,7 +1454,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Register the cluster internally.
-   * 
+   *
    * @param iCluster
    *          OCluster implementation
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
@@ -1802,5 +1812,10 @@ public class OStorageLocal extends OStorageEmbedded {
     }
 
     modificationLock.allowModifications();
+  }
+
+  public boolean isClusterSoftlyClosed(String clusterName) {
+    final OCluster indexCluster = clusterMap.get(clusterName);
+    return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }
 }

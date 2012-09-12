@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import static com.orientechnologies.orient.core.storage.OStorage.CLUSTER_INDEX_NAME;
+import static com.orientechnologies.orient.core.metadata.OMetadata.CLUSTER_INDEX_NAME;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;

@@ -33,6 +33,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+/**
+ * If some of the tests start to fail then check cluster number
+ * in queries, e.g #7:1. It can be because the order of clusters
+ * could be affected due to adding or removing cluster from storage.
+ */
 @Test(groups = "sql-update", sequential = true)
 public class SQLUpdateTest {
   private ODatabaseDocument database;
@@ -47,10 +52,10 @@ public class SQLUpdateTest {
   public void updateWithWhereOperator() {
     database.open("admin", "admin");
 
-    List<Long> positions = getValidPositions(3);
+    List<Long> positions = getValidPositions(4);
 
     Integer records = (Integer) database.command(
-        new OCommandSQL("update Profile set salary = 120.30, location = 3:" + positions.get(2)
+        new OCommandSQL("update Profile set salary = 120.30, location = 4:" + positions.get(2)
             + ", salary_cloned = salary where surname = 'Obama'")).execute();
 
     Assert.assertEquals(records.intValue(), 3);
@@ -78,7 +83,7 @@ public class SQLUpdateTest {
   public void updateCollectionsAddWithWhereOperator() {
     database.open("admin", "admin");
 
-    updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #12:0")).execute();
+    updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();
 
     database.close();
   }
@@ -87,7 +92,7 @@ public class SQLUpdateTest {
   public void updateCollectionsRemoveWithWhereOperator() {
     database.open("admin", "admin");
 
-    final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #12:0")).execute();
+    final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #13:0")).execute();
 
     Assert.assertEquals(records, updatedRecords);
 
@@ -100,19 +105,19 @@ public class SQLUpdateTest {
 
     List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 
-    List<Long> positions = getValidPositions(12);
+    List<Long> positions = getValidPositions(13);
 
     for (ODocument doc : docs) {
 
       final int records = (Integer) database.command(
-          new OCommandSQL("update Account set addresses = [#12:" + positions.get(0) + ", #12:" + positions.get(1) + ",#12:"
+          new OCommandSQL("update Account set addresses = [#13:" + positions.get(0) + ", #13:" + positions.get(1) + ",#13:"
               + positions.get(2) + "] where @rid = " + doc.getIdentity())).execute();
 
       Assert.assertEquals(records, 1);
 
       ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
       Assert.assertEquals(((List<?>) loadedDoc.field("addresses")).size(), 3);
-      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#12:"
+      Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#13:"
           + positions.get(0));
       loadedDoc.field("addresses", doc.field("addresses"));
       database.save(loadedDoc);

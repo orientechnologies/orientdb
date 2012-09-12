@@ -18,10 +18,12 @@ package com.orientechnologies.orient.core.metadata;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -34,10 +36,14 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OMetadata {
+  public static final String CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String CLUSTER_INDEX_NAME        = "index";
+  public static final String CLUSTER_MANUAL_INDEX_NAME = "manindex";
+
   protected int                       schemaClusterId;
 
   protected OSchemaProxy              schema;
@@ -54,7 +60,7 @@ public class OMetadata {
     try {
       init(true);
 
-      if (schemaClusterId == -1 || getDatabase().countClusterElements(OStorage.CLUSTER_INTERNAL_NAME) == 0)
+      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
         return;
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), timer);
@@ -87,7 +93,7 @@ public class OMetadata {
 
   private void init(final boolean iLoad) {
     final ODatabaseRecord database = getDatabase();
-    schemaClusterId = database.getClusterIdByName(OStorage.CLUSTER_INTERNAL_NAME);
+    schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
 
     schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
       public OSchemaShared call() {
@@ -113,6 +119,15 @@ public class OMetadata {
             return instance;
           }
         }), database);
+
+    // rebuild indexes if index cluster wasn't closed properly
+    if (iLoad && (database.getStorage() instanceof OStorageLocal)
+        && !((OStorageLocal)database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
+      for (OIndex<?> idx : indexManager.getIndexes())
+        if (idx.isAutomatic()) {
+          OLogManager.instance().info(idx, "Rebuilding index " + idx.getName());
+          idx.rebuild();
+        }
 
     final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
     if (enableSecurity != null && !enableSecurity)

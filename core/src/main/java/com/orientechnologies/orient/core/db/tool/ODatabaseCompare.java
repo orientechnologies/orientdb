@@ -79,6 +79,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     // exclude automatically generated clusters
     excludeClusters.add("orids");
     excludeClusters.add("index");
+    excludeClusters.add("manindex");
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {

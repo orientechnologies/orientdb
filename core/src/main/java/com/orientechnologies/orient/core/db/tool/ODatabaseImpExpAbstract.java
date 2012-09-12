@@ -56,6 +56,7 @@ public abstract class ODatabaseImpExpAbstract {
 		listener = iListener;
 		excludeClusters = new LinkedHashSet<String>();
 		excludeClusters.add("index");
+    excludeClusters.add("manindex");
 	}
 
 	public Set<String> getIncludeClusters() {

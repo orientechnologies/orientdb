@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -47,7 +48,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
 			if (clusterName != null)
 				clusterId = storage.getClusterIdByName(iClusterName);
 			else
-				clusterId = storage.getClusterIdByName(OStorage.CLUSTER_INDEX_NAME);
+				clusterId = storage.getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
 		} else {
 			// CLUSTER ID NOT USED FOR DATABASE INDEX
 			clusterId = -1;

@@ -16,6 +16,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
+/**
+ * If some of the tests start to fail then check cluster number
+ * in queries, e.g #7:1. It can be because the order of clusters
+ * could be affected due to adding or removing cluster from storage.
+ */
 public class LocalGremlinTest {
   public LocalGremlinTest() {
     OGremlinHelper.global().create();
@@ -77,7 +82,7 @@ public class LocalGremlinTest {
     OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
     db.open("admin", "admin");
 
-    List<OIdentifiable> result = db.command(new OCommandSQL("SELECT gremlin('m = []; m << 1; m;') FROM #6:1")).execute();
+    List<OIdentifiable> result = db.command(new OCommandSQL("SELECT gremlin('m = []; m << 1; m;') FROM #7:1")).execute();
 
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(1, ((Collection) ((ODocument) result.get(0)).field("gremlin")).iterator().next());
@@ -92,7 +97,7 @@ public class LocalGremlinTest {
 
     List<OIdentifiable> result = db.command(
         new OCommandSQL(
-            "SELECT gremlin('m = []; current.out.sideEffect({ m << it.id }).out.out.sideEffect({ m << it.id })') FROM #6:1"))
+            "SELECT gremlin('m = []; current.out.sideEffect({ m << it.id }).out.out.sideEffect({ m << it.id })') FROM #7:1"))
         .execute();
 
     Assert.assertEquals(1, result.size());

@@ -33,6 +33,11 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+/**
+ * If some of the tests start to fail then check cluster number
+ * in queries, e.g #7:1. It can be because the order of clusters
+ * could be affected due to adding or removing cluster from storage.
+ */
 @Test(groups = "sql-insert")
 public class SQLInsertTest {
   private ODatabaseDocument database;
@@ -242,10 +247,10 @@ public class SQLInsertTest {
   public void updateMultipleFields() {
     database.open("admin", "admin");
 
-    List<Long> positions = getValidPositions(2);
+    List<Long> positions = getValidPositions(3);
 
     OIdentifiable result = database.command(
-        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #2:"
+        new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #3:"
             + positions.get(0))).execute();
     Assert.assertNotNull(result);
 
@@ -256,7 +261,7 @@ public class SQLInsertTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(2, +positions.get(0)));
+    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, +positions.get(0)));
 
     database.close();
   }

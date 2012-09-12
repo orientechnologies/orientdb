@@ -106,6 +106,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   private static final int                                      DEFAULT_BUFFER_SIZE    = 1024;
 
+  private boolean                                               isOpen = false;
+
   public OClusterLocalLHPEPS() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
@@ -151,6 +153,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       overflowSegment.create((iStartSize * 20) / 100);
       overflowStatistic.create(-1);
 
+      isOpen = true;
+
       allocateSpace((int) (mainBucketsSize * OClusterLocalLHPEBucket.BUCKET_SIZE_IN_BYTES));
 
     } finally {
@@ -166,6 +170,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       overflowStatistic.open();
 
       deserializeState();
+
+      isOpen = true;
 
       clearCache();
     } finally {
@@ -200,12 +206,15 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   public void close() throws IOException {
     acquireExclusiveLock();
     try {
+      if (!isOpen)
+        return;
 
       serializeState();
 
       fileSegment.close();
       overflowSegment.close();
       overflowStatistic.close();
+      isOpen = false;
 
     } finally {
       releaseExclusiveLock();

@@ -662,4 +662,24 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
+  public boolean isSoftlyClosed() {
+    // Look over files of the cluster
+    if (!fileSegment.wasSoftlyClosedAtPreviousTime())
+      return false;
+
+    // Look over the hole segment
+    if (!holeSegment.wasSoftlyClosedAtPreviousTime())
+      return false;
+
+    // Look over files of the corresponding data segment
+    final ODataLocal dataSegment = storage.getDataSegmentById(config.getDataSegmentId());
+    if (!dataSegment.wasSoftlyClosedAtPreviousTime())
+      return false;
+
+    // Look over the hole segment
+    if (!dataSegment.holeSegment.wasSoftlyClosedAtPreviousTime())
+      return false;
+
+    return true;
+  }
 }

@@ -37,6 +37,7 @@ public class OMultiFileSegment extends OSegment {
   private int                            fileStartSize;
   final private int                      fileMaxSize;
   private final int                      fileIncrementSize;
+  private boolean                        wasSoftlyClosedAtPreviousTime = true;
 
   public OMultiFileSegment(final OStorageLocal iStorage, final OStorageSegmentConfiguration iConfig, final String iFileExtension,
       final int iRoundMaxSize) throws IOException {
@@ -90,6 +91,7 @@ public class OMultiFileSegment extends OSegment {
         OLogManager.instance().warn(this, "segment file '%s' was not closed correctly last time",
             OFileUtils.getPath(file.getName()));
         // TODO VERIFY DATA?
+        wasSoftlyClosedAtPreviousTime = false;
       }
   }
 
@@ -412,5 +414,9 @@ public class OMultiFileSegment extends OSegment {
       }
       offset = 0;
     }
+  }
+    
+  public boolean wasSoftlyClosedAtPreviousTime() {
+    return wasSoftlyClosedAtPreviousTime;
   }
 }

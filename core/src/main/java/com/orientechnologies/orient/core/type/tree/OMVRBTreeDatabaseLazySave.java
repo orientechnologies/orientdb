@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -34,13 +33,15 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
   protected int     updates            = 0;
   protected boolean transactionRunning = false;
 
-  public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID) {
+  public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID, int iMaxUpdatesBeforeSave) {
     super(iDatabase, iRID);
+    maxUpdatesBeforeSave = iMaxUpdatesBeforeSave;
   }
 
   public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer<K> iKeySerializer, OStreamSerializer iValueSerializer,
-      int keySize) {
+      int keySize, int iMaxUpdatesBeforeSave) {
     super(iClusterName, iKeySerializer, iValueSerializer, keySize);
+    maxUpdatesBeforeSave = iMaxUpdatesBeforeSave;
   }
 
   /**
@@ -102,12 +103,6 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
    */
   public void setMaxUpdatesBeforeSave(final int iValue) {
     this.maxUpdatesBeforeSave = iValue;
-  }
-
-  @Override
-  protected void config() {
-    super.config();
-    maxUpdatesBeforeSave = OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.getValueAsInteger();
   }
 
   /**

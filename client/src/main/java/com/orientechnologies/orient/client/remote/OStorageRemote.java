@@ -72,7 +72,6 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -1824,7 +1823,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       clusterMap.put(clusterName, cluster);
     }
 
-    defaultClusterId = clusterMap.get(OStorage.CLUSTER_DEFAULT_NAME).getId();
+    defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
   }
 
   @Override
