@@ -25,6 +25,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -875,6 +876,8 @@ public class OObjectEntitySerializer {
       }
     } else if (OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)) {
       return OType.EMBEDDED;
+    } else if (Date.class.isAssignableFrom(f.getType())) {
+      return OType.DATETIME;
     } else {
       return OType.getTypeByClass(f.getType());
     }
@@ -979,7 +982,8 @@ public class OObjectEntitySerializer {
 
     while (!currentClass.equals(Object.class) && classes.contains(pojoClass)) {
       for (Field p : currentClass.getDeclaredFields()) {
-        if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers()))
+        if (Modifier.isStatic(p.getModifiers()) || Modifier.isNative(p.getModifiers()) || Modifier.isTransient(p.getModifiers())
+            || p.getType().isAnonymousClass())
           continue;
 
         fieldName = p.getName();
@@ -991,6 +995,9 @@ public class OObjectEntitySerializer {
           continue;
 
         fieldValue = getFieldValue(p, iPojo);
+        if (fieldValue != null && fieldValue.getClass().isAnonymousClass())
+          continue;
+
         if (isSerializedType(p))
           fieldValue = serializeFieldValue(p.getType(), fieldValue);
 

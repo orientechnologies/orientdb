@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -126,10 +127,12 @@ public class CRUDObjectPhysicalTest {
     database.close();
   }
 
+  @Test
   public void testSimpleTypes() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaSimpleTestClass javaObj = database.newInstance(JavaSimpleTestClass.class);
     Assert.assertEquals(javaObj.getText(), "initTest");
+    Date date = new Date();
     javaObj.setText("test");
     javaObj.setNumberSimple(12345);
     javaObj.setDoubleSimple(12.34d);
@@ -137,6 +140,7 @@ public class CRUDObjectPhysicalTest {
     javaObj.setLongSimple(12345678l);
     javaObj.setByteSimple((byte) 1);
     javaObj.setFlagSimple(true);
+    javaObj.setDateField(date);
     javaObj.setEnumeration(EnumTest.ENUM1);
 
     JavaSimpleTestClass savedJavaObj = database.save(javaObj);
@@ -153,6 +157,7 @@ public class CRUDObjectPhysicalTest {
     Assert.assertEquals(loadedJavaObj.getByteSimple(), (byte) 1);
     Assert.assertEquals(loadedJavaObj.getFlagSimple(), true);
     Assert.assertEquals(loadedJavaObj.getEnumeration(), EnumTest.ENUM1);
+    Assert.assertEquals(loadedJavaObj.getDateField(), date);
     Assert.assertTrue(loadedJavaObj.getTestAnonymous() instanceof JavaTestInterface);
     Assert.assertEquals(loadedJavaObj.getTestAnonymous().getNumber(), -1);
     loadedJavaObj.setEnumeration(EnumTest.ENUM2);
@@ -171,6 +176,21 @@ public class CRUDObjectPhysicalTest {
     Assert.assertEquals(loadedJavaObj.getEnumeration(), EnumTest.ENUM2);
     Assert.assertTrue(loadedJavaObj.getTestAnonymous() instanceof JavaTestInterface);
     Assert.assertEquals(loadedJavaObj.getTestAnonymous().getNumber(), -1);
+  }
+
+  @Test(dependsOnMethods = "testSimpleTypes")
+  public void testDateInTransaction() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaSimpleTestClass javaObj = new JavaSimpleTestClass();
+    Date date = new Date();
+    javaObj.setDateField(date);
+    database.begin(TXTYPE.OPTIMISTIC);
+    JavaSimpleTestClass dbEntry = database.save(javaObj);
+    database.commit();
+    database.detachAll(dbEntry, false);
+    Assert.assertEquals(dbEntry.getDateField(), date);
+    // Close db
+    database.close();
   }
 
   @Test(dependsOnMethods = "testAutoCreateClass")
@@ -791,7 +811,7 @@ public class CRUDObjectPhysicalTest {
     for (String referenceRelativ : relatives.keySet()) {
       Assert.assertEquals(relatives.get(referenceRelativ), p.getMapObject().get(referenceRelativ));
     }
-    
+
     p.getMapObject().keySet().size();
 
     database.save(p);
