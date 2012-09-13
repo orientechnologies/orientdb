@@ -158,26 +158,30 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   public static void validateField(ORecordSchemaAwareAbstract<?> iRecord, OProperty p) throws OValidationException {
-    Object fieldValue;
-    if (p.isMandatory())
-      if (!iRecord.containsField(p.getName()))
+    final Object fieldValue;
+
+    if (iRecord.containsField(p.getName())) {
+      if (iRecord instanceof ODocument)
+        // AVOID CONVERSIONS: FASTER!
+        fieldValue = ((ODocument) iRecord).rawField(p.getName());
+      else
+        fieldValue = iRecord.field(p.getName());
+
+      if (p.isNotNull() && fieldValue == null)
+        // NULLITY
+        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null");
+
+      if (fieldValue != null && p.getRegexp() != null) {
+        // REGEXP
+        if (!fieldValue.toString().matches(p.getRegexp()))
+          throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
+              + p.getRegexp() + "'. Field value is: " + fieldValue);
+      }
+
+    } else {
+      if (p.isMandatory())
         throw new OValidationException("The field '" + p.getFullName() + "' is mandatory");
-
-    if (iRecord instanceof ODocument)
-      // AVOID CONVERSIONS: FASTER!
-      fieldValue = ((ODocument) iRecord).rawField(p.getName());
-    else
-      fieldValue = iRecord.field(p.getName());
-
-    if (p.isNotNull() && fieldValue == null)
-      // NULLITY
-      throw new OValidationException("The field '" + p.getFullName() + "' cannot be null");
-
-    if (fieldValue != null && p.getRegexp() != null) {
-      // REGEXP
-      if (!fieldValue.toString().matches(p.getRegexp()))
-        throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
-            + p.getRegexp() + "'. Field value is: " + fieldValue);
+      fieldValue = null;
     }
 
     final OType type = p.getType();
