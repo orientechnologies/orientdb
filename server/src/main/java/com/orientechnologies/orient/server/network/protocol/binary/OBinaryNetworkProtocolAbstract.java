@@ -300,7 +300,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
-      final byte recordType, int dataSegmentId) {
+      final byte recordType, final int dataSegmentId) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     record.fill(rid, 0, buffer, true);
     if (dataSegmentId > 0)

@@ -481,6 +481,11 @@ public enum OType {
         + b.getClass() + ")");
   }
 
+  public boolean isMultiValue() {
+    return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
+        || this == LINKSET;
+  }
+
   public boolean isLink() {
     return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
   }

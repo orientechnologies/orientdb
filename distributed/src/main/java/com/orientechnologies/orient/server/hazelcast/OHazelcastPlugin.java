@@ -370,7 +370,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public ODocument getDatabaseConfiguration(String iDatabaseName) {
+  public ODocument getDatabaseConfiguration(final String iDatabaseName) {
     // SEARCH IN THE CLUSTER'S DISTRIBUTED CONFIGURATION
     final IMap<String, Object> distributedConfiguration = getConfigurationMap();
     ODocument cfg = (ODocument) distributedConfiguration.get("db." + iDatabaseName);
