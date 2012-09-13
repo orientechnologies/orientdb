@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
@@ -54,7 +55,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
   public DB acquire(final String iURL, final String iUserName, final String iUserPassword, final Map<String, Object> iOptionalParams)
       throws OLockException {
-    final String dbPooledName = iUserName + "@" + iURL;
+    final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
 
     OResourcePool<String, DB> pool = pools.get(dbPooledName);
     if (pool == null)

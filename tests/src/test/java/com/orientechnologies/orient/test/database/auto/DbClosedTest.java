@@ -15,18 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.Assert;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.SetupTest;
 
 @Test(groups = "db")
 public class DbClosedTest {
+  final private String url;
+
+  @Parameters(value = { "url" })
+  public DbClosedTest(final String iURL) {
+    url = iURL;
+  }
 
   public void testStorageClosed() {
     if (SetupTest.instance().isReuseDatabase())
@@ -38,8 +43,28 @@ public class DbClosedTest {
     if (OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
       return;
 
-//    for (OStorage stg : Orient.instance().getStorages()) {
-//      Assert.assertTrue(stg.isClosed());
-//    }
+    // for (OStorage stg : Orient.instance().getStorages()) {
+    // Assert.assertTrue(stg.isClosed());
+    // }
+  }
+
+  public void testDoubleDb() {
+    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    // now I am getting another db instance
+    OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    dbAnother.close();
+
+    db.close();
+  }
+
+  public void testDoubleDbWindowsPath() {
+    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url.replace('/', '\\'), "admin", "admin");
+
+    // now I am getting another db instance
+    OObjectDatabaseTx dbAnother = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    dbAnother.close();
+
+    db.close();
   }
 }

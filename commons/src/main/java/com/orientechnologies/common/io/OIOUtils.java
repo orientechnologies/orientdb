@@ -1,7 +1,10 @@
 package com.orientechnologies.common.io;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.ParseException;
@@ -107,5 +110,28 @@ public class OIOUtils {
     final Date rslt = new Date();
     rslt.setTime(today - (today % DAY) + df.parse(iTime).getTime());
     return rslt;
+  }
+
+  public static String readFileAsString(final File iFile) throws java.io.IOException {
+    final StringBuffer fileData = new StringBuffer(1000);
+    final BufferedReader reader = new BufferedReader(new FileReader(iFile));
+    try {
+      final char[] buf = new char[1024];
+      int numRead = 0;
+      while ((numRead = reader.read(buf)) != -1) {
+        String readData = String.valueOf(buf, 0, numRead);
+        fileData.append(readData);
+      }
+    } finally {
+      reader.close();
+    }
+    return fileData.toString();
+  }
+
+  /**
+   * Returns the Unix file name format converting backslashes (\) to slasles (/)
+   */
+  public static String getUnixFileName(final String iFileName) {
+    return iFileName != null ? iFileName.replace('\\', '/') : null;
   }
 }
