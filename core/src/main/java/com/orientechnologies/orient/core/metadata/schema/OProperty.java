@@ -33,7 +33,14 @@ public interface OProperty extends Comparable<OProperty> {
 
   public String getName();
 
+  /**
+   * Returns the full name as <class>.<property>
+   */
+  public String getFullName();
+
   public OProperty setName(String iName);
+
+  public void set(ATTRIBUTES attribute, Object iValue);
 
   public OType getType();
 
@@ -182,6 +189,4 @@ public interface OProperty extends Comparable<OProperty> {
   public OPropertyImpl setCustom(final String iName, final String iValue);
 
   public Object get(ATTRIBUTES iAttribute);
-
-  public void set(ATTRIBUTES attribute, Object iValue);
 }
