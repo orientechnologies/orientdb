@@ -1,11 +1,9 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -56,24 +54,24 @@ public class BlueprintsTest {
     Edge e = graph.addEdge("class:SubEdge", v1, v2, null);
     e.setProperty("key", "subedge");
   }
-  
+
   @Test
   public void testIndexAgainstList() {
     graph.dropKeyIndex("list", Vertex.class);
     graph.createKeyIndex("list", Vertex.class, new Parameter("type", "EMBEDDEDLIST"), new Parameter("embeddedType", "INTEGER"));
-    
+
     Vertex v1 = graph.addVertex(null);
-    
+
     List<Integer> list = new ArrayList<Integer>();
     list.add(1);
     list.add(2);
     list.add(3);
-    
+
     v1.setProperty("list", list);
-    
+
     Iterable<Vertex> item = graph.getVertices("list", 1);
     Assert.assertTrue(item.iterator().hasNext());
-    
+
     graph.dropKeyIndex("list", Vertex.class);
   }
 }
