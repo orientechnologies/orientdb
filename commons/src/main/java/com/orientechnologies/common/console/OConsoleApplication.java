@@ -44,6 +44,10 @@ import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
 public class OConsoleApplication {
+  protected enum RESULT {
+    OK, ERROR, EXIT
+  };
+
   protected InputStream         in               = System.in;                    // System.in;
   protected PrintStream         out              = System.out;
   protected PrintStream         err              = System.err;
@@ -91,7 +95,7 @@ public class OConsoleApplication {
         if (consoleInput == null || consoleInput.length() == 0)
           continue;
 
-        if (!executeCommands(consoleInput))
+        if (!executeCommands(new Scanner(consoleInput), false))
           break;
       }
     } else {
@@ -110,26 +114,34 @@ public class OConsoleApplication {
 
   protected boolean executeBatch(final String commandLine) {
     final File commandFile = new File(commandLine);
-    if (commandFile.exists()) {
-      try {
-        return executeCommands(new Scanner(commandFile).useDelimiter(";"));
-      } catch (FileNotFoundException fnfe) {
-        return false;
-      }
-    } else {
-      return executeCommands(commandLine);
+
+    Scanner scanner = null;
+
+    try {
+      scanner = new Scanner(commandFile);
+    } catch (FileNotFoundException e) {
+      scanner = new Scanner(commandLine);
     }
+
+    return executeCommands(scanner, true);
   }
 
-  protected boolean executeCommands(final String iCommands) {
-    String[] commandLines = OStringParser.split(iCommands, commandSeparator, OStringParser.COMMON_JUMP);
+  protected boolean executeCommands(final Scanner iScanner, final boolean iExitOnException) {
+    iScanner.useDelimiter(";");
+    try {
 
-    final List<String> modifiedCommandLines = filterCommands(commandLines);
+      while (iScanner.hasNext()) {
+        String commandLine = iScanner.next();
 
-    // EXECUTE THE COMMANDS IN SEQUENCE
-    for (String commandLine : modifiedCommandLines)
-      if (!execute(commandLine))
-        return false;
+        final RESULT status = execute(commandLine);
+
+        if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+          return false;
+      }
+
+    } finally {
+      iScanner.close();
+    }
     return true;
   }
 
@@ -137,37 +149,28 @@ public class OConsoleApplication {
     return Arrays.asList(commandLines);
   }
 
-  protected boolean executeCommands(final Scanner iScanner) {
-    while (iScanner.hasNext()) {
-      String commandLine = iScanner.next();
-      if (!execute(commandLine))
-        return false;
-    }
-    return true;
-  }
-
-  protected boolean execute(String iCommand) {
+  protected RESULT execute(String iCommand) {
     iCommand = iCommand.trim();
 
     if (iCommand.length() == 0)
       // NULL LINE: JUMP IT
-      return true;
+      return RESULT.OK;
 
     if (iCommand.startsWith(COMMENT_PREFIX))
       // COMMENT: JUMP IT
-      return true;
+      return RESULT.OK;
 
     String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
     for (String cmd : helpCommands)
       if (cmd.equals(commandWords[0])) {
         help();
-        return true;
+        return RESULT.OK;
       }
 
     for (String cmd : exitCommands)
       if (cmd.equals(commandWords[0])) {
-        return false;
+        return RESULT.EXIT;
       }
 
     Method lastMethodInvoked = null;
@@ -258,16 +261,16 @@ public class OConsoleApplication {
           onException(e.getCause());
         else
           e.printStackTrace();
-        return false;
+        return RESULT.ERROR;
       }
-      return true;
+      return RESULT.OK;
     }
 
     if (lastMethodInvoked != null)
       syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
     out.println("!Unrecognized command: '" + iCommand + "'");
-    return true;
+    return RESULT.ERROR;
   }
 
   protected void syntaxError(String iCommand, Method m) {
