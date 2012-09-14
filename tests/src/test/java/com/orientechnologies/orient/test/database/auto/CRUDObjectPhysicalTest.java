@@ -688,6 +688,55 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapStringTest")
+  public void setStringTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass testClass = new JavaComplexTestClass();
+    Set<String> roles = new HashSet<String>();
+    roles.add("manager");
+    roles.add("developer");
+    testClass.setStringSet(roles);
+
+    JavaComplexTestClass testClassProxy = database.save(testClass);
+    Assert.assertEquals(roles.size(), testClassProxy.getStringSet().size());
+    for (String referenceRole : roles) {
+      Assert.assertTrue(testClassProxy.getStringSet().contains(referenceRole));
+    }
+
+    ORID orid = database.getIdentity(testClassProxy);
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    JavaComplexTestClass loadedProxy = database.load(orid);
+    Assert.assertEquals(roles.size(), loadedProxy.getStringSet().size());
+    for (String referenceRole : roles) {
+      Assert.assertTrue(loadedProxy.getStringSet().contains(referenceRole));
+    }
+
+    database.save(loadedProxy);
+    Assert.assertEquals(roles.size(), loadedProxy.getStringSet().size());
+    for (String referenceRole : roles) {
+      Assert.assertTrue(loadedProxy.getStringSet().contains(referenceRole));
+    }
+
+    loadedProxy.getStringSet().remove("developer");
+    roles.remove("developer");
+    database.save(loadedProxy);
+    Assert.assertEquals(roles.size(), loadedProxy.getStringSet().size());
+    for (String referenceRole : roles) {
+      Assert.assertTrue(loadedProxy.getStringSet().contains(referenceRole));
+    }
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    loadedProxy = database.load(orid);
+    Assert.assertEquals(roles.size(), loadedProxy.getStringSet().size());
+    for (String referenceRole : roles) {
+      Assert.assertTrue(loadedProxy.getStringSet().contains(referenceRole));
+    }
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "setStringTest")
   public void mapStringListTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     Map<String, List<String>> songAndMovies = new HashMap<String, List<String>>();

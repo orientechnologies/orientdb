@@ -55,6 +55,7 @@ public class JavaComplexTestClass {
   private Map<String, Object>       mapObject     = new HashMap<String, Object>();
   private List<EnumTest>            enumList      = new ArrayList<EnumTest>();
   private Set<EnumTest>             enumSet       = new HashSet<EnumTest>();
+  private Set<String>               stringSet     = new HashSet<String>();
   private Map<String, EnumTest>     enumMap       = new HashMap<String, EnumTest>();
 
   public String getName() {
@@ -183,5 +184,13 @@ public class JavaComplexTestClass {
 
   public void setEnumField(EnumTest enumField) {
     this.enumField = enumField;
+  }
+
+  public Set<String> getStringSet() {
+    return stringSet;
+  }
+
+  public void setStringSet(Set<String> stringSet) {
+    this.stringSet = stringSet;
   }
 }

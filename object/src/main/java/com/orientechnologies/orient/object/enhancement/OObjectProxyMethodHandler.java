@@ -258,7 +258,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               value = manageObjectCollections(self, fieldName, value);
             }
           } else {
-            Object docValue = doc.field(fieldName);
+            Object docValue = doc.field(fieldName, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
             if (docValue == null) {
               if (value.getClass().isArray()) {
                 OClass schemaClass = doc.getSchemaClass();
