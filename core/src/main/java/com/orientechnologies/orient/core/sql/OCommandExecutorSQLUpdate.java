@@ -330,11 +330,16 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         && !parserGetLastWord().equals(KEYWORD_WHERE)) {
 
       fieldName = parserRequiredWord(false, "Field name expected");
-      final boolean equals = parserOptionalKeyword("=");
-      if (equals) {
-        fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
-        value = getFieldValueCountingParameters(fieldValue);
-      } else
+      final boolean found = parserOptionalKeyword("=", "WHERE");
+      if (found)
+        if (parserGetLastWord().equals("WHERE")) {
+          parserGoBack();
+          value = EMPTY_VALUE;
+        } else {
+          fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
+          value = getFieldValueCountingParameters(fieldValue);
+        }
+      else
         value = EMPTY_VALUE;
 
       // INSERT FIELD NAME TO BE REMOVED
