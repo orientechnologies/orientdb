@@ -34,11 +34,12 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see ORole
  */
 public class OUser extends ODocumentWrapper {
-	public static final String	ADMIN	= "admin";
+  public static final String ADMIN      = "admin";
+  public static final String CLASS_NAME = "OUser";
 
-	public enum STATUSES {
-		SUSPENDED, ACTIVE
-	}
+  public enum STATUSES {
+    SUSPENDED, ACTIVE
+  }
 
 	// AVOID THE INVOCATION OF SETTER
 	protected Set<ORole>	roles	= new HashSet<ORole>();
@@ -49,11 +50,11 @@ public class OUser extends ODocumentWrapper {
 	public OUser() {
 	}
 
-	public OUser(final String iName) {
-		super("OUser");
-		document.field("name", iName);
-		setAccountStatus(STATUSES.ACTIVE);
-	}
+  public OUser(final String iName) {
+    super(CLASS_NAME);
+    document.field("name", iName);
+    setAccountStatus(STATUSES.ACTIVE);
+  }
 
 	public OUser(String iUserName, final String iUserPassword) {
 		super("OUser");

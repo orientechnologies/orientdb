@@ -54,7 +54,9 @@ public class ORawBuffer implements Externalizable {
     final int bufferLenght = iInput.readInt();
     if (bufferLenght > 0) {
       buffer = new byte[bufferLenght];
-      iInput.read(buffer);
+      for (int pos = 0, bytesReaded = 0; pos < bufferLenght; pos += bytesReaded) {
+        bytesReaded = iInput.read(buffer, pos, buffer.length - pos);
+      }
     } else
       buffer = null;
     version = iInput.readInt();

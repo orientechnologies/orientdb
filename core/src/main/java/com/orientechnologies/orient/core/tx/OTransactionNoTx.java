@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -27,9 +30,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * No operation transaction.
@@ -64,12 +64,14 @@ public class OTransactionNoTx extends OTransactionAbstract {
   /**
    * Update the record.
    * 
+   * @param iForceCreate
    * @param iCallback
    */
   public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      final ORecordCallback<? extends Number> iCallback) {
+      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), true, iMode, iCallback);
+      database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), true, iMode, iForceCreate,
+          iCallback);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -184,6 +186,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-	public void updateIndexIdentityAfterCommit(ORID oldRid, ORID newRid) {
-	}
+  public void updateIndexIdentityAfterCommit(ORID oldRid, ORID newRid) {
+  }
 }

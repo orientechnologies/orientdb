@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -267,13 +268,20 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public ORecordAbstract<T> save() {
-    getDatabase().save(this);
-
-    return this;
+    return save(false);
   }
 
   public ORecordAbstract<T> save(final String iClusterName) {
-    getDatabase().save(this, iClusterName);
+    return save(iClusterName, false);
+  }
+
+  public ORecordAbstract<T> save(boolean forceCreate) {
+    getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null);
+    return this;
+  }
+
+  public ORecordAbstract<T> save(String iClusterName, boolean forceCreate) {
+    getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null);
     return this;
   }
 

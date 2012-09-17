@@ -271,7 +271,7 @@ public class OScriptGraphDatabaseWrapper {
   }
 
   public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iMode, iCallback);
+    return database.save(iRecord, iMode, false, iCallback);
   }
 
   public OMetadata getMetadata() {
@@ -416,7 +416,7 @@ public class OScriptGraphDatabaseWrapper {
 
   public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iClusterName, iMode, iCallback);
+    return database.save(iRecord, iClusterName, iMode, false, iCallback);
   }
 
   public Set<OIdentifiable> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels, String[] iClassNames) {

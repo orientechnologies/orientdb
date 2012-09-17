@@ -572,7 +572,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     try {
 
       document.setDirty();
-      super.save();
+      super.save(OMetadata.CLUSTER_INTERNAL_NAME);
 
     } finally {
       lock.releaseExclusiveLock();

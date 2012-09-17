@@ -789,7 +789,7 @@ public class CRUDDocumentPhysicalTest {
         record.field("location", "Italy");
         record.field("salary", (i + 300));
 
-        database.save(record, OPERATION_MODE.ASYNCHRONOUS, new ORecordCallback<Long>() {
+        database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<Long>() {
 
           public void call(ORecordId iRID, Long iParameter) {
             System.out.println("asynchInsertion callback for record " + iRID + ": " + callBackCalled.incrementAndGet());

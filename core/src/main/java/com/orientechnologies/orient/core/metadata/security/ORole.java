@@ -38,7 +38,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
-  public static final String ADMIN = "admin";
+  public static final String ADMIN      = "admin";
+  public static final String CLASS_NAME = "ORole";
 
   public enum ALLOW_MODES {
     DENY_ALL_BUT, ALLOW_ALL_BUT
@@ -68,7 +69,7 @@ public class ORole extends ODocumentWrapper {
   }
 
   public ORole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
-    super("ORole");
+    super(CLASS_NAME);
     document.field("name", iName);
     parentRole = iParent;
     document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);

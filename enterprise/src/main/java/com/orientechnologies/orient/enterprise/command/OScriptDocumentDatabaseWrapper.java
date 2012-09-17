@@ -222,7 +222,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iMode, iCallback);
+    return database.save(iRecord, iMode, false, iCallback);
   }
 
   public OMetadata getMetadata() {
@@ -339,7 +339,7 @@ public class OScriptDocumentDatabaseWrapper {
 
   public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode,
       final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iClusterName, iMode, iCallback);
+    return database.save(iRecord, iClusterName, iMode, false, iCallback);
   }
 
   public ODataSegmentStrategy getDataSegmentStrategy() {

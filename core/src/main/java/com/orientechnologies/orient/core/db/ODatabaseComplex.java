@@ -167,15 +167,17 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * Saves an entity specifying the mode. If the entity is not dirty, then the operation will be ignored. For custom entity
    * implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    * 
+   * 
    * @param iObject
    *          The entity to save
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iCallback
-   *          Callback to call once the save is made
-   * @return The saved entity.
+   *          Callback to call once the save is made @return The saved entity.
    */
-  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode, ORecordCallback<? extends Number> iCallback);
+  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iCallback);
 
   /**
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -193,17 +195,20 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * Saves an entity in the specified cluster specifying the mode. If the entity is not dirty, then the operation will be ignored.
    * For custom entity implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
    * 
+   * 
    * @param iObject
    *          The entity to save
    * @param iClusterName
    *          Name of the cluster where to save
    * @param iMode
    *          Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iCallback
-   *          Callback to call once the save is made
-   * @return The saved entity.
+   *          Callback to call once the save is made @return The saved entity.
    */
-  public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, ORecordCallback<? extends Number> iCallback);
+  public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iCallback);
 
   /**
    * Deletes an entity from the database in synchronous mode.

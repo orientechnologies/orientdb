@@ -237,12 +237,12 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public int save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final int iVersion,
-      final byte iRecordType, final int iMode, final ORecordCallback<? extends Number> iCallBack) {
+      final byte iRecordType, final int iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallBack) {
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
     try {
-      if (iRid.clusterPosition < 0) {
+      if (iForceCreate || iRid.clusterPosition < 0) {
         // CREATE
         return storage
             .createRecord(iDataSegmentId, iRid, iContent, iVersion, iRecordType, iMode, (ORecordCallback<Long>) iCallBack).recordVersion;

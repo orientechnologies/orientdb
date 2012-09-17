@@ -273,17 +273,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
     return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, null);
+        OPERATION_MODE.SYNCHRONOUS, false, null);
   }
 
   /**
    * Updates the record without checking the version.
    * 
+   * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iCallback
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
-      final ORecordCallback<? extends Number> iCallback) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
+      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iForceCreate,
+        iCallback);
   }
 
   /**
@@ -291,17 +294,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
     return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, null);
+        OPERATION_MODE.SYNCHRONOUS, false, null);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    * 
-   * @param iCallbac
+   * @param iForceCreate
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
-      final OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode, iCallback);
+      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode,
+        iForceCreate, iCallback);
   }
 
   /**
@@ -595,7 +599,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName,
-      final int iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode,
+      final int iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iCallback) {
     checkOpeness();
 
@@ -611,7 +615,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     setCurrentDatabaseinThreadLocal();
 
     try {
-      final boolean wasNew = rid.isNew();
+      final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1 && iClusterName != null)
         // ASSIGN THE CLUSTER ID
         rid.clusterId = getClusterIdByName(iClusterName);
@@ -619,7 +623,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
       byte[] stream = iRecord.toStream();
 
-      final boolean isNew = rid.isNew();
+      final boolean isNew = iForceCreate || rid.isNew();
       if (isNew)
         // NOTIFY IDENTITY HAS CHANGED
         iRecord.onBeforeIdentityChanged(rid);
@@ -665,7 +669,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       try {
         // SAVE IT
         final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
-            iRecord.getRecordType(), iMode.ordinal(), iCallback);
+            iRecord.getRecordType(), iMode.ordinal(), iForceCreate, iCallback);
 
         if (isNew) {
           // UPDATE INFORMATION: CLUSTER ID+POSITION

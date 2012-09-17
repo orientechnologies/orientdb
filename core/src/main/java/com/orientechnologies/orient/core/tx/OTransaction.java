@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,8 +26,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-
-import java.util.List;
 
 public interface OTransaction {
   public enum TXTYPE {
@@ -48,7 +48,7 @@ public interface OTransaction {
 
   public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
 
-  public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode,
+  public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iCallback);
 
   public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
@@ -93,13 +93,15 @@ public interface OTransaction {
 
   public void close();
 
-	/**
-	 * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
-	 * to fix them given method will be called for each entry.
-	 *
-	 * @param oldRid   Record identity before commit.
-	 * @param newRid   Record identity after commit.
-	 */
-	public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+  /**
+   * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
+   * to fix them given method will be called for each entry.
+   * 
+   * @param oldRid
+   *          Record identity before commit.
+   * @param newRid
+   *          Record identity after commit.
+   */
+  public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
 }

@@ -303,7 +303,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent) {
-    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, null);
+    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null);
   }
 
   /**
@@ -312,8 +312,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * Reflection to extract the field values. <br/>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
-  public <RET> RET save(final Object iContent, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) save(iContent, null, iMode, iCallback);
+  public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+    return (RET) save(iContent, null, iMode, false, iCallback);
   }
 
   /**
@@ -328,7 +328,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see ORecordSchemaAware#validate()
    */
   public <RET> RET save(final Object iPojo, final String iClusterName) {
-    return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, null);
+    return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null);
   }
 
   /**
@@ -342,7 +342,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * 
    * @see ORecordSchemaAware#validate()
    */
-  public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode,
+  public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iCallback) {
     checkOpeness();
     if (iPojo == null)
@@ -367,7 +367,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           // registerUserObject(iPojo, record);
           deleteOrphans((((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler())));
 
-          underlying.save(record, iClusterName, iMode, iCallback);
+          underlying.save(record, iClusterName, iMode, iForceCreate, iCallback);
 
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap();
           // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED

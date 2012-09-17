@@ -1238,19 +1238,29 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   @Override
   public ODocument save() {
-    if (_clazz != null)
-      return save(getDatabase().getClusterNameById(_clazz.getDefaultClusterId()));
-
-    convertAllMultiValuesToTrackedVersions();
-    validate();
-    return (ODocument) super.save();
+    return save(false);
   }
 
   @Override
   public ODocument save(final String iClusterName) {
+    return save(iClusterName, false);
+  }
+
+  @Override
+  public ODocument save(boolean forceCreate) {
+    if (_clazz != null)
+      return save(getDatabase().getClusterNameById(_clazz.getDefaultClusterId()), forceCreate);
+
     convertAllMultiValuesToTrackedVersions();
     validate();
-    return (ODocument) super.save(iClusterName);
+    return (ODocument) super.save(forceCreate);
+  }
+
+  @Override
+  public ODocument save(final String iClusterName, boolean forceCreate) {
+    convertAllMultiValuesToTrackedVersions();
+    validate();
+    return (ODocument) super.save(iClusterName, forceCreate);
   }
 
   /*

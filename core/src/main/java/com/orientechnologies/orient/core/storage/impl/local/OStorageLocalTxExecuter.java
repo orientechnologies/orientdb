@@ -67,7 +67,6 @@ public class OStorageLocalTxExecuter {
 
   protected OPhysicalPosition createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment,
       final ORecordId iRid, final byte[] iContent, final int iRecordVersion, final byte iRecordType, int dataSegmentId) {
-    iRid.clusterPosition = -1;
 
     try {
       final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid,

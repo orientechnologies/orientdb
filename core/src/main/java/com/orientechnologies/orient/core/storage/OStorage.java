@@ -32,13 +32,14 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
  * 
- * @see OStorageLocal, OStorageMemory
+ * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
+ * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
  * @author Luca Garulli
  * 
  */
 public interface OStorage extends OSharedContainer {
-  public static final String DATA_DEFAULT_NAME         = "default";
-  public static final String CLUSTER_DEFAULT_NAME      = "default";
+  public static final String DATA_DEFAULT_NAME    = "default";
+  public static final String CLUSTER_DEFAULT_NAME = "default";
 
   public enum CLUSTER_TYPE {
     PHYSICAL, MEMORY
@@ -187,7 +188,7 @@ public interface OStorage extends OSharedContainer {
    * Returns a pair of long values telling the begin and end positions of data in the requested cluster. Useful to know the range of
    * the records.
    * 
-   * @param iCurrentClusterId
+   * @param currentClusterId
    *          Cluster id
    */
   public long[] getClusterDataRange(int currentClusterId);
