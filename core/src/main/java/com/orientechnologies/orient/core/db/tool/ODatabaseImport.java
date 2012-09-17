@@ -501,7 +501,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (clusterId != id)
         throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: "
-            + id);
+            + id + ". To continue the import drop the cluster '" + database.getClusterNameById(clusterId - 1) + "' that has "
+            + database.countClusterElements(clusterId - 1) + " records");
 
       listener.onMessage("OK, assigned id=" + clusterId);
 

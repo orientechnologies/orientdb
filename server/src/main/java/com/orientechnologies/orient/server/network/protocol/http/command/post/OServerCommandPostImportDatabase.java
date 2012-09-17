@@ -34,80 +34,81 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
  * 
  */
 public class OServerCommandPostImportDatabase extends OHttpMultipartRequestCommand<String, InputStream> implements
-		OCommandOutputListener {
+    OCommandOutputListener {
 
-	protected static final String[]	NAMES	= { "POST|import/*" };
-	protected StringWriter					buffer;
-	protected InputStream						importData;
-	protected ODatabaseRecord				database;
+  protected static final String[] NAMES = { "POST|import/*" };
+  protected StringWriter          buffer;
+  protected InputStream           importData;
+  protected ODatabaseRecord       database;
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		if (!iRequest.isMultipart) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", null,
-					OHttpUtils.CONTENT_TEXT_PLAIN, "Request is not multipart/form-data");
-		} else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null,
-					OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
-		} else {
-			database = getProfiledDatabaseInstance(iRequest);
-			try {
-				parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
-				//
-				// FileOutputStream f = new FileOutputStream("C:/temp/backup.gz");
-				// while (importData.available() > 0) {
-				// f.write(importData.read());
-				// }
-				// f.close()
+  @Override
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    if (!iRequest.isMultipart) {
+      sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", null,
+          OHttpUtils.CONTENT_TEXT_PLAIN, "Request is not multipart/form-data");
+    } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
+      sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null,
+          OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
+    } else {
+      database = getProfiledDatabaseInstance(iRequest);
+      try {
+        parse(iRequest, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
+        //
+        // FileOutputStream f = new FileOutputStream("C:/temp/backup.gz");
+        // while (importData.available() > 0) {
+        // f.write(importData.read());
+        // }
+        // f.close()
 
-				ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
-				importer.importDatabase();
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON,
-						"{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}");
-			} catch (Exception e) {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
-						.getMessage() : "", null, OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
-						+ (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}");
-			} finally {
-				if (database != null)
-					database.close();
-				database = null;
-				if (importData != null)
-					importData.close();
-				importData = null;
-			}
-		}
-		return false;
-	}
+        ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
+        importer.importDatabase();
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON,
+            "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}");
+      } catch (Exception e) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
+            .getMessage() : "", null, OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
+            + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}");
+      } finally {
+        if (database != null)
+          database.close();
+        database = null;
+        if (importData != null)
+          importData.close();
+        importData = null;
+      }
+    }
+    return false;
+  }
 
-	@Override
-	protected void processBaseContent(final OHttpRequest iRequest, final String iContentResult, final HashMap<String, String> headers)
-			throws Exception {
-	}
+  @Override
+  protected void processBaseContent(final OHttpRequest iRequest, final String iContentResult, final HashMap<String, String> headers)
+      throws Exception {
+  }
 
-	@Override
-	protected void processFileContent(final OHttpRequest iRequest, final InputStream iContentResult,
-			final HashMap<String, String> headers) throws Exception {
-		importData = iContentResult;
-	}
+  @Override
+  protected void processFileContent(final OHttpRequest iRequest, final InputStream iContentResult,
+      final HashMap<String, String> headers) throws Exception {
+    importData = iContentResult;
+  }
 
-	@Override
-	protected String getDocumentParamenterName() {
-		return "linkValue";
-	}
+  @Override
+  protected String getDocumentParamenterName() {
+    return "linkValue";
+  }
 
-	@Override
-	protected String getFileParamenterName() {
-		return "databaseFile";
-	}
+  @Override
+  protected String getFileParamenterName() {
+    return "databaseFile";
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
-	@Override
-	public void onMessage(String iText) {
-		OLogManager.instance().info(this, iText, new Object[0]);
-	}
+  @Override
+  public void onMessage(String iText) {
+    final String msg = iText.startsWith("\n") ? iText.substring(1) : iText;
+    OLogManager.instance().info(this, msg, new Object[0]);
+  }
 }

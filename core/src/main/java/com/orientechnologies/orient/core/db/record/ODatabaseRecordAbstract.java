@@ -406,6 +406,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   @Override
   public long countClusterElements(final int iClusterId) {
     final String name = getClusterNameById(iClusterId);
+    if( name == null )
+      return 0;
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
     setCurrentDatabaseinThreadLocal();
     return super.countClusterElements(name);
