@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.enterprise.command;
+package com.orientechnologies.orient.core.command.script;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
@@ -26,8 +27,6 @@ import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 /**
@@ -99,9 +98,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null)
-      for (int i = 0; i < iArgs.size(); ++i) {
-        binding.put("$" + i, iArgs.get(i));
-      }
+      for (Entry<Object, Object> a : iArgs.entrySet())
+        binding.put("$" + a.getKey().toString(), a.getValue());
 
     try {
       Object result = null;

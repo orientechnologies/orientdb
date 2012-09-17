@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.enterprise.command;
+package com.orientechnologies.orient.core.command.script;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -270,8 +270,9 @@ public class OScriptGraphDatabaseWrapper {
     return database.getUser();
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iMode, false, iCallback);
+  public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iCallback) {
+    return database.save(iRecord, iMode, iForceCreate, iCallback);
   }
 
   public OMetadata getMetadata() {
@@ -414,9 +415,9 @@ public class OScriptGraphDatabaseWrapper {
     return database.getEdgesBetweenVertexes(iVertex1, iVertex2, iLabels);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode,
+  public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iClusterName, iMode, false, iCallback);
+    return database.save(iRecord, iClusterName, iMode, iForceCreate, iCallback);
   }
 
   public Set<OIdentifiable> getEdgesBetweenVertexes(ODocument iVertex1, ODocument iVertex2, String[] iLabels, String[] iClassNames) {

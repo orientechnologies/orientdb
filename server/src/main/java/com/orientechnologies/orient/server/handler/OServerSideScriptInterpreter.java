@@ -17,8 +17,8 @@ package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.enterprise.command.OCommandExecutorScript;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 

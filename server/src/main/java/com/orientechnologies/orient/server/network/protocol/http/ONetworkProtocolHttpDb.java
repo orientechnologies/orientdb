@@ -44,6 +44,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
@@ -66,7 +67,6 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
     registerCommand(new OServerCommandGetConnect());
     registerCommand(new OServerCommandGetDisconnect());
-
     registerCommand(new OServerCommandGetClass());
     registerCommand(new OServerCommandGetCluster());
     registerCommand(new OServerCommandGetDatabase());
@@ -104,6 +104,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     registerCommand(new OServerCommandDeleteIndex());
 
     registerCommand(new OServerCommandOptions());
+
+    registerCommand(new OServerCommandFunction());
 
     super.config(server, iSocket, iConfiguration);
     connection.data.serverInfo = ORIENT_SERVER_DB;
