@@ -49,12 +49,16 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 /**
@@ -456,6 +460,35 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
+    boolean recreateManualIndex = false;
+    if (exporterVersion < 4) {
+      recreateManualIndex = true;
+
+      listener
+          .onMessage("\nExported database does not support manual index separation." + " Manual index cluster will be dropped.");
+
+      // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
+      // all clusters and recreate cluster for manual indexes in the end.
+      database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+
+      final OSchema schema = database.getMetadata().getSchema();
+      schema.dropClass(OUser.CLASS_NAME);
+      schema.dropClass(ORole.CLASS_NAME);
+      schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+      schema.save();
+
+      database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
+
+      database.getStorage().setDefaultClusterId(
+          database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));
+
+      // Starting from v4 schema has been moved to internal cluster.
+      // Create a stub at #2:0 to prevent cluster position shifting.
+      new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
+
+      database.getMetadata().getSecurity().create();
+    }
+
     @SuppressWarnings("unused")
     ORecordId rid = null;
     while (jsonReader.lastChar() != ']') {
@@ -511,6 +544,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
     }
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+
+    if (recreateManualIndex) {
+      database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      database.getMetadata().getIndexManager().create();
+
+      listener.onMessage("\nManual index cluster was recreated.");
+    }
 
     listener.onMessage("\nDone. Imported " + total + " clusters");
 
@@ -598,6 +638,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           // JUMP INDEX RECORDS
           return null;
       }
+
+      if (exporterVersion >= 4) {
+        final int manualIndex = database.getClusterIdByName(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+
+        if (record.getIdentity().getClusterId() == manualIndex)
+          // JUMP INDEX RECORDS
+          return null;
+      }
+
       final String rid = record.getIdentity().toString();
 
       if (!lhClustersAreUsed)
