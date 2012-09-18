@@ -929,7 +929,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               iTx.clearRecordEntries();
 
-              if (tmpEntries.size() > 0){
+              if (tmpEntries.size() > 0) {
                 for (ORecordOperation txEntry : tmpEntries) {
                   commitEntry(network, txEntry);
                   committedEntries.add(txEntry);
@@ -1809,7 +1809,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     for (int i = 0; i < tot; ++i) {
       final OClusterRemote cluster = new OClusterRemote();
-      final String clusterName = network.readString().toLowerCase();
+      String clusterName = network.readString();
+      if (clusterName != null)
+        clusterName = clusterName.toLowerCase();
       final int clusterId = network.readShort();
       final String clusterType = network.readString();
       final int dataSegmentId = network.getSrvProtocolVersion() >= 12 ? (int) network.readShort() : 0;
