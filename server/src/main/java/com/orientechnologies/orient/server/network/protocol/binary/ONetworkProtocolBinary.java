@@ -1232,13 +1232,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   private void sendDatabaseInformation() throws IOException {
-    final int clusters = connection.database.getClusters();
+    final Collection<? extends OCluster> clusters = connection.database.getStorage().getClusterInstances();
     if (connection.data.protocolVersion >= 7)
-      channel.writeShort((short) clusters);
+      channel.writeShort((short) clusters.size());
     else
-      channel.writeInt(clusters);
+      channel.writeInt(clusters.size());
 
-    for (OCluster c : (connection.database.getStorage()).getClusterInstances()) {
+    for (OCluster c : clusters) {
       if (c != null) {
         channel.writeString(c.getName());
         channel.writeShort((short) c.getId());
