@@ -21,6 +21,7 @@ import java.net.Socket;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
@@ -44,7 +45,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;

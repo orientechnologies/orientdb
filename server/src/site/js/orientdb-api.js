@@ -644,6 +644,40 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResponse();
 	}
+	
+
+	ODatabase.prototype.function = function(iName) {
+		if (this.databaseInfo == null)
+			this.open();
+
+		if (!iLanguage)
+			iLanguage = "sql";
+
+		var dataType = this.evalResponse ? null : 'text';
+
+		iName = this.URLEncode(iName);
+		$.ajax({
+			type : "POST",
+			url : this.urlPrefix + 'function/' + this.encodedDatabaseName + '/'
+					+ iName 
+					+ this.urlSuffix,
+			context : this,
+			async : false,
+			'dataType' : dataType,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Function error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResponse();
+	}
+
 
 	ODatabase.prototype.serverInfo = function() {
 		$.ajax({
