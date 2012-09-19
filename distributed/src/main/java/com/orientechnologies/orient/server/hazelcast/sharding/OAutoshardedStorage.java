@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -33,12 +33,12 @@ import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerIn
  * @since 8/28/12
  */
 public class OAutoshardedStorage implements OStorage {
-  protected OStorageEmbedded        wrapped;
-  private final ServerInstance      serverInstance;
+  protected OStorageEmbedded    wrapped;
+  private final ServerInstance  serverInstance;
 
-  private final MersenneTwisterFast positionGenerator     = new MersenneTwisterFast();
+  private final MersenneTwister positionGenerator     = new MersenneTwister();
 
-  private final Set<Integer>        undistributedClusters = new HashSet<Integer>();
+  private final Set<Integer>    undistributedClusters = new HashSet<Integer>();
 
   public OAutoshardedStorage(ServerInstance serverInstance, OStorageEmbedded wrapped, ODHTConfiguration dhtConfiguration) {
     this.serverInstance = serverInstance;
