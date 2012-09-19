@@ -1,13 +1,3 @@
-body {
-	font-size: 9pt;
-	font-family: Arial;
-}
-
-td {
-	font-size: 9pt;
-	font-family: Arial;
-}
-
 .cell_readonly {
 	color: white;
 	background-color: #6D7B8D;

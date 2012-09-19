@@ -1,0 +1,139 @@
+<div id="tab-functions">
+	<div class="row-fluid">
+		<div class="span12">
+			<label>Language</label> <select id="funcLanguage" class="input-small">
+				<option value='SQL'>SQL</option>
+				<option value='Javascript'>Javascript</option>
+			</select> <label>Name</label> <input id="funcName" value="?" style="width: 500px;" />
+		</div>
+		</div>
+		<div class="row-fluid btn-group noborder">
+			<button class="btn" onClick="javascript:rawEditor.setCode('')" style="width: 90px; text-align: center">
+				Clear <img border="0" alt="Graph result" src="images/clear.png" align="top" />
+			</button>
+			<button class="btn" onClick="javascript:rawEditor.reindent();" style="width: 90px; text-align: center">
+				Indent <img border="0" alt="Graph result" src="images/indent.png" align="top" />
+			</button>
+			<button id="editRaw" class="btn" style="width: 90px; text-align: center">
+				Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+			</button>
+			<button id="graphRaw" class="btn" style="width: 90px; text-align: center">
+				Graph <img border="0" alt="Graph result" src="images/graph.png" align="top" />
+			</button>
+		</div>
+		<div class="row-fluid">
+			<div class="span12" style="border: 1px solid gray; width: 100%;">
+				<textarea id="rawOutput" cols="130" rows="22" title="value">
+                                    </textarea>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		rawEditor = CodeMirror.fromTextArea('rawOutput', {
+			width : "auto",
+			height : "350px",
+			parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
+			stylesheet : "styles/codemirror/jscolors.css",
+			path : "js/codemirror/",
+			textWrapping : true,
+			json : true
+		});
+
+		$("#editRaw")
+				.click(
+						function() {
+							var raw = rawEditor.getCode();
+							if (raw == null || raw.length == 0)
+								return;
+
+							try {
+								var result = jQuery.parseJSON(raw);
+								if (result != null)
+									displayDocument(result.result != null ? result.result[0]
+											: result);
+							} catch (e) {
+								alert("Error on parsing result:" + e);
+							}
+						});
+
+		$("#graphRaw")
+				.click(
+						function() {
+							var raw = rawEditor.getCode();
+							if (raw == null || raw.length == 0)
+								return;
+
+							try {
+								var result = jQuery.parseJSON(raw);
+								if (result != null)
+									displayGraph(result.result != null ? result.result[0]
+											: result);
+							} catch (e) {
+								alert("Error on parsing result:" + e);
+							}
+						});
+
+		// SET SAVED VALUES
+		var previous = controller.parameter('rawMethod');
+		if (previous != null)
+			$('#rawMethod').val(previous);
+		previous = controller.parameter('rawOperation');
+		if (previous != null)
+			$('#rawOperation').val(previous);
+		previous = controller.parameter('rawDatabase');
+		if (previous != null)
+			$('#rawDatabase').val(previous);
+		else
+			$("#rawDatabase").val($("#header-database").val());
+		previous = controller.parameter('rawArgs');
+		if (previous != null)
+			$('#rawArgs').val(previous);
+		previous = controller.parameter('rawOutput');
+		if (previous != null) {
+			rawEditor.setCode(previous);
+			rawEditor.reindent();
+		}
+
+		function executeRawCommand() {
+			startTimer();
+
+			var code = rawEditor.getCode();
+
+			var req = $('#rawServer').val() + '/' + $('#rawOperation').val();
+			if ($('#rawDatabase').val() != null
+					&& $('#rawDatabase').val().length > 0)
+				req += '/' + $('#rawDatabase').val();
+			if ($('#rawArgs').val() != null && $('#rawArgs').val().length > 0)
+				req += '/' + $('#rawArgs').val();
+
+			$
+					.ajax({
+						type : $('#rawMethod').val(),
+						url : req,
+						data : code,
+						contentType : "application/json; charset=utf-8",
+						processData : false,
+						cache : false,
+						dataType : 'text',
+						success : function(msg) {
+							rawEditor.setCode(msg);
+							rawEditor.reindent();
+							controller.parameter('rawOutput', msg);
+							jQuery("#output").val(
+									"Raw command executed in " + stopTimer()
+											+ " sec.");
+						},
+						error : function(msg) {
+							rawEditor.setCode("");
+							jQuery("#output").val("Command response: " + msg);
+						}
+					});
+
+			// SAVE VALUES IN SESSION
+			controller.parameter('rawMethod', $('#rawMethod').val());
+			controller.parameter('rawOperation', $('#rawOperation').val());
+			controller.parameter('rawDatabase', $('#rawDatabase').val());
+			controller.parameter('rawArgs', $('#rawArgs').val());
+		}
+	</script>

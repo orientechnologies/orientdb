@@ -1,59 +1,51 @@
-<div >
-	<div class="row" style="border: 1px solid gray;">
+<div class="row-fluid">
+	<div class="span12" style="border: 1px solid gray;">
 		<textarea id="queryText" title="value"></textarea>
 	</div>
-	<div class="row">
-		<div class="span2">
-			<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large">
-				Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
-			</button>
-		</div>
-		<div class="span5">
-			History: <select style="width: 350px;" id="savedQueries"></select>
-		</div>
-		<div class="span2">
-			Limit: <input id="limit" class="input-mini" size="1" value="20" />
-		</div>
-		<div class="span2">
-			Language: <select id="language" class="input-small"><option label="SQL" value="sql">SQL</option>
-				<option label="GREMLIN" value="gremlin">GREMLIN</option>
-			</select>
-		</div>
-		<div class="span1">
-			<a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a>
-		</div>
+	<div class="span2">
+		<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large">
+			Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
+		</button>
 	</div>
-	<div class="row-fluid">
-		<div id="tabs-results" >
-			<ul>
-				<li><a href="#tab-table"><span>Table</span> </a></li>
-				<li><a href="#tab-output"><span>Output</span> </a></li>
-			</ul>
-			<div id="tab-table" class="row">
-				<div class="row">
-					<div class="offset4 span4 btn-group">
-						<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
-							Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />						</button>
-						<button id="editRecord" class="btn" style="width: 90px; text-align: center">
-							Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
-						</button>
-						<button id="graphRecord" class="btn" style="width: 90px; text-align: center">
-							Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
-						</button>
-					</div>
-				</div>
-				<div class="row">
-					<div >
-						<table id="queryResultTable">
-						</table>
-						<div id="queryResultTableNav"></div>
-					</div>
-				</div>
+	<div class="span5">
+		History: <select style="width: 350px;" id="savedQueries"></select>
+	</div>
+	<div class="span2">
+		Limit: <input id="limit" class="input-mini" size="1" value="20" />
+	</div>
+	<div class="span2">
+		Language: <select id="language" class="input-small"><option label="SQL" value="sql">SQL</option>
+			<option label="GREMLIN" value="gremlin">GREMLIN</option>
+		</select>
+	</div>
+	<div class="span1">
+		<a href="http://code.google.com/p/orient/wiki/SQLQuery" target="help">SQL syntax</a>
+	</div>
+	<div id="tabs-results" class="span12">
+		<ul>
+			<li><a href="#tab-table"><span>Table</span> </a></li>
+			<li><a href="#tab-output"><span>Output</span> </a></li>
+		</ul>
+		<div id="tab-table" class="row">
+			<div class="offset4 span4 btn-group">
+				<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
+					Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />						</button>
+				<button id="editRecord" class="btn" style="width: 90px; text-align: center">
+					Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+				</button>
+				<button id="graphRecord" class="btn" style="width: 90px; text-align: center">
+					Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
+				</button>
 			</div>
-			<div id="tab-output">
-				<textarea id="commandOutput" cols="110" rows="15" title="value" readonly="readonly">
-                                                          </textarea>
+			<div class="span12">
+				<table id="queryResultTable">
+				</table>
+				<div id="queryResultTableNav"></div>
 			</div>
+		</div>
+		<div id="tab-output" class="row">
+			<textarea id="commandOutput" cols="110" rows="15" title="value" readonly="readonly">
+	                                                        </textarea>
 		</div>
 	</div>
 </div>
