@@ -130,6 +130,13 @@
 		
 		orientServer.save(currentFunction);
 		loadFunctions();
+		
+		for( f in functions){
+			if( currentFunction['name'] == functions[f].name ){
+				currentFunction = functions[f];
+				break;
+			}
+		}
 	}
 	
 	function executeFunction(){
