@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 /**
  * Manages stored functions.
  * 
@@ -26,5 +24,5 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface OFunctionManager {
   public String[] getFunctionNames();
 
-  public ODocument getFunction(String iName);
+  public OFunction getFunction(String iName);
 }

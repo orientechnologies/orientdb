@@ -30,13 +30,13 @@ public class OCommandScriptException extends OException {
 	public OCommandScriptException(String iMessage, String iText, int iPosition, Throwable cause) {
 		super(iMessage, cause);
 		text = iText;
-		position = iPosition;
+		position = iPosition < 0 ? 0 : iPosition;
 	}
 
 	public OCommandScriptException(String iMessage, String iText, int iPosition) {
 		super(iMessage);
 		text = iText;
-		position = iPosition;
+		position = iPosition < 0 ? 0 : iPosition;
 	}
 
 	@Override

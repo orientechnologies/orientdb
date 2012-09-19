@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -32,14 +33,32 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * 
  */
 public class OFunctionManagerImpl implements OFunctionManager {
-  protected Map<String, ODocument> functions = new ConcurrentHashMap<String, ODocument>();
+  protected Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
 
   public OFunctionManagerImpl() {
+  }
+
+  public void create() {
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (db.getMetadata().getSchema().existsClass("OFunction"))
+      return;
+
+    final OClass f = db.getMetadata().getSchema().createClass("OFunction");
+    f.createProperty("name", OType.STRING);
+    f.createProperty("code", OType.STRING);
+    f.createProperty("language", OType.STRING);
+  }
+
+  public void load() {
     // LOAD ALL THE FUNCTIONS IN MEMORY
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
-    for (ODocument d : result)
-      functions.put((String) d.field("name"), d);
+    if (!db.getMetadata().getSchema().existsClass("OFunction"))
+      create();
+    else {
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
+      for (ODocument d : result)
+        functions.put((String) d.field("name"), new OFunction(d));
+    }
   }
 
   public String[] getFunctionNames() {
@@ -47,20 +66,24 @@ public class OFunctionManagerImpl implements OFunctionManager {
     return functions.keySet().toArray(result);
   }
 
-  public ODocument getFunction(final String iName) {
+  public OFunction getFunction(final String iName) {
     return functions.get(iName);
   }
 
-  public synchronized ODocument createFunction(final String iName) {
+  public synchronized OFunction createFunction(final String iName) {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     OClass functionClass = db.getMetadata().getSchema().getClass("OFunction");
     if (functionClass == null)
       functionClass = db.getMetadata().getSchema().createClass("OFunction");
 
-    final ODocument f = new ODocument("OFunction").field("name", iName);
+    final OFunction f = new OFunction().setName(iName);
     functions.put(iName, f);
 
     return f;
+  }
+
+  public void close() {
+    functions.clear();
   }
 }

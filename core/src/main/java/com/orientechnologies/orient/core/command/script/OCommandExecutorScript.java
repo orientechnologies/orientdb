@@ -28,6 +28,7 @@ import javax.script.ScriptException;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 
 /**
  * Executes Script Commands.
@@ -59,6 +60,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         engines.put(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
         defaultLanguage = DEF_LANGUAGE;
       }
+
+      if (!engines.containsKey(OSQLScriptEngine.ENGINE)) {
+        engines.put(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
+        defaultLanguage = DEF_LANGUAGE;
+      }
     }
   }
 
@@ -71,10 +77,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     return this;
   }
 
+  @SuppressWarnings("deprecation")
   public Object execute(final Map<Object, Object> iArgs) {
 
     final String language = request.getLanguage();
-    final String script = request.getText();
+    parserText = request.getText();
 
     if (language == null)
       throw new OCommandScriptException("No language was specified");
@@ -82,7 +89,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     if (!engines.containsKey(language.toLowerCase()))
       throw new OCommandScriptException("Unsupported language: " + language + ". Supported languages are: " + engines);
 
-    if (script == null)
+    if (parserText == null)
       throw new OCommandScriptException("Invalid script: null");
 
     final ScriptEngine scriptEngine = engines.get(language.toLowerCase());
@@ -103,11 +110,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     try {
       Object result = null;
-      result = scriptEngine.eval(script, binding);
+      result = scriptEngine.eval(parserText, binding);
 
       return result;
     } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber());
     }
   }
 

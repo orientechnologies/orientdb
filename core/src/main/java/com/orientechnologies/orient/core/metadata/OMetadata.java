@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
+import com.orientechnologies.orient.core.metadata.function.OFunctionManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -40,134 +41,145 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 public class OMetadata {
-	public static final String					CLUSTER_INTERNAL_NAME			= "internal";
-	public static final String					CLUSTER_INDEX_NAME				= "index";
-	public static final String					CLUSTER_MANUAL_INDEX_NAME	= "manindex";
+  public static final String          CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String          CLUSTER_INDEX_NAME        = "index";
+  public static final String          CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
-	protected int												schemaClusterId;
+  protected int                       schemaClusterId;
 
-	protected OSchemaProxy							schema;
-	protected OSecurity									security;
-	protected OIndexManagerProxy				indexManager;
-	protected static final OJVMProfiler	PROFILER									= Orient.instance().getProfiler();
+  protected OSchemaProxy              schema;
+  protected OSecurity                 security;
+  protected OIndexManagerProxy        indexManager;
+  protected OFunctionManagerImpl      functionManager;
+  protected static final OJVMProfiler PROFILER                  = Orient.instance().getProfiler();
 
-	public OMetadata() {
-	}
+  public OMetadata() {
+  }
 
-	public void load() {
-		final long timer = PROFILER.startChrono();
+  public void load() {
+    final long timer = PROFILER.startChrono();
 
-		try {
-			init(true);
+    try {
+      init(true);
 
-			if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
-				return;
-		} finally {
-			PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), timer);
-		}
-	}
+      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
+        return;
+    } finally {
+      PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), timer);
+    }
+  }
 
-	public void create() throws IOException {
-		init(false);
+  public void create() throws IOException {
+    init(false);
 
-		security.create();
-		schema.create();
-		indexManager.create();
-	}
+    security.create();
+    schema.create();
+    indexManager.create();
+//    functionManager.create();
+  }
 
-	public OSchema getSchema() {
-		return schema;
-	}
+  public OSchema getSchema() {
+    return schema;
+  }
 
-	public OSecurity getSecurity() {
-		return security;
-	}
+  public OSecurity getSecurity() {
+    return security;
+  }
 
-	public OIndexManagerProxy getIndexManager() {
-		return indexManager;
-	}
+  public OIndexManagerProxy getIndexManager() {
+    return indexManager;
+  }
 
-	public int getSchemaClusterId() {
-		return schemaClusterId;
-	}
+  public int getSchemaClusterId() {
+    return schemaClusterId;
+  }
 
-	private void init(final boolean iLoad) {
-		final ODatabaseRecord database = getDatabase();
-		schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
+  private void init(final boolean iLoad) {
+    final ODatabaseRecord database = getDatabase();
+    schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
 
-		schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
-			public OSchemaShared call() {
-				final OSchemaShared instance = new OSchemaShared(schemaClusterId);
-				if (iLoad)
-					instance.load();
-				return instance;
-			}
-		}), database);
+    schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
+      public OSchemaShared call() {
+        final OSchemaShared instance = new OSchemaShared(schemaClusterId);
+        if (iLoad)
+          instance.load();
+        return instance;
+      }
+    }), database);
 
-		indexManager = new OIndexManagerProxy(database.getStorage().getResource(OIndexManager.class.getSimpleName(),
-				new Callable<OIndexManager>() {
-					public OIndexManager call() {
-						OIndexManager instance;
-						if (database.getStorage() instanceof OStorageProxy)
-							instance = new OIndexManagerRemote(database);
-						else
-							instance = new OIndexManagerShared(database);
+    indexManager = new OIndexManagerProxy(database.getStorage().getResource(OIndexManager.class.getSimpleName(),
+        new Callable<OIndexManager>() {
+          public OIndexManager call() {
+            OIndexManager instance;
+            if (database.getStorage() instanceof OStorageProxy)
+              instance = new OIndexManagerRemote(database);
+            else
+              instance = new OIndexManagerShared(database);
 
-						if (iLoad)
-							instance.load();
+            if (iLoad)
+              instance.load();
 
-						// rebuild indexes if index cluster wasn't closed properly
-						if (iLoad && (database.getStorage() instanceof OStorageLocal)
-								&& !((OStorageLocal) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
-							for (OIndex<?> idx : instance.getIndexes())
-								if (idx.isAutomatic()) {
-									OLogManager.instance().info(idx, "Rebuilding index " + idx.getName());
-									idx.rebuild();
-								}
+            // rebuild indexes if index cluster wasn't closed properly
+            if (iLoad && (database.getStorage() instanceof OStorageLocal)
+                && !((OStorageLocal) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
+              for (OIndex<?> idx : instance.getIndexes())
+                if (idx.isAutomatic()) {
+                  OLogManager.instance().info(idx, "Rebuilding index " + idx.getName());
+                  idx.rebuild();
+                }
 
-						return instance;
-					}
-				}), database);
+            return instance;
+          }
+        }), database);
 
-		final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
-		if (enableSecurity != null && !enableSecurity)
-			// INSTALL NO SECURITY IMPL
-			security = new OSecurityNull();
-		else
-			security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
-					new Callable<OSecurityShared>() {
-						public OSecurityShared call() {
-							final OSecurityShared instance = new OSecurityShared();
-							if (iLoad)
-								instance.load();
-							return instance;
-						}
-					}), database);
+    final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
+    if (enableSecurity != null && !enableSecurity)
+      // INSTALL NO SECURITY IMPL
+      security = new OSecurityNull();
+    else
+      security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+          new Callable<OSecurityShared>() {
+            public OSecurityShared call() {
+              final OSecurityShared instance = new OSecurityShared();
+              if (iLoad)
+                instance.load();
+              return instance;
+            }
+          }), database);
 
-	}
+    functionManager = new OFunctionManagerImpl();
+    //functionManager.load();
+  }
 
-	/**
-	 * Reloads the internal objects.
-	 */
-	public void reload() {
-		schema.reload();
-		indexManager.load();
-		security.load();
-	}
+  /**
+   * Reloads the internal objects.
+   */
+  public void reload() {
+    schema.reload();
+    indexManager.load();
+    security.load();
+    functionManager.load();
+  }
 
-	/**
-	 * Closes internal objects
-	 */
-	public void close() {
-		if (indexManager != null)
-			indexManager.flush();
-		if (schema != null)
-			schema.close();
-		if (security != null)
-			security.close();
-	}
+  /**
+   * Closes internal objects
+   */
+  public void close() {
+    if (indexManager != null)
+      indexManager.flush();
+    if (schema != null)
+      schema.close();
+    if (security != null)
+      security.close();
+    if (functionManager != null)
+      functionManager.close();
+  }
 
-	protected ODatabaseRecord getDatabase() {
-		return ODatabaseRecordThreadLocal.INSTANCE.get();
-	}
+  protected ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  public OFunctionManagerImpl getFunctionManager() {
+    return functionManager;
+  }
 }

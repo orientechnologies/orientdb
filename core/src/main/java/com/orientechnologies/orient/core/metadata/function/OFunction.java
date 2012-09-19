@@ -15,10 +15,19 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Stored function.
+ * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
+ * state-less, so can be used by different threads.
  * 
  * @author Luca Garulli
  * 
@@ -26,12 +35,95 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OFunction {
   protected ODocument document;
 
+  /**
+   * Creates a new function.
+   */
   public OFunction() {
+    document = new ODocument("OFunction");
+  }
+
+  /**
+   * Creates a new function wrapping the saved document.
+   * 
+   * @param iDocument
+   *          Document to assign
+   */
+  public OFunction(final ODocument iDocument) {
+    document = iDocument;
+  }
+
+  /**
+   * Loads a function.
+   * 
+   * @param iRid
+   *          RID of the function to load
+   */
+  public OFunction(final ORecordId iRid) {
+    document = ODatabaseRecordThreadLocal.INSTANCE.get().load(iRid);
+  }
+
+  public String getName() {
+    return document.field("name");
+  }
+
+  public OFunction setName(final String iName) {
+    document.field("name", iName);
+    return this;
+  }
+
+  public String getCode() {
+    return document.field("code");
+  }
+
+  public OFunction setCode(final String iCode) {
+    document.field("code", iCode);
+    saveChanges();
+    return this;
+  }
+
+  public String getLanguage() {
+    return document.field("language");
+  }
+
+  public OFunction setlanguage(final String iLanguage) {
+    document.field("language", iLanguage);
+    return this;
   }
 
   public Object execute(final Object... iArgs) {
-    Object result = null;
+    final OCommandExecutorScript command = new OCommandExecutorScript();
+    command.parse(new OCommandScript(getLanguage(), getCode()));
+
+    // CONVERT PARAMETERS IN A MAP
+    Map<Object, Object> args = null;
+
+    if (iArgs.length > 0) {
+      args = new HashMap<Object, Object>();
+      for (int i = 0; i < iArgs.length; ++i)
+        args.put(i, iArgs[i]);
+    }
+
+    return command.execute(args);
+  }
+
+  public Object execute(final Map<Object, Object> iArgs) {
+    final long start = Orient.instance().getProfiler().startChrono();
+
+    final OCommandExecutorScript command = new OCommandExecutorScript();
+    command.parse(new OCommandScript(getLanguage(), getCode()));
+    final Object result = command.execute(iArgs);
+
+    if (Orient.instance().getProfiler().isRecording())
+      Orient.instance().getProfiler()
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute", start);
 
     return result;
+  }
+
+  /**
+   * Save pending changes if any.
+   */
+  private void saveChanges() {
+    document.save();
   }
 }

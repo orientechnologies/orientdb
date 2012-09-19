@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -26,7 +28,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
 
   @Override
   public boolean execute(final OHttpRequest iRequest) throws Exception {
-    checkSyntax(iRequest.url, 2, "Syntax error: function/<database>");
+    final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
 
     iRequest.data.commandInfo = "Execute a function";
 
@@ -36,13 +38,27 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
+      final OFunction f = db.getMetadata().getFunctionManager().getFunction(parts[2]);
+      final Object[] args = new Object[parts.length - 3];
+      for (int i = 3; i < parts.length; ++i)
+        args[i - 3] = parts[i];
+      result = f.execute(args);
+
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);
     }
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-        OHttpUtils.CONTENT_TEXT_PLAIN, result, true, null);
+    if (result != null) {
+      if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
+            ((ODocument) result).toJSON(), true, null);
+      } else
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+            result, true, null);
+    } else
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
+
     return false;
   }
 
