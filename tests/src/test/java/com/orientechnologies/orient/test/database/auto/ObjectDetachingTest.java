@@ -32,12 +32,14 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
 import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
@@ -659,6 +661,40 @@ public class ObjectDetachingTest {
     Assert.assertEquals(loadedJavaObj.enumMap.get("1"), EnumTest.ENUM2);
     Assert.assertEquals(loadedJavaObj.enumMap.get("2"), EnumTest.ENUM3);
 
+    database.close();
+  }
+
+  public void testReloadAndDetachAll() {
+    // Open db
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    // Create the address without country
+    Address anAddress = new Address("Godewaersvelde");
+    anAddress = database.save(anAddress);
+    Address realAddress = database.detachAll(anAddress, true);
+    // Create the person
+    Profile aPerson = new Profile("Jack", "Jack", "Black", null);
+    aPerson.setLocation(realAddress);
+    aPerson = database.save(aPerson);
+    // Update the address by another way (another process for example)
+    City aCity = new City("Paris");
+    aCity = database.save(aCity);
+    String command = "update " + anAddress.getId() + " set city = " + database.getIdentity(aCity);
+    database.command(new OCommandSQL(command)).execute();
+    realAddress = database.reload(anAddress, true);
+    Assert.assertNotNull(realAddress.getCity());
+    // At this point, in OrientDB Studio everything is fine
+    // The address has the good country @rid, with version +1
+    // Now reload and detachAll the person
+    Profile newPerson = database.reload(aPerson, "*:-1", true);
+    Profile finalPerson = database.detachAll(newPerson, true);
+    // But with the reload, the country is null
+    Assert.assertNotNull(finalPerson.getLocation().getCity()); // out = null
+    // Same problem with query and detachAll
+    String query = "select from Profile where name = 'Jack' and surname = 'Black'";
+    newPerson = (Profile) database.query(new OSQLSynchQuery<Object>(query), new Object[0]).get(0);
+    finalPerson = database.detachAll(newPerson, true);
+    Assert.assertNotNull(finalPerson.getLocation().getCity()); // out = null
+    // Close db
     database.close();
   }
 

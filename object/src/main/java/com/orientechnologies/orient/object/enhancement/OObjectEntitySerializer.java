@@ -357,10 +357,13 @@ public class OObjectEntitySerializer {
   public static synchronized void registerClass(final Class<?> iClass) {
     if (Proxy.class.isAssignableFrom(iClass) || classes.contains(iClass))
       return;
+    boolean reloadSchema = false;
 
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
-        && !ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(iClass.getSimpleName()))
+        && !ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
       ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().createClass(iClass.getSimpleName());
+      reloadSchema = true;
+    }
 
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
       if (!classes.contains(currentClass)) {
@@ -534,7 +537,7 @@ public class OObjectEntitySerializer {
         registerCallbacks(currentClass);
 
       }
-      String iClassName = iClass.getSimpleName();
+      String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
 
       if (currentClass == null || currentClass.equals(ODocument.class))
@@ -546,19 +549,26 @@ public class OObjectEntitySerializer {
           && !currentClass.equals(Object.class)) {
         OClass oSuperClass;
         OClass currentOClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iClassName);
-        if (!ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(currentClass.getSimpleName()))
+        if (!ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
           oSuperClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema()
               .createClass(currentClass.getSimpleName());
-        else
+          reloadSchema = true;
+        } else {
           oSuperClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(currentClass.getSimpleName());
+          reloadSchema = true;
+        }
 
-        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass))
+        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
           currentOClass.setSuperClass(oSuperClass);
+          reloadSchema = true;
+        }
 
       }
     }
-    if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
+    if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed() && reloadSchema) {
       ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().save();
+      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().reload();
+    }
   }
 
   protected static boolean checkCascadeDelete(OneToOne oneToOne) {
@@ -814,8 +824,14 @@ public class OObjectEntitySerializer {
         break;
       currentClass = currentClass.getSuperclass();
     }
-    if (f != null)
-      setFieldValue(f, iObject, iValue);
+    if (f != null) {
+      if (f.getType().equals(String.class))
+        setFieldValue(f, iObject, String.valueOf(iValue));
+      else if (f.getType().equals(Long.class))
+        setFieldValue(f, iObject, Long.valueOf(iValue));
+      else if (f.getType().equals(Object.class))
+        setFieldValue(f, iObject, iValue);
+    }
   }
 
   public static Object getFieldValue(Field iField, Object iInstance) throws IllegalArgumentException, IllegalAccessException {

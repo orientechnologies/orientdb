@@ -440,6 +440,43 @@ public class CRUDObjectPhysicalTest {
     database.close();
   }
 
+  @Test(dependsOnMethods = "enumQueryTest")
+  public void paramQueryTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    JavaComplexTestClass testObject = database.newInstance(JavaComplexTestClass.class);
+    testObject.setName("Silvester");
+    Child child = database.newInstance(Child.class);
+    testObject.setChild(child);
+    testObject.setEnumField(EnumTest.ENUM1);
+
+    database.save(testObject);
+
+    ORID testObjectRid = database.getIdentity(testObject);
+    ORID childRid = database.getIdentity(child);
+
+    OSQLSynchQuery<JavaComplexTestClass> enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
+        "select from JavaComplexTestClass where enumField = :enumField and child = :child");
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("child", childRid);
+    params.put("enumField", EnumTest.ENUM1);
+    List<JavaComplexTestClass> result = database.query(enumFieldQuery, params);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), testObjectRid);
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    enumFieldQuery = new OSQLSynchQuery<JavaComplexTestClass>(
+        "select from JavaComplexTestClass where enumField = :enumField and child = :child");
+    result = database.query(enumFieldQuery, params);
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(database.getIdentity(result.get(0)).getIdentity(), testObjectRid);
+
+    database.close();
+  }
+
   @Test(dependsOnMethods = "mapObjectsLinkTest")
   public void mapObjectsLinkUpdateDatabaseNewInstanceTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");

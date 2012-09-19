@@ -115,7 +115,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case EMBEDDEDMAP:
-      return embeddedMapFromStream((ODocument) iSourceRecord, iLinkedType, iValue);
+      return embeddedMapFromStream((ODocument) iSourceRecord, iLinkedType, iValue, iName);
 
     case LINK:
       if (iValue.length() > 1) {
@@ -144,7 +144,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
   }
 
-  public Map<String, Object> embeddedMapFromStream(final ODocument iSourceDocument, final OType iLinkedType, final String iValue) {
+  public Map<String, Object> embeddedMapFromStream(final ODocument iSourceDocument, final OType iLinkedType, final String iValue,
+      final String iName) {
     if (iValue.length() == 0)
       return null;
 
@@ -181,7 +182,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
             if (iLinkedType == null)
               if (!mapValue.isEmpty()) {
                 linkedType = getType(mapValue);
-                if (isConvertToLinkedMap(map, linkedType)) {
+                if ((iName == null || iSourceDocument.fieldType(iName) == null || iSourceDocument.fieldType(iName) != OType.EMBEDDEDMAP)
+                    && isConvertToLinkedMap(map, linkedType)) {
                   // CONVERT IT TO A LAZY MAP
                   map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
                   ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);

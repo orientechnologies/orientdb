@@ -16,19 +16,19 @@
  */
 package com.orientechnologies.orient.test.domain.inheritance;
 
-import javax.persistence.Id;
-import javax.persistence.Version;
-
 /**
  * @author luca.molino
  * 
  */
-public class InheritanceTestSuperclass {
-	@Id
-	public String	id;
+public abstract class InheritanceTestAbstractClass {
+  protected int cField;
 
-	@Version
-	public String	version;
+  public int getcField() {
+    return cField;
+  }
 
-	public String	aField;
+  public void setcField(int cField) {
+    this.cField = cField;
+  }
+
 }

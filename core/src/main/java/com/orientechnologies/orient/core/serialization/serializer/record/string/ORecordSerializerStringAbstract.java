@@ -136,7 +136,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     case EMBEDDEDMAP: {
       final String value = (String) iValue;
-      return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value);
+      return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value, null);
     }
     }
 

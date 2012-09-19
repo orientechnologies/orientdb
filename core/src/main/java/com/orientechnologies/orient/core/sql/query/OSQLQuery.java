@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -169,7 +170,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     final ODocument param = new ODocument();
     param.fromStream(paramBuffer);
-
+    param.setFieldType("params", OType.EMBEDDEDMAP);
     final Map<String, Object> params = param.rawField("params");
 
     final Map<Object, Object> result = new HashMap<Object, Object>();

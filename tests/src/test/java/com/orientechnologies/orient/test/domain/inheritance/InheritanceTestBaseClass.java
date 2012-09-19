@@ -16,10 +16,19 @@
  */
 package com.orientechnologies.orient.test.domain.inheritance;
 
+import javax.persistence.Id;
+import javax.persistence.Version;
+
 /**
  * @author luca.molino
  * 
  */
-public class InheritanceTestClass extends InheritanceTestBaseClass {
-	public String	bField;
+public class InheritanceTestBaseClass extends InheritanceTestAbstractClass {
+  @Id
+  public String id;
+
+  @Version
+  public String version;
+
+  public String aField;
 }

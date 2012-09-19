@@ -19,44 +19,48 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 
 public class City {
-	@Id
-	private Long		id;
+  @Id
+  private Long    id;
 
-	@Version
-	private Long		version;
+  @Version
+  private Long    version;
 
-	private String	name;
-	private Country	country;
+  private String  name;
+  private Country country;
 
-	public City() {
-	}
+  public City() {
+  }
 
-	public City(Country iCountry, String iName) {
-		country = iCountry;
-		name = iName;
-	}
+  public City(String iName) {
+    name = iName;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public City(Country iCountry, String iName) {
+    country = iCountry;
+    name = iName;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public Country getCountry() {
-		return country;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public Object setCountry(Country iCountry) {
-		return country = iCountry;
-	}
+  public Country getCountry() {
+    return country;
+  }
 
-	public Long getId() {
-		return id;
-	}
+  public Object setCountry(Country iCountry) {
+    return country = iCountry;
+  }
 
-	public Long getVersion() {
-		return version;
-	}
+  public Long getId() {
+    return id;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
 }

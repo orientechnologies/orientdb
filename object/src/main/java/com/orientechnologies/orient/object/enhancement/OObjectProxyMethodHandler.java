@@ -144,17 +144,20 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   public void detachAll(Object self, boolean nonProxiedInstance) throws NoSuchMethodException, IllegalAccessException,
       InvocationTargetException {
     for (String fieldName : doc.fieldNames()) {
-      Object value = getValue(self, fieldName, false, null);
-      if (value instanceof OLazyObjectMultivalueElement)
-        ((OLazyObjectMultivalueElement) value).detachAll(nonProxiedInstance);
-      else if (value instanceof Proxy) {
-        OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) value).getHandler();
-        if (nonProxiedInstance) {
-          value = OObjectEntitySerializer.getNonProxiedInstance(value);
+      Field field = OObjectEntitySerializer.getField(fieldName, self.getClass());
+      if (field != null) {
+        Object value = getValue(self, fieldName, false, null);
+        if (value instanceof OLazyObjectMultivalueElement)
+          ((OLazyObjectMultivalueElement) value).detachAll(nonProxiedInstance);
+        else if (value instanceof Proxy) {
+          OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) value).getHandler();
+          if (nonProxiedInstance) {
+            value = OObjectEntitySerializer.getNonProxiedInstance(value);
+          }
+          handler.detachAll(value, nonProxiedInstance);
         }
-        handler.detachAll(value, nonProxiedInstance);
+        OObjectEntitySerializer.setFieldValue(field, self, value);
       }
-      OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()), self, value);
     }
     OObjectEntitySerializer.setIdField(self.getClass(), self, doc.getIdentity());
     OObjectEntitySerializer.setVersionField(self.getClass(), self, doc.getVersion());

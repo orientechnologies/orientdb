@@ -1,40 +1,69 @@
 package com.orientechnologies.orient.test.domain.business;
 
+import javax.persistence.Id;
+import javax.persistence.Version;
+
 public class Address {
-	private String	type;
-	private String	street;
-	private City		city;
+  @Id
+  private String  id;
 
-	public Address() {
-	}
+  @Version
+  private Integer version;
 
-	public Address(String iType, City iCity, String iStreet) {
-		type = iType;
-		city = iCity;
-		street = iStreet;
-	}
+  private String  type;
+  private String  street;
+  private City    city;
 
-	public String getType() {
-		return type;
-	}
+  public Address() {
+  }
 
-	public void setType(String type) {
-		this.type = type;
-	}
+  public Address(String iStreet) {
+    street = iStreet;
+  }
 
-	public String getStreet() {
-		return street;
-	}
+  public Address(String iType, City iCity, String iStreet) {
+    type = iType;
+    city = iCity;
+    street = iStreet;
+  }
 
-	public void setStreet(String street) {
-		this.street = street;
-	}
+  public String getType() {
+    return type;
+  }
 
-	public City getCity() {
-		return city;
-	}
+  public void setType(String type) {
+    this.type = type;
+  }
 
-	public void setCity(City city) {
-		this.city = city;
-	}
+  public String getStreet() {
+    return street;
+  }
+
+  public void setStreet(String street) {
+    this.street = street;
+  }
+
+  public City getCity() {
+    return city;
+  }
+
+  public void setCity(City city) {
+    this.city = city;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public Integer getVersion() {
+    return version;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
 }

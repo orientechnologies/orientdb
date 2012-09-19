@@ -179,6 +179,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return (RET) reload(iPojo, null, true);
   }
 
+  public <RET> RET reload(final Object iPojo, final boolean iIgnoreCache) {
+    return (RET) reload(iPojo, null, iIgnoreCache);
+  }
+
   public <RET> RET reload(Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
     checkOpeness();
     if (iPojo == null)
@@ -312,7 +316,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * Reflection to extract the field values. <br/>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
-  public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+  public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iCallback) {
     return (RET) save(iContent, null, iMode, false, iCallback);
   }
 

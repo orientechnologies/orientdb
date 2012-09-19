@@ -143,7 +143,7 @@ public abstract class OStringSerializerHelper {
     case EMBEDDEDMAP:
       // RECORD
       final String value = (String) iValue;
-      return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value);
+      return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value, null);
     }
 
     throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
