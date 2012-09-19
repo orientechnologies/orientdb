@@ -1378,7 +1378,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
       // ADD ALL THE CLUSTERS
       for (OCluster c : clusters)
-        result.add(c);
+        if (c != null)
+          result.add(c);
 
     } finally {
       lock.releaseSharedLock();
