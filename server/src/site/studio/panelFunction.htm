@@ -93,6 +93,11 @@
 	});
 
 	function loadFunctions(){
+		var funcClass = orientServer.getClass("OFunction");
+		if( !funcClass )
+			// NO FUNCTION INSTALLED
+			return;
+		
 		var commandResult = orientServer.executeCommand("select from OFunction");
 	
 		if (commandResult) {

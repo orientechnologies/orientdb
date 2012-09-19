@@ -39,6 +39,9 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
       db = getProfiledDatabaseInstance(iRequest);
 
       final OFunction f = db.getMetadata().getFunctionManager().getFunction(parts[2]);
+      if (f == null)
+        throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
+
       final Object[] args = new Object[parts.length - 3];
       for (int i = 3; i < parts.length; ++i)
         args[i - 3] = parts[i];
