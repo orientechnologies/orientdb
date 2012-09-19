@@ -39,22 +39,13 @@ public class OFunctionManagerImpl implements OFunctionManager {
   }
 
   public void create() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass("OFunction"))
-      return;
-
-    final OClass f = db.getMetadata().getSchema().createClass("OFunction");
-    f.createProperty("name", OType.STRING);
-    f.createProperty("code", OType.STRING);
-    f.createProperty("language", OType.STRING);
+    init();
   }
 
   public void load() {
     // LOAD ALL THE FUNCTIONS IN MEMORY
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!db.getMetadata().getSchema().existsClass("OFunction"))
-      create();
-    else {
+    if (db.getMetadata().getSchema().existsClass("OFunction")) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
       for (ODocument d : result)
         functions.put((String) d.field("name"), new OFunction(d));
@@ -71,11 +62,7 @@ public class OFunctionManagerImpl implements OFunctionManager {
   }
 
   public synchronized OFunction createFunction(final String iName) {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-    OClass functionClass = db.getMetadata().getSchema().getClass("OFunction");
-    if (functionClass == null)
-      functionClass = db.getMetadata().getSchema().createClass("OFunction");
+    init();
 
     final OFunction f = new OFunction().setName(iName);
     functions.put(iName, f);
@@ -85,5 +72,16 @@ public class OFunctionManagerImpl implements OFunctionManager {
 
   public void close() {
     functions.clear();
+  }
+
+  protected void init() {
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (db.getMetadata().getSchema().existsClass("OFunction"))
+      return;
+
+    final OClass f = db.getMetadata().getSchema().createClass("OFunction");
+    f.createProperty("name", OType.STRING);
+    f.createProperty("code", OType.STRING);
+    f.createProperty("language", OType.STRING);
   }
 }

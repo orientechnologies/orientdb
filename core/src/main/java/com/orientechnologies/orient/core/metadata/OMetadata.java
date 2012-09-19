@@ -75,7 +75,7 @@ public class OMetadata {
     security.create();
     schema.create();
     indexManager.create();
-//    functionManager.create();
+    functionManager.create();
   }
 
   public OSchema getSchema() {
