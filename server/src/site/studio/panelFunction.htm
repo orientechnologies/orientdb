@@ -156,9 +156,17 @@
 	}
 	
 	function executeFunction(){
+		var funcName = $('#funcName').val();
+		$("#output").val("Executing server-side function '"+funcName+"'...");
+		
+		startTimer();
+
 		orientServer.setEvalResponse(false);
-		var commandResult = orientServer.executeFunction($('#funcName').val());
+		var commandResult = orientServer.executeFunction(funcName);
 		orientServer.setEvalResponse(true);
+		
+		$("#output").val("Server-side function '"+funcName+"' executed in " + stopTimer() + " sec.");
+
 		
 		if( !commandResult )
 			commandResult = "";
