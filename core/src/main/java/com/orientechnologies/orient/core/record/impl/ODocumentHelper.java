@@ -430,7 +430,7 @@ public class ODocumentHelper {
 		if (begin == '@') {
 			// RETURN AN ATTRIBUTE
 			if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
-				return iCurrent;
+				return iCurrent.getRecord();
 			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
 				return iCurrent.getIdentity();
 			else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))

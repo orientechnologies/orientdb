@@ -17,8 +17,10 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -31,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -60,19 +63,33 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       if (extractTargets()) {
         // IF WHERE EXISTS EXTRACT CONDITIONS
 
-        if (parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_WHERE, OCommandExecutorSQLAbstract.KEYWORD_LIMIT,
-            OCommandExecutorSQLSelect.KEYWORD_ORDER, OCommandExecutorSQLSelect.KEYWORD_SKIP)) {
-          if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
-            final int lastPos = parserGetCurrentPosition();
-            final String lastText = parserText;
-            final String lastTextUpperCase = parserTextUpperCase;
+        if (parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_LET, OCommandExecutorSQLAbstract.KEYWORD_WHERE,
+            OCommandExecutorSQLAbstract.KEYWORD_LIMIT, OCommandExecutorSQLSelect.KEYWORD_ORDER,
+            OCommandExecutorSQLSelect.KEYWORD_SKIP)) {
 
-            text(parserText.substring(lastPos));
+          boolean continueParsing = true;
+          if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_LET)) {
+            extractLet();
+            continueParsing = parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_WHERE,
+                OCommandExecutorSQLAbstract.KEYWORD_LIMIT, OCommandExecutorSQLSelect.KEYWORD_ORDER,
+                OCommandExecutorSQLSelect.KEYWORD_SKIP);
+          }
 
-            parserText = lastText;
-            parserTextUpperCase = lastTextUpperCase;
-            parserMoveCurrentPosition(lastPos);
+          if (continueParsing) {
 
+            if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+              final int lastPos = parserGetCurrentPosition();
+              final String lastText = parserText;
+              final String lastTextUpperCase = parserTextUpperCase;
+
+              text(parserText.substring(lastPos));
+
+              parserText = lastText;
+              parserTextUpperCase = lastTextUpperCase;
+              parserMoveCurrentPosition(lastPos);
+
+            } else
+              parserGoBack();
           } else
             parserGoBack();
         }
@@ -89,6 +106,17 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   }
 
   public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
+    if (let != null && !let.isEmpty()) {
+      // BIND CONTEXT VARIABLES
+      for (Entry<String, String> entry : let.entrySet()) {
+        String varName = entry.getKey();
+        if (varName.startsWith("$"))
+          varName = varName.substring(1);
+
+        context.setVariable(varName, ODocumentHelper.getFieldValue(iRecord, entry.getValue()));
+      }
+    }
+
     if (rootCondition == null)
       return true;
 
@@ -182,6 +210,27 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     }
 
     return !parserIsEnded();
+  }
+
+  protected void extractLet() {
+    int endPosition = parserTextUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, parserGetCurrentPosition());
+    if (endPosition == -1)
+      endPosition = parserText.length() - 1;
+
+    final String letString = parserText.substring(parserGetCurrentPosition(), endPosition).trim();
+    if (letString.length() > 0) {
+      // EXTRACT LET
+      let = new LinkedHashMap<String, String>();
+      final List<String> items = OStringSerializerHelper.smartSplit(letString, ',');
+
+      for (String letItem : items) {
+        final List<String> letItemParts = OStringSerializerHelper.smartSplit(letItem.trim(), '=',
+            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+        let.put(letItemParts.get(0), letItemParts.get(1));
+      }
+    }
+
+    parserSetCurrentPosition(endPosition);
   }
 
   public Map<String, String> getTargetClusters() {

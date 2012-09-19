@@ -32,7 +32,6 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -47,7 +46,6 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -364,8 +362,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
 
     if (searchForIndexes(cls)) {
-//      final OJVMProfiler profiler = Orient.instance().getProfiler();
-//      profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
+      // final OJVMProfiler profiler = Orient.instance().getProfiler();
+      // profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
     } else
       super.searchInClasses();
   }
@@ -633,9 +631,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           fieldName = OStringSerializerHelper.getStringContent(fieldName);
 
           // FIND A UNIQUE NAME BY ADDING A COUNTER
-          for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex) {
+          for (int fieldIndex = 2; projections.containsKey(fieldName); ++fieldIndex)
             fieldName += fieldIndex;
-          }
         }
 
         if (projection.toUpperCase(Locale.ENGLISH).startsWith("FLATTEN(")) {

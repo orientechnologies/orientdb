@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
   public static final String KEYWORD_FROM   = "FROM";
+  public static final String KEYWORD_LET    = "LET";
   public static final String KEYWORD_WHERE  = "WHERE";
   public static final String KEYWORD_LIMIT  = "LIMIT";
   public static final String KEYWORD_SKIP   = "SKIP";

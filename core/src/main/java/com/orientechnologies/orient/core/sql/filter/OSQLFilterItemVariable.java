@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.sql.filter;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Represents a context variable as value in the query condition.
@@ -27,32 +26,29 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
  * 
  */
 public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
-	protected String	name;
+  protected String name;
 
-	public OSQLFilterItemVariable(final OBaseParser iQueryToParse, final String iName) {
-		super(iQueryToParse, iName.substring(1));
-	}
+  public OSQLFilterItemVariable(final OBaseParser iQueryToParse, final String iName) {
+    super(iQueryToParse, iName.substring(1));
+  }
 
-	public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
-		if (iRecord == null)
-			throw new OCommandExecutionException("Context variable '$" + name + "' cannot be resolved because record is null");
+  public Object getValue(final OIdentifiable iRecord, final OCommandContext iContext) {
+    if (iRecord == null || iContext == null)
+      return null;
 
-		if (iContext == null)
-			throw new OCommandExecutionException("Context variable '$" + name + "' cannot be resolved because context is null");
+    return transformValue(iRecord, iContext.getVariable(name));
+  }
 
-		return transformValue(iRecord, iContext.getVariable(name));
-	}
+  public String getRoot() {
+    return name;
+  }
 
-	public String getRoot() {
-		return name;
-	}
+  public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
+    this.name = iRoot;
+  }
 
-	public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
-		this.name = iRoot;
-	}
-
-	@Override
-	public String toString() {
-		return "$" + super.toString();
-	}
+  @Override
+  public String toString() {
+    return "$" + super.toString();
+  }
 }
