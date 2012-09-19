@@ -646,12 +646,9 @@ function ODatabase(databasePath) {
 	}
 	
 
-	ODatabase.prototype.function = function(iName) {
+	ODatabase.prototype.executeFunction = function(iName) {
 		if (this.databaseInfo == null)
 			this.open();
-
-		if (!iLanguage)
-			iLanguage = "sql";
 
 		var dataType = this.evalResponse ? null : 'text';
 
