@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,20 +48,33 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         args[i - 3] = parts[i];
       result = f.execute(args);
 
+      if (result != null) {
+        if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
+          sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
+              ((ODocument) result).toJSON(), true, null);
+        } else
+          sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null,
+              OHttpUtils.CONTENT_TEXT_PLAIN, result, true, null);
+      } else
+        sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
+
+    } catch (OCommandScriptException e) {
+      // EXCEPTION
+
+      final StringBuilder msg = new StringBuilder();
+      for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
+        if (msg.length() > 0)
+          msg.append("\n");
+        msg.append(currentException.getMessage());
+      }
+
+      sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
+          OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(), true, null);
+
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);
     }
-
-    if (result != null) {
-      if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
-            ((ODocument) result).toJSON(), true, null);
-      } else
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-            result, true, null);
-    } else
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
 
     return false;
   }

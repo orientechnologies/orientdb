@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -62,6 +63,7 @@ public class Orient extends OSharedResourceAbstract {
   protected ORecordFactoryManager                       recordFactoryManager = new ORecordFactoryManager();
   protected ODatabaseFactory                            databaseFactory      = new ODatabaseFactory();
   protected OClusterFactory                             clusterFactory       = new ODefaultClusterFactory();
+  protected OScriptManager                              scriptManager        = new OScriptManager();
   protected volatile boolean                            active               = false;
 
   protected static final OrientShutdownHook             shutdownHook         = new OrientShutdownHook();
@@ -432,5 +434,9 @@ public class Orient extends OSharedResourceAbstract {
 
   public void registerThreadDatabaseFactory(ODatabaseThreadLocalFactory iDatabaseFactory) {
     databaseThreadFactory = iDatabaseFactory;
+  }
+
+  public OScriptManager getScriptManager() {
+    return scriptManager;
   }
 }

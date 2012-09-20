@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.core.command.script;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.Bindings;
+import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -25,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 
 /**
  * Executes Script Commands.
@@ -33,38 +36,50 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorScript extends OCommandExecutorAbstract {
-  protected OCommandScript request;
+public class OCommandExecutorFunction extends OCommandExecutorAbstract {
+  protected OCommandFunction request;
 
-  public OCommandExecutorScript() {
+  public OCommandExecutorFunction() {
   }
 
   @SuppressWarnings("unchecked")
-  public OCommandExecutorScript parse(final OCommandRequest iRequest) {
-    request = (OCommandScript) iRequest;
+  public OCommandExecutorFunction parse(final OCommandRequest iRequest) {
+    request = (OCommandFunction) iRequest;
     return this;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    final String language = request.getLanguage();
+
     parserText = request.getText();
 
     final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
 
     try {
+      final OFunction f = db.getMetadata().getFunctionManager().getFunction(parserText);
       final OScriptManager scriptManager = Orient.instance().getScriptManager();
-      final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+      final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
       final Bindings binding = scriptManager.createBinding(scriptEngine, db, iArgs);
 
       // COMPILE FUNCTION LIBRARY
-      parserText = scriptManager.getLibrary(db, language) + parserText;
-      
-      scriptEngine.eval(parserText);
+      scriptEngine.eval(scriptManager.getLibrary(db, f.getLanguage()));
 
-      return scriptEngine.eval(parserText, binding);
+      if (scriptEngine instanceof Invocable) {
+        // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
+        final Invocable invocableEngine = (Invocable) scriptEngine;
+        Object[] args = new Object[iArgs.size()];
+        int i = 0;
+        for (Entry<Object, Object> arg : iArgs.entrySet())
+          args[i++] = arg.getValue();
+        return invocableEngine.invokeFunction(parserText, args);
 
+      } else {
+        // INVOKE THE CODE SNIPPET
+        return scriptEngine.eval(invokeFunction(f, iArgs.values().toArray()), binding);
+      }
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+    } catch (NoSuchMethodException e) {
+      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
     }
   }
 
@@ -76,4 +91,21 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   protected void throwSyntaxErrorException(String iText) {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
+
+  protected String invokeFunction(final OFunction f, Object[] iArgs) {
+    final StringBuilder code = new StringBuilder();
+
+    code.append(f.getName());
+    code.append('(');
+    int i = 0;
+    for (Object a : iArgs) {
+      if (i++ > 0)
+        code.append(',');
+      code.append(a);
+    }
+    code.append(");");
+
+    return code.toString();
+  }
+
 }

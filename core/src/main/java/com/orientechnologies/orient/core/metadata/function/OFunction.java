@@ -16,14 +16,18 @@
 package com.orientechnologies.orient.core.metadata.function;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
+import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 /**
  * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
@@ -90,17 +94,34 @@ public class OFunction {
     return this;
   }
 
+  public List<String> getParameters() {
+    return document.field("parameters");
+  }
+
+  public OFunction setParameters(final List<String> iParameters) {
+    document.field("parameters", iParameters);
+    return this;
+  }
+
   public Object execute(final Object... iArgs) {
-    final OCommandExecutorScript command = new OCommandExecutorScript();
-    command.parse(new OCommandScript(getLanguage(), getCode()));
+    final OCommandExecutorFunction command = new OCommandExecutorFunction();
+    command.parse(new OCommandFunction(getName()));
+
+    final List<String> params = getParameters();
 
     // CONVERT PARAMETERS IN A MAP
     Map<Object, Object> args = null;
 
     if (iArgs.length > 0) {
       args = new HashMap<Object, Object>();
-      for (int i = 0; i < iArgs.length; ++i)
-        args.put(i, iArgs[i]);
+      for (int i = 0; i < iArgs.length; ++i) {
+        final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
+
+        if (i < params.size())
+          args.put(params.get(i), argValue);
+        else
+          args.put("param" + i, argValue);
+      }
     }
 
     return command.execute(args);

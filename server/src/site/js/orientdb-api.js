@@ -646,17 +646,22 @@ function ODatabase(databasePath) {
 	}
 	
 
-	ODatabase.prototype.executeFunction = function(iName) {
+	ODatabase.prototype.executeFunction = function(iName, iParameters) {
 		if (this.databaseInfo == null)
 			this.open();
 
 		var dataType = this.evalResponse ? null : 'text';
+		
+		var params = "";
+		if( iParameters )
+			for( p in iParameters )
+				params += '/' + iParameters[p];
 
 		iName = this.URLEncode(iName);
 		$.ajax({
 			type : "POST",
 			url : this.urlPrefix + 'function/' + this.encodedDatabaseName + '/'
-					+ iName 
+					+ iName + params
 					+ this.urlSuffix,
 			context : this,
 			async : false,

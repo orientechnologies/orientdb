@@ -1,12 +1,8 @@
 <div id="tab-functions" class="row-fluid">
 	<div class="span3">
 		<div class="row-fluid">
-			<div class="span12">
-				Create a <button class="btn" onclick='javascript:newFunction()'>New <img border="0" alt="New function" src="images/add.png" align="top" /></button> function
-				</div>
-			<div class="span12"></div>
 			<div class="span10">
-				Stored functions in database:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Stored functions in database:
 			</div>
 			<div class="span1">
 				<a href="#" onclick='javascript:loadFunctions()'><i class="icon-refresh"></i></a>
@@ -15,7 +11,7 @@
 		</div>
 	</div>
 	<div class="span9">
-		<div class="row-fluid">
+		<div class="row-fluid bs-docs-example">
 			<div class="span2">
 				<label>Language</label><select id="funcLanguage" class="input-small">
 					<option value='SQL'>SQL</option>
@@ -23,45 +19,50 @@
 				</select>
 			</div>
 			<div class="span9">
-				<label>Name</label> <input id="funcName" value="" style="width: 600px;" />
+				<label>Name</label> <input id="funcName" value="" style="width: 600px;" onkeydown="updateRuntimeName()" />
 			</div>
 			<div class="span1">
 				<label>@rid&nbsp;</label> <input id="funcRid" value="" class="input-mini" />
 			</div>
 		</div>
 		<div class="row-fluid">
-			<div class="span1">Code:</div>
-			<div class="offset3 span8 row-fluid btn-toolbar">
-				<div class="btn-group">
-					<button class="btn" onClick="javascript:funcCodeEditor.setCode('')" style="width: 90px; text-align: center">
-						Clear <img border="0" alt="Graph result" src="images/clear.png" align="top" />
-					</button>
-					<button class="btn" onClick="javascript:funcCodeEditor.reindent();" style="width: 90px; text-align: center">
-						Indent <img border="0" alt="Graph result" src="images/indent.png" align="top" />
-					</button>
-					<button id="editRaw" class="btn" style="width: 90px; text-align: center">
-						Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
-					</button>
-				</div>
-				<div class="btn-group">
-					<button id="doc_delete" onclick="javascript:deleteFunction()" class="btn"><i class="icon-trash"></i> Delete</button>
-					<button id="doc_save" onclick="javascript:saveFunction()" class="btn btn-primary"><i class="icon-ok"></i> Save</button>
-				</div>
-				<div class="btn-group">
-					<button onclick="javascript:executeFunction()" class="btn btn-success btn-big">
-						Execute <img border="0" alt="Execute" src="images/execute.png" />
-					</button>
-				</div>
-			</div>
+			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>	
+			<div id="funcParameters" class="span10"></div>
 		</div>
 		<div class="row-fluid">
-			<div class="span12" style="border: 1px solid gray; width: 100%;">
-				<textarea id="funcCode" cols="130" rows="6" title="value">
+			<div class="span10" style="border: 1px solid gray;">
+				<textarea id="funcCode" cols="100" rows="6" title="value">
                                   </textarea>
 			</div>
+			<div class="span2 row-fluid btn-toolbar">
+				<div class="btn-group-vertical">
+					<button class="btn" onclick='javascript:newFunction()'><img border="0" alt="New function" src="images/add.png" align="top" /> New</button>			
+					<button  class="btn" onclick="javascript:deleteFunction()"><i class="icon-trash"></i> Delete</button>
+				</div>
+				<div>&nbsp;</div>
+				<div class="btn-group-vertical">
+					<button class="btn" onClick="javascript:funcCodeEditor.setCode('')"><img border="0" alt="Graph result" src="images/clear.png" align="top" />
+					 Clear</button>
+					<button class="btn" onClick="javascript:funcCodeEditor.reindent();">
+					<img border="0" alt="Graph result" src="images/indent.png" align="top" /> Indent
+					</button>
+				</div>
+				<div>&nbsp;</div>
+				<div class="btn-group-vertical">
+					<button onclick="javascript:saveFunction()" class="btn btn-primary"><i class="icon-ok"></i> Save</button>
+				</div>
+			</div>
 		</div>
 		<div class="row-fluid">
-			<div class="span12">Result:</div>
+			<form id="funcExecution" class="form-inline">
+				<label id="funcRuntimeName"></label>
+				<label><h3>(</h3></label>
+				<span id="funcRuntimeParameters"></span>
+				<label><h3>)</h3></label>
+			</form>
+			<a  class="btn btn-success" onclick="javascript:executeFunction()">
+				<img border="0" alt="Execute" src="images/execute.png" /> Execute
+			</a>
 		</div>
 		<div class="row-fluid">
 			<div class="span12" style="border: 1px solid gray; width: 100%;">
@@ -75,7 +76,7 @@
 <script>
 	funcCodeEditor = CodeMirror.fromTextArea('funcCode', {
 		width : "auto",
-		height : "250px",
+		height : "200px",
 		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
 		stylesheet : "styles/codemirror/jscolors.css",
 		path : "js/codemirror/",
@@ -85,7 +86,7 @@
 
 	funcOutput = CodeMirror.fromTextArea('funcOutput', {
 		width : "auto",
-		height : "100px",
+		height : "80px",
 		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
 		stylesheet : "styles/codemirror/jscolors.css",
 		path : "js/codemirror/",
@@ -95,9 +96,13 @@
 
 	function loadFunctions(){
 		var funcClass = orientServer.getClass("OFunction");
-		if( !funcClass )
+		if( !funcClass ) {
 			// NO FUNCTION INSTALLED
+			$("#output").val("No functions module installed. Create a new function to activate it");
 			return;
+		}
+
+		startTimer();
 		
 		var commandResult = orientServer.executeCommand("select from OFunction");
 	
@@ -110,11 +115,14 @@
 			}
 			$('#functions').html(snippet);
 		}
+		
+		$("#output").val("Loaded " + functions.length +" functions in " + stopTimer() + " sec.");
 	}
 	
 	function newFunction(){
 		currentFunction = { '@class' : 'OFunction', language : 'Javascript', name : '', code : '' };
 		viewFunction();
+		funcOutput.setCode("");
 	}
 	
 	function editFunction(row){
@@ -127,22 +135,64 @@
 		$('#funcName').val( currentFunction['name'] );
 		$('#funcRid').val( currentFunction['@rid'] );
 		funcCodeEditor.setCode( currentFunction['code'] );
+		viewParameters();
+		updateRuntimeName();
 	}
 	
 	function saveFunction() {
 		currentFunction['language'] = $('#funcLanguage').val();
 		currentFunction['name'] = $('#funcName').val();
 		currentFunction['code'] = funcCodeEditor.getCode();
+
+		var pars = [];
+		for( i = 0; i < totalParameters; ++i )
+			pars.push( $("#funcParam" + i).val() );
 		
+		currentFunction['parameters'] = pars;
+
 		orientServer.save(currentFunction);
 		loadFunctions();
-		
-		for( f in functions){
+
+		$("#output").val("Saved function '"+currentFunction['name']+"' as version " + currentFunction['@version']);
+
+		for( f in functions ){
 			if( currentFunction['name'] == functions[f].name ){
 				currentFunction = functions[f];
 				break;
 			}
 		}
+	}
+	
+	function viewParameters(){
+		totalParameters = 0;
+		$('#funcParameters').html('');
+		$('#funcRuntimeParameters').html('');
+		var pars = currentFunction['parameters'];
+		for( p in pars )
+			addParam( pars[p] );
+	}
+	
+	function addParam( name ){
+		if( !name )
+			name = '';
+		
+		$('#funcParameters').append('<input id="funcParam' + totalParameters + '" class="input-small" value="' + name + '"/><a id="funcRemove' + totalParameters + '" onclick="delParam(' + totalParameters + ')"><i class="icon-trash"></a>');
+		
+		if( totalParameters > 0 )
+			$('#funcRuntimeParameters').append(',&nbsp;');
+		
+		$('#funcRuntimeParameters').append('<input id="funcRuntimeParam' + totalParameters + '" class="input-small" value=""/>');
+		
+		totalParameters++;
+	}
+	
+	function delParam( id ){
+		delete currentFunction['parameters'][id];
+		viewParameters();
+	}
+	
+	function updateRuntimeName(){
+		$('#funcRuntimeName').html( '<h3>' + $('#funcName').val() + '</h3>');
 	}
 	
 	function deleteFunction() {
@@ -152,22 +202,30 @@
 		
 		orientServer.remove(currentFunction);
 		loadFunctions();
+		
+		$("#output").val("Deleted function '"+currentFunction['name']+"'");
+
 		currentFunction = null;
+		totalParameters = 0;
 	}
 	
 	function executeFunction(){
 		var funcName = $('#funcName').val();
 		$("#output").val("Executing server-side function '"+funcName+"'...");
 		
+		var pars = [];
+		for( i = 0; i < totalParameters; ++i )
+			pars.push( $("#funcRuntimeParam" + i).val() );
+		
 		startTimer();
 
 		orientServer.setEvalResponse(false);
-		var commandResult = orientServer.executeFunction(funcName);
+		var commandResult = orientServer.executeFunction(funcName, pars);
 		orientServer.setEvalResponse(true);
 		
-		$("#output").val("Server-side function '"+funcName+"' executed in " + stopTimer() + " sec.");
+		if( !orientServer.getErrorMessage() )
+			$("#output").val("Server-side function '"+funcName+"' executed in " + stopTimer() + " sec.");
 
-		
 		if( !commandResult )
 			commandResult = "";
 		
@@ -176,5 +234,7 @@
 	
 	var functions;
 	var currentFunction = null;
+	var totalParameters = 0;
+	
 	loadFunctions();
 </script>

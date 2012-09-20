@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
+import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -34,6 +37,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class OFunctionManagerImpl implements OFunctionManager {
   protected Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
+
+  static {
+    OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
+  }
 
   public OFunctionManagerImpl() {
   }
