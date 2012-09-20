@@ -1,9 +1,7 @@
 <div id="tab-functions" class="row-fluid">
 	<div class="span3">
 		<div class="row-fluid">
-			<div class="span10">
-				Stored functions in database:
-			</div>
+			<div class="span10">Stored functions in database:</div>
 			<div class="span1">
 				<a href="#" onclick='javascript:loadFunctions()'><i class="icon-refresh"></i></a>
 			</div>
@@ -19,14 +17,14 @@
 				</select>
 			</div>
 			<div class="span9">
-				<label>Name</label> <input id="funcName" value="" style="width: 600px;" onkeydown="updateRuntimeName()" />
+				<label>Name</label> <input id="funcName" value="" style="width: 600px;" />
 			</div>
 			<div class="span1">
 				<label>@rid&nbsp;</label> <input id="funcRid" value="" class="input-mini" />
 			</div>
 		</div>
 		<div class="row-fluid">
-			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>	
+			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>
 			<div id="funcParameters" class="span10"></div>
 		</div>
 		<div class="row-fluid">
@@ -36,32 +34,35 @@
 			</div>
 			<div class="span2 row-fluid btn-toolbar">
 				<div class="btn-group-vertical">
-					<button class="btn" onclick='javascript:newFunction()'><img border="0" alt="New function" src="images/add.png" align="top" /> New</button>			
-					<button  class="btn" onclick="javascript:deleteFunction()"><i class="icon-trash"></i> Delete</button>
-				</div>
-				<div>&nbsp;</div>
-				<div class="btn-group-vertical">
-					<button class="btn" onClick="javascript:funcCodeEditor.setCode('')"><img border="0" alt="Graph result" src="images/clear.png" align="top" />
-					 Clear</button>
-					<button class="btn" onClick="javascript:funcCodeEditor.reindent();">
-					<img border="0" alt="Graph result" src="images/indent.png" align="top" /> Indent
+					<button class="btn" onclick='javascript:newFunction()'>
+						<img border="0" alt="New function" src="images/add.png" align="top" /> New
+					</button>
+					<button class="btn" onclick="javascript:deleteFunction()">
+						<i class="icon-trash"></i> Delete
 					</button>
 				</div>
 				<div>&nbsp;</div>
 				<div class="btn-group-vertical">
-					<button onclick="javascript:saveFunction()" class="btn btn-primary"><i class="icon-ok"></i> Save</button>
+					<button class="btn" onClick="javascript:funcCodeEditor.setCode('')">
+						<img border="0" alt="Graph result" src="images/clear.png" align="top" /> Clear
+					</button>
+					<button class="btn" onClick="javascript:funcCodeEditor.reindent();">
+						<img border="0" alt="Graph result" src="images/indent.png" align="top" /> Indent
+					</button>
+				</div>
+				<div>&nbsp;</div>
+				<div class="btn-group-vertical">
+					<button onclick="javascript:saveFunction()" class="btn btn-primary">
+						<i class="icon-ok"></i> Save
+					</button>
 				</div>
 			</div>
 		</div>
 		<div class="row-fluid">
 			<form id="funcExecution" class="form-inline">
-				<label id="funcRuntimeName"></label>
-				<label><h3>(</h3></label>
-				<span id="funcRuntimeParameters"></span>
-				<label><h3>)</h3></label>
+				<label id="funcRuntimeName"></label> <label><h3>(</h3></label> <span id="funcRuntimeParameters"></span> <label><h3>)</h3></label>
 			</form>
-			<a  class="btn btn-success" onclick="javascript:executeFunction()">
-				<img border="0" alt="Execute" src="images/execute.png" /> Execute
+			<a class="btn btn-success" onclick="javascript:executeFunction()"> <img border="0" alt="Execute" src="images/execute.png" /> Execute
 			</a>
 		</div>
 		<div class="row-fluid">
@@ -232,9 +233,13 @@
 		funcOutput.setCode(commandResult);
 	}
 	
+	$('#funcName').bind('keyup input paste', function(event, previousText) {
+		updateRuntimeName();
+	});
+
 	var functions;
 	var currentFunction = null;
 	var totalParameters = 0;
-	
+
 	loadFunctions();
 </script>

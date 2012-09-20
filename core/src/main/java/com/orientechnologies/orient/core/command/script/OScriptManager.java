@@ -25,6 +25,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -65,6 +66,7 @@ public class OScriptManager {
         registerEngine(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
 
       registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
+      registerFormatter("ruby", new ORubyScriptFormatter());
     }
   }
 

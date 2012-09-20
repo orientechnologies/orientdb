@@ -90,5 +90,6 @@ public class OFunctionManagerImpl implements OFunctionManager {
     f.createProperty("name", OType.STRING);
     f.createProperty("code", OType.STRING);
     f.createProperty("language", OType.STRING);
+    f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING);
   }
 }

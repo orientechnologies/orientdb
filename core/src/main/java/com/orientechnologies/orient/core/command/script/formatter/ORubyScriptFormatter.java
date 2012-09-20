@@ -15,19 +15,21 @@
  */
 package com.orientechnologies.orient.core.command.script.formatter;
 
+import java.util.Scanner;
+
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 
 /**
- * Javascript script formatter.
+ * Ruby script formatter
  * 
  * @author Luca Garulli
  * 
  */
-public class OJSScriptFormatter implements OScriptFormatter {
+public class ORubyScriptFormatter implements OScriptFormatter {
   public String getFunction(final OFunction f) {
 
     final StringBuilder fCode = new StringBuilder();
-    fCode.append("function ");
+    fCode.append("def ");
     fCode.append(f.getName());
     fCode.append('(');
     int i = 0;
@@ -36,9 +38,20 @@ public class OJSScriptFormatter implements OScriptFormatter {
         fCode.append(',');
       fCode.append(p);
     }
-    fCode.append(") {\n");
-    fCode.append(f.getCode());
-    fCode.append("\n}\n");
+    fCode.append(")\n");
+
+    final Scanner scanner = new Scanner(f.getCode());
+    try {
+      scanner.useDelimiter("\n").skip("\r");
+
+      while (scanner.hasNext()) {
+        fCode.append('\t');
+        fCode.append(scanner.next());
+      }
+    } finally {
+      scanner.close();
+    }
+    fCode.append("\nend\n");
 
     return fCode.toString();
   }
