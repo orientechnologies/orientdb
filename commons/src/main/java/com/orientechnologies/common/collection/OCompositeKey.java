@@ -63,6 +63,14 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable {
   }
 
   /**
+   * Clears the keys array for reuse of the object
+   */
+  public void reset() {
+    if (this.keys != null)
+      this.keys.clear();
+  }
+
+  /**
    * @return List of heterogeneous values that are going to be stored in {@link OMVRBTree}.
    */
   public List<Object> getKeys() {
