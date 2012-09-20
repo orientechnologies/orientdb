@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import javax.script.Bindings;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -59,6 +60,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       final OScriptManager scriptManager = Orient.instance().getScriptManager();
       final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
       final Bindings binding = scriptManager.createBinding(scriptEngine, db, iArgs);
+      scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
       // COMPILE FUNCTION LIBRARY
       scriptEngine.eval(scriptManager.getLibrary(db, f.getLanguage()));
@@ -66,10 +68,13 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       if (scriptEngine instanceof Invocable) {
         // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
         final Invocable invocableEngine = (Invocable) scriptEngine;
-        Object[] args = new Object[iArgs.size()];
-        int i = 0;
-        for (Entry<Object, Object> arg : iArgs.entrySet())
-          args[i++] = arg.getValue();
+        Object[] args = null;
+        if (iArgs != null) {
+          args = new Object[iArgs.size()];
+          int i = 0;
+          for (Entry<Object, Object> arg : iArgs.entrySet())
+            args[i++] = arg.getValue();
+        }
         return invocableEngine.invokeFunction(parserText, args);
 
       } else {
