@@ -130,8 +130,6 @@ public class OrientBlob implements Blob {
 		int currentSize = 0;
 		currentChunkIndex = 0;
 
-		System.out.println("lenght:: " + binaryDataChunks.get(currentChunkIndex).length);
-
 		// loop until we find the chuks holding the given position
 		while (pos >= (currentSize += binaryDataChunks.get(currentChunkIndex).length))
 			currentChunkIndex++;

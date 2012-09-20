@@ -1,20 +1,29 @@
 package com.orientechnologies.orient.jdbc;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class OrientDbCreationHelper {
 
-	public static void loadDB(ODatabaseDocumentTx db, int documents) {
+	public static void loadDB(ODatabaseDocumentTx db, int documents) throws IOException {
 
 		db.declareIntent(new OIntentMassiveInsert());
 
@@ -27,6 +36,9 @@ public class OrientDbCreationHelper {
 		}
 
 		db.declareIntent(null);
+
+		createArtilcle(db);
+		createArtilcleWithAttachmentSplitted(db);
 
 	}
 
@@ -53,10 +65,9 @@ public class OrientDbCreationHelper {
 
 		article.createProperty("uuid", OType.INTEGER).createIndex(INDEX_TYPE.UNIQUE);
 		article.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
-		
 		article.createProperty("title", OType.STRING);
 		article.createProperty("content", OType.STRING);
-		article.createProperty("attachment", OType.BINARY);
+//		article.createProperty("attachment", OType.LINK);
 
 		// author
 		OClass author = schema.createClass("Author");
@@ -106,4 +117,70 @@ public class OrientDbCreationHelper {
 
 	}
 
+	public static ODocument createArtilcle(ODatabaseDocumentTx db) throws IOException {
+		
+		ODocument article = new ODocument("Article");
+	
+		Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		Date time = instance.getTime();
+		article.field("date", time, OType.DATE);
+
+		article.field("uuid", "1");
+		article.field("title", "the title");
+		article.field("content", "the content");
+		article.field("attachment", loadFile(db, "./src/test/resources/file.pdf"));
+		db.save(article);		
+		return article;
+	}
+
+
+	public static ODocument createArtilcleWithAttachmentSplitted(ODatabaseDocumentTx db) throws IOException {
+		
+		ODocument article = new ODocument("Article");
+		Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+		Date time = instance.getTime();
+		article.field("date", time, OType.DATE);
+
+		article.field("uuid", "2");
+		article.field("title", "the title 2");
+		article.field("content", "the content 2");
+		article.field("attachment", loadFile(db, "./src/test/resources/file.pdf",256));
+		db.save(article);		
+		return article;
+	}
+
+	private static ORecordBytes loadFile(ODatabaseRecord database, String filePath) throws IOException {
+		BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(new File(filePath)));
+		ORecordBytes record = new ORecordBytes(database);
+		record.fromInputStream(inputStream);
+		return record;
+	}
+
+	private static List<ORID> loadFile(ODatabaseRecord database, String filePath, int bufferSize) throws IOException {
+		File binaryFile = new File(filePath);
+		long binaryFileLength = binaryFile.length();
+		int numberOfRecords = (int) (binaryFileLength / bufferSize);
+		int remainder = (int) (binaryFileLength % bufferSize);
+		if (remainder > 0) numberOfRecords++;
+		List<ORID> binaryChuncks = new ArrayList<ORID>(numberOfRecords);
+		BufferedInputStream binaryStream = new BufferedInputStream(new FileInputStream(binaryFile));
+		byte[] chunk;
+
+		database.declareIntent(new OIntentMassiveInsert());
+		ORecordBytes recordChunck;
+		for (int i = 0; i < numberOfRecords; i++) {
+			if (i == numberOfRecords - 1) chunk = new byte[remainder];
+			else chunk = new byte[bufferSize];
+			binaryStream.read(chunk);
+			recordChunck = new ORecordBytes(database, chunk);
+			database.save(recordChunck);
+			binaryChuncks.add(recordChunck.getIdentity());
+		}
+		database.declareIntent(null);
+		
+		return binaryChuncks;
+	}
+
 }
+

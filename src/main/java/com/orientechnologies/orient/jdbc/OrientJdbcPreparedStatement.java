@@ -143,7 +143,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 	}
 
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-
+		params.put(parameterIndex, x.toString());
 	}
 
 	public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {

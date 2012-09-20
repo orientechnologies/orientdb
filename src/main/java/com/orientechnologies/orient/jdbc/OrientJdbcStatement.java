@@ -240,7 +240,7 @@ public class OrientJdbcStatement implements Statement {
 	}
 
 	public ResultSet getResultSet() throws SQLException {
-
+		
 		return resultSet;
 	}
 

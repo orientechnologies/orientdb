@@ -248,9 +248,10 @@ public class OrientJdbcResultSet implements ResultSet {
 	}
 
 	public Blob getBlob(String columnLabel) throws SQLException {
+
 		try {
 			Object value = document.field(columnLabel);
-			System.out.println(document.toJSON());
+
 			if (value instanceof ORecordBytes) {
 				return new OrientBlob((ORecordBytes) value);
 			} else if (value instanceof ORecordLazyList) {
@@ -272,6 +273,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
 			return null;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new SQLException("An error occured during the retrieval of the BLOB at column '" + columnLabel + "'", e);
 		}
 

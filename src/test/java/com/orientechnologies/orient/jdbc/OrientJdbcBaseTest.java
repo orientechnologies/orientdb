@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import static java.lang.Class.forName;
+import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createArtilcle;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.createSchemaDB;
 import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 
@@ -41,7 +42,7 @@ public abstract class OrientJdbcBaseTest {
 
 		createSchemaDB(db);
 		loadDB(db, 20);
-
+	
 		Properties info = new Properties();
 		info.put("user", username);
 		info.put("password", password);
