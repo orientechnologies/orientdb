@@ -269,9 +269,9 @@ public class OServer {
 			throw new IllegalArgumentException("Storage path is null");
 
 		String name = iName.indexOf(':') > -1 ? iName.substring(iName.indexOf(':') + 1) : iName;
-		int pos = name.lastIndexOf('/');
-		if (pos > -1)
-			name = name.substring(pos + 1);
+//		int pos = name.lastIndexOf('/');
+//		if (pos > -1)
+//			name = name.substring(pos + 1);
 
 		final OStorage stg = Orient.instance().getStorage(name);
 		if (stg != null)
