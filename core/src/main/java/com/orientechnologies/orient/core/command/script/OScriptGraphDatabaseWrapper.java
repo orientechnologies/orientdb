@@ -74,12 +74,12 @@ public class OScriptGraphDatabaseWrapper {
     this.database = new OGraphDatabase(iURL);
   }
 
-  public List<OIdentifiable> query(final String iText) {
-    return database.query(new OSQLSynchQuery<Object>(iText));
+  public List<OIdentifiable> query(final String iText, Object... iParameters) {
+    return database.query(new OSQLSynchQuery<Object>(iText), iParameters);
   }
 
-  public Object command(final String iText) {
-    return database.command(new OCommandSQL(iText));
+  public Object command(final String iText, Object... iParameters) {
+    return database.command(new OCommandSQL(iText)).execute(iParameters);
   }
 
   public boolean exists() {
