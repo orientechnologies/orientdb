@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,7 +113,7 @@ public class OFunction {
     Map<Object, Object> args = null;
 
     if (iArgs.length > 0) {
-      args = new HashMap<Object, Object>();
+      args = new LinkedHashMap<Object, Object>();
       for (int i = 0; i < iArgs.length; ++i) {
         final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
 
