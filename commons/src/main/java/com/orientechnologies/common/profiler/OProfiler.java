@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,7 +41,7 @@ import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
  */
 public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
   protected long                            recordingFrom           = -1;
-  protected Map<OProfilerHookValue, String> hooks                   = new HashMap<OProfiler.OProfilerHookValue, String>();
+  protected Map<OProfilerHookValue, String> hooks                   = new ConcurrentHashMap<OProfiler.OProfilerHookValue, String>();
   protected Date                            lastReset               = new Date();
 
   protected OProfilerData                   realTime                = new OProfilerData();
@@ -96,9 +97,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
   public void shutdown() {
     stopRecording();
-    synchronized (hooks) {
-      hooks.clear();
-    }
+    hooks.clear();
+
     synchronized (snapshots) {
       snapshots.clear();
     }
@@ -416,29 +416,27 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     acquireSharedLock();
     try {
 
-      synchronized (hooks) {
-        if (hooks.size() == 0)
-          return "";
+      if (hooks.size() == 0)
+        return "";
 
-        buffer.append("HOOK VALUES:");
+      buffer.append("HOOK VALUES:");
 
-        buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-        buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-        buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-        final List<String> names = new ArrayList<String>(hooks.values());
-        Collections.sort(names);
+      final List<String> names = new ArrayList<String>(hooks.values());
+      Collections.sort(names);
 
-        for (String k : names) {
-          for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-            if (v.getValue().equals(k)) {
-              final OProfilerHookValue hook = v.getKey();
-              if (hook != null) {
-                final Object hookValue = hook.getValue();
-                buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
-              }
-              break;
+      for (String k : names) {
+        for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
+          if (v.getValue().equals(k)) {
+            final OProfilerHookValue hook = v.getKey();
+            if (hook != null) {
+              final Object hookValue = hook.getValue();
+              buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
             }
+            break;
           }
         }
       }
@@ -452,13 +450,11 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public Object getHookValue(final String iName) {
-    synchronized (hooks) {
-      for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-        if (v.getValue().equals(iName)) {
-          final OProfilerHookValue h = v.getKey();
-          if (h != null)
-            return h.getValue();
-        }
+    for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
+      if (v.getValue().equals(iName)) {
+        final OProfilerHookValue h = v.getKey();
+        if (h != null)
+          return h.getValue();
       }
     }
     return null;
@@ -523,28 +519,18 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
-    synchronized (hooks) {
-      for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
-        if (entry.getValue().equals(iName)) {
-          hooks.remove(entry.getKey());
-          break;
-        }
-      }
-
-      hooks.put(iHookValue, iName);
-    }
+    unregisterHookValue(iName);
+    hooks.put(iHookValue, iName);
   }
 
   public void unregisterHookValue(final String iName) {
     if (recordingFrom < 0)
       return;
 
-    synchronized (hooks) {
-      for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
-        if (entry.getValue().equals(iName)) {
-          hooks.remove(entry.getKey());
-          break;
-        }
+    for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
+      if (entry.getValue().equals(iName)) {
+        hooks.remove(entry.getKey());
+        break;
       }
     }
   }
@@ -572,10 +558,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     final Map<String, Object> result = new HashMap<String, Object>();
 
-    synchronized (hooks) {
-      for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet())
-        result.put(v.getValue(), v.getKey().getValue());
-    }
+    for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet())
+      result.put(v.getValue(), v.getKey().getValue());
 
     return result;
   }
