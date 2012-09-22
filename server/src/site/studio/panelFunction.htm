@@ -5,35 +5,13 @@
 			<div class="span1">
 				<a href="#" onclick='javascript:loadFunctions()'><i class="icon-refresh"></i></a>
 			</div>
-			<div id="functions" class="btn-group btn-group-vertical" style="border: 1px solid gray; width: 90%; height: 400px;"></div>
+			<div id="functions" class="btn-group btn-group-vertical" style="border: 1px solid gray; width: 90%; height: 450px;"></div>
 		</div>
 	</div>
 	<div class="span9">
-		<div class="row-fluid bs-docs-example">
-			<div class="span2">
-				<label>Language</label><select id="funcLanguage" class="input-small">
-					<option value='SQL'>SQL</option>
-					<option value='Javascript'>Javascript</option>
-				</select>
-			</div>
-			<div class="span9">
-				<label>Name</label> <input id="funcName" value="" style="width: 600px;" />
-			</div>
-			<div class="span1">
-				<label>@rid&nbsp;</label> <input id="funcRid" value="" class="input-mini" />
-			</div>
-		</div>
 		<div class="row-fluid">
-			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>
-			<div id="funcParameters" class="span10"></div>
-		</div>
-		<div class="row-fluid">
-			<div class="span10" style="border: 1px solid gray;">
-				<textarea id="funcCode" cols="120" rows="6" title="value">
-                                  </textarea>
-			</div>
-			<div class="span2 row-fluid btn-toolbar">
-				<div class="btn-group-vertical">
+ 			<div class="span7 btn-toolbar">
+				<div class="btn-group">
 					<button class="btn" onclick='javascript:newFunction()'>
 						<img border="0" alt="New function" src="images/add.png" align="top" /> New
 					</button>
@@ -41,8 +19,7 @@
 						<i class="icon-trash"></i> Delete
 					</button>
 				</div>
-				<div>&nbsp;</div>
-				<div class="btn-group-vertical">
+				<div class="btn-group">
 					<button class="btn" onClick="javascript:funcCodeEditor.setCode('')">
 						<img border="0" alt="Graph result" src="images/clear.png" align="top" /> Clear
 					</button>
@@ -50,12 +27,35 @@
 						<img border="0" alt="Graph result" src="images/indent.png" align="top" /> Indent
 					</button>
 				</div>
-				<div>&nbsp;</div>
-				<div class="btn-group-vertical">
+				<div class="btn-group">
 					<button onclick="javascript:saveFunction()" class="btn btn-primary">
 						<i class="icon-ok"></i> Save
 					</button>
 				</div>
+			</div>		
+			<div class="span2">
+				<label>Language</label><select id="funcLanguage" class="input-small">
+					<option value='SQL'>SQL</option>
+					<option value='Javascript'>Javascript</option>
+				</select>
+			</div>
+			<div class="span3">
+				<label>Name</label> <input id="funcName" value="" />
+			</div>
+			
+<!-- 		<div class="span1">
+				<label>@rid&nbsp;</label> <input id="funcRid" value="" class="input-mini" />
+			</div>
+ -->
+		</div>
+		<div class="row-fluid">
+			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>
+			<div id="funcParameters" class="span10"></div>
+		</div>
+		<div class="row-fluid">
+			<div class="span12" style="border: 1px solid gray;">
+				<textarea id="funcCode" cols="120" rows="8" title="value">
+                                  </textarea>
 			</div>
 		</div>
 		<div class="row-fluid">
@@ -66,7 +66,7 @@
 		</div>
 		<div class="row-fluid">
 			<div class="span12" style="border: 1px solid gray; width: 100%;">
-				<textarea id="funcOutput" cols="130" rows="6" title="value">
+				<textarea id="funcOutput" cols="140" rows="6" title="value">
                                   </textarea>
 			</div>
 		</div>
@@ -76,7 +76,7 @@
 <script>
 	funcCodeEditor = CodeMirror.fromTextArea('funcCode', {
 		width : "auto",
-		height : "200px",
+		height : "230px",
 		parserfile : [ "tokenizejavascript.js", "parsejavascript.js" ],
 		stylesheet : "styles/codemirror/jscolors.css",
 		path : "js/codemirror/",
