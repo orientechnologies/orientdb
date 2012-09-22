@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -139,7 +138,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     return lock.removeUser();
   }
 
-  public OSharedResourceAdaptive getLock() {
+  public OSharedResourceAdaptiveExternal getLock() {
     return lock;
   }
 

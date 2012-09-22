@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   public enum LOCK {
     SHARED, EXCLUSIVE
@@ -44,11 +43,6 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   public OLockManager(final boolean iEnabled, final int iAcquireTimeout) {
     this(iEnabled, iAcquireTimeout, defaultConcurrency());
-  }
-
-  private static int defaultConcurrency() {
-    return Runtime.getRuntime().availableProcessors() > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors()
-        : DEFAULT_CONCURRENCY_LEVEL;
   }
 
   public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
@@ -158,13 +152,18 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     return map.size();
   }
 
+  protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
+    return iResourceId;
+  }
+
   private Object internalLock(final RESOURCE_TYPE iResourceId) {
     final int hashCode = iResourceId.hashCode();
     final int index = (hashCode >>> shift) & mask;
     return locks[index];
   }
 
-  protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {
-    return iResourceId;
+  private static int defaultConcurrency() {
+    return Runtime.getRuntime().availableProcessors() > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors()
+        : DEFAULT_CONCURRENCY_LEVEL;
   }
 }

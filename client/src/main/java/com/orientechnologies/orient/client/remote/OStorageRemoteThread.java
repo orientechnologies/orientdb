@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -93,7 +93,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.addUser();
   }
 
-  public OSharedResourceAdaptive getLock() {
+  public OSharedResourceAdaptiveExternal getLock() {
     delegate.setSessionId(sessionId);
     return delegate.getLock();
   }
