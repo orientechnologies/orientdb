@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -75,6 +76,8 @@ public interface OStorage extends OSharedContainer {
    * @return Current cache.
    */
   public OLevel2RecordCache getLevel2Cache();
+  
+  public OSharedResourceAdaptiveExternal getLock(); 
 
   // CRUD OPERATIONS
   public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,

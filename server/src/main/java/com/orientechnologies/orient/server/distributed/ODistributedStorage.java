@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
@@ -58,14 +59,14 @@ import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
  * 
  */
 public class ODistributedStorage implements OStorage {
-  protected ODistributedServerManager dManager;
-  protected OStorageEmbedded          wrapped;
-  protected OStorageSynchronizer      dbSynchronizer;
+  protected final ODistributedServerManager dManager;
+  protected final OStorageEmbedded          wrapped;
+  protected final OStorageSynchronizer      dbSynchronizer;
 
-  protected boolean                   eventuallyConsistent = true;
-  protected EXECUTION_MODE            createRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
-  protected EXECUTION_MODE            updateRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
-  protected EXECUTION_MODE            deleteRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
+  protected boolean                         eventuallyConsistent = true;
+  protected EXECUTION_MODE                  createRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
+  protected EXECUTION_MODE                  updateRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
+  protected EXECUTION_MODE                  deleteRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
 
   public ODistributedStorage(final ODistributedServerManager iCluster, final OStorageSynchronizer dbSynchronizer,
       final OStorageEmbedded wrapped) {
@@ -405,6 +406,11 @@ public class ODistributedStorage implements OStorage {
   @Override
   public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
+  }
+
+  @Override
+  public OSharedResourceAdaptiveExternal getLock() {
+    return wrapped.getLock();
   }
 
   protected String getClusterNameFromRID(final ORecordId iRecordId) {

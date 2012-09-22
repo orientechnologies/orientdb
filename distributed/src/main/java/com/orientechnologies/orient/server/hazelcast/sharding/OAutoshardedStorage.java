@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
@@ -33,12 +34,12 @@ import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerIn
  * @since 8/28/12
  */
 public class OAutoshardedStorage implements OStorage {
-  protected OStorageEmbedded    wrapped;
-  private final ServerInstance  serverInstance;
+  protected final OStorageEmbedded wrapped;
+  private final ServerInstance     serverInstance;
 
-  private final MersenneTwister positionGenerator     = new MersenneTwister();
+  private final MersenneTwister    positionGenerator     = new MersenneTwister();
 
-  private final Set<Integer>    undistributedClusters = new HashSet<Integer>();
+  private final Set<Integer>       undistributedClusters = new HashSet<Integer>();
 
   public OAutoshardedStorage(ServerInstance serverInstance, OStorageEmbedded wrapped, ODHTConfiguration dhtConfiguration) {
     this.serverInstance = serverInstance;
@@ -332,5 +333,10 @@ public class OAutoshardedStorage implements OStorage {
   @Override
   public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
+  }
+
+  @Override
+  public OSharedResourceAdaptiveExternal getLock() {
+    return wrapped.getLock();
   }
 }
