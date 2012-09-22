@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -52,9 +53,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
 
-  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
-
   public abstract OCluster getClusterByName(final String iClusterName);
+
+  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
 
   /**
    * Closes the storage freeing the lock manager first.
@@ -94,14 +95,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     }
   }
 
-  /**
-   * Checks if the storage is open. If it's closed an exception is raised.
-   */
-  protected void checkOpeness() {
-    if (status != STATUS.OPEN)
-      throw new OStorageException("Storage " + name + " is not opened.");
-  }
-
   @Override
   public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     if (currentClusterId == -1)
@@ -124,6 +117,22 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     } finally {
       lock.releaseSharedLock();
     }
+  }
+
+  public void acquireWriteLock(final ORID iRid) {
+    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+  }
+
+  public void releaseWriteLock(final ORID iRid) {
+    lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+  }
+
+  public void acquireReadLock(final ORID iRid) {
+    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+  }
+
+  public void releaseReadLock(final ORID iRid) {
+    lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
   }
 
   protected OPhysicalPosition moveRecord(ORID originalId, ORID newId) throws IOException {
@@ -189,5 +198,13 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     }
 
     return ppos;
+  }
+
+  /**
+   * Checks if the storage is open. If it's closed an exception is raised.
+   */
+  protected void checkOpeness() {
+    if (status != STATUS.OPEN)
+      throw new OStorageException("Storage " + name + " is not opened.");
   }
 }

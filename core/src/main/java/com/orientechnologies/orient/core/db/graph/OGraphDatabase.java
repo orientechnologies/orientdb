@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -47,6 +48,10 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 public class OGraphDatabase extends ODatabaseDocumentTx {
+  public enum LOCK_MODE {
+    NO_LOCKING, DATABASE_LEVEL_LOCKING, RECORD_LEVEL_LOCKING
+  }
+
   public static final String TYPE                   = "graph";
 
   public static final String VERTEX_CLASS_NAME      = "OGraphVertex";
@@ -62,7 +67,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
   private boolean            useCustomTypes         = true;
   private boolean            safeMode               = false;
-  private boolean            autoLock               = true;
+  private LOCK_MODE          lockMode               = LOCK_MODE.DATABASE_LEVEL_LOCKING;
   protected OClass           vertexBaseClass;
   protected OClass           edgeBaseClass;
 
@@ -80,11 +85,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
     super.open(iUserName, iUserPassword);
     checkForGraphSchema();
-
-    if (autoLock && !(getStorage() instanceof OStorageEmbedded))
-      // NOT YET SUPPORETD REMOTE LOCKING
-      autoLock = false;
-
     return (THISDB) this;
   }
 
@@ -218,10 +218,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
             edge.field(iFields[i].toString(), iFields[i + 1]);
 
       // OUT FIELD
-      if (autoLock)
-        // LOCK VERTEX TO AVOID CONCURRENT ACCESS
-        acquireWriteLock(iOutVertex);
+      acquireWriteLock(iOutVertex);
       try {
+
         final Object outField = iOutVertex.field(VERTEX_FIELD_OUT);
         final OMVRBTreeRIDSet out;
         if (outField instanceof OMVRBTreeRIDSet) {
@@ -235,15 +234,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
         out.add(edge);
       } finally {
-        if (autoLock)
-          releaseWriteLock(iOutVertex);
+        releaseWriteLock(iOutVertex);
       }
 
       // IN FIELD
-      if (autoLock)
-        // LOCK VERTEX TO AVOID CONCURRENT ACCESS
-        acquireWriteLock(iInVertex);
+      acquireWriteLock(iInVertex);
       try {
+
         final Object inField = iInVertex.field(VERTEX_FIELD_IN);
         final OMVRBTreeRIDSet in;
         if (inField instanceof OMVRBTreeRIDSet) {
@@ -256,9 +253,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           iInVertex.field(VERTEX_FIELD_IN, in);
         }
         in.add(edge);
+
       } finally {
-        if (autoLock)
-          releaseWriteLock(iInVertex);
+        releaseWriteLock(iInVertex);
       }
 
       edge.setDirty();
@@ -290,8 +287,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       // OUT VERTEX
       final ODocument outVertex = edge.field(EDGE_FIELD_OUT);
 
-      if (autoLock)
-        acquireWriteLock(outVertex);
+      acquireWriteLock(outVertex);
       try {
 
         if (outVertex != null) {
@@ -302,15 +298,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
       } finally {
-        if (autoLock)
-          releaseWriteLock(outVertex);
+        releaseWriteLock(outVertex);
       }
 
       // IN VERTEX
       final ODocument inVertex = edge.field(EDGE_FIELD_IN);
 
-      if (autoLock)
-        acquireWriteLock(inVertex);
+      acquireWriteLock(inVertex);
       try {
 
         if (inVertex != null) {
@@ -321,8 +315,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
       } finally {
-        if (autoLock)
-          releaseWriteLock(inVertex);
+        releaseWriteLock(inVertex);
       }
 
       delete(edge);
@@ -344,10 +337,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       Set<ODocument> otherEdges;
 
       // REMOVE OUT EDGES
-      if (autoLock)
-        // LOCK VERTEX TO AVOID CONCURRENT ACCESS
-        acquireWriteLock(iVertex);
+      acquireWriteLock(iVertex);
       try {
+
         Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT);
         if (edges != null) {
           for (ODocument edge : edges) {
@@ -383,8 +375,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         delete(iVertex);
 
       } finally {
-        if (autoLock)
-          releaseWriteLock(iVertex);
+        releaseWriteLock(iVertex);
       }
 
       commitBlock(safeMode);
@@ -444,9 +435,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
     if (iVertex1 != null && iVertex2 != null) {
-      if (autoLock)
-        // LOCK VERTEX TO AVOID CONCURRENT ACCESS
-        acquireReadLock(iVertex1);
+      acquireReadLock(iVertex1);
       try {
 
         // CHECK OUT EDGES
@@ -472,8 +461,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
       } finally {
-        if (autoLock)
-          releaseReadLock(iVertex1);
+        releaseReadLock(iVertex1);
       }
 
     }
@@ -500,8 +488,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
     OMVRBTreeRIDSet result = null;
 
-    if (autoLock)
-      acquireReadLock(iVertex);
+    acquireReadLock(iVertex);
     try {
 
       final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_OUT);
@@ -522,8 +509,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
     } finally {
-      if (autoLock)
-        releaseReadLock(iVertex);
+      releaseReadLock(iVertex);
     }
 
     return result;
@@ -571,8 +557,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
     OMVRBTreeRIDSet result = null;
 
-    if (autoLock)
-      acquireReadLock(iVertex);
+    acquireReadLock(iVertex);
     try {
 
       final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_IN);
@@ -593,8 +578,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
     } finally {
-      if (autoLock)
-        releaseReadLock(iVertex);
+      releaseReadLock(iVertex);
     }
     return result;
   }
@@ -664,8 +648,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Iterable<String> iPropertyNames) {
-    if (autoLock)
-      acquireReadLock(null);
+    acquireReadLock(null);
     try {
 
       if (iPropertyNames == null)
@@ -690,14 +673,12 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       return result;
 
     } finally {
-      if (autoLock)
-        releaseReadLock(null);
+      releaseReadLock(null);
     }
   }
 
   public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Map<String, Object> iProperties) {
-    if (autoLock)
-      acquireReadLock(null);
+    acquireReadLock(null);
     try {
 
       if (iProperties == null)
@@ -727,8 +708,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
       return result;
     } finally {
-      if (autoLock)
-        releaseReadLock(null);
+      releaseReadLock(null);
     }
   }
 
@@ -886,14 +866,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     return iRecord != null ? iRecord.getSchemaClass().isSubClassOf(edgeBaseClass) : false;
   }
 
-  public boolean isAutoLock() {
-    return autoLock;
-  }
-
-  public void setAutoLock(final boolean iAutoLock) {
-    this.autoLock = iAutoLock;
-  }
-
   /**
    * Locks the record in exclusive mode to avoid concurrent access.
    * 
@@ -902,8 +874,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return The current instance as fluent interface to allow calls in chain.
    */
   public OGraphDatabase acquireWriteLock(final OIdentifiable iRecord) {
-    ((OStorageEmbedded) getStorage()).getLock().acquireExclusiveLock();
-    // ((OStorageEmbedded) getStorage()).acquireWriteLock(iRecord.getIdentity());
+    switch (lockMode) {
+    case DATABASE_LEVEL_LOCKING:
+      ((OStorage) getStorage()).getLock().acquireExclusiveLock();
+      break;
+    case RECORD_LEVEL_LOCKING:
+      ((OStorageEmbedded) getStorage()).acquireWriteLock(iRecord.getIdentity());
+      break;
+    case NO_LOCKING:
+      break;
+    }
     return this;
   }
 
@@ -915,8 +895,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return The current instance as fluent interface to allow calls in chain.
    */
   public OGraphDatabase releaseWriteLock(final OIdentifiable iRecord) {
-    ((OStorageEmbedded) getStorage()).getLock().releaseExclusiveLock();
-    // ((OStorageEmbedded) getStorage()).releaseWriteLock(iRecord.getIdentity());
+    switch (lockMode) {
+    case DATABASE_LEVEL_LOCKING:
+      ((OStorage) getStorage()).getLock().releaseExclusiveLock();
+      break;
+    case RECORD_LEVEL_LOCKING:
+      ((OStorageEmbedded) getStorage()).releaseWriteLock(iRecord.getIdentity());
+      break;
+    case NO_LOCKING:
+      break;
+    }
     return this;
   }
 
@@ -928,8 +916,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return The current instance as fluent interface to allow calls in chain.
    */
   public OGraphDatabase acquireReadLock(final OIdentifiable iRecord) {
-    ((OStorageEmbedded) getStorage()).getLock().acquireSharedLock();
-    // ((OStorageEmbedded) getStorage()).acquireReadLock(iRecord.getIdentity());
+    switch (lockMode) {
+    case DATABASE_LEVEL_LOCKING:
+      ((OStorage) getStorage()).getLock().acquireSharedLock();
+      break;
+    case RECORD_LEVEL_LOCKING:
+      ((OStorageEmbedded) getStorage()).acquireReadLock(iRecord.getIdentity());
+      break;
+    case NO_LOCKING:
+      break;
+    }
     return this;
   }
 
@@ -941,8 +937,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return The current instance as fluent interface to allow calls in chain.
    */
   public OGraphDatabase releaseReadLock(final OIdentifiable iRecord) {
-    ((OStorageEmbedded) getStorage()).getLock().releaseSharedLock();
-    // ((OStorageEmbedded) getStorage()).releaseReadLock(iRecord.getIdentity());
+    switch (lockMode) {
+    case DATABASE_LEVEL_LOCKING:
+      ((OStorage) getStorage()).getLock().releaseSharedLock();
+      break;
+    case RECORD_LEVEL_LOCKING:
+      ((OStorageEmbedded) getStorage()).releaseReadLock(iRecord.getIdentity());
+      break;
+    case NO_LOCKING:
+      break;
+    }
     return this;
   }
 
@@ -1023,5 +1027,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       }
     }
     return good;
+  }
+
+  public LOCK_MODE getLockMode() {
+    return lockMode;
+  }
+
+  public void setLockMode(final LOCK_MODE lockMode) {
+    if (lockMode == LOCK_MODE.RECORD_LEVEL_LOCKING && !(getStorage() instanceof OStorageEmbedded))
+      // NOT YET SUPPORETD REMOTE LOCKING
+      throw new IllegalArgumentException("Record leve locking is not supported for remote connections");
+
+    this.lockMode = lockMode;
   }
 }
