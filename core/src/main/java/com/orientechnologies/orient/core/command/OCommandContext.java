@@ -30,7 +30,7 @@ public interface OCommandContext {
 
   public Map<String, Object> getVariables();
 
-  public void merge(OCommandContext context);
+  public OCommandContext merge(OCommandContext context);
 
   /**
    * Updates a counter. Used to record metrics.

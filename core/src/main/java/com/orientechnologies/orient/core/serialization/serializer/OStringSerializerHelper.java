@@ -170,7 +170,7 @@ public abstract class OStringSerializerHelper {
   }
 
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-      final char[] iRecordSeparator, final boolean iStringSeparatorExtended, final char... iJumpChars) {
+      final char[] iSeparator, final boolean iStringSeparatorExtended, final char... iJumpChars) {
     char stringBeginChar = ' ';
     boolean encodeMode = false;
     int insideParenthesis = 0;
@@ -188,7 +188,7 @@ public abstract class OStringSerializerHelper {
     int i = 0;
     for (; i < buffer.length; ++i) {
       final char c = buffer[i];
-      if (!isCharPresent(c, iRecordSeparator))
+      if (!isCharPresent(c, iSeparator))
         break;
     }
 
@@ -201,7 +201,7 @@ public abstract class OStringSerializerHelper {
         if (c == COLLECTION_BEGIN)
           insideCollection++;
         else if (c == COLLECTION_END) {
-          if (!isCharPresent(c, iRecordSeparator)) {
+          if (!isCharPresent(c, iSeparator)) {
             if (insideCollection == 0)
               throw new OSerializationException("Found invalid " + COLLECTION_END
                   + " character. Ensure it is opened and closed correctly.");
@@ -221,7 +221,7 @@ public abstract class OStringSerializerHelper {
         } else if (c == MAP_BEGIN) {
           insideMap++;
         } else if (c == MAP_END) {
-          if (!isCharPresent(c, iRecordSeparator)) {
+          if (!isCharPresent(c, iSeparator)) {
             if (insideMap == 0)
               throw new OSerializationException("Found invalid " + MAP_END
                   + " character. Ensure it is opened and closed correctly.");
@@ -246,7 +246,7 @@ public abstract class OStringSerializerHelper {
 
         if (insideParenthesis == 0 && insideCollection == 0 && insideMap == 0 && insideLinkPart == 0) {
           // OUTSIDE A PARAMS/COLLECTION/MAP
-          if (isCharPresent(c, iRecordSeparator)) {
+          if (isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
             return beginIndex + i + 1;
           }

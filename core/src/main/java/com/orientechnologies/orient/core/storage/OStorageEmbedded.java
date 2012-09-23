@@ -84,6 +84,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 
     try {
+      executor.getContext().merge(iCommand.getContext());
       final Object result = executor.execute(iCommand.getParameters());
       iCommand.setContext(executor.getContext());
       return result;

@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,14 +27,23 @@ import java.util.Map;
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-  private boolean             recordMetrics = false;
-  private OCommandContext     inherited;
-  private Map<String, Object> variables;
+  private boolean               recordMetrics = false;
+  private List<OCommandContext> inherited;
+  private Map<String, Object>   variables;
 
   public Object getVariable(final String iName) {
-    Object result = inherited != null ? inherited.getVariable(iName) : null;
+    Object result = null;
+
+    if (inherited != null && !inherited.isEmpty())
+      for (OCommandContext in : inherited) {
+        result = in.getVariable(iName);
+        if (result != null)
+          break;
+      }
+
     if (variables != null && variables.containsKey(iName))
       result = variables.get(iName);
+
     return result;
   }
 
@@ -60,8 +71,10 @@ public class OBasicCommandContext implements OCommandContext {
    */
   public Map<String, Object> getVariables() {
     final HashMap<String, Object> map = new HashMap<String, Object>();
-    if (inherited != null)
-      map.putAll(inherited.getVariables());
+    if (inherited != null && !inherited.isEmpty())
+      for (OCommandContext in : inherited)
+        map.putAll(in.getVariables());
+
     if (variables != null)
       map.putAll(variables);
     return map;
@@ -69,12 +82,22 @@ public class OBasicCommandContext implements OCommandContext {
 
   /**
    * Set the inherited context avoiding to copy all the values every time.
+   * 
+   * @return
    */
-  public void merge(final OCommandContext iContext) {
+  public OCommandContext merge(final OCommandContext iContext) {
     if (iContext == null)
-      return;
+      return this;
 
-    inherited = iContext;
+    if (inherited != null) {
+      if (!inherited.contains(iContext))
+        inherited.add(iContext);
+    } else {
+      inherited = new ArrayList<OCommandContext>();
+      inherited.add(iContext);
+    }
+
+    return this;
   }
 
   @Override

@@ -138,7 +138,16 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         searchInClusters();
       else if (compiledFilter.getTargetRecords() != null)
         target = compiledFilter.getTargetRecords();
-      else
+      else if (compiledFilter.getTargetVariable() != null) {
+        final Object var = getContext().getVariable(compiledFilter.getTargetVariable());
+        if (var == null)
+          return false;
+        else if (var instanceof OIdentifiable) {
+          target = new ArrayList<OIdentifiable>();
+          ((List<OIdentifiable>) target).add((OIdentifiable) var);
+        } else if (var instanceof Iterable<?>)
+          target = (Iterable<? extends OIdentifiable>) var;
+      } else
         return false;
 
     return true;

@@ -84,7 +84,7 @@ public class OTraverseContext implements OCommandContext {
       return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
     else if (nestedStack != null)
       // DELEGATE
-      nestedStack.getVariable(iName);
+      return nestedStack.getVariable(iName);
     return null;
   }
 
@@ -112,8 +112,9 @@ public class OTraverseContext implements OCommandContext {
     return map;
   }
 
-  public void merge(final OCommandContext context) {
+  public OCommandContext merge(final OCommandContext context) {
     nestedStack = context;
+    return this;
   }
 
   public String getPath() {

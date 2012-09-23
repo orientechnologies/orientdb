@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-  protected String fetchPlan;
+  protected String          fetchPlan;
+  protected OCommandContext context;
 
   public OQueryAbstract() {
   }

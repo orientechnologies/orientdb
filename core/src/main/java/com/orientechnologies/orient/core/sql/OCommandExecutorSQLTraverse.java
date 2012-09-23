@@ -181,6 +181,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [WHERE <filter>]";
+    return "TRAVERSE <field>* FROM <target> [WHILE <condition>]";
   }
 }

@@ -64,6 +64,8 @@ public class OSQLFilterCondition {
   }
 
   public Object evaluate(final OIdentifiable o, final OCommandContext iContext) {
+    iContext.setVariable("CURRENT", o);
+
     // EXECUTE SUB QUERIES ONCE
     if (left instanceof OSQLQuery<?>)
       left = ((OSQLQuery<?>) left).setContext(iContext).execute();

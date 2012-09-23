@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -49,6 +50,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
  * 
  */
 public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
+  protected String                            targetVariable;
   protected Iterable<? extends OIdentifiable> targetRecords;
   protected Map<String, String>               targetClusters;
   protected Map<OClass, String>               targetClasses;
@@ -128,7 +130,17 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
         if (varName.startsWith("$"))
           varName = varName.substring(1);
 
-        context.setVariable(varName, ODocumentHelper.getFieldValue(iRecord, entry.getValue()));
+        Object varValue;
+        final String varValueAsString = entry.getValue().trim();
+        if (varValueAsString.startsWith("(")) {
+          final OSQLSynchQuery<Object> subQuery = new OSQLSynchQuery<Object>(varValueAsString.substring(1,
+              varValueAsString.length() - 1));
+          subQuery.setContext(context);
+          varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
+        } else
+          varValue = ODocumentHelper.getFieldValue(iRecord, varValueAsString);
+
+        context.setVariable(varName, varValue);
       }
     }
 
@@ -147,7 +159,10 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
     final char c = parserGetCurrentChar();
 
-    if (c == '#' || Character.isDigit(c)) {
+    if (c == '$') {
+      targetVariable = parserRequiredWord(true, "No valid target");
+      targetVariable = targetVariable.substring(1);
+    } else if (c == '#' || Character.isDigit(c)) {
       // UNIQUE RID
       targetRecords = new ArrayList<OIdentifiable>();
       ((List<OIdentifiable>) targetRecords).add(new ORecordId(parserRequiredWord(true, "No valid RID")));
@@ -161,7 +176,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       final OCommandExecutor executor = OCommandManager.instance().getExecutor(subCommand);
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
-      subCommand.setContext(executor.getContext());
+      executor.getContext().merge(context);
 
       if (!(executor instanceof Iterable<?>))
         throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "
@@ -228,28 +243,21 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   }
 
   protected void extractLet(final String iFilterKeyword) {
-    int endPosition = parserTextUpperCase.indexOf(iFilterKeyword, parserGetCurrentPosition());
-    if (endPosition == -1) {
-      // TODO Remove this since it's deprecated!
-      endPosition = parserTextUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_WHERE, parserGetCurrentPosition());
-      if (endPosition == -1)
-        endPosition = parserText.length() - 1;
+    let = new LinkedHashMap<String, String>();
+
+    boolean stop = false;
+    while (!stop) {
+      parserNextWord(false);
+      final String letName = parserGetLastWord();
+
+      parserOptionalKeyword("=");
+
+      parserNextWord(false, " =><,\r\n");
+      final String letValue = parserGetLastWord();
+
+      let.put(letName, letValue);
+      stop = parserGetLastSeparator() == ' ';
     }
-
-    final String letString = parserText.substring(parserGetCurrentPosition(), endPosition).trim();
-    if (letString.length() > 0) {
-      // EXTRACT LET
-      let = new LinkedHashMap<String, String>();
-      final List<String> items = OStringSerializerHelper.smartSplit(letString, ',');
-
-      for (String letItem : items) {
-        final List<String> letItemParts = OStringSerializerHelper.smartSplit(letItem.trim(), '=',
-            OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
-        let.put(letItemParts.get(0), letItemParts.get(1));
-      }
-    }
-
-    parserSetCurrentPosition(endPosition);
   }
 
   public Map<String, String> getTargetClusters() {
@@ -277,6 +285,10 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     if (rootCondition != null)
       return "Parsed: " + rootCondition.toString();
     return "Unparsed: " + parserText;
+  }
+
+  public String getTargetVariable() {
+    return targetVariable;
   }
 
 }
