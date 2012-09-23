@@ -107,7 +107,7 @@ public abstract class OBaseParser {
    *          True if must return UPPERCASE, otherwise false
    * @return The word parsed
    */
-  protected String parseRequiredWord(final boolean iUpperCase) {
+  protected String parserRequiredWord(final boolean iUpperCase) {
     return parserRequiredWord(iUpperCase, "Syntax error", null);
   }
 
@@ -139,7 +139,7 @@ public abstract class OBaseParser {
    */
   protected String parserRequiredWord(final boolean iUpperCase, final String iCustomMessage, String iSeparators) {
     if (iSeparators == null)
-      iSeparators = " =><(),\r\n";
+      iSeparators = " ()=><,\r\n";
 
     parserNextWord(iUpperCase, iSeparators);
     if (parserLastWord.length() == 0)

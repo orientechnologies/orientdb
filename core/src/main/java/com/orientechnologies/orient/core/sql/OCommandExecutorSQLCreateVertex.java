@@ -56,7 +56,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     while (temp != null) {
       if (temp.equals("CLUSTER")) {
-        clusterName = parseRequiredWord(false);
+        clusterName = parserRequiredWord(false);
 
       } else if (temp.equals("SET")) {
         fields = new LinkedHashMap<String, Object>();

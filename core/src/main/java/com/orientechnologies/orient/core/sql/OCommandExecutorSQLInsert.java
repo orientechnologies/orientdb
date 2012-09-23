@@ -89,7 +89,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
     final String temp = parseOptionalWord(true);
     if (temp.equals("CLUSTER")) {
-      clusterName = parseRequiredWord(false);
+      clusterName = parserRequiredWord(false);
 
       parserSkipWhiteSpaces();
       if (parserIsEnded())
@@ -105,7 +105,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       newRecords.add(fields);
 
       // ADVANCE THE SET KEYWORD
-      parseRequiredWord(false);
+      parserRequiredWord(false);
 
       parseSetFields(fields);
     }

@@ -56,12 +56,12 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware {
     while (temp != null) {
 
       if (temp.equals("FROM")) {
-        from = new ORecordId(parseRequiredWord(false));
+        from = new ORecordId(parserRequiredWord(false));
         if (rid != null)
           throwSyntaxErrorException("FROM '" + from + "' is not allowed when specify a RID (" + rid + ")");
 
       } else if (temp.equals("TO")) {
-        to = new ORecordId(parseRequiredWord(false));
+        to = new ORecordId(parserRequiredWord(false));
         if (rid != null)
           throwSyntaxErrorException("TO '" + to + "' is not allowed when specify a RID (" + rid + ")");
 

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -73,34 +75,45 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(v5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
     // EDGES
-    ODocument e1 = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+    List<ODocument> edges = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity()))
+        .execute();
+    Assert.assertFalse(edges.isEmpty());
+    ODocument e1 = edges.get(0);
     Assert.assertEquals(e1.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
     Assert.assertEquals(e1.field("out"), v1);
     Assert.assertEquals(e1.field("in"), v2);
 
-    ODocument e2 = database.command(new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity()))
-        .execute();
+    edges = database.command(new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
+    Assert.assertFalse(edges.isEmpty());
+    ODocument e2 = edges.get(0);
     Assert.assertEquals(e2.getClassName(), "E1");
     Assert.assertEquals(e2.field("out"), v1);
     Assert.assertEquals(e2.field("in"), v3);
 
-    ODocument e3 = database.command(
+    edges = database.command(
         new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
+    Assert.assertFalse(edges.isEmpty());
+    ODocument e3 = edges.get(0);
     Assert.assertEquals(e3.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.field("weight"), 3);
 
-    ODocument e4 = database.command(
+    edges = database.command(
         new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10")).execute();
+    Assert.assertFalse(edges.isEmpty());
+    ODocument e4 = edges.get(0);
     Assert.assertEquals(e4.getClassName(), "E1");
     Assert.assertEquals(e4.field("out"), v2);
     Assert.assertEquals(e4.field("in"), v3);
     Assert.assertEquals(e4.field("weight"), 10);
 
-    ODocument e5 = database.command(
-        new OCommandSQL("create edge e1 cluster default from " + v3.getIdentity() + " to " + v5.getIdentity() + " set weight = 17"))
-        .execute();
+    edges = database
+        .command(
+            new OCommandSQL("create edge e1 cluster default from " + v3.getIdentity() + " to " + v5.getIdentity()
+                + " set weight = 17")).execute();
+    Assert.assertFalse(edges.isEmpty());
+    ODocument e5 = edges.get(0);
     Assert.assertEquals(e5.getClassName(), "E1");
     Assert.assertEquals(e5.getIdentity().getClusterId(), database.getDefaultClusterId());
 

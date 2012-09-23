@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -23,12 +25,14 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * SQL CREATE EDGE command.
@@ -59,13 +63,13 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     while (temp != null) {
       if (temp.equals("CLUSTER")) {
-        clusterName = parseRequiredWord(false);
+        clusterName = parserRequiredWord(false);
 
       } else if (temp.equals("FROM")) {
-        from = parseRequiredWord(false);
+        from = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
       } else if (temp.equals("TO")) {
-        to = parseRequiredWord(false);
+        to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
       } else if (temp.equals("SET")) {
         fields = new LinkedHashMap<String, Object>();
@@ -102,21 +106,51 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     if (!(database instanceof OGraphDatabase))
       database = new OGraphDatabase((ODatabaseRecordTx) database);
 
-    final ORecordId fromId = new ORecordId(from);
-    final ORecordId toId = new ORecordId(to);
+    final ORecordId[] fromIds = parseTarget(database, from);
+    final ORecordId[] toIds = parseTarget(database, to);
 
-    final ODocument edge = ((OGraphDatabase) database).createEdge(fromId, toId, clazz.getName());
+    // CREATE EDGES
+    List<ODocument> edges = new ArrayList<ODocument>();
+    for (ORecordId from : fromIds) {
+      for (ORecordId to : toIds) {
+        final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
+        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
+        edge.save(clusterName);
 
-    OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
+        edges.add(edge);
+      }
+    }
 
-    edge.save(clusterName);
-
-    return edge;
+    return edges;
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>) TO <rid>|(<query>) [SET <field> = <expression>[,]*]";
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]";
+  }
+
+  protected ORecordId[] parseTarget(ODatabaseRecord database, final String iTarget) {
+    final ORecordId[] ids;
+    if (iTarget.startsWith("(")) {
+      // SUB-QUERY
+      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
+      if (result == null || result.isEmpty())
+        ids = new ORecordId[0];
+      else {
+        ids = new ORecordId[result.size()];
+        for (int i = 0; i < result.size(); ++i)
+          ids[i] = new ORecordId(result.get(i).getIdentity());
+      }
+    } else if (iTarget.startsWith("[")) {
+      // COLLECTION OF RIDS
+      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
+      ids = new ORecordId[idsAsStrings.length];
+      for (int i = 0; i < idsAsStrings.length; ++i)
+        ids[i] = new ORecordId(idsAsStrings[i]);
+    } else
+      // SINGLE RID
+      ids = new ORecordId[] { new ORecordId(iTarget) };
+    return ids;
   }
 
 }
