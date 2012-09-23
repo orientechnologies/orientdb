@@ -50,13 +50,13 @@ public class OFunctionManagerImpl implements OFunctionManager {
   }
 
   public void load() {
-    // LOAD ALL THE FUNCTIONS IN MEMORY
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass("OFunction")) {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
-      for (ODocument d : result)
-        functions.put((String) d.field("name"), new OFunction(d));
-    }
+//    // LOAD ALL THE FUNCTIONS IN MEMORY
+//    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+//    if (db.getMetadata().getSchema().existsClass("OFunction")) {
+//      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
+//      for (ODocument d : result)
+//        functions.put((String) d.field("name"), new OFunction(d));
+//    }
   }
 
   public String[] getFunctionNames() {
