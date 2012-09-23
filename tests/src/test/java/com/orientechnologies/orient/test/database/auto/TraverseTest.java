@@ -116,7 +116,7 @@ public class TraverseTest {
   @Test
   public void traverseSQLOutFromActor1Depth() {
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity() + " where $depth <= 1")).execute();
+        new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity() + " while $depth <= 1")).execute();
 
     Assert.assertTrue(result1.size() != 0);
 
@@ -126,9 +126,14 @@ public class TraverseTest {
 
   @Test
   public void traverseSQLDept02() {
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie while $depth < 2"))
+        .execute();
+  }
+
+  @Test
+  public void traverseSQLOldSyntax() {
     List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
         .execute();
-
   }
 
   @Test
@@ -156,12 +161,12 @@ public class TraverseTest {
   public void traverseSQLMoviesOnlyDepth() {
     List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
-            + " where $depth <= 1 ) where @class = 'Movie'")).execute();
+            + " while $depth <= 1 ) where @class = 'Movie'")).execute();
     Assert.assertTrue(result1.isEmpty());
 
     List<ODocument> result2 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
-            + " where $depth <= 2 ) where @class = 'Movie'")).execute();
+            + " while $depth <= 2 ) where @class = 'Movie'")).execute();
     Assert.assertTrue(result2.size() > 0);
     for (ODocument d : result2) {
       Assert.assertEquals(d.getClassName(), "Movie");
@@ -187,7 +192,7 @@ public class TraverseTest {
   public void traverseSQLSelectAndTraverseNested() {
     List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-            + " where $depth <= 2 ) where @class = 'Movie' )")).execute();
+            + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
@@ -195,14 +200,14 @@ public class TraverseTest {
   public void traverseAPISelectAndTraverseNested() {
     List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
-            + " where $depth <= 2 ) where @class = 'Movie' )")).execute();
+            + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseSQLIterating() {
     int cycles = 0;
-    for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from Movie where $depth < 2")) {
+    for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from Movie while $depth < 2")) {
       cycles++;
     }
     Assert.assertTrue(cycles > 0);
@@ -234,7 +239,7 @@ public class TraverseTest {
   @Test
   public void traverseSelectIterable() {
     int cycles = 0;
-    for (OIdentifiable id : new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie where $depth < 2 )")) {
+    for (OIdentifiable id : new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie while $depth < 2 )")) {
       cycles++;
     }
     Assert.assertTrue(cycles > 0);
@@ -242,14 +247,14 @@ public class TraverseTest {
 
   @Test
   public void traverseSelectNoInfluence() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie where $depth < 2"))
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie while $depth < 2"))
         .execute();
     List<ODocument> result2 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 )")).execute();
+        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie while $depth < 2 )")).execute();
     List<ODocument> result3 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 ) where true")).execute();
+        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie while $depth < 2 ) where true")).execute();
     List<ODocument> result4 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie where $depth < 2 and ( true = true ) ) where true"))
+        new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie while $depth < 2 and ( true = true ) ) where true"))
         .execute();
 
     Assert.assertEquals(result1, result2);

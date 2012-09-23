@@ -108,7 +108,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (context == null)
       context = new OBasicCommandContext();
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context);
+    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context,
+        KEYWORD_WHERE);
 
     optimize();
 

@@ -274,8 +274,8 @@ public class OSQLEngine {
     return null;
   }
 
-  public OSQLFilter parseFromWhereCondition(final String iText, final OCommandContext iContext) {
-    return new OSQLFilter(iText, iContext);
+  public OSQLFilter parseFromWhereCondition(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+    return new OSQLFilter(iText, iContext, iFilterKeyword);
   }
 
   public static OSQLEngine getInstance() {

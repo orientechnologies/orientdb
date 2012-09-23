@@ -93,7 +93,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
       // INDEX
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-      compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(oldPos), context);
+      compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(oldPos), context, KEYWORD_WHERE);
     } else {
       query = database
           .command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));

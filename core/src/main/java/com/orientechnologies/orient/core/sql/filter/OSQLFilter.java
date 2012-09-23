@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -53,7 +54,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   protected Map<OClass, String>               targetClasses;
   protected String                            targetIndex;
 
-  public OSQLFilter(final String iText, final OCommandContext iContext) {
+  public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
     context = iContext;
     parserText = iText;
@@ -63,21 +64,27 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       if (extractTargets()) {
         // IF WHERE EXISTS EXTRACT CONDITIONS
 
-        if (parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_LET, OCommandExecutorSQLAbstract.KEYWORD_WHERE,
-            OCommandExecutorSQLAbstract.KEYWORD_LIMIT, OCommandExecutorSQLSelect.KEYWORD_ORDER,
-            OCommandExecutorSQLSelect.KEYWORD_SKIP)) {
+        if (parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_LET, OCommandExecutorSQLAbstract.KEYWORD_LIMIT,
+            OCommandExecutorSQLSelect.KEYWORD_ORDER, OCommandExecutorSQLSelect.KEYWORD_SKIP, iFilterKeyword,
+            OCommandExecutorSQLSelect.KEYWORD_WHERE)) { // TODO Remove the additional management of WHERE for TRAVERSE after a while
 
           boolean continueParsing = true;
           if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_LET)) {
-            extractLet();
-            continueParsing = parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_WHERE,
-                OCommandExecutorSQLAbstract.KEYWORD_LIMIT, OCommandExecutorSQLSelect.KEYWORD_ORDER,
-                OCommandExecutorSQLSelect.KEYWORD_SKIP);
+            extractLet(iFilterKeyword);
+            continueParsing = parserOptionalKeyword(OCommandExecutorSQLAbstract.KEYWORD_LIMIT,
+                OCommandExecutorSQLSelect.KEYWORD_ORDER, OCommandExecutorSQLSelect.KEYWORD_SKIP, iFilterKeyword,
+                OCommandExecutorSQLSelect.KEYWORD_WHERE);// TODO Remove the additional management of WHERE for TRAVERSE after a
+                                                         // while
           }
 
           if (continueParsing) {
 
-            if (parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+            if (parserGetLastWord().equals(iFilterKeyword) || parserGetLastWord().equals(OCommandExecutorSQLSelect.KEYWORD_WHERE)) {
+              if (!iFilterKeyword.equals(OCommandExecutorSQLSelect.KEYWORD_WHERE)
+                  && parserGetLastWord().equals(OCommandExecutorSQLSelect.KEYWORD_WHERE))
+                // TODO Remove the additional management of WHERE for TRAVERSE after a while
+                warnDeprecatedWhere();
+
               final int lastPos = parserGetCurrentPosition();
               final String lastText = parserText;
               final String lastTextUpperCase = parserTextUpperCase;
@@ -103,6 +110,14 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } catch (Throwable t) {
       throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
+  }
+
+  protected void warnDeprecatedWhere() {
+    OLogManager
+        .instance()
+        .warn(
+            this,
+            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
   }
 
   public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
@@ -212,10 +227,14 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     return !parserIsEnded();
   }
 
-  protected void extractLet() {
-    int endPosition = parserTextUpperCase.indexOf(OCommandExecutorSQLAbstract.KEYWORD_WHERE, parserGetCurrentPosition());
-    if (endPosition == -1)
-      endPosition = parserText.length() - 1;
+  protected void extractLet(final String iFilterKeyword) {
+    int endPosition = parserTextUpperCase.indexOf(iFilterKeyword, parserGetCurrentPosition());
+    if (endPosition == -1) {
+      // TODO Remove this since it's deprecated!
+      endPosition = parserTextUpperCase.indexOf(OCommandExecutorSQLSelect.KEYWORD_WHERE, parserGetCurrentPosition());
+      if (endPosition == -1)
+        endPosition = parserText.length() - 1;
+    }
 
     final String letString = parserText.substring(parserGetCurrentPosition(), endPosition).trim();
     if (letString.length() > 0) {

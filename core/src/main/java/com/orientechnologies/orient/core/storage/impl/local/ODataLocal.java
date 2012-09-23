@@ -451,7 +451,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
           // ASYNCHRONOUS DEFRAG: CREATE A NEW HOLE AND DEFRAG LATER
           holeSegment.createHole(iRecordOffset, holeSize);
         else {
-          defrag(file, iRecordOffset, iRecordSize, closestHole);
+          defragHole(file, iRecordOffset, iRecordSize, closestHole);
           return;
         }
       }
@@ -465,11 +465,16 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     }
   }
 
-  private void defrag(OFile file, final long iRecordOffset, final int iRecordSize, final ODataHoleInfo closestHole)
+  private void defragHole(final OFile file, final long iRecordOffset, final int iRecordSize, ODataHoleInfo closestHole)
       throws IOException {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     int holeSize = iRecordSize + RECORD_FIX_SIZE;
+
+    if (closestHole == null) {
+      final long[] pos = getRelativePosition(iRecordOffset);
+      closestHole = getCloserHole(iRecordOffset, iRecordSize, file, pos);
+    }
 
     // QUITE CLOSE, AUTO-DEFRAG!
     long closestHoleOffset;

@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbstract {
+  public static final String KEYWORD_WHILE    = "WHILE";
   public static final String KEYWORD_TRAVERSE = "TRAVERSE";
 
   // HANDLES ITERATION IN LAZY WAY
@@ -69,7 +70,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (endP > -1 && endP < endPosition)
       endPosition = endP;
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context);
+    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context,
+        KEYWORD_WHILE);
     traverse.predicate(compiledFilter);
 
     optimize();
