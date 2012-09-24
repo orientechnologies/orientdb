@@ -1,5 +1,5 @@
 <div id="tab-functions" class="row-fluid">
-	<div class="span3">
+	<div class="span2">
 		<div class="row-fluid">
 			<div class="span10">Stored functions in database:</div>
 			<div class="span1">
@@ -8,9 +8,9 @@
 			<div id="functions" class="btn-group btn-group-vertical" style="border: 1px solid gray; width: 90%; height: 450px;"></div>
 		</div>
 	</div>
-	<div class="span9">
+	<div class="span10">
 		<div class="row-fluid">
- 			<div class="span7 btn-toolbar">
+ 			<div class="span6 btn-toolbar">
 				<div class="btn-group">
 					<button class="btn" onclick='javascript:newFunction()'>
 						<img border="0" alt="New function" src="images/add.png" align="top" /> New
@@ -40,7 +40,10 @@
 				</select>
 			</div>
 			<div class="span3">
-				<label>Name</label> <input id="funcName" value="" />
+				<label>Name</label> <input id="funcName" value="" class="input"/>
+			</div>
+			<div class="span1">
+				<label>Idempotent</label> <input id="funcIdempotent" type="checkbox" />
 			</div>
 			
 <!-- 		<div class="span1">
@@ -111,7 +114,7 @@
 			var snippet = "";
 			for( row in functions ) {
 				var funcName = functions[row].name;
-				snippet += "<button class='btn' onclick='editFunction(\""+row+"\")'>"+funcName+"</button>";
+				snippet += "<button class='btn btn-mini' onclick='editFunction(\""+row+"\")'>"+funcName+"</button>";
 			}
 			$('#functions').html(snippet);
 		}
@@ -133,8 +136,10 @@
 	function viewFunction(){		
 		$('#funcLanguage').val( currentFunction['language'] );
 		$('#funcName').val( currentFunction['name'] );
-		$('#funcRid').val( currentFunction['@rid'] );
+		//$('#funcRid').val( currentFunction['@rid'] );
 		funcCodeEditor.setCode( currentFunction['code'] );
+		$('#funcIdempotent').attr("checked", currentFunction['idempotent'] );
+
 		viewParameters();
 		updateRuntimeName();
 	}
@@ -143,6 +148,7 @@
 		currentFunction['language'] = $('#funcLanguage').val();
 		currentFunction['name'] = $('#funcName').val();
 		currentFunction['code'] = funcCodeEditor.getCode();
+		currentFunction['idempotent'] = $('#funcIdempotent').is(':checked');
 
 		var pars = [];
 		for( i = 0; i < totalParameters; ++i )

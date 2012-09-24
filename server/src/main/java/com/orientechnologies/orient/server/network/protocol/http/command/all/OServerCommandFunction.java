@@ -38,10 +38,20 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
+      
+      // FORCE RELOADING
+      db.getMetadata().getFunctionManager().load();
 
       final OFunction f = db.getMetadata().getFunctionManager().getFunction(parts[2]);
       if (f == null)
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
+
+      if (iRequest.method.equalsIgnoreCase("GET") && !f.isIdempotent()) {
+        sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
+            OHttpUtils.CONTENT_TEXT_PLAIN, "GET method is not allowed to execute function '" + parts[2]
+                + "' because has been declared as non idempotent. Use POST instead.", true, null);
+        return false;
+      }
 
       final Object[] args = new Object[parts.length - 3];
       for (int i = 3; i < parts.length; ++i)

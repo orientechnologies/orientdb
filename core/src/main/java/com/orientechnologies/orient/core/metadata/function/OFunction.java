@@ -103,6 +103,17 @@ public class OFunction {
     return this;
   }
 
+  public boolean isIdempotent() {
+    final Boolean idempotent = document.field("idempotent");
+    return idempotent != null && idempotent;
+  }
+
+  public OFunction setCode(final boolean iIdempotent) {
+    document.field("idempotent", iIdempotent);
+    saveChanges();
+    return this;
+  }
+
   public Object execute(final Object... iArgs) {
     final OCommandExecutorFunction command = new OCommandExecutorFunction();
     command.parse(new OCommandFunction(getName()));

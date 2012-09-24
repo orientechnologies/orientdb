@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
+import com.orientechnologies.orient.core.metadata.function.OFunctionManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionManagerImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
@@ -148,7 +149,16 @@ public class OMetadata {
           }), database);
 
     functionManager = new OFunctionManagerImpl();
-    //functionManager.load();
+
+    functionManager = (OFunctionManagerImpl) database.getStorage().getResource(OFunctionManager.class.getSimpleName(),
+        new Callable<OFunctionManager>() {
+          public OFunctionManager call() {
+            final OFunctionManagerImpl instance = new OFunctionManagerImpl();
+            if (iLoad)
+              instance.load();
+            return instance;
+          }
+        });
   }
 
   /**

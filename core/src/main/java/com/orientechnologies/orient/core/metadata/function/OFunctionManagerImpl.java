@@ -50,13 +50,13 @@ public class OFunctionManagerImpl implements OFunctionManager {
   }
 
   public void load() {
-//    // LOAD ALL THE FUNCTIONS IN MEMORY
-//    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-//    if (db.getMetadata().getSchema().existsClass("OFunction")) {
-//      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
-//      for (ODocument d : result)
-//        functions.put((String) d.field("name"), new OFunction(d));
-//    }
+    // LOAD ALL THE FUNCTIONS IN MEMORY
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (db.getMetadata().getSchema().existsClass("OFunction")) {
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
+      for (ODocument d : result)
+        functions.put((String) d.field("name"), new OFunction(d));
+    }
   }
 
   public String[] getFunctionNames() {
@@ -90,6 +90,7 @@ public class OFunctionManagerImpl implements OFunctionManager {
     f.createProperty("name", OType.STRING);
     f.createProperty("code", OType.STRING);
     f.createProperty("language", OType.STRING);
+    f.createProperty("idempotent", OType.BOOLEAN);
     f.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING);
   }
 }
