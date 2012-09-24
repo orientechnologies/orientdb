@@ -24,41 +24,49 @@ import java.util.Map;
  * 
  */
 public class OHttpRequestWrapper {
-  private OHttpRequest wrapped;
+  private final OHttpRequest request;
+
+  public OHttpRequestWrapper(final OHttpRequest request) {
+    this.request = request;
+  }
 
   public String getContent() {
-    return wrapped.content;
+    return request.content;
   }
 
   public String getUser() {
-    return wrapped.authorization != null ? wrapped.authorization.substring(0, wrapped.authorization.indexOf(":")) : null;
+    return request.authorization != null ? request.authorization.substring(0, request.authorization.indexOf(":")) : null;
   }
 
   public String getContentType() {
-    return wrapped.contentType;
+    return request.contentType;
   }
 
   public String getHttpVersion() {
-    return wrapped.httpVersion;
+    return request.httpVersion;
+  }
+
+  public String getHttpMethod() {
+    return request.method;
   }
 
   public String getIfMatch() {
-    return wrapped.ifMatch;
+    return request.ifMatch;
   }
 
   public boolean getisMultipart() {
-    return wrapped.isMultipart;
+    return request.isMultipart;
   }
 
   public Map<String, String> getParameters() {
-    return wrapped.parameters;
+    return request.parameters;
   }
 
   public String getSessionId() {
-    return wrapped.sessionId;
+    return request.sessionId;
   }
 
   public String getURL() {
-    return wrapped.url;
+    return request.url;
   }
 }

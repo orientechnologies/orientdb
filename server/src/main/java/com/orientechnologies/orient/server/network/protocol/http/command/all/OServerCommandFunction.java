@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -32,7 +34,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
   private static final String[] NAMES = { "GET|function/*", "POST|function/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
 
     iRequest.data.commandInfo = "Execute a function";
@@ -63,20 +65,21 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
 
       // BIND CONTEXT VARIABLES
       final Map<String, Object> context = new HashMap<String, Object>();
-      context.put("request", null);
-      context.put("response", null);
+      context.put("request", new OHttpRequestWrapper(iRequest));
+      context.put("response", new OHttpResponseWrapper(iResponse));
 
       result = f.executeInContext(context, args);
 
       if (result != null) {
         if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-          iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
-              ((ODocument) result).toJSON(), true, null);
+          iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null,
+              OHttpUtils.CONTENT_JSON, ((ODocument) result).toJSON(), true, null);
         } else
           iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, result, true, null);
       } else
-        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null,
+            true, null);
 
     } catch (OCommandScriptException e) {
       // EXCEPTION

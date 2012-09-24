@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
  * Wrapper to use the HTTP response in functions and scripts.
  * 
@@ -22,4 +25,25 @@ package com.orientechnologies.orient.server.network.protocol.http;
  * 
  */
 public class OHttpResponseWrapper {
+  private final OHttpResponse response;
+
+  /**
+   * @param iResponse
+   */
+  public OHttpResponseWrapper(OHttpResponse iResponse) {
+    response = iResponse;
+  }
+
+  public void setHeader(String iHeader) {
+    response.setHeader(iHeader);
+  }
+
+  public OutputStream getOutputStream() {
+    return response.getOutputStream();
+  }
+
+  public void flush() throws IOException {
+    response.flush();
+  }
+
 }

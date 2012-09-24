@@ -139,7 +139,7 @@ public class OFunction {
       }
     }
 
-    return command.execute(args);
+    return command.executeInContext(iContext, args);
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
