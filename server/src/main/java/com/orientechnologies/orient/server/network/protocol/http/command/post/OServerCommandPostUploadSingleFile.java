@@ -60,11 +60,11 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     if (!iRequest.isMultipart) {
-      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", null,
-          OHttpUtils.CONTENT_TEXT_PLAIN, "Request is not multipart/form-data");
+      iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Request is not multipart/form-data");
     } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
-      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null,
-          OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty");
+      iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Content stream is null or empty");
     } else {
       database = getProfiledDatabaseInstance(iRequest);
       try {
@@ -74,7 +74,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser(), database);
         saveRecord(iRequest, iResponse);
         writer.flush();
-        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
       } finally {
         if (database != null)
           database.close();
@@ -156,8 +156,8 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         writer.endObject();
         writer.endObject();
       } else {
-        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", null,
-            OHttpUtils.CONTENT_TEXT_PLAIN, "File cannot be null");
+        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "File cannot be null");
       }
 
       fileDocument = null;
@@ -166,8 +166,8 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         ORecordBytes file = new ORecordBytes(fileRID);
         database.delete(file);
       }
-      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Document template cannot be null", null,
-          OHttpUtils.CONTENT_TEXT_PLAIN, "Document template cannot be null");
+      iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Document template cannot be null", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Document template cannot be null");
     }
   }
 

@@ -45,11 +45,11 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
       IOException {
     iRequest.data.commandInfo = "Database export";
     ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
-    iResponse.sendStatus(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
-    iResponse.sendResponseHeaders(iRequest, OHttpUtils.CONTENT_GZIP);
-    iResponse.writeLine(iRequest, "Content-Disposition: attachment; filename=" + database.getName() + ".gz");
-    iResponse.writeLine(iRequest, "Date: " + new Date());
-    iResponse.writeLine(iRequest, null);
+    iResponse.sendStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
+    iResponse.sendResponseHeaders(OHttpUtils.CONTENT_GZIP);
+    iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
+    iResponse.writeLine("Date: " + new Date());
+    iResponse.writeLine(null);
     ODatabaseExport export = new ODatabaseExport(database, new GZIPOutputStream(iResponse.getOutputStream()), this);
     export.exportDatabase();
     iResponse.flush();

@@ -90,7 +90,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     channel.connected();
 
     request = new OHttpRequest(this, channel.inStream, connection.data, iConfiguration);
-    response = new OHttpResponse(channel.outStream);
 
     connection.data.caller = channel.toString();
 
@@ -105,6 +104,15 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     ++connection.data.totalRequests;
     connection.data.commandInfo = null;
     connection.data.commandDetail = null;
+
+    final String callbackF;
+    if ((request.parameters != null) && request.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
+      callbackF = request.parameters.get(OHttpUtils.CALLBACK_PARAMETER_NAME);
+    else
+      callbackF = null;
+
+    response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
+        connection.data.serverInfo, request.sessionId, callbackF);
 
     final long begin = System.currentTimeMillis();
 
@@ -150,8 +158,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         }
       else {
         try {
-          OLogManager.instance().warn(this,
-              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.method + "." + command);
+          OLogManager.instance().warn(
+              this,
+              "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
+                  + command);
 
           sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
@@ -460,7 +470,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           // CONSUME THE NEXT \n
           channel.read();
 
-          request.method = words[0];
+          request.httpMethod = words[0];
           request.url = words[1].trim();
 
           final int parametersPos = request.url.indexOf('?');
@@ -476,7 +486,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
           if (OLogManager.instance().isDebugEnabled())
-            OLogManager.instance().debug(this, "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s", request.method,
+            OLogManager.instance().debug(this, "[ONetworkProtocolHttpAbstract.execute] Requested: %s %s", request.httpMethod,
                 request.url);
 
           service();
@@ -496,10 +506,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       timeout();
 
     } catch (Throwable t) {
-      if (request.method != null && request.url != null) {
+      if (request.httpMethod != null && request.url != null) {
         try {
-          sendTextContent(505, "Error on executing of " + request.method + " for the resource: " + request.url, null, "text/plain",
-              t.toString());
+          sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
+              "text/plain", t.toString());
         } catch (IOException e) {
         }
       } else
@@ -566,7 +576,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     final int getQueryPosition = command.indexOf('?');
 
     final StringBuilder commandString = new StringBuilder();
-    commandString.append(request.method);
+    commandString.append(request.httpMethod);
     commandString.append(COMMAND_SEPARATOR);
 
     if (getQueryPosition > -1)

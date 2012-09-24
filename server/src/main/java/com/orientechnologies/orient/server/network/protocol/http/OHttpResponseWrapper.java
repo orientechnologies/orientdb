@@ -30,20 +30,42 @@ public class OHttpResponseWrapper {
   /**
    * @param iResponse
    */
-  public OHttpResponseWrapper(OHttpResponse iResponse) {
+  public OHttpResponseWrapper(final OHttpResponse iResponse) {
     response = iResponse;
   }
 
-  public void setHeader(String iHeader) {
+  public String getHeader() {
+    return response.headers;
+  }
+
+  public OHttpResponseWrapper setHeader(final String iHeader) {
     response.setHeader(iHeader);
+    return this;
+  }
+
+  public String getCharacterSet() {
+    return response.characterSet;
+  }
+
+  public OHttpResponseWrapper setCharacterSet(final String iCharacterSet) {
+    response.characterSet = iCharacterSet;
+    return this;
+  }
+
+  public String getHttpVersion() {
+    return response.httpVersion;
+  }
+
+  public String[] getAdditionalResponseHeaders() {
+    return response.additionalHeaders;
   }
 
   public OutputStream getOutputStream() {
     return response.getOutputStream();
   }
 
-  public void flush() throws IOException {
+  public OHttpResponseWrapper flush() throws IOException {
     response.flush();
+    return this;
   }
-
 }

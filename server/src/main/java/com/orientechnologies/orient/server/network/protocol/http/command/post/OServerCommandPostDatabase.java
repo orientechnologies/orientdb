@@ -242,7 +242,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.endObject();
     json.flush();
 
-    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
   }
 
   protected void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {

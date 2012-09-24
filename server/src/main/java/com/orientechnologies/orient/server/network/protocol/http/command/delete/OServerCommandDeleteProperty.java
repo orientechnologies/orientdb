@@ -45,7 +45,7 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
 
 			cls.dropProperty(urlParts[3]);
 
-			iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 
 		} finally {
 			if (db != null)

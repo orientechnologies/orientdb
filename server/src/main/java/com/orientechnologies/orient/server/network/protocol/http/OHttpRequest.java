@@ -31,11 +31,11 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
 public class OHttpRequest {
   public final OContextConfiguration        configuration;
   public final InputStream                  in;
-  public String                             method;
   public String                             authorization;
   public String                             sessionId;
   public String                             url;
   public Map<String, String>                parameters;
+  public String                             httpMethod;
   public String                             httpVersion;
   public String                             contentType;
   public String                             content;

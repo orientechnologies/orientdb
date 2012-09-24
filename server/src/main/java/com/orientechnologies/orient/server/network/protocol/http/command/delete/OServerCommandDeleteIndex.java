@@ -49,10 +49,10 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 				found = index.remove(urlParts[3]);
 
 			if (found)
-			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			  iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 			else
-			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			  iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+						null);
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);

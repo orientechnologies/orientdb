@@ -93,7 +93,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         generateDefaultOutput(iRecords, json);
     }
 
-    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
   }
 
   protected void generateDefaultOutput(List<OIdentifiable> iRecords, final OJSONWriter json) throws IOException {

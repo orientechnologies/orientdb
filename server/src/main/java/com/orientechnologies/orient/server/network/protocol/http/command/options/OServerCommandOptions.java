@@ -32,11 +32,11 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 		iRequest.data.commandDetail = iRequest.url;
 
 		iResponse.sendTextContent(
-				iRequest,
 				OHttpUtils.STATUS_OK_CODE,
 				OHttpUtils.STATUS_OK_DESCRIPTION,
 				"Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\nAccess-Control-Max-Age: 1728000\r\nAccess-Control-Allow-Headers: if-modified-since, content-type, authorization, x-requested-with",
-				OHttpUtils.CONTENT_TEXT_PLAIN, null);
+				OHttpUtils.CONTENT_TEXT_PLAIN,
+				null);
 		return false;
 	}
 

@@ -47,7 +47,7 @@ public class OHttpRequestWrapper {
   }
 
   public String getHttpMethod() {
-    return request.method;
+    return request.httpMethod;
   }
 
   public String getIfMatch() {

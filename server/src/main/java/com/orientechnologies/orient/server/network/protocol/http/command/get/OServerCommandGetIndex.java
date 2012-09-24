@@ -48,8 +48,8 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 			final Object content = index.get(urlParts[3]);
 
 			if (content == null)
-			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			  iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+						null);
 			else {
 				final StringBuilder buffer = new StringBuilder();
 				buffer.append('[');
@@ -64,7 +64,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 
 				buffer.append(']');
 
-				iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+				iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 			}
 		} finally {
 			if (db != null)

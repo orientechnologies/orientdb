@@ -116,8 +116,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
       break;
     }
 
-    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-        OHttpUtils.CONTENT_TEXT_PLAIN, cls.properties().size());
+    iResponse.sendTextContent(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+        cls.properties().size());
 
     return false;
   }
@@ -174,8 +174,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
       }
     }
 
-    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-        OHttpUtils.CONTENT_TEXT_PLAIN, cls.properties().size());
+    iResponse.sendTextContent(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+        cls.properties().size());
 
     return false;
   }

@@ -61,7 +61,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 				OSharedDocumentDatabase.release(db);
 		}
 
-		iResponse.sendRecordsContent(iRequest, response, fetchPlan);
+		iResponse.sendRecordsContent(response, fetchPlan);
 		return false;
 	}
 

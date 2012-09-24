@@ -39,29 +39,36 @@ public class OHttpResponse {
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
-  private String             headers;
+  public final String        httpVersion;
+  public String              headers;
+  public String[]            additionalHeaders;
+  public String              characterSet;
+  public String              serverInfo;
+  public String              sessionId;
+  public String              callbackFunction;
 
-  public OHttpResponse(final OutputStream iOutStream) {
+  public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
+      final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
     out = iOutStream;
+    httpVersion = iHttpVersion;
+    additionalHeaders = iAdditionalHeaders;
+    characterSet = iResponseCharSet;
+    serverInfo = iServerInfo;
+    sessionId = iSessionId;
+    callbackFunction = iCallbackFunction;
   }
 
-  public void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-      final String iContentType, final Object iContent) throws IOException {
-    sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, true);
+  public void sendTextContent(final int iCode, final String iReason, final String iHeaders, final String iContentType,
+      final Object iContent) throws IOException {
+    sendTextContent(iCode, iReason, iHeaders, iContentType, iContent, true);
   }
 
-  public void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-      final String iContentType, final Object iContent, final boolean iKeepAlive) throws IOException {
-    sendTextContent(iRequest, iCode, iReason, iHeaders, iContentType, iContent, iKeepAlive, null);
-  }
-
-  public void sendTextContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iHeaders,
-      final String iContentType, final Object iContent, final boolean iKeepAlive, final String[] iAdditionalHeaders)
-      throws IOException {
+  public void sendTextContent(final int iCode, final String iReason, final String iHeaders, final String iContentType,
+      final Object iContent, final boolean iKeepAlive) throws IOException {
     final String content;
     final String contentType;
-    if ((iRequest.parameters != null) && iRequest.parameters.containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME)) {
-      final String callbackFunction = iRequest.parameters.get(OHttpUtils.CALLBACK_PARAMETER_NAME);
+
+    if (callbackFunction != null) {
       content = callbackFunction + "(" + iContent + ")";
       contentType = "text/javascript";
     } else {
@@ -71,71 +78,69 @@ public class OHttpResponse {
 
     final boolean empty = content == null || content.length() == 0;
 
-    sendStatus(iRequest, empty && iCode == 200 ? 204 : iCode, iReason);
-    sendResponseHeaders(iRequest, contentType, iKeepAlive);
+    sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
+    sendResponseHeaders(contentType, iKeepAlive);
 
-    if (iAdditionalHeaders != null)
-      for (String h : iAdditionalHeaders)
-        writeLine(iRequest, h);
+    if (additionalHeaders != null)
+      for (String h : additionalHeaders)
+        writeLine(h);
 
     if (iHeaders != null)
-      writeLine(iRequest, iHeaders);
+      writeLine(iHeaders);
 
-    final String sessId = iRequest.sessionId != null ? iRequest.sessionId : "-";
+    final String sessId = sessionId != null ? sessionId : "-";
 
-    writeLine(iRequest, "Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
     final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
 
-    writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
-    writeLine(iRequest, null);
+    writeLine(null);
 
     if (binaryContent != null)
       out.write(binaryContent);
     out.flush();
   }
 
-  public void sendStatus(final OHttpRequest iRequest, final int iStatus, final String iReason) throws IOException {
-    writeLine(iRequest, iRequest.httpVersion + " " + iStatus + " " + iReason);
+  public void sendStatus(final int iStatus, final String iReason) throws IOException {
+    writeLine(httpVersion + " " + iStatus + " " + iReason);
   }
 
-  public void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType) throws IOException {
-    sendResponseHeaders(iRequest, iContentType, true);
+  public void sendResponseHeaders(final String iContentType) throws IOException {
+    sendResponseHeaders(iContentType, true);
   }
 
-  public void sendResponseHeaders(final OHttpRequest iRequest, final String iContentType, final boolean iKeepAlive)
-      throws IOException {
+  public void sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
     if (headers != null)
-      writeLine(iRequest, headers);
+      writeLine(headers);
 
-    writeLine(iRequest, "Date: " + new Date());
-    writeLine(iRequest, "Content-Type: " + iContentType + "; charset=" + iRequest.executor.getResponseCharSet());
-    writeLine(iRequest, "Server: " + iRequest.data.serverInfo);
-    writeLine(iRequest, "Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+    writeLine("Date: " + new Date());
+    writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
+    writeLine("Server: " + serverInfo);
+    writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
     // INCLUDE COMMON CUSTOM HEADERS
-    if (iRequest.executor.getAdditionalResponseHeaders() != null)
-      for (String h : iRequest.executor.getAdditionalResponseHeaders())
-        writeLine(iRequest, h);
+    if (additionalHeaders != null)
+      for (String h : additionalHeaders)
+        writeLine(h);
   }
 
-  public void writeLine(final OHttpRequest iRequest, final String iContent) throws IOException {
-    writeContent(iRequest, iContent);
+  public void writeLine(final String iContent) throws IOException {
+    writeContent(iContent);
     out.write(OHttpUtils.EOL);
   }
 
-  public void writeContent(final OHttpRequest iRequest, final String iContent) throws IOException {
+  public void writeContent(final String iContent) throws IOException {
     if (iContent != null)
       out.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  public void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords) throws IOException {
-    sendRecordsContent(iRequest, iRecords, null);
+  public void sendRecordsContent(final List<OIdentifiable> iRecords) throws IOException {
+    sendRecordsContent(iRecords, null);
   }
 
-  public void sendRecordsContent(final OHttpRequest iRequest, final List<OIdentifiable> iRecords, final String iFetchPlan)
-      throws IOException {
+  public void sendRecordsContent(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
     json.beginObject();
@@ -149,7 +154,7 @@ public class OHttpResponse {
 
     json.endObject();
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
   }
 
   public void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
@@ -172,22 +177,22 @@ public class OHttpResponse {
     }
   }
 
-  public void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord) throws IOException {
-    sendRecordContent(iRequest, iRecord, null);
+  public void sendRecordContent(final ORecord<?> iRecord) throws IOException {
+    sendRecordContent(iRecord, null);
   }
 
-  public void sendRecordContent(final OHttpRequest iRequest, final ORecord<?> iRecord, String iFetchPlan) throws IOException {
+  public void sendRecordContent(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
     final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
     if (iRecord != null)
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
+      sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
   }
 
-  public void sendBinaryContent(final OHttpRequest iRequest, final int iCode, final String iReason, final String iContentType,
-      final InputStream iContent, final long iSize) throws IOException {
-    sendStatus(iRequest, iCode, iReason);
-    sendResponseHeaders(iRequest, iContentType);
-    writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
-    writeLine(iRequest, null);
+  public void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
+      final long iSize) throws IOException {
+    sendStatus(iCode, iReason);
+    sendResponseHeaders(iContentType);
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
+    writeLine(null);
 
     if (iContent != null) {
       int b;

@@ -44,7 +44,7 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
     try {
       final ODocument result = new ODocument();
       result.field("databases", OServerMain.server().getAvailableStorageNames().keySet());
-      iResponse.sendRecordContent(iRequest, result);
+      iResponse.sendRecordContent(result);
     } finally {
     }
     return false;

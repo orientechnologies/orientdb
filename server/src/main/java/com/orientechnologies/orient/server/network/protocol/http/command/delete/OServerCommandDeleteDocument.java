@@ -62,7 +62,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			}
 			doc.delete();
 
-			iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 
 		} finally {
 			if (db != null)

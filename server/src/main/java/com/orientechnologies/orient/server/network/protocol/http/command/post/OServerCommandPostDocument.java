@@ -53,9 +53,8 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
         OSharedDocumentDatabase.release(db);
     }
 
-    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
-        OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity(), true, new String[] { "Location: " + "/document/" + db.getName() + "/"
-            + doc.getIdentity().toString().substring(1) });
+    iResponse.sendTextContent(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
+        doc.getIdentity(), true);
     return false;
   }
 
