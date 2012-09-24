@@ -114,6 +114,8 @@ function initTooltips() {
 	$("[rel=tooltip]").tooltip({
 		delay : 500
 	});
+	$("[rel=tooltip]").tooltip('hide');
+	$(".tooltip").remove();
 }
 
 $(document).ready(function() {
