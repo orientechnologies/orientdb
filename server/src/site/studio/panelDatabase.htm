@@ -8,8 +8,9 @@
 </style>
 <div id="tab-database" class="row-fluid">
 	<div class="span12">
-		<button onclick="javascript:askDatabaseInfo()" class="btn">
-			Refresh <img border="0" alt="Refresh" src="images/execute.png" align="top" />
+		<button onclick="javascript:askDatabaseInfo()" class="btn" id="dbRefresh"
+		 		rel="tooltip" data-placement="right" data-original-title="Refreshes the database information from the Server">
+				Refresh <img border="0" alt="Refresh" src="images/execute.png" align="top" />
 		</button>
 		<div id="tabs-db">
 			<ul>
@@ -34,21 +35,24 @@
 										<table>
 											<tr>
 												<td>
-													<button id="queryClass" class="btn" style="text-align: left">
+													<button id="queryClass" class="btn" style="text-align: left"
+													 		rel="tooltip" data-placement="right" data-original-title="Executes a query, wihtout filters, against the selected class">
 														Query <img border="0" alt="Query" src="images/execute.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="createObject" class="btn" style="text-align: left">
+													<button id="createObject" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Creates a new object of the selected class">
 														Create object <img border="0" alt="Create object" src="images/set.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="addClass" class="btn" style="text-align: left">
+													<button id="addClass" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Creates a new class">
 														Add class <img border="0" alt="New record" src="images/add.png" align="top" />
 													</button>
 												</td>
@@ -56,8 +60,9 @@
 											</tr>
 											<tr>
 												<td>
-													<button id="deleteClass" class="btn" style="text-align: left">
-														Delete class <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+													<button id="dropClass" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Drops a class">
+														Drop class <img border="0" alt="Drop record" src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
@@ -88,15 +93,17 @@
 											</tr>
 											<tr>
 												<td>
-													<button id="addProperty" class="btn" style="text-align: left">
+													<button id="addProperty" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Adds a new property in the selected class">
 														Add property <img border="0" alt="New record" src="images/add.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="deleteProperty" class="btn" style="text-align: left">
-														Delete property <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+													<button id="dropProperty" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Drops a property from the selected class">
+														Drop property <img border="0" alt="Delete record" src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
@@ -123,15 +130,17 @@
 											</tr>
 											<tr>
 												<td>
-													<button id="addIndex" class="btn" style="text-align: left">
+													<button id="addIndex" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Adds a new index against the selected property">
 														Add index <img border="0" alt="Add index" src="images/add.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="deleteIndex" class="btn" style="text-align: left">
-														Delete index <img border="0" alt="Delete index" src="images/delete.png" align="top" />
+													<button id="dropIndex" class="btn" style="text-align: left"
+															rel="tooltip" data-placement="right" data-original-title="Drops the selected index">
+														Drop index <img border="0" alt="Delete index" src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
@@ -724,7 +733,7 @@
 										}
 									});
 						});
-		$("#deleteProperty")
+		$("#dropProperty")
 				.click(
 						function() {
 							var selectedRow = $("#classProperties").jqGrid(
@@ -891,7 +900,7 @@
 												}
 											});
 						});
-		$("#deleteIndex").click(
+		$("#dropIndex").click(
 				function() {
 					var selectedRow = $("#classIndexes").jqGrid('getGridParam',
 							'selrow');
@@ -988,7 +997,7 @@
 				}
 			});
 		});
-		$("#deleteClass")
+		$("#dropClass")
 				.click(
 						function() {
 							var selectedRow = $("#databaseClasses").jqGrid(
@@ -1233,7 +1242,8 @@
 							$('#output').val(responseText);
 						}
 					});
-
+		
+	
 	function displayClass(clsName) {
 		$('#tabs-db').tabs('select', 0);
 
@@ -1248,4 +1258,8 @@
 	}
 
 	showDatabaseInfo();
+	
+	$(function() {
+		initTooltips();
+	});
 </script>

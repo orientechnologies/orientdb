@@ -110,6 +110,12 @@ function getRID(value) {
 	return rid;
 }
 
+function initTooltips() {
+	$("[rel=tooltip]").tooltip({
+		delay : 500
+	});
+}
+
 $(document).ready(function() {
 	$(document).ajaxError(function(event, request, settings, err) {
 		$("#output").val("Error: " + request.responseText);

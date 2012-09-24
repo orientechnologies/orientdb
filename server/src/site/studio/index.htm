@@ -86,7 +86,8 @@
 		</div>
 		<div class="row-fluid">
 			<form class="form-inline">
-				<label>Last output: </label> <a href="#" onclick="javascript:clearOutput()"> <i class="icon-remove"></i>
+				<label>Last output: </label> <a id="clearOutput" href="#" rel="tooltip" onclick="javascript:clearOutput()" data-placement="right"
+					data-original-title="Clears the output"> <i class="icon-remove"></i>
 				</a>
 				<textarea style="width: 100%;" id="output" rows="3" title="value" readonly="readonly"></textarea>
 			</form>
@@ -98,4 +99,9 @@
 		</div>
 	</div>
 </body>
+<script>
+	$(function() {
+		initTooltips();
+	});
+</script>
 </html>

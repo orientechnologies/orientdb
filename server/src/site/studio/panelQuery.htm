@@ -1,20 +1,24 @@
 <div class="row-fluid">
-	<div class="span12" style="border: 1px solid gray;">
+	<div id="boxQuery" class="span12" style="border: 1px solid gray;" rel="tooltip" data-placement="top" data-original-title="Insert here the text of the query to execute">
 		<textarea id="queryText" title="value"></textarea>
 	</div>
 	<div class="span2">
-		<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large">
+		<button onclick="javascript:executeQuery()" class="btn btn-primary btn-large" id="queryExecute"
+				rel="tooltip" data-placement="bottom" data-original-title="Executes the query">
 			Execute <img border="0" alt="Execute" src="images/execute.png" align="top" />
 		</button>
 	</div>
 	<div class="span5">
-		History: <select style="width: 350px;" id="savedQueries"></select>
+		History: <select style="width: 350px;" id="savedQueries"
+		rel="tooltip" data-placement="bottom" data-original-title="Reuses a command between the command history"></select>
 	</div>
 	<div class="span2">
-		Limit: <input id="limit" class="input-mini" size="1" value="20" />
+		Limit: <input id="limit" class="input-mini" size="1" value="20" 
+		rel="tooltip" data-placement="bottom" data-original-title="Sets the limit of the result set" />
 	</div>
 	<div class="span2">
-		Language: <select id="language" class="input-small"><option label="SQL" value="sql">SQL</option>
+		Language: <select id="language" class="input-small"
+		rel="tooltip" data-placement="bottom" data-original-title="Selects the language of the query"><option label="SQL" value="sql">SQL</option>
 			<option label="GREMLIN" value="gremlin">GREMLIN</option>
 		</select>
 	</div>
@@ -28,12 +32,15 @@
 		</ul>
 		<div id="tab-table" class="row">
 			<div class="offset9 span3 btn-group">
-				<button id="deleteRecord" class="btn" style="width: 90px; text-align: center">
+				<button id="deleteRecord" class="btn" style="width: 90px; text-align: center"
+						rel="tooltip" data-placement="bottom" data-original-title="Deletes the selected record">
 					Delete <img border="0" alt="Delete record" src="images/delete.png" align="top" />						</button>
-				<button id="editRecord" class="btn" style="width: 90px; text-align: center">
+				<button id="editRecord" class="btn" style="width: 90px; text-align: center"
+						rel="tooltip" data-placement="bottom" data-original-title="Edits the selected record">
 					Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
 				</button>
-				<button id="graphRecord" class="btn" style="width: 90px; text-align: center">
+				<button id="graphRecord" class="btn" style="width: 90px; text-align: center"
+						rel="tooltip" data-placement="bottom" data-original-title="Displays the current record as an element of a graph">
 					Graph <img border="0" alt="Graph record" src="images/graph.png" align="top" />
 				</button>
 			</div>
@@ -198,4 +205,8 @@
 
 	$('#tabs-results').tabs();
 	$('#tabs-results').tabs('select', 0);
+	
+	$(function() {
+		initTooltips();
+	});
 </script>

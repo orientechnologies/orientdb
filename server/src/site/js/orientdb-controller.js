@@ -37,6 +37,8 @@ function OController(options) {
 
 	OController.prototype.loadFragment = function(file, callback, cache,
 			component) {
+		$("[rel=tooltip]").tooltip('hide');
+		
 		if (!component)
 			component = options['component'];
 

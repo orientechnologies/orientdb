@@ -51,7 +51,8 @@
 							</div>
 							<div class="row-fluid">
 								<div class="span12" align="center">
-									<button type="submit" id="buttonConnect" class="btn">
+									<button type="submit" id="buttonConnect" class="btn"
+											rel="tooltip" data-placement="right" data-original-title="Connect to the database">
 										Connect <img border="0" alt="Connect" src="images/connect.png" align="top" />
 									</button>
 								</div>
@@ -69,7 +70,8 @@
 			<div class="span6">
 				<h2>Server <small>management</small></h2>
 					<div class="well">
-						<button class="btn" onclick="javascript:connectServer()">
+						<button class="btn" onclick="javascript:connectServer()" id="connectServer"
+								rel="tooltip" data-placement="right" data-original-title="Connect to the server">
 							<img src='images/menu-server.png' /><br>Server
 						</button>
 					</div>
@@ -158,6 +160,7 @@
 	$('#password').val(getRequestParam('password'));
 	$('#server').change(formatServerURL);
 	$('#server').val(document.location.href);
+	
 	formatServerURL();
 	listDatabases($('#server').val());
 
@@ -171,4 +174,8 @@
 		controller.loadFragment("panelCreateDatabase.htm", null, null, "mainPanel");
 		return false;
 	}
+
+	$(function() {
+		initTooltips();
+	});
 </script>

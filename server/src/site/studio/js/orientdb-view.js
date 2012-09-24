@@ -196,9 +196,9 @@ function ODocumentView(name, component, doc, options) {
 		// BEGIN ADD BUTTON
 		component += "<div class='offset10 span2'>"
 				+ this.generateButton('doc_addField', 'Add Field', 'icon-plus',
-						"btn", "ODocumentView.addField('" + this.name + "')")
+						"btn", "ODocumentView.addField('" + this.name + "')", "rel='tooltip' data-placement='bottom' data-original-title='Adds a field to the document'")
 				+ "</div>";
-		// END ADD BUTTON
+		// END ADD BUTTON		
 
 		component += "</div></div><div>"
 				+ this.generateButton('doc_save', 'Save', 'icon-ok',
@@ -290,7 +290,7 @@ function ODocumentView(name, component, doc, options) {
 
 		component += this.generateButton('doc_' + this.fieldNum + '_remove',
 				'', 'icon-trash', null, "ODocumentView.removeField('doc_"
-						+ this.fieldNum + "')");
+						+ this.fieldNum + "')", "rel='tooltip' data-placement='bottom' data-original-title='Removes this field from the document'");
 		component += "</div>";
 		// END FIELD TYPE + REMOVE
 
@@ -302,11 +302,13 @@ function ODocumentView(name, component, doc, options) {
 	}
 
 	ODocumentView.prototype.generateButton = function(id, label, image,
-			styleClass, onClick) {
+			styleClass, onClick, additionalTags) {
 		var out = "<button id='" + id + "' onClick=\"javascript:" + onClick
 				+ "\"";
 		if (styleClass)
 			out += " class='" + styleClass + "'";
+		if( additionalTags)
+			out += additionalTags;
 		out += ">";
 		if (image != null)
 			out += "<i alt='" + label + "' class='" + image + "'/> ";

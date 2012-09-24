@@ -43,7 +43,8 @@
 				<label>Name</label> <input id="funcName" value="" class="input"/>
 			</div>
 			<div class="span1">
-				<label>Idempotent</label> <input id="funcIdempotent" type="checkbox" />
+				<label id="labelIdempotent" rel="tooltip" data-placement="left" data-original-title="Tells if the function is idempotent. Idempotent only functions can be executed using the HTTP GET method">Idempotent</label>
+				<input id="funcIdempotent"  rel="tooltip" data-placement="left" data-original-title="Tells if the function is idempotent. Idempotent only functions can be executed using the HTTP GET method" type="checkbox"/>
 			</div>
 			
 <!-- 		<div class="span1">
@@ -114,7 +115,7 @@
 			var snippet = "";
 			for( row in functions ) {
 				var funcName = functions[row].name;
-				snippet += "<button class='btn btn-mini' onclick='editFunction(\""+row+"\")'>"+funcName+"</button>";
+				snippet += "<button id='funcLoad"+row+"' class='btn btn-mini' onclick='editFunction(\""+row+"\")' rel='tooltip' data-placement='right' data-original-title='Loads the function <b>" + funcName+"</b> in the editor'>"+funcName+"</button>";
 			}
 			$('#functions').html(snippet);
 		}
@@ -241,11 +242,16 @@
 	$('#funcName').bind('keyup input paste', function(event, previousText) {
 		updateRuntimeName();
 	});
-
+	
 	var functions;
 	var currentFunction = null;
 	var totalParameters = 0;
 
 	loadFunctions();
+	
+	$(function() {
+		initTooltips();
+	});
+
 	newFunction();
 </script>
