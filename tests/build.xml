@@ -73,16 +73,17 @@
 
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
-
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" />
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" />
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="./server.sh"/>
         </exec>
 
@@ -90,7 +91,6 @@
         <sleep seconds="5"/>
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
-
         <testng outputDir="target/test-output" haltOnFailure="true">
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -103,7 +103,6 @@
         </testng>
 
         <echo>SHUTDOWNING THE SERVER...</echo>
-
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <arg value="/c shutdown.bat"/>
         </exec>
@@ -117,16 +116,17 @@
 
     <target name="test-remote-lh" depends="test-init" if="${fullTest}">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE WITH LH DATA CLUSTERS...</echo>
-
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
                  value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
                  value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="./server.sh"/>
         </exec>
 

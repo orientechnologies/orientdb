@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) 1999-2012 Luca Garulli
 #
 
 echo "           .                                              "
@@ -48,7 +48,12 @@ PRGDIR=`dirname "$PRG"`
 [ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENTDB_HOME
 
-CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
+if [ -b "${CONFIG_FILE}" ]
+then
+else
+  CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
+fi
+
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_CONSOLE_LEVEL=info
 LOG_FILE_LEVEL=fine

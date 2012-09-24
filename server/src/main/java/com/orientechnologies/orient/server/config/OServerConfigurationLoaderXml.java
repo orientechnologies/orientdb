@@ -46,6 +46,13 @@ public class OServerConfigurationLoaderXml {
 
   public OServerConfiguration load() throws IOException {
     try {
+      String path = file.getAbsolutePath();
+      String current = new File(".").getAbsolutePath();
+      if (path.startsWith(current))
+        path = path.substring(current.length());
+
+      OLogManager.instance().info(this, "Loading configuration from: %s...", path);
+
       context = JAXBContext.newInstance(rootClass);
       Unmarshaller unmarshaller = context.createUnmarshaller();
       unmarshaller.setSchema(null);
