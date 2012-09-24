@@ -100,7 +100,14 @@ public class ODatabaseHelper {
 
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
     // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
-    File file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    String sysProperty = System.getProperty("orientdb.config.file");
+    File file = new File(sysProperty != null ? sysProperty : "");
+    if (!file.exists()) {
+      sysProperty = System.getenv("CONFIG_FILE");
+      file = new File(sysProperty != null ? sysProperty : "");
+    }
+    if (!file.exists())
+      file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
       file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
