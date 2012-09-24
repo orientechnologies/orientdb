@@ -23,13 +23,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "GET|cluster/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				3,
@@ -56,7 +57,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 				response.add(rec);
 			}
 
-			sendRecordsContent(iRequest, response);
+			iResponse.sendRecordsContent(iRequest, response);
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);

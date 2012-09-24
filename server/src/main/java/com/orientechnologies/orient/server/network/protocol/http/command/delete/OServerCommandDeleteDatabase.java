@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
@@ -30,7 +31,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
     iRequest.data.commandInfo = "Drop database";
@@ -47,7 +48,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
         db.close();
     }
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, null,
+    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, null,
         OHttpUtils.CONTENT_TEXT_PLAIN, null);
     return false;
   }

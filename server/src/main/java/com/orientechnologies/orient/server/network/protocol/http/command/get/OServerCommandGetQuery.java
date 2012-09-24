@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstract {
@@ -30,7 +31,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		String[] urlParts = checkSyntax(
 				iRequest.url,
 				4,
@@ -60,7 +61,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendRecordsContent(iRequest, response, fetchPlan);
+		iResponse.sendRecordsContent(iRequest, response, fetchPlan);
 		return false;
 	}
 

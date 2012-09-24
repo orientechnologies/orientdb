@@ -118,12 +118,19 @@ public class OScriptManager {
     return scriptEngine;
   }
 
-  public Bindings createBinding(final ScriptEngine iEngine, final ODatabaseRecordTx db, final Map<Object, Object> iArgs) {
+  public Bindings createBinding(final ScriptEngine iEngine, final ODatabaseRecordTx db, final Map<String, Object> iContext,
+      final Map<Object, Object> iArgs) {
     final Bindings binding = iEngine.createBindings();
 
     // BIND FIXED VARIABLES
     binding.put("db", new OScriptDocumentDatabaseWrapper(db));
     binding.put("gdb", new OScriptGraphDatabaseWrapper(db));
+
+    // BIND CONTEXT VARIABLE INTO THE SCRIPT
+    if (iContext != null) {
+      for (Entry<String, Object> a : iContext.entrySet())
+        binding.put(a.getKey(), a.getValue());
+    }
 
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null) {

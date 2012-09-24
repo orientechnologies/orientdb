@@ -23,63 +23,64 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "PUT|index/*" };
+  private static final String[] NAMES = { "PUT|index/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
 
-		iRequest.data.commandInfo = "Index put";
+    iRequest.data.commandInfo = "Index put";
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
-			if (index == null)
-				throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
+      final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
+      if (index == null)
+        throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
-			final OIdentifiable record;
+      final OIdentifiable record;
 
-			if (urlParts.length > 4)
-				// GET THE RECORD ID AS VALUE
-				record = new ORecordId(urlParts[4]);
-			else {
-				// GET THE REQUEST CONTENT AS DOCUMENT
-				if (iRequest.content == null || iRequest.content.length() == 0)
-					throw new IllegalArgumentException("Index's entry value is null");
+      if (urlParts.length > 4)
+        // GET THE RECORD ID AS VALUE
+        record = new ORecordId(urlParts[4]);
+      else {
+        // GET THE REQUEST CONTENT AS DOCUMENT
+        if (iRequest.content == null || iRequest.content.length() == 0)
+          throw new IllegalArgumentException("Index's entry value is null");
 
-				record = new ODocument().fromJSON(iRequest.content);
-			}
+        record = new ODocument().fromJSON(iRequest.content);
+      }
 
-			final OIndexDefinition indexDefinition = index.getDefinition();
-			final Object key;
-			if (indexDefinition != null)
-				key = indexDefinition.createValue(urlParts[3]);
-			else
-				key = urlParts[3];
+      final OIndexDefinition indexDefinition = index.getDefinition();
+      final Object key;
+      if (indexDefinition != null)
+        key = indexDefinition.createValue(urlParts[3]);
+      else
+        key = urlParts[3];
 
-			if (key == null)
-				throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
+      if (key == null)
+        throw new IllegalArgumentException("Invalid key value : " + urlParts[3]);
 
-			index.put(key, record);
+      index.put(key, record);
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Key '" + urlParts[3]
-					+ "' correctly inserted into the index " + urlParts[2] + ".");
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, "Key '"
+          + urlParts[3] + "' correctly inserted into the index " + urlParts[2] + ".");
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

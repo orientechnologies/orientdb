@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedPatternAbstract;
 
@@ -31,7 +32,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 	}
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: *.action");
 
 		iRequest.data.commandInfo = "Execute action";
@@ -51,7 +52,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 				OSharedDocumentDatabase.release(db);
 		}
 
-		sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
+		iResponse.sendTextContent(iRequest, 201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
 		return false;
 	}
 }

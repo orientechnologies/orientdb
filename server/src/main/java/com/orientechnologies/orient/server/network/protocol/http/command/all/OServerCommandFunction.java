@@ -15,12 +15,16 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -28,7 +32,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
   private static final String[] NAMES = { "GET|function/*", "POST|function/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
 
     iRequest.data.commandInfo = "Execute a function";
@@ -38,7 +42,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
-      
+
       // FORCE RELOADING
       db.getMetadata().getFunctionManager().load();
 
@@ -47,7 +51,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
       if (iRequest.method.equalsIgnoreCase("GET") && !f.isIdempotent()) {
-        sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
             OHttpUtils.CONTENT_TEXT_PLAIN, "GET method is not allowed to execute function '" + parts[2]
                 + "' because has been declared as non idempotent. Use POST instead.", true, null);
         return false;
@@ -56,17 +60,23 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
       final Object[] args = new Object[parts.length - 3];
       for (int i = 3; i < parts.length; ++i)
         args[i - 3] = parts[i];
-      result = f.execute(args);
+
+      // BIND CONTEXT VARIABLES
+      final Map<String, Object> context = new HashMap<String, Object>();
+      context.put("request", null);
+      context.put("response", null);
+
+      result = f.executeInContext(context, args);
 
       if (result != null) {
         if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-          sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
+          iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
               ((ODocument) result).toJSON(), true, null);
         } else
-          sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null,
+          iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, result, true, null);
       } else
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true, null);
 
     } catch (OCommandScriptException e) {
       // EXCEPTION
@@ -78,7 +88,7 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         msg.append(currentException.getMessage());
       }
 
-      sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
           OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(), true, null);
 
     } finally {

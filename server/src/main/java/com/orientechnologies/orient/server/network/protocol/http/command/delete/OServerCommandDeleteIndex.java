@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
@@ -27,7 +28,7 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 	private static final String[]	NAMES	= { "DELETE|index/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
 
 		iRequest.data.commandInfo = "Index remove";
@@ -48,9 +49,9 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 				found = index.remove(urlParts[3]);
 
 			if (found)
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 			else
-				sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
+			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, null);
 		} finally {
 			if (db != null)

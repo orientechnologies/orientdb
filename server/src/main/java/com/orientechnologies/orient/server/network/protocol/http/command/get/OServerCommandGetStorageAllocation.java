@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -33,7 +34,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
   private static final String[] NAMES = { "GET|allocation/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: allocation/<database>");
 
     iRequest.data.commandInfo = "Storage allocation";
@@ -107,7 +108,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
       json.endObject();
       json.flush();
 
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);

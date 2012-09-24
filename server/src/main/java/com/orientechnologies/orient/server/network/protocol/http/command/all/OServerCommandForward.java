@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.all;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 /**
@@ -43,7 +44,7 @@ public class OServerCommandForward extends OServerCommandAbstract {
 	}
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final StringBuilder forwardURL = new StringBuilder("/");
 
 		forwardURL.append(forwardTo);

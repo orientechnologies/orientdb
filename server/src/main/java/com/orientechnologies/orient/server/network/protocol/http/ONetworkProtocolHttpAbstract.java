@@ -59,6 +59,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected OChannelTextServer              channel;
   protected OUser                           account;
   protected OHttpRequest                    request;
+  protected OHttpResponse                   response;
 
   private final StringBuilder               requestContent    = new StringBuilder();
   private final Map<String, OServerCommand> exactCommands     = new HashMap<String, OServerCommand>();
@@ -88,7 +89,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
 
-    request = new OHttpRequest(this, channel, connection.data, iConfiguration);
+    request = new OHttpRequest(this, channel.inStream, connection.data, iConfiguration);
+    response = new OHttpResponse(channel.outStream);
 
     connection.data.caller = channel.toString();
 
@@ -104,7 +106,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     connection.data.commandInfo = null;
     connection.data.commandDetail = null;
 
-    long begin = System.currentTimeMillis();
+    final long begin = System.currentTimeMillis();
 
     boolean isChain;
     do {
@@ -139,9 +141,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
       if (cmd != null)
         try {
-          if (cmd.beforeExecute(request))
+          if (cmd.beforeExecute(request, response))
             // EXECUTE THE COMMAND
-            isChain = cmd.execute(request);
+            isChain = cmd.execute(request, response);
 
         } catch (Exception e) {
           handleError(e);

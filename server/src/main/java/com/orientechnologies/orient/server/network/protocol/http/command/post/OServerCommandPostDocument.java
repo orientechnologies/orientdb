@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
@@ -28,7 +29,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
   private static final String[] NAMES = { "POST|document/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.url, 2, "Syntax error: document/<database>");
 
     iRequest.data.commandInfo = "Create document";
@@ -52,7 +53,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
         OSharedDocumentDatabase.release(db);
     }
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
+    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
         OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity(), true, new String[] { "Location: " + "/document/" + db.getName() + "/"
             + doc.getIdentity().toString().substring(1) });
     return false;

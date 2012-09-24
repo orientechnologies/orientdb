@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -36,95 +37,95 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
  */
 public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDbAbstract {
 
-	private static final String[]	NAMES	= { "GET|fileDownload/*" };
+  private static final String[] NAMES = { "GET|fileDownload/*" };
 
-	@Override
-	public boolean execute(OHttpRequest iRequest) throws Exception {
-		ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
+  @Override
+  public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: fileDownload/<database>/rid/[/<fileName>][/<fileType>].");
 
-		final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
+    final String fileName = urlParts.length > 3 ? encodeResponseText(urlParts[3]) : "unknown";
 
-		final String fileType = urlParts.length > 5 ? encodeResponseText(urlParts[4]) + '/' + encodeResponseText(urlParts[5])
-				: (urlParts.length > 4 ? encodeResponseText(urlParts[4]) : "");
+    final String fileType = urlParts.length > 5 ? encodeResponseText(urlParts[4]) + '/' + encodeResponseText(urlParts[5])
+        : (urlParts.length > 4 ? encodeResponseText(urlParts[4]) : "");
 
-		final String rid = urlParts[2];
+    final String rid = urlParts[2];
 
-		iRequest.data.commandInfo = "Download";
-		iRequest.data.commandDetail = rid;
+    iRequest.data.commandInfo = "Download";
+    iRequest.data.commandDetail = rid;
 
-		final ORecordAbstract<?> response;
+    final ORecordAbstract<?> response;
 
-		try {
+    try {
 
-			response = db.load(new ORecordId(rid));
-			if (response != null) {
-				if (response instanceof ORecordBytes) {
-					sendORecordBinaryFileContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
-							(ORecordBytes) response, fileName);
-				} else if (response instanceof ORecordSchemaAware) {
-					for (OProperty prop : ((ORecordSchemaAware<?>) response).getSchemaClass().properties()) {
-						if (prop.getType().equals(OType.BINARY))
-							sendBinaryFieldFileContent(iRequest, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
-									(byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
-					}
-				} else {
-					sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE,
-							"Record requested is not a file nor has a readable schema", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-							"Record requested is not a file nor has a readable schema");
-				}
-			} else {
-				sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", null,
-						OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists");
-			}
-		} catch (Exception e) {
-			sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, null,
-					OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage());
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
+      response = db.load(new ORecordId(rid));
+      if (response != null) {
+        if (response instanceof ORecordBytes) {
+          sendORecordBinaryFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
+              (ORecordBytes) response, fileName);
+        } else if (response instanceof ORecordSchemaAware) {
+          for (OProperty prop : ((ORecordSchemaAware<?>) response).getSchemaClass().properties()) {
+            if (prop.getType().equals(OType.BINARY))
+              sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION,
+                  fileType, (byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
+          }
+        } else {
+          iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE,
+              "Record requested is not a file nor has a readable schema", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+              "Record requested is not a file nor has a readable schema");
+        }
+      } else {
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", null,
+            OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists");
+      }
+    } catch (Exception e) {
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, null,
+          OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage());
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
 
-		return false;
-	}
+    return false;
+  }
 
-	protected void sendORecordBinaryFileContent(final OHttpRequest iRequest, final int iCode, final String iReason,
-			final String iContentType, final ORecordBytes record, final String iFileName) throws IOException {
-		sendStatus(iRequest, iCode, iReason);
-		sendResponseHeaders(iRequest, iContentType);
-		writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
-		writeLine(iRequest, "Date: " + new Date());
-		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.getSize()));
-		writeLine(iRequest, null);
+  protected void sendORecordBinaryFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
+      final String iReason, final String iContentType, final ORecordBytes record, final String iFileName) throws IOException {
+    iResponse.sendStatus(iRequest, iCode, iReason);
+    iResponse.sendResponseHeaders(iRequest, iContentType);
+    iResponse.writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
+    iResponse.writeLine(iRequest, "Date: " + new Date());
+    iResponse.writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.getSize()));
+    iResponse.writeLine(iRequest, null);
 
-		record.toOutputStream(iRequest.channel.outStream);
+    record.toOutputStream(iResponse.getOutputStream());
 
-		iRequest.channel.flush();
-	}
+    iResponse.flush();
+  }
 
-	protected void sendBinaryFieldFileContent(final OHttpRequest iRequest, final int iCode, final String iReason,
-			final String iContentType, final byte[] record, final String iFileName) throws IOException {
-		sendStatus(iRequest, iCode, iReason);
-		sendResponseHeaders(iRequest, iContentType);
-		writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
-		writeLine(iRequest, "Date: " + new Date());
-		writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.length));
-		writeLine(iRequest, null);
+  protected void sendBinaryFieldFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
+      final String iReason, final String iContentType, final byte[] record, final String iFileName) throws IOException {
+    iResponse.sendStatus(iRequest, iCode, iReason);
+    iResponse.sendResponseHeaders(iRequest, iContentType);
+    iResponse.writeLine(iRequest, "Content-Disposition: attachment; filename=" + iFileName);
+    iResponse.writeLine(iRequest, "Date: " + new Date());
+    iResponse.writeLine(iRequest, OHttpUtils.HEADER_CONTENT_LENGTH + (record.length));
+    iResponse.writeLine(iRequest, null);
 
-		iRequest.channel.outStream.write(record);
+    iResponse.getOutputStream().write(record);
 
-		iRequest.channel.flush();
-	}
+    iResponse.flush();
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
-	private String encodeResponseText(String iText) {
-		iText = new String(iText.replaceAll(" ", "%20"));
-		iText = new String(iText.replaceAll("&", "%26"));
-		return iText;
-	}
+  private String encodeResponseText(String iText) {
+    iText = new String(iText.replaceAll(" ", "%20"));
+    iText = new String(iText.replaceAll("&", "%26"));
+    return iText;
+  }
 
 }

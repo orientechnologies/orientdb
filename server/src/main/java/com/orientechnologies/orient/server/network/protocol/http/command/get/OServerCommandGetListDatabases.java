@@ -20,38 +20,39 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedServerAbstract {
-	private static final String[]	NAMES	= { "GET|listDatabases" };
+  private static final String[] NAMES = { "GET|listDatabases" };
 
-	public OServerCommandGetListDatabases() {
-		super("server.listDatabases");
-	}
+  public OServerCommandGetListDatabases() {
+    super("server.listDatabases");
+  }
 
-	@Override
-	public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
-		return authenticate(iRequest, false);
-	}
+  @Override
+  public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+    return authenticate(iRequest, iResponse, false);
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		checkSyntax(iRequest.url, 1, "Syntax error: server");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+    checkSyntax(iRequest.url, 1, "Syntax error: server");
 
-		iRequest.data.commandInfo = "Server status";
+    iRequest.data.commandInfo = "Server status";
 
-		try {
-			final ODocument result = new ODocument();
-			result.field("databases", OServerMain.server().getAvailableStorageNames().keySet());
-			sendRecordContent(iRequest, result);
-		} finally {
-		}
-		return false;
-	}
+    try {
+      final ODocument result = new ODocument();
+      result.field("databases", OServerMain.server().getAvailableStorageNames().keySet());
+      iResponse.sendRecordContent(iRequest, result);
+    } finally {
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
 }

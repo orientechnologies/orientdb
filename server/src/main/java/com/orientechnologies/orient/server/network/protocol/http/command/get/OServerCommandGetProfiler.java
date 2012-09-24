@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
@@ -31,7 +32,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<command>/[<config>]|[<from>/<to>]");
 
     iRequest.data.commandInfo = "Profiler information";
@@ -41,20 +42,20 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       final String command = parts[1];
       if (command.equalsIgnoreCase("start")) {
         Orient.instance().getProfiler().startRecording();
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording started");
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording started");
 
       } else if (command.equalsIgnoreCase("stop")) {
         Orient.instance().getProfiler().stopRecording();
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording stopped");
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording stopped");
 
       } else if (command.equalsIgnoreCase("configure")) {
         Orient.instance().getProfiler().configure(parts[2]);
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Profiler configured with: "
-            + parts[2]);
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON,
+            "Profiler configured with: " + parts[2]);
 
       } else if (command.equalsIgnoreCase("status")) {
         final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, status);
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, status);
 
       } else {
         final String from = parts.length > 2 ? parts[2] : null;
@@ -64,11 +65,11 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         OJSONWriter json = new OJSONWriter(jsonBuffer);
         json.append(Orient.instance().getProfiler().toJSON(command, from, to));
 
-        sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
+        iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
       }
 
     } catch (Exception e) {
-      sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null,
           OHttpUtils.CONTENT_TEXT_PLAIN, e);
     }
     return false;

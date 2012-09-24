@@ -16,18 +16,19 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 	private static final String[]	NAMES	= { "GET|database/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: database/<database>");
 
 		iRequest.data.commandInfo = "Database info";
 		iRequest.data.commandDetail = urlParts[1];
 
-		exec(iRequest, urlParts);
+		exec(iRequest, iResponse, urlParts);
 		return false;
 	}
 

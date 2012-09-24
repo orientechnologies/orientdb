@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
+@SuppressWarnings("unchecked")
 public class OScriptDocumentDatabaseWrapper {
   private ODatabaseDocumentTx database;
 

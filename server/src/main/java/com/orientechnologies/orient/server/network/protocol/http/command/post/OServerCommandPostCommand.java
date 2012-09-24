@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -32,7 +33,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
   @Override
   @SuppressWarnings("unchecked")
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit]");
 
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
@@ -61,14 +62,14 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     }
 
     if (response instanceof List<?>)
-      sendRecordsContent(iRequest, (List<OIdentifiable>) response);
+      iResponse.sendRecordsContent(iRequest, (List<OIdentifiable>) response);
     else if (response == null || response instanceof Integer)
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
     else if (response instanceof ODocument)
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN,
           ((ODocument) response).toJSON());
     else
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
     return false;
   }
 

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -42,7 +43,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
   @Override
   @SuppressWarnings("unchecked")
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(
         iRequest.url,
         4,
@@ -72,14 +73,14 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         OSharedDocumentDatabase.release(db);
     }
 
-    sendRecordsContent(iRequest, response, fetchPlan);
+    sendRecordsContent(iRequest, iResponse, response, fetchPlan);
     return false;
   }
 
-  @Override
-  protected void sendRecordsContent(OHttpRequest iRequest, List<OIdentifiable> iRecords, String iFetchPlan) throws IOException {
+  protected void sendRecordsContent(final OHttpRequest iRequest, final OHttpResponse iResponse, List<OIdentifiable> iRecords,
+      String iFetchPlan) throws IOException {
     final StringWriter buffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+    final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
 
     if (iRecords.size() > 0) {
       final ORecord<?> firstRecord = iRecords.get(0).getRecord();
@@ -92,7 +93,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         generateDefaultOutput(iRecords, json);
     }
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
   }
 
   protected void generateDefaultOutput(List<OIdentifiable> iRecords, final OJSONWriter json) throws IOException {

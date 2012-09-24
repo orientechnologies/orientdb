@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.options;
 
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
@@ -26,11 +27,11 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 	}
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		iRequest.data.commandInfo = "HTTP Options";
 		iRequest.data.commandDetail = iRequest.url;
 
-		sendTextContent(
+		iResponse.sendTextContent(
 				iRequest,
 				OHttpUtils.STATUS_OK_CODE,
 				OHttpUtils.STATUS_OK_DESCRIPTION,

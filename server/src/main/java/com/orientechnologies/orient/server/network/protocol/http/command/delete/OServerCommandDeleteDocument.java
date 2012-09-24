@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
@@ -27,7 +28,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 	private static final String[]	NAMES	= { "DELETE|document/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		try {
@@ -61,7 +62,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 			}
 			doc.delete();
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 
 		} finally {
 			if (db != null)

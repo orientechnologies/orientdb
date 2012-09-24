@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -27,7 +28,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 	private static final String[]	NAMES	= { "GET|documentbyclass/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		final String[] urlParts = checkSyntax(iRequest.url, 4,
@@ -53,10 +54,10 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 		}
 
 		if (rec == null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+		  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
-			sendRecordContent(iRequest, rec, fetchPlan);
+		  iResponse.sendRecordContent(iRequest, rec, fetchPlan);
 		return false;
 	}
 

@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
+@SuppressWarnings("unchecked")
 public class OScriptGraphDatabaseWrapper {
   private OGraphDatabase database;
 

@@ -46,6 +46,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
+    return executeInContext(null, iArgs);
+  }
+
+  public Object executeInContext(final Map<String, Object> iContext, final Map<Object, Object> iArgs) {
     final String language = request.getLanguage();
     parserText = request.getText();
 
@@ -54,11 +58,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     try {
       final OScriptManager scriptManager = Orient.instance().getScriptManager();
       final ScriptEngine scriptEngine = scriptManager.getEngine(language);
-      final Bindings binding = scriptManager.createBinding(scriptEngine, db, iArgs);
+      final Bindings binding = scriptManager.createBinding(scriptEngine, db, iContext, iArgs);
 
       // COMPILE FUNCTION LIBRARY
       parserText = scriptManager.getLibrary(db, language) + parserText;
-      
+
       scriptEngine.eval(parserText);
 
       return scriptEngine.eval(parserText, binding);

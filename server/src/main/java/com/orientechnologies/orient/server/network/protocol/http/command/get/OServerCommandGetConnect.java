@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -52,7 +53,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
   private static final String[] NAMES = { "GET|connect/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
     urlParts[1] = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
@@ -60,22 +61,23 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
     iRequest.data.commandInfo = "Connect";
     iRequest.data.commandDetail = urlParts[1];
 
-    exec(iRequest, urlParts);
+    exec(iRequest, iResponse, urlParts);
     return false;
   }
 
   @Override
-  public boolean beforeExecute(OHttpRequest iRequest) throws IOException {
+  public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
     if (urlParts == null || urlParts.length < 3)
-      return super.beforeExecute(iRequest);
+      return super.beforeExecute(iRequest, iResponse);
 
     // USER+PASSWD AS PARAMETERS
     return true;
   }
 
-  protected void exec(final OHttpRequest iRequest, String[] urlParts) throws InterruptedException, IOException {
+  protected void exec(final OHttpRequest iRequest, final OHttpResponse iResponse, String[] urlParts) throws InterruptedException,
+      IOException {
     ODatabaseDocumentTx db = null;
     try {
       if (urlParts.length > 2) {
@@ -235,7 +237,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       json.endObject();
       json.flush();
 
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);

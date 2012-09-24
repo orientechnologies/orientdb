@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
@@ -57,7 +58,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: database/<db>/<type>");
 
     iRequest.data.commandInfo = "Create database";
@@ -78,7 +79,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
         }
         OLogManager.instance().info(this, "Creating database " + url);
         database.create();
-        sendDatabaseInfo(iRequest, database);
+        sendDatabaseInfo(iRequest, iResponse, database);
       } else {
         throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");
       }
@@ -99,7 +100,8 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     return path;
   }
 
-  protected void sendDatabaseInfo(final OHttpRequest iRequest, final ODatabaseDocumentTx db) throws IOException {
+  protected void sendDatabaseInfo(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db)
+      throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer);
 
@@ -240,7 +242,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.endObject();
     json.flush();
 
-    sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
   }
 
   protected void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {

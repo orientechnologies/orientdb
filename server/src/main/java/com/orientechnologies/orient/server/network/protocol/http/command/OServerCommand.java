@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 /**
  * Generic interface for server-side commands.
@@ -24,17 +25,20 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  * 
  */
 public interface OServerCommand {
-	/**
-	 * Called before to execute. Useful to make checks.
-	 */
-	public boolean beforeExecute(OHttpRequest iRequest) throws Exception;
+  /**
+   * Called before to execute. Useful to make checks.
+   * 
+   * @param iResponse
+   *          TODO
+   */
+  public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
-	/**
-	 * Executes the command requested.
-	 * 
-	 * @return boolean value that indicates if this command is part of a chain
-	 */
-	public boolean execute(OHttpRequest iRequest) throws Exception;
+  /**
+   * Executes the command requested.
+   * 
+   * @return boolean value that indicates if this command is part of a chain
+   */
+  public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
-	public String[] getNames();
+  public String[] getNames();
 }

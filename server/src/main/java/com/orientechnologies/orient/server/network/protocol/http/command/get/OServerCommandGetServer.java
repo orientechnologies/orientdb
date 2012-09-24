@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
@@ -46,7 +47,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.url, 1, "Syntax error: server");
 
     iRequest.data.commandInfo = "Server status";
@@ -139,7 +140,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
       json.endCollection(2, true);
       json.endObject();
 
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
 
     } finally {
     }

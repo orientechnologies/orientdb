@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -25,7 +26,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 	private static final String[]	NAMES	= { "DELETE|class/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
 		iRequest.data.commandInfo = "Delete class";
@@ -41,7 +42,7 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
 
 			db.getMetadata().getSchema().dropClass(urlParts[2]);
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
+			iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, null);
 
 		} finally {
 			if (db != null)

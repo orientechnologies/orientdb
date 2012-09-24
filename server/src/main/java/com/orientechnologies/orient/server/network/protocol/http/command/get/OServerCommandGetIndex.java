@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
@@ -30,7 +31,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>");
 
 		iRequest.data.commandInfo = "Index get";
@@ -47,7 +48,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 			final Object content = index.get(urlParts[3]);
 
 			if (content == null)
-				sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
+			  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, null);
 			else {
 				final StringBuilder buffer = new StringBuilder();
@@ -63,7 +64,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 
 				buffer.append(']');
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
+				iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString());
 			}
 		} finally {
 			if (db != null)

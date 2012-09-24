@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
@@ -39,7 +40,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 	private static final String[]	NAMES							= { "POST|importRecords/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 4,
 				"Syntax error: importRecords/<database>/<format>/<class>[/<separator>][/<string-delimiter>][/<locale>]");
 
@@ -133,7 +134,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 								"Import of records of class '%s' completed in %5.3f seconds. Line parsed: %d, imported: %d, error: %d\nDetailed messages:\n%s",
 								cls.getName(), elapsed, line, imported, errors, output);
 
-				sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
+				iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null,
 						OHttpUtils.CONTENT_TEXT_PLAIN, message);
 				return false;
 

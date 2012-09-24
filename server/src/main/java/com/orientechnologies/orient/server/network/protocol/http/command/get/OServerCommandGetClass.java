@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -28,7 +29,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
   private static final String[] NAMES = { "GET|class/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
     iRequest.data.commandInfo = "Returns the information of a class in the schema";
@@ -43,9 +44,9 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
         throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
 
       final StringWriter buffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+      final OJSONWriter json = new OJSONWriter(buffer, iResponse.JSON_FORMAT);
       OServerCommandGetConnect.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
-      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+      iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);

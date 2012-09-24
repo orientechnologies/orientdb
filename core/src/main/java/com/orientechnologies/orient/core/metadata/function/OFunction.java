@@ -115,6 +115,10 @@ public class OFunction {
   }
 
   public Object execute(final Object... iArgs) {
+    return executeInContext(null, iArgs);
+  }
+
+  public Object executeInContext(final Map<String, Object> iContext, final Object... iArgs) {
     final OCommandExecutorFunction command = new OCommandExecutorFunction();
     command.parse(new OCommandFunction(getName()));
 

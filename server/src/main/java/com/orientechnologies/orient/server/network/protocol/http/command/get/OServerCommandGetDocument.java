@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -27,7 +28,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 	private static final String[]	NAMES	= { "GET|document/*" };
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		ODatabaseDocumentTx db = null;
 
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
@@ -52,10 +53,10 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 		}
 
 		if (rec == null)
-			sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+		  iResponse.sendTextContent(iRequest, OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
 					+ "' was not found.");
 		else
-			sendRecordContent(iRequest, rec, fetchPlan);
+		  iResponse.sendRecordContent(iRequest, rec, fetchPlan);
 		return false;
 	}
 

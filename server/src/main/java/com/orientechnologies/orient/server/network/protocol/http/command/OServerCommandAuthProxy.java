@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
@@ -57,7 +58,7 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
   }
 
   @Override
-  public boolean execute(final OHttpRequest iRequest) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     iRequest.authorization = authentication;
     checkSyntax(iRequest.url, 3, "Syntax error: " + Arrays.toString(getNames()) + "/<nextCommand>/");
     iRequest.url = OHttpUtils.nextChainUrl(iRequest.url);
