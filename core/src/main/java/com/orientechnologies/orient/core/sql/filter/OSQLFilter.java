@@ -136,6 +136,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
           final OSQLSynchQuery<Object> subQuery = new OSQLSynchQuery<Object>(varValueAsString.substring(1,
               varValueAsString.length() - 1));
           subQuery.setContext(context);
+          subQuery.getContext().setVariable("CURRENT", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
         } else
           varValue = ODocumentHelper.getFieldValue(iRecord, varValueAsString);

@@ -141,7 +141,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       else if (compiledFilter.getTargetVariable() != null) {
         final Object var = getContext().getVariable(compiledFilter.getTargetVariable());
         if (var == null)
-          return false;
+          return true;
         else if (var instanceof OIdentifiable) {
           target = new ArrayList<OIdentifiable>();
           ((List<OIdentifiable>) target).add((OIdentifiable) var);
