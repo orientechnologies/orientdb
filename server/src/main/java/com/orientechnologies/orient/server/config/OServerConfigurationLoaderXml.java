@@ -25,6 +25,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
@@ -47,11 +48,11 @@ public class OServerConfigurationLoaderXml {
   public OServerConfiguration load() throws IOException {
     try {
       String path = file.getAbsolutePath();
-      String current = new File(".").getAbsolutePath();
+      String current = new File("").getAbsolutePath();
       if (path.startsWith(current))
-        path = path.substring(current.length());
+        path = path.substring(current.length() + 1);
 
-      OLogManager.instance().info(this, "Loading configuration from: %s...", path);
+      OLogManager.instance().info(this, "Loading configuration from: %s...", OFileUtils.getPath(path));
 
       context = JAXBContext.newInstance(rootClass);
       Unmarshaller unmarshaller = context.createUnmarshaller();
