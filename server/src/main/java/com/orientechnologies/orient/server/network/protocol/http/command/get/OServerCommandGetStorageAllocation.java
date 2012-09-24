@@ -30,89 +30,93 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetStorageAllocation extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|allocation/*" };
+  private static final String[] NAMES = { "GET|allocation/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: allocation/<database>");
+  @Override
+  public boolean execute(final OHttpRequest iRequest) throws Exception {
+    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: allocation/<database>");
 
-		iRequest.data.commandInfo = "Storage allocation";
-		iRequest.data.commandDetail = urlParts[1];
+    iRequest.data.commandInfo = "Storage allocation";
+    iRequest.data.commandDetail = urlParts[1];
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			final List<ODataHoleInfo> holes = ((OStorageLocal) db.getStorage()).getHolesList();
-			Collections.sort(holes);
+      if (!(db.getStorage() instanceof OStorageLocal))
+        throw new IllegalArgumentException("Cannot get allocation information for database '" + iRequest.databaseName
+            + "' because it is not a disk-based database");
 
-			final StringWriter buffer = new StringWriter();
-			final OJSONWriter json = new OJSONWriter(buffer);
+      final List<ODataHoleInfo> holes = ((OStorageLocal) db.getStorage()).getHolesList();
+      Collections.sort(holes);
 
-			final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegmentById(0);
-			final long dbSize = dataSegment.getFilledUpTo();
+      final StringWriter buffer = new StringWriter();
+      final OJSONWriter json = new OJSONWriter(buffer);
 
-			json.beginObject();
-			json.writeAttribute(1, true, "size", dbSize);
+      final ODataLocal dataSegment = ((OStorageLocal) db.getStorage()).getDataSegmentById(0);
+      final long dbSize = dataSegment.getFilledUpTo();
 
-			long current = 0;
+      json.beginObject();
+      json.writeAttribute(1, true, "size", dbSize);
 
-			long holesSize = 0;
+      long current = 0;
 
-			json.beginCollection(1, true, "segments");
-			for (ODataHoleInfo h : holes) {
-				if (h.dataOffset == -1)
-					continue;
+      long holesSize = 0;
 
-				if (current < h.dataOffset) {
-					// DATA SEGMENT
-					json.beginObject(2, true, null);
-					json.writeAttribute(3, false, "type", "d");
-					json.writeAttribute(3, false, "offset", current);
-					json.writeAttribute(3, false, "size", h.dataOffset - current);
-					json.endObject(2, false);
-				}
+      json.beginCollection(1, true, "segments");
+      for (ODataHoleInfo h : holes) {
+        if (h.dataOffset == -1)
+          continue;
 
-				json.beginObject(2, true, null);
-				json.writeAttribute(3, false, "type", "h");
-				json.writeAttribute(3, false, "offset", h.dataOffset);
-				json.writeAttribute(3, false, "size", h.size);
-				json.endObject(2, false);
-				holesSize += h.size;
+        if (current < h.dataOffset) {
+          // DATA SEGMENT
+          json.beginObject(2, true, null);
+          json.writeAttribute(3, false, "type", "d");
+          json.writeAttribute(3, false, "offset", current);
+          json.writeAttribute(3, false, "size", h.dataOffset - current);
+          json.endObject(2, false);
+        }
 
-				current = h.dataOffset + h.size;
-			}
+        json.beginObject(2, true, null);
+        json.writeAttribute(3, false, "type", "h");
+        json.writeAttribute(3, false, "offset", h.dataOffset);
+        json.writeAttribute(3, false, "size", h.size);
+        json.endObject(2, false);
+        holesSize += h.size;
 
-			if (dbSize > current) {
-				// DATA SEGMENT
-				json.beginObject(2, true, null);
-				json.writeAttribute(3, false, "type", "d");
-				json.writeAttribute(3, false, "offset", current);
-				json.writeAttribute(3, false, "size", dbSize - current);
-				json.endObject(2, false);
-			}
+        current = h.dataOffset + h.size;
+      }
 
-			json.endCollection(1, true);
+      if (dbSize > current) {
+        // DATA SEGMENT
+        json.beginObject(2, true, null);
+        json.writeAttribute(3, false, "type", "d");
+        json.writeAttribute(3, false, "offset", current);
+        json.writeAttribute(3, false, "size", dbSize - current);
+        json.endObject(2, false);
+      }
 
-			json.writeAttribute(1, true, "dataSize", dbSize - holesSize);
-			json.writeAttribute(1, true, "dataSizePercent", (dbSize - holesSize) * 100 / dbSize);
-			json.writeAttribute(1, true, "holesSize", holesSize);
-			json.writeAttribute(1, true, "holesSizePercent", 100 - (dbSize - holesSize) * 100 / dbSize);
+      json.endCollection(1, true);
 
-			json.endObject();
-			json.flush();
+      json.writeAttribute(1, true, "dataSize", dbSize - holesSize);
+      json.writeAttribute(1, true, "dataSizePercent", (dbSize - holesSize) * 100 / dbSize);
+      json.writeAttribute(1, true, "holesSize", holesSize);
+      json.writeAttribute(1, true, "holesSizePercent", 100 - (dbSize - holesSize) * 100 / dbSize);
 
-			sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+      json.endObject();
+      json.flush();
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+      sendTextContent(iRequest, OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
+    return false;
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
