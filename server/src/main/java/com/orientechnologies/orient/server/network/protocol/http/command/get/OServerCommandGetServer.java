@@ -19,16 +19,20 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
@@ -63,7 +67,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
       String lastCommandOn;
       String connectedOn;
 
-      final OClientConnection[] conns = OServerMain.server().getManagedServer().getConnections();
+      final List<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
       for (OClientConnection c : conns) {
         final ONetworkProtocolData data = c.data;
 
@@ -119,7 +123,7 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
       json.endCollection(1, false);
 
       json.beginCollection(1, true, "storages");
-      OStorage[] storages = OServerMain.server().getManagedServer().getOpenedStorages();
+      Collection<OStorage> storages = Orient.instance().getStorages();
       for (OStorage s : storages) {
         json.beginObject(2);
         writeField(json, 2, "name", s.getName());

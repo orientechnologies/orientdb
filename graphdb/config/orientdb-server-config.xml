@@ -4,6 +4,13 @@
 		<handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
 			<parameters />
 		</handler>
+		<!-- JMX SERVER, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
+		<handler class="com.orientechnologies.orient.server.handler.OJMXPlugin">
+			<parameters>
+				<parameter name="enabled" value="false" />
+				<parameter name="profilerManaged" value="true" />
+			</parameters>
+		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
 			<parameters>
