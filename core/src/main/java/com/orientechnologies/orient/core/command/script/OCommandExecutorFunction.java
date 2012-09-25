@@ -59,7 +59,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
 
-    final OFunction f = db.getMetadata().getFunctionManager().getFunction(parserText);
+    final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
     final Bindings binding = scriptManager.bind(scriptEngine, db, iContext, iArgs);

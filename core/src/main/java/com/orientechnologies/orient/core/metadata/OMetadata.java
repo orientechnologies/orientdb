@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
-import com.orientechnologies.orient.core.metadata.function.OFunctionManager;
-import com.orientechnologies.orient.core.metadata.function.OFunctionManagerImpl;
+import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
+import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -51,7 +51,7 @@ public class OMetadata {
   protected OSchemaProxy              schema;
   protected OSecurity                 security;
   protected OIndexManagerProxy        indexManager;
-  protected OFunctionManagerImpl      functionManager;
+  protected OFunctionLibraryImpl      functionLibrary;
   protected static final OJVMProfiler PROFILER                  = Orient.instance().getProfiler();
 
   public OMetadata() {
@@ -76,7 +76,7 @@ public class OMetadata {
     security.create();
     schema.create();
     indexManager.create();
-    functionManager.create();
+    functionLibrary.create();
   }
 
   public OSchema getSchema() {
@@ -148,12 +148,12 @@ public class OMetadata {
             }
           }), database);
 
-    functionManager = new OFunctionManagerImpl();
+    functionLibrary = new OFunctionLibraryImpl();
 
-    functionManager = (OFunctionManagerImpl) database.getStorage().getResource(OFunctionManager.class.getSimpleName(),
-        new Callable<OFunctionManager>() {
-          public OFunctionManager call() {
-            final OFunctionManagerImpl instance = new OFunctionManagerImpl();
+    functionLibrary = (OFunctionLibraryImpl) database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),
+        new Callable<OFunctionLibrary>() {
+          public OFunctionLibrary call() {
+            final OFunctionLibraryImpl instance = new OFunctionLibraryImpl();
             if (iLoad)
               instance.load();
             return instance;
@@ -168,7 +168,7 @@ public class OMetadata {
     schema.reload();
     indexManager.load();
     security.load();
-    functionManager.load();
+    functionLibrary.load();
   }
 
   /**
@@ -181,15 +181,15 @@ public class OMetadata {
       schema.close();
     if (security != null)
       security.close();
-    if (functionManager != null)
-      functionManager.close();
+    if (functionLibrary != null)
+      functionLibrary.close();
   }
 
   protected ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public OFunctionManagerImpl getFunctionManager() {
-    return functionManager;
+  public OFunctionLibraryImpl getFunctionLibrary() {
+    return functionLibrary;
   }
 }

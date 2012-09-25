@@ -35,14 +35,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * @author Luca Garulli
  * 
  */
-public class OFunctionManagerImpl implements OFunctionManager {
+public class OFunctionLibraryImpl implements OFunctionLibrary {
   protected Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
 
   static {
     OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
   }
 
-  public OFunctionManagerImpl() {
+  public OFunctionLibraryImpl() {
   }
 
   public void create() {

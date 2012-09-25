@@ -93,9 +93,9 @@ public class OScriptManager {
   public String getLibrary(final ODatabaseComplex<?> db, final String iLanguage) {
     final StringBuilder code = new StringBuilder();
 
-    final String[] functions = db.getMetadata().getFunctionManager().getFunctionNames();
+    final String[] functions = db.getMetadata().getFunctionLibrary().getFunctionNames();
     for (String fName : functions) {
-      final OFunction f = db.getMetadata().getFunctionManager().getFunction(fName);
+      final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(fName);
 
       if (f.getLanguage().equalsIgnoreCase(iLanguage)) {
         code.append(getFunction(f));

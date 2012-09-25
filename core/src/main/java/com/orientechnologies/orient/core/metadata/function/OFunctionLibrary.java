@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.metadata.function;
  * @author Luca Garulli
  * 
  */
-public interface OFunctionManager {
+public interface OFunctionLibrary {
   public String[] getFunctionNames();
 
   public OFunction getFunction(String iName);
