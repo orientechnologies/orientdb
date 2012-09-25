@@ -15,21 +15,43 @@
  */
 package com.orientechnologies.orient.server.plugin.mail;
 
+import java.io.File;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.script.Bindings;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 
-public class OMailPlugin extends OServerHandlerAbstract {
+public class OMailPlugin extends OServerHandlerAbstract implements OScriptInjection {
   private static final String       CONFIG_PROFILE_PREFIX = "profile.";
   private static final String       CONFIG_MAIL_PREFIX    = "mail.";
 
   private Map<String, OMailProfile> profiles              = new HashMap<String, OMailProfile>();
 
   public OMailPlugin() {
+    Orient.instance().getScriptManager().registerInjection(this);
   }
 
   @Override
@@ -68,8 +90,89 @@ public class OMailPlugin extends OServerHandlerAbstract {
   public void shutdown() {
   }
 
-  public void sendEmail(final Map<String, Object> iConfiguration) {
+  /**
+   * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
+   * 
+   * @param iConfiguration
+   *          Configuration as Map<String,Object>
+   * @throws AddressException
+   * @throws MessagingException
+   */
+  public void send(final Map<String, Object> iConfiguration) throws AddressException, MessagingException {
+    final String profileName = (String) iConfiguration.get("profile");
 
+    OMailProfile profile = profiles.get(profileName);
+    if (profile == null)
+      throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
+
+    final Properties prop = profile.properties;
+
+    // creates a new session with an authenticator
+    Authenticator auth = new OSMTPAuthenticator((String) prop.get("mail.smtp.user"), (String) prop.get("mail.smtp.password"));
+    Session session = Session.getInstance(prop, auth);
+
+    // creates a new e-mail message
+    MimeMessage msg = new MimeMessage(session);
+
+    msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
+    InternetAddress[] toAddresses = { new InternetAddress((String) iConfiguration.get("to")) };
+    msg.setRecipients(Message.RecipientType.TO, toAddresses);
+    InternetAddress[] ccAddresses = { new InternetAddress((String) iConfiguration.get("cc")) };
+    msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+    InternetAddress[] bccAddresses = { new InternetAddress((String) iConfiguration.get("bcc")) };
+    msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
+    msg.setSubject((String) iConfiguration.get("subject"));
+    Date sendDate = (Date) iConfiguration.get("date");
+    if (sendDate == null)
+      sendDate = new Date();
+    msg.setSentDate(sendDate);
+
+    // creates message part
+    MimeBodyPart messageBodyPart = new MimeBodyPart();
+    messageBodyPart.setContent(iConfiguration.get("message"), "text/html");
+
+    // creates multi-part
+    Multipart multipart = new MimeMultipart();
+    multipart.addBodyPart(messageBodyPart);
+
+    final String[] attachments = (String[]) iConfiguration.get("attachments");
+    // adds attachments
+    if (attachments != null && attachments.length > 0) {
+      for (String filePath : attachments) {
+        addAttachment(multipart, filePath);
+      }
+    }
+
+    // sets the multi-part as e-mail's content
+    msg.setContent(multipart);
+
+    // sends the e-mail
+    Transport.send(msg);
+  }
+
+  /**
+   * Adds a file as an attachment to the email's content
+   * 
+   * @param multipart
+   * @param filePath
+   * @throws MessagingException
+   */
+  private void addAttachment(final Multipart multipart, final String filePath) throws MessagingException {
+    MimeBodyPart attachPart = new MimeBodyPart();
+    DataSource source = new FileDataSource(filePath);
+    attachPart.setDataHandler(new DataHandler(source));
+    attachPart.setFileName(new File(filePath).getName());
+    multipart.addBodyPart(attachPart);
+  }
+
+  @Override
+  public void bind(Bindings binding) {
+    binding.put("mail", this);
+  }
+
+  @Override
+  public void unbind(Bindings binding) {
+    binding.remove("mail");
   }
 
   @Override
