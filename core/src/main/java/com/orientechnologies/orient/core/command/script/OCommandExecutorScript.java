@@ -55,11 +55,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
 
-    try {
-      final OScriptManager scriptManager = Orient.instance().getScriptManager();
-      final ScriptEngine scriptEngine = scriptManager.getEngine(language);
-      final Bindings binding = scriptManager.createBinding(scriptEngine, db, iContext, iArgs);
+    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+    final Bindings binding = scriptManager.bind(scriptEngine, db, iContext, iArgs);
 
+    try {
       // COMPILE FUNCTION LIBRARY
       parserText = scriptManager.getLibrary(db, language) + parserText;
 
@@ -69,6 +69,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+
+    } finally {
+      scriptManager.unbind(binding);
     }
   }
 

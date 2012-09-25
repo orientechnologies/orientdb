@@ -59,11 +59,12 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
 
+    final OFunction f = db.getMetadata().getFunctionManager().getFunction(parserText);
+    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
+    final Bindings binding = scriptManager.bind(scriptEngine, db, iContext, iArgs);
+
     try {
-      final OFunction f = db.getMetadata().getFunctionManager().getFunction(parserText);
-      final OScriptManager scriptManager = Orient.instance().getScriptManager();
-      final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
-      final Bindings binding = scriptManager.createBinding(scriptEngine, db, iContext, iArgs);
       scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
       // COMPILE FUNCTION LIBRARY
@@ -89,6 +90,9 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
     } catch (NoSuchMethodException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+      
+    } finally {
+      scriptManager.unbind(binding);
     }
   }
 

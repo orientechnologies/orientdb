@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -45,6 +47,7 @@ public class OScriptManager {
   protected Map<String, ScriptEngine>     engines;
   protected String                        defaultLanguage = DEF_LANGUAGE;
   protected Map<String, OScriptFormatter> formatters      = new HashMap<String, OScriptFormatter>();
+  protected List<OScriptInjection>        injections      = new ArrayList<OScriptInjection>();
 
   public OScriptManager() {
     if (engines == null) {
@@ -118,9 +121,12 @@ public class OScriptManager {
     return scriptEngine;
   }
 
-  public Bindings createBinding(final ScriptEngine iEngine, final ODatabaseRecordTx db, final Map<String, Object> iContext,
+  public Bindings bind(final ScriptEngine iEngine, final ODatabaseRecordTx db, final Map<String, Object> iContext,
       final Map<Object, Object> iArgs) {
     final Bindings binding = iEngine.createBindings();
+
+    for (OScriptInjection i : injections)
+      i.bind(binding);
 
     // BIND FIXED VARIABLES
     binding.put("db", new OScriptDocumentDatabaseWrapper(db));
@@ -141,6 +147,25 @@ public class OScriptManager {
       binding.put("params", new HashMap<Object, Object>());
 
     return binding;
+  }
+
+  /**
+   * Unbinds variables
+   * 
+   * @param binding
+   */
+  public void unbind(Bindings binding) {
+    for (OScriptInjection i : injections)
+      i.unbind(binding);
+  }
+
+  public void registerInjection(final OScriptInjection iInj) {
+    if (!injections.contains(iInj))
+      injections.add(iInj);
+  }
+
+  public void unregisterInjection(final OScriptInjection iInj) {
+    injections.remove(iInj);
   }
 
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngine iEngine) {
