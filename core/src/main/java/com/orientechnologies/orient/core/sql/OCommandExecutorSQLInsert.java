@@ -140,30 +140,27 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
-    while (blockStart != textEnd) {
+    while (blockStart < textEnd) {
       // skip comma between records
       blockStart = parserText.indexOf('(', blockStart - 1);
 
-      blockEnd = OStringSerializerHelper.findEndBlock(parserText, '(', ')', blockStart);
+      final List<String> values = new ArrayList<String>();
+      blockEnd = OStringSerializerHelper.getParameters(parserText, blockStart, -1, values);
       if (blockEnd == -1)
         throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
 
-      final List<String> values = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart + 1, blockEnd - 1, true);
+      if (values.isEmpty())
+        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(),
+            parserText, blockStart);
 
-      if (values.isEmpty()) {
-        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(), parserText,
-            blockStart);
-      }
-
-      if (values.size() != fieldNames.size()) {
+      if (values.size() != fieldNames.size())
         throw new OCommandSQLParsingException("Fields not match with values", parserText, blockStart);
-      }
 
       // TRANSFORM FIELD VALUES
       final Map<String, Object> fields = new LinkedHashMap<String, Object>();
-      for (int i = 0; i < values.size(); ++i) {
+      for (int i = 0; i < values.size(); ++i)
         fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
-      }
+      
       newRecords.add(fields);
       blockStart = blockEnd;
     }
