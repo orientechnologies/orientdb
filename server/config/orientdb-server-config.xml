@@ -8,6 +8,19 @@
 				<parameter name="profilerManaged" value="true" />
 			</parameters>
 		</handler>
+		<!-- MAIL, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
+		<handler class="com.orientechnologies.orient.server.plugin.mail.OMailPlugin">
+			<parameters>
+				<parameter name="enabled" value="true" />
+				<!-- CREATE MULTIPLE PROFILES WITH profile.<name>... -->
+				<parameter name="profile.default.mail.smtp.host" value="localhost" />
+				<parameter name="profile.default.mail.smtp.port" value="25" />
+				<parameter name="profile.default.mail.smtp.auth" value="true" />
+				<parameter name="profile.default.mail.smtp.starttls.enable" value="true" />
+				<parameter name="profile.default.mail.smtp.user" value="" />
+				<parameter name="profile.default.mail.smtp.password" value="" />
+			</parameters>
+		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
 		<handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
 			<parameters>
