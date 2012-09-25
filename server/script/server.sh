@@ -48,8 +48,7 @@ PRGDIR=`dirname "$PRG"`
 [ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENTDB_HOME
 
-if [ -b "${CONFIG_FILE}" ]
-then
+if [ ! -b "${CONFIG_FILE}" ]
 else
   CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
 fi
