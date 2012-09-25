@@ -143,6 +143,14 @@ public class OScriptGraphDatabaseWrapper {
     return (THISDB) database.open(iUserName, iUserPassword);
   }
 
+  public ODocument save(final Map<String, Object> iObject) {
+    return database.save(new ODocument().fields(iObject));
+  }
+
+  public ODocument save(final String iString) {
+    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
+  }
+
   public ODocument save(ORecordInternal<?> iRecord) {
     return database.save(iRecord);
   }

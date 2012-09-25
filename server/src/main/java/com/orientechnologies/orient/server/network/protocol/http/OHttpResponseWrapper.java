@@ -17,6 +17,10 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Wrapper to use the HTTP response in functions and scripts.
@@ -64,8 +68,56 @@ public class OHttpResponseWrapper {
     return response.getOutputStream();
   }
 
-  public OHttpResponseWrapper flush() throws IOException {
+  public void sendStatus(int iStatus, String iReason) throws IOException {
+    response.sendStatus(iStatus, iReason);
+  }
+
+  public void sendResponseHeaders(String iContentType) throws IOException {
+    response.sendResponseHeaders(iContentType);
+  }
+
+  public void sendResponseHeaders(String iContentType, boolean iKeepAlive) throws IOException {
+    response.sendResponseHeaders(iContentType, iKeepAlive);
+  }
+
+  public void writeLine(String iContent) throws IOException {
+    response.writeLine(iContent);
+  }
+
+  public void writeContent(String iContent) throws IOException {
+    response.writeContent(iContent);
+  }
+
+  public void sendRecordsContent(List<OIdentifiable> iRecords) throws IOException {
+    response.sendRecordsContent(iRecords);
+  }
+
+  public void sendRecordsContent(List<OIdentifiable> iRecords, String iFetchPlan) throws IOException {
+    response.sendRecordsContent(iRecords, iFetchPlan);
+  }
+
+  public void sendRecordContent(ORecord<?> iRecord) throws IOException {
+    response.sendRecordContent(iRecord);
+  }
+
+  public void sendRecordContent(ORecord<?> iRecord, String iFetchPlan) throws IOException {
+    response.sendRecordContent(iRecord, iFetchPlan);
+  }
+
+  public void flush() throws IOException {
     response.flush();
-    return this;
+  }
+
+  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent) throws IOException {
+    response.sendTextContent(iCode, iReason, iContentType, iContent, null);
+  }
+
+  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent, String iHeaders) throws IOException {
+    response.sendTextContent(iCode, iReason, iContentType, iContent, iHeaders);
+  }
+
+  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent, String iHeaders, boolean iKeepAlive)
+      throws IOException {
+    response.sendTextContent(iCode, iReason, iContentType, iContent, iHeaders, iKeepAlive);
   }
 }

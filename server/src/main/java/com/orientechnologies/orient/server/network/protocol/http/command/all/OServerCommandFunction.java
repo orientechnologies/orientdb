@@ -53,9 +53,9 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
       if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-            "GET method is not allowed to execute function '" + parts[2]
-                + "' because has been declared as non idempotent. Use POST instead.", true);
+        iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "GET method is not allowed to execute function '" + parts[2]
+            + "' because has been declared as non idempotent. Use POST instead.",
+            null, true);
         return false;
       }
 
@@ -72,13 +72,13 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
 
       if (result != null) {
         if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-          iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_JSON,
-              ((ODocument) result).toJSON(), true);
+          iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, ((ODocument) result).toJSON(),
+              null, true);
         } else
-          iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-              result, true);
+          iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, result,
+              null, true);
       } else
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", null, OHttpUtils.CONTENT_TEXT_PLAIN, null, true);
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
 
     } catch (OCommandScriptException e) {
       // EXCEPTION
@@ -90,8 +90,8 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         msg.append(currentException.getMessage());
       }
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-          msg.toString(), true);
+      iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(),
+          null, true);
 
     } finally {
       if (db != null)

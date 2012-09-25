@@ -54,8 +54,8 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 		}
 
 		if (rec == null)
-		  iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", null, OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
-					+ "' was not found.");
+		  iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+					+ "' was not found.", null);
 		else
 		  iResponse.sendRecordContent(rec, fetchPlan);
 		return false;

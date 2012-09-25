@@ -34,7 +34,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
   private static final String[] NAMES = { "GET|allocation/*" };
 
   @Override
-  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: allocation/<database>");
 
     iRequest.data.commandInfo = "Storage allocation";
@@ -108,7 +108,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
       json.endObject();
       json.flush();
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);

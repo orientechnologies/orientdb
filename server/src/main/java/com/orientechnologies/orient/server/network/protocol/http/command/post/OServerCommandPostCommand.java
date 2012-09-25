@@ -64,11 +64,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     if (response instanceof List<?>)
       iResponse.sendRecordsContent((List<OIdentifiable>) response);
     else if (response == null || response instanceof Integer)
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response);
+      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, response, null);
     else if (response instanceof ODocument)
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, ((ODocument) response).toJSON());
+      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, ((ODocument) response).toJSON(), null);
     else
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_TEXT_PLAIN, response.toString());
+      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, response.toString(), null);
     return false;
   }
 

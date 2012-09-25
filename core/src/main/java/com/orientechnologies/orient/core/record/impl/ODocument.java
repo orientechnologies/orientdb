@@ -637,6 +637,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
+    if ("@class".equals(iFieldName)) {
+      setClassName(iPropertyValue.toString());
+      return this;
+    }
+
     iFieldName = checkFieldName(iFieldName);
 
     checkForLoading();

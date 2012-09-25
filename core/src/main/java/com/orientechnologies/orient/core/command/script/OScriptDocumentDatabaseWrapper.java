@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.command.script;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
@@ -132,6 +133,14 @@ public class OScriptDocumentDatabaseWrapper {
 
   public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
     return (THISDB) database.open(iUserName, iUserPassword);
+  }
+
+  public ODocument save(final Map<String, Object> iObject) {
+    return database.save(new ODocument().fields(iObject));
+  }
+
+  public ODocument save(final String iString) {
+    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
   }
 
   public ODocument save(ORecordInternal<?> iRecord) {

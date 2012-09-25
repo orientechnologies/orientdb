@@ -58,13 +58,13 @@ public class OHttpResponse {
     callbackFunction = iCallbackFunction;
   }
 
-  public void sendTextContent(final int iCode, final String iReason, final String iHeaders, final String iContentType,
-      final Object iContent) throws IOException {
-    sendTextContent(iCode, iReason, iHeaders, iContentType, iContent, true);
+  public void sendTextContent(final int iCode, final String iReason, final String iContentType, final Object iContent,
+      final String iHeaders) throws IOException {
+    sendTextContent(iCode, iReason, iContentType, iContent, iHeaders, true);
   }
 
-  public void sendTextContent(final int iCode, final String iReason, final String iHeaders, final String iContentType,
-      final Object iContent, final boolean iKeepAlive) throws IOException {
+  public void sendTextContent(final int iCode, final String iReason, final String iContentType, final Object iContent,
+      final String iHeaders, final boolean iKeepAlive) throws IOException {
     final String content;
     final String contentType;
 
@@ -154,7 +154,7 @@ public class OHttpResponse {
 
     json.endObject();
 
-    sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, buffer.toString());
+    sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
   public void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
@@ -184,7 +184,7 @@ public class OHttpResponse {
   public void sendRecordContent(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
     final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
     if (iRecord != null)
-      sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, iRecord.toJSON(format));
+      sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
   }
 
   public void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent,

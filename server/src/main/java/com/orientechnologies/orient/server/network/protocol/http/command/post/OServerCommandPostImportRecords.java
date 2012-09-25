@@ -134,8 +134,8 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 								"Import of records of class '%s' completed in %5.3f seconds. Line parsed: %d, imported: %d, error: %d\nDetailed messages:\n%s",
 								cls.getName(), elapsed, line, imported, errors, output);
 
-				iResponse.sendTextContent(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-						message);
+				iResponse.sendTextContent(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, message,
+						null);
 				return false;
 
 			} else

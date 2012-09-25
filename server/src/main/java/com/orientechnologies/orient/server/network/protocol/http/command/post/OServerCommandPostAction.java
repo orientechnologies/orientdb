@@ -53,7 +53,7 @@ public class OServerCommandPostAction extends OServerCommandAuthenticatedPattern
 				OSharedDocumentDatabase.release(db);
 		}
 
-		iResponse.sendTextContent(201, OHttpUtils.STATUS_OK_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity());
+		iResponse.sendTextContent(201, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, doc.getIdentity(), null);
 		return false;
 	}
 }

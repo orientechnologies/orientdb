@@ -42,19 +42,19 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       final String command = parts[1];
       if (command.equalsIgnoreCase("start")) {
         Orient.instance().getProfiler().startRecording();
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording started");
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "Recording started", null);
 
       } else if (command.equalsIgnoreCase("stop")) {
         Orient.instance().getProfiler().stopRecording();
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Recording stopped");
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "Recording stopped", null);
 
       } else if (command.equalsIgnoreCase("configure")) {
         Orient.instance().getProfiler().configure(parts[2]);
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, "Profiler configured with: " + parts[2]);
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "Profiler configured with: " + parts[2], null);
 
       } else if (command.equalsIgnoreCase("status")) {
         final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, status);
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status, null);
 
       } else {
         final String from = parts.length > 2 ? parts[2] : null;
@@ -64,12 +64,12 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         OJSONWriter json = new OJSONWriter(jsonBuffer);
         json.append(Orient.instance().getProfiler().toJSON(command, from, to));
 
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", null, OHttpUtils.CONTENT_JSON, jsonBuffer.toString());
+        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
       }
 
     } catch (Exception e) {
-      iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-          e);
+      iResponse.sendTextContent(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e,
+          null);
     }
     return false;
   }

@@ -71,15 +71,15 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
           }
         } else {
           iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",
-              null, OHttpUtils.CONTENT_TEXT_PLAIN, "Record requested is not a file nor has a readable schema");
+              OHttpUtils.CONTENT_TEXT_PLAIN, "Record requested is not a file nor has a readable schema", null);
         }
       } else {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", null, OHttpUtils.CONTENT_TEXT_PLAIN,
-            "Record requestes not exists");
+        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists",
+            null);
       }
     } catch (Exception e) {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, null, OHttpUtils.CONTENT_TEXT_PLAIN,
-          e.getMessage());
+      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(),
+          null);
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);
