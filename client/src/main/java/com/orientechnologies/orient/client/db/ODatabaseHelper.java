@@ -94,11 +94,29 @@ public class ODatabaseHelper {
     }
   }
 
+  public static File getConfigurationFile() {
+    return getConfigurationFile(null);
+  }
+
   protected static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
 
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
+    File file = getConfigurationFile(iDirectory);
+
+    FileReader f = new FileReader(file);
+    final char[] buffer = new char[(int) file.length()];
+    f.read(buffer);
+    f.close();
+
+    String fileContent = new String(buffer);
+    int pos = fileContent.indexOf("password=\"");
+    pos += "password=\"".length();
+    return fileContent.substring(pos, fileContent.indexOf('"', pos));
+  }
+
+  protected static File getConfigurationFile(final String iDirectory) {
     // LOAD SERVER CONFIG FILE TO EXTRACT THE ROOT'S PASSWORD
     String sysProperty = System.getProperty("orientdb.config.file");
     File file = new File(sysProperty != null ? sysProperty : "");
@@ -110,10 +128,11 @@ public class ODatabaseHelper {
       file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
       file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-    if (!file.exists())
+    if (!file.exists() && iDirectory != null) {
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
-    if (!file.exists())
-      file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
+      if (!file.exists())
+        file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
+    }
     if (!file.exists())
       file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
           + "}/config/orientdb-server-config.xml"));
@@ -121,15 +140,6 @@ public class ODatabaseHelper {
       throw new OConfigurationException(
           "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
               + new File(".").getAbsolutePath());
-
-    FileReader f = new FileReader(file);
-    final char[] buffer = new char[(int) file.length()];
-    f.read(buffer);
-    f.close();
-
-    String fileContent = new String(buffer);
-    int pos = fileContent.indexOf("password=\"");
-    pos += "password=\"".length();
-    return fileContent.substring(pos, fileContent.indexOf('"', pos));
+    return file;
   }
 }

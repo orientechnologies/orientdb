@@ -48,13 +48,13 @@ public class OServerConfigurationLoaderXml {
   public OServerConfiguration load() throws IOException {
     try {
       if (file != null) {
-          String path = file.getAbsolutePath();
-          String current = new File("").getAbsolutePath();
-          if (path.startsWith(current))
+        String path = OFileUtils.getPath(file.getAbsolutePath());
+        String current = OFileUtils.getPath(new File("").getAbsolutePath());
+        if (path.startsWith(current))
           path = path.substring(current.length() + 1);
-          OLogManager.instance().info(this, "Loading configuration from: %s...", OFileUtils.getPath(path));
+        OLogManager.instance().info(this, "Loading configuration from: %s...", path);
       } else {
-          OLogManager.instance().info(this, "Loading configuration from input stream");
+        OLogManager.instance().info(this, "Loading configuration from input stream");
       }
 
       context = JAXBContext.newInstance(rootClass);
