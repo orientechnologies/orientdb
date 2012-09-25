@@ -168,7 +168,7 @@ public class OMetadata {
     schema.reload();
     indexManager.load();
     security.load();
-    functionLibrary.load();
+    //functionLibrary.load();
   }
 
   /**
