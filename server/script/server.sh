@@ -49,7 +49,7 @@ PRGDIR=`dirname "$PRG"`
 export ORIENTDB_HOME
 
 if [ ! -b "${CONFIG_FILE}" ]
-else
+then
   CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
 fi
 
