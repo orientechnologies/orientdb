@@ -79,7 +79,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
       filePath.mkdirs();
 
     OLogManager.instance().info(this,
-        "Automatic backup handler installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
+        "Automatic backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
         targetDirectory);
 
     final TimerTask timerTask = new TimerTask() {
