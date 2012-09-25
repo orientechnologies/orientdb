@@ -9,7 +9,7 @@ import java.util.logging.LogRecord;
 
 public class OLogFormatter extends Formatter {
 
-	private static final DateFormat	dateFormat	= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss:SSS");
+	private static final DateFormat	dateFormat	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 
 	/**
 	 * The end-of-line character for this platform.

@@ -19,6 +19,7 @@
 				<parameter name="profile.default.mail.smtp.starttls.enable" value="true" />
 				<parameter name="profile.default.mail.smtp.user" value="" />
 				<parameter name="profile.default.mail.smtp.password" value="" />
+				<parameter name="profile.default.mail.date.format" value="yyyy-MM-dd HH:mm:ss" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->

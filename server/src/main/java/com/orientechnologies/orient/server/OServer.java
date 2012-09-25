@@ -384,7 +384,7 @@ public class OServer {
   }
 
   @SuppressWarnings("unchecked")
-  public <RET extends OServerHandler> RET getHandler(final Class<RET> iHandlerClass) {
+  public <RET extends OServerHandler> RET getPluginByClass(final Class<RET> iHandlerClass) {
     try {
       startupLatch.await();
     } catch (InterruptedException e) {

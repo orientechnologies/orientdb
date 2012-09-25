@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.plugin.mail;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -93,13 +95,14 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
   /**
    * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
    * 
-   * @param iConfiguration
+   * @param iMessage
    *          Configuration as Map<String,Object>
    * @throws AddressException
    * @throws MessagingException
+   * @throws ParseException
    */
-  public void send(final Map<String, Object> iConfiguration) throws AddressException, MessagingException {
-    final String profileName = (String) iConfiguration.get("profile");
+  public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
+    final String profileName = (String) iMessage.get("profile");
 
     OMailProfile profile = profiles.get(profileName);
     if (profile == null)
@@ -115,27 +118,41 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
     MimeMessage msg = new MimeMessage(session);
 
     msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
-    InternetAddress[] toAddresses = { new InternetAddress((String) iConfiguration.get("to")) };
+    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
     msg.setRecipients(Message.RecipientType.TO, toAddresses);
-    InternetAddress[] ccAddresses = { new InternetAddress((String) iConfiguration.get("cc")) };
+    InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
     msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-    InternetAddress[] bccAddresses = { new InternetAddress((String) iConfiguration.get("bcc")) };
+    InternetAddress[] bccAddresses = { new InternetAddress((String) iMessage.get("bcc")) };
     msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-    msg.setSubject((String) iConfiguration.get("subject"));
-    Date sendDate = (Date) iConfiguration.get("date");
-    if (sendDate == null)
+    msg.setSubject((String) iMessage.get("subject"));
+
+    // DATE
+    Object date = iMessage.get("date");
+    final Date sendDate;
+    if (date == null)
+      // NOT SPECIFIED = NOW
       sendDate = new Date();
+    else if (date instanceof Date)
+      // PASSED
+      sendDate = (Date) date;
+    else {
+      // FORMAT IT
+      String dateFormat = (String) prop.get("mail.date.format");
+      if (dateFormat == null)
+        dateFormat = "yyyy-MM-dd HH:mm:ss";
+      sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
+    }
     msg.setSentDate(sendDate);
 
     // creates message part
     MimeBodyPart messageBodyPart = new MimeBodyPart();
-    messageBodyPart.setContent(iConfiguration.get("message"), "text/html");
+    messageBodyPart.setContent(iMessage.get("message"), "text/html");
 
     // creates multi-part
     Multipart multipart = new MimeMultipart();
     multipart.addBodyPart(messageBodyPart);
 
-    final String[] attachments = (String[]) iConfiguration.get("attachments");
+    final String[] attachments = (String[]) iMessage.get("attachments");
     // adds attachments
     if (attachments != null && attachments.length > 0) {
       for (String filePath : attachments) {
