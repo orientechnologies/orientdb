@@ -105,10 +105,12 @@
 
         <echo>SHUTDOWNING THE SERVER...</echo>
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="/c shutdown.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="./shutdown.sh"/>
         </exec>
 
@@ -150,10 +152,12 @@
         <echo>SHUTDOWNING THE SERVER...</echo>
 
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="/c shutdown.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
             <arg value="./shutdown.sh"/>
         </exec>
         <sleep seconds="10"/>
