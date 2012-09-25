@@ -251,17 +251,17 @@ public class OServer {
     // SEARCH IN CONFIGURED PATHS
     String dbPath = configuration.getStoragePath(name);
 
-    if (dbPath == null) {
-      // SEARCH IN DEFAULT DATABASE DIRECTORY
-      dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name + "/");
-      File f = new File(dbPath + "default.odh");
-      if (!f.exists())
-        throw new OConfigurationException("Database '" + name + "' is not configured on server");
+		if (dbPath == null) {
+			// SEARCH IN DEFAULT DATABASE DIRECTORY
+			dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name);
+			File f = new File(dbPath + "/default.odh");
+			if (!f.exists())
+				throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
-      dbPath = "local:${" + Orient.ORIENTDB_HOME + "}/databases/" + name;
-    }
+			dbPath = "local:" + dbPath;
+		}
 
-    return dbPath;
+		return dbPath;
   }
 
   public Map<String, String> getAvailableStorageNames() {
@@ -273,15 +273,15 @@ public class OServer {
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+		scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
 
-    for (OStorage storage : Orient.instance().getStorages()) {
-      final String storageName = storage.getName();
-      if (storage.exists() && !storages.containsKey(storageName))
-        storages.put(storageName, storage.getURL());
-    }
+		for (OStorage storage : Orient.instance().getStorages()) {
+			final String storageUrl = storage.getURL();
+			if (storage.exists() && !storages.containsValue(storageUrl))
+				storages.put(storage.getName(), storageUrl);
+		}
 
-    return storages;
+		return storages;
   }
 
   public String getStorageURL(final String iName) {
