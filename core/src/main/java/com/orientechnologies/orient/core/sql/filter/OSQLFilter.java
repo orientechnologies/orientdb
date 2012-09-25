@@ -184,7 +184,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
             + subCommand);
 
       targetRecords = (Iterable<? extends OIdentifiable>) executor;
-      final OCommandContext subContext = subCommand.getContext();
+      final OCommandContext subContext = executor.getContext();
 
       // MERGE THE CONTEXTS
       if (context != null)
