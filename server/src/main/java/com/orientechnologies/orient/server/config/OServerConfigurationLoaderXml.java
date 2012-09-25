@@ -47,12 +47,15 @@ public class OServerConfigurationLoaderXml {
 
   public OServerConfiguration load() throws IOException {
     try {
-      String path = file.getAbsolutePath();
-      String current = new File("").getAbsolutePath();
-      if (path.startsWith(current))
-        path = path.substring(current.length() + 1);
-
-      OLogManager.instance().info(this, "Loading configuration from: %s...", OFileUtils.getPath(path));
+      if (file != null) {
+          String path = file.getAbsolutePath();
+          String current = new File("").getAbsolutePath();
+          if (path.startsWith(current))
+          path = path.substring(current.length() + 1);
+          OLogManager.instance().info(this, "Loading configuration from: %s...", OFileUtils.getPath(path));
+      } else {
+          OLogManager.instance().info(this, "Loading configuration from input stream");
+      }
 
       context = JAXBContext.newInstance(rootClass);
       Unmarshaller unmarshaller = context.createUnmarshaller();
