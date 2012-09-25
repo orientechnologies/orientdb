@@ -789,6 +789,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (anyFunctionAggregates)
         return null;
 
+      result.unsetDirty();
       return result;
     }
 

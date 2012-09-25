@@ -737,7 +737,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ORecordInternal<?> iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
-      if (rid.isNew() || iLinkedRecord.isDirty()) {
+      if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
         if (iLinkedRecord instanceof ODocument) {
           final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
           database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getDefaultClusterId()) : null);

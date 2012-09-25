@@ -24,6 +24,7 @@ import java.util.Map;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -155,6 +156,7 @@ public class OFetchHelper {
       fieldValue = record.field(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
+          && (!(fieldValue instanceof ORecordLazyMultiValue) || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
@@ -286,6 +288,7 @@ public class OFetchHelper {
       fieldValue = record.field(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
+          && (!(fieldValue instanceof ORecordLazyMultiValue) || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
@@ -295,14 +298,18 @@ public class OFetchHelper {
         iContext.onAfterStandardField(fieldValue, fieldName, iUserObject);
       } else {
         try {
-          if (!(!(fieldValue instanceof ODocument) || (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue)
-              .getIdentity().isValid()) && iContext.fetchEmbeddedDocuments())
-              && !iFetchPlan.containsKey(fieldPath) && depthLevel > -1 && iCurrentLevel > depthLevel) {
-            // MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
-            continue;
-          }
-          fetch(record, iUserObject, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot + 1, iFieldDepthLevel,
-              parsedRecords, depthLevel, fieldPath, iListener, iContext);
+          boolean fetch = !(fieldValue instanceof ODocument) || depthLevel == -1 || iCurrentLevel <= depthLevel
+              || iFetchPlan.containsKey(fieldPath);
+
+          if (!fetch && (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isValid())
+              && iContext.fetchEmbeddedDocuments())
+            // EMBEDDED, GO DEEPER
+            fetch = true;
+
+          if (fetch)
+            fetch(record, iUserObject, iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot + 1, iFieldDepthLevel,
+                parsedRecords, depthLevel, fieldPath, iListener, iContext);
+
         } catch (Exception e) {
           e.printStackTrace();
           OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
