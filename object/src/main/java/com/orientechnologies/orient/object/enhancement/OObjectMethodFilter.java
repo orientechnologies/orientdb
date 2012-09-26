@@ -28,9 +28,13 @@ import com.orientechnologies.common.log.OLogManager;
  */
 public class OObjectMethodFilter implements MethodFilter {
 
-  public boolean isHandled(Method m) {
+  public boolean isHandled(final Method m) {
     final String methodName = m.getName();
     final String fieldName = getFieldName(m);
+
+    if (fieldName == null)
+      return false;
+
     try {
       if (!OObjectEntitySerializer.isClassField(m.getDeclaringClass(), fieldName))
         return false;
@@ -45,25 +49,28 @@ public class OObjectMethodFilter implements MethodFilter {
     }
   }
 
-  public String getFieldName(Method m) {
-    if (m.getName().startsWith("get"))
-      return getFieldName(m.getName(), "get");
-    else if (m.getName().startsWith("set"))
-      return getFieldName(m.getName(), "set");
-    else
-      return getFieldName(m.getName(), "is");
+  public String getFieldName(final Method m) {
+    final String methodName = m.getName();
+
+    if (methodName.startsWith("get"))
+      return getFieldName(methodName, "get");
+    else if (methodName.startsWith("set"))
+      return getFieldName(methodName, "set");
+    else if (methodName.startsWith("is"))
+      return getFieldName(methodName, "is");
+
+    // NO FIELD
+    return null;
   }
 
-  protected String getFieldName(String methodName, String prefix) {
-    StringBuffer fieldName = new StringBuffer();
+  protected String getFieldName(final String methodName, final String prefix) {
+    final StringBuffer fieldName = new StringBuffer();
     fieldName.append(Character.toLowerCase(methodName.charAt(prefix.length())));
-    for (int i = (prefix.length() + 1); i < methodName.length(); i++) {
-      fieldName.append(methodName.charAt(i));
-    }
+    fieldName.append(methodName.substring(prefix.length() + 1));
     return fieldName.toString();
   }
 
-  public boolean isSetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {
+  public boolean isSetterMethod(final String fieldName, final Method m) throws SecurityException, NoSuchFieldException {
     if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set"))
       return false;
     if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
