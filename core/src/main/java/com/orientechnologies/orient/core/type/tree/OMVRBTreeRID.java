@@ -466,7 +466,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
     int size = 0;
     if (iRoot != null)
-      size = size();
+      size = hashedSize();
 
     super.setRoot(iRoot);
 
