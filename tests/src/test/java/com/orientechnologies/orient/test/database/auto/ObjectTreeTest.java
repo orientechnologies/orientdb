@@ -44,6 +44,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.JavaCascadeDeleteTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.Planet;
 import com.orientechnologies.orient.test.domain.base.Satellite;
@@ -299,31 +300,33 @@ public class ObjectTreeTest {
     }
   }
 
-  // @Test(dependsOnMethods = "testQueryMultiCircular")
-  // public void testSetFieldSize() {
-  // JavaComplexTestClass test = database.newInstance(JavaComplexTestClass.class);
-  // for (int i = 0; i < 100; i++) {
-  // Child child = database.newInstance(Child.class);
-  // child.setName(String.valueOf(i));
-  // test.getSet().add(child);
-  // }
-  // Assert.assertNotNull(test.getSet());
-  // Assert.assertEquals(test.getSet().size(), 100);
-  // database.save(test);
-  // ORID rid = database.getIdentity(test);
-  // close();
-  // open();
-  // test = database.load(rid);
-  // Assert.assertNotNull(test.getSet());
-  // Iterator<Child> it = test.getSet().iterator();
-  // while (it.hasNext()) {
-  // Child child = it.next();
-  // Assert.assertNotNull(child.getName());
-  // Assert.assertTrue(Integer.valueOf(child.getName()) < 100);
-  // Assert.assertTrue(Integer.valueOf(child.getName()) >= 0);
-  // }
-  // Assert.assertEquals(test.getSet().size(), 100);
-  // }
+  @Test(dependsOnMethods = "testQueryMultiCircular")
+  public void testSetFieldSize() {
+    JavaComplexTestClass test = database.newInstance(JavaComplexTestClass.class);
+    for (int i = 0; i < 100; i++) {
+      Child child = database.newInstance(Child.class);
+      child.setName(String.valueOf(i));
+      test.getSet().add(child);
+    }
+    Assert.assertNotNull(test.getSet());
+    Assert.assertEquals(test.getSet().size(), 100);
+    database.save(test);
+    //Assert.assertEquals(test.getSet().size(), 100);
+    ORID rid = database.getIdentity(test);
+    close();
+    open();
+    test = database.load(rid);
+    Assert.assertNotNull(test.getSet());
+    Iterator<Child> it = test.getSet().iterator();
+    while (it.hasNext()) {
+      Child child = it.next();
+      Assert.assertNotNull(child.getName());
+      Assert.assertTrue(Integer.valueOf(child.getName()) < 100);
+      Assert.assertTrue(Integer.valueOf(child.getName()) >= 0);
+    }
+    Assert.assertEquals(test.getSet().size(), 100);
+    database.delete(test);
+  }
 
   @Test(dependsOnMethods = "testQueryMultiCircular")
   public void testCascadeDeleteSimpleObject() {
