@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
@@ -34,30 +35,35 @@ public class OBasicCommandContext implements OCommandContext {
   protected Map<String, Object> variables;
 
   public Object getVariable(final String iName) {
-    int pos = iName.indexOf(".");
+    int pos = OStringSerializerHelper.getLowerIndexOf(iName, 0, ".", "[");
+
+    String firstPart;
+    String lastPart;
     if (pos > -1) {
       // UP TO THE PARENT
-      final String up = iName.substring(0, pos);
-      if (up.equals("PARENT") && parent != null)
-        return parent.getVariable(iName.substring(pos + 1));
+      firstPart = iName.substring(0, pos);
+      lastPart = iName.substring(pos + 1);
+      if (firstPart.equalsIgnoreCase("PARENT") && parent != null)
+        return parent.getVariable(lastPart);
+    } else {
+      firstPart = iName;
+      lastPart = null;
     }
 
-    final String name;
-    pos = iName.indexOf("[");
-    if (pos > -1)
-      name = iName.substring(0, pos);
-    else
-      name = iName;
-
     Object result = null;
-
-    if (variables != null && variables.containsKey(name))
-      result = variables.get(name);
-    else if (child != null)
-      result = child.getVariable(name);
+    if (firstPart.equalsIgnoreCase("CONTEXT"))
+      result = getVariables();
+    else if (firstPart.equalsIgnoreCase("PARENT"))
+      return parent;
+    else {
+      if (variables != null && variables.containsKey(firstPart))
+        result = variables.get(firstPart);
+      else if (child != null)
+        result = child.getVariable(firstPart);
+    }
 
     if (pos > -1)
-      result = ODocumentHelper.getFieldValue(result, iName);
+      result = ODocumentHelper.getFieldValue(result, lastPart);
 
     return result;
   }
@@ -89,8 +95,10 @@ public class OBasicCommandContext implements OCommandContext {
     final HashMap<String, Object> map = new HashMap<String, Object>();
     if (child != null)
       map.putAll(child.getVariables());
+
     if (variables != null)
       map.putAll(variables);
+
     return map;
   }
 

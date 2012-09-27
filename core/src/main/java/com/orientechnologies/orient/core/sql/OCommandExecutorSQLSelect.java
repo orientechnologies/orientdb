@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
@@ -793,9 +794,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (v.equals("*")) {
           doc.copy(result);
           value = null;
-        } else if (v.toString().startsWith("$")) {
+        } else if (v instanceof OSQLFilterItemVariable) {
           // RETURN A VARIABLE FROM THE CONTEXT
-          value = context != null ? context.getVariable(v.toString().substring(1)) : null;
+          value = ((OSQLFilterItemVariable) v).getValue(doc, context);
         } else if (v instanceof OSQLFilterItemField)
           value = ((OSQLFilterItemField) v).getValue(doc, null);
         else if (v instanceof OSQLFunctionRuntime) {
