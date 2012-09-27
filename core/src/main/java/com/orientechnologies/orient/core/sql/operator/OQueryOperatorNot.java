@@ -27,35 +27,45 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
  * 
  */
 public class OQueryOperatorNot extends OQueryOperator {
+  private OQueryOperator next;
 
-	public OQueryOperatorNot() {
-		super("NOT", 10, true);
-	}
+  public OQueryOperatorNot() {
+    super("NOT", 10, true);
+    next = null;
+  }
 
-	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
-		if (iLeft == null)
-			return false;
-		return !(Boolean) iLeft;
-	}
+  public OQueryOperatorNot(final OQueryOperator iNext) {
+    this();
+    next = iNext;
+  }
 
-	@Override
-	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		return OIndexReuseType.NO_INDEX;
-	}
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    if (next != null)
+      return !(Boolean) next.evaluateRecord(iRecord, iCondition, iLeft, iRight, iContext);
+
+    if (iLeft == null)
+      return false;
+    return !(Boolean) iLeft;
+  }
+
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    return OIndexReuseType.NO_INDEX;
+  }
 
   @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    if(iLeft instanceof OSQLFilterCondition) {
+    if (iLeft instanceof OSQLFilterCondition) {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if(beginRange == null && endRange == null)
+      if (beginRange == null && endRange == null)
         return null;
-      else if(beginRange == null)
+      else if (beginRange == null)
         return endRange;
-      else if(endRange == null)
+      else if (endRange == null)
         return null;
       else
         return null;
@@ -66,20 +76,24 @@ public class OQueryOperatorNot extends OQueryOperator {
 
   @Override
   public ORID getEndRidRange(Object iLeft, Object iRight) {
-    if(iLeft instanceof OSQLFilterCondition) {
+    if (iLeft instanceof OSQLFilterCondition) {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if(beginRange == null && endRange == null)
+      if (beginRange == null && endRange == null)
         return null;
-      else if(beginRange == null)
+      else if (beginRange == null)
         return null;
-      else if(endRange == null)
+      else if (endRange == null)
         return beginRange;
       else
         return null;
     }
 
     return null;
+  }
+
+  public OQueryOperator getNext() {
+    return next;
   }
 }

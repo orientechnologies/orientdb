@@ -36,9 +36,9 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
     super(iKeyword, iPrecedence, iLogical, iExpectedRightWords);
   }
 
-  protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iLogical,
+  protected OQueryOperatorEqualityNotNulls(final String iKeyword, final int iPrecedence, final boolean iUnary,
       final int iExpectedRightWords, final boolean iExpectsParameters) {
-    super(iKeyword, iPrecedence, iLogical, iExpectedRightWords, iExpectsParameters);
+    super(iKeyword, iPrecedence, iUnary, iExpectedRightWords, iExpectsParameters);
   }
 
   @Override

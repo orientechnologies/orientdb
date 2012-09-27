@@ -147,7 +147,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     if (checkForEnd(left.toString()))
       return null;
 
-    final OQueryOperator oper;
+    OQueryOperator oper;
     final Object right;
 
     if (left instanceof OQueryOperator && ((OQueryOperator) left).isUnary()) {
@@ -156,6 +156,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       right = null;
     } else {
       oper = extractConditionOperator();
+
+      if (oper instanceof OQueryOperatorNot)
+        // SPECIAL CASE: READ NEXT OPERATOR
+        oper = new OQueryOperatorNot(extractConditionOperator());
+
       right = oper != null ? extractConditionItem(false, oper.expectedRightWords) : null;
     }
 
