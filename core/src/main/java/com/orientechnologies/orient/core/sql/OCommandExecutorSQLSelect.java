@@ -1052,7 +1052,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       request.getResultListener().result(result);
-    } else if (compiledFilter == null && let != null)
+    } else if (parsedTarget == null && let != null)
       // ONLY LET, APPLY TO THEM
       handleResult(applyProjections(lastRecord));
   }
