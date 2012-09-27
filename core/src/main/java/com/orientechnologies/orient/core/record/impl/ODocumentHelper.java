@@ -267,16 +267,29 @@ public class ODocumentHelper {
               .getRecord() : null;
 
           final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
-          if (indexParts.size() == 1)
+          final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=', ' ');
+          if (indexParts.size() == 1 && indexCondition.size() == 1)
             // SINGLE VALUE
             value = ((ODocument) record).field(index);
-          else {
+          else if (indexParts.size() > 1) {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
               values[i] = ((ODocument) record).field(indexParts.get(i));
             }
             value = values;
+          } else if (!indexCondition.isEmpty()) {
+            // CONDITION
+            final String conditionFieldName = indexCondition.get(0);
+            Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
+
+            if (conditionFieldValue instanceof String)
+              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+
+            final Object fieldValue = getFieldValue(currentRecord, conditionFieldName);
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
+                & !fieldValue.equals(conditionFieldValue))
+              value = null;
           }
         } else if (value instanceof Map<?, ?>) {
           final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
