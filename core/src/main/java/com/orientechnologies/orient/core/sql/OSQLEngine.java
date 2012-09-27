@@ -31,6 +31,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -274,8 +275,12 @@ public class OSQLEngine {
     return null;
   }
 
-  public OSQLFilter parseFromWhereCondition(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+  public OSQLFilter parseCondition(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     return new OSQLFilter(iText, iContext, iFilterKeyword);
+  }
+
+  public OSQLTarget parseTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+    return new OSQLTarget(iText, iContext, iFilterKeyword);
   }
 
   public static OSQLEngine getInstance() {

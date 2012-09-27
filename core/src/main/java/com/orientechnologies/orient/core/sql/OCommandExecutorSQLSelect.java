@@ -103,17 +103,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (pos == -1)
       return this;
 
-    int endPosition = parserText.length();
-
     if (context == null)
       context = new OBasicCommandContext();
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context,
-        KEYWORD_WHERE);
+    final int endPosition = parserText.length();
 
-    optimize();
+    parserNextWord(true);
+    if (parserGetLastWord().equalsIgnoreCase(KEYWORD_FROM)) {
+      // FROM
+      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition),
+          getContext(), KEYWORD_WHERE);
+      parserSetCurrentPosition(parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition()
+          + parserGetCurrentPosition());
+    } else
+      parserGoBack();
 
-    parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition() + pos);
+    parserNextWord(true);
+    if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE)) {
+      // WHERE
+      compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
+          getContext(), KEYWORD_WHERE);
+      optimize();
+      parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
+          + parserGetCurrentPosition());
+    } else
+      parserGoBack();
 
     if (!parserIsEnded()) {
       parserSkipWhiteSpaces();
@@ -124,7 +138,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (!parserIsEnded()) {
           final String w = parserGetLastWord();
 
-          if (w.equals(KEYWORD_ORDER))
+          if (w.equals(KEYWORD_LET))
+            parseLet();
+          else if (w.equals(KEYWORD_ORDER))
             parseOrderBy(w);
           else if (w.equals(KEYWORD_LIMIT))
             parseLimit(w);
@@ -208,9 +224,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected void executeSearch(final Map<Object, Object> iArgs) {
     assignTarget(iArgs);
 
-    if (target == null)
-      // SEARCH WITHOUT USING TARGET (USUALLY WHEN INDEXES ARE INVOLVED)
+    if (target == null) {
+      if (let != null)
+        // EXECUTE ONCE TO ASSIGN THE LET
+        assignLetClauses(null);
+
+      // SEARCH WITHOUT USING TARGET (USUALLY WHEN LET/INDEXES ARE INVOLVED)
       return;
+    }
 
     // BROWSE ALL THE RECORDS
     for (OIdentifiable id : target)
@@ -221,7 +242,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   @Override
   protected boolean assignTarget(Map<Object, Object> iArgs) {
     if (!super.assignTarget(iArgs)) {
-      if (compiledFilter.getTargetIndex() != null)
+      if (parsedTarget.getTargetIndex() != null)
         searchInIndex();
       else
         throw new OQueryParsingException("No source found in query: specify class, cluster(s), index or single record(s). Use "
@@ -360,7 +381,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   protected void searchInClasses() {
-    final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
+    final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     if (searchForIndexes(cls)) {
       // final OJVMProfiler profiler = Orient.instance().getProfiler();
@@ -379,6 +400,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
 
     // fetch all possible variants of subqueries that can be used in indexes.
+    if (compiledFilter == null)
+      return false;
+
     analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
 
     // most specific will be processed first
@@ -591,12 +615,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
 
-    int fromPosition = parserTextUpperCase.indexOf(KEYWORD_FROM_2FIND, parserGetCurrentPosition());
-    if (fromPosition == -1)
-      throwParsingException("Missed " + KEYWORD_FROM);
+    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
+        KEYWORD_LET);
+    if (upperBound == -1)
+      // UP TO THE END
+      upperBound = parserText.length() - 1;
 
     Object projectionValue;
-    final String projectionString = parserText.substring(parserGetCurrentPosition(), fromPosition).trim();
+    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
     if (projectionString.length() > 0 && !projectionString.equals("*")) {
       // EXTRACT PROJECTIONS
       projections = new LinkedHashMap<String, Object>();
@@ -661,7 +687,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    parserSetCurrentPosition(fromPosition + KEYWORD_FROM.length() + 1);
+    if (upperBound < parserText.length() - 1)
+      parserSetCurrentPosition(upperBound);
 
     return parserGetCurrentPosition();
   }
@@ -750,7 +777,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private OIdentifiable applyProjections(final OIdentifiable iRecord) {
     if (projections != null) {
       // APPLY PROJECTIONS
-      final ODocument doc = iRecord.getRecord();
+      final ODocument doc = (ODocument) (iRecord != null ? iRecord.getRecord() : null);
       final ODocument result = new ODocument().setOrdered(true);
 
       // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
@@ -799,16 +826,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private void searchInIndex() {
     final OIndex<Object> index = (OIndex<Object>) getDatabase().getMetadata().getIndexManager()
-        .getIndex(compiledFilter.getTargetIndex());
+        .getIndex(parsedTarget.getTargetIndex());
 
     if (index == null)
-      throw new OCommandExecutionException("Target index '" + compiledFilter.getTargetIndex() + "' not found");
+      throw new OCommandExecutionException("Target index '" + parsedTarget.getTargetIndex() + "' not found");
 
     // nothing was added yet, so index definition for manual index was not calculated
     if (index.getDefinition() == null)
       return;
 
-    if (compiledFilter.getRootCondition() != null) {
+    if (compiledFilter != null && compiledFilter.getRootCondition() != null) {
       if (!"KEY".equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
         throw new OCommandExecutionException("'Key' field is required for queries against indexes");
 
@@ -1010,20 +1037,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // EXECUTE AGGREGATIONS
       Object value;
       final ODocument result = new ODocument().setOrdered(true);
-      for (Entry<String, Object> projection : projections.entrySet()) {
-        if (projection.getValue() instanceof OSQLFilterItemField)
-          value = ((OSQLFilterItemField) projection.getValue()).getValue(result, null);
-        else if (projection.getValue() instanceof OSQLFunctionRuntime) {
-          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
-          value = f.getResult();
-        } else
-          value = projection.getValue();
+      if (projections != null)
+        for (Entry<String, Object> projection : projections.entrySet()) {
+          if (projection.getValue() instanceof OSQLFilterItemField)
+            value = ((OSQLFilterItemField) projection.getValue()).getValue(result, null);
+          else if (projection.getValue() instanceof OSQLFunctionRuntime) {
+            final OSQLFunctionRuntime f = (OSQLFunctionRuntime) projection.getValue();
+            value = f.getResult();
+          } else
+            value = projection.getValue();
 
-        result.field(projection.getKey(), value);
-      }
+          result.field(projection.getKey(), value);
+        }
 
       request.getResultListener().result(result);
-    }
+    } else if (compiledFilter == null && let != null)
+      // ONLY LET, APPLY TO THEM
+      handleResult(applyProjections(lastRecord));
   }
 
   private static boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
@@ -1052,7 +1082,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean optimizeExecution() {
-    if (compiledFilter != null & compiledFilter.getRootCondition() == null && projections != null && projections.size() == 1) {
+    if (compiledFilter != null && compiledFilter.getRootCondition() == null && projections != null && projections.size() == 1) {
       final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
 
       if (entry.getValue() instanceof OSQLFunctionRuntime) {
@@ -1061,15 +1091,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             && "*".equals(rf.configuredParameters[0])) {
           long count = 0;
 
-          if (compiledFilter.getTargetClasses() != null) {
-            final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
+          if (parsedTarget.getTargetClasses() != null) {
+            final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
             count = cls.count();
-          } else if (compiledFilter.getTargetClusters() != null) {
-            for (String cluster : compiledFilter.getTargetClusters().keySet()) {
+          } else if (parsedTarget.getTargetClusters() != null) {
+            for (String cluster : parsedTarget.getTargetClusters().keySet()) {
               count += getDatabase().countClusterElements(cluster);
             }
-          } else if (compiledFilter.getTargetIndex() != null) {
-            count += getDatabase().getMetadata().getIndexManager().getIndex(compiledFilter.getTargetIndex()).getSize();
+          } else if (parsedTarget.getTargetIndex() != null) {
+            count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
           }
 
           if (tempResult == null)

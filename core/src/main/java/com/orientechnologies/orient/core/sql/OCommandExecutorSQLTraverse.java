@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -70,13 +71,30 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (endP > -1 && endP < endPosition)
       endPosition = endP;
 
-    compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(pos, endPosition), context,
-        KEYWORD_WHILE);
-    traverse.predicate(compiledFilter);
+    parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
-    optimize();
+    if (!parsedTarget.parserIsEnded()) {
+      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos + 1);
 
-    parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition() + pos);
+      parserNextWord(true);
+
+      if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
+        // // TODO Remove the additional management of WHERE for TRAVERSE after a while
+        warnDeprecatedWhere();
+
+      if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE) || parserGetLastWord().equalsIgnoreCase(KEYWORD_WHILE)) {
+
+        compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
+            getContext(), KEYWORD_WHILE);
+
+        traverse.predicate(compiledFilter);
+        optimize();
+        parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
+            + parserGetCurrentPosition());
+      }
+    } else
+      parserSetCurrentPosition(-1);
+
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
@@ -94,9 +112,17 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     else
       traverse.limit(limit);
 
-    traverse.context(((OCommandRequestText) iRequest).getContext());
+    ((OCommandRequestText) iRequest).getContext().setChild(traverse.getContext());
 
     return this;
+  }
+
+  protected void warnDeprecatedWhere() {
+    OLogManager
+        .instance()
+        .warn(
+            this,
+            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
   }
 
   @Override

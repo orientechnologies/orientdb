@@ -104,12 +104,6 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return this;
   }
 
-  public OTraverse context(final OCommandContext iContext) {
-    if (iContext != null)
-      iContext.merge(context);
-    return this;
-  }
-
   public OTraverseContext getContext() {
     return context;
   }

@@ -796,4 +796,24 @@ public abstract class OStringSerializerHelper {
 
     return -1;
   }
+
+  public static int getLowerIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
+    int lowest = -1;
+    for (String toSearch : iToSearch) {
+      int index = iText.indexOf(toSearch, iBeginOffset);
+      if (index > -1 && (lowest == -1 || index < lowest))
+        lowest = index;
+    }
+    return lowest;
+  }
+
+  public static int getHigherIndexOf(final String iText, final int iBeginOffset, final String... iToSearch) {
+    int lowest = -1;
+    for (String toSearch : iToSearch) {
+      int index = iText.indexOf(toSearch, iBeginOffset);
+      if (index > -1 && (lowest == -1 || index > lowest))
+        lowest = index;
+    }
+    return lowest;
+  }
 }

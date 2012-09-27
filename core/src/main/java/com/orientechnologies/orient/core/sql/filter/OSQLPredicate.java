@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * 
  */
 public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
-  protected Map<String, String>           let        = null;
   protected Set<OProperty>                properties = new HashSet<OProperty>();
   protected OSQLFilterCondition           rootCondition;
   protected List<String>                  recordTransformed;

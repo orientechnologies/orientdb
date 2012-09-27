@@ -267,11 +267,14 @@ public abstract class OBaseParser {
   }
 
   /**
-   * Skips not valid characters like spaces and linefeed.
+   * Skips not valid characters like spaces and line feeds.
    * 
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSkipWhiteSpaces() {
+    if( parserCurrentPos == -1 )
+      return false;
+    
     parserCurrentPos = OStringParser.jumpWhiteSpaces(parserText, parserCurrentPos, -1);
     return parserCurrentPos > -1;
   }

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
@@ -55,6 +56,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private String               indexName       = null;
   private int                  recordCount     = 0;
 
+  private OSQLTarget           parsedTarget;
   private OSQLFilter           compiledFilter;
 
   public OCommandExecutorSQLDelete() {
@@ -93,7 +95,19 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
       // INDEX
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-      compiledFilter = OSQLEngine.getInstance().parseFromWhereCondition(parserText.substring(oldPos), context, KEYWORD_WHERE);
+      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(oldPos), getContext(), KEYWORD_WHERE);
+
+      if (!parsedTarget.parserIsEnded()) {
+        parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + oldPos + 1);
+
+        parserNextWord(true);
+
+        if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
+          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
+              KEYWORD_WHERE);
+      } else
+        parserSetCurrentPosition(-1);
+
     } else {
       query = database
           .command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));
@@ -113,7 +127,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     } else {
       // AGAINST INDEXES
 
-      compiledFilter.bindParameters(iArgs);
+      if (compiledFilter != null)
+        compiledFilter.bindParameters(iArgs);
 
       final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       if (index == null)
@@ -122,7 +137,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       Object key = null;
       Object value = VALUE_NOT_FOUND;
 
-      if (compiledFilter.getRootCondition() == null) {
+      if (compiledFilter == null || compiledFilter.getRootCondition() == null) {
         final long total = index.getSize();
         index.clear();
         return total;

@@ -15,41 +15,57 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+
 /**
- * Basic implementation of OCommandContext interface that stores variables in a map.
+ * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
+ * of contexts. If a variable is not found on current object the search is applied recursively on child contexts.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-  private boolean               recordMetrics = false;
-  private List<OCommandContext> inherited;
-  private Map<String, Object>   variables;
+  protected boolean             recordMetrics = false;
+  protected OCommandContext     parent;
+  protected OCommandContext     child;
+  protected Map<String, Object> variables;
 
   public Object getVariable(final String iName) {
+    int pos = iName.indexOf(".");
+    if (pos > -1) {
+      // UP TO THE PARENT
+      final String up = iName.substring(0, pos);
+      if (up.equals("PARENT") && parent != null)
+        return parent.getVariable(iName.substring(pos + 1));
+    }
+
+    final String name;
+    pos = iName.indexOf("[");
+    if (pos > -1)
+      name = iName.substring(0, pos);
+    else
+      name = iName;
+
     Object result = null;
 
-    if (inherited != null && !inherited.isEmpty())
-      for (OCommandContext in : inherited) {
-        result = in.getVariable(iName);
-        if (result != null)
-          break;
-      }
+    if (variables != null && variables.containsKey(name))
+      result = variables.get(name);
+    else if (child != null)
+      result = child.getVariable(name);
 
-    if (variables != null && variables.containsKey(iName))
-      result = variables.get(iName);
+    if (pos > -1)
+      result = ODocumentHelper.getFieldValue(result, iName);
 
     return result;
   }
 
-  public void setVariable(final String iName, final Object iValue) {
+  public OCommandContext setVariable(final String iName, final Object iValue) {
     init();
     variables.put(iName, iValue);
+    return this;
   }
 
   public long updateMetric(final String iName, final long iValue) {
@@ -71,10 +87,8 @@ public class OBasicCommandContext implements OCommandContext {
    */
   public Map<String, Object> getVariables() {
     final HashMap<String, Object> map = new HashMap<String, Object>();
-    if (inherited != null && !inherited.isEmpty())
-      for (OCommandContext in : inherited)
-        map.putAll(in.getVariables());
-
+    if (child != null)
+      map.putAll(child.getVariables());
     if (variables != null)
       map.putAll(variables);
     return map;
@@ -85,18 +99,30 @@ public class OBasicCommandContext implements OCommandContext {
    * 
    * @return
    */
-  public OCommandContext merge(final OCommandContext iContext) {
-    if (iContext == null)
-      return this;
+  public OCommandContext setChild(final OCommandContext iContext) {
+    if (iContext == null) {
+      // REMOVE IT
+      child.setParent(null);
+      child = null;
 
-    if (inherited != null) {
-      if (!inherited.contains(iContext))
-        inherited.add(iContext);
-    } else {
-      inherited = new ArrayList<OCommandContext>();
-      inherited.add(iContext);
+    } else if (child != iContext) {
+      // ADD IT
+      // if (child != null)
+      // throw new IllegalStateException("Current context already has a child context");
+
+      child = iContext;
+      iContext.setParent(this);
     }
+    return this;
+  }
 
+  public OCommandContext setParent(final OCommandContext iParentContext) {
+    if (parent != iParentContext) {
+      // if (parent != null)
+      // throw new IllegalStateException("Current context already has a parent context");
+
+      parent = iParentContext;
+    }
     return this;
   }
 
@@ -114,7 +140,8 @@ public class OBasicCommandContext implements OCommandContext {
     return recordMetrics;
   }
 
-  public void setRecordingMetrics(boolean recordMetrics) {
+  public OCommandContext setRecordingMetrics(boolean recordMetrics) {
     this.recordMetrics = recordMetrics;
+    return this;
   }
 }

@@ -18,12 +18,15 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,10 +40,12 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
@@ -72,7 +77,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
 
   protected OSQLAsynchQuery<ORecordSchemaAware<?>> request;
+  protected OSQLTarget                             parsedTarget;
   protected OSQLFilter                             compiledFilter;
+  protected Map<String, String>                    let                = null;
   protected Iterable<? extends OIdentifiable>      target;
   protected List<OIdentifiable>                    tempResult;
   protected int                                    resultCount;
@@ -126,20 +133,21 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    */
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
     parameters = iArgs;
+    if (parsedTarget == null)
+      return true;
 
-    if (iArgs != null && iArgs.size() > 0) {
+    if (iArgs != null && iArgs.size() > 0 && compiledFilter != null )
       compiledFilter.bindParameters(iArgs);
-    }
 
     if (target == null)
-      if (compiledFilter.getTargetClasses() != null)
+      if (parsedTarget.getTargetClasses() != null)
         searchInClasses();
-      else if (compiledFilter.getTargetClusters() != null)
+      else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
-      else if (compiledFilter.getTargetRecords() != null)
-        target = compiledFilter.getTargetRecords();
-      else if (compiledFilter.getTargetVariable() != null) {
-        final Object var = getContext().getVariable(compiledFilter.getTargetVariable());
+      else if (parsedTarget.getTargetRecords() != null)
+        target = parsedTarget.getTargetRecords();
+      else if (parsedTarget.getTargetVariable() != null) {
+        final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
         if (var == null)
           return true;
         else if (var instanceof OIdentifiable) {
@@ -182,6 +190,24 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         return false;
     }
     return true;
+  }
+
+  protected void parseLet() {
+    let = new LinkedHashMap<String, String>();
+
+    boolean stop = false;
+    while (!stop) {
+      parserNextWord(false);
+      final String letName = parserGetLastWord();
+
+      parserOptionalKeyword("=");
+
+      parserNextWord(false, " =><,\r\n");
+      final String letValue = parserGetLastWord();
+
+      let.put(letName, letValue);
+      stop = parserGetLastSeparator() == ' ';
+    }
   }
 
   /**
@@ -249,7 +275,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (iRecord instanceof ORecordSchemaAware<?>) {
       // CHECK THE TARGET CLASS
       final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
-      Map<OClass, String> targetClasses = compiledFilter.getTargetClasses();
+      Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
         for (OClass targetClass : targetClasses.keySet()) {
@@ -260,11 +286,42 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       }
     }
 
+    return evaluateRecord(iRecord);
+  }
+
+  protected boolean evaluateRecord(final ORecord<?> iRecord) {
+    assignLetClauses(iRecord);
+    if (compiledFilter == null)
+      return true;
     return compiledFilter.evaluate(iRecord, context);
   }
 
+  protected void assignLetClauses(final ORecord<?> iRecord) {
+    if (let != null && !let.isEmpty()) {
+      // BIND CONTEXT VARIABLES
+      for (Entry<String, String> entry : let.entrySet()) {
+        String varName = entry.getKey();
+        if (varName.startsWith("$"))
+          varName = varName.substring(1);
+
+        Object varValue;
+        final String varValueAsString = entry.getValue().trim();
+        if (varValueAsString.startsWith("(")) {
+          final OSQLSynchQuery<Object> subQuery = new OSQLSynchQuery<Object>(varValueAsString.substring(1,
+              varValueAsString.length() - 1));
+          subQuery.setContext(context);
+          subQuery.getContext().setVariable("CURRENT", iRecord);
+          varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
+        } else
+          varValue = ODocumentHelper.getFieldValue(iRecord, varValueAsString);
+
+        context.setVariable(varName, varValue);
+      }
+    }
+  }
+
   protected void searchInClasses() {
-    final OClass cls = compiledFilter.getTargetClasses().keySet().iterator().next();
+    final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
@@ -279,7 +336,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final ODatabaseRecord database = getDatabase();
 
     final Set<Integer> clusterIds = new HashSet<Integer>();
-    for (String clusterName : compiledFilter.getTargetClusters().keySet()) {
+    for (String clusterName : parsedTarget.getTargetClusters().keySet()) {
       if (clusterName == null || clusterName.length() == 0)
         throw new OCommandExecutionException("No cluster or schema class selected in query");
 
@@ -426,8 +483,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final ORID beginRange;
     final ORID endRange;
 
-    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-    if (rootCondition == null) {
+    final OSQLFilterCondition rootCondition = compiledFilter == null ? null : compiledFilter.getRootCondition();
+    if (compiledFilter == null || rootCondition == null) {
       if (request instanceof OSQLSynchQuery)
         beginRange = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
       else

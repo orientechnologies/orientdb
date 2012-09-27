@@ -22,19 +22,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
-public class OTraverseContext implements OCommandContext {
-  private OCommandContext                   nestedStack;
+public class OTraverseContext extends OBasicCommandContext {
   private Set<ORID>                         history = new HashSet<ORID>();
   private List<OTraverseAbstractProcess<?>> stack   = new ArrayList<OTraverseAbstractProcess<?>>();
   private int                               depth   = -1;
 
   public void push(final OTraverseAbstractProcess<?> iProcess) {
     stack.add(iProcess);
+  }
+
+  public Map<String, Object> getVariables() {
+    final HashMap<String, Object> map = new HashMap<String, Object>();
+    map.put("depth", depth);
+    map.put("path", getPath());
+    map.put("stack", stack);
+    // DELEGATE
+    map.putAll(super.getVariables());
+    return map;
+  }
+
+  public Object getVariable(final String iName) {
+    final String name = iName.trim().toUpperCase();
+
+    if ("DEPTH".startsWith(name))
+      return depth;
+    else if (name.startsWith("PATH"))
+      return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
+    else if (name.startsWith("STACK"))
+      return ODocumentHelper.getFieldValue(stack, iName.substring("STACK".length()));
+    else if (name.startsWith("HISTORY"))
+      return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
+    else
+      // DELEGATE
+      return super.getVariable(iName);
   }
 
   public OTraverseAbstractProcess<?> pop() {
@@ -71,52 +96,6 @@ public class OTraverseContext implements OCommandContext {
     return --depth;
   }
 
-  public Object getVariable(final String iName) {
-    final String name = iName.trim().toUpperCase();
-
-    if ("DEPTH".startsWith(name))
-      return depth;
-    else if (name.startsWith("PATH"))
-      return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
-    else if (name.startsWith("STACK"))
-      return ODocumentHelper.getFieldValue(stack, iName.substring("STACK".length()));
-    else if (name.startsWith("HISTORY"))
-      return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
-    else if (nestedStack != null)
-      // DELEGATE
-      return nestedStack.getVariable(iName);
-    return null;
-  }
-
-  public void setVariable(final String iName, final Object iValue) {
-    if (nestedStack != null)
-      // DELEGATE
-      nestedStack.setVariable(iName, iValue);
-  }
-
-  public long updateMetric(final String iName, final long iValue) {
-    if (nestedStack != null)
-      // DELEGATE
-      return nestedStack.updateMetric(iName, iValue);
-    return -1;
-  }
-
-  public Map<String, Object> getVariables() {
-    final HashMap<String, Object> map = new HashMap<String, Object>();
-    map.put("depth", depth);
-    map.put("path", getPath());
-    map.put("stack", stack);
-    if (nestedStack != null)
-      // DELEGATE
-      map.putAll(nestedStack.getVariables());
-    return map;
-  }
-
-  public OCommandContext merge(final OCommandContext context) {
-    nestedStack = context;
-    return this;
-  }
-
   public String getPath() {
     final StringBuilder buffer = new StringBuilder();
     for (OTraverseAbstractProcess<?> process : stack) {
@@ -129,19 +108,5 @@ public class OTraverseContext implements OCommandContext {
       }
     }
     return buffer.toString();
-  }
-
-  @Override
-  public String toString() {
-    return getVariables().toString();
-  }
-
-  public boolean isRecordingMetrics() {
-    return nestedStack != null ? nestedStack.isRecordingMetrics() : false;
-  }
-
-  public void setRecordingMetrics(boolean recordMetrics) {
-    if (nestedStack != null)
-      nestedStack.setRecordingMetrics(recordMetrics);
   }
 }

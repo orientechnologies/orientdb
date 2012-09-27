@@ -26,11 +26,13 @@ import java.util.Map;
 public interface OCommandContext {
   public Object getVariable(final String iName);
 
-  public void setVariable(final String iName, final Object iValue);
+  public OCommandContext setVariable(final String iName, final Object iValue);
 
   public Map<String, Object> getVariables();
 
-  public OCommandContext merge(OCommandContext context);
+  public OCommandContext setParent(OCommandContext iParentContext);
+
+  public OCommandContext setChild(OCommandContext context);
 
   /**
    * Updates a counter. Used to record metrics.
@@ -45,5 +47,5 @@ public interface OCommandContext {
 
   public boolean isRecordingMetrics();
 
-  public void setRecordingMetrics(boolean recordMetrics);
+  public OCommandContext setRecordingMetrics(boolean recordMetrics);
 }

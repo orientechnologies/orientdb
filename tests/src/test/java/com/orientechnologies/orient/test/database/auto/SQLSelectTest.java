@@ -1316,6 +1316,18 @@ public class SQLSelectTest {
   }
 
   @Test
+  public void subQueryNoFrom() {
+    List<ODocument> result2 = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select $names let $names = (select flatten( addresses.city ) as city from Account where addresses.size() > 0 )"))
+        .execute();
+
+    Assert.assertTrue(result2.size() != 0);
+    Assert.assertTrue(((ODocument) result2.get(0)).field("$names") instanceof Collection<?>);
+    Assert.assertFalse(((Collection<?>) ((ODocument) result2.get(0)).field("$names")).isEmpty());
+  }
+
+  @Test
   public void queryOrderByWithLimit() {
 
     OSchema schema = database.getMetadata().getSchema();
