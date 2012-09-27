@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1401,5 +1402,38 @@ public class SQLSelectTest {
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;
+  }
+
+  @Test
+  public void testSelectFromListParameter() {
+
+    OGraphDatabase db = new OGraphDatabase("memory:test");
+    db.create();
+
+    OClass placeClass = db.createVertexType("Place");
+    placeClass.createProperty("id", OType.STRING);
+    placeClass.createProperty("descr", OType.STRING);
+    placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
+
+    ODocument odoc = new ODocument("Place");
+    odoc.field("id", "adda");
+    odoc.field("descr", "Adda");
+    db.save(odoc);
+
+    odoc = new ODocument("Place");
+    odoc.field("id", "lago_di_como");
+    odoc.field("descr", "Lago di Como");
+    db.save(odoc);
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    List<String> inputValues = new ArrayList<String>();
+    inputValues.add("lago_di_como");
+    inputValues.add("lecco");
+    params.put("place", inputValues);
+
+    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from place where id in :place").execute(params);
+    Assert.assertEquals(1, result.size());
+
+    db.close();
   }
 }

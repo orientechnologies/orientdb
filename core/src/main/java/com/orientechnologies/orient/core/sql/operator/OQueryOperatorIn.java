@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
@@ -109,7 +110,15 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       return null;
 
     if (indexDefinition.getParamCount() == 1) {
-      final List<Object> inParams = (List<Object>) keyParams.get(0);
+      final Object inKeyValue = keyParams.get(0);
+      final List<Object> inParams;
+      if (inKeyValue instanceof List<?>)
+        inParams = (List<Object>) inKeyValue;
+      else if (inKeyValue instanceof OSQLFilterItem)
+        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, iContext);
+      else
+        throw new IllegalArgumentException("Key is not valid");
+      
       final List<Object> inKeys = new ArrayList<Object>();
 
       boolean containsNotCompatibleKey = false;
