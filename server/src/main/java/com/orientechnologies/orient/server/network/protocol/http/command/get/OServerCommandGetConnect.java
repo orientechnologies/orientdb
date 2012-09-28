@@ -17,8 +17,10 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -102,15 +104,20 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
       if (db.getMetadata().getSchema().getClasses() != null) {
         json.beginCollection(1, true, "classes");
-        Set<String> exportedNames = new HashSet<String>();
-        for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-          if (!exportedNames.contains(cls.getName()))
-            try {
-              exportClass(db, json, cls);
-              exportedNames.add(cls.getName());
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
-            }
+        List<String> classNames = new ArrayList<String>();
+
+        for (OClass cls : db.getMetadata().getSchema().getClasses())
+          classNames.add(cls.getName());
+        Collections.sort(classNames);
+
+        for (String className : classNames) {
+          final OClass cls = db.getMetadata().getSchema().getClass(className);
+
+          try {
+            exportClass(db, json, cls);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+          }
         }
         json.endCollection(1, true);
       }
