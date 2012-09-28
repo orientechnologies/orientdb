@@ -382,19 +382,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    */
   @Override
   public <RET extends ODocumentWrapper> RET reload() {
-    getDatabase().getStorage().callInLock(new Callable<Void>() {
+    lock.acquireExclusiveLock();
+    try {
+      
+      getDatabase().getStorage().callInLock(new Callable<Void>() {
 
-      public Void call() throws Exception {
-        lock.acquireExclusiveLock();
-        try {
+        public Void call() throws Exception {
           reload(null);
-        } finally {
-          lock.releaseExclusiveLock();
+          return null;
         }
-
-        return null;
-      }
-    }, false);
+      }, false);
+      
+    } finally {
+      lock.releaseExclusiveLock();
+    }
 
     return (RET) this;
   }
