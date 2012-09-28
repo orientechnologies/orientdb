@@ -182,7 +182,7 @@ public class OServer {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeDeactivate();
 
-    OLogManager.instance().info(this, "OrientDB Server is shutdowning...");
+    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
 
     try {
       Orient.instance().shutdown();
