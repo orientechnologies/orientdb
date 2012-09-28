@@ -26,32 +26,34 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  * @author Luca Garulli
  */
 public class OUserTrigger extends ODocumentHookAbstract {
+  public OUserTrigger() {
+    setIncludeClasses("OUser");
+  }
 
-	@Override
-	public boolean onRecordBeforeCreate(ODocument iDocument) {
-		return encodePassword(iDocument);
-	}
+  @Override
+  public boolean onRecordBeforeCreate(ODocument iDocument) {
+    return encodePassword(iDocument);
+  }
 
-	@Override
-	public boolean onRecordBeforeUpdate(final ODocument iDocument) {
-		return encodePassword(iDocument);
-	}
+  @Override
+  public boolean onRecordBeforeUpdate(final ODocument iDocument) {
+    return encodePassword(iDocument);
+  }
 
-	private boolean encodePassword(final ODocument iDocument) {
-		if ("OUser".equals(iDocument.getClassName())) {
-			if (iDocument.field("name") == null)
-				throw new OSecurityException("User name not found");
+  private boolean encodePassword(final ODocument iDocument) {
+    if (iDocument.field("name") == null)
+      throw new OSecurityException("User name not found");
 
-			final String password = (String) iDocument.field("password");
+    final String password = (String) iDocument.field("password");
 
-			if (password == null)
-				throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+    if (password == null)
+      throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
 
-			if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
-				iDocument.field("password", OUser.encryptPassword(password));
-				return true;
-			}
-		}
-		return false;
-	}
+    if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
+      iDocument.field("password", OUser.encryptPassword(password));
+      return true;
+    }
+
+    return false;
+  }
 }

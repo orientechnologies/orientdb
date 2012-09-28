@@ -27,6 +27,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @see ORecordHook
  */
 public abstract class ODocumentHookAbstract implements ORecordHook {
+  private String[] includeClasses;
+  private String[] excludeClasses;
+
+  protected ODocumentHookAbstract() {
+  }
+
   /**
    * It's called just before to create the new document.
    * 
@@ -141,6 +147,9 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     final ODocument document = (ODocument) iRecord;
 
+    if (!filterBySchemaClass(document))
+      return false;
+
     switch (iType) {
     case BEFORE_CREATE:
       return onRecordBeforeCreate(document);
@@ -183,8 +192,58 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       onRecordDeleteFailed(document);
       break;
 
+    default:
+      throw new IllegalStateException("Hook method " + iType + " is not managed");
     }
 
     return false;
+  }
+
+  public String[] getIncludeClasses() {
+    return includeClasses;
+  }
+
+  public ODocumentHookAbstract setIncludeClasses(final String... includeClasses) {
+    if (excludeClasses != null)
+      throw new IllegalStateException("Cannot include classes if exclude classes has been set");
+    this.includeClasses = includeClasses;
+    return this;
+  }
+
+  public String[] getExcludeClasses() {
+    return excludeClasses;
+  }
+
+  public ODocumentHookAbstract setExcludeClasses(final String... excludeClasses) {
+    if (includeClasses != null)
+      throw new IllegalStateException("Cannot exclude classes if include classes has been set");
+    this.excludeClasses = excludeClasses;
+    return this;
+  }
+
+  protected boolean filterBySchemaClass(final ODocument iDocument) {
+    final String clazz = iDocument.getClassName();
+
+    if (includeClasses != null) {
+      if (clazz == null)
+        return false;
+
+      // FILTER BY CLASSES
+      for (String cls : includeClasses)
+        if (cls.equals(clazz))
+          return true;
+      return false;
+    }
+
+    if (excludeClasses != null) {
+      if (clazz == null)
+        return false;
+
+      // FILTER BY CLASSES
+      for (String cls : excludeClasses)
+        if (cls.equals(clazz))
+          return false;
+    }
+    return true;
   }
 }
