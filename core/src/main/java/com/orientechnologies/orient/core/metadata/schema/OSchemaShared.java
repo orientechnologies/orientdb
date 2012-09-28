@@ -60,7 +60,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private final OSharedResourceAdaptiveExternal lock                   = new OSharedResourceAdaptiveExternal(
                                                                            OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                                .getValueAsBoolean(),
-                                                                           0, true);
+                                                                           1000, true);
 
   public OSchemaShared(final int schemaClusterId) {
     super(new ODocument());
