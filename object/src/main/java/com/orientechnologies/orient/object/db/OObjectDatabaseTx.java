@@ -207,7 +207,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public <RET> RET attachAndSave(final Object iPojo) {
     attach(iPojo);
-    return save(iPojo);
+    return (RET) save(iPojo);
   }
 
   @Override
