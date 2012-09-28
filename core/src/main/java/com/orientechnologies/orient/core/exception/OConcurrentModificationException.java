@@ -36,7 +36,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
   private ORID                rid;
   private int                 databaseVersion;
   private int                 recordVersion;
-private int recordOperation;
+  private int                 recordOperation;
 
   /**
    * Default constructor for OFastConcurrentModificationException
@@ -61,8 +61,9 @@ private int recordOperation;
     recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
   }
 
-  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion, final int iRecordOperation) {
-	if (OFastConcurrentModificationException.enabled())
+  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion,
+      final int iRecordOperation) {
+    if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
     rid = iRID;
@@ -84,12 +85,16 @@ private int recordOperation;
   }
 
   public String getMessage() {
-    StringBuilder sb = new StringBuilder();
+    final String operation = ORecordOperation.getName(recordOperation);
+
+    final StringBuilder sb = new StringBuilder();
     sb.append("Cannot ");
-    sb.append(ORecordOperation.getName(recordOperation));
+    sb.append(operation);
     sb.append(" the record ");
     sb.append(rid);
-    sb.append(" because the version is not the latest. Probably you are deleting an old record or it has been modified by another user (db=v");
+    sb.append(" because the version is not the latest. Probably you are ");
+    sb.append(operation.toLowerCase().substring(operation.length() - 1));
+    sb.append("ing an old record or it has been modified by another user (db=v");
     sb.append(databaseVersion);
     sb.append(" your=v");
     sb.append(recordVersion);
