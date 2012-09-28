@@ -20,10 +20,11 @@ package com.orientechnologies.orient.core.db.object;
  * @author luca.molino
  * 
  */
-public interface OLazyObjectMultivalueElement {
+public interface OLazyObjectMultivalueElement<T> {
 
-	public void detach();
+  public void detach(boolean nonProxiedInstance);
 
-	public void detachAll(boolean nonProxiedInstance);
+  public void detachAll(boolean nonProxiedInstance);
 
+  public T getNonOrientInstance();
 }

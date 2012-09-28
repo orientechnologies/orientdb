@@ -41,8 +41,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLazyObjectMultivalueElement,
-    Serializable {
+public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSetInterface<TYPE>,
+    OLazyObjectMultivalueElement<Set<TYPE>>, Serializable {
   private static final long        serialVersionUID = 1793910544017627989L;
 
   private final ProxyObject        sourceRecord;
@@ -218,8 +218,19 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     convertAll();
   }
 
+  public void detach(boolean nonProxiedInstance) {
+    convertAll();
+  }
+
   public void detachAll(boolean nonProxiedInstance) {
     convertAndDetachAll(nonProxiedInstance);
+  }
+
+  @Override
+  public Set<TYPE> getNonOrientInstance() {
+    Set<TYPE> set = new HashSet<TYPE>();
+    set.addAll(this);
+    return set;
   }
 
   protected void convertAll() {

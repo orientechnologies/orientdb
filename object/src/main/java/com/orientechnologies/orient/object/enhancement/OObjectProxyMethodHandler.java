@@ -121,11 +121,15 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detach(Object self) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+  public void detach(Object self, boolean nonProxiedInstance) throws NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException {
     for (String fieldName : doc.fieldNames()) {
       Object value = getValue(self, fieldName, false, null);
-      if (value instanceof OLazyObjectMultivalueElement)
-        ((OLazyObjectMultivalueElement) value).detach();
+      if (value instanceof OLazyObjectMultivalueElement) {
+        ((OLazyObjectMultivalueElement<?>) value).detach(nonProxiedInstance);
+        if (nonProxiedInstance)
+          value = ((OLazyObjectMultivalueElement<?>) value).getNonOrientInstance();
+      }
       OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass()), self, value);
     }
     OObjectEntitySerializer.setIdField(self.getClass(), self, doc.getIdentity());
@@ -147,9 +151,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       Field field = OObjectEntitySerializer.getField(fieldName, self.getClass());
       if (field != null) {
         Object value = getValue(self, fieldName, false, null);
-        if (value instanceof OLazyObjectMultivalueElement)
-          ((OLazyObjectMultivalueElement) value).detachAll(nonProxiedInstance);
-        else if (value instanceof Proxy) {
+        if (value instanceof OLazyObjectMultivalueElement) {
+          ((OLazyObjectMultivalueElement<?>) value).detachAll(nonProxiedInstance);
+          if (nonProxiedInstance)
+            value = ((OLazyObjectMultivalueElement<?>) value).getNonOrientInstance();
+        } else if (value instanceof Proxy) {
           OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) value).getHandler();
           if (nonProxiedInstance) {
             value = OObjectEntitySerializer.getNonProxiedInstance(value);
@@ -468,7 +474,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       }
     }
     if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
-      ((OLazyObjectMultivalueElement) value).detach();
+      ((OLazyObjectMultivalueElement) value).detach(false);
     return value;
   }
 

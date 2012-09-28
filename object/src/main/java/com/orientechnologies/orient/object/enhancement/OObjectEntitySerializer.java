@@ -184,7 +184,7 @@ public class OObjectEntitySerializer {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        handler.detach(o);
+        handler.detach(o, returnNonProxiedInstance);
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
       } catch (IllegalAccessException e) {

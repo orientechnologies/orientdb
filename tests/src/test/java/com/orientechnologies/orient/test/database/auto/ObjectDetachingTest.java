@@ -560,8 +560,11 @@ public class ObjectDetachingTest {
 
     Assert.assertEquals(loadedJavaObj.enumSet.size(), 2);
     it = loadedJavaObj.enumSet.iterator();
-    Assert.assertEquals(it.next(), EnumTest.ENUM1);
-    Assert.assertEquals(it.next(), EnumTest.ENUM3);
+    EnumTest next = (EnumTest) it.next();
+    Assert.assertTrue(next.equals(EnumTest.ENUM1) || next.equals(EnumTest.ENUM3));
+    next = (EnumTest) it.next();
+    Assert.assertTrue(next.equals(EnumTest.ENUM1) || next.equals(EnumTest.ENUM3));
+    ;
 
     Assert.assertEquals(loadedJavaObj.enumMap.size(), 2);
     Assert.assertEquals(loadedJavaObj.enumMap.get("1"), EnumTest.ENUM2);
@@ -654,8 +657,10 @@ public class ObjectDetachingTest {
 
     Assert.assertEquals(loadedJavaObj.enumSet.size(), 2);
     it = loadedJavaObj.enumSet.iterator();
-    Assert.assertEquals(it.next(), EnumTest.ENUM1);
-    Assert.assertEquals(it.next(), EnumTest.ENUM3);
+    EnumTest next = (EnumTest) it.next();
+    Assert.assertTrue(next.equals(EnumTest.ENUM1) || next.equals(EnumTest.ENUM3));
+    next = (EnumTest) it.next();
+    Assert.assertTrue(next.equals(EnumTest.ENUM1) || next.equals(EnumTest.ENUM3));
 
     Assert.assertEquals(loadedJavaObj.enumMap.size(), 2);
     Assert.assertEquals(loadedJavaObj.enumMap.get("1"), EnumTest.ENUM2);

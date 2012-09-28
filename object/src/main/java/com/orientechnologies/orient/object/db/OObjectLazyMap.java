@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
-public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Serializable, OLazyObjectMultivalueElement,
-    OLazyObjectMapInterface<TYPE> {
+public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Serializable,
+    OLazyObjectMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
   private static final long                serialVersionUID = -7071023580831419958L;
 
   private final ProxyObject                sourceRecord;
@@ -218,9 +218,21 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     convertAll();
   }
 
+  public void detach(boolean nonProxiedInstance) {
+    convertAll();
+  }
+
   public void detachAll(boolean nonProxiedInstance) {
     convertAndDetachAll(nonProxiedInstance);
 
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public Map<Object, TYPE> getNonOrientInstance() {
+    Map<Object, TYPE> map = new HashMap<Object, TYPE>();
+    map.putAll((Map<Object, TYPE>) this);
+    return map;
   }
 
   /**

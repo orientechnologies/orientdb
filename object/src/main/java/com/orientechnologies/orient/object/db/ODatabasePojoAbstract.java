@@ -55,454 +55,454 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-		ODatabaseSchemaAware<T> {
-	protected IdentityHashMap<Object, ODocument>	objects2Records	= new IdentityHashMap<Object, ODocument>();
-	protected IdentityHashMap<ODocument, T>				records2Objects	= new IdentityHashMap<ODocument, T>();
-	protected HashMap<ORID, ODocument>						rid2Records			= new HashMap<ORID, ODocument>();
-	protected boolean															retainObjects		= true;
-
-	public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
-		super(iDatabase);
-		iDatabase.setDatabaseOwner(this);
-	}
-
-	public abstract ODocument pojo2Stream(final T iPojo, final ODocument record);
-
-	public abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
-
-	@Override
-	public void close() {
-		objects2Records.clear();
-		records2Objects.clear();
-		rid2Records.clear();
-		super.close();
-	}
-
-	public OTransaction getTransaction() {
-		return underlying.getTransaction();
-	}
-
-	public ODatabaseComplex<T> begin() {
-		return (ODatabaseComplex<T>) underlying.begin();
-	}
-
-	public ODatabaseComplex<T> begin(final TXTYPE iType) {
-		return (ODatabaseComplex<T>) underlying.begin(iType);
-	}
-
-	public ODatabaseComplex<T> begin(final OTransaction iTx) {
-		return (ODatabaseComplex<T>) underlying.begin(iTx);
-	}
-
-	public ODatabaseComplex<T> commit() {
-		clearNewEntriesFromCache();
-
-		underlying.commit();
-
-		return this;
-	}
-
-	public ODatabaseComplex<T> rollback() {
-		clearNewEntriesFromCache();
-
-		underlying.rollback();
-
-		final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
-
-		ORecord<?> record;
-		Object object;
-		for (ORID rid : rids) {
-			if (rid.isTemporary()) {
-				record = rid2Records.remove(rid);
-				if (record != null) {
-					object = records2Objects.remove(record);
-					if (object != null) {
-						objects2Records.remove(object);
-					}
-				}
-			}
-		}
-
-		return this;
-	}
-
-	/**
-	 * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	public void setDirty(final Object iPojo) {
-		if (iPojo == null)
-			return;
-
-		final ODocument record = getRecordByUserObject(iPojo, false);
-		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
-
-		record.setDirty();
-	}
-
-	/**
-	 * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
-	 * not dirty.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	public void unsetDirty(final Object iPojo) {
-		if (iPojo == null)
-			return;
-
-		final ODocument record = getRecordByUserObject(iPojo, false);
-		if (record == null)
-			return;
-
-		record.unsetDirty();
-	}
-
-	public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
-		underlying.setInternal(attribute, iValue);
-	}
-
-	/**
-	 * Returns the version number of the object. Version starts from 0 assigned on creation.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	public int getVersion(final Object iPojo) {
-		final ODocument record = getRecordByUserObject(iPojo, false);
-
-		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
-
-		return record.getVersion();
-	}
-
-	/**
-	 * Returns the object unique identity.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	public ORID getIdentity(final Object iPojo) {
-		final ODocument record = getRecordByUserObject(iPojo, false);
-		if (record == null)
-			throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
-
-		return record.getIdentity();
-	}
-
-	public OUser getUser() {
-		return underlying.getUser();
-	}
-
-	public OMetadata getMetadata() {
-		return underlying.getMetadata();
-	}
-
-	/**
-	 * Returns a wrapped OCommandRequest instance to catch the result-set by converting it before to return to the user application.
-	 */
-	public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
-		return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
-	}
-
-	public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
-		checkOpeness();
-
-		convertParameters(iArgs);
-
-		final List<ODocument> result = underlying.query(iCommand, iArgs);
-
-		if (result == null)
-			return null;
-
-		final List<Object> resultPojo = new ArrayList<Object>();
-		Object obj;
-		for (OIdentifiable doc : result) {
-			if (doc instanceof ODocument) {
-				// GET THE ASSOCIATED DOCUMENT
-				if (((ODocument) doc).getClassName() == null)
-					obj = doc;
-				else
-					obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
-
-				resultPojo.add(obj);
-			} else {
-				resultPojo.add(doc);
-			}
-
-		}
-
-		return (RET) resultPojo;
-	}
-
-	public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
-		underlying.delete((ODocument) iRecord);
-		return this;
-	}
-
-	public ODatabaseComplex<T> delete(final ORID iRID) {
-		underlying.delete(iRID);
-		return this;
-	}
-
-	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
-		underlying.registerHook(iHookImpl);
-		return (DBTYPE) this;
-	}
-
-	public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
-		return underlying.callbackHooks(iType, iObject);
-	}
-
-	public Set<ORecordHook> getHooks() {
-		return underlying.getHooks();
-	}
-
-	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
-		underlying.unregisterHook(iHookImpl);
-		return (DBTYPE) this;
-	}
-
-	public boolean isMVCC() {
-		return underlying.isMVCC();
-	}
-
-	public <DBTYPE extends ODatabaseComplex<?>> DBTYPE setMVCC(final boolean iMvcc) {
-		underlying.setMVCC(iMvcc);
-		return (DBTYPE) this;
-	}
-
-	/**
-	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
-	 * enabled.
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #isRetainObjects()
-	 */
-	public ODatabasePojoAbstract<T> setRetainObjects(final boolean iValue) {
-		retainObjects = iValue;
-		return this;
-	}
-
-	/**
-	 * Returns true if current configuration retains objects, otherwise false
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #setRetainObjects(boolean)
-	 */
-
-	public boolean isRetainObjects() {
-		return retainObjects;
-	}
-
-	public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
-		if (iPojo instanceof ODocument)
-			return (ODocument) iPojo;
-		else if (iPojo instanceof Proxy)
-			return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
-
-		ODocument record = objects2Records.get(iPojo);
-		if (record == null) {
-			// SEARCH BY RID
-			final ORID rid = OObjectSerializerHelper.getObjectID(this, iPojo);
-			if (rid != null && rid.isValid()) {
-				record = rid2Records.get(rid);
-				if (record == null)
-					// LOAD IT
-					record = underlying.load(rid);
-			} else if (iCreateIfNotAvailable) {
-				record = underlying.newInstance(iPojo.getClass().getSimpleName());
-			} else {
-				return null;
-			}
-
-			registerUserObject(iPojo, record);
-		}
-
-		return record;
-	}
-
-	public boolean existsUserObjectByRID(ORID iRID) {
-		return rid2Records.containsKey(iRID);
-	}
-
-	public ODocument getRecordById(final ORID iRecordId) {
-		return iRecordId.isValid() ? rid2Records.get(iRecordId) : null;
-	}
-
-	public boolean isManaged(final Object iEntity) {
-		return objects2Records.containsKey(iEntity);
-	}
-
-	public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan) {
-		return getUserObjectByRecord(iRecord, iFetchPlan, true);
-	}
-
-	public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan, final boolean iCreate) {
-		if (!(iRecord instanceof ODocument))
-			return null;
-
-		// PASS FOR rid2Records MAP BECAUSE IDENTITY COULD BE CHANGED IF WAS NEW AND IN TX
-		ODocument record = rid2Records.get(iRecord.getIdentity());
-
-		if (record == null)
-			record = (ODocument) iRecord;
-
-		Object pojo = records2Objects.get(record);
-
-		if (pojo == null && iCreate) {
-			checkOpeness();
-
-			try {
-				if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-					record = (ODocument) record.load();
-
-				pojo = newInstance(record.getClassName());
-				registerUserObject(pojo, record);
-
-				stream2pojo(record, pojo, iFetchPlan);
-
-			} catch (Exception e) {
-				throw new OConfigurationException("Cannot retrieve pojo from record " + record, e);
-			}
-		}
-
-		return (T) pojo;
-	}
-
-	public void attach(final Object iPojo) {
-		checkOpeness();
-
-		final ODocument record = objects2Records.get(iPojo);
-		if (record != null)
-			return;
-
-		if (OObjectSerializerHelper.hasObjectID(iPojo)) {
-		} else {
-			throw new OObjectNotDetachedException("Cannot attach a non-detached object");
-		}
-	}
-
-	public <RET> RET detach(final Object iPojo) {
-		checkOpeness();
-
-		for (Field field : iPojo.getClass().getDeclaredFields()) {
-			final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-			if (value instanceof OLazyObjectMultivalueElement)
-				((OLazyObjectMultivalueElement) value).detach();
-		}
-
-		return (RET) iPojo;
-	}
-
-	/**
-	 * Register a new POJO
-	 */
-	public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
-		if (!(iRecord instanceof ODocument))
-			return;
-
-		final ODocument doc = (ODocument) iRecord;
-
-		if (retainObjects) {
-			if (iObject != null) {
-				objects2Records.put(iObject, doc);
-				records2Objects.put(doc, (T) iObject);
-
-				OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
-				OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
-			}
-
-			final ORID rid = iRecord.getIdentity();
-			if (rid.isValid())
-				rid2Records.put(rid, doc);
-		}
-	}
-
-	public void unregisterPojo(final T iObject, final ODocument iRecord) {
-		if (iObject != null)
-			objects2Records.remove(iObject);
-
-		if (iRecord != null) {
-			records2Objects.remove(iRecord);
-
-			final ORID rid = iRecord.getIdentity();
-			if (rid.isValid())
-				rid2Records.remove(rid);
-		}
-	}
-
-	protected void clearNewEntriesFromCache() {
-		for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext();) {
-			Entry<ORID, ODocument> entry = it.next();
-			if (entry.getKey().isNew()) {
-				it.remove();
-			}
-		}
-
-		for (Iterator<Entry<Object, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
-			Entry<Object, ODocument> entry = it.next();
-			if (entry.getValue().getIdentity().isNew()) {
-				it.remove();
-			}
-		}
-
-		for (Iterator<Entry<ODocument, T>> it = records2Objects.entrySet().iterator(); it.hasNext();) {
-			Entry<ODocument, T> entry = it.next();
-			if (entry.getKey().getIdentity().isNew()) {
-				it.remove();
-			}
-		}
-	}
-
-	/**
-	 * Converts an array of parameters: if a POJO is used, then replace it with its record id.
-	 * 
-	 * @param iArgs
-	 *          Array of parameters as Object
-	 * @see #convertParameter(Object)
-	 */
-	protected void convertParameters(final Object... iArgs) {
-		if (iArgs == null)
-			return;
-
-		// FILTER PARAMETERS
-		for (int i = 0; i < iArgs.length; ++i)
-			iArgs[i] = convertParameter(iArgs[i]);
-	}
-
-	/**
-	 * Convert a parameter: if a POJO is used, then replace it with its record id.
-	 * 
-	 * @param iParameter
-	 *          Parameter to convert, if applicable
-	 * @see #convertParameters(Object...)
-	 */
-	protected Object convertParameter(final Object iParameter) {
-		if (iParameter != null)
-			// FILTER PARAMETERS
-			if (iParameter instanceof Map<?, ?>) {
-				Map<String, Object> map = (Map<String, Object>) iParameter;
-
-				for (Entry<String, Object> e : map.entrySet()) {
-					map.put(e.getKey(), convertParameter(e.getValue()));
-				}
-
-			} else if (iParameter != null && iParameter.getClass().isEnum()) {
-				return ((Enum<?>) iParameter).name();
-			} else if (iParameter != null && !OType.isSimpleType(iParameter)) {
-				final ORID rid = getIdentity(iParameter);
-				if (rid != null && rid.isValid())
-					// REPLACE OBJECT INSTANCE WITH ITS RECORD ID
-					return rid;
-			}
-
-		return iParameter;
-	}
+    ODatabaseSchemaAware<T> {
+  protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
+  protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
+  protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
+  protected boolean                            retainObjects   = true;
+
+  public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+    iDatabase.setDatabaseOwner(this);
+  }
+
+  public abstract ODocument pojo2Stream(final T iPojo, final ODocument record);
+
+  public abstract Object stream2pojo(final ODocument record, final Object iPojo, final String iFetchPlan);
+
+  @Override
+  public void close() {
+    objects2Records.clear();
+    records2Objects.clear();
+    rid2Records.clear();
+    super.close();
+  }
+
+  public OTransaction getTransaction() {
+    return underlying.getTransaction();
+  }
+
+  public ODatabaseComplex<T> begin() {
+    return (ODatabaseComplex<T>) underlying.begin();
+  }
+
+  public ODatabaseComplex<T> begin(final TXTYPE iType) {
+    return (ODatabaseComplex<T>) underlying.begin(iType);
+  }
+
+  public ODatabaseComplex<T> begin(final OTransaction iTx) {
+    return (ODatabaseComplex<T>) underlying.begin(iTx);
+  }
+
+  public ODatabaseComplex<T> commit() {
+    clearNewEntriesFromCache();
+
+    underlying.commit();
+
+    return this;
+  }
+
+  public ODatabaseComplex<T> rollback() {
+    clearNewEntriesFromCache();
+
+    underlying.rollback();
+
+    final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
+
+    ORecord<?> record;
+    Object object;
+    for (ORID rid : rids) {
+      if (rid.isTemporary()) {
+        record = rid2Records.remove(rid);
+        if (record != null) {
+          object = records2Objects.remove(record);
+          if (object != null) {
+            objects2Records.remove(object);
+          }
+        }
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Sets as dirty a POJO. This is useful when you change the object and need to tell to the engine to treat as dirty.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public void setDirty(final Object iPojo) {
+    if (iPojo == null)
+      return;
+
+    final ODocument record = getRecordByUserObject(iPojo, false);
+    if (record == null)
+      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+
+    record.setDirty();
+  }
+
+  /**
+   * Sets as not dirty a POJO. This is useful when you change some other object and need to tell to the engine to treat this one as
+   * not dirty.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public void unsetDirty(final Object iPojo) {
+    if (iPojo == null)
+      return;
+
+    final ODocument record = getRecordByUserObject(iPojo, false);
+    if (record == null)
+      return;
+
+    record.unsetDirty();
+  }
+
+  public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
+    underlying.setInternal(attribute, iValue);
+  }
+
+  /**
+   * Returns the version number of the object. Version starts from 0 assigned on creation.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public int getVersion(final Object iPojo) {
+    final ODocument record = getRecordByUserObject(iPojo, false);
+
+    if (record == null)
+      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+
+    return record.getVersion();
+  }
+
+  /**
+   * Returns the object unique identity.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  public ORID getIdentity(final Object iPojo) {
+    final ODocument record = getRecordByUserObject(iPojo, false);
+    if (record == null)
+      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+
+    return record.getIdentity();
+  }
+
+  public OUser getUser() {
+    return underlying.getUser();
+  }
+
+  public OMetadata getMetadata() {
+    return underlying.getMetadata();
+  }
+
+  /**
+   * Returns a wrapped OCommandRequest instance to catch the result-set by converting it before to return to the user application.
+   */
+  public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
+    return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
+  }
+
+  public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
+    checkOpeness();
+
+    convertParameters(iArgs);
+
+    final List<ODocument> result = underlying.query(iCommand, iArgs);
+
+    if (result == null)
+      return null;
+
+    final List<Object> resultPojo = new ArrayList<Object>();
+    Object obj;
+    for (OIdentifiable doc : result) {
+      if (doc instanceof ODocument) {
+        // GET THE ASSOCIATED DOCUMENT
+        if (((ODocument) doc).getClassName() == null)
+          obj = doc;
+        else
+          obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
+
+        resultPojo.add(obj);
+      } else {
+        resultPojo.add(doc);
+      }
+
+    }
+
+    return (RET) resultPojo;
+  }
+
+  public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
+    underlying.delete((ODocument) iRecord);
+    return this;
+  }
+
+  public ODatabaseComplex<T> delete(final ORID iRID) {
+    underlying.delete(iRID);
+    return this;
+  }
+
+  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
+    underlying.registerHook(iHookImpl);
+    return (DBTYPE) this;
+  }
+
+  public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
+    return underlying.callbackHooks(iType, iObject);
+  }
+
+  public Set<ORecordHook> getHooks() {
+    return underlying.getHooks();
+  }
+
+  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
+    underlying.unregisterHook(iHookImpl);
+    return (DBTYPE) this;
+  }
+
+  public boolean isMVCC() {
+    return underlying.isMVCC();
+  }
+
+  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE setMVCC(final boolean iMvcc) {
+    underlying.setMVCC(iMvcc);
+    return (DBTYPE) this;
+  }
+
+  /**
+   * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
+   * enabled.
+   * 
+   * @param iValue
+   *          True to enable, false to disable it.
+   * @see #isRetainObjects()
+   */
+  public ODatabasePojoAbstract<T> setRetainObjects(final boolean iValue) {
+    retainObjects = iValue;
+    return this;
+  }
+
+  /**
+   * Returns true if current configuration retains objects, otherwise false
+   * 
+   * @param iValue
+   *          True to enable, false to disable it.
+   * @see #setRetainObjects(boolean)
+   */
+
+  public boolean isRetainObjects() {
+    return retainObjects;
+  }
+
+  public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
+    if (iPojo instanceof ODocument)
+      return (ODocument) iPojo;
+    else if (iPojo instanceof Proxy)
+      return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
+
+    ODocument record = objects2Records.get(iPojo);
+    if (record == null) {
+      // SEARCH BY RID
+      final ORID rid = OObjectSerializerHelper.getObjectID(this, iPojo);
+      if (rid != null && rid.isValid()) {
+        record = rid2Records.get(rid);
+        if (record == null)
+          // LOAD IT
+          record = underlying.load(rid);
+      } else if (iCreateIfNotAvailable) {
+        record = underlying.newInstance(iPojo.getClass().getSimpleName());
+      } else {
+        return null;
+      }
+
+      registerUserObject(iPojo, record);
+    }
+
+    return record;
+  }
+
+  public boolean existsUserObjectByRID(ORID iRID) {
+    return rid2Records.containsKey(iRID);
+  }
+
+  public ODocument getRecordById(final ORID iRecordId) {
+    return iRecordId.isValid() ? rid2Records.get(iRecordId) : null;
+  }
+
+  public boolean isManaged(final Object iEntity) {
+    return objects2Records.containsKey(iEntity);
+  }
+
+  public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan) {
+    return getUserObjectByRecord(iRecord, iFetchPlan, true);
+  }
+
+  public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan, final boolean iCreate) {
+    if (!(iRecord instanceof ODocument))
+      return null;
+
+    // PASS FOR rid2Records MAP BECAUSE IDENTITY COULD BE CHANGED IF WAS NEW AND IN TX
+    ODocument record = rid2Records.get(iRecord.getIdentity());
+
+    if (record == null)
+      record = (ODocument) iRecord;
+
+    Object pojo = records2Objects.get(record);
+
+    if (pojo == null && iCreate) {
+      checkOpeness();
+
+      try {
+        if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+          record = (ODocument) record.load();
+
+        pojo = newInstance(record.getClassName());
+        registerUserObject(pojo, record);
+
+        stream2pojo(record, pojo, iFetchPlan);
+
+      } catch (Exception e) {
+        throw new OConfigurationException("Cannot retrieve pojo from record " + record, e);
+      }
+    }
+
+    return (T) pojo;
+  }
+
+  public void attach(final Object iPojo) {
+    checkOpeness();
+
+    final ODocument record = objects2Records.get(iPojo);
+    if (record != null)
+      return;
+
+    if (OObjectSerializerHelper.hasObjectID(iPojo)) {
+    } else {
+      throw new OObjectNotDetachedException("Cannot attach a non-detached object");
+    }
+  }
+
+  public <RET> RET detach(final Object iPojo) {
+    checkOpeness();
+
+    for (Field field : iPojo.getClass().getDeclaredFields()) {
+      final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
+      if (value instanceof OLazyObjectMultivalueElement)
+        ((OLazyObjectMultivalueElement<?>) value).detach(false);
+    }
+
+    return (RET) iPojo;
+  }
+
+  /**
+   * Register a new POJO
+   */
+  public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
+    if (!(iRecord instanceof ODocument))
+      return;
+
+    final ODocument doc = (ODocument) iRecord;
+
+    if (retainObjects) {
+      if (iObject != null) {
+        objects2Records.put(iObject, doc);
+        records2Objects.put(doc, (T) iObject);
+
+        OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
+        OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
+      }
+
+      final ORID rid = iRecord.getIdentity();
+      if (rid.isValid())
+        rid2Records.put(rid, doc);
+    }
+  }
+
+  public void unregisterPojo(final T iObject, final ODocument iRecord) {
+    if (iObject != null)
+      objects2Records.remove(iObject);
+
+    if (iRecord != null) {
+      records2Objects.remove(iRecord);
+
+      final ORID rid = iRecord.getIdentity();
+      if (rid.isValid())
+        rid2Records.remove(rid);
+    }
+  }
+
+  protected void clearNewEntriesFromCache() {
+    for (Iterator<Entry<ORID, ODocument>> it = rid2Records.entrySet().iterator(); it.hasNext();) {
+      Entry<ORID, ODocument> entry = it.next();
+      if (entry.getKey().isNew()) {
+        it.remove();
+      }
+    }
+
+    for (Iterator<Entry<Object, ODocument>> it = objects2Records.entrySet().iterator(); it.hasNext();) {
+      Entry<Object, ODocument> entry = it.next();
+      if (entry.getValue().getIdentity().isNew()) {
+        it.remove();
+      }
+    }
+
+    for (Iterator<Entry<ODocument, T>> it = records2Objects.entrySet().iterator(); it.hasNext();) {
+      Entry<ODocument, T> entry = it.next();
+      if (entry.getKey().getIdentity().isNew()) {
+        it.remove();
+      }
+    }
+  }
+
+  /**
+   * Converts an array of parameters: if a POJO is used, then replace it with its record id.
+   * 
+   * @param iArgs
+   *          Array of parameters as Object
+   * @see #convertParameter(Object)
+   */
+  protected void convertParameters(final Object... iArgs) {
+    if (iArgs == null)
+      return;
+
+    // FILTER PARAMETERS
+    for (int i = 0; i < iArgs.length; ++i)
+      iArgs[i] = convertParameter(iArgs[i]);
+  }
+
+  /**
+   * Convert a parameter: if a POJO is used, then replace it with its record id.
+   * 
+   * @param iParameter
+   *          Parameter to convert, if applicable
+   * @see #convertParameters(Object...)
+   */
+  protected Object convertParameter(final Object iParameter) {
+    if (iParameter != null)
+      // FILTER PARAMETERS
+      if (iParameter instanceof Map<?, ?>) {
+        Map<String, Object> map = (Map<String, Object>) iParameter;
+
+        for (Entry<String, Object> e : map.entrySet()) {
+          map.put(e.getKey(), convertParameter(e.getValue()));
+        }
+
+      } else if (iParameter != null && iParameter.getClass().isEnum()) {
+        return ((Enum<?>) iParameter).name();
+      } else if (iParameter != null && !OType.isSimpleType(iParameter)) {
+        final ORID rid = getIdentity(iParameter);
+        if (rid != null && rid.isValid())
+          // REPLACE OBJECT INSTANCE WITH ITS RECORD ID
+          return rid;
+      }
+
+    return iParameter;
+  }
 }

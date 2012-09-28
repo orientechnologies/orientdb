@@ -22,6 +22,6 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
  * @author luca.molino
  * 
  */
-public interface OLazyObjectCustomSerializer extends OLazyObjectMultivalueElement {
+public interface OLazyObjectCustomSerializer<T> extends OLazyObjectMultivalueElement<T> {
 
 }

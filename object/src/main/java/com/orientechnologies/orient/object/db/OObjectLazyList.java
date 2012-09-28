@@ -38,8 +38,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 @SuppressWarnings({ "unchecked" })
-public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement,
-    Serializable {
+public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjectListInterface<TYPE>,
+    OLazyObjectMultivalueElement<List<TYPE>>, Serializable {
   private static final long         serialVersionUID = -1665952780303555865L;
   private ProxyObject               sourceRecord;
   private final List<OIdentifiable> recordList;
@@ -346,6 +346,10 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     convertAll();
   }
 
+  public void detach(boolean nonProxiedInstance) {
+    convertAll();
+  }
+
   protected void convertAll() {
     if (converted || !convertToRecord)
       return;
@@ -359,6 +363,13 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   public void setDirty() {
     if (sourceRecord != null)
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+  }
+
+  @Override
+  public List<TYPE> getNonOrientInstance() {
+    List<TYPE> list = new ArrayList<TYPE>();
+    list.addAll(this);
+    return list;
   }
 
   /**

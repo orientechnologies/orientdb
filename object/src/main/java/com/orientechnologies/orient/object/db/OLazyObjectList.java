@@ -33,226 +33,232 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Deprecated
 @SuppressWarnings({ "unchecked" })
-public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement, Serializable {
-	private static final long				serialVersionUID	= 289711963195698937L;
-	private ORecord<?>							sourceRecord;
-	private final ArrayList<Object>	list							= new ArrayList<Object>();
-	private String									fetchPlan;
-	private boolean									converted					= false;
-	private boolean									convertToRecord		= true;
+public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement<List<TYPE>>,
+    Serializable {
+  private static final long       serialVersionUID = 289711963195698937L;
+  private ORecord<?>              sourceRecord;
+  private final ArrayList<Object> list             = new ArrayList<Object>();
+  private String                  fetchPlan;
+  private boolean                 converted        = false;
+  private boolean                 convertToRecord  = true;
 
-	public OLazyObjectList() {
-	}
+  public OLazyObjectList() {
+  }
 
-	public OLazyObjectList(final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
-		this.sourceRecord = iSourceRecord;
-		if (iSourceList != null)
-			list.addAll(iSourceList);
-	}
+  public OLazyObjectList(final ORecord<?> iSourceRecord, final Collection<?> iSourceList) {
+    this.sourceRecord = iSourceRecord;
+    if (iSourceList != null)
+      list.addAll(iSourceList);
+  }
 
-	public OLazyObjectList(final ORecord<?> iSourceRecord) {
-		this.sourceRecord = iSourceRecord;
-	}
+  public OLazyObjectList(final ORecord<?> iSourceRecord) {
+    this.sourceRecord = iSourceRecord;
+  }
 
-	public Iterator<TYPE> iterator() {
-		return new OLazyObjectIterator<TYPE>(
-				(ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(),
-				convertToRecord);
-	}
+  public Iterator<TYPE> iterator() {
+    return new OLazyObjectIterator<TYPE>(
+        (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner(), sourceRecord, list.iterator(),
+        convertToRecord);
+  }
 
-	public boolean contains(final Object o) {
-		convertAll();
-		return list.contains(o);
-	}
+  public boolean contains(final Object o) {
+    convertAll();
+    return list.contains(o);
+  }
 
-	public boolean add(TYPE element) {
-		if (converted && element instanceof ORID)
-			converted = false;
-		setDirty();
-		return list.add(element);
-	}
+  public boolean add(TYPE element) {
+    if (converted && element instanceof ORID)
+      converted = false;
+    setDirty();
+    return list.add(element);
+  }
 
-	public void add(int index, TYPE element) {
-		if (converted && element instanceof ORID)
-			converted = false;
-		setDirty();
-		list.add(index, element);
-	}
+  public void add(int index, TYPE element) {
+    if (converted && element instanceof ORID)
+      converted = false;
+    setDirty();
+    list.add(index, element);
+  }
 
-	public TYPE get(final int index) {
-		convert(index);
-		return (TYPE) list.get(index);
-	}
+  public TYPE get(final int index) {
+    convert(index);
+    return (TYPE) list.get(index);
+  }
 
-	public int indexOf(final Object o) {
-		convertAll();
-		return list.indexOf(o);
-	}
+  public int indexOf(final Object o) {
+    convertAll();
+    return list.indexOf(o);
+  }
 
-	public int lastIndexOf(final Object o) {
-		convertAll();
-		return list.lastIndexOf(o);
-	}
+  public int lastIndexOf(final Object o) {
+    convertAll();
+    return list.lastIndexOf(o);
+  }
 
-	public Object[] toArray() {
-		convertAll();
-		return list.toArray();
-	}
+  public Object[] toArray() {
+    convertAll();
+    return list.toArray();
+  }
 
-	public <T> T[] toArray(final T[] a) {
-		convertAll();
-		return list.toArray(a);
-	}
+  public <T> T[] toArray(final T[] a) {
+    convertAll();
+    return list.toArray(a);
+  }
 
-	public int size() {
-		return list.size();
-	}
+  public int size() {
+    return list.size();
+  }
 
-	public boolean isEmpty() {
-		return list.isEmpty();
-	}
+  public boolean isEmpty() {
+    return list.isEmpty();
+  }
 
-	public boolean remove(Object o) {
-		convertAll();
-		setDirty();
-		return list.remove(o);
-	}
+  public boolean remove(Object o) {
+    convertAll();
+    setDirty();
+    return list.remove(o);
+  }
 
-	public boolean containsAll(Collection<?> c) {
-		convertAll();
-		return list.containsAll(c);
-	}
+  public boolean containsAll(Collection<?> c) {
+    convertAll();
+    return list.containsAll(c);
+  }
 
-	public boolean addAll(Collection<? extends TYPE> c) {
-		setDirty();
-		return list.addAll(c);
-	}
+  public boolean addAll(Collection<? extends TYPE> c) {
+    setDirty();
+    return list.addAll(c);
+  }
 
-	public boolean addAll(int index, Collection<? extends TYPE> c) {
-		setDirty();
-		return list.addAll(index, c);
-	}
+  public boolean addAll(int index, Collection<? extends TYPE> c) {
+    setDirty();
+    return list.addAll(index, c);
+  }
 
-	public boolean removeAll(Collection<?> c) {
-		convertAll();
-		setDirty();
-		return list.removeAll(c);
-	}
+  public boolean removeAll(Collection<?> c) {
+    convertAll();
+    setDirty();
+    return list.removeAll(c);
+  }
 
-	public boolean retainAll(Collection<?> c) {
-		convertAll();
-		setDirty();
-		return list.retainAll(c);
-	}
+  public boolean retainAll(Collection<?> c) {
+    convertAll();
+    setDirty();
+    return list.retainAll(c);
+  }
 
-	public void clear() {
-		setDirty();
-		list.clear();
-	}
+  public void clear() {
+    setDirty();
+    list.clear();
+  }
 
-	public TYPE set(int index, TYPE element) {
-		convert(index);
-		setDirty();
-		return (TYPE) list.set(index, element);
-	}
+  public TYPE set(int index, TYPE element) {
+    convert(index);
+    setDirty();
+    return (TYPE) list.set(index, element);
+  }
 
-	public TYPE remove(int index) {
-		convert(index);
-		setDirty();
-		return (TYPE) list.remove(index);
-	}
+  public TYPE remove(int index) {
+    convert(index);
+    setDirty();
+    return (TYPE) list.remove(index);
+  }
 
-	public ListIterator<TYPE> listIterator() {
-		return (ListIterator<TYPE>) list.listIterator();
-	}
+  public ListIterator<TYPE> listIterator() {
+    return (ListIterator<TYPE>) list.listIterator();
+  }
 
-	public ListIterator<TYPE> listIterator(int index) {
-		return (ListIterator<TYPE>) list.listIterator(index);
-	}
+  public ListIterator<TYPE> listIterator(int index) {
+    return (ListIterator<TYPE>) list.listIterator(index);
+  }
 
-	public List<TYPE> subList(int fromIndex, int toIndex) {
-		return (List<TYPE>) list.subList(fromIndex, toIndex);
-	}
+  public List<TYPE> subList(int fromIndex, int toIndex) {
+    return (List<TYPE>) list.subList(fromIndex, toIndex);
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public OLazyObjectList<TYPE> setFetchPlan(final String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-		return this;
-	}
+  public OLazyObjectList<TYPE> setFetchPlan(final String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+    return this;
+  }
 
-	public boolean isConvertToRecord() {
-		return convertToRecord;
-	}
+  public boolean isConvertToRecord() {
+    return convertToRecord;
+  }
 
-	public void setConvertToRecord(boolean convertToRecord) {
-		this.convertToRecord = convertToRecord;
-	}
+  public void setConvertToRecord(boolean convertToRecord) {
+    this.convertToRecord = convertToRecord;
+  }
 
-	public boolean isConverted() {
-		return converted;
-	}
+  public boolean isConverted() {
+    return converted;
+  }
 
-	public void detach() {
-		convertAll();
-	}
+  public void detach() {
+    convertAll();
+  }
 
-	public void detachAll() {
-		detach();
-	}
+  public void detachAll() {
+    detach();
+  }
 
-	public void detach(boolean nonProxiedInstance) {
-		detach();
-	}
+  public void detach(boolean nonProxiedInstance) {
+    detach();
+  }
 
-	public void detachAll(boolean nonProxiedInstance) {
-		detach();
-	}
+  public void detachAll(boolean nonProxiedInstance) {
+    detach();
+  }
 
-	protected void convertAll() {
-		if (converted || !convertToRecord)
-			return;
+  protected void convertAll() {
+    if (converted || !convertToRecord)
+      return;
 
-		for (int i = 0; i < size(); ++i)
-			convert(i);
+    for (int i = 0; i < size(); ++i)
+      convert(i);
 
-		converted = true;
-	}
+    converted = true;
+  }
 
-	public void setDirty() {
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public void setDirty() {
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 
-	/**
-	 * Convert the item requested.
-	 * 
-	 * @param iIndex
-	 *          Position of the item to convert
-	 */
-	private void convert(final int iIndex) {
-		if (converted || !convertToRecord)
-			return;
+  /**
+   * Convert the item requested.
+   * 
+   * @param iIndex
+   *          Position of the item to convert
+   */
+  private void convert(final int iIndex) {
+    if (converted || !convertToRecord)
+      return;
 
-		final Object o = list.get(iIndex);
+    final Object o = list.get(iIndex);
 
-		final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-		if (o != null) {
-			ODocument doc = new ODocument();
-			if (o instanceof ORID) {
-				doc = database.load((ORID) o, fetchPlan);
-			} else if (o instanceof ODocument) {
-				doc = (ODocument) o;
-			}
-			list.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
-		}
-	}
+    if (o != null) {
+      ODocument doc = new ODocument();
+      if (o instanceof ORID) {
+        doc = database.load((ORID) o, fetchPlan);
+      } else if (o instanceof ODocument) {
+        doc = (ODocument) o;
+      }
+      list.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
+    }
+  }
 
-	@Override
-	public String toString() {
-		return list.toString();
-	}
+  @Override
+  public List<TYPE> getNonOrientInstance() {
+    return (List<TYPE>) list;
+  }
+
+  @Override
+  public String toString() {
+    return list.toString();
+  }
 }

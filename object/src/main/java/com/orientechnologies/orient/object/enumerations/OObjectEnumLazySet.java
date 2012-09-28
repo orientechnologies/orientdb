@@ -29,143 +29,155 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OLazyObjectEnumSerializer, Serializable {
-	private static final long	serialVersionUID	= -7698875159671927472L;
+public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OLazyObjectEnumSerializer<Set<TYPE>>,
+    Serializable {
+  private static final long serialVersionUID = -7698875159671927472L;
 
-	private final ORecord<?>	sourceRecord;
-	private final Set<Object>	underlying;
-	private boolean						converted					= false;
-	private final Class<Enum>	enumClass;
+  private final ORecord<?>  sourceRecord;
+  private final Set<Object> underlying;
+  private boolean           converted        = false;
+  private final Class<Enum> enumClass;
 
-	public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource) {
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iRecordSource;
-		this.enumClass = iEnumClass;
-	}
+  public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource) {
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iRecordSource;
+    this.enumClass = iEnumClass;
+  }
 
-	public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource,
-			final Set<? extends TYPE> iSourceCollection) {
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iRecordSource;
-		this.enumClass = iEnumClass;
-		convertAll();
-		addAll(iSourceCollection);
-	}
+  public OObjectEnumLazySet(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Set<Object> iRecordSource,
+      final Set<? extends TYPE> iSourceCollection) {
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iRecordSource;
+    this.enumClass = iEnumClass;
+    convertAll();
+    addAll(iSourceCollection);
+  }
 
-	public Iterator<TYPE> iterator() {
-		return (Iterator<TYPE>) new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, underlying.iterator());
-	}
+  public Iterator<TYPE> iterator() {
+    return (Iterator<TYPE>) new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, underlying.iterator());
+  }
 
-	public int size() {
-		return underlying.size();
-	}
+  public int size() {
+    return underlying.size();
+  }
 
-	public boolean isEmpty() {
-		return underlying.isEmpty();
-	}
+  public boolean isEmpty() {
+    return underlying.isEmpty();
+  }
 
-	public boolean contains(final Object o) {
-		boolean underlyingContains = underlying.contains(o.toString());
-		return underlyingContains || super.contains(o);
-	}
+  public boolean contains(final Object o) {
+    boolean underlyingContains = underlying.contains(o.toString());
+    return underlyingContains || super.contains(o);
+  }
 
-	public Object[] toArray() {
-		return toArray(new Object[size()]);
-	}
+  public Object[] toArray() {
+    return toArray(new Object[size()]);
+  }
 
-	public <T> T[] toArray(final T[] a) {
-		convertAll();
-		return super.toArray(a);
-	}
+  public <T> T[] toArray(final T[] a) {
+    convertAll();
+    return super.toArray(a);
+  }
 
-	public boolean add(final TYPE e) {
-		underlying.add(e.name());
-		return super.add(e);
-	}
+  public boolean add(final TYPE e) {
+    underlying.add(e.name());
+    return super.add(e);
+  }
 
-	public boolean remove(final Object e) {
-		underlying.remove(e.toString());
-		return super.remove(e);
-	}
+  public boolean remove(final Object e) {
+    underlying.remove(e.toString());
+    return super.remove(e);
+  }
 
-	public boolean containsAll(final Collection<?> c) {
-		for (Object o : c)
-			if (!super.contains(o) && !underlying.contains(o.toString()))
-				return false;
+  public boolean containsAll(final Collection<?> c) {
+    for (Object o : c)
+      if (!super.contains(o) && !underlying.contains(o.toString()))
+        return false;
 
-		return true;
-	}
+    return true;
+  }
 
-	public boolean addAll(final Collection<? extends TYPE> c) {
-		boolean modified = false;
-		setDirty();
-		for (Object o : c)
-			modified = add((TYPE) o) || modified;
-		return modified;
-	}
+  public boolean addAll(final Collection<? extends TYPE> c) {
+    boolean modified = false;
+    setDirty();
+    for (Object o : c)
+      modified = add((TYPE) o) || modified;
+    return modified;
+  }
 
-	public boolean retainAll(final Collection<?> c) {
-		boolean modified = false;
-		Iterator<TYPE> e = iterator();
-		while (e.hasNext()) {
-			if (!c.contains(e.next())) {
-				remove(e);
-				modified = true;
-			}
-		}
-		return modified;
-	}
+  public boolean retainAll(final Collection<?> c) {
+    boolean modified = false;
+    Iterator<TYPE> e = iterator();
+    while (e.hasNext()) {
+      if (!c.contains(e.next())) {
+        remove(e);
+        modified = true;
+      }
+    }
+    return modified;
+  }
 
-	public void clear() {
-		setDirty();
-		underlying.clear();
-	}
+  public void clear() {
+    setDirty();
+    underlying.clear();
+  }
 
-	public boolean removeAll(final Collection<?> c) {
-		setDirty();
-		boolean modified = super.removeAll(c);
-		for (Object o : c) {
-			modified = modified || underlying.remove(o.toString());
-		}
-		return modified;
-	}
+  public boolean removeAll(final Collection<?> c) {
+    setDirty();
+    boolean modified = super.removeAll(c);
+    for (Object o : c) {
+      modified = modified || underlying.remove(o.toString());
+    }
+    return modified;
+  }
 
-	public boolean isConverted() {
-		return converted;
-	}
+  public boolean isConverted() {
+    return converted;
+  }
 
-	@Override
-	public String toString() {
-		return underlying.toString();
-	}
+  @Override
+  public String toString() {
+    return underlying.toString();
+  }
 
-	public void setDirty() {
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public void setDirty() {
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 
-	public void detach() {
-		convertAll();
-	}
+  public void detach() {
+    convertAll();
+  }
 
-	public void detachAll(boolean nonProxiedInstance) {
-		convertAll();
-	}
+  public void detach(boolean nonProxiedInstance) {
+    convertAll();
+  }
 
-	protected void convertAll() {
-		if (converted)
-			return;
+  public void detachAll(boolean nonProxiedInstance) {
+    convertAll();
+  }
 
-		super.clear();
-		for (Object o : underlying) {
-			if (o instanceof Number)
-				o = enumClass.getEnumConstants()[((Number) o).intValue()];
-			else
-				o = Enum.valueOf(enumClass, o.toString());
-			super.add((TYPE) o);
-		}
+  @Override
+  public Set<TYPE> getNonOrientInstance() {
+    Set<TYPE> set = new HashSet<TYPE>();
+    set.addAll(this);
+    return set;
+  }
 
-		converted = true;
-	}
+  protected void convertAll() {
+    if (converted)
+      return;
+
+    super.clear();
+    for (Object o : underlying) {
+      if (o instanceof Number)
+        o = enumClass.getEnumConstants()[((Number) o).intValue()];
+      else
+        o = Enum.valueOf(enumClass, o.toString());
+      super.add((TYPE) o);
+    }
+
+    converted = true;
+  }
 
 }
