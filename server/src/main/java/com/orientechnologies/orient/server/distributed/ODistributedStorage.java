@@ -208,12 +208,13 @@ public class ODistributedStorage implements OStorage {
     return wrapped.existsResource(iName);
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T removeResource(final String iName) {
-    return wrapped.removeResource(iName);
+    return (T) wrapped.removeResource(iName);
   }
 
   public <T> T getResource(final String iName, final Callable<T> iCallback) {
-    return wrapped.getResource(iName, iCallback);
+    return (T) wrapped.getResource(iName, iCallback);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
