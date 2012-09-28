@@ -202,8 +202,15 @@ public class ODocumentHelper {
       final List<Object> tempResult = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(value)) {
         final Object result = ODocumentHelper.getFieldValue(o, iFieldName);
-        if (result != null)
-          tempResult.add(result);
+        if (result != null) {
+          if (OMultiValue.isMultiValue(result)) {
+            // MULTI-VALUE: FLATTEN THE COLLECTION
+            for (Object item : OMultiValue.getMultiValueIterable(result))
+              tempResult.add(item);
+
+          } else
+            tempResult.add(result);
+        }
       }
       return (RET) tempResult;
     } else
