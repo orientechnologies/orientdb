@@ -54,13 +54,15 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
+  private static final long                     serialVersionUID       = 1L;
+
   public static final int                       CURRENT_VERSION_NUMBER = 4;
   private static final String                   DROP_INDEX_QUERY       = "drop index ";
   protected Map<String, OClass>                 classes                = new HashMap<String, OClass>();
   private final OSharedResourceAdaptiveExternal lock                   = new OSharedResourceAdaptiveExternal(
                                                                            OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                                .getValueAsBoolean(),
-                                                                           1000, true);
+                                                                           5000, true);
 
   public OSchemaShared(final int schemaClusterId) {
     super(new ODocument());
@@ -76,11 +78,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.Class)
-   */
   public OClass createClass(final Class<?> iClass) {
     final Class<?> superClass = iClass.getSuperclass();
     final OClass cls;
@@ -92,11 +89,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return createClass(iClass.getSimpleName(), cls, OStorage.CLUSTER_TYPE.PHYSICAL);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.Class, int)
-   */
   public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
     final Class<?> superClass = iClass.getSuperclass();
     final OClass cls;
@@ -108,31 +100,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return createClass(iClass.getSimpleName(), cls, iDefaultClusterId);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String)
-   */
   public OClass createClass(final String iClassName) {
     return createClass(iClassName, null, OStorage.CLUSTER_TYPE.PHYSICAL);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String,
-   * com.orientechnologies.orient.core.metadata.schema.OClass)
-   */
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     return createClass(iClassName, iSuperClass, OStorage.CLUSTER_TYPE.PHYSICAL);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String,
-   * com.orientechnologies.orient.core.metadata.schema.OClass, com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE)
-   */
   public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType) {
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new class inside a transaction");
@@ -146,21 +121,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return createClass(iClassName, iSuperClass, clusterId);
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String, int)
-   */
   public OClass createClass(final String iClassName, final int iDefaultClusterId) {
     return createClass(iClassName, null, new int[] { iDefaultClusterId });
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String,
-   * com.orientechnologies.orient.core.metadata.schema.OClass, int)
-   */
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
     return createClass(iClassName, iSuperClass, new int[] { iDefaultClusterId });
   }
@@ -180,12 +144,28 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.metadata.schema.OSchema#createClass(java.lang.String,
-   * com.orientechnologies.orient.core.metadata.schema.OClass, int[])
-   */
+  @Override
+  public OClass createAbstractClass(final Class<?> iClass) {
+    final Class<?> superClass = iClass.getSuperclass();
+    final OClass cls;
+    if (superClass != null && superClass != Object.class && existsClass(superClass.getSimpleName()))
+      cls = getClass(superClass.getSimpleName());
+    else
+      cls = null;
+
+    return createClass(iClass.getSimpleName(), cls, -1);
+  }
+
+  @Override
+  public OClass createAbstractClass(final String iClassName) {
+    return createClass(iClassName, null, -1);
+  }
+
+  @Override
+  public OClass createAbstractClass(final String iClassName, final OClass iSuperClass) {
+    return createClass(iClassName, iSuperClass, -1);
+  }
+
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
@@ -205,14 +185,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       if (iClusterIds != null) {
-        cmd.append(" cluster ");
-        for (int i = 0; i < iClusterIds.length; ++i) {
-          if (i > 0)
-            cmd.append(',');
-          else
-            cmd.append(' ');
+        if (iClusterIds.length == 1 && iClusterIds[0] == -1)
+          cmd.append(" abstract");
+        else {
+          cmd.append(" cluster ");
+          for (int i = 0; i < iClusterIds.length; ++i) {
+            if (i > 0)
+              cmd.append(',');
+            else
+              cmd.append(' ');
 
-          cmd.append(iClusterIds[i]);
+            cmd.append(iClusterIds[i]);
+          }
         }
       }
 

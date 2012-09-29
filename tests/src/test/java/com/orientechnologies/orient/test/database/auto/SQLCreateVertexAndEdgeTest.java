@@ -117,6 +117,12 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e5.getClassName(), "E1");
     Assert.assertEquals(e5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
+//    edges = database.command(new OCommandSQL("create edge cluster default from ? to ? set weight = 30")).execute(v3, v5);
+//    Assert.assertFalse(edges.isEmpty());
+//    ODocument e6 = edges.get(0);
+//    Assert.assertTrue(database.getInVertex(e6).equals(v5));
+//    Assert.assertTrue(database.getOutVertex(e6).equals(v3));
+
     // database.command(new OCommandSQL("drop class E1")).execute();
     // database.command(new OCommandSQL("drop class V1")).execute();
   }

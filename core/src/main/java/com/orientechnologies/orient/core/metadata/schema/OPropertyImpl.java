@@ -574,23 +574,23 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return true;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void fromStream() {
     name = document.field("name");
     if (document.field("type") != null)
       type = OType.getById(((Integer) document.field("type")).byteValue());
 
-    mandatory = (Boolean) document.field("mandatory");
-    notNull = (Boolean) document.field("notNull");
+    mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
+    notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
 
-    min = document.field("min");
-    max = document.field("max");
-    regexp = document.field("regexp");
-    linkedClassName = (String) document.field("linkedClass");
-    if (document.field("linkedType") != null)
-      linkedType = OType.getById(((Integer) document.field("linkedType")).byteValue());
-
-    customFields = document.field("customFields", OType.EMBEDDEDMAP);
+    min = (String) (document.containsField("min") ? document.field("min") : null);
+    max = (String) (document.containsField("max") ? document.field("max") : null);
+    regexp = (String) (document.containsField("regexp") ? document.field("regexp") : null);
+    linkedClassName = (String) (document.containsField("linkedClass") ? document.field("linkedClass") : null);
+    linkedType = document.field("linkedType") != null ? OType.getById(((Integer) document.field("linkedType")).byteValue()) : null;
+    customFields = (Map<String, String>) (document.containsField("customFields") ? document
+        .field("customFields", OType.EMBEDDEDMAP) : null);
   }
 
   public Collection<OIndex<?>> getAllIndexes() {
@@ -613,16 +613,24 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       document.field("name", name);
       document.field("type", type.id);
-      document.field("mandatory", mandatory);
-      document.field("notNull", notNull);
+      if (mandatory)
+        document.field("mandatory", mandatory);
+      if (notNull)
+        document.field("notNull", notNull);
 
-      document.field("min", min);
-      document.field("max", max);
-      document.field("regexp", regexp);
+      if (min != null)
+        document.field("min", min);
+      if (max != null)
+        document.field("max", max);
+      if (regexp != null)
+        document.field("regexp", regexp);
 
-      document.field("linkedType", linkedType != null ? linkedType.id : null);
-      document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+      if (linkedType != null)
+        document.field("linkedType", linkedType.id);
+      if (linkedClass != null || linkedClassName != null)
+        document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
+      if (customFields != null && customFields.size() > 0)
+        document.field("customFields", customFields, OType.EMBEDDEDMAP);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);

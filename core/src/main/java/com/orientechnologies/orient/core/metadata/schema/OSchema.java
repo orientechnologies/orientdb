@@ -23,56 +23,62 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 public interface OSchema {
 
-	public int countClasses();
+  public int countClasses();
 
-	public OClass createClass(final Class<?> iClass);
+  public OClass createClass(final Class<?> iClass);
 
-	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId);
+  public OClass createClass(final Class<?> iClass, final int iDefaultClusterId);
 
-	public OClass createClass(final String iClassName);
+  public OClass createClass(final String iClassName);
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass);
+  public OClass createClass(final String iClassName, final OClass iSuperClass);
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType);
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType);
 
-	public OClass createClass(final String iClassName, final int iDefaultClusterId);
+  public OClass createClass(final String iClassName, final int iDefaultClusterId);
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds);
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds);
 
-	public void dropClass(final String iClassName);
+  public OClass createAbstractClass(final Class<?> iClass);
 
-	public <RET extends ODocumentWrapper> RET reload();
+  public OClass createAbstractClass(final String iClassName);
 
-	public boolean existsClass(final String iClassName);
+  public OClass createAbstractClass(final String iClassName, final OClass iSuperClass);
 
-	public OClass getClass(final Class<?> iClass);
+  public void dropClass(final String iClassName);
 
-	/**
-	 * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
-	 * requested class as registered, then creates a schema class for it at the fly.
-	 * 
-	 * @param iClassName
-	 *          Name of the class to retrieve
-	 * @return
-	 */
-	public OClass getClass(final String iClassName);
+  public <RET extends ODocumentWrapper> RET reload();
 
-	public OClass getOrCreateClass(final String iClassName);
+  public boolean existsClass(final String iClassName);
 
-	public Collection<OClass> getClasses();
+  public OClass getClass(final Class<?> iClass);
 
-	public void create();
+  /**
+   * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
+   * requested class as registered, then creates a schema class for it at the fly.
+   * 
+   * @param iClassName
+   *          Name of the class to retrieve
+   * @return
+   */
+  public OClass getClass(final String iClassName);
 
-	public int getVersion();
+  public OClass getOrCreateClass(final String iClassName);
 
-	public ORID getIdentity();
+  public Collection<OClass> getClasses();
 
-	/**
-	 * Do nothing. Starting from 1.0rc2 the schema is auto saved!
-	 * 
-	 * @COMPATIBILITY 1.0rc1
-	 */
-	public <RET extends ODocumentWrapper> RET save();
+  public void create();
+
+  public int getVersion();
+
+  public ORID getIdentity();
+
+  /**
+   * Do nothing. Starting from 1.0rc2 the schema is auto saved!
+   * 
+   * @COMPATIBILITY 1.0rc1
+   */
+  public <RET extends ODocumentWrapper> RET save();
 }

@@ -296,7 +296,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
           // ASSIGN OTHER CLUSTER IDS
           for (int i : OStringSerializerHelper.splitIntArray(classClusterIds)) {
-            cls.addClusterId(i);
+            if (i != -1)
+              cls.addClusterId(i);
           }
         }
 
@@ -308,6 +309,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (value.equals("\"strictMode\"")) {
             final String strictMode = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
             cls.setStrictMode(Boolean.valueOf(strictMode));
+          } else if (value.equals("\"abstract\"")) {
+            final String abstractClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+            cls.setAbstract(Boolean.valueOf(abstractClass));
           } else if (value.equals("\"oversize\"")) {
             final String oversize = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
             cls.setOverSize(Float.parseFloat(oversize));

@@ -67,13 +67,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   protected final Map<String, OProperty> properties       = new LinkedHashMap<String, OProperty>();
 
   protected int[]                        clusterIds;
-  protected int                          defaultClusterId;
+  protected int                          defaultClusterId = -1;
   protected OClassImpl                   superClass;
   protected int[]                        polymorphicClusterIds;
   protected List<OClass>                 baseClasses;
   protected float                        overSize         = 0f;
   protected String                       shortName;
   protected boolean                      strictMode       = false;                                 // @SINCE v1.0rc8
+  protected boolean                      abstractClass    = false;                                 // @SINCE v1.2.0
   protected Map<String, String>          customFields;
   private static final Iterator<OClass>  EMPTY_CLASSES    = new ArrayList<OClass>().iterator();
 
@@ -99,18 +100,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     owner = iOwner;
   }
 
-  protected OClassImpl(final OSchemaShared iOwner, final String iName, final String iJavaClassName, final int[] iClusterIds)
-      throws ClassNotFoundException {
-    this(iOwner, iName, iClusterIds);
-    javaClass = Class.forName(iJavaClassName);
-  }
-
   protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
     this(iOwner);
     name = iName;
     setClusterIds(iClusterIds);
     setPolymorphicClusterIds(iClusterIds);
     defaultClusterId = iClusterIds[0];
+    if (defaultClusterId == -1)
+      abstractClass = true;
   }
 
   public <T> T newInstance() throws InstantiationException, IllegalAccessException {
@@ -413,13 +410,25 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   @Override
   public void fromStream() {
     name = document.field("name");
-    shortName = document.field("shortName");
+    if (document.containsField("shortName"))
+      shortName = document.field("shortName");
+    else
+      shortName = null;
     defaultClusterId = (Integer) document.field("defaultClusterId");
     if (document.containsField("strictMode"))
       strictMode = (Boolean) document.field("strictMode");
+    else
+      strictMode = false;
+
+    if (document.containsField("abstract"))
+      abstractClass = (Boolean) document.field("abstract");
+    else
+      abstractClass = false;
 
     if (document.field("overSize") != null)
       overSize = (Float) document.field("overSize");
+    else
+      overSize = 0f;
 
     final Object cc = document.field("clusterIds");
     if (cc instanceof Collection<?>) {
@@ -454,11 +463,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     try {
       document.field("name", name);
-      document.field("shortName", shortName);
+      if (shortName != null)
+        document.field("shortName", shortName);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
-      document.field("overSize", overSize);
-      document.field("strictMode", strictMode);
+      if (overSize > 0)
+        document.field("overSize", overSize);
+      if (strictMode)
+        document.field("strictMode", strictMode);
+      if (abstractClass)
+        document.field("abstract", abstractClass);
 
       if (properties != null) {
         final Set<ODocument> props = new HashSet<ODocument>();
@@ -656,6 +670,44 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return overSize;
   }
 
+  public boolean isAbstract() {
+    return abstractClass;
+  }
+
+  public OClass setAbstract(boolean iAbstract) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s abstract %s", name, iAbstract);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    setAbstractInternal(iAbstract);
+    return this;
+  }
+
+  public void setAbstractInternal(final boolean iAbstract) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    if (iAbstract) {
+      // SWITCH TO ABSTRACT
+      if (defaultClusterId > -1) {
+        // CHECK
+        final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (count() > 0)
+          throw new IllegalStateException("Cannot set the class as abstract because contains records.");
+
+        if (name.toLowerCase().equals(db.getClusterNameById(defaultClusterId))) {
+          // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
+          if (ODatabaseRecordThreadLocal.INSTANCE.get().getClusterRecordSizeById(defaultClusterId) == 0)
+            ODatabaseRecordThreadLocal.INSTANCE.get().dropCluster(defaultClusterId);
+        }
+      }
+    } else {
+      // SWITCH TO NOT ABSTRACT
+      this.defaultClusterId = getDatabase().getDefaultClusterId();
+      this.clusterIds[0] = this.defaultClusterId;
+    }
+
+    this.abstractClass = iAbstract;
+  }
+
   public boolean isStrictMode() {
     return strictMode;
   }
@@ -809,6 +861,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return getOverSize();
     case STRICTMODE:
       return isStrictMode();
+    case ABSTRACT:
+      return isAbstract();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -836,6 +890,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     case STRICTMODE:
       setStrictModeInternal(Boolean.parseBoolean(stringValue));
+      break;
+    case ABSTRACT:
+      setAbstractInternal(Boolean.parseBoolean(stringValue));
       break;
     case ADDCLUSTER: {
       int clId = getClusterId(stringValue);
@@ -894,6 +951,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     case STRICTMODE:
       setStrictMode(Boolean.parseBoolean(stringValue));
+      break;
+    case ABSTRACT:
+      setAbstract(Boolean.parseBoolean(stringValue));
       break;
     case ADDCLUSTER: {
       int clId = getClusterId(stringValue);

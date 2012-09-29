@@ -32,134 +32,153 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
-	public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecord iDatabase) {
-		super(iDelegate, iDatabase);
-	}
+  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecord iDatabase) {
+    super(iDelegate, iDatabase);
+  }
 
-	public void create() {
-		setCurrentDatabaseInThreadLocal();
-		delegate.create();
-	}
+  public void create() {
+    setCurrentDatabaseInThreadLocal();
+    delegate.create();
+  }
 
-	public int countClasses() {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.countClasses();
-	}
+  public int countClasses() {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.countClasses();
+  }
 
-	public OClass createClass(final Class<?> iClass) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClass);
-	}
+  public OClass createClass(final Class<?> iClass) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClass);
+  }
 
-	public String toString() {
-		return delegate.toString();
-	}
+  public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClass, iDefaultClusterId);
+  }
 
-	public OClass createClass(final Class<?> iClass, final int iDefaultClusterId) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClass, iDefaultClusterId);
-	}
+  public OClass createClass(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName);
+  }
 
-	public OClass createClass(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName);
-	}
+  public OClass getOrCreateClass(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getOrCreateClass(iClassName);
+  }
 
-	public OClass getOrCreateClass(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getOrCreateClass(iClassName);
-	}
+  public OClass createClass(final String iClassName, final OClass iSuperClass) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName, iSuperClass);
+  }
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName, iSuperClass);
-	}
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final CLUSTER_TYPE iType) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName, iSuperClass, iType);
+  }
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final CLUSTER_TYPE iType) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName, iSuperClass, iType);
-	}
+  public OClass createClass(final String iClassName, final int iDefaultClusterId) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName, iDefaultClusterId);
+  }
 
-	public OClass createClass(final String iClassName, final int iDefaultClusterId) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName, iDefaultClusterId);
-	}
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName, iSuperClass, iDefaultClusterId);
+  }
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName, iSuperClass, iDefaultClusterId);
-	}
+  public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClass(iClassName, iSuperClass, iClusterIds);
+  }
 
-	public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClass(iClassName, iSuperClass, iClusterIds);
-	}
+  @Override
+  public OClass createAbstractClass(Class<?> iClass) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createAbstractClass(iClass);
+  }
 
-	public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.createClassInternal(iClassName, iSuperClass, iClusterIds);
-	}
+  @Override
+  public OClass createAbstractClass(String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createAbstractClass(iClassName);
+  }
 
-	public void dropClass(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		delegate.dropClass(iClassName);
-	}
+  @Override
+  public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createAbstractClass(iClassName, iSuperClass);
+  }
 
-	public void dropClassInternal(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		delegate.dropClassInternal(iClassName);
-	}
+  public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.createClassInternal(iClassName, iSuperClass, iClusterIds);
+  }
 
-	public boolean existsClass(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.existsClass(iClassName);
-	}
+  public void dropClass(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    delegate.dropClass(iClassName);
+  }
 
-	public OClass getClass(final Class<?> iClass) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getClass(iClass);
-	}
+  public void dropClassInternal(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    delegate.dropClassInternal(iClassName);
+  }
 
-	public OClass getClass(final String iClassName) {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getClass(iClassName);
-	}
+  public boolean existsClass(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.existsClass(iClassName);
+  }
 
-	public Collection<OClass> getClasses() {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getClasses();
-	}
+  public OClass getClass(final Class<?> iClass) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getClass(iClass);
+  }
 
-	public void load() {
-		setCurrentDatabaseInThreadLocal();
-		delegate.load();
-	}
+  public OClass getClass(final String iClassName) {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getClass(iClassName);
+  }
 
-	public <RET extends ODocumentWrapper> RET reload() {
-		setCurrentDatabaseInThreadLocal();
-		return (RET) delegate.reload();
-	}
+  public Collection<OClass> getClasses() {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getClasses();
+  }
 
-	public <RET extends ODocumentWrapper> RET save() {
-		setCurrentDatabaseInThreadLocal();
-		return (RET) delegate.save();
-	}
+  public void load() {
+    setCurrentDatabaseInThreadLocal();
+    delegate.load();
+  }
 
-	public int getVersion() {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getVersion();
-	}
+  public <RET extends ODocumentWrapper> RET reload() {
+    setCurrentDatabaseInThreadLocal();
+    return (RET) delegate.reload();
+  }
 
-	public void saveInternal() {
-		setCurrentDatabaseInThreadLocal();
-		delegate.saveInternal();
-	}
+  public <RET extends ODocumentWrapper> RET save() {
+    setCurrentDatabaseInThreadLocal();
+    return (RET) delegate.save();
+  }
 
-	public ORID getIdentity() {
-		setCurrentDatabaseInThreadLocal();
-		return delegate.getIdentity();
-	}
+  public int getVersion() {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getVersion();
+  }
 
-	public void close() {
-	}
+  public void saveInternal() {
+    setCurrentDatabaseInThreadLocal();
+    delegate.saveInternal();
+  }
+
+  public ORID getIdentity() {
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getIdentity();
+  }
+
+  public void close() {
+  }
+
+  public String toString() {
+    return delegate.toString();
+  }
+
 }

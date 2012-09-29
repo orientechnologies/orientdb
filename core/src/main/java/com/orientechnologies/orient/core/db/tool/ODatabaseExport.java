@@ -422,6 +422,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
         if (cls.getShortName() != null)
           writer.writeAttribute(0, false, "short-name", cls.getShortName());
+        if (cls.isAbstract())
+          writer.writeAttribute(0, false, "abstract", cls.isAbstract());
 
         if (!cls.properties().isEmpty()) {
           writer.beginCollection(4, true, "properties");

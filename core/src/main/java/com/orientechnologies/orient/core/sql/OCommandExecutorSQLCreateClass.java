@@ -37,14 +37,16 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE  = "CREATE";
-  public static final String KEYWORD_CLASS   = "CLASS";
-  public static final String KEYWORD_EXTENDS = "EXTENDS";
-  public static final String KEYWORD_CLUSTER = "CLUSTER";
+  public static final String KEYWORD_CREATE   = "CREATE";
+  public static final String KEYWORD_CLASS    = "CLASS";
+  public static final String KEYWORD_EXTENDS  = "EXTENDS";
+  public static final String KEYWORD_ABSTRACT = "ABSTRACT";
+  public static final String KEYWORD_CLUSTER  = "CLUSTER";
 
   private String             className;
   private OClass             superClass;
   private int[]              clusterIds;
+  private boolean            abstractClass    = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
@@ -110,6 +112,9 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
           }
         }
+      } else if (k.equals(KEYWORD_ABSTRACT)) {
+        abstractClass = true;
+        clusterIds = new int[] { -1 };
       }
 
       oldPos = pos;
@@ -157,6 +162,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
   @Override
   public String getSyntax() {
-    return "CREATE CLASS <class> [EXTENDS <super-class>] [CLUSTER <clusterId>*]";
+    return "CREATE CLASS <class> [EXTENDS <super-class>] [CLUSTER <clusterId>*] [ABSTRACT]";
   }
 }

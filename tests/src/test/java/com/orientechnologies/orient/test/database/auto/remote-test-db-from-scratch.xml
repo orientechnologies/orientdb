@@ -19,6 +19,7 @@
     <test name="Schema">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.SchemaTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.AbstractClassTest" />
         </classes>
     </test>
     <test name="Security">

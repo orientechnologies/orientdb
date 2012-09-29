@@ -22,6 +22,7 @@ import java.util.Date;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -149,6 +150,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   protected void setClass(final OClass iClass) {
+    if (iClass != null && iClass.isAbstract())
+      throw new OSchemaException("Cannot create a document of an abstract class");
+
     _clazz = iClass;
   }
 
