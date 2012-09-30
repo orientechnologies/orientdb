@@ -272,9 +272,9 @@ public abstract class OBaseParser {
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSkipWhiteSpaces() {
-    if( parserCurrentPos == -1 )
+    if (parserCurrentPos == -1)
       return false;
-    
+
     parserCurrentPos = OStringParser.jumpWhiteSpaces(parserText, parserCurrentPos, -1);
     return parserCurrentPos > -1;
   }
@@ -362,8 +362,7 @@ public abstract class OBaseParser {
       for (; parserCurrentPos < text2Use.length(); parserCurrentPos++) {
         final char c = text2Use.charAt(parserCurrentPos);
 
-        if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && !escape && c == '\\'
-            && ((parserCurrentPos + 1) < text2Use.length())) {
+        if (!escape && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
           final char nextChar = text2Use.charAt(parserCurrentPos + 1);
 

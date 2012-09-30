@@ -411,9 +411,14 @@ public abstract class OStringSerializerHelper {
   }
 
   public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
+    return getCollection(iText, iStartPosition, iCollection, COLLECTION_BEGIN, COLLECTION_END, COLLECTION_SEPARATOR);
+  }
+
+  public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection,
+      final char iCollectionBegin, final char iCollectionEnd, final char iCollectionSeparator) {
     final StringBuilder buffer = new StringBuilder();
 
-    int openPos = iText.indexOf(COLLECTION_BEGIN, iStartPosition);
+    int openPos = iText.indexOf(iCollectionBegin, iStartPosition);
     if (openPos == -1)
       return -1;
 
@@ -429,30 +434,26 @@ public abstract class OStringSerializerHelper {
         continue;
       }
 
-      switch (c) {
-      case COLLECTION_BEGIN:
+      if (c == iCollectionBegin) {
+        // BEGINE
         buffer.append(c);
         deep++;
-        break;
-
-      case COLLECTION_END:
+      } else if (c == iCollectionEnd) {
+        // END
         if (deep > 1)
           buffer.append(c);
         deep--;
-        break;
-
-      case COLLECTION_SEPARATOR:
+      } else if (c == iCollectionSeparator) {
+        // SEPARATOR
         if (deep > 1) {
           buffer.append(c);
         } else {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
-        break;
-
-      default:
+      } else
+        // COLLECT
         buffer.append(c);
-      }
     }
 
     if (buffer.length() > 0)
