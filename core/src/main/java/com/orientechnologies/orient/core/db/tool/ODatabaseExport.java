@@ -416,8 +416,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.writeAttribute(0, false, "name", cls.getName());
         writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
         writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
-        writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
-        writer.writeAttribute(0, false, "strictMode", cls.isStrictMode());
+        if (((OClassImpl) cls).getOverSizeInternal() > 1)
+          writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
+        if (cls.isStrictMode())
+          writer.writeAttribute(0, false, "strictMode", cls.isStrictMode());
         if (cls.getSuperClass() != null)
           writer.writeAttribute(0, false, "super-class", cls.getSuperClass().getName());
         if (cls.getShortName() != null)
@@ -435,8 +437,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             writer.beginObject(5, true, null);
             writer.writeAttribute(0, false, "name", p.getName());
             writer.writeAttribute(0, false, "type", p.getType().toString());
-            writer.writeAttribute(0, false, "mandatory", p.isMandatory());
-            writer.writeAttribute(0, false, "not-null", p.isNotNull());
+            if (p.isMandatory())
+              writer.writeAttribute(0, false, "mandatory", p.isMandatory());
+            if (p.isNotNull())
+              writer.writeAttribute(0, false, "not-null", p.isNotNull());
             if (p.getLinkedClass() != null)
               writer.writeAttribute(0, false, "linked-class", p.getLinkedClass().getName());
             if (p.getLinkedType() != null)

@@ -307,11 +307,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           value = jsonReader.getValue();
 
           if (value.equals("\"strictMode\"")) {
-            final String strictMode = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-            cls.setStrictMode(Boolean.valueOf(strictMode));
+            cls.setStrictMode(jsonReader.readBoolean(OJSONReader.NEXT_IN_OBJECT));
           } else if (value.equals("\"abstract\"")) {
-            final String abstractClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-            cls.setAbstract(Boolean.valueOf(abstractClass));
+            cls.setAbstract(jsonReader.readBoolean(OJSONReader.NEXT_IN_OBJECT));
           } else if (value.equals("\"oversize\"")) {
             final String oversize = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
             cls.setOverSize(Float.parseFloat(oversize));

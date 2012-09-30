@@ -422,20 +422,20 @@ public abstract class OStringSerializerHelper {
     if (openPos == -1)
       return -1;
 
+    boolean escape = false;
     int currentPos, deep;
+    int maxPos = iText.length() - 1;
     for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
-      if (currentPos >= iText.length()) {
+      if (currentPos > maxPos)
         return -1;
-      }
 
       char c = iText.charAt(currentPos);
 
-      if (buffer.length() == 0 && c == ' ') {
+      if (buffer.length() == 0 && c == ' ')
         continue;
-      }
 
       if (c == iCollectionBegin) {
-        // BEGINE
+        // BEGIN
         buffer.append(c);
         deep++;
       } else if (c == iCollectionEnd) {
@@ -451,9 +451,34 @@ public abstract class OStringSerializerHelper {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
-      } else
+      } else {
         // COLLECT
+        if (!escape && c == '\\' && (currentPos + 1 <= maxPos)) {
+          // ESCAPE CHARS
+          final char nextChar = iText.charAt(currentPos + 1);
+
+          if (nextChar == 'u') {
+            currentPos = OStringParser.readUnicode(iText, currentPos + 2, buffer);
+          } else if (nextChar == 'n') {
+            buffer.append("\n");
+            currentPos++;
+          } else if (nextChar == 'r') {
+            buffer.append("\r");
+            currentPos++;
+          } else if (nextChar == 't') {
+            buffer.append("\t");
+            currentPos++;
+          } else if (nextChar == 'f') {
+            buffer.append("\f");
+            currentPos++;
+          } else
+            escape = true;
+
+          continue;
+        }
+
         buffer.append(c);
+      }
     }
 
     if (buffer.length() > 0)
