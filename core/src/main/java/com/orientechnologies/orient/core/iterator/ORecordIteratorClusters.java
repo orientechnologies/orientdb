@@ -358,6 +358,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   }
 
   protected void config() {
+    if( clusterIds.length == 0 )
+      return;
+    
     currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
     updateClusterRange();

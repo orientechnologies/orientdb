@@ -99,7 +99,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   @Override
   public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     if (currentClusterId == -1)
-      throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'');
+      return new long[] { -1, -1 };
 
     checkOpeness();
 

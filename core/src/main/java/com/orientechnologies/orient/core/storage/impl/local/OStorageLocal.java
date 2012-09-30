@@ -903,7 +903,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   public long[] getClusterDataRange(final int iClusterId) {
     if (iClusterId == -1)
-      throw new OStorageException("Cluster Id " + iClusterId + " is invalid in storage '" + name + "'");
+      return new long[] { -1, -1 };
 
     checkOpeness();
 
