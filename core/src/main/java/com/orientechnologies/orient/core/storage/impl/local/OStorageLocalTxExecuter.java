@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,12 @@ public class OStorageLocalTxExecuter {
 
   public void open() throws IOException {
     try {
+      
       txSegment.open();
+      
+    } catch (FileNotFoundException e) {
+      OLogManager.instance().warn(this, "Creating new txlog file '%s'", txSegment.getFile());
+      create();
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on opening the txlog file '%s', reset it", e, txSegment.getFile());
       create();
