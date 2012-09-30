@@ -887,9 +887,11 @@ public class OStorageLocal extends OStorageEmbedded {
         if (iClusterIds[i] >= clusters.length)
           throw new OConfigurationException("Cluster id " + iClusterIds[i] + " was not found in storage '" + name + "'");
 
-        final OCluster c = clusters[iClusterIds[i]];
-        if (c != null)
-          tot += c.getEntries();
+        if (iClusterIds[i] > -1) {
+          final OCluster c = clusters[iClusterIds[i]];
+          if (c != null)
+            tot += c.getEntries();
+        }
       }
 
       return tot;
