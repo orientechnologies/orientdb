@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -51,6 +52,7 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
@@ -130,6 +132,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             }
           }
         }
+        registerHook(new ORestrictedAccessHook());
         registerHook(new OUserTrigger());
         registerHook(new OClassIndexManager());
       } else
@@ -164,6 +167,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       getStorage().getConfiguration().update();
 
       if (!(getStorage() instanceof OStorageProxy)) {
+        registerHook(new ORestrictedAccessHook());
         registerHook(new OUserTrigger());
         registerHook(new OClassIndexManager());
       }
@@ -317,6 +321,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   /**
+   * Deletes the record checking the version.
+   */
+  public ODatabaseRecord delete(final ORID iRecord, final int iVersion) {
+    executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS);
+    return this;
+  }
+
+  /**
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
@@ -406,7 +418,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   @Override
   public long countClusterElements(final int iClusterId) {
     final String name = getClusterNameById(iClusterId);
-    if( name == null )
+    if (name == null)
       return 0;
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
     setCurrentDatabaseinThreadLocal();
@@ -560,7 +572,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
 
         OFetchHelper.checkFetchPlanValid(iFetchPlan);
-        callbackHooks(TYPE.BEFORE_READ, record);
+        if (callbackHooks(TYPE.BEFORE_READ, record) == ORecordHook.RESULT.SKIP)
+          return null;
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
@@ -579,7 +592,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       iRecord.fill(iRid, recordBuffer.version, recordBuffer.buffer, false);
 
-      callbackHooks(TYPE.BEFORE_READ, iRecord);
+      if (callbackHooks(TYPE.BEFORE_READ, iRecord) == RESULT.SKIP)
+        return null;
 
       iRecord.fromStream(recordBuffer.buffer);
 
@@ -644,13 +658,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (wasNew) {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord))
+            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED)
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
               stream = iRecord.toStream();
           } else {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord))
+            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED)
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
               stream = iRecord.toStream();
           }
@@ -871,20 +885,27 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    *          Record received in the callback
    * @return True if the input record is changed, otherwise false
    */
-  public boolean callbackHooks(final TYPE iType, final OIdentifiable id) {
+  public ORecordHook.RESULT callbackHooks(final TYPE iType, final OIdentifiable id) {
     if (!OHookThreadLocal.INSTANCE.push(id))
-      return false;
+      return RESULT.RECORD_NOT_CHANGED;
 
     try {
       final ORecord<?> rec = id.getRecord();
       if (rec == null)
-        return false;
+        return RESULT.RECORD_NOT_CHANGED;
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks)
-        if (hook.onTrigger(iType, rec))
+      for (ORecordHook hook : hooks) {
+        final RESULT res = hook.onTrigger(iType, rec);
+
+        if (res == RESULT.RECORD_CHANGED)
           recordChanged = true;
-      return recordChanged;
+        else if (res == RESULT.SKIP)
+          // SKIP NEXT HOOKS AND RETURN IT
+          return res;
+      }
+
+      return recordChanged ? RESULT.RECORD_CHANGED : RESULT.RECORD_NOT_CHANGED;
 
     } finally {
       OHookThreadLocal.INSTANCE.pop(id);

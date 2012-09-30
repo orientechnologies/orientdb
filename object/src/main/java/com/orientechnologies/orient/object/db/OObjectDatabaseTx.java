@@ -437,6 +437,28 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return this;
   }
 
+  @Override
+  public ODatabaseObject delete(final ORID iRID, final int iVersion) {
+    checkOpeness();
+
+    if (iRID == null)
+      return this;
+
+    ODocument record = iRID.getRecord();
+    if (record != null) {
+      Object iPojo = getUserObjectByRecord(record, null);
+
+      deleteCascade(record);
+
+      underlying.delete(iRID, iVersion);
+
+      if (getTransaction() instanceof OTransactionNoTx)
+        unregisterPojo(iPojo, record);
+
+    }
+    return this;
+  }
+
   protected void deleteCascade(ODocument record) {
     if (record == null)
       return;

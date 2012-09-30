@@ -313,7 +313,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       // NO OVERSIZE
       newSize = iOutput.length();
 
-    if (newSize > iOutput.length()){
+    if (newSize > iOutput.length()) {
       iOutput.ensureCapacity(newSize);
       for (int b = iOutput.length(); b < newSize; ++b)
         iOutput.append(' ');
@@ -509,7 +509,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
     // ORecordSchemaAware#_source property may be initialized incorrectly.
-    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware) iRecord;
+    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
     if (recordSchemaAware.fields() > 0)
       return null;
 

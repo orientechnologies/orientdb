@@ -54,10 +54,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
-  public boolean onRecordBeforeCreate(ODocument iRecord) {
+  public RESULT onRecordBeforeCreate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
     checkIndexesAndAquireLock(iRecord, BEFORE_CREATE);
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
@@ -91,10 +91,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public boolean onRecordBeforeUpdate(ODocument iRecord) {
+  public RESULT onRecordBeforeUpdate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
     checkIndexesAndAquireLock(iRecord, BEFORE_UPDATE);
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
@@ -134,7 +134,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public boolean onRecordBeforeDelete(final ODocument iDocument) {
+  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
@@ -147,7 +147,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
 
     acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override

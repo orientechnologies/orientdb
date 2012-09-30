@@ -484,8 +484,6 @@ public class ODocumentHelper {
         return ((ODocument) iCurrent.getRecord()).fieldNames();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
         return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
-
-      throw new IllegalArgumentException("Document attribute '" + iFieldName + "' not supported");
     }
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());

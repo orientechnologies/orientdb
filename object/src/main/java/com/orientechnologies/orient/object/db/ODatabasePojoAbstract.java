@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -249,12 +250,17 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return this;
   }
 
+  public ODatabaseComplex<T> delete(final ORID iRID, final int iVersion) {
+    underlying.delete(iRID, iVersion);
+    return this;
+  }
+
   public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
     underlying.registerHook(iHookImpl);
     return (DBTYPE) this;
   }
 
-  public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
+  public RESULT callbackHooks(final TYPE iType, final OIdentifiable iObject) {
     return underlying.callbackHooks(iType, iObject);
   }
 

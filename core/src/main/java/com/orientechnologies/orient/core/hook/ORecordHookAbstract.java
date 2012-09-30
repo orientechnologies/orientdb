@@ -31,8 +31,8 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to create
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeCreate(final ORecord<?> iiRecord) {
-    return false;
+  public RESULT onRecordBeforeCreate(final ORecord<?> iiRecord) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -50,10 +50,12 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   /**
    * It's called just before to read the iRecord.
    * 
-   * @param iiRecord
+   * @param iRecord
    *          The iRecord to read
+   * @return
    */
-  public void onRecordBeforeRead(final ORecord<?> iiRecord) {
+  public RESULT onRecordBeforeRead(final ORecord<?> iRecord) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -72,8 +74,8 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to update
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeUpdate(final ORecord<?> iiRecord) {
-    return false;
+  public RESULT onRecordBeforeUpdate(final ORecord<?> iiRecord) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -95,8 +97,8 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to delete
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeDelete(final ORecord<?> iiRecord) {
-    return false;
+  public RESULT onRecordBeforeDelete(final ORecord<?> iiRecord) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -111,7 +113,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordDeleteFailed(final ORecord<?> iiRecord) {
   }
 
-  public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     switch (iType) {
     case BEFORE_CREATE:
       return onRecordBeforeCreate(iRecord);
@@ -125,8 +127,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
       break;
 
     case BEFORE_READ:
-      onRecordBeforeRead(iRecord);
-      break;
+      return onRecordBeforeRead(iRecord);
 
     case AFTER_READ:
       onRecordAfterRead(iRecord);
@@ -154,6 +155,6 @@ public abstract class ORecordHookAbstract implements ORecordHook {
       onRecordDeleteFailed(iRecord);
       break;
     }
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 }

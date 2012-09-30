@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.metadata.security.ORole.ALLOW_MODES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +33,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
   public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecord iDatabase) {
     super(iDelegate, iDatabase);
+  }
+
+  @Override
+  public boolean isAllowed(final Set<OIdentifiable> iAllowSet) {
+    return delegate.isAllowed(iAllowSet);
   }
 
   public OUser create() {

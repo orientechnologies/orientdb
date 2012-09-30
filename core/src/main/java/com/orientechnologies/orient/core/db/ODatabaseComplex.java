@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -229,6 +230,17 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public ODatabaseComplex<T> delete(ORID iRID);
 
   /**
+   * Deletes the entity with the received RID from the database.
+   * 
+   * @param iRID
+   *          The RecordID to delete.
+   * @param iVersion
+   *          for MVCC
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public ODatabaseComplex<T> delete(ORID iRID, int iVersion);
+
+  /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.
    * 
    * @return OTransaction implementation
@@ -363,7 +375,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          POJO for {@link ODatabaseObject} implementations.
    * @return True if the input record is changed, otherwise false
    */
-  public boolean callbackHooks(TYPE iType, OIdentifiable iObject);
+  public RESULT callbackHooks(TYPE iType, OIdentifiable iObject);
 
   /**
    * Returns if the Multi Version Concurrency Control is enabled or not. If enabled the version of the record is checked before each

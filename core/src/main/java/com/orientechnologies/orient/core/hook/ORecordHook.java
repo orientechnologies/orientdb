@@ -29,5 +29,9 @@ public interface ORecordHook {
     ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE, UPDATE_FAILED, CREATE_FAILED, DELETE_FAILED
   };
 
-  public boolean onTrigger(TYPE iType, ORecord<?> iRecord);
+  public enum RESULT {
+    RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP
+  }
+
+  public RESULT onTrigger(TYPE iType, ORecord<?> iRecord);
 }

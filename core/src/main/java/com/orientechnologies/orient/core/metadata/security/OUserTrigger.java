@@ -31,16 +31,16 @@ public class OUserTrigger extends ODocumentHookAbstract {
   }
 
   @Override
-  public boolean onRecordBeforeCreate(ODocument iDocument) {
+  public RESULT onRecordBeforeCreate(ODocument iDocument) {
     return encodePassword(iDocument);
   }
 
   @Override
-  public boolean onRecordBeforeUpdate(final ODocument iDocument) {
+  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     return encodePassword(iDocument);
   }
 
-  private boolean encodePassword(final ODocument iDocument) {
+  private RESULT encodePassword(final ODocument iDocument) {
     if (iDocument.field("name") == null)
       throw new OSecurityException("User name not found");
 
@@ -51,9 +51,9 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
     if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
       iDocument.field("password", OUser.encryptPassword(password));
-      return true;
+      return RESULT.RECORD_CHANGED;
     }
 
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 }

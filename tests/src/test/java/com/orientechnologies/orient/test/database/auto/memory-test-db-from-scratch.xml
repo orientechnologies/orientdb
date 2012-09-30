@@ -26,6 +26,7 @@
 	<test name="Security">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SecurityTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.RestrictedTest"/>
 		</classes>
 	</test>
 	<test name="Hook">

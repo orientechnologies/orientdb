@@ -16,12 +16,14 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -40,6 +42,28 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * 
  */
 public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
+  public static final String RESTRICTED_CLASSNAME = "ORestricted";
+  public static final String ALLOW_FIELD          = "_allow";
+
+  public boolean isAllowed(final Set<OIdentifiable> iAllowSet) {
+    if (iAllowSet == null || iAllowSet.isEmpty())
+      return true;
+
+    final OUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
+    if (currentUser != null) {
+      // CHECK IF CURRENT USER IS ENLISTED
+      if (!iAllowSet.contains(currentUser.getDocument().getIdentity())) {
+        // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
+        for (ORole r : currentUser.getRoles()) {
+          if (iAllowSet.contains(r.getDocument().getIdentity()))
+            return true;
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
   public OUser authenticate(final String iUserName, final String iUserPassword) {
     acquireExclusiveLock();
     try {
@@ -255,9 +279,17 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   protected OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
 
+    OClass identityClass = database.getMetadata().getSchema().getClass("OIdentity"); // SINCE 1.2.0
+    if (identityClass == null)
+      identityClass = database.getMetadata().getSchema().createAbstractClass("OIdentity");
+
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
     if (roleClass == null)
-      roleClass = database.getMetadata().getSchema().createClass("ORole");
+      roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
+    else if (roleClass.getSuperClass() == null)
+      // MIGRATE AUTOMATICALLY TO 1.2.0
+      roleClass.setSuperClass(identityClass);
+
     if (!roleClass.existsProperty("name"))
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
     if (!roleClass.existsProperty("mode"))
@@ -267,7 +299,11 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
     OClass userClass = database.getMetadata().getSchema().getClass("OUser");
     if (userClass == null)
-      userClass = database.getMetadata().getSchema().createClass("OUser");
+      userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
+    else if (userClass.getSuperClass() == null)
+      // MIGRATE AUTOMATICALLY TO 1.2.0
+      userClass.setSuperClass(identityClass);
+
     if (!userClass.existsProperty("name"))
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("password"))
@@ -283,6 +319,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     OUser adminUser = getUser(OUser.ADMIN);
     if (adminUser == null)
       adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+
+    // SINCE 1.2.0
+    OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
+    if (restrictedClass == null)
+      restrictedClass = database.getMetadata().getSchema().createClass(RESTRICTED_CLASSNAME);
+    if (!restrictedClass.existsProperty(ALLOW_FIELD))
+      restrictedClass.createProperty(ALLOW_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
 
     return adminUser;
   }

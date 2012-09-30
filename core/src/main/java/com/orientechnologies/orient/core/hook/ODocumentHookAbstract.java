@@ -40,8 +40,8 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *          The document to create
    * @return True if the document has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeCreate(final ODocument iDocument) {
-    return false;
+  public RESULT onRecordBeforeCreate(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -67,8 +67,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    * 
    * @param iDocument
    *          The document to read
+   * @return True if the document has been modified and a new marshalling is required, otherwise false
    */
-  public void onRecordBeforeRead(final ODocument iDocument) {
+  public RESULT onRecordBeforeRead(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -87,8 +89,8 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *          The document to update
    * @return True if the document has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeUpdate(final ODocument iDocument) {
-    return false;
+  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -116,8 +118,8 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *          The document to delete
    * @return True if the document has been modified and a new marshalling is required, otherwise false
    */
-  public boolean onRecordBeforeDelete(final ODocument iDocument) {
-    return false;
+  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   /**
@@ -138,17 +140,17 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteFailed(final ODocument iDocument) {
   }
 
-  public boolean onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
-      return false;
+      return RESULT.RECORD_NOT_CHANGED;
 
     if (!(iRecord instanceof ODocument))
-      return false;
+      return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
 
     if (!filterBySchemaClass(document))
-      return false;
+      return RESULT.RECORD_NOT_CHANGED;
 
     switch (iType) {
     case BEFORE_CREATE:
@@ -163,8 +165,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       break;
 
     case BEFORE_READ:
-      onRecordBeforeRead(document);
-      break;
+      return onRecordBeforeRead(document);
 
     case AFTER_READ:
       onRecordAfterRead(document);
@@ -196,7 +197,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       throw new IllegalStateException("Hook method " + iType + " is not managed");
     }
 
-    return false;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   public String[] getIncludeClasses() {

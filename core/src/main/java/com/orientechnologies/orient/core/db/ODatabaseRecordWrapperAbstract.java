@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -186,6 +187,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final int iVersion) {
+    underlying.delete(iRid, iVersion);
+    return this;
+  }
+
   public ODatabaseComplex<ORecordInternal<?>> delete(final ORecordInternal<?> iRecord) {
     underlying.delete(iRecord);
     return this;
@@ -309,7 +315,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (DBTYPE) this;
   }
 
-  public boolean callbackHooks(final TYPE iType, final OIdentifiable iObject) {
+  public RESULT callbackHooks(final TYPE iType, final OIdentifiable iObject) {
     return underlying.callbackHooks(iType, iObject);
   }
 

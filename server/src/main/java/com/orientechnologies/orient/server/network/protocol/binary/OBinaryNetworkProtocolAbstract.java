@@ -290,13 +290,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final int version) {
-    final ORecordInternal<?> record = iDatabase.load(rid);
-    if (record != null) {
-      record.setVersion(version);
-      record.delete();
-      return 1;
-    }
-    return 0;
+    iDatabase.delete(rid, version);
+    return 1;
   }
 
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,

@@ -38,6 +38,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
+  private static final long serialVersionUID = 1L;
+  
   public static final String ADMIN      = "admin";
   public static final String CLASS_NAME = "ORole";
 

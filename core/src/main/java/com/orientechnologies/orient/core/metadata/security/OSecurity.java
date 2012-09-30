@@ -16,7 +16,9 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
+import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -26,31 +28,33 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OSecurity {
-	public OUser create();
+  public OUser create();
 
-	public void load();
+  public void load();
 
-	public OUser authenticate(String iUsername, String iUserPassword);
+  public boolean isAllowed(final Set<OIdentifiable> iAllowSet);
 
-	public OUser getUser(String iUserName);
+  public OUser authenticate(String iUsername, String iUserPassword);
 
-	public OUser createUser(String iUserName, String iUserPassword, String[] iRoles);
+  public OUser getUser(String iUserName);
 
-	public boolean dropUser(String iUserName);
+  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles);
 
-	public ORole getRole(String iRoleName);
+  public boolean dropUser(String iUserName);
 
-	public ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
+  public ORole getRole(String iRoleName);
 
-	public ORole createRole(String iRoleName, ORole iParent, ORole.ALLOW_MODES iAllowMode);
+  public ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
 
-	public boolean dropRole(String iRoleName);
+  public ORole createRole(String iRoleName, ORole iParent, ORole.ALLOW_MODES iAllowMode);
 
-	public List<ODocument> getAllUsers();
+  public boolean dropRole(String iRoleName);
 
-	public List<ODocument> getAllRoles();
+  public List<ODocument> getAllUsers();
 
-	public OUser repair();
+  public List<ODocument> getAllRoles();
 
-	public void close();
+  public OUser repair();
+
+  public void close();
 }

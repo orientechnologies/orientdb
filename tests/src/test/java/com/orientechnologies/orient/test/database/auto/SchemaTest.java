@@ -149,7 +149,8 @@ public class SchemaTest {
     database.open("admin", "admin");
 
     for (OClass cls : database.getMetadata().getSchema().getClasses()) {
-      assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
+      if (!cls.isAbstract())
+        assert database.getClusterNameById(cls.getDefaultClusterId()) != null;
     }
 
     database.close();
@@ -342,11 +343,11 @@ public class SchemaTest {
     }
 
     database.command(new OCommandSQL("alter class " + company.getName() + " superclass " + superClass.getName())).execute();
-    
+
     database.getMetadata().getSchema().reload();
     company = database.getMetadata().getSchema().getClass("Company");
     superClass = company.getSuperClass();
-    
+
     Assert.assertNotNull(company.getSuperClass());
     found = false;
     for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
