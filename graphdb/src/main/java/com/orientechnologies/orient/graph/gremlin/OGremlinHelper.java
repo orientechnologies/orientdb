@@ -42,23 +42,22 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
-  private static final String                     PARAM_OUTPUT = "output";
-  private static Object                           ONE          = new Object();
-  private static GremlinGroovyScriptEngineFactory factory      = new GremlinGroovyScriptEngineFactory();
-  private static OGremlinHelper                   instance     = new OGremlinHelper();
+  private static final String                        PARAM_OUTPUT = "output";
+  private static Object                              ONE          = new Object();
+  private static GremlinGroovyScriptEngineFactory    factory      = new GremlinGroovyScriptEngineFactory();
+  private static OGremlinHelper                      instance     = new OGremlinHelper();
 
-  private int                                     maxEngines   = 50;
-  private int                                     maxGraphs    = 50;
+  private int                                        maxEngines   = 50;
+  private int                                        maxGraphs    = 50;
 
-  private OResourcePool<Object, ScriptEngine>     enginePool;
-  private OResourcePool<String, OrientGraph>      graphPool;
+  private OResourcePool<Object, ScriptEngine>        enginePool;
+  private OResourcePool<OGraphDatabase, OrientGraph> graphPool;
 
   public static interface OGremlinCallback {
     public boolean call(ScriptEngine iEngine, OrientGraph iGraph);
@@ -95,16 +94,16 @@ public class OGremlinHelper {
       }
     });
 
-    graphPool = new OResourcePool<String, OrientGraph>(maxGraphs, new OResourcePoolListener<String, OrientGraph>() {
+    graphPool = new OResourcePool<OGraphDatabase, OrientGraph>(maxGraphs, new OResourcePoolListener<OGraphDatabase, OrientGraph>() {
 
       @Override
-      public OrientGraph createNewResource(final String iKey, final Object... iAdditionalArgs) {
-        final String[] parts = iKey.split(",");
-        return new OrientGraph(parts[1]);
+      public OrientGraph createNewResource(final OGraphDatabase iKey, final Object... iAdditionalArgs) {
+        return new OrientGraph(iKey);
       }
 
       @Override
-      public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OrientGraph iReusedGraph) {
+      public boolean reuseResource(final OGraphDatabase iKey, final Object[] iAdditionalArgs, final OrientGraph iReusedGraph) {
+        iReusedGraph.reuse(iKey);
         return true;
       }
     });
@@ -140,25 +139,9 @@ public class OGremlinHelper {
     enginePool.returnResource(engine);
   }
 
-  public OrientGraph acquireGraph(final String iURL) {
-    return acquireGraph("admin", "admin", iURL);
-  }
-
-  public OrientGraph acquireGraph(final String iURL, final String iUserName, final String iUserPassword) {
-    checkStatus();
-    final OrientGraph g = graphPool.getResource(iUserName + "," + iURL, Long.MAX_VALUE);
-    if (!g.getRawGraph().getUser().checkPassword(iUserPassword)) {
-      graphPool.returnResource(g);
-      throw new OSecurityException("User and/or password not valid to open database: " + iURL);
-    }
-
-    return g;
-  }
-
   public OrientGraph acquireGraph(final OGraphDatabase iDatabase) {
     checkStatus();
-    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase.getUser().getName() + "," + iDatabase.getURL(), Long.MAX_VALUE))
-        .reuse(iDatabase);
+    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase, Long.MAX_VALUE));
   }
 
   public void releaseGraph(final OrientGraph iGraph) {
