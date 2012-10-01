@@ -76,7 +76,7 @@ public class OStringParser {
         continue;
       }
 
-      if (openBraket == 0 && openGraph == 0 && !escape && (c == '\'' || c == '"')) {
+      if (!escape && (c == '\'' || c == '"')) {
         if (stringBeginChar != ' ') {
           // CLOSE THE STRING?
           if (stringBeginChar == c) {
