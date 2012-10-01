@@ -335,9 +335,9 @@ function OGraph(targetId, config) {
 
 	OGraph.prototype.drawChildVertex = function(name, node, nodeId, child) {
 		if (this.config.bluePrintsGraphModel == "checked") {
-			if (child["out"] == nodeId)
+			if (child["out"] && child["out"]["@rid"] == nodeId)
 				child = child["in"];
-			else
+			else if (child["in"] && child["in"]["@rid"] == nodeId)
 				child = child["out"];
 		}
 
