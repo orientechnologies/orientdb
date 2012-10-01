@@ -291,11 +291,12 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       keySize = iDocument.<Integer> field("keySize");
 
     tree.load();
-    
+
     final Collection<OIdentifiable> tempEntries = iDocument.field("tempEntries");
     if (tempEntries != null && !tempEntries.isEmpty())
       for (OIdentifiable entry : tempEntries)
-        tree.put(entry, null);
+        if (entry != null)
+          tree.put(entry, null);
   }
 
   public boolean isEmbeddedStreaming() {

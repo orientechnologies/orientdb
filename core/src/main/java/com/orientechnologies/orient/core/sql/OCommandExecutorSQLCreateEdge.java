@@ -115,7 +115,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       for (ORecordId to : toIds) {
         final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
         OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
-        edge.save(clusterName);
+
+        if (clusterName != null)
+          edge.save(clusterName);
+        else
+          edge.save();
 
         edges.add(edge);
       }

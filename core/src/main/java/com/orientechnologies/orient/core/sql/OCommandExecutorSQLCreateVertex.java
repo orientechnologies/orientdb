@@ -62,7 +62,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
         fields = new LinkedHashMap<String, Object>();
         parseSetFields(fields);
 
-      } else if (className == null && temp.length() > 0 )
+      } else if (className == null && temp.length() > 0)
         className = temp;
 
       temp = parserOptionalWord(true);
@@ -97,7 +97,10 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs));
 
-    vertex.save(clusterName);
+    if (clusterName != null)
+      vertex.save(clusterName);
+    else
+      vertex.save();
 
     return vertex;
   }
