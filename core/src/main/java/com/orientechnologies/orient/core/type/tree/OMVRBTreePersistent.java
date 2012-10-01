@@ -655,7 +655,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
           buffer.append(',');
         buffer.append(current);
 
-        current = successor(current);
+        current = next(current);
       }
     } else {
       buffer.append("size=");
