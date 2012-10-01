@@ -59,7 +59,6 @@ public class RestrictedTest {
   @Test(dependsOnMethods = "testCreateRestrictedClass")
   public void testFilteredQuery() throws IOException {
     database.open("writer", "writer");
-
     List<?> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
     Assert.assertTrue(result.isEmpty());
   }
@@ -69,6 +68,20 @@ public class RestrictedTest {
     database.open("writer", "writer");
     writerRecord = new ODocument("CMSDocument").field("user", "writer").save();
     writerRecord.reload();
+  }
+
+  @Test(dependsOnMethods = "testCreateAsWriter")
+  public void testFilteredQueryAsReader() throws IOException {
+    database.open("reader", "reader");
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
+    Assert.assertEquals(result.size(), 0);
+  }
+
+  @Test(dependsOnMethods = "testCreateAsWriter")
+  public void testFilteredQueryAsAdmin() throws IOException {
+    database.open("admin", "admin");
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument where user = 'writer'"));
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test(dependsOnMethods = "testCreateAsWriter")

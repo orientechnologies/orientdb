@@ -78,6 +78,10 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
+      if (db.getUser().isRuleDefined(ODatabaseSecurityResources.BYPASS_RESTRICTED))
+        // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
+        return true;
+
       final ODocument doc;
       if (iReadOriginal)
         // RELOAD TO AVOID HACKING OF "_ALLOW" FIELD
