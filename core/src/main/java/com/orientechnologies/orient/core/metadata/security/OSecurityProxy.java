@@ -48,12 +48,22 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.allowRole(iDocument, iAllowFieldName, iRoleName);
   }
 
+  @Override
+  public OIdentifiable allowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+    return delegate.allowIdentity(iDocument, iAllowFieldName, iId);
+  }
+
   public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     return delegate.disallowUser(iDocument, iAllowFieldName, iUserName);
   }
 
   public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
     return delegate.disallowRole(iDocument, iAllowFieldName, iRoleName);
+  }
+
+  @Override
+  public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+    return delegate.disallowIdentity(iDocument, iAllowFieldName, iId);
   }
 
   public OUser create() {

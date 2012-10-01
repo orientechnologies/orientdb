@@ -43,11 +43,13 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
-  public static final String RESTRICTED_CLASSNAME = "ORestricted";
-  public static final String ALLOW_ALL_FIELD      = "_allow";
-  public static final String ALLOW_READ_FIELD     = "_allowRead";
-  public static final String ALLOW_UPDATE_FIELD   = "_allowUpdate";
-  public static final String ALLOW_DELETE_FIELD   = "_allowDelete";
+  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String ALLOW_ALL_FIELD        = "_allow";
+  public static final String ALLOW_READ_FIELD       = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);

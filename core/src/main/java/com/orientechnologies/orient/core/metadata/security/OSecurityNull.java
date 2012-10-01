@@ -100,12 +100,22 @@ public class OSecurityNull implements OSecurity {
   }
 
   @Override
+  public OIdentifiable allowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
+    return null;
+  }
+
+  @Override
   public OIdentifiable disallowUser(ODocument iDocument, String iAllowFieldName, String iUserName) {
     return null;
   }
 
   @Override
   public OIdentifiable disallowRole(ODocument iDocument, String iAllowFieldName, String iRoleName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return null;
   }
 }

@@ -38,9 +38,13 @@ public interface OSecurity {
 
   public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
+  public OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
+
   public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
 
   public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
+
+  public OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId);
 
   public OUser authenticate(String iUsername, String iUserPassword);
 

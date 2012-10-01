@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -40,14 +41,32 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     final OClass cls = iDocument.getSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      Set<OIdentifiable> allowed = iDocument.field(OSecurityShared.ALLOW_ALL_FIELD);
-      if (allowed == null) {
-        allowed = new HashSet<OIdentifiable>();
-        iDocument.field(OSecurityShared.ALLOW_ALL_FIELD, allowed);
-      }
-      allowed.add(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getDocument().getIdentity());
+      String fieldNames = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_FIELD);
+      if (fieldNames == null)
+        fieldNames = OSecurityShared.ALLOW_ALL_FIELD;
+      final String[] fields = fieldNames.split(",");
+      String identityType = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
+      if (identityType == null)
+        identityType = "user";
 
-      return RESULT.RECORD_CHANGED;
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+      ODocument identity = null;
+      if (identityType.equals("user"))
+        identity = db.getUser().getDocument();
+      else if (identityType.equals("role")) {
+        final Set<ORole> roles = db.getUser().getRoles();
+        if (!roles.isEmpty())
+          identity = roles.iterator().next().getDocument();
+      } else
+        throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
+            + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
+
+      if (identity != null) {
+        for (String f : fields)
+          db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+        return RESULT.RECORD_CHANGED;
+      }
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
