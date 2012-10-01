@@ -32,7 +32,15 @@ public interface OSecurity {
 
   public void load();
 
-  public boolean isAllowed(final Set<OIdentifiable> iAllowSet);
+  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation);
+
+  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
+
+  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
+
+  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName);
+
+  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName);
 
   public OUser authenticate(String iUsername, String iUserPassword);
 

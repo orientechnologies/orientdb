@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OSecurityNull implements OSecurity {
 
   @Override
-  public boolean isAllowed(Set<OIdentifiable> iAllowSet) {
+  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
     return true;
   }
 
@@ -87,5 +87,25 @@ public class OSecurityNull implements OSecurity {
 
   public boolean dropRole(String iRoleName) {
     return false;
+  }
+
+  @Override
+  public OIdentifiable allowUser(ODocument iDocument, String iAllowFieldName, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable allowRole(ODocument iDocument, String iAllowFieldName, String iRoleName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable disallowUser(ODocument iDocument, String iAllowFieldName, String iUserName) {
+    return null;
+  }
+
+  @Override
+  public OIdentifiable disallowRole(ODocument iDocument, String iAllowFieldName, String iRoleName) {
+    return null;
   }
 }

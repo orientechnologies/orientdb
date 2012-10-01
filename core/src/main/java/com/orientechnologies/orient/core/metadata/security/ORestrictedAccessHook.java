@@ -40,10 +40,10 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     final OClass cls = iDocument.getSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      Set<OIdentifiable> allowed = iDocument.field(OSecurityShared.ALLOW_FIELD);
+      Set<OIdentifiable> allowed = iDocument.field(OSecurityShared.ALLOW_ALL_FIELD);
       if (allowed == null) {
         allowed = new HashSet<OIdentifiable>();
-        iDocument.field(OSecurityShared.ALLOW_FIELD, allowed);
+        iDocument.field(OSecurityShared.ALLOW_ALL_FIELD, allowed);
       }
       allowed.add(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getDocument().getIdentity());
 
@@ -54,42 +54,46 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeRead(final ODocument iDocument) {
-    return isAllowed(iDocument, false) ? RESULT.RECORD_NOT_CHANGED : RESULT.SKIP;
+    return isAllowed(iDocument, OSecurityShared.ALLOW_READ_FIELD, false) ? RESULT.RECORD_NOT_CHANGED : RESULT.SKIP;
   }
 
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-    if (!isAllowed(iDocument, true))
-      throw new OSecurityException("Resource " + iDocument.getIdentity() + " has restricted access");
+    if (!isAllowed(iDocument, OSecurityShared.ALLOW_UPDATE_FIELD, true))
+      throw new OSecurityException("Cannot update record " + iDocument.getIdentity() + ": the resource has restricted access");
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    if (!isAllowed(iDocument, true))
-      throw new OSecurityException("Resource " + iDocument.getIdentity() + " has restricted access");
+    if (!isAllowed(iDocument, OSecurityShared.ALLOW_DELETE_FIELD, true))
+      throw new OSecurityException("Cannot delete record " + iDocument.getIdentity() + ": the resource has restricted access");
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @SuppressWarnings("unchecked")
-  protected boolean isAllowed(final ODocument iDocument, final boolean iReadOriginal) {
+  protected boolean isAllowed(final ODocument iDocument, final String iAllowOperation, final boolean iReadOriginal) {
     final OClass cls = iDocument.getSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-      if (db.getUser().isRuleDefined(ODatabaseSecurityResources.BYPASS_RESTRICTED))
+      if (db.getUser().checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) != null)
         // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
         return true;
 
       final ODocument doc;
       if (iReadOriginal)
-        // RELOAD TO AVOID HACKING OF "_ALLOW" FIELD
+        // RELOAD TO AVOID HACKING OF "_ALLOW" FIELDS
         doc = (ODocument) db.load(iDocument.getIdentity());
       else
         doc = iDocument;
 
-      return db.getMetadata().getSecurity().isAllowed((Set<OIdentifiable>) doc.field(OSecurityShared.ALLOW_FIELD));
+      return db
+          .getMetadata()
+          .getSecurity()
+          .isAllowed((Set<OIdentifiable>) doc.field(OSecurityShared.ALLOW_ALL_FIELD),
+              (Set<OIdentifiable>) doc.field(iAllowOperation));
     }
 
     return true;

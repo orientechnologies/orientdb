@@ -36,8 +36,24 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
   }
 
   @Override
-  public boolean isAllowed(final Set<OIdentifiable> iAllowSet) {
-    return delegate.isAllowed(iAllowSet);
+  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
+    return delegate.isAllowed(iAllowAll, iAllowOperation);
+  }
+
+  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
+    return delegate.allowUser(iDocument, iAllowFieldName, iUserName);
+  }
+
+  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
+    return delegate.allowRole(iDocument, iAllowFieldName, iRoleName);
+  }
+
+  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
+    return delegate.disallowUser(iDocument, iAllowFieldName, iUserName);
+  }
+
+  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
+    return delegate.disallowRole(iDocument, iAllowFieldName, iRoleName);
   }
 
   public OUser create() {

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -43,19 +44,79 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  */
 public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
   public static final String RESTRICTED_CLASSNAME = "ORestricted";
-  public static final String ALLOW_FIELD          = "_allow";
+  public static final String ALLOW_ALL_FIELD      = "_allow";
+  public static final String ALLOW_READ_FIELD     = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD   = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD   = "_allowDelete";
 
-  public boolean isAllowed(final Set<OIdentifiable> iAllowSet) {
-    if (iAllowSet == null || iAllowSet.isEmpty())
+  public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
+    final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
+    if (user == null)
+      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+
+    return allowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
+  }
+
+  public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
+    final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
+    if (role == null)
+      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+
+    return allowIdentity(iDocument, iAllowFieldName, role.getDocument().getIdentity());
+  }
+
+  public OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId) {
+    Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
+    if (field == null) {
+      field = new OMVRBTreeRIDSet(iDocument);
+      iDocument.field(iAllowFieldName, field);
+    }
+    field.add(iId);
+    return iId;
+  }
+
+  public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
+    final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
+    if (user == null)
+      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+
+    return disallowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
+  }
+
+  public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
+    final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
+    if (role == null)
+      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+
+    return disallowIdentity(iDocument, iAllowFieldName, role.getDocument().getIdentity());
+  }
+
+  public OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId) {
+    Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
+    if (field != null)
+      field.remove(iId);
+    return iId;
+  }
+
+  public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
+    if (iAllowAll == null || iAllowAll.isEmpty())
       return true;
 
     final OUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
-      if (!iAllowSet.contains(currentUser.getDocument().getIdentity())) {
+      if (!iAllowAll.contains(currentUser.getDocument().getIdentity())) {
+        // CHECK AGAINST SPECIFIC _ALLOW OPERATION
+        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getDocument().getIdentity()))
+          return true;
+
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
         for (ORole r : currentUser.getRoles()) {
-          if (iAllowSet.contains(r.getDocument().getIdentity()))
+          // CHECK AGAINST GENERIC _ALLOW
+          if (iAllowAll.contains(r.getDocument().getIdentity()))
+            return true;
+          // CHECK AGAINST SPECIFIC _ALLOW OPERATION
+          if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
             return true;
         }
         return false;
@@ -324,8 +385,14 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
     if (restrictedClass == null)
       restrictedClass = database.getMetadata().getSchema().createClass(RESTRICTED_CLASSNAME);
-    if (!restrictedClass.existsProperty(ALLOW_FIELD))
-      restrictedClass.createProperty(ALLOW_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+    if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
+      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+    if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
+      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+    if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
+      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+    if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
+      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
 
     return adminUser;
   }

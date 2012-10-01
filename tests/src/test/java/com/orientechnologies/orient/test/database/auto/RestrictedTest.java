@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -77,27 +78,27 @@ public class RestrictedTest {
     Assert.assertEquals(result.size(), 0);
   }
 
-  @Test(dependsOnMethods = "testCreateAsWriter")
+  @Test(dependsOnMethods = "testFilteredQueryAsReader")
   public void testFilteredQueryAsAdmin() throws IOException {
     database.open("admin", "admin");
     List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument where user = 'writer'"));
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test(dependsOnMethods = "testCreateAsWriter")
+  @Test(dependsOnMethods = "testFilteredQueryAsAdmin")
   public void testFilteredQueryAsWriter() throws IOException {
     database.open("writer", "writer");
     List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>("select from CMSDocument"));
     Assert.assertEquals(result.size(), 1);
   }
 
-  @Test(dependsOnMethods = "testCreateRestrictedClass")
+  @Test(dependsOnMethods = "testFilteredQueryAsWriter")
   public void testFilteredDirectReadAsWriter() throws IOException {
     database.open("writer", "writer");
     Assert.assertNull(database.load(adminRecord));
   }
 
-  @Test(dependsOnMethods = "testCreateRestrictedClass")
+  @Test(dependsOnMethods = "testFilteredDirectReadAsWriter")
   public void testFilteredDirectUpdateAsWriter() throws IOException {
     database.open("writer", "writer");
     adminRecord.field("user", "writer-hacker");
@@ -114,7 +115,7 @@ public class RestrictedTest {
     Assert.assertEquals(((ODocument) adminRecord.reload()).field("user"), "admin");
   }
 
-  @Test(dependsOnMethods = "testCreateRestrictedClass")
+  @Test(dependsOnMethods = "testFilteredDirectUpdateAsWriter")
   public void testFilteredDirectDeleteAsWriter() throws IOException {
     database.open("writer", "writer");
     try {
@@ -131,12 +132,12 @@ public class RestrictedTest {
     Assert.assertEquals(adminRecord.field("user"), "admin");
   }
 
-  @Test(dependsOnMethods = "testCreateRestrictedClass")
+  @Test(dependsOnMethods = "testFilteredDirectDeleteAsWriter")
   public void testFilteredHackingAllowFieldAsWriter() throws IOException {
     database.open("writer", "writer");
     try {
       // FORCE LOADING
-      Set<OIdentifiable> allows = adminRecord.field(OSecurityShared.ALLOW_FIELD);
+      Set<OIdentifiable> allows = adminRecord.field(OSecurityShared.ALLOW_ALL_FIELD);
       allows.add(database.getMetadata().getSecurity().getUser(database.getUser().getName()).getDocument().getIdentity());
       adminRecord.save();
     } catch (OSecurityException e) {
@@ -150,17 +151,45 @@ public class RestrictedTest {
     adminRecord.reload();
   }
 
-  @Test(dependsOnMethods = "testCreateAsWriter")
-  public void testAddAdminAsRole() throws IOException {
+  @Test(dependsOnMethods = "testFilteredHackingAllowFieldAsWriter")
+  public void testAddReaderAsRole() throws IOException {
     database.open("writer", "writer");
-    Set<OIdentifiable> allows = ((ODocument) writerRecord.reload()).field(OSecurityShared.ALLOW_FIELD);
-    allows.add(database.getMetadata().getSecurity().getRole("admin").getDocument().getIdentity());
+    Set<OIdentifiable> allows = ((ODocument) writerRecord.reload()).field(OSecurityShared.ALLOW_ALL_FIELD);
+    allows.add(database.getMetadata().getSecurity().getRole("reader").getDocument().getIdentity());
     writerRecord.save();
   }
 
-  @Test(dependsOnMethods = "testAddAdminAsRole")
-  public void testAdminCanSeeWriterDocumentAfterPermission() throws IOException {
-    database.open("admin", "admin");
+  @Test(dependsOnMethods = "testAddReaderAsRole")
+  public void testReaderCanSeeWriterDocumentAfterPermission() throws IOException {
+    database.open("reader", "reader");
     Assert.assertNotNull(database.load(writerRecord));
+  }
+
+  @Test(dependsOnMethods = "testReaderCanSeeWriterDocumentAfterPermission")
+  public void testWriterRoleCanRemoveReader() throws IOException {
+    database.open("writer", "writer");
+    Assert.assertEquals(((Collection<?>) writerRecord.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
+    database.getMetadata().getSecurity().disallowRole(writerRecord, OSecurityShared.ALLOW_ALL_FIELD, "reader");
+    Assert.assertEquals(((Collection<?>) writerRecord.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
+    writerRecord.save();
+  }
+
+  @Test(dependsOnMethods = "testWriterRoleCanRemoveReader")
+  public void testReaderCannotSeeWriterDocument() throws IOException {
+    database.open("reader", "reader");
+    Assert.assertNull(database.load(writerRecord.getIdentity()));
+  }
+
+  @Test(dependsOnMethods = "testReaderCannotSeeWriterDocument")
+  public void testWriterAddReaderUserOnlyForRead() throws IOException {
+    database.open("writer", "writer");
+    database.getMetadata().getSecurity().allowUser(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "reader");
+    writerRecord.save();
+  }
+
+  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead")
+  public void testReaderCanSeeWriterDocument() throws IOException {
+    database.open("reader", "reader");
+    Assert.assertNotNull(database.load(writerRecord.getIdentity()));
   }
 }
