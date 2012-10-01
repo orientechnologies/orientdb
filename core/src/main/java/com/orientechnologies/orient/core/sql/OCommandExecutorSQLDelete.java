@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
@@ -56,7 +56,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private String               indexName       = null;
   private int                  recordCount     = 0;
 
-  private OSQLTarget           parsedTarget;
   private OSQLFilter           compiledFilter;
 
   public OCommandExecutorSQLDelete() {
@@ -72,34 +71,18 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     query = null;
     recordCount = 0;
 
-    StringBuilder word = new StringBuilder();
+    parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
+    parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
 
-    int pos = nextWord(parserText, parserTextUpperCase, 0, word, true);
-    if (pos == -1 || !word.toString().equals(OCommandExecutorSQLDelete.KEYWORD_DELETE))
-      throw new OCommandSQLParsingException("Keyword " + OCommandExecutorSQLDelete.KEYWORD_DELETE + " not found. Use "
-          + getSyntax(), parserText, 0);
+    String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+    if (subjectName == null)
+      throwSyntaxErrorException("Invalid subject name. Expected cluster, class or index");
 
-    int oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    oldPos = pos;
-    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Invalid subject name. Expected cluster, class or index. Use " + getSyntax(),
-          parserText, oldPos);
-
-    final String subjectName = word.toString();
-
-    if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+    if (OStringParser.startsWithIgnoreCase(subjectName, OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
       // INDEX
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(oldPos), getContext(), KEYWORD_WHERE);
 
-      if (!parsedTarget.parserIsEnded()) {
-        parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + oldPos + 1);
-
+      if (!parserIsEnded()) {
         parserNextWord(true);
 
         if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
@@ -108,9 +91,13 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       } else
         parserSetCurrentPosition(-1);
 
+    } else if (subjectName.startsWith("(")) {
+      subjectName = subjectName.trim();
+      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+
     } else {
-      query = database
-          .command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + parserText.substring(pos), this));
+      final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+      query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
     }
 
     return this;

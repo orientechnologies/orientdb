@@ -373,4 +373,14 @@ public class OStringParser {
     buffer.append(iText.substring(lastAppend));
     return buffer.toString();
   }
+
+  /**
+   * Like String.startsWith() but ignoring case
+   */
+  public static boolean startsWithIgnoreCase(final String iText, final String iToFind) {
+    if (iText.length() < iToFind.length())
+      return false;
+
+    return iText.substring(0, iToFind.length()).equalsIgnoreCase(iToFind);
+  }
 }
