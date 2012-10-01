@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -136,7 +137,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (parsedTarget == null)
       return true;
 
-    if (iArgs != null && iArgs.size() > 0 && compiledFilter != null )
+    if (iArgs != null && iArgs.size() > 0 && compiledFilter != null)
       compiledFilter.bindParameters(iArgs);
 
     if (target == null)
@@ -148,9 +149,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         target = parsedTarget.getTargetRecords();
       else if (parsedTarget.getTargetVariable() != null) {
         final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
-        if (var == null)
+        if (var == null) {
+          target = Collections.EMPTY_LIST;
           return true;
-        else if (var instanceof OIdentifiable) {
+        } else if (var instanceof OIdentifiable) {
           target = new ArrayList<OIdentifiable>();
           ((List<OIdentifiable>) target).add((OIdentifiable) var);
         } else if (var instanceof Iterable<?>)

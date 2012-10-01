@@ -119,17 +119,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } else
       parserGoBack();
 
-    parserNextWord(true);
-    if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE)) {
-      // WHERE
-      compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-          getContext(), KEYWORD_WHERE);
-      optimize();
-      parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-          + parserGetCurrentPosition());
-    } else
-      parserGoBack();
-
     if (!parserIsEnded()) {
       parserSkipWhiteSpaces();
 
@@ -137,9 +126,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         parserNextWord(true);
 
         if (!parserIsEnded()) {
+
           final String w = parserGetLastWord();
 
-          if (w.equals(KEYWORD_LET))
+          if (w.equals(KEYWORD_WHERE)) {
+            compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
+                getContext(), KEYWORD_WHERE);
+            optimize();
+            parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
+                + parserGetCurrentPosition());
+          } else if (w.equals(KEYWORD_LET))
             parseLet();
           else if (w.equals(KEYWORD_ORDER))
             parseOrderBy(w);
