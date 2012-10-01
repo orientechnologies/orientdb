@@ -923,7 +923,7 @@
 		fillDynaTable(
 				$('#databaseClasses'),
 				"Classes",
-				[ 'name', 'superClass', 'alias', 'clusters', 'defaultCluster',
+				[ 'name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster',
 						'records' ],
 				[ {
 					name : 'name',
@@ -949,6 +949,16 @@
 					index : 'alias',
 					width : 80,
 					editable : true,
+					formoptions : {
+						elmprefix : '(*)'
+					}
+				}, {
+					name : 'abstract',
+					index : 'abstract',
+					width : 80,
+					editable : true,
+					formatter : 'checkbox',
+					edittype : 'checkbox',
 					formoptions : {
 						elmprefix : '(*)'
 					}
