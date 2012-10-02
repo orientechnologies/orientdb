@@ -17,6 +17,7 @@ package com.orientechnologies.orient.console;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -106,7 +107,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   public static void main(final String[] args) {
     int result = 0;
-    
+
     try {
       boolean tty = false;
       try {
@@ -138,7 +139,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       } catch (Exception e) {
       }
     }
-    
+
     System.exit(result);
   }
 
@@ -1938,6 +1939,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     lastPercentStep = (int) (iPercent * 10);
     return true;
+  }
+
+  @ConsoleCommand(description = "Display the current path")
+  public void pwd() {
+    out.println("Current path: " + new File("").getAbsolutePath());
   }
 
   public void onCompletition(final Object iTask, final boolean iSucceed) {
