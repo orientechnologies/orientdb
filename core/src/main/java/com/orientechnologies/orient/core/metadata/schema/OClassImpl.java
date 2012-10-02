@@ -463,16 +463,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     try {
       document.field("name", name);
-      if (shortName != null)
-        document.field("shortName", shortName);
+      document.field("shortName", shortName);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
-      if (overSize > 0)
-        document.field("overSize", overSize);
-      if (strictMode)
-        document.field("strictMode", strictMode);
-      if (abstractClass)
-        document.field("abstract", abstractClass);
+      document.field("overSize", overSize);
+      document.field("strictMode", strictMode);
+      document.field("abstract", abstractClass);
 
       if (properties != null) {
         final Set<ODocument> props = new HashSet<ODocument>();

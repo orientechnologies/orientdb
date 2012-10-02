@@ -613,17 +613,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       document.field("name", name);
       document.field("type", type.id);
-      if (mandatory)
-        document.field("mandatory", mandatory);
-      if (notNull)
-        document.field("notNull", notNull);
+      document.field("mandatory", mandatory);
+      document.field("notNull", notNull);
 
-      if (min != null)
-        document.field("min", min);
-      if (max != null)
-        document.field("max", max);
-      if (regexp != null)
-        document.field("regexp", regexp);
+      document.field("min", min);
+      document.field("max", max);
+      document.field("regexp", regexp);
 
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
