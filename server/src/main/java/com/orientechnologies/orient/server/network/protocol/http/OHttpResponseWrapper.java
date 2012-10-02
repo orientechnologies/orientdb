@@ -115,8 +115,8 @@ public class OHttpResponseWrapper {
    * @return The object itself for fluent chained calls
    */
 
-  public OHttpResponseWrapper writeResponseHeaders(final String iContentType) throws IOException {
-    response.writeResponseHeaders(iContentType);
+  public OHttpResponseWrapper writeHeaders(final String iContentType) throws IOException {
+    response.writeHeaders(iContentType);
     return this;
   }
 

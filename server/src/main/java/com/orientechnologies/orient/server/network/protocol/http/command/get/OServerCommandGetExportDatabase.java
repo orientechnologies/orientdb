@@ -46,7 +46,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
     iRequest.data.commandInfo = "Database export";
     ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
     iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
-    iResponse.writeResponseHeaders(OHttpUtils.CONTENT_GZIP);
+    iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
     iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
     iResponse.writeLine("Date: " + new Date());
     iResponse.writeLine(null);

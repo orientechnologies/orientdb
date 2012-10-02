@@ -107,7 +107,7 @@ public class OHttpResponse {
     writeLine(httpVersion + " " + iStatus + " " + iReason);
   }
 
-  public void writeResponseHeaders(final String iContentType) throws IOException {
+  public void writeHeaders(final String iContentType) throws IOException {
     sendResponseHeaders(iContentType, true);
   }
 
@@ -190,7 +190,7 @@ public class OHttpResponse {
   public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
       final long iSize) throws IOException {
     writeStatus(iCode, iReason);
-    writeResponseHeaders(iContentType);
+    writeHeaders(iContentType);
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
     writeLine(null);
 
