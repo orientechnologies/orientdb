@@ -129,8 +129,8 @@ public class OHttpResponseWrapper {
    *          Use the keep-alive of the connection
    * @return The object itself for fluent chained calls
    */
-  public OHttpResponseWrapper sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
-    response.sendResponseHeaders(iContentType, iKeepAlive);
+  public OHttpResponseWrapper writeHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
+    response.writeHeaders(iContentType, iKeepAlive);
     return this;
   }
 

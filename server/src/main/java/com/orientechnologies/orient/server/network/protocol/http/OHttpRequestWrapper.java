@@ -89,7 +89,7 @@ public class OHttpRequestWrapper {
    * 
    * @return true if is multipart, otherwise false
    */
-  public boolean getisMultipart() {
+  public boolean isMultipart() {
     return request.isMultipart;
   }
 
@@ -103,7 +103,7 @@ public class OHttpRequestWrapper {
   }
 
   /**
-   * Return the session-id.
+   * Returns the session-id.
    * 
    * @return The session-id in form of String
    */
@@ -112,7 +112,7 @@ public class OHttpRequestWrapper {
   }
 
   /**
-   * Return the request's URL.
+   * Returns the request's URL.
    * 
    * @return The URL requested in form of String
    */

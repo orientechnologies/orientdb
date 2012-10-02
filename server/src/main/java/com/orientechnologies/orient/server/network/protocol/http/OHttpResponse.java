@@ -79,7 +79,7 @@ public class OHttpResponse {
     final boolean empty = content == null || content.length() == 0;
 
     writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-    sendResponseHeaders(contentType, iKeepAlive);
+    writeHeaders(contentType, iKeepAlive);
 
     if (additionalHeaders != null)
       for (String h : additionalHeaders)
@@ -108,10 +108,10 @@ public class OHttpResponse {
   }
 
   public void writeHeaders(final String iContentType) throws IOException {
-    sendResponseHeaders(iContentType, true);
+    writeHeaders(iContentType, true);
   }
 
-  public void sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
+  public void writeHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
     if (headers != null)
       writeLine(headers);
 
