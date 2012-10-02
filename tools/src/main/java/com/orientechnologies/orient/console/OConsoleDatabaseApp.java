@@ -512,7 +512,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Explain how a command is executed profiling it")
   public void explain(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    Object result = sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s):\n", false);
+    Object result = sqlCommand("explain", iCommandText, "\nProfiled command '%s' in %f sec(s):\n", true);
     if (result != null && result instanceof ODocument) {
       out.printf(((ODocument) result).toJSON());
     }
