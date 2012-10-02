@@ -108,7 +108,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
       json.endObject();
       json.flush();
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
         OSharedDocumentDatabase.release(db);

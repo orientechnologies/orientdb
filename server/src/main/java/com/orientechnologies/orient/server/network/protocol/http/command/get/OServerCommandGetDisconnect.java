@@ -43,7 +43,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 			iRequest.sessionId = "!";
 		}
 
-		iResponse.sendTextContent(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out", null,
+		iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out", null,
 				false);
 		return false;
 	}

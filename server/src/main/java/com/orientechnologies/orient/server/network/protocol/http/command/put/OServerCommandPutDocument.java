@@ -66,7 +66,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       final ODocument currentDocument = db.load(recordId);
 
       if (currentDocument == null) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " was not found.",
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " was not found.",
             null);
         return false;
       }
@@ -81,7 +81,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
         OSharedDocumentDatabase.release(db);
     }
 
-    iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId
         + " updated successfully.", null);
     return false;
   }

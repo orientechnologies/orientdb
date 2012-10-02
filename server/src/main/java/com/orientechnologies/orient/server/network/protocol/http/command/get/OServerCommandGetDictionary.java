@@ -41,7 +41,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 			if (record == null)
 				throw new ORecordNotFoundException("Key '" + urlParts[2] + "' was not found in the database dictionary");
 
-			iResponse.sendRecordContent(record);
+			iResponse.writeRecord(record);
 
 		} finally {
 			if (db != null)

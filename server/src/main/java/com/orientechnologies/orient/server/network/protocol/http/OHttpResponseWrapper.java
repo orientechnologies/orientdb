@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * Wrapper to use the HTTP response in functions and scripts.
+ * Wrapper to use the HTTP response in functions and scripts. This class mimics the J2EE HTTPResponse class.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -38,19 +39,43 @@ public class OHttpResponseWrapper {
     response = iResponse;
   }
 
+  /**
+   * Returns the response's additional headers.
+   * 
+   * @return The additional headers in form of String
+   */
   public String getHeader() {
     return response.headers;
   }
 
+  /**
+   * Sets the response's additional headers to send back. To specify multiple headers use the line breaks.
+   * 
+   * @param iHeader
+   *          String containing the header
+   * @return The object itself for fluent chained calls
+   */
   public OHttpResponseWrapper setHeader(final String iHeader) {
     response.setHeader(iHeader);
     return this;
   }
 
+  /**
+   * Returns the response's character set used.
+   * 
+   * @return The character set in form of String
+   */
   public String getCharacterSet() {
     return response.characterSet;
   }
 
+  /**
+   * Sets the response's character set.
+   * 
+   * @param iHeader
+   *          String containing the header
+   * @return The object itself for fluent chained calls
+   */
   public OHttpResponseWrapper setCharacterSet(final String iCharacterSet) {
     response.characterSet = iCharacterSet;
     return this;
@@ -68,56 +93,217 @@ public class OHttpResponseWrapper {
     return response.getOutputStream();
   }
 
-  public void sendStatus(int iStatus, String iReason) throws IOException {
-    response.sendStatus(iStatus, iReason);
+  /**
+   * Sets the response's status as HTTP code and reason.
+   * 
+   * @param iHttpCode
+   *          Response's HTTP code
+   * @param iReason
+   *          Response's reason
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeStatus(final int iHttpCode, final String iReason) throws IOException {
+    response.writeStatus(iHttpCode, iReason);
+    return this;
   }
 
-  public void sendResponseHeaders(String iContentType) throws IOException {
-    response.sendResponseHeaders(iContentType);
+  /**
+   * Sets the response's headers using the keep-alive.
+   * 
+   * @param iContentType
+   *          Response's content type
+   * @return The object itself for fluent chained calls
+   */
+
+  public OHttpResponseWrapper writeResponseHeaders(final String iContentType) throws IOException {
+    response.writeResponseHeaders(iContentType);
+    return this;
   }
 
-  public void sendResponseHeaders(String iContentType, boolean iKeepAlive) throws IOException {
+  /**
+   * Sets the response's headers specifying when using the keep-alive or not.
+   * 
+   * @param iContentType
+   *          Response's content type
+   * @param iKeepAlive
+   *          Use the keep-alive of the connection
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
     response.sendResponseHeaders(iContentType, iKeepAlive);
+    return this;
   }
 
-  public void writeLine(String iContent) throws IOException {
+  /**
+   * Writes a line in the response. A line feed will be appended at the end of the content.
+   * 
+   * @param iContent
+   *          Content to send as string
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeLine(final String iContent) throws IOException {
     response.writeLine(iContent);
+    return this;
   }
 
-  public void writeContent(String iContent) throws IOException {
+  /**
+   * Writes content directly to the response.
+   * 
+   * @param iContent
+   *          Content to send as string
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeContent(final String iContent) throws IOException {
     response.writeContent(iContent);
+    return this;
   }
 
-  public void sendRecordsContent(List<OIdentifiable> iRecords) throws IOException {
-    response.sendRecordsContent(iRecords);
+  /**
+   * Writes records as response. The records are serialized in JSON format.
+   * 
+   * @param iContent
+   *          List of records to serialize
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeRecords(final List<OIdentifiable> iRecords) throws IOException {
+    response.writeRecords(iRecords);
+    return this;
   }
 
-  public void sendRecordsContent(List<OIdentifiable> iRecords, String iFetchPlan) throws IOException {
-    response.sendRecordsContent(iRecords, iFetchPlan);
+  /**
+   * Writes records as response specifying a fetch-plan to serialize nested records. The records are serialized in JSON format.
+   * 
+   * @param iContent
+   *          List of records to serialize
+   * @param iFetchPlan
+   *          Fetch plan to specify nested records
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeRecords(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+    response.writeRecords(iRecords, iFetchPlan);
+    return this;
   }
 
-  public void sendRecordContent(ORecord<?> iRecord) throws IOException {
-    response.sendRecordContent(iRecord);
+  /**
+   * Writes a record as response. The record is serialized in JSON format.
+   * 
+   * @param iContent
+   *          Record to serialize
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeRecord(final ORecord<?> iRecord) throws IOException {
+    response.writeRecord(iRecord);
+    return this;
   }
 
-  public void sendRecordContent(ORecord<?> iRecord, String iFetchPlan) throws IOException {
-    response.sendRecordContent(iRecord, iFetchPlan);
+  /**
+   * Writes a record as response. The record is serialized in JSON format.
+   * 
+   * @param iContent
+   *          Record to serialize
+   * @param iFetchPlan
+   *          Fetch plan to specify nested records
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper writeRecord(final ORecord<?> iRecord, final String iFetchPlan) throws IOException {
+    response.writeRecord(iRecord, iFetchPlan);
+    return this;
   }
 
-  public void flush() throws IOException {
-    response.flush();
-  }
-
-  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent) throws IOException {
-    response.sendTextContent(iCode, iReason, iContentType, iContent, null);
-  }
-
-  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent, String iHeaders) throws IOException {
-    response.sendTextContent(iCode, iReason, iContentType, iContent, iHeaders);
-  }
-
-  public void sendTextContent(int iCode, String iReason, String iContentType, Object iContent, String iHeaders, boolean iKeepAlive)
+  /**
+   * Sends the complete HTTP response in one call.
+   * 
+   * @param iCode
+   *          HTTP response's Code
+   * @param iReason
+   *          Response's reason
+   * @param iContentType
+   *          Response's content type
+   * @param iContent
+   *          Content to send. Content can be a string for plain text, binary data to return directly binary information,
+   *          OIdentifiable for a single record and Collection<OIdentifiable> for a collection of records
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper send(final int iCode, final String iReason, final String iContentType, final Object iContent)
       throws IOException {
-    response.sendTextContent(iCode, iReason, iContentType, iContent, iHeaders, iKeepAlive);
+    response.send(iCode, iReason, iContentType, iContent, null);
+    return this;
+  }
+
+  /**
+   * Sends the complete HTTP response in one call specifying additional headers. Keep-alive is set.
+   * 
+   * @param iCode
+   *          HTTP response's Code
+   * @param iReason
+   *          Response's reason
+   * @param iContentType
+   *          Response's content type
+   * @param iContent
+   *          Content to send. Content can be a string for plain text, binary data to return directly binary information,
+   *          OIdentifiable for a single record and Collection<OIdentifiable> for a collection of records
+   * @param iHeaders
+   *          Response's additional headers
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper send(final int iCode, final String iReason, final String iContentType, final Object iContent,
+      final String iHeaders) throws IOException {
+    response.send(iCode, iReason, iContentType, iContent, iHeaders);
+    return this;
+  }
+
+  /**
+   * Sends the complete HTTP response in one call specifying additional headers.
+   * 
+   * @param iCode
+   *          HTTP response's Code
+   * @param iReason
+   *          Response's reason
+   * @param iContentType
+   *          Response's content type
+   * @param iContent
+   *          Content to send. Content can be a string for plain text, binary data to return directly binary information,
+   *          OIdentifiable for a single record and Collection<OIdentifiable> for a collection of records
+   * @param iHeaders
+   *          Response's additional headers
+   * @param iKeepAlive
+   *          Use the connection keep-alive
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper send(final int iCode, final String iReason, final String iContentType, final Object iContent,
+      final String iHeaders, final boolean iKeepAlive) throws IOException {
+    response.send(iCode, iReason, iContentType, iContent, iHeaders, iKeepAlive);
+    return this;
+  }
+
+  /**
+   * Sends the complete HTTP response in one call specifying a stream as content.
+   * 
+   * @param iCode
+   *          HTTP response's Code
+   * @param iReason
+   *          Response's reason
+   * @param iContentType
+   *          Response's content type
+   * @param iContent
+   *          java.io.InputStream object
+   * @param iSize
+   *          Content size in bytes
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper sendStream(final int iCode, final String iReason, final String iContentType,
+      final InputStream iContent, final long iSize) throws IOException {
+    response.sendStream(iCode, iReason, iContentType, iContent, iSize);
+    return this;
+  }
+
+  /**
+   * Flushes the content to the TCP/IP socket.
+   * 
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper flush() throws IOException {
+    response.flush();
+    return this;
   }
 }

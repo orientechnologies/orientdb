@@ -129,7 +129,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       throws IOException {
     // UNAUTHORIZED
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
-    iResponse.sendTextContent(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+    iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", false);
   }
 

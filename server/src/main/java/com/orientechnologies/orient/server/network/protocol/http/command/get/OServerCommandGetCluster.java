@@ -57,7 +57,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
 				response.add(rec);
 			}
 
-			iResponse.sendRecordsContent(response);
+			iResponse.writeRecords(response);
 		} finally {
 			if (db != null)
 				OSharedDocumentDatabase.release(db);

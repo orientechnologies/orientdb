@@ -58,12 +58,12 @@ public class OHttpResponse {
     callbackFunction = iCallbackFunction;
   }
 
-  public void sendTextContent(final int iCode, final String iReason, final String iContentType, final Object iContent,
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent,
       final String iHeaders) throws IOException {
-    sendTextContent(iCode, iReason, iContentType, iContent, iHeaders, true);
+    send(iCode, iReason, iContentType, iContent, iHeaders, true);
   }
 
-  public void sendTextContent(final int iCode, final String iReason, final String iContentType, final Object iContent,
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent,
       final String iHeaders, final boolean iKeepAlive) throws IOException {
     final String content;
     final String contentType;
@@ -78,7 +78,7 @@ public class OHttpResponse {
 
     final boolean empty = content == null || content.length() == 0;
 
-    sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
+    writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     sendResponseHeaders(contentType, iKeepAlive);
 
     if (additionalHeaders != null)
@@ -103,11 +103,11 @@ public class OHttpResponse {
     out.flush();
   }
 
-  public void sendStatus(final int iStatus, final String iReason) throws IOException {
+  public void writeStatus(final int iStatus, final String iReason) throws IOException {
     writeLine(httpVersion + " " + iStatus + " " + iReason);
   }
 
-  public void sendResponseHeaders(final String iContentType) throws IOException {
+  public void writeResponseHeaders(final String iContentType) throws IOException {
     sendResponseHeaders(iContentType, true);
   }
 
@@ -136,11 +136,11 @@ public class OHttpResponse {
       out.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  public void sendRecordsContent(final List<OIdentifiable> iRecords) throws IOException {
-    sendRecordsContent(iRecords, null);
+  public void writeRecords(final List<OIdentifiable> iRecords) throws IOException {
+    writeRecords(iRecords, null);
   }
 
-  public void sendRecordsContent(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+  public void writeRecords(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
     json.beginObject();
@@ -154,7 +154,7 @@ public class OHttpResponse {
 
     json.endObject();
 
-    sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+    send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
   public void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
@@ -177,20 +177,20 @@ public class OHttpResponse {
     }
   }
 
-  public void sendRecordContent(final ORecord<?> iRecord) throws IOException {
-    sendRecordContent(iRecord, null);
+  public void writeRecord(final ORecord<?> iRecord) throws IOException {
+    writeRecord(iRecord, null);
   }
 
-  public void sendRecordContent(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
+  public void writeRecord(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
     final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
     if (iRecord != null)
-      sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
   }
 
-  public void sendBinaryContent(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
+  public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
       final long iSize) throws IOException {
-    sendStatus(iCode, iReason);
-    sendResponseHeaders(iContentType);
+    writeStatus(iCode, iReason);
+    writeResponseHeaders(iContentType);
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
     writeLine(null);
 

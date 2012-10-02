@@ -70,15 +70,15 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
                   fileType, (byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
           }
         } else {
-          iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",
+          iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",
               OHttpUtils.CONTENT_TEXT_PLAIN, "Record requested is not a file nor has a readable schema", null);
         }
       } else {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists",
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists",
             null);
       }
     } catch (Exception e) {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(),
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(),
           null);
     } finally {
       if (db != null)
@@ -90,8 +90,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
   protected void sendORecordBinaryFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
       final String iReason, final String iContentType, final ORecordBytes record, final String iFileName) throws IOException {
-    iResponse.sendStatus(iCode, iReason);
-    iResponse.sendResponseHeaders(iContentType);
+    iResponse.writeStatus(iCode, iReason);
+    iResponse.writeResponseHeaders(iContentType);
     iResponse.writeLine("Content-Disposition: attachment; filename=" + iFileName);
     iResponse.writeLine("Date: " + new Date());
     iResponse.writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (record.getSize()));
@@ -104,8 +104,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
   protected void sendBinaryFieldFileContent(final OHttpRequest iRequest, final OHttpResponse iResponse, final int iCode,
       final String iReason, final String iContentType, final byte[] record, final String iFileName) throws IOException {
-    iResponse.sendStatus(iCode, iReason);
-    iResponse.sendResponseHeaders(iContentType);
+    iResponse.writeStatus(iCode, iReason);
+    iResponse.writeResponseHeaders(iContentType);
     iResponse.writeLine("Content-Disposition: attachment; filename=" + iFileName);
     iResponse.writeLine("Date: " + new Date());
     iResponse.writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (record.length));

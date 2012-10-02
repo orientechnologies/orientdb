@@ -31,7 +31,7 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 		iRequest.data.commandInfo = "HTTP Options";
 		iRequest.data.commandDetail = iRequest.url;
 
-		iResponse.sendTextContent(
+		iResponse.send(
 				OHttpUtils.STATUS_OK_CODE,
 				OHttpUtils.STATUS_OK_DESCRIPTION,
 				OHttpUtils.CONTENT_TEXT_PLAIN,

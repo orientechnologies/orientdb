@@ -162,7 +162,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         if (!inputFile.exists()) {
           OLogManager.instance().debug(this, "Static resource not found: %s", path);
 
-          iResponse.sendBinaryContent(404, "File not found", null, null, 0);
+          iResponse.sendStream(404, "File not found", null, null, 0);
           return false;
         }
 
@@ -214,7 +214,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         }
       }
 
-      iResponse.sendBinaryContent(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, is, contentSize);
+      iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, type, is, contentSize);
 
     } catch (IOException e) {
       e.printStackTrace();

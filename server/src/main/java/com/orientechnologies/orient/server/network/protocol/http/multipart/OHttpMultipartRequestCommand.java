@@ -112,12 +112,12 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
       if (currChar == '-') {
         endRequest = true;
       } else {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected -", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected -",
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected -", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected -",
             null);
         endRequest = true;
       }
     } else {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected CR/LF", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected CR/LF",
+      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected CR/LF", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected CR/LF",
           null);
       endRequest = true;
     }
@@ -129,7 +129,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
     int boundaryCursor = 0;
     for (int i = 0; i < 2; i++) {
       if (currChar != '-') {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected boundary", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected boundary",
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected boundary", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected boundary",
             null);
         return;
       }
@@ -138,7 +138,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
     }
     while (boundaryCursor < iRequest.boundary.length()) {
       if (currChar != iRequest.boundary.charAt(boundaryCursor)) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected boundary", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected boundary",
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request: Expected boundary", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request: Expected boundary",
             null);
       }
       boundaryCursor++;
@@ -193,11 +193,11 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
       in = iRequest.multipartStream.read();
       currChar = (char) in;
       if (currChar != ' ') {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ' ' (header: " + headerName + ")",
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ' ' (header: " + headerName + ")",
             OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request part header: Expected ' ' (header: " + headerName + ")", null);
       }
     } else if (currChar != '=') {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ':' (header: "
+      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Wrong request part header: Expected ':' (header: "
           + headerName + ")", OHttpUtils.CONTENT_TEXT_PLAIN, "Wrong request part header: Expected ':' (header: " + headerName
           + ")", null);
     }

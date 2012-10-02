@@ -70,7 +70,7 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
       index.put(key, record);
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Key '"
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Key '"
           + urlParts[3] + "' correctly inserted into the index " + urlParts[2] + ".", null);
     } finally {
       if (db != null)

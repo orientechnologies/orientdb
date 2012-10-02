@@ -53,10 +53,10 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 		}
 
 		if (rec == null)
-		  iResponse.sendTextContent(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+		  iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
 					+ "' was not found.", null);
 		else
-		  iResponse.sendRecordContent(rec, fetchPlan);
+		  iResponse.writeRecord(rec, fetchPlan);
 		return false;
 	}
 

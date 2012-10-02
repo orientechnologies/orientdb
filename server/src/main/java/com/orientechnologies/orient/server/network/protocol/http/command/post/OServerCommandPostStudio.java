@@ -105,7 +105,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     // GET THE TARGET CLASS
     final OClass cls = db.getMetadata().getSchema().getClass(rid);
     if (cls == null) {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
       return;
     }
 
@@ -133,11 +133,11 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         if (fields.get("max") != null)
           prop.setMax(fields.get("max"));
 
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
             + fields.get("name") + " created successfully", null);
 
       } catch (Exception e) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class "
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class "
             + rid + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
@@ -145,7 +145,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
       cls.dropProperty(className);
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
           + fields.get("name") + " deleted successfully.", null);
     }
   }
@@ -172,11 +172,11 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         if (alias != null)
           cls.setShortName(alias);
 
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
             + "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size(), null);
 
       } catch (Exception e) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': "
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': "
             + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e, null);
       }
     } else if ("del".equals(operation)) {
@@ -184,7 +184,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
       db.getMetadata().getSchema().dropClass(rid);
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
           + "' deleted successfully.", null);
     }
   }
@@ -196,14 +196,14 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
       int clusterId = db.addCluster(fields.get("name"), CLUSTER_TYPE.valueOf(fields.get("type")));
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' created successfully with id=" + clusterId, null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' created successfully with id=" + clusterId, null);
 
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete cluster";
 
       db.dropCluster(fields.get("name"));
 
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' deleted successfully", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' deleted successfully", null);
     }
   }
 
@@ -248,7 +248,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       }
 
       doc.save();
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
           + " updated successfully.", null);
     } else if ("add".equals(operation)) {
       iRequest.data.commandInfo = "Studio create document";
@@ -260,7 +260,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         doc.field(f.getKey(), f.getValue());
 
       doc.save();
-      iResponse.sendTextContent(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
+      iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
           + " updated successfully.", null);
 
     } else if ("del".equals(operation)) {
@@ -272,11 +272,11 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       final ODocument doc = new ODocument(new ORecordId(rid));
       doc.load();
       doc.delete();
-      iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
           + " deleted successfully.", null);
 
     } else
-      iResponse.sendTextContent(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+      iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
   }
 
   private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
@@ -284,7 +284,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     // GET THE TARGET CLASS
     final OClass cls = db.getMetadata().getSchema().getClass(rid);
     if (cls == null) {
-      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
       return;
     }
 
@@ -297,10 +297,10 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
         cls.createIndex(fields.get("name"), indexType, fieldNames);
 
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name") + " created successfully", null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name") + " created successfully", null);
 
       } catch (Exception e) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid
             + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
@@ -309,21 +309,21 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       try {
         final OIndex<?> index = cls.getClassIndex(className);
         if (index == null) {
-          iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '" + className + "' not found in class '" + rid + "'.", null);
+          iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '" + className + "' not found in class '" + rid + "'.", null);
           return;
         }
 
         db.getMetadata().getIndexManager().dropIndex(index.getName());
 
-        iResponse.sendTextContent(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index "
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index "
             + className + " deleted successfully.", null);
       } catch (Exception e) {
-        iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className
             + "' for class " + rid + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className
             + "' for class " + rid + ": " + e, null);
       }
     } else
-      iResponse.sendTextContent(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
   }
 
   public String[] getNames() {

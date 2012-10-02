@@ -48,7 +48,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
         db.close();
     }
 
-    iResponse.sendTextContent(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
+    iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
         null);
     return false;
   }
