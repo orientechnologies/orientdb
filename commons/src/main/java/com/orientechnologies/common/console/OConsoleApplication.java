@@ -23,12 +23,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -52,7 +50,8 @@ public class OConsoleApplication {
   protected PrintStream         out              = System.out;
   protected PrintStream         err              = System.err;
 
-  protected char                commandSeparator = ';';
+  protected String              lineSeparator    = "\n";
+  protected String              commandSeparator = ";";
   protected String              wordSeparator    = " ";
   protected String[]            helpCommands     = { "help", "?" };
   protected String[]            exitCommands     = { "exit", "bye", "quit" };
@@ -127,26 +126,51 @@ public class OConsoleApplication {
   }
 
   protected boolean executeCommands(final Scanner iScanner, final boolean iExitOnException) {
-    iScanner.useDelimiter(";");
+    final StringBuilder commandBuffer = new StringBuilder();
+
     try {
+      String commandLine = null;
 
+      iScanner.useDelimiter(commandSeparator);
       while (iScanner.hasNext()) {
-        String commandLine = iScanner.next();
 
-        final RESULT status = execute(commandLine);
+        commandLine = iScanner.next().trim();
 
+        // JS CASE: MANAGE ENSEMBLING ALL TOGETHER
+        if (commandLine.startsWith("js")) {
+          // BEGIN: START TO COLLECT
+          commandBuffer.append(commandLine);
+          commandLine = null;
+        } else if (commandLine.startsWith("end") && commandBuffer.length() > 0) {
+          // END: FLUSH IT
+          commandLine = commandBuffer.toString();
+          commandBuffer.setLength(0);
+
+        } else if (commandBuffer.length() > 0) {
+          // BUFFER IT
+          commandBuffer.append(';');
+          commandBuffer.append(commandLine);
+          commandLine = null;
+        }
+
+        if (commandLine != null) {
+          final RESULT status = execute(commandLine);
+          commandLine = null;
+
+          if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+            return false;
+        }
+      }
+
+      if (commandBuffer.length() > 0) {
+        final RESULT status = execute(commandBuffer.toString());
         if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
           return false;
       }
-
     } finally {
       iScanner.close();
     }
     return true;
-  }
-
-  protected List<String> filterCommands(String[] commandLines) {
-    return Arrays.asList(commandLines);
   }
 
   protected RESULT execute(String iCommand) {

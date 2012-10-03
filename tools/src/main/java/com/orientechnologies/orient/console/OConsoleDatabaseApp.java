@@ -164,36 +164,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     Orient.instance().shutdown();
   }
 
-  @Override
-  protected List<String> filterCommands(String[] commandLines) {
-    final StringBuilder buffer = new StringBuilder();
-    final List<String> modifiedCommandLines = new ArrayList<String>();
-    for (String commandLine : commandLines) {
-      // JS CASE: MANAGE ENSEMBLING ALL TOGETHER
-      if (buffer.length() > 0 && commandLine.startsWith("end")) {
-        // END: FLUSH IT
-        modifiedCommandLines.add(buffer.toString());
-        buffer.setLength(0);
-
-      } else if (commandLine.startsWith("js")) {
-        // BEGIN: START TO COLLECT
-        buffer.append(commandLine);
-
-      } else if (buffer.length() > 0) {
-        // CONTINUE TO APPEND
-        buffer.append(';');
-        buffer.append(commandLine);
-      } else
-        modifiedCommandLines.add(commandLine);
-    }
-
-    if (buffer.length() > 0) {
-      // END: FLUSH IT
-      modifiedCommandLines.add(buffer.toString());
-    }
-    return modifiedCommandLines;
-  }
-
   @ConsoleCommand(aliases = { "use database" }, description = "Connect to a database or a remote Server instance")
   public void connect(
       @ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect to in the format '<mode>:<path>'") String iURL,
