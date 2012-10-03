@@ -139,6 +139,15 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-    return OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    if (db != null) {
+      iRequest.data.lastDatabase = db.getName();
+      iRequest.data.lastUser = db.getUser() != null ? db.getUser().getName() : null;
+    } else {
+      iRequest.data.lastDatabase = null;
+      iRequest.data.lastUser = null;
+    }
+
+    return db;
   }
 }

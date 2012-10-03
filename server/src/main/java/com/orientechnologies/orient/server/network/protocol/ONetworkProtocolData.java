@@ -22,18 +22,20 @@ package com.orientechnologies.orient.server.network.protocol;
  * 
  */
 public class ONetworkProtocolData {
-	public int		totalRequests							= 0;
-	public String	commandInfo								= null;
-	public String	commandDetail							= null;
-	public String	lastCommandInfo						= null;
-	public String	lastCommandDetail					= null;
-	public long		lastCommandExecutionTime	= 0;
-	public long		lastCommandReceived				= 0;
-	public long		totalCommandExecutionTime	= 0;
-	public String	serverInfo								= null;
-	public String	caller										= null;
-	public String	driverName								= null;
-	public String	driverVersion							= null;
-	public short	protocolVersion						= -1;
-	public String	clientId									= null;
+  public int    totalRequests             = 0;
+  public String commandInfo               = null;
+  public String commandDetail             = null;
+  public String lastCommandInfo           = null;
+  public String lastCommandDetail         = null;
+  public long   lastCommandExecutionTime  = 0;
+  public long   lastCommandReceived       = 0;
+  public String lastDatabase              = null;
+  public String lastUser                  = null;
+  public long   totalCommandExecutionTime = 0;
+  public String serverInfo                = null;
+  public String caller                    = null;
+  public String driverName                = null;
+  public String driverVersion             = null;
+  public short  protocolVersion           = -1;
+  public String clientId                  = null;
 }

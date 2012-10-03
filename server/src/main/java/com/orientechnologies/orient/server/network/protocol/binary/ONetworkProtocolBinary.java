@@ -121,6 +121,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (connection != null) {
       ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
+      if (connection.database != null) {
+        connection.data.lastDatabase = connection.database.getName();
+        connection.data.lastUser = connection.database.getUser() != null ? connection.database.getUser().getName() : null;
+      } else {
+        connection.data.lastDatabase = null;
+        connection.data.lastUser = null;
+      }
+
       ++connection.data.totalRequests;
       setDataCommandInfo("Listening");
       connection.data.commandDetail = "-";
