@@ -339,4 +339,10 @@ public class OAutoshardedStorage implements OStorage {
   public OSharedResourceAdaptiveExternal getLock() {
     return wrapped.getLock();
   }
+
+  @Override
+  public String getType() {
+    return "autoshareded";
+  }
+
 }

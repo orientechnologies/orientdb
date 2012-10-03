@@ -76,8 +76,8 @@ public interface OStorage extends OSharedContainer {
    * @return Current cache.
    */
   public OLevel2RecordCache getLevel2Cache();
-  
-  public OSharedResourceAdaptiveExternal getLock(); 
+
+  public OSharedResourceAdaptiveExternal getLock();
 
   // CRUD OPERATIONS
   public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
@@ -231,4 +231,11 @@ public interface OStorage extends OSharedContainer {
    * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
    */
   public boolean isLHClustersAreUsed();
+
+  /**
+   * Returns the storage's type.
+   * 
+   * @return
+   */
+  public String getType();
 }

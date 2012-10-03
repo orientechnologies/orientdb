@@ -115,8 +115,9 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
           json.beginObject(2);
           writeField(json, 2, "db", db.getName());
           writeField(json, 2, "user", db.getUser() != null ? db.getUser().getName() : "-");
-          writeField(json, 2, "open", db.isClosed() ? "closed" : "open");
-          writeField(json, 2, "storage", db.getStorage().getClass().getSimpleName());
+          writeField(json, 2, "status", db.isClosed() ? "closed" : "open");
+          writeField(json, 2, "type", db.getType());
+          writeField(json, 2, "storageType", db.getStorage().getType());
           json.endObject(2);
         }
       }

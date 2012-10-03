@@ -1842,4 +1842,10 @@ public class OStorageLocal extends OStorageEmbedded {
     final OCluster indexCluster = clusterMap.get(clusterName);
     return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }
+
+  @Override
+  public String getType() {
+    return OEngineLocal.NAME;
+  }
+
 }

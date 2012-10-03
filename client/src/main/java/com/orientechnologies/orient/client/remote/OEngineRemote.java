@@ -25,52 +25,52 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OEngineRemote extends OEngineAbstract {
-	public static final String												NAME						= "remote";
-	private static final Map<String, OStorageRemote>	sharedStorages	= new ConcurrentHashMap<String, OStorageRemote>();
+  public static final String                       NAME           = "remote";
+  private static final Map<String, OStorageRemote> sharedStorages = new ConcurrentHashMap<String, OStorageRemote>();
 
-	public OEngineRemote() {
-	}
+  public OEngineRemote() {
+  }
 
-	public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
-		try {
-			synchronized (sharedStorages) {
-				OStorageRemote sharedStorage = sharedStorages.get(iURL);
-				if (sharedStorage == null) {
-					sharedStorage = new OStorageRemote(null, iURL, "rw");
-					sharedStorages.put(iURL, sharedStorage);
-				}
+  public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
+    try {
+      synchronized (sharedStorages) {
+        OStorageRemote sharedStorage = sharedStorages.get(iURL);
+        if (sharedStorage == null) {
+          sharedStorage = new OStorageRemote(null, iURL, "rw");
+          sharedStorages.put(iURL, sharedStorage);
+        }
 
-				return new OStorageRemoteThread(sharedStorage);
-			}
-		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on opening database: " + iURL, t, ODatabaseException.class);
-		}
-		return null;
-	}
+        return new OStorageRemoteThread(sharedStorage);
+      }
+    } catch (Throwable t) {
+      OLogManager.instance().error(this, "Error on opening database: " + iURL, t, ODatabaseException.class);
+    }
+    return null;
+  }
 
-	public void removeStorage(final String iURL) {
-		synchronized (sharedStorages) {
-			sharedStorages.remove(iURL);
-		}
-	}
+  public void removeStorage(final String iURL) {
+    synchronized (sharedStorages) {
+      sharedStorages.remove(iURL);
+    }
+  }
 
-	@Override
-	public void removeStorage(final OStorage iStorage) {
-		synchronized (sharedStorages) {
-			for (Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
-				if (entry.getValue() == iStorage) {
-					sharedStorages.remove(entry.getKey());
-					break;
-				}
-			}
-		}
-	}
+  @Override
+  public void removeStorage(final OStorage iStorage) {
+    synchronized (sharedStorages) {
+      for (Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
+        if (entry.getValue() == iStorage) {
+          sharedStorages.remove(entry.getKey());
+          break;
+        }
+      }
+    }
+  }
 
-	public String getName() {
-		return NAME;
-	}
+  public String getName() {
+    return NAME;
+  }
 
-	public boolean isShared() {
-		return false;
-	}
+  public boolean isShared() {
+    return false;
+  }
 }

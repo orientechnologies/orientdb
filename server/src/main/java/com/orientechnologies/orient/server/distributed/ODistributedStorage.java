@@ -414,6 +414,11 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getLock();
   }
 
+  @Override
+  public String getType() {
+    return "distributed";
+  }
+
   protected String getClusterNameFromRID(final ORecordId iRecordId) {
     return OStorageSynchronizer.getClusterNameByRID(wrapped, iRecordId);
   }

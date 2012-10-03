@@ -393,4 +393,10 @@ public class OStorageRemoteThread implements OStorageProxy {
   public STATUS getStatus() {
     return delegate.getStatus();
   }
+
+  @Override
+  public String getType() {
+    return delegate.getType();
+  }
+
 }

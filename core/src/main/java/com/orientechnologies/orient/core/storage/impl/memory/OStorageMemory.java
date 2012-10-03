@@ -801,4 +801,10 @@ public class OStorageMemory extends OStorageEmbedded {
   public boolean isLHClustersAreUsed() {
     return false;
   }
+
+  @Override
+  public String getType() {
+    return OEngineMemory.NAME;
+  }
+
 }

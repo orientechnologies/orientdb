@@ -1848,16 +1848,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     throw new UnsupportedOperationException("getDataSegmentById()");
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OStorage#getClusters()
-   */
   public int getClusters() {
     return clusterMap.size();
   }
 
   public void setDefaultClusterId(int defaultClusterId) {
     this.defaultClusterId = defaultClusterId;
+  }
+  
+  @Override
+  public String getType() {
+    return OEngineRemote.NAME;
   }
 }
