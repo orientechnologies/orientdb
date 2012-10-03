@@ -485,10 +485,12 @@ public class OStorageMemory extends OStorageEmbedded {
 
       long tot = 0;
       for (int i = 0; i < iClusterIds.length; ++i) {
-        final OCluster cluster = clusters.get(iClusterIds[i]);
+        if (iClusterIds[i] > -1) {
+          final OCluster cluster = clusters.get(iClusterIds[i]);
 
-        if (cluster != null)
-          tot += cluster.getEntries();
+          if (cluster != null)
+            tot += cluster.getEntries();
+        }
       }
       return tot;
 
