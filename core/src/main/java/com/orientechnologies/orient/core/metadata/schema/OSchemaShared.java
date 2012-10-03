@@ -113,10 +113,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new IllegalStateException("Cannot create a new class inside a transaction");
 
     int clusterId = getDatabase().getClusterIdByName(iClassName);
-    if (clusterId == -1) {
+    if (clusterId == -1)
       // CREATE A NEW CLUSTER
       clusterId = getDatabase().addCluster(iType.toString(), iClassName, null, null);
-    }
 
     return createClass(iClassName, iSuperClass, clusterId);
   }
@@ -368,7 +367,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public <RET extends ODocumentWrapper> RET reload() {
     lock.acquireExclusiveLock();
     try {
-      
+
       getDatabase().getStorage().callInLock(new Callable<Void>() {
 
         public Void call() throws Exception {
@@ -376,7 +375,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           return null;
         }
       }, false);
-      
+
     } finally {
       lock.releaseExclusiveLock();
     }

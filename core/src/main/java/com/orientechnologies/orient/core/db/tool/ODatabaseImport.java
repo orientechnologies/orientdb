@@ -466,8 +466,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (exporterVersion < 4) {
       recreateManualIndex = true;
 
-      listener
-          .onMessage("\nExported database does not support manual index separation." + " Manual index cluster will be dropped.");
+      listener.onMessage("\nWARN: Exported database does not support manual index separation."
+          + " Manual index cluster will be dropped.");
 
       // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
       // all clusters and recreate cluster for manual indexes in the end.
@@ -476,6 +476,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final OSchema schema = database.getMetadata().getSchema();
       schema.dropClass(OUser.CLASS_NAME);
       schema.dropClass(ORole.CLASS_NAME);
+      schema.dropClass("ORestricted");
+      schema.dropClass("OFunction");
       schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
       schema.save();
 

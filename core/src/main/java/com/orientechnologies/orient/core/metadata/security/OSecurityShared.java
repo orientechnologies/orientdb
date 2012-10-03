@@ -285,7 +285,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
-        throw new OSecurityException("Default users and roles already installed");
+        return null;
 
       final OUser adminUser = createMetadata();
 
