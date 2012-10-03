@@ -91,6 +91,10 @@ public class OScriptManager {
    * @return String containing all the functions
    */
   public String getLibrary(final ODatabaseComplex<?> db, final String iLanguage) {
+    if (db == null)
+      // NO DB = NO LIBRARY
+      return "";
+
     final StringBuilder code = new StringBuilder();
 
     final String[] functions = db.getMetadata().getFunctionLibrary().getFunctionNames();
@@ -128,9 +132,11 @@ public class OScriptManager {
     for (OScriptInjection i : injections)
       i.bind(binding);
 
-    // BIND FIXED VARIABLES
-    binding.put("db", new OScriptDocumentDatabaseWrapper(db));
-    binding.put("gdb", new OScriptGraphDatabaseWrapper(db));
+    if (db != null) {
+      // BIND FIXED VARIABLES
+      binding.put("db", new OScriptDocumentDatabaseWrapper(db));
+      binding.put("gdb", new OScriptGraphDatabaseWrapper(db));
+    }
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {

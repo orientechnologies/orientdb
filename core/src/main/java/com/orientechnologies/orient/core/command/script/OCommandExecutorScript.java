@@ -24,6 +24,7 @@ import javax.script.ScriptException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 /**
@@ -53,7 +54,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     final String language = request.getLanguage();
     parserText = request.getText();
 
-    final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
+    final ODatabaseRecordTx db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(language);
@@ -62,8 +63,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     try {
       // COMPILE FUNCTION LIBRARY
       parserText = scriptManager.getLibrary(db, language) + parserText;
-
-      scriptEngine.eval(parserText);
 
       return scriptEngine.eval(parserText, binding);
 
