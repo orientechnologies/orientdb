@@ -113,7 +113,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     acquireExclusiveLock();
     try {
-      OLogManager.instance().info(this, "Profiler is recording metrics");
+      OLogManager.instance().info(this, "Profiler is recording metrics with configuration: %d,%d,%d", elapsedToCreateSnapshot,
+          maxSnapshots, maxSummaries);
 
       if (elapsedToCreateSnapshot > 0) {
         lastSnapshot = new OProfilerData();
