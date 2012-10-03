@@ -386,7 +386,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     // SINCE 1.2.0
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
     if (restrictedClass == null)
-      restrictedClass = database.getMetadata().getSchema().createClass(RESTRICTED_CLASSNAME);
+      restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
     if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
       restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
     if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))

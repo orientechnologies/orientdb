@@ -37,13 +37,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * 
  */
 public class OFunction {
-  protected ODocument document;
+  public static final String CLASS_NAME = "OFunction";
+  protected ODocument        document;
 
   /**
    * Creates a new function.
    */
   public OFunction() {
-    document = new ODocument("OFunction");
+    document = new ODocument(CLASS_NAME);
   }
 
   /**

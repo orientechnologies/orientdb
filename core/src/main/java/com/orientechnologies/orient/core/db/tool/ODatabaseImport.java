@@ -46,12 +46,14 @@ import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -476,8 +478,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final OSchema schema = database.getMetadata().getSchema();
       schema.dropClass(OUser.CLASS_NAME);
       schema.dropClass(ORole.CLASS_NAME);
-      schema.dropClass("ORestricted");
-      schema.dropClass("OFunction");
+      schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
+      schema.dropClass(OFunction.CLASS_NAME);
       schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
       schema.save();
 
