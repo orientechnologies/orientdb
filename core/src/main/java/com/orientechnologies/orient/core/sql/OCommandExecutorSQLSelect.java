@@ -613,7 +613,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return -1;
 
     int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET);
+        KEYWORD_LET_2FIND);
     if (upperBound == -1)
       // UP TO THE END
       upperBound = parserText.length() - 1;

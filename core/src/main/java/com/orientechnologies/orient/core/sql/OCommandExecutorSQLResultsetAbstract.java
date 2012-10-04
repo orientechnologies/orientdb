@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterator<OIdentifiable>,
     Iterable<OIdentifiable> {
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
+  protected static final String                    KEYWORD_LET_2FIND = " " + KEYWORD_LET + " ";
 
   protected OSQLAsynchQuery<ORecordSchemaAware<?>> request;
   protected OSQLTarget                             parsedTarget;
