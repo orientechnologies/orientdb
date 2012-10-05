@@ -26,14 +26,14 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 public class OClientConnection {
-  public int                      id;
-  public ONetworkProtocol         protocol;
-  public long                     since;
-  public ODatabaseDocumentTx      database;
-  public ODatabaseRaw             rawDatabase;
-  public OServerUserConfiguration serverUser;
+  public final int                         id;
+  public final ONetworkProtocol            protocol;
+  public final long                        since;
+  public volatile ODatabaseDocumentTx      database;
+  public volatile ODatabaseRaw             rawDatabase;
+  public volatile OServerUserConfiguration serverUser;
 
-  public ONetworkProtocolData     data = new ONetworkProtocolData();
+  public ONetworkProtocolData              data = new ONetworkProtocolData();
 
   public OClientConnection(final int iId, final ONetworkProtocol iProtocol) throws IOException {
     this.id = iId;

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -65,6 +66,12 @@ public class DbCreationTest {
       ODatabaseHelper.createDatabase(database, url);
       ODatabaseHelper.dropDatabase(database, "server");
     }
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    if (url.contains("remote:"))
+      ODatabaseDocumentPool.global().close();
   }
 
   @Test(dependsOnMethods = { "testDbCreationNoSecurity" })
