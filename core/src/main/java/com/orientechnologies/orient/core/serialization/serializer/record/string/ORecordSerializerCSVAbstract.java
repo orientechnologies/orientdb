@@ -227,7 +227,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler,
       final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
-      final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     if (iValue == null)
       return;
 
@@ -408,7 +408,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue,
-      final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
     if (iValue != null) {
@@ -570,7 +570,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public StringBuilder embeddedCollectionToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-      final Set<Integer> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
 
     final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;

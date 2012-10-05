@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationLongIdThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
@@ -48,23 +49,23 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   private static final int            MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta,
+      final OUserObject2RecordHandler iObjHandler, final Set<Long> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 
   public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
     return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationThreadLocal.INSTANCE.get(), false, true);
+        OSerializationLongIdThreadLocal.INSTANCE.get(), false, true);
   }
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
     return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
+        OSerializationLongIdThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
   }
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-    return toString(iRecord, iOutput, iFormat, null, OSerializationThreadLocal.INSTANCE.get(), false, true);
+    return toString(iRecord, iOutput, iFormat, null, OSerializationLongIdThreadLocal.INSTANCE.get(), false, true);
   }
 
   public ORecordInternal<?> fromString(final String iSource) {
@@ -87,7 +88,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     try {
       return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
-          OSerializationThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
+          OSerializationLongIdThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), timer);

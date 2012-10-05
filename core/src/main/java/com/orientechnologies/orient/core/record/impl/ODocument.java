@@ -85,6 +85,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   protected static final String[]                                        EMPTY_STRINGS    = new String[] {};
 
+  private long                                                            serializationId  = -1;
+
   /**
    * Internal constructor used on unmarshalling.
    */
@@ -1501,5 +1503,18 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<String, Object>) event);
     }
+  }
+
+	/**
+	 * ID which is used to track document instance identity during serialization.
+	 *
+	 * @return ID which is used to track document instance identity during serialization.
+	 */
+  public long getSerializationId() {
+    return serializationId;
+  }
+
+  public void setSerializationId(long serializationId) {
+    this.serializationId = serializationId;
   }
 }

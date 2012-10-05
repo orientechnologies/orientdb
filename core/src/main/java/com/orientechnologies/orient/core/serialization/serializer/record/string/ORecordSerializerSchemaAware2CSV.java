@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -43,9 +44,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
-  private static final long                            serialVersionUID = 1L;
-  public static final String                           NAME             = "ORecordDocument2csv";
-  public static final ORecordSerializerSchemaAware2CSV INSTANCE         = new ORecordSerializerSchemaAware2CSV();
+  private static final long                            serialVersionUID    = 1L;
+  public static final String                           NAME                = "ORecordDocument2csv";
+  public static final ORecordSerializerSchemaAware2CSV INSTANCE            = new ORecordSerializerSchemaAware2CSV();
+
+  private static final AtomicLong                      nextSerializationId = new AtomicLong(0);
 
   @Override
   public ORecordSchemaAware<?> newObject(String iClassName) {
@@ -59,7 +62,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, final boolean iOnlyDelta,
+      OUserObject2RecordHandler iObjHandler, final Set<Long> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
@@ -70,7 +73,14 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final ODocument record = (ODocument) iRecord;
 
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-    final Integer identityRecord = System.identityHashCode(record);
+
+    if (record.getSerializationId() < 0) {
+      long serializationId = nextSerializationId.getAndIncrement();
+      record.setSerializationId(serializationId);
+    }
+
+    final Long identityRecord = record.getSerializationId();
+
     if (iMarshalledRecords != null)
       if (iMarshalledRecords.contains(identityRecord)) {
         return iOutput;

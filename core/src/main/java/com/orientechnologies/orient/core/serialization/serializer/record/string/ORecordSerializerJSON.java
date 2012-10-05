@@ -444,7 +444,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<Integer> iMarshalledRecords, boolean iOnlyDelta,
+      final OUserObject2RecordHandler iObjHandler, final Set<Long> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter();
