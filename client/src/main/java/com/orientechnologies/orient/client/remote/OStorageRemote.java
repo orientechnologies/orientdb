@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -299,8 +300,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
-      final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -336,7 +337,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               ppos.recordVersion = network.readInt();
             else
               ppos.recordVersion = 0;
-            return ppos;
+            return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
             endResponse(network);
           }
@@ -369,7 +370,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             asynchExecutor.submit(new FutureTask<Object>(response));
           }
         }
-        return ppos;
+        return new OStorageOperationResult<OPhysicalPosition>(ppos);
 
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
@@ -380,13 +381,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
       final ORecordCallback<ORawBuffer> iCallback) {
     checkConnection();
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
       // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
-      return null;
+      return new OStorageOperationResult<ORawBuffer>(null);
 
     do {
       try {
@@ -407,7 +408,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           beginResponse(network);
 
           if (network.readByte() == 0)
-            return null;
+            return new OStorageOperationResult<ORawBuffer>(null);
 
           final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
 
@@ -420,7 +421,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // PUT IN THE CLIENT LOCAL CACHE
               database.getLevel1Cache().updateRecord(record);
           }
-          return buffer;
+          return new OStorageOperationResult<ORawBuffer>(buffer);
 
         } finally {
           endResponse(network);
@@ -433,8 +434,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, int iMode,
-      final ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
+      final byte iRecordType, int iMode, final ORecordCallback<Integer> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -460,7 +461,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            return network.readInt();
+            return new OStorageOperationResult<Integer>(network.readInt());
           } finally {
             endResponse(network);
           }
@@ -490,7 +491,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             asynchExecutor.submit(new FutureTask<Object>(response));
           }
         }
-        return iVersion;
+        return new OStorageOperationResult<Integer>(iVersion);
 
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
@@ -501,7 +502,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public boolean deleteRecord(final ORecordId iRid, final int iVersion, int iMode, final ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, int iMode,
+      final ORecordCallback<Boolean> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -526,7 +528,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            return network.readByte() == 1;
+            return new OStorageOperationResult<Boolean>(network.readByte() == 1);
           } finally {
             endResponse(network);
           }
@@ -555,7 +557,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             asynchExecutor.submit(new FutureTask<Object>(response));
           }
         }
-        return false;
+        return new OStorageOperationResult<Boolean>(Boolean.FALSE);
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
       } catch (Exception e) {
@@ -1855,7 +1857,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public void setDefaultClusterId(int defaultClusterId) {
     this.defaultClusterId = defaultClusterId;
   }
-  
+
   @Override
   public String getType() {
     return OEngineRemote.NAME;

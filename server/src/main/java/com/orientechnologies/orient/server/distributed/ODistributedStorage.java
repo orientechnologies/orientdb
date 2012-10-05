@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -125,8 +126,9 @@ public class ODistributedStorage implements OStorage {
     }
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRecordId, final byte[] iContent,
-      final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRecordId,
+      final byte[] iContent, final int iRecordVersion, final byte iRecordType, final int iMode,
+      final ORecordCallback<Long> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -144,11 +146,11 @@ public class ODistributedStorage implements OStorage {
       handleDistributedException("Cannot route CREATE_RECORD operation against %s to the distributed node", e, iRecordId);
     }
 
-    return (OPhysicalPosition) result;
+    return new OStorageOperationResult<OPhysicalPosition>((OPhysicalPosition) result);
   }
 
-  public ORawBuffer readRecord(final ORecordId iRecordId, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
@@ -157,16 +159,16 @@ public class ODistributedStorage implements OStorage {
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
 
     try {
-      return (ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new OReadRecordDistributedTask(
-          dManager.getLocalNodeId(), wrapped.getName(), iRecordId));
+      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId),
+          iRecordId, new OReadRecordDistributedTask(dManager.getLocalNodeId(), wrapped.getName(), iRecordId)));
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route READ_RECORD operation against %s to the distributed node", e, iRecordId);
     }
-    return null;
+    return new OStorageOperationResult<ORawBuffer>(null);
   }
 
-  public int updateRecord(final ORecordId iRecordId, final byte[] iContent, final int iVersion, final byte iRecordType,
-      final int iMode, final ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRecordId, final byte[] iContent, final int iVersion,
+      final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -182,10 +184,10 @@ public class ODistributedStorage implements OStorage {
     }
 
     // UPDATE LOCALLY
-    return (Integer) result;
+    return new OStorageOperationResult<Integer>((Integer) result);
   }
 
-  public boolean deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
@@ -201,7 +203,7 @@ public class ODistributedStorage implements OStorage {
     }
 
     // DELETE LOCALLY
-    return (Boolean) result;
+    return new OStorageOperationResult<Boolean>((Boolean) result);
   }
 
   public boolean existsResource(final String iName) {

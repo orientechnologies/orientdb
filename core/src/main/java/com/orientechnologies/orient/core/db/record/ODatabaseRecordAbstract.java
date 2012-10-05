@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
@@ -582,7 +583,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache);
+      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -668,13 +669,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
               stream = iRecord.toStream();
           }
-
-        if (!iRecord.isDirty()) {
-          // RECORD SAVED DURING PREVIOUS STREAMING PHASE: THIS HAPPENS FOR CIRCULAR REFERENCED RECORDS
-          // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-          getLevel1Cache().updateRecord(iRecord);
-          return (RET) iRecord;
-        }
       }
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
@@ -684,8 +678,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       try {
         // SAVE IT
-        final int version = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
-            iRecord.getRecordType(), iMode.ordinal(), iForceCreate, iCallback);
+        final OStorageOperationResult<Integer> operationResult = underlying.save(dataSegmentId, rid, stream == null ? new byte[0]
+            : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(), iForceCreate, iCallback);
+
+        final int version = operationResult.getResult();
 
         if (isNew) {
           // UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -699,10 +695,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           iRecord.fill(rid, version, stream, stream == null || stream.length == 0);
         }
 
-        if (iCallTriggers && stream != null && stream.length > 0)
-          callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
+        if (iCallTriggers && stream != null && stream.length > 0) {
+          if (!operationResult.isMoved()) {
+            callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, iRecord);
+          } else {
+            callbackHooks(wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED, iRecord);
+          }
+        }
 
-        if (stream != null && stream.length > 0)
+        if (stream != null && stream.length > 0 && !operationResult.isMoved())
           // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
           getLevel1Cache().updateRecord(iRecord);
       } catch (Throwable t) {
@@ -745,19 +746,27 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = mvcc ? iVersion : -1;
+      OStorageOperationResult<Boolean> operationResult = null;
 
       try {
-        underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+        operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
       } catch (Throwable t) {
         if (iCallTriggers)
           callbackHooks(TYPE.DELETE_FAILED, rec);
       }
 
-      if (iCallTriggers)
-        callbackHooks(TYPE.AFTER_DELETE, rec);
+      if (iCallTriggers) {
+        if (operationResult == null || !operationResult.isMoved()) {
+          callbackHooks(TYPE.AFTER_DELETE, rec);
+        } else {
+          callbackHooks(TYPE.DELETE_REPLICATED, rec);
+        }
+      }
 
       // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-      getLevel1Cache().deleteRecord(rid);
+      if (operationResult == null || !operationResult.isMoved()) {
+        getLevel1Cache().deleteRecord(rid);
+      }
 
     } catch (OException e) {
       // RE-THROW THE EXCEPTION

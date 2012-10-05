@@ -80,15 +80,17 @@ public interface OStorage extends OSharedContainer {
   public OSharedResourceAdaptiveExternal getLock();
 
   // CRUD OPERATIONS
-  public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
-      byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
+  public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
+      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
 
-  public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback);
+  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+      ORecordCallback<ORawBuffer> iCallback);
 
-  public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
-      ORecordCallback<Integer> iCallback);
+  public OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType,
+      int iMode, ORecordCallback<Integer> iCallback);
 
-  public boolean deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
+  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
+      ORecordCallback<Boolean> iCallback);
 
   // TX OPERATIONS
   public void commit(OTransaction iTx);

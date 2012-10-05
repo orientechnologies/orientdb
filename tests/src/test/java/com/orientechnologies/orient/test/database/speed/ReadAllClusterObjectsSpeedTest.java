@@ -24,40 +24,40 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
 public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
-	private static final String	CLUSTER_NAME	= "Animal";
-	private final static int		RECORDS				= 1;
-	private ODatabaseRaw				db;
-	private int									objectsRead;
+  private static final String CLUSTER_NAME = "Animal";
+  private final static int    RECORDS      = 1;
+  private ODatabaseRaw        db;
+  private int                 objectsRead;
 
-	public ReadAllClusterObjectsSpeedTest() {
-		super(RECORDS);
-	}
+  public ReadAllClusterObjectsSpeedTest() {
+    super(RECORDS);
+  }
 
-	@Override
-	public void init() throws IOException {
-		db = new ODatabaseRaw("embedded:database/test");
-	}
+  @Override
+  public void init() throws IOException {
+    db = new ODatabaseRaw("embedded:database/test");
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
-		ORawBuffer buffer;
-		objectsRead = 0;
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
+    ORawBuffer buffer;
+    objectsRead = 0;
 
-		int clusterId = db.getClusterIdByName(CLUSTER_NAME);
+    int clusterId = db.getClusterIdByName(CLUSTER_NAME);
 
-		final ORecordId rid = new ORecordId(clusterId);
-		for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
-			rid.clusterPosition = i;
-			
-			buffer = db.read(rid, null, false);
-			if (buffer != null)
-				++objectsRead;
-		}
-	}
+    final ORecordId rid = new ORecordId(clusterId);
+    for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
+      rid.clusterPosition = i;
 
-	@Override
-	public void deinit() throws IOException {
-		System.out.println("Read " + objectsRead + " objects in the cluster " + CLUSTER_NAME);
-		db.close();
-	}
+      buffer = db.read(rid, null, false).getResult();
+      if (buffer != null)
+        ++objectsRead;
+    }
+  }
+
+  @Override
+  public void deinit() throws IOException {
+    System.out.println("Read " + objectsRead + " objects in the cluster " + CLUSTER_NAME);
+    db.close();
+  }
 }

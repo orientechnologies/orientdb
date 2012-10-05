@@ -47,6 +47,9 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordCreateFailed(final ORecord<?> iiRecord) {
   }
 
+  public void onRecordCreateReplicated(final ORecord<?> iiRecord) {
+  }
+
   /**
    * It's called just before to read the iRecord.
    * 
@@ -65,6 +68,12 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord just read
    */
   public void onRecordAfterRead(final ORecord<?> iiRecord) {
+  }
+
+  public void onRecordReadFailed(final ORecord<?> iiRecord) {
+  }
+
+  public void onRecordReadReplicated(final ORecord<?> iiRecord) {
   }
 
   /**
@@ -90,6 +99,9 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordUpdateFailed(final ORecord<?> iiRecord) {
   }
 
+  public void onRecordUpdateReplicated(final ORecord<?> iiRecord) {
+  }
+
   /**
    * It's called just before to delete the iRecord.
    * 
@@ -113,6 +125,9 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordDeleteFailed(final ORecord<?> iiRecord) {
   }
 
+  public void onRecordDeleteReplicated(final ORecord<?> iiRecord) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     switch (iType) {
     case BEFORE_CREATE:
@@ -126,11 +141,23 @@ public abstract class ORecordHookAbstract implements ORecordHook {
       onRecordCreateFailed(iRecord);
       break;
 
+    case CREATE_REPLICATED:
+      onRecordCreateReplicated(iRecord);
+      break;
+
     case BEFORE_READ:
       return onRecordBeforeRead(iRecord);
 
     case AFTER_READ:
       onRecordAfterRead(iRecord);
+      break;
+
+    case READ_FAILED:
+      onRecordReadFailed(iRecord);
+      break;
+
+    case READ_REPLICATED:
+      onRecordReadReplicated(iRecord);
       break;
 
     case BEFORE_UPDATE:
@@ -144,6 +171,10 @@ public abstract class ORecordHookAbstract implements ORecordHook {
       onRecordUpdateFailed(iRecord);
       break;
 
+    case UPDATE_REPLICATED:
+      onRecordUpdateReplicated(iRecord);
+      break;
+
     case BEFORE_DELETE:
       return onRecordBeforeDelete(iRecord);
 
@@ -153,6 +184,10 @@ public abstract class ORecordHookAbstract implements ORecordHook {
 
     case DELETE_FAILED:
       onRecordDeleteFailed(iRecord);
+      break;
+
+    case DELETE_REPLICATED:
+      onRecordDeleteReplicated(iRecord);
       break;
     }
     return RESULT.RECORD_NOT_CHANGED;

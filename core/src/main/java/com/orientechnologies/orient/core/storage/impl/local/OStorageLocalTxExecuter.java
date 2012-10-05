@@ -51,9 +51,9 @@ public class OStorageLocalTxExecuter {
 
   public void open() throws IOException {
     try {
-      
+
       txSegment.open();
-      
+
     } catch (FileNotFoundException e) {
       OLogManager.instance().warn(this, "Creating new txlog file '%s'", txSegment.getFile());
       create();
@@ -239,7 +239,7 @@ public class OStorageLocalTxExecuter {
               .getRecordType(), txEntry.dataSegmentId);
         else
           ppos = iTx.getDatabase().getStorage()
-              .createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(), (byte) 0, null);
+              .createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(), (byte) 0, null).getResult();
 
         rid.clusterPosition = ppos.clusterPosition;
         txEntry.getRecord().setVersion(ppos.recordVersion);
@@ -253,12 +253,10 @@ public class OStorageLocalTxExecuter {
                   updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
                       .getRecordType()));
         else
-          txEntry.getRecord()
-              .setVersion(
-                  iTx.getDatabase()
-                      .getStorage()
-                      .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0,
-                          null));
+          txEntry.getRecord().setVersion(
+									iTx.getDatabase().getStorage()
+													.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
+													.getResult());
       }
       break;
     }
@@ -272,7 +270,8 @@ public class OStorageLocalTxExecuter {
       else
         txEntry.getRecord().setVersion(
             iTx.getDatabase().getStorage()
-                .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null));
+                .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
+                .getResult());
       break;
     }
 

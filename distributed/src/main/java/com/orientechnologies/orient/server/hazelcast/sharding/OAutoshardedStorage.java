@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
@@ -51,8 +52,8 @@ public class OAutoshardedStorage implements OStorage {
   }
 
   @Override
-  public OPhysicalPosition createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
-      byte iRecordType, int iMode, ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
+      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<Long> iCallback) {
     if (undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
@@ -81,11 +82,12 @@ public class OAutoshardedStorage implements OStorage {
     }
     iRecordId.clusterPosition = result.clusterPosition;
 
-    return result;
+    return new OStorageOperationResult<OPhysicalPosition>(result, true);
   }
 
   @Override
-  public ORawBuffer readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
+  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+      ORecordCallback<ORawBuffer> iCallback) {
     if (undistributedClusters.contains(iRid.getClusterId())) {
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
     }
@@ -95,12 +97,12 @@ public class OAutoshardedStorage implements OStorage {
     if (node.isLocal())
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
     else
-      return node.readRecord(wrapped.getName(), iRid);
+      return new OStorageOperationResult<ORawBuffer>(node.readRecord(wrapped.getName(), iRid), true);
   }
 
   @Override
-  public int updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType, int iMode,
-      ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType,
+      int iMode, ORecordCallback<Integer> iCallback) {
     if (undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     }
@@ -109,11 +111,13 @@ public class OAutoshardedStorage implements OStorage {
     if (node.isLocal())
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     else
-      return node.updateRecord(wrapped.getName(), iRecordId, iContent, iVersion, iRecordType);
+      return new OStorageOperationResult<Integer>(node.updateRecord(wrapped.getName(), iRecordId, iContent, iVersion, iRecordType),
+          true);
   }
 
   @Override
-  public boolean deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
+      ORecordCallback<Boolean> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution || undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
@@ -122,7 +126,7 @@ public class OAutoshardedStorage implements OStorage {
     if (node.isLocal())
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     else
-      return node.deleteRecord(wrapped.getName(), iRecordId, iVersion);
+      return new OStorageOperationResult<Boolean>(node.deleteRecord(wrapped.getName(), iRecordId, iVersion), true);
   }
 
   @Override

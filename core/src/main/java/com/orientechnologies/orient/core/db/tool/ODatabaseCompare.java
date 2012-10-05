@@ -430,8 +430,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null);
-          final ORawBuffer buffer2 = storage2.readRecord(rid, null, true, null);
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
+          final ORawBuffer buffer2 = storage2.readRecord(rid, null, true, null).getResult();
 
           if (buffer1 == null && buffer2 == null)
             // BOTH RECORD NULL, OK
@@ -454,7 +454,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             if (buffer1.buffer == null && buffer2.buffer == null) {
             } else if (buffer1.buffer == null && buffer2.buffer != null) {
               listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content is different: null <-> "
-											+ buffer2.buffer.length);
+                  + buffer2.buffer.length);
               ++differences;
 
             } else if (buffer1.buffer != null && buffer2.buffer == null) {

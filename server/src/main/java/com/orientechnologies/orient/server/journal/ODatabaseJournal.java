@@ -323,7 +323,7 @@ public class ODatabaseJournal {
           // GET LAST RID
           rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
 
-        final ORawBuffer record = storage.readRecord(rid, null, false, null);
+        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         if (record != null)
           task = new OCreateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
         break;
@@ -333,7 +333,7 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
             + OBinaryProtocol.SIZE_SHORT));
 
-        final ORawBuffer record = storage.readRecord(rid, null, false, null);
+        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         if (record != null)
           task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version - 1, record.recordType);
         break;
@@ -342,7 +342,7 @@ public class ODatabaseJournal {
       case RECORD_DELETE: {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
             + OBinaryProtocol.SIZE_SHORT));
-        final ORawBuffer record = storage.readRecord(rid, null, false, null);
+        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : -1);
         break;
       }

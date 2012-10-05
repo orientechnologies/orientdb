@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -281,8 +282,8 @@ public class OStorageMemory extends OStorageEmbedded {
     return addDataSegment(iSegmentName);
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
@@ -300,7 +301,7 @@ public class OStorageMemory extends OStorageEmbedded {
       if (iCallback != null)
         iCallback.call(iRid, iRid.clusterPosition);
 
-      return ppos;
+      return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException e) {
       throw new OStorageException("Error on create record in cluster: " + iRid.clusterId, e);
 
@@ -310,8 +311,9 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public ORawBuffer readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
-    return readRecord(getClusterById(iRid.clusterId), iRid, true);
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+      ORecordCallback<ORawBuffer> iCallback) {
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true));
   }
 
   @Override
@@ -352,8 +354,8 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -368,7 +370,7 @@ public class OStorageMemory extends OStorageEmbedded {
         if (ppos == null) {
           if (iCallback != null)
             iCallback.call(iRid, -1);
-          return -1;
+          return new OStorageOperationResult<Integer>(-1);
         }
 
         if (iVersion != -1) {
@@ -391,7 +393,7 @@ public class OStorageMemory extends OStorageEmbedded {
         if (iCallback != null)
           iCallback.call(null, ppos.recordVersion);
 
-        return ppos.recordVersion;
+        return new OStorageOperationResult<Integer>(ppos.recordVersion);
 
       } finally {
         lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -405,7 +407,8 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
+      ORecordCallback<Boolean> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -421,7 +424,7 @@ public class OStorageMemory extends OStorageEmbedded {
         if (ppos == null) {
           if (iCallback != null)
             iCallback.call(iRid, false);
-          return false;
+          return new OStorageOperationResult<Boolean>(Boolean.FALSE);
         }
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
@@ -439,7 +442,7 @@ public class OStorageMemory extends OStorageEmbedded {
         if (iCallback != null)
           iCallback.call(null, true);
 
-        return true;
+        return new OStorageOperationResult<Boolean>(Boolean.TRUE);
 
       } finally {
         lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -747,12 +750,14 @@ public class OStorageMemory extends OStorageEmbedded {
         if (rid.isNew()) {
           txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(),
-              0, null);
+              0, null).getResult();
           txEntry.getRecord().setVersion(ppos.recordVersion);
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         } else {
-          txEntry.getRecord().setVersion(
-              updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
+          txEntry.getRecord()
+              .setVersion(
+                  updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                      .getResult());
         }
       }
       break;
@@ -761,7 +766,7 @@ public class OStorageMemory extends OStorageEmbedded {
       byte[] stream = txEntry.getRecord().toStream();
 
       txEntry.getRecord().setVersion(
-          updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null));
+          updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult());
       break;
 
     case ORecordOperation.DELETED:

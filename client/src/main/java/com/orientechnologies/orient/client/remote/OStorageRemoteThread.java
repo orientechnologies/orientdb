@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
@@ -134,25 +135,26 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getClusterNames();
   }
 
-  public OPhysicalPosition createRecord(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent, int iRecordVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.createRecord(iDataSegmentId, iRid, iContent, 0, iRecordType, iMode, iCallback);
   }
 
-  public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
   }
 
-  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iCallback);
   }
 
-  public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
+      ORecordCallback<Boolean> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.deleteRecord(iRid, iVersion, iMode, iCallback);
   }

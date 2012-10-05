@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -935,8 +936,8 @@ public class OStorageLocal extends OStorageEmbedded {
     }
   }
 
-  public OPhysicalPosition createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent, final int iRecordVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
+      final int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -965,17 +966,17 @@ public class OStorageLocal extends OStorageEmbedded {
       modificationLock.releaseModificationLock();
     }
 
-    return ppos;
+    return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }
 
-  public ORawBuffer readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback) {
     checkOpeness();
-    return readRecord(getClusterById(iRid.clusterId), iRid, true);
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true));
   }
 
-  public int updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -983,7 +984,8 @@ public class OStorageLocal extends OStorageEmbedded {
     modificationLock.requestModificationLock();
     try {
       if (txManager.isCommitting()) {
-        return txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster, iRid, iContent, iVersion, iRecordType);
+        return new OStorageOperationResult<Integer>(txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster,
+            iRid, iContent, iVersion, iRecordType));
       } else {
         final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
@@ -997,14 +999,15 @@ public class OStorageLocal extends OStorageEmbedded {
         if (iCallback != null)
           iCallback.call(iRid, returnValue);
 
-        return returnValue;
+        return new OStorageOperationResult<Integer>(returnValue);
       }
     } finally {
       modificationLock.releaseModificationLock();
     }
   }
 
-  public boolean deleteRecord(final ORecordId iRid, final int iVersion, final int iMode, ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
+      ORecordCallback<Boolean> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -1012,7 +1015,8 @@ public class OStorageLocal extends OStorageEmbedded {
     modificationLock.requestModificationLock();
     try {
       if (txManager.isCommitting()) {
-        return txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster, iRid.clusterPosition, iVersion);
+        return new OStorageOperationResult<Boolean>(txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster,
+            iRid.clusterPosition, iVersion));
       } else {
         final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
 
@@ -1026,7 +1030,7 @@ public class OStorageLocal extends OStorageEmbedded {
         if (iCallback != null)
           iCallback.call(iRid, returnValue);
 
-        return returnValue;
+        return new OStorageOperationResult<Boolean>(returnValue);
       }
     } finally {
       modificationLock.releaseModificationLock();

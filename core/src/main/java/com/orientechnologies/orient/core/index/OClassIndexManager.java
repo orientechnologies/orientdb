@@ -91,6 +91,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
+  public void onRecordCreateReplicated(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
+
+  @Override
   public RESULT onRecordBeforeUpdate(ODocument iRecord) {
     iRecord = checkForLoading(iRecord);
     checkIndexesAndAquireLock(iRecord, BEFORE_UPDATE);
@@ -134,6 +139,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
+  public void onRecordUpdateReplicated(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
+
+  @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     final int version = iDocument.getVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
@@ -143,7 +153,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version, ORecordOperation.DELETED);
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
+              ORecordOperation.DELETED);
     }
 
     acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
@@ -196,6 +207,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public void onRecordDeleteFailed(ODocument iDocument) {
+    releaseModificationLock(iDocument);
+  }
+
+  @Override
+  public void onRecordDeleteReplicated(ODocument iDocument) {
     releaseModificationLock(iDocument);
   }
 

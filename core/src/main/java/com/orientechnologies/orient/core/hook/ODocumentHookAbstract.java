@@ -63,6 +63,15 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   /**
+   * It's called just after the document creation was replicated on another node.
+   * 
+   * @param iDocument
+   *          The document just created
+   */
+  public void onRecordCreateReplicated(final ODocument iDocument) {
+  }
+
+  /**
    * It's called just before to read the document.
    * 
    * @param iDocument
@@ -80,6 +89,24 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
    *          The document just read
    */
   public void onRecordAfterRead(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just after the document read was failed.
+   * 
+   * @param iDocument
+   *          The document just created
+   */
+  public void onRecordReadFailed(final ODocument iDocument) {
+  }
+
+  /**
+   * It's called just after the document read was replicated on another node.
+   * 
+   * @param iDocument
+   *          The document just created
+   */
+  public void onRecordReadReplicated(final ODocument iDocument) {
   }
 
   /**
@@ -112,6 +139,15 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   /**
+   * It's called just after the document updated was replicated.
+   * 
+   * @param iDocument
+   *          The document is going to be updated
+   */
+  public void onRecordUpdateReplicated(final ODocument iDocument) {
+  }
+
+  /**
    * It's called just before to delete the document.
    * 
    * @param iDocument
@@ -140,6 +176,15 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteFailed(final ODocument iDocument) {
   }
 
+  /**
+   * It's called just after the document deletion was replicated.
+   * 
+   * @param iDocument
+   *          The document is going to be deleted
+   */
+  public void onRecordDeleteReplicated(final ODocument iDocument) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
@@ -164,11 +209,23 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       onRecordCreateFailed(document);
       break;
 
+    case CREATE_REPLICATED:
+      onRecordCreateReplicated(document);
+      break;
+
     case BEFORE_READ:
       return onRecordBeforeRead(document);
 
     case AFTER_READ:
       onRecordAfterRead(document);
+      break;
+
+    case READ_FAILED:
+      onRecordReadFailed(document);
+      break;
+
+    case READ_REPLICATED:
+      onRecordReadReplicated(document);
       break;
 
     case BEFORE_UPDATE:
@@ -182,6 +239,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       onRecordUpdateFailed(document);
       break;
 
+    case UPDATE_REPLICATED:
+      onRecordUpdateReplicated(document);
+      break;
+
     case BEFORE_DELETE:
       return onRecordBeforeDelete(document);
 
@@ -191,6 +252,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     case DELETE_FAILED:
       onRecordDeleteFailed(document);
+      break;
+
+    case DELETE_REPLICATED:
+      onRecordDeleteReplicated(document);
       break;
 
     default:
