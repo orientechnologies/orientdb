@@ -859,6 +859,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return isStrictMode();
     case ABSTRACT:
       return isAbstract();
+    case CUSTOM:
+      return getCustomInternal();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
