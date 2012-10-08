@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionUnion extends OSQLFunctionCollAbstract {
+public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object>> {
 	public static final String	NAME	= "union";
 
 	public OSQLFunctionUnion() {

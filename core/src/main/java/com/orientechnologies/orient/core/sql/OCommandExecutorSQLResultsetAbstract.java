@@ -76,12 +76,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterator<OIdentifiable>,
     Iterable<OIdentifiable> {
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String                    KEYWORD_LET_2FIND = " " + KEYWORD_LET + " ";
+  protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
   protected OSQLAsynchQuery<ORecordSchemaAware<?>> request;
   protected OSQLTarget                             parsedTarget;
   protected OSQLFilter                             compiledFilter;
-  protected Map<String, String>                    let                = null;
+  protected Map<String, Object>                    let                = null;
   protected Iterable<? extends OIdentifiable>      target;
   protected List<OIdentifiable>                    tempResult;
   protected int                                    resultCount;
@@ -196,17 +196,30 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected void parseLet() {
-    let = new LinkedHashMap<String, String>();
+    let = new LinkedHashMap<String, Object>();
 
     boolean stop = false;
     while (!stop) {
+      // PARSE THE KEY
       parserNextWord(false);
       final String letName = parserGetLastWord();
 
       parserOptionalKeyword("=");
 
       parserNextWord(false, " =><,\r\n");
-      final String letValue = parserGetLastWord();
+
+      // PARSE THE VALUE
+      String letValueAsString = parserGetLastWord();
+      final Object letValue;
+
+      // TRY TO PARSE AS FUNCTION
+      final Object func = OSQLHelper.getFunction(parsedTarget, letValueAsString);
+      if (func != null)
+        letValue = func;
+      else if (letValueAsString.startsWith("(")) {
+        letValue = new OSQLSynchQuery<Object>(letValueAsString.substring(1, letValueAsString.length() - 1));
+      } else
+        letValue = letValueAsString;
 
       let.put(letName, letValue);
       stop = parserGetLastSeparator() == ' ';
@@ -302,21 +315,30 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected void assignLetClauses(final ORecord<?> iRecord) {
     if (let != null && !let.isEmpty()) {
       // BIND CONTEXT VARIABLES
-      for (Entry<String, String> entry : let.entrySet()) {
+      for (Entry<String, Object> entry : let.entrySet()) {
         String varName = entry.getKey();
         if (varName.startsWith("$"))
           varName = varName.substring(1);
 
+        final Object letValue = entry.getValue();
+
         Object varValue;
-        final String varValueAsString = entry.getValue().trim();
-        if (varValueAsString.startsWith("(")) {
-          final OSQLSynchQuery<Object> subQuery = new OSQLSynchQuery<Object>(varValueAsString.substring(1,
-              varValueAsString.length() - 1));
+        if (letValue instanceof OSQLSynchQuery<?>) {
+          final OSQLSynchQuery<Object> subQuery = (OSQLSynchQuery<Object>) letValue;
+          subQuery.reset();
+          subQuery.resetPagination();
           subQuery.setContext(context);
           subQuery.getContext().setVariable("CURRENT", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
+        } else if (letValue instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
+          if (f.getFunction().aggregateResults(f.getConfiguredParameters())) {
+            f.execute(iRecord, this);
+            varValue = f.getFunction().getResult();
+          } else
+            varValue = f.execute(iRecord, this);
         } else
-          varValue = ODocumentHelper.getFieldValue(iRecord, varValueAsString);
+          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim());
 
         context.setVariable(varName, varValue);
       }

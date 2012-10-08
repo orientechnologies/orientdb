@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -146,6 +147,52 @@ public class SQLFunctionsTest {
     for (Object city : citiesFound) {
       Assert.assertFalse(cities.contains(city.toString()));
       cities.add(city.toString());
+    }
+
+    database.close();
+  }
+
+  @Test
+  public void queryList() {
+    database.open("admin", "admin");
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select list(name) as names from City")).execute();
+
+    Assert.assertFalse(result.isEmpty());
+
+    for (ODocument d : result) {
+      List<Object> citiesFound = d.field("names");
+      Assert.assertTrue(citiesFound.size() > 1);
+    }
+
+    database.close();
+  }
+
+  @Test
+  public void querySet() {
+    database.open("admin", "admin");
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as names from City")).execute();
+
+    Assert.assertFalse(result.isEmpty());
+
+    for (ODocument d : result) {
+      Set<Object> citiesFound = d.field("names");
+      Assert.assertTrue(citiesFound.size() > 1);
+    }
+    
+    database.close();
+  }
+
+  @Test
+  public void queryMap() {
+    database.open("admin", "admin");
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select map(name, country.name) as names from City"))
+        .execute();
+
+    Assert.assertFalse(result.isEmpty());
+
+    for (ODocument d : result) {
+      Map<Object, Object> citiesFound = d.field("names");
+      Assert.assertTrue(citiesFound.size() > 1);
     }
 
     database.close();

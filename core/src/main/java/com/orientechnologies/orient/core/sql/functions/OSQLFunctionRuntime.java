@@ -126,4 +126,12 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
   public OSQLFunction getFunction() {
     return function;
   }
+
+  public Object[] getConfiguredParameters() {
+    return configuredParameters;
+  }
+
+  public Object[] getRuntimeParameters() {
+    return runtimeParameters;
+  }
 }

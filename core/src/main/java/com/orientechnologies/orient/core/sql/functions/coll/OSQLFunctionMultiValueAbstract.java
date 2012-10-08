@@ -15,30 +15,28 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Abstract class for collection based functions implementations.
+ * Abstract class for multi-value based functions implementations.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSQLFunctionCollAbstract extends OSQLFunctionAbstract {
+public abstract class OSQLFunctionMultiValueAbstract<T> extends OSQLFunctionAbstract {
 
-	protected Set<Object>	context;
+  protected T context;
 
-	public OSQLFunctionCollAbstract(final String iName, final int iMinParams, final int iMaxParams) {
-		super(iName, iMinParams, iMaxParams);
-	}
+  public OSQLFunctionMultiValueAbstract(final String iName, final int iMinParams, final int iMaxParams) {
+    super(iName, iMinParams, iMaxParams);
+  }
 
-	public boolean aggregateResults(final Object[] configuredParameters) {
-		return configuredParameters.length == 1;
-	}
+  public boolean aggregateResults(final Object[] configuredParameters) {
+    return configuredParameters.length == 1;
+  }
 
-	@Override
-	public Object getResult() {
-		return context;
-	}
+  @Override
+  public T getResult() {
+    return context;
+  }
 }

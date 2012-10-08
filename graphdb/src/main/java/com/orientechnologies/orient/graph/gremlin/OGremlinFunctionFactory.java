@@ -15,50 +15,51 @@
  */
 package com.orientechnologies.orient.graph.gremlin;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @module pending
  */
-public class OGremlinFunctionFactory implements OSQLFunctionFactory{
+public class OGremlinFunctionFactory implements OSQLFunctionFactory {
 
-    private static final Map<String,Object> FUNCTIONS = new HashMap<String, Object>();
-    static {
-		FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
-    }
-    
-    public Set<String> getFunctionNames() {
-        return FUNCTIONS.keySet();
+  private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
+  static {
+    FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
+  }
+
+  public Set<String> getFunctionNames() {
+    return FUNCTIONS.keySet();
+  }
+
+  public OSQLFunction createFunction(String name) {
+    final Object obj = FUNCTIONS.get(name);
+
+    if (obj == null) {
+      throw new OCommandExecutionException("Unknowned function name :" + name);
     }
 
-    public OSQLFunction createFunction(String name) {
-        final Object obj = FUNCTIONS.get(name);
-        
-        if(obj == null){
-            throw new OCommandExecutionException("Unknowned function name :" + name);
-        }
-        
-        if(obj instanceof OSQLFunction){
-            return (OSQLFunction) obj;
-        }else{
-            //it's a class
-            final Class clazz = (Class) obj;
-            try {
-				return (OSQLFunction) clazz.newInstance();
-			} catch (Exception e) {
-				throw new OCommandExecutionException("Error in creation of function " + name
-						+ "(). Probably there is not an empty constructor or the constructor generates errors", e);
-			}
-        }
-        
+    if (obj instanceof OSQLFunction) {
+      return (OSQLFunction) obj;
+    } else {
+      // it's a class
+      final Class<?> clazz = (Class<?>) obj;
+      try {
+        return (OSQLFunction) clazz.newInstance();
+      } catch (Exception e) {
+        throw new OCommandExecutionException("Error in creation of function " + name
+            + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+      }
     }
-    
+
+  }
+
 }

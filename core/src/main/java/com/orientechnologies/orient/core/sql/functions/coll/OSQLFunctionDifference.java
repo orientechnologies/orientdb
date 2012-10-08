@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,54 +29,54 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionDifference extends OSQLFunctionCollAbstract {
-	public static final String	NAME	= "difference";
+public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<Object>> {
+  public static final String NAME = "difference";
 
-	public OSQLFunctionDifference() {
-		super(NAME, 1, -1);
-	}
+  public OSQLFunctionDifference() {
+    super(NAME, 1, -1);
+  }
 
-	public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters[0] == null)
-			return null;
+  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    if (iParameters[0] == null)
+      return null;
 
-		Object value = iParameters[0];
+    Object value = iParameters[0];
 
-		if (iParameters.length == 1) {
-			// AGGREGATION MODE (STATEFULL)
-			if (context == null) {
-				context = new HashSet<Object>();
-				if (value instanceof Collection<?>)
-					// INSERT EVERY SINGLE COLLECTION ITEM
-					context.addAll((Collection<?>) value);
-				else
-					context.add(value);
-			} else {
-				if (value instanceof Collection<?>)
-					// INSERT EVERY SINGLE COLLECTION ITEM
-					context.removeAll((Collection<?>) value);
-				else
-					context.remove(value);
-			}
+    if (iParameters.length == 1) {
+      // AGGREGATION MODE (STATEFULL)
+      if (context == null) {
+        context = new HashSet<Object>();
+        if (value instanceof Collection<?>)
+          // INSERT EVERY SINGLE COLLECTION ITEM
+          context.addAll((Collection<?>) value);
+        else
+          context.add(value);
+      } else {
+        if (value instanceof Collection<?>)
+          // INSERT EVERY SINGLE COLLECTION ITEM
+          context.removeAll((Collection<?>) value);
+        else
+          context.remove(value);
+      }
 
-			return null;
-		} else {
-			if (!(value instanceof Collection<?>))
-				return null;
+      return null;
+    } else {
+      if (!(value instanceof Collection<?>))
+        return null;
 
-			// IN-LINE MODE (STATELESS)
-			final HashSet<Object> result = new HashSet<Object>((Collection<?>) value);
+      // IN-LINE MODE (STATELESS)
+      final HashSet<Object> result = new HashSet<Object>((Collection<?>) value);
 
-			for (int i = 1; i < iParameters.length; ++i) {
-				value = iParameters[i];
-				result.removeAll((Collection<?>) value);
-			}
+      for (int i = 1; i < iParameters.length; ++i) {
+        value = iParameters[i];
+        result.removeAll((Collection<?>) value);
+      }
 
-			return result;
-		}
-	}
+      return result;
+    }
+  }
 
-	public String getSyntax() {
-		return "Syntax error: difference(<field>*)";
-	}
+  public String getSyntax() {
+    return "Syntax error: difference(<field>*)";
+  }
 }
