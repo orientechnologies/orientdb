@@ -170,7 +170,8 @@ public class OStorageLocal extends OStorageEmbedded {
             if (pos == -1) {
               // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
               // OPENED
-              clusters[i].close();
+              if (clusters[i] != null)
+                clusters[i].close();
               clusters[i] = Orient.instance().getClusterFactory().createCluster(OClusterLocal.TYPE);
               clusters[i].configure(this, clusterConfig);
               clusterMap.put(clusters[i].getName(), clusters[i]);
