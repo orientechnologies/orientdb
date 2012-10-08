@@ -156,7 +156,8 @@ public class OFetchHelper {
       fieldValue = record.field(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
-          && (!(fieldValue instanceof ORecordLazyMultiValue) || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
+          && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
+              .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
@@ -288,7 +289,8 @@ public class OFetchHelper {
       fieldValue = record.field(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
-          && (!(fieldValue instanceof ORecordLazyMultiValue) || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable))
+          && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
+              .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
