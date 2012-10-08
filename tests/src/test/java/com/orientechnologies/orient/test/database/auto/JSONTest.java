@@ -571,16 +571,16 @@ public class JSONTest {
   }
 
   public void testSpaces() {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    ODocument doc = new ODocument();
+    String test = "{" + "\"embedded\": {" + "\"second_embedded\":  {" + "\"text\":\"this is a test\"" + "}" + "}" + "}";
+    doc.fromJSON(test);
+    Assert.assertTrue(doc.toJSON("fetchPlan:*:0,rid").indexOf("this is a test") > -1);
+  }
 
-    try {
-      ODocument doc = new ODocument();
-      String test = "{" + "\"embedded\": {" + "\"second_embedded\":  {" + "\"text\":\"this is a test\"" + "}" + "}" + "}";
-      doc.fromJSON(test);
-      Assert.assertTrue(doc.toJSON("fetchPlan:*:0,rid").indexOf("this is a test") > -1);
-    } finally {
-      database.close();
-    }
+  public void testEscaping() {
+    ODocument doc = new ODocument();
+    String s = "{\r\n    \"name\": \"test\",\r\n    \"nested\": {\r\n        \"key\": \"value\",\r\n        \"anotherKey\": 123\r\n    },\r\n    \"deep\": {\r\n        \"deeper\": {\r\n            \"k\": \"v\",\r\n            \"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\",  \r\n            \"likeJson\": \"[1,2,3]\",\r\n            \"spaces\":  \"value with spaces\"\r\n        }\r\n    }\r\n}";
+    doc.fromJSON(s);
+    Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
   }
 }
