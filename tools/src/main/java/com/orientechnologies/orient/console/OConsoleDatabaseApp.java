@@ -1418,8 +1418,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Export the current record in the requested format")
-  public void exportRecord(@ConsoleParameter(name = "format", description = "Format, such as 'json'") final String iFormat)
-      throws IOException {
+  public void exportRecord(@ConsoleParameter(name = "format", description = "Format, such as 'json'") final String iFormat,
+      @ConsoleParameter(name = "options", description = "Options", optional = true) final String iOptions) throws IOException {
     checkForDatabase();
     checkCurrentObject();
 
@@ -1436,7 +1436,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     try {
-      out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord, null));
+      out.println(((ORecordSerializerStringAbstract) serializer).toString(currentRecord, iOptions));
     } catch (ODatabaseExportException e) {
       printError(e);
     }

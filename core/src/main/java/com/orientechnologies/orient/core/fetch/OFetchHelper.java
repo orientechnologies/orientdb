@@ -54,6 +54,9 @@ public class OFetchHelper {
         List<String> parts;
         for (String planPart : planParts) {
           parts = OStringSerializerHelper.split(planPart, ':');
+          if (parts.size() != 2)
+            throw new IllegalArgumentException("Wrong fetch plan: " + planPart);
+          
           fetchPlan.put(parts.get(0), Integer.parseInt(parts.get(1)));
         }
       }
