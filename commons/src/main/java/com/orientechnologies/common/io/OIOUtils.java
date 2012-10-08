@@ -54,32 +54,33 @@ public class OIOUtils {
       time = time.toUpperCase(Locale.ENGLISH);
 
       int pos = time.indexOf("MS");
+      final String timeAsNumber = time.substring(0, pos);
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos));
+        return Long.parseLong(timeAsNumber);
 
       pos = time.indexOf("S");
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * SECOND;
+        return Long.parseLong(timeAsNumber) * SECOND;
 
       pos = time.indexOf("M");
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * MINUTE;
+        return Long.parseLong(timeAsNumber) * MINUTE;
 
       pos = time.indexOf("H");
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * HOUR;
+        return Long.parseLong(timeAsNumber) * HOUR;
 
       pos = time.indexOf("D");
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * DAY;
+        return Long.parseLong(timeAsNumber) * DAY;
 
       pos = time.indexOf('W');
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * WEEK;
+        return Long.parseLong(timeAsNumber) * WEEK;
 
       pos = time.indexOf('Y');
       if (pos > -1)
-        return Long.parseLong(time.substring(0, pos)) * YEAR;
+        return Long.parseLong(timeAsNumber) * YEAR;
 
       // RE-THROW THE EXCEPTION
       throw new IllegalArgumentException("Time '" + time + "' has a unrecognizable format");
