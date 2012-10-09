@@ -18,6 +18,10 @@ package com.orientechnologies.orient.core.record;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -194,28 +198,72 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       // CHECK TYPE
       switch (type) {
       case LINK:
-        final ORecord<?> linkedRecord;
-
-        if (fieldValue instanceof OIdentifiable)
-          linkedRecord = ((OIdentifiable) fieldValue).getRecord();
-        else if (fieldValue instanceof String)
-          linkedRecord = new ORecordId((String) fieldValue).getRecord();
-        else
+        validateLink(p, fieldValue);
+        break;
+      case LINKLIST:
+        if (!(fieldValue instanceof List))
           throw new OValidationException("The field '" + p.getFullName()
-              + "' has been declared as LINK but the value is not a record or a record-id");
+              + "' has been declared as LINKLIST but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null)
+          for (Object item : ((List<?>) fieldValue))
+            validateLink(p, item);
+        break;
+      case LINKSET:
+        if (!(fieldValue instanceof Set))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as LINKSET but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null)
+          for (Object item : ((Set<?>) fieldValue))
+            validateLink(p, item);
+        break;
+      case LINKMAP:
+        if (!(fieldValue instanceof Map))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as LINKMAP but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null)
+          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
+            validateLink(p, entry.getValue());
+        break;
 
-        if (linkedRecord != null && p.getLinkedClass() != null) {
-          if (!(linkedRecord instanceof ODocument))
-            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as LINK of type '"
-                + p.getLinkedClass() + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
-
-          // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-          if (((ODocument) linkedRecord).getSchemaClass() != null
-              && !p.getLinkedClass().isSuperClassOf(((ODocument) linkedRecord).getSchemaClass()))
-            throw new OValidationException("The field '" + p.getFullName() + "' has been declared as LINK of type '"
-                + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-                + ((ODocument) linkedRecord).getSchemaClass() + "'");
+      case EMBEDDED:
+        validateEmbedded(p, fieldValue);
+        break;
+      case EMBEDDEDLIST:
+        if (!(fieldValue instanceof List))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as EMBEDDEDLIST but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null) {
+          for (Object item : ((List<?>) fieldValue))
+            validateEmbedded(p, item);
+        } else if (p.getLinkedType() != null) {
+          for (Object item : ((List<?>) fieldValue))
+            validateType(p, item);
         }
+        break;
+      case EMBEDDEDSET:
+        if (!(fieldValue instanceof Set))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as EMBEDDEDSET but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null) {
+          for (Object item : ((Set<?>) fieldValue))
+            validateEmbedded(p, item);
+        } else if (p.getLinkedType() != null) {
+          for (Object item : ((Set<?>) fieldValue))
+            validateType(p, item);
+        }
+        break;
+      case EMBEDDEDMAP:
+        if (!(fieldValue instanceof Map))
+          throw new OValidationException("The field '" + p.getFullName()
+              + "' has been declared as EMBEDDEDMAP but an incompatible type is used. Value: " + fieldValue);
+        if (p.getLinkedClass() != null) {
+          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
+            validateEmbedded(p, entry.getValue());
+        } else if (p.getLinkedType() != null) {
+          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
+            validateType(p, entry.getValue());
+        }
+        break;
       }
     }
 
@@ -298,5 +346,63 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
           && (fieldValue != null && ((Collection<?>) fieldValue).size() > Integer.parseInt(max)))
         throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
     }
+  }
+
+  protected static void validateType(final OProperty p, final Object value) {
+    if (value != null)
+      OType.convert(value, p.getLinkedType().getDefaultJavaType());
+  }
+
+  protected static void validateLink(final OProperty p, final Object fieldValue) {
+    final ORecord<?> linkedRecord;
+    if (fieldValue instanceof OIdentifiable)
+      linkedRecord = ((OIdentifiable) fieldValue).getRecord();
+    else if (fieldValue instanceof String)
+      linkedRecord = new ORecordId((String) fieldValue).getRecord();
+    else
+      throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+          + " but the value is not a record or a record-id");
+
+    if (linkedRecord != null && p.getLinkedClass() != null) {
+      if (!(linkedRecord instanceof ODocument))
+        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+            + p.getLinkedClass() + "' but the value is the record " + linkedRecord.getIdentity() + " that is not a document");
+
+      final ODocument doc = (ODocument) linkedRecord;
+
+      // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
+      if (doc.getSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getSchemaClass()))
+        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+            + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
+            + doc.getSchemaClass() + "'");
+    }
+  }
+
+  protected static void validateEmbedded(final OProperty p, final Object fieldValue) {
+    if (fieldValue instanceof ORecordId)
+      throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+          + " but the value is the RecordID " + fieldValue);
+    else if (fieldValue instanceof OIdentifiable) {
+      if (!((OIdentifiable) fieldValue).getIdentity().isValid())
+        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+            + " but the value is a document with the valid RecordID " + fieldValue);
+
+      final OClass embeddedClass = p.getLinkedClass();
+      if (embeddedClass != null) {
+        final ORecord<?> rec = ((OIdentifiable) fieldValue).getRecord();
+        if (!(rec instanceof ODocument))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+              + " with linked class '" + embeddedClass + "' but the record was not a document");
+
+        final ODocument doc = (ODocument) rec;
+        if (!(doc.getSchemaClass().isSubClassOf(embeddedClass)))
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+              + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getSchemaClass().getName()
+              + "' that is not a subclass of that");
+      }
+
+    } else
+      throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+          + " but an incompatible type is used. Value: " + fieldValue);
   }
 }
