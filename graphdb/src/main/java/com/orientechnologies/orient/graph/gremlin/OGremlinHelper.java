@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
@@ -54,9 +53,9 @@ public class OGremlinHelper {
   private static OGremlinHelper                      instance     = new OGremlinHelper();
 
   private int                                        maxEngines   = 0;
-  private int                                        maxGraphs    = 50;
+  private int                                        maxGraphs    = 0;
 
-  private OResourcePool<Object, ScriptEngine>        enginePool;
+//  private OResourcePool<Object, ScriptEngine>        enginePool;
   private OResourcePool<OGraphDatabase, OrientGraph> graphPool;
 
   public static interface OGremlinCallback {
@@ -72,27 +71,27 @@ public class OGremlinHelper {
    * Initializes the pools.
    */
   public void create() {
-    if (enginePool != null)
+    if (graphPool != null)
       // ALREADY CREATED
       return;
 
-    enginePool = new OResourcePool<Object, ScriptEngine>(maxEngines, new OResourcePoolListener<Object, ScriptEngine>() {
-
-      @Override
-      public ScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
-        try {
-          return getGroovyEngine();
-        } catch (Throwable e) {
-          throw new OConfigurationException("Error on loading Gremlin engine", e);
-        }
-      }
-
-      @Override
-      public boolean reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
-        iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-        return true;
-      }
-    });
+//    enginePool = new OResourcePool<Object, ScriptEngine>(maxEngines, new OResourcePoolListener<Object, ScriptEngine>() {
+//
+//      @Override
+//      public ScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
+//        try {
+//          return getGroovyEngine();
+//        } catch (Throwable e) {
+//          throw new OConfigurationException("Error on loading Gremlin engine", e);
+//        }
+//      }
+//
+//      @Override
+//      public boolean reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
+//        iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+//        return true;
+//      }
+//    });
 
     graphPool = new OResourcePool<OGraphDatabase, OrientGraph>(maxGraphs, new OResourcePoolListener<OGraphDatabase, OrientGraph>() {
 
@@ -113,13 +112,13 @@ public class OGremlinHelper {
    * Destroys the helper by cleaning all the in memory objects.
    */
   public void destroy() {
-    if (enginePool != null) {
-      for (ScriptEngine engine : enginePool.getResources()) {
-        engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-      }
-      enginePool.close();
-    }
-
+//    if (enginePool != null) {
+//      for (ScriptEngine engine : enginePool.getResources()) {
+//        engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+//      }
+//      enginePool.close();
+//    }
+//
     if (graphPool != null) {
       for (OrientGraph graph : graphPool.getResources()) {
         graph.shutdown();
@@ -130,13 +129,13 @@ public class OGremlinHelper {
 
   public ScriptEngine acquireEngine() {
     checkStatus();
-    return enginePool.getResource(ONE, Long.MAX_VALUE);
+    return getGroovyEngine();// enginePool.getResource(ONE, Long.MAX_VALUE);
   }
 
   public void releaseEngine(final ScriptEngine engine) {
     checkStatus();
-    engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-    enginePool.returnResource(engine);
+//    engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+//    enginePool.returnResource(engine);
   }
 
   public OrientGraph acquireGraph(final OGraphDatabase iDatabase) {
@@ -373,7 +372,7 @@ public class OGremlinHelper {
   }
 
   private void checkStatus() {
-    if (enginePool == null || graphPool == null)
+    if (graphPool == null)
       throw new IllegalStateException(
           "OGremlinHelper instance has been not created. Call OGremlinHelper.global().create() to iniziailze it");
   }
