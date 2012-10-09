@@ -598,7 +598,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Create a class")
   public void createClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("create", iCommandText, "\nClass created successfully with id=%d\n", true);
+    sqlCommand("create", iCommandText, "\nClass created successfully. Total classes in database now: %d\n", true);
     updateDatabaseInfo();
   }
 
