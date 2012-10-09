@@ -392,12 +392,20 @@ public class ODocumentHelper {
               ((ORecord<?>) value).reload();
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
-
+          else if (value instanceof Collection<?>) {
+            final List<Object> values = new ArrayList<Object>();
+            for (Object v : OMultiValue.getMultiValueIterable(value))
+              values.add(getIdentifiableValue((OIdentifiable) v, fieldName));
+            value = values;
+          } else
+            return null;
         }
       }
 
       if (value instanceof OIdentifiable)
         currentRecord = (OIdentifiable) value;
+      else
+        currentRecord = null;
 
       beginPos = ++nextSeparatorPos;
     } while (nextSeparatorPos < fieldNameLength && value != null);

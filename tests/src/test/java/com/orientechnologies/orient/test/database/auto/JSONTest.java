@@ -523,7 +523,7 @@ public class JSONTest {
       result = database.query(new OSQLSynchQuery<Object>("select from device where domainset[domain = 'abc'] is not null"));
       Assert.assertTrue(result.size() > 0);
 
-      result = database.query(new OSQLSynchQuery<Object>("select from device where domainset.domain.name in 'pqr'"));
+      result = database.query(new OSQLSynchQuery<Object>("select from device where domainset.domain in 'pqr'"));
       Assert.assertTrue(result.size() > 0);
 
     } finally {
