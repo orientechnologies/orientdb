@@ -1041,8 +1041,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return createIndex(iName, iType.name(), iProgressListener, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
-      final String... fields) {
+  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, final String... fields) {
+    if (iType == null)
+      throw new IllegalArgumentException("Index type is null");
+
+    iType = iType.toUpperCase();
 
     try {
       final INDEX_TYPE recognizedIdxType = INDEX_TYPE.valueOf(iType);
