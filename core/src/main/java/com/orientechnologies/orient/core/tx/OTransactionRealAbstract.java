@@ -161,19 +161,21 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
    * Called by cluster iterator.
    */
-  public List<ORecordOperation> getRecordEntriesByClusterIds(final int[] iIds) {
+  public List<ORecordOperation> getNewRecordEntriesByClusterIds(final int[] iIds) {
     final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
 
     if (iIds == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : recordEntries.values()) {
-        result.add(entry);
+        if (entry.type == ORecordOperation.CREATED)
+          result.add(entry);
       }
     else
       // FILTER RECORDS BY ID
       for (ORecordOperation entry : recordEntries.values()) {
         for (int id : iIds) {
-          if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id) {
+          if (entry.getRecord() != null && entry.getRecord().getIdentity().getClusterId() == id
+              && entry.type == ORecordOperation.CREATED) {
             result.add(entry);
             break;
           }

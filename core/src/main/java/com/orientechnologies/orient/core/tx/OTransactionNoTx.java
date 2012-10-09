@@ -117,7 +117,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds) {
+  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds) {
     return null;
   }
 

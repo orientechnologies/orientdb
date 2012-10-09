@@ -63,7 +63,7 @@ public interface OTransaction {
 
   public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
 
-  public List<ORecordOperation> getRecordEntriesByClusterIds(int[] iIds);
+  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
   public ORecordInternal<?> getRecord(ORID iRid);
 

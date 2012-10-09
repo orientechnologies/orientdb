@@ -367,7 +367,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     totalAvailableRecords = database.countClusterElements(clusterIds);
 
-    txEntries = database.getTransaction().getRecordEntriesByClusterIds(clusterIds);
+    txEntries = database.getTransaction().getNewRecordEntriesByClusterIds(clusterIds);
 
     if (txEntries != null)
       // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
