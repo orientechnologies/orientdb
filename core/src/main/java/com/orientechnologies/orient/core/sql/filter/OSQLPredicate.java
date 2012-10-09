@@ -127,7 +127,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       // SWAP ITEMS
       final OSQLFilterCondition subCondition = new OSQLFilterCondition(currentCondition.right, nextOperator);
       currentCondition.right = subCondition;
-      subCondition.right = extractConditions(subCondition);
+      subCondition.right = extractConditionItem(false, 1);
       return currentCondition;
     } else {
       final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
