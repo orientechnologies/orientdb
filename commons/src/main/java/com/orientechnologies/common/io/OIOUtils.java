@@ -54,7 +54,7 @@ public class OIOUtils {
       time = time.toUpperCase(Locale.ENGLISH);
 
       int pos = time.indexOf("MS");
-      final String timeAsNumber = time.substring(0, pos);
+      final String timeAsNumber = time.replaceAll("[^\\d]", "");
       if (pos > -1)
         return Long.parseLong(timeAsNumber);
 
