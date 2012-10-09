@@ -350,7 +350,9 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
   protected static void validateType(final OProperty p, final Object value) {
     if (value != null)
-      OType.convert(value, p.getLinkedType().getDefaultJavaType());
+      if (OType.convert(value, p.getLinkedType().getDefaultJavaType()) == null)
+        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
+            + p.getLinkedType() + "' but the value is " + value);
   }
 
   protected static void validateLink(final OProperty p, final Object fieldValue) {
