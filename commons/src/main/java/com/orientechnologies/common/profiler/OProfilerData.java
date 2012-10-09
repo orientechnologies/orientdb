@@ -125,9 +125,11 @@ public class OProfilerData {
           currentValue = ((Double) currentValue).doubleValue() + ((Double) otherValue).doubleValue();
         else if (currentValue instanceof Boolean)
           currentValue = otherValue;
+        else if (currentValue instanceof String)
+          currentValue = otherValue;
         else
-          OLogManager.instance().warn(this, "Type not support on profiler hook '%s' to merge with value: %s", entry.getKey(),
-              entry.getValue());
+          OLogManager.instance().warn(this, "Type of value '%s' not support on profiler hook '%s' to merge with value: %s",
+              currentValue, entry.getKey(), entry.getValue());
       }
 
       hooks.put(entry.getKey(), currentValue);
