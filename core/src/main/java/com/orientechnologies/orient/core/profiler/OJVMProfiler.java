@@ -40,6 +40,36 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
         return metricProcessors;
       }
     });
+    registerHookValue(getSystemMetric("config.os.name"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return System.getProperty("os.name");
+      }
+    });
+    registerHookValue(getSystemMetric("config.os.version"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return System.getProperty("os.version");
+      }
+    });
+    registerHookValue(getSystemMetric("config.os.arch"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return System.getProperty("os.arch");
+      }
+    });
+    registerHookValue(getSystemMetric("config.java.vendor"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return System.getProperty("java.vendor");
+      }
+    });
+    registerHookValue(getSystemMetric("config.java.version"), new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+        return System.getProperty("java.version");
+      }
+    });
     registerHookValue(getProcessMetric("runtime.availableMemory"), new OProfilerHookValue() {
       @Override
       public Object getValue() {
