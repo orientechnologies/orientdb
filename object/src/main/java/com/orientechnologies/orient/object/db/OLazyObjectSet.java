@@ -200,6 +200,11 @@ public class OLazyObjectSet<TYPE> implements OLazyObjectSetInterface<TYPE>, OLaz
   }
 
   @Override
+  public Object getUnderlying() {
+    return null;
+  }
+
+  @Override
   public Set<TYPE> getNonOrientInstance() {
     Set<TYPE> set = new HashSet<TYPE>();
     set.addAll(this);

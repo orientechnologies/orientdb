@@ -164,6 +164,11 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
     return set;
   }
 
+  @Override
+  public Object getUnderlying() {
+    return underlying;
+  }
+
   protected void convertAll() {
     if (converted)
       return;

@@ -260,4 +260,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjec
   public String toString() {
     return list.toString();
   }
+
+  @Override
+  public Object getUnderlying() {
+    return serializedList;
+  }
 }

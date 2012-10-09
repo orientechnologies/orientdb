@@ -170,6 +170,11 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
     return map;
   }
 
+  @Override
+  public Object getUnderlying() {
+    return underlying;
+  }
+
   /**
    * Converts all the items
    */

@@ -165,6 +165,11 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
     return set;
   }
 
+  @Override
+  public Object getUnderlying() {
+    return underlying;
+  }
+
   protected void convertAll() {
     if (converted)
       return;

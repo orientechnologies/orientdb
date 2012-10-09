@@ -227,6 +227,11 @@ public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
       sourceRecord.setDirty();
   }
 
+  @Override
+  public Object getUnderlying() {
+    return null;
+  }
+
   /**
    * Convert the item requested.
    * 

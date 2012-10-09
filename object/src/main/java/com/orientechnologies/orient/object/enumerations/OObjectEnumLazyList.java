@@ -240,6 +240,11 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OL
       sourceRecord.setDirty();
   }
 
+  @Override
+  public Object getUnderlying() {
+    return serializedList;
+  }
+
   /**
    * Convert the item requested.
    * 

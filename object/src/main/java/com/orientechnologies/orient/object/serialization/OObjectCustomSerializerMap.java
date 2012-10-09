@@ -170,6 +170,11 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
     return map;
   }
 
+  @Override
+  public Object getUnderlying() {
+    return underlying;
+  }
+
   /**
    * Converts all the items
    */

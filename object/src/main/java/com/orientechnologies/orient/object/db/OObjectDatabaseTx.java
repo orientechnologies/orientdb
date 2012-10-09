@@ -372,9 +372,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           // registerUserObject(iPojo, record);
           deleteOrphans((((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler())));
 
-          underlying.save(record, iClusterName, iMode, iForceCreate, iCallback);
+          ODocument savedRecord = underlying.save(record, iClusterName, iMode, iForceCreate, iCallback);
 
-          ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap();
+          ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).setDoc(savedRecord);
+          ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject);
           // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
           registerUserObject(proxiedObject, record);
         }

@@ -27,4 +27,6 @@ public interface OLazyObjectMultivalueElement<T> {
   public void detachAll(boolean nonProxiedInstance);
 
   public T getNonOrientInstance();
+
+  public Object getUnderlying();
 }

@@ -250,8 +250,9 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     boolean modified = false;
     Iterator<TYPE> e = iterator();
     while (e.hasNext()) {
-      if (!c.contains(e.next())) {
-        remove(e);
+      Object value = e.next();
+      if (!c.contains(value)) {
+        remove(value);
         modified = true;
       }
     }
@@ -370,6 +371,11 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     List<TYPE> list = new ArrayList<TYPE>();
     list.addAll(this);
     return list;
+  }
+
+  @Override
+  public Object getUnderlying() {
+    return recordList;
   }
 
   /**

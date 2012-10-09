@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -219,10 +220,26 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       ((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
   }
 
-  public void updateLoadedFieldMap() {
+  public void updateLoadedFieldMap(Object proxiedObject) {
     final Set<String> fields = new HashSet<String>(loadedFields.keySet());
     for (String key : fields) {
-      loadedFields.put(key, doc.getVersion());
+      try {
+        Object value = getValue(proxiedObject, key, false, null);
+        if (value instanceof OLazyObjectMultivalueElement) {
+          if (((OLazyObjectMultivalueElement<?>) value).getUnderlying() != doc.field(key))
+            loadedFields.remove(key);
+        } else {
+          loadedFields.put(key, doc.getVersion());
+        }
+      } catch (IllegalArgumentException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (IllegalAccessException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (NoSuchMethodException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (InvocationTargetException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      }
     }
   }
 
@@ -307,7 +324,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               setMethod.invoke(self, value);
             }
           }
-        } else if (!loadedFields.containsKey(fieldName)) {
+        } else if (!loadedFields.containsKey(fieldName) || loadedFields.get(fieldName) < doc.getVersion()) {
           final Object docValue = doc.field(fieldName, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
           if (docValue != null && !docValue.equals(value)) {
             value = lazyLoadField(self, fieldName, docValue, value);

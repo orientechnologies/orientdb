@@ -233,6 +233,11 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     return set;
   }
 
+  @Override
+  public Object getUnderlying() {
+    return underlying;
+  }
+
   protected void convertAll() {
     if (converted || !convertToRecord)
       return;
