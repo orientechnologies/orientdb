@@ -53,7 +53,7 @@ public class OGremlinHelper {
   private static GremlinGroovyScriptEngineFactory    factory      = new GremlinGroovyScriptEngineFactory();
   private static OGremlinHelper                      instance     = new OGremlinHelper();
 
-  private int                                        maxEngines   = 50;
+  private int                                        maxEngines   = 0;
   private int                                        maxGraphs    = 50;
 
   private OResourcePool<Object, ScriptEngine>        enginePool;

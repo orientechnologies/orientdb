@@ -21,6 +21,30 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
  * be affected due to adding or removing cluster from storage.
  */
 public class LocalGremlinTest {
+  public static void main(String[] args) {
+    LocalGremlinTest instance = new LocalGremlinTest();
+    
+    long start = System.currentTimeMillis();
+    instance.function();
+    System.out.println("function: " + (System.currentTimeMillis() - start));
+
+    start = System.currentTimeMillis();
+    instance.command();
+    System.out.println("command: " + (System.currentTimeMillis() - start));
+
+    start = System.currentTimeMillis();
+    instance.testMultipleExpressions();
+    System.out.println("testMultipleExpressions: " + (System.currentTimeMillis() - start));
+
+    start = System.currentTimeMillis();
+    instance.testMultipleExpressionsSideEffects();
+    System.out.println("testMultipleExpressionsSideEffects: " + (System.currentTimeMillis() - start));
+
+    start = System.currentTimeMillis();
+    instance.testGremlinAgainstBlueprints();
+    System.out.println("testGremlinAgainstBlueprints: " + (System.currentTimeMillis() - start));
+  }
+
   public LocalGremlinTest() {
     OGremlinHelper.global().create();
   }
@@ -98,11 +122,11 @@ public class LocalGremlinTest {
     db.open("admin", "admin");
 
     int clusterId = db.getVertexBaseClass().getDefaultClusterId();
-    
+
     List<OIdentifiable> result = db.command(
         new OCommandSQL(
-            "SELECT gremlin('m = []; current.out.sideEffect({ m << it.id }).out.out.sideEffect({ m << it.id })') FROM #" + clusterId + ":1"))
-        .execute();
+            "SELECT gremlin('m = []; current.out.sideEffect({ m << it.id }).out.out.sideEffect({ m << it.id })') FROM #"
+                + clusterId + ":1")).execute();
 
     Assert.assertEquals(1, result.size());
     System.out.println("Query result: " + result);
@@ -122,7 +146,7 @@ public class LocalGremlinTest {
     try {
       for (int i = NUM_ITERS; i > 0; i--) {
         List<Vertex> r = graph.getRawGraph().command(new OCommandGremlin("g.V[1].out.out.in")).execute();
-        System.out.println(r.size());
+        System.out.println(i + " = found: " + r.size() + " items");
       }
 
       System.out.println("Total: " + (System.currentTimeMillis() - start) + " ms AVG: "
