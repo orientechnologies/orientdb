@@ -383,7 +383,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but the value is the RecordID " + fieldValue);
     else if (fieldValue instanceof OIdentifiable) {
-      if (!((OIdentifiable) fieldValue).getIdentity().isValid())
+      if (((OIdentifiable) fieldValue).getIdentity().isValid())
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
             + " but the value is a document with the valid RecordID " + fieldValue);
 
