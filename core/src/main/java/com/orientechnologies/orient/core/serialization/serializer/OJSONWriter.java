@@ -266,13 +266,13 @@ public class OJSONWriter {
       buffer.append('"');
     } else if (iValue instanceof String) {
       final String v = (String) iValue;
-      if (v.startsWith("\""))
-        buffer.append(v);
-      else {
+//      if (v.startsWith("\""))
+//        buffer.append(encode(v));
+//      else {
         buffer.append('"');
         buffer.append(encode(v));
         buffer.append('"');
-      }
+//      }
     } else
       buffer.append(iValue.toString());
 

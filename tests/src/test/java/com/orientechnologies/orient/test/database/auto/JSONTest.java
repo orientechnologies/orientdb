@@ -579,8 +579,13 @@ public class JSONTest {
 
   public void testEscaping() {
     ODocument doc = new ODocument();
-    String s = "{\r\n    \"name\": \"test\",\r\n    \"nested\": {\r\n        \"key\": \"value\",\r\n        \"anotherKey\": 123\r\n    },\r\n    \"deep\": {\r\n        \"deeper\": {\r\n            \"k\": \"v\",\r\n            \"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\",  \r\n            \"likeJson\": \"[1,2,3]\",\r\n            \"spaces\":  \"value with spaces\"\r\n        }\r\n    }\r\n}";
+    String s = "{\"name\": \"test\", \"nested\": { \"key\": \"value\", \"anotherKey\": 123 }, \"deep\": {\"deeper\": { \"k\": \"v\",\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\", \"likeJson\": \"[1,2,3]\",\"spaces\": \"value with spaces\"}}}";
     doc.fromJSON(s);
     Assert.assertEquals(doc.field("deep[deeper][quotes]"), "\"\",\"oops\":\"123\"");
+
+    String res = doc.toJSON();
+
+    // LOOK FOR "quotes": \"\",\"oops\":\"123\"
+    Assert.assertTrue(res.contains("\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 }
