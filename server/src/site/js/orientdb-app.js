@@ -221,7 +221,6 @@ function displayResultSet(result) {
 				break;
 			}
 		}
-
 	}
 
 	columnModel.push({
