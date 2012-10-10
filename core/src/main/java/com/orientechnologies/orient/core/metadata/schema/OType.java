@@ -347,9 +347,13 @@ public enum OType {
       } else if (iTargetClass.equals(Boolean.TYPE) || iTargetClass.equals(Boolean.class)) {
         if (iValue instanceof Boolean)
           return ((Boolean) iValue).booleanValue();
-        else if (iValue instanceof String)
-          return ((String) iValue).equalsIgnoreCase("true") ? Boolean.TRUE : Boolean.FALSE;
-        else if (iValue instanceof Number)
+        else if (iValue instanceof String) {
+          if (((String) iValue).equalsIgnoreCase("true"))
+            return Boolean.TRUE;
+          else if (((String) iValue).equalsIgnoreCase("false"))
+            return Boolean.FALSE;
+          return null;
+        } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
       } else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
