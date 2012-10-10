@@ -5,7 +5,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.0</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -308,7 +308,7 @@
                         <Bundle-Name>${project.name}</Bundle-Name>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Description>${project.description}</Bundle-Description>
-                        <Bundle-Version>1.2.0-SNAPSHOT.qualifier</Bundle-Version>
+                        <Bundle-Version>1.2.0.qualifier</Bundle-Version>
                         <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
                         <Export-Package>${osgi.export}</Export-Package>
                         <Private-Package>${osgi.private}</Private-Package>
