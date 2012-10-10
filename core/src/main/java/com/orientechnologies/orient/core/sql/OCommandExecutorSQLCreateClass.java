@@ -145,18 +145,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
         superClass, clusterIds);
     sourceClass.saveInternal();
 
-    if (superClass != null) {
-      int[] clustersToIndex = superClass.getPolymorphicClusterIds();
-      String[] clusterNames = new String[clustersToIndex.length];
-      for (int i = 0; i < clustersToIndex.length; i++) {
-        clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
-      }
-
-      for (OIndex<?> index : superClass.getIndexes())
-        for (String clusterName : clusterNames)
-          index.getInternal().addCluster(clusterName);
-    }
-
     return database.getMetadata().getSchema().getClasses().size();
   }
 

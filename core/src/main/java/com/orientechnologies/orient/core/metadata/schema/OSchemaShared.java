@@ -224,11 +224,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     if (wrongCharacter != null)
       throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
+    final ODatabaseRecord database = getDatabase();
+
     if (iClusterIds == null || iClusterIds.length == 0)
       // CREATE A NEW CLUSTER
-      iClusterIds = new int[] { getDatabase().addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, null) };
+      iClusterIds = new int[] { database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, null) };
 
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
+    database.checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
     final String key = iClassName.toLowerCase();
 
@@ -244,8 +246,19 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         // BIND SHORT NAME TOO
         classes.put(cls.getShortName().toLowerCase(), cls);
 
-      if (iSuperClass != null)
+      if (iSuperClass != null) {
         cls.setSuperClassInternal(iSuperClass);
+
+        // UPDATE INDEXES
+        final int[] clustersToIndex = iSuperClass.getPolymorphicClusterIds();
+        final String[] clusterNames = new String[clustersToIndex.length];
+        for (int i = 0; i < clustersToIndex.length; i++)
+          clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+
+        for (OIndex<?> index : iSuperClass.getIndexes())
+          for (String clusterName : clusterNames)
+            index.getInternal().addCluster(clusterName);
+      }
 
       return cls;
 
