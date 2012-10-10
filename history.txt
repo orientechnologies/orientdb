@@ -26,6 +26,27 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.2.0 - (October, 10th 2012)
+-------------------------------------------------------------------------------
+- Functions: these are like Stored Procedures for RDBMS but in Javascript
+- Record Level Security, just let the class to protect overriding the
+  ORestricted abstract class
+- Profiler: generation of snapshots
+- JMX now is a plugin (not more installed by default)
+- Automatic rebuild of schema index on restart after a crash/hard shutdown
+- SQL: new EXPLAIN command to profile any commands, new SQL LET keyword to set
+       context variables, support for Sub-Queries in CREATE EDGE
+- Object Database JPA interface: support for configurable naming policy
+- Supported abstract classes (without record cluster)
+- Partial unmarshalling of fields to speed up queries
+- Automatic backup can start at concrete time
+- Console: prompt password if not provided
+- Renamed traverse's WHERE in WHILE
+- 63 bugs fixed!
+
+Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.2.0%2Cv1.2
+
+-------------------------------------------------------------------------------
 VERSION 1.1.0 - (July, 24th 2012)
 -------------------------------------------------------------------------------
 - New distributed server architecture with balance of workload, full
