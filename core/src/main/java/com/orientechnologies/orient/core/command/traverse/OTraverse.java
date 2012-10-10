@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommand;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
