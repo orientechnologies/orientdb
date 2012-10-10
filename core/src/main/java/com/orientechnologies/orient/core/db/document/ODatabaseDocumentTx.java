@@ -357,20 +357,19 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
       final int[] clusterIds;
       if (doc.getSchemaClass() != null) {
-        // throw new IllegalArgumentException("Class '" + iClusterName + "' not configured in the record to save");
-
         // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
         clusterIds = doc.getSchemaClass().getClusterIds();
         int i = 0;
         for (; i < clusterIds.length; ++i)
           if (clusterIds[i] == id)
             break;
+        
+        if (i == clusterIds.length)
+          throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
+              + doc.getClassName());
       } else
         clusterIds = new int[] { id };
 
-      if (id == clusterIds.length)
-        throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
-            + doc.getClassName());
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
       if (doc.getClassName() != null)
