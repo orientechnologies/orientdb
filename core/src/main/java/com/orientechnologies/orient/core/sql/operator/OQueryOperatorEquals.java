@@ -54,6 +54,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   public static boolean equals(final Object iLeft, final Object iRight) {
+    if (iLeft == null || iRight == null)
+      return false;
+
     if (iLeft instanceof ORecord<?>) {
       // RECORD & ORID
       return comparesValues(iRight, (ORecord<?>) iLeft);
