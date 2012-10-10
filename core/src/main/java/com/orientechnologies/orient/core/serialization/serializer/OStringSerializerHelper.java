@@ -392,7 +392,7 @@ public abstract class OStringSerializerHelper {
     final List<String> items = split(iInput, RECORD_SEPARATOR);
     final int[] values = new int[items.size()];
     for (int i = 0; i < items.size(); ++i) {
-      values[i] = Integer.parseInt(items.get(i));
+      values[i] = Integer.parseInt(items.get(i).trim());
     }
     return values;
   }

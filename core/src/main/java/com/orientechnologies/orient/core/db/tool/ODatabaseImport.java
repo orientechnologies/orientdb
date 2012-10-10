@@ -282,7 +282,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           classDefClusterId = database.getDefaultClusterId();
 
         String classClusterIds = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"cluster-ids\"")
-            .readString(OJSONReader.NEXT_IN_OBJECT).trim();
+            .readString(OJSONReader.END_COLLECTION, true).trim();
+
+        jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
 
         OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
 
