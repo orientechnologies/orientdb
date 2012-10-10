@@ -24,26 +24,28 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 public abstract class OCommandExecutorSQLPermissionAbstract extends OCommandExecutorSQLAbstract {
-	protected static final String	KEYWORD_ON	= "ON";
-	protected int									privilege;
-	protected String							resource;
-	protected ORole								role;
+  protected static final String KEYWORD_ON = "ON";
+  protected int                 privilege;
+  protected String              resource;
+  protected ORole               role;
 
-	protected void parsePrivilege(final StringBuilder word, final int oldPos) {
-		final String privilegeName = word.toString();
+  protected void parsePrivilege(final StringBuilder word, final int oldPos) {
+    final String privilegeName = word.toString();
 
-		if ("CREATE".equals(privilegeName))
-			privilege = ORole.PERMISSION_CREATE;
-		else if ("READ".equals(privilegeName))
-			privilege = ORole.PERMISSION_READ;
-		else if ("UPDATE".equals(privilegeName))
-			privilege = ORole.PERMISSION_UPDATE;
-		else if ("DELETE".equals(privilegeName))
-			privilege = ORole.PERMISSION_DELETE;
-		else if ("ALL".equals(privilegeName))
-			privilege = ORole.PERMISSION_ALL;
-		else
-			throw new OCommandSQLParsingException("Unrecognized privilege '" + privilegeName + "'", parserText, oldPos);
-	}
+    if ("CREATE".equals(privilegeName))
+      privilege = ORole.PERMISSION_CREATE;
+    else if ("READ".equals(privilegeName))
+      privilege = ORole.PERMISSION_READ;
+    else if ("UPDATE".equals(privilegeName))
+      privilege = ORole.PERMISSION_UPDATE;
+    else if ("DELETE".equals(privilegeName))
+      privilege = ORole.PERMISSION_DELETE;
+    else if ("ALL".equals(privilegeName))
+      privilege = ORole.PERMISSION_ALL;
+    else if ("NONE".equals(privilegeName))
+      privilege = ORole.PERMISSION_NONE;
+    else
+      throw new OCommandSQLParsingException("Unrecognized privilege '" + privilegeName + "'", parserText, oldPos);
+  }
 
 }
