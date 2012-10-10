@@ -402,6 +402,11 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
+  public void checkForClusterPermissions(final String iClusterName) {
+    wrapped.checkForClusterPermissions(iClusterName);
+  }
+
+  @Override
   public boolean isLHClustersAreUsed() {
     return wrapped.isLHClustersAreUsed();
   }

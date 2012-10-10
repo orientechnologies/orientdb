@@ -392,6 +392,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     return sessionSerialId.decrementAndGet();
   }
 
+  @Override
+  public void checkForClusterPermissions(final String iClusterName) {
+    delegate.checkForClusterPermissions(iClusterName);
+  }
+
   public STATUS getStatus() {
     return delegate.getStatus();
   }

@@ -76,184 +76,64 @@ public class OClusterRemote implements OCluster {
   public void open() throws IOException {
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#close()
-   */
   public void close() throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#delete()
-   */
   public void delete() throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#set(com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES,
-   * java.lang.Object)
-   */
   public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#truncate()
-   */
   public void truncate() throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getType()
-   */
   public String getType() {
     return type;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getDataSegmentId()
-   */
   public int getDataSegmentId() {
     return dataSegmentId;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * com.orientechnologies.orient.core.storage.OCluster#addPhysicalPosition(com.orientechnologies.orient.core.storage.OPhysicalPosition
-   * )
-   */
   public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    // TODO Auto-generated method stub
     return false;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see
-   * com.orientechnologies.orient.core.storage.OCluster#getPhysicalPosition(com.orientechnologies.orient.core.storage.OPhysicalPosition
-   * )
-   */
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    // TODO Auto-generated method stub
     return null;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#updateDataSegmentPosition(long, int, long)
-   */
   public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#removePhysicalPosition(long)
-   */
   public void removePhysicalPosition(long iPosition) throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#updateRecordType(long, byte)
-   */
   public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#updateVersion(long, int)
-   */
   public void updateVersion(long iPosition, int iVersion) throws IOException {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getEntries()
-   */
   public long getEntries() {
-    // TODO Auto-generated method stub
     return 0;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getFirstEntryPosition()
-   */
   public long getFirstEntryPosition() {
-    // TODO Auto-generated method stub
     return 0;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getLastEntryPosition()
-   */
   public long getLastEntryPosition() {
-    // TODO Auto-generated method stub
     return 0;
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#lock()
-   */
   public void lock() {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#unlock()
-   */
   public void unlock() {
-    // TODO Auto-generated method stub
-
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.OCluster#getId()
-   */
   public int getId() {
     return id;
   }

@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -519,6 +520,27 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     lock.acquireSharedLock();
     try {
       return new HashSet<OClass>(classes.values());
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Set<OClass> getClassesRelyOnCluster(final String iClusterName) {
+
+    final int clusterId = getDatabase().getClusterIdByName(iClusterName);
+
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    lock.acquireSharedLock();
+    try {
+      final Set<OClass> result = new HashSet<OClass>();
+      for (OClass c : classes.values()) {
+        if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
+          result.add(c);
+      }
+
+      return result;
+
     } finally {
       lock.releaseSharedLock();
     }

@@ -106,7 +106,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   private static final int                                      DEFAULT_BUFFER_SIZE    = 1024;
 
-  private boolean                                               isOpen = false;
+  private boolean                                               isOpen                 = false;
 
   public OClusterLocalLHPEPS() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -347,6 +347,8 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public void truncate() throws IOException {
+    storage.checkForClusterPermissions(getName());
+    
     acquireExclusiveLock();
     try {
       long localSize = size;

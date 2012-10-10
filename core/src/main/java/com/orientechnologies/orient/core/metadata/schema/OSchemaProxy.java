@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
@@ -181,4 +182,8 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.toString();
   }
 
+  @Override
+  public Set<OClass> getClassesRelyOnCluster(final String iClusterName) {
+    return delegate.getClassesRelyOnCluster(iClusterName);
+  }
 }

@@ -99,6 +99,8 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
   }
 
   public void truncate() throws IOException {
+    storage.checkForClusterPermissions(getName());
+
     acquireExclusiveLock();
     try {
 

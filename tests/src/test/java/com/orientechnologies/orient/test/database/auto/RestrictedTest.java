@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "security")
@@ -191,5 +192,17 @@ public class RestrictedTest {
   public void testReaderCanSeeWriterDocument() throws IOException {
     database.open("reader", "reader");
     Assert.assertNotNull(database.load(writerRecord.getIdentity()));
+  }
+
+  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead", expectedExceptions = OSecurityException.class)
+  public void testTruncateClass() {
+    database.open("admin", "admin");
+    database.command(new OCommandSQL("truncate class CMSDocument")).execute();
+  }
+
+  @Test(dependsOnMethods = "testTruncateClass", expectedExceptions = OSecurityException.class)
+  public void testTruncateUnderlyingCluster() {
+    database.open("admin", "admin");
+    database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
   }
 }

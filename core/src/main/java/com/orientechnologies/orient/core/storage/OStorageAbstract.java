@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,6 +28,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
@@ -178,5 +183,17 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   public STATUS getStatus() {
     return status;
+  }
+
+  public void checkForClusterPermissions(final String iClusterName) {
+    // CHECK FOR ORESTRICTED
+    final Set<OClass> classes = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema()
+        .getClassesRelyOnCluster(iClusterName);
+    for (OClass c : classes) {
+      if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
+        throw new OSecurityException("Class " + c.getName()
+            + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME
+            + ")");
+    }
   }
 }

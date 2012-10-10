@@ -349,4 +349,8 @@ public class OAutoshardedStorage implements OStorage {
     return "autoshareded";
   }
 
+  @Override
+  public void checkForClusterPermissions(final String iClusterName) {
+    wrapped.checkForClusterPermissions(iClusterName);
+  }
 }

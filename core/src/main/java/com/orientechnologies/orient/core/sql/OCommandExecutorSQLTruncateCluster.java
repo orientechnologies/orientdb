@@ -77,7 +77,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     if (clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    OCluster cluster = ((OStorageEmbedded) getDatabase().getStorage()).getClusterByName(clusterName);
+    final OCluster cluster = ((OStorageEmbedded) getDatabase().getStorage()).getClusterByName(clusterName);
 
     final long recs = cluster.getEntries();
 

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -81,4 +82,12 @@ public interface OSchema {
    * @COMPATIBILITY 1.0rc1
    */
   public <RET extends ODocumentWrapper> RET save();
+
+  /**
+   * Returns all the classes that rely on a cluster
+   * 
+   * @param name
+   *          Cluster name
+   */
+  public Set<OClass> getClassesRelyOnCluster(String iClusterName);
 }

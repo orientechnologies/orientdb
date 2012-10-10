@@ -40,84 +40,84 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
 public class TruncateTest {
-	private ODatabaseDocumentTx	database;
+  private ODatabaseDocumentTx database;
 
-	@Parameters(value = "url")
-	public TruncateTest(@Optional String iURL) {
-		final String url = iURL != null ? iURL : "memory:test";
-		database = new ODatabaseDocumentTx(url);
-	}
+  @Parameters(value = "url")
+  public TruncateTest(@Optional String iURL) {
+    final String url = iURL != null ? iURL : "memory:test";
+    database = new ODatabaseDocumentTx(url);
+  }
 
-	@BeforeMethod
-	public void openDatabase() {
-		if (database.getURL().startsWith(OEngineMemory.NAME) && !database.exists())
-			database.create();
-		else
-			database.open("admin", "admin");
-	}
+  @BeforeMethod
+  public void openDatabase() {
+    if (database.getURL().startsWith(OEngineMemory.NAME) && !database.exists())
+      database.create();
+    else
+      database.open("admin", "admin");
+  }
 
-	@AfterMethod
-	public void closeDatabase() {
-		database.close();
-	}
+  @AfterMethod
+  public void closeDatabase() {
+    database.close();
+  }
 
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testTruncateClass() {
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTruncateClass() {
 
-		OSchema schema = database.getMetadata().getSchema();
-		OClass testClass = getOrCreateClass(schema);
+    OSchema schema = database.getMetadata().getSchema();
+    OClass testClass = getOrCreateClass(schema);
 
-		final OIndex<?> index = getOrCreateIndex(testClass);
-		schema.save();
-		
-		database.command(new OCommandSQL("truncate class test_class")).execute();
+    final OIndex<?> index = getOrCreateIndex(testClass);
+    schema.save();
 
-		database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
-		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
+    database.command(new OCommandSQL("truncate class test_class")).execute();
 
-		database.command(new OCommandSQL("truncate class test_class")).execute();
+    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(1, 2)));
+    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(3, 0)));
 
-		database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
-		database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
+    database.command(new OCommandSQL("truncate class test_class")).execute();
 
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from test_class"));
-		Assert.assertEquals(result.size(), 2);
-		Set<Integer> set = new HashSet<Integer>();
-		for (ODocument document : result) {
-			set.addAll((Collection<Integer>) document.field("data"));
-		}
-		Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
+    database.save(new ODocument(testClass).field("name", "x").field("data", Arrays.asList(5, 6, 7)));
+    database.save(new ODocument(testClass).field("name", "y").field("data", Arrays.asList(8, 9, -1)));
 
-		Assert.assertEquals(index.getSize(), 6);
-		
-		for (Object o : index.keys()) {
-			if (o instanceof ODocument) {
-				o = ((ODocument) o).field("key");
-			}
-			Assert.assertTrue(set.contains(o));
-		}
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from test_class"));
+    Assert.assertEquals(result.size(), 2);
+    Set<Integer> set = new HashSet<Integer>();
+    for (ODocument document : result) {
+      set.addAll((Collection<Integer>) document.field("data"));
+    }
+    Assert.assertTrue(set.containsAll(Arrays.asList(5, 6, 7, 8, 9, -1)));
 
-		schema.dropClass("test_class");
-	}
+    Assert.assertEquals(index.getSize(), 6);
 
-	private OIndex<?> getOrCreateIndex(OClass testClass) {
-		OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
-		if (index == null) {
-			testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
-			index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");
-		}
-		return index;
-	}
+    for (Object o : index.keys()) {
+      if (o instanceof ODocument) {
+        o = ((ODocument) o).field("key");
+      }
+      Assert.assertTrue(set.contains(o));
+    }
 
-	private OClass getOrCreateClass(OSchema schema) {
-		OClass testClass;
-		if (schema.existsClass("test_class")) {
-			testClass = schema.getClass("test_class");
-		} else {
-			testClass = schema.createClass("test_class");
-		}
-		schema.save();
-		return testClass;
-	}
+    schema.dropClass("test_class");
+  }
+
+  private OIndex<?> getOrCreateIndex(OClass testClass) {
+    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("test_class_by_data");
+    if (index == null) {
+      testClass.createProperty("data", OType.EMBEDDEDLIST, OType.INTEGER);
+      index = testClass.createIndex("test_class_by_data", OClass.INDEX_TYPE.UNIQUE, "data");
+    }
+    return index;
+  }
+
+  private OClass getOrCreateClass(OSchema schema) {
+    OClass testClass;
+    if (schema.existsClass("test_class")) {
+      testClass = schema.getClass("test_class");
+    } else {
+      testClass = schema.createClass("test_class");
+    }
+    schema.save();
+    return testClass;
+  }
 }
