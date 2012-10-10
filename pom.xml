@@ -129,6 +129,7 @@
         <!--
              | Configuration properties for the OSGi maven-bundle-plugin
             -->
+        <osgi.fragment.host/>
         <osgi.export>${project.groupId}.*;version=${project.version};-noimport:=true</osgi.export>
         <osgi.import>*</osgi.import>
         <osgi.dynamicImport/>
@@ -308,6 +309,7 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Description>${project.description}</Bundle-Description>
                         <Bundle-Version>1.2.0-SNAPSHOT.qualifier</Bundle-Version>
+                        <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
                         <Export-Package>${osgi.export}</Export-Package>
                         <Private-Package>${osgi.private}</Private-Package>
                         <Import-Package>${osgi.import}</Import-Package>

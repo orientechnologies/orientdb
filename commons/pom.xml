@@ -18,6 +18,7 @@
     <properties>
         <osgi.export>com.orientechnologies.common.*</osgi.export>
         <osgi.import>javax.imageio.spi.*,sun.misc.*;resolution:=optional</osgi.import>
+        <osgi.fragment.host>com.orientechnologies.orientdb-core</osgi.fragment.host>
     </properties>
 
     <dependencies>
