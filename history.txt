@@ -42,7 +42,7 @@ VERSION 1.2.0 - (October, 10th 2012)
 - Automatic backup can start at concrete time
 - Console: prompt password if not provided
 - Renamed traverse's WHERE in WHILE
-- 63 bugs fixed!
+- 65 bugs fixed!
 
 Full list: http://code.google.com/p/orient/issues/list?can=1&q=label%3Av1.2.0%2Cv1.2
 
