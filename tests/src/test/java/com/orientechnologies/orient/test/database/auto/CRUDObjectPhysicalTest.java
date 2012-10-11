@@ -377,6 +377,56 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapObjectsLinkTest")
+  public void mapObjectsNonExistingKeyTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    JavaComplexTestClass p = new JavaComplexTestClass();
+    p.setName("Silvester");
+
+    p = database.save(p);
+
+    Child c1 = new Child();
+    c1.setName("John");
+
+    Child c2 = new Child();
+    c2.setName("Jack");
+
+    p.getChildren().put("first", c1);
+    p.getChildren().put("second", c2);
+
+    database.save(p);
+
+    Child c3 = new Child();
+    c3.setName("Olivia");
+    Child c4 = new Child();
+    c4.setName("Peter");
+
+    p.getChildren().put("third", c3);
+    p.getChildren().put("fourth", c4);
+
+    database.save(p);
+
+    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    Assert.assertTrue(cresult.size() > 0);
+
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    Assert.assertEquals(loaded.getChildren().get("first").getName(), c1.getName());
+    Assert.assertEquals(loaded.getChildren().get("second").getName(), c2.getName());
+    Assert.assertEquals(loaded.getChildren().get("third").getName(), c3.getName());
+    Assert.assertEquals(loaded.getChildren().get("fourth").getName(), c4.getName());
+    Assert.assertEquals(loaded.getChildren().get("fifth"), null);
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsLinkTest")
   public void mapObjectsLinkTwoSaveTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 

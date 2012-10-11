@@ -209,7 +209,10 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
     if (super.containsKey(iKey))
       return;
-    TYPE o = getDatabase().getUserObjectByRecord((ORecordInternal<?>) underlying.get(iKey), null);
+    final ORecordInternal<?> record = (ORecordInternal<?>) underlying.get(iKey);
+    if (record == null)
+      return;
+    TYPE o = getDatabase().getUserObjectByRecord(record, null);
     ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
     super.put(iKey, o);
   }
