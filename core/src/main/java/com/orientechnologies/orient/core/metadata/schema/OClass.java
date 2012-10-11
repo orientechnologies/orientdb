@@ -326,4 +326,12 @@ public interface OClass extends Comparable<OClass> {
   public Set<OIndex<?>> getIndexes();
 
   public abstract void setDefaultClusterId(final int iDefaultClusterId);
+
+  public String getCustom(final String iName);
+
+  public OClassImpl setCustom(final String iName, final String iValue);
+
+  public void removeCustom(final String iName);
+
+  public void clearCustom();
 }

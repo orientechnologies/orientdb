@@ -147,6 +147,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return null;
   }
 
+  public void removeCustom(final String iName) {
+    if (customFields != null)
+      customFields.remove(iName);
+  }
+
+  public void clearCustom() {
+    customFields = null;
+  }
+
   public void validateInstances() {
     ODatabaseComplex<?> current = getDatabase().getDatabaseOwner();
 
