@@ -101,7 +101,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     } finally {
       Orient.instance().getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".query." + iCommand.getText(), beginTime);
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.getText(), beginTime);
     }
   }
 
