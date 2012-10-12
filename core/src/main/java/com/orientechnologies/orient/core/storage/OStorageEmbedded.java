@@ -19,10 +19,12 @@ import java.io.IOException;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -83,16 +85,23 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     if (iCommand.isIdempotent() && !executor.isIdempotent())
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 
+    long beginTime = Orient.instance().getProfiler().startChrono();
     try {
+
       iCommand.getContext().setChild(executor.getContext());
       final Object result = executor.execute(iCommand.getParameters());
       iCommand.getContext().setChild(null);
       return result;
+
     } catch (OException e) {
       // PASS THROUGHT
       throw e;
     } catch (Exception e) {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+
+    } finally {
+      Orient.instance().getProfiler()
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".query." + iCommand.getText(), beginTime);
     }
   }
 
