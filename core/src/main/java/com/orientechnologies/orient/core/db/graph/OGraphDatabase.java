@@ -329,7 +329,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     return true;
   }
 
-  public void removeVertex(final ODocument iVertex) {
+  public boolean removeVertex(final OIdentifiable iVertex) {
+    if (iVertex == null)
+      return false;
+
+    final ODocument vertex = (ODocument) iVertex.getRecord();
+    if (vertex == null)
+      return false;
+
     final boolean safeMode = beginBlock();
     try {
 
@@ -337,10 +344,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       Set<ODocument> otherEdges;
 
       // REMOVE OUT EDGES
-      acquireWriteLock(iVertex);
+      acquireWriteLock(vertex);
       try {
 
-        Set<ODocument> edges = iVertex.field(VERTEX_FIELD_OUT);
+        Set<ODocument> edges = vertex.field(VERTEX_FIELD_OUT);
         if (edges != null) {
           for (ODocument edge : edges) {
             if (edge != null) {
@@ -356,7 +363,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
         // REMOVE IN EDGES
-        edges = iVertex.field(VERTEX_FIELD_IN);
+        edges = vertex.field(VERTEX_FIELD_IN);
         if (edges != null) {
           for (ODocument edge : edges) {
             if (edge != null) {
@@ -372,14 +379,16 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
         // DELETE VERTEX AS DOCUMENT
-        delete(iVertex);
+        delete(vertex);
 
       } finally {
-        releaseWriteLock(iVertex);
+        releaseWriteLock(vertex);
       }
 
       commitBlock(safeMode);
 
+      return true;
+      
     } catch (RuntimeException e) {
       rollbackBlock(safeMode);
       throw e;

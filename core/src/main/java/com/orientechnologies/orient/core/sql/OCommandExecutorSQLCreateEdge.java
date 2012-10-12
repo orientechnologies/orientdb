@@ -54,10 +54,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     init(((OCommandRequestText) iRequest).getText());
 
-    String className = null;
-
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("EDGE");
+
+    String className = null;
 
     String temp = parseOptionalWord(true);
 

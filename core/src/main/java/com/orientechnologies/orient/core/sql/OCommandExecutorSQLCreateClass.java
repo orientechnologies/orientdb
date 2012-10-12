@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
@@ -46,7 +45,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   private String             className;
   private OClass             superClass;
   private int[]              clusterIds;
-  private boolean            abstractClass    = false;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
@@ -112,10 +110,8 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
           }
         }
-      } else if (k.equals(KEYWORD_ABSTRACT)) {
-        abstractClass = true;
+      } else if (k.equals(KEYWORD_ABSTRACT))
         clusterIds = new int[] { -1 };
-      }
 
       oldPos = pos;
     }

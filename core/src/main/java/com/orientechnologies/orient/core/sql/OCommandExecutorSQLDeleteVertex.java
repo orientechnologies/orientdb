@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -35,53 +33,39 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 /**
- * SQL DELETE EDGE command.
+ * SQL DELETE VERTEX command.
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware implements OCommandResultListener {
-  public static final String NAME    = "DELETE EDGE";
+public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLSetAware implements OCommandResultListener {
+  public static final String NAME    = "DELETE VERTEX";
   private ORecordId          rid;
-  private ORecordId          from;
-  private ORecordId          to;
   private int                removed = 0;
   private ODatabaseRecord    database;
   private OCommandRequest    query;
 
   @SuppressWarnings("unchecked")
-  public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
+  public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
     database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init(((OCommandRequestText) iRequest).getText());
 
     parserRequiredKeyword("DELETE");
-    parserRequiredKeyword("EDGE");
+    parserRequiredKeyword("VERTEX");
 
     OClass clazz = null;
 
     String temp = parseOptionalWord(true);
     while (temp != null) {
 
-      if (temp.equals("FROM")) {
-        from = new ORecordId(parserRequiredWord(false));
-        if (rid != null)
-          throwSyntaxErrorException("FROM '" + from + "' is not allowed when specify a RID (" + rid + ")");
-
-      } else if (temp.equals("TO")) {
-        to = new ORecordId(parserRequiredWord(false));
-        if (rid != null)
-          throwSyntaxErrorException("TO '" + to + "' is not allowed when specify a RID (" + rid + ")");
-
-      } else if (temp.startsWith("#")) {
+      if (temp.startsWith("#")) {
         rid = new ORecordId(temp);
-        if (from != null || to != null)
-          throwSyntaxErrorException("Specifying the RID " + rid + " is not allowed with FROM/TO");
 
       } else if (temp.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
-          clazz = database.getMetadata().getSchema().getClass(OGraphDatabase.EDGE_CLASS_NAME);
+          clazz = database.getMetadata().getSchema().getClass(OGraphDatabase.VERTEX_CLASS_NAME);
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));
@@ -95,9 +79,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
       }
 
-      if (from == null && to == null && rid == null && clazz == null)
-        // DELETE ALL EDGES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
+      if (rid == null && clazz == null)
+        // DELETE ALL VERTEXES
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from V", this));
 
       temp = parseOptionalWord(true);
       if (parserIsEnded())
@@ -111,7 +95,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (from == null && to == null && rid == null && query == null)
+    if (rid == null && query == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     database = getDatabase();
@@ -120,48 +104,25 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      if (((OGraphDatabase) database).removeEdge(rid))
+      if (((OGraphDatabase) database).removeVertex(rid))
         removed = 1;
-    } else {
-      // MULTIPLE EDGES
-      final Set<OIdentifiable> edges;
-
-      if (query == null) {
-        // SELECTIVE TARGET
-        if (from != null && to != null)
-          // REMOVE ALL THE EDGES BETWEEN VERTICES
-          edges = ((OGraphDatabase) database).getEdgesBetweenVertexes(from, to);
-        else if (from != null)
-          // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
-          edges = new HashSet<OIdentifiable>(((OGraphDatabase) database).getOutEdges(from));
-        else if (to != null)
-          // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-          edges = new HashSet<OIdentifiable>(((OGraphDatabase) database).getInEdges(to));
-        else
-          throw new OCommandExecutionException("Invalid target");
-
-        // DELETE THE FOUND EDGES
-        removed = edges.size();
-        for (OIdentifiable edge : edges)
-          ((OGraphDatabase) database).removeEdge(edge);
-      } else if (query != null)
-        // TARGET IS A CLASS + OPTIONAL CONDITION
-        query.execute(iArgs);
-      else
-        throw new OCommandExecutionException("Invalid target");
-    }
+    } else if (query != null)
+      // TARGET IS A CLASS + OPTIONAL CONDITION
+      query.execute(iArgs);
+    else
+      throw new OCommandExecutionException("Invalid target");
 
     return removed;
   }
 
   /**
-   * Delete the current edge.
+   * Delete the current vertex.
    */
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
 
-      if (((OGraphDatabase) database).removeEdge(id)) {
+      if (((OGraphDatabase) database).removeVertex(id)) {
         removed++;
         return true;
       }
@@ -172,6 +133,6 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
   @Override
   public String getSyntax() {
-    return "DELETE EDGE <rid>|FROM <rid>|TO <rid>|<[<class>] [WHERE <conditions>]>";
+    return "DELETE VERTEX <rid>|<[<class>] [WHERE <conditions>] [LIMIT <max-records>]>";
   }
 }
