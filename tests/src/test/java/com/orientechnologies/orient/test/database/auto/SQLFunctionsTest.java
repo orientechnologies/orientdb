@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -101,6 +103,28 @@ public class SQLFunctionsTest {
 
     database.close();
   }
+
+    @Test
+    public void queryCountWithConditions() {
+      database.open("admin", "admin");
+
+      OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
+      indexed.createProperty("key", OType.STRING);
+      indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
+      database.<ODocument>newInstance("Indexed").field("key","one").save();
+      database.<ODocument>newInstance("Indexed").field("key","two").save();
+
+
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();
+
+      Assert.assertTrue(result.size() == 1);
+      for (ODocument d : result) {
+        Assert.assertNotNull(d.field("total"));
+        Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
+      }
+
+      database.close();
+    }
 
   @Test
   public void queryDistinct() {

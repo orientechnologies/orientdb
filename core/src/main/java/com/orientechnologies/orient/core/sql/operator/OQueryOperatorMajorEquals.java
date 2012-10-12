@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
 
 /**
  * MAJOR EQUALS operator.
@@ -80,7 +81,9 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (fetchLimit > -1)
+      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
+        result = index.getValuesMajor(key, true).size();
+      else if (fetchLimit > -1)
         result = index.getValuesMajor(key, true, fetchLimit);
       else
         result = index.getValuesMajor(key, true);
@@ -102,7 +105,9 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (fetchLimit > -1)
+      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
+        result = index.getValuesBetween(keyOne, true, keyTwo, true).size();
+      else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);

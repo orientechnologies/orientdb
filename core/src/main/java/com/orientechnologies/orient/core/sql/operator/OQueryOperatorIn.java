@@ -103,7 +103,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
       List<Object> keyParams, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
-    final Collection<OIdentifiable> result;
+    final Object result;
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
@@ -118,7 +118,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, iContext);
       else
         throw new IllegalArgumentException("Key is not valid");
-      
+
       final List<Object> inKeys = new ArrayList<Object>();
 
       boolean containsNotCompatibleKey = false;
@@ -135,7 +135,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (containsNotCompatibleKey)
         return null;
 
-      if (fetchLimit > -1)
+      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
+        result = index.getValues(inKeys).size();
+      else if (fetchLimit > -1)
         result = index.getValues(inKeys, fetchLimit);
       else
         result = index.getValues(inKeys);
