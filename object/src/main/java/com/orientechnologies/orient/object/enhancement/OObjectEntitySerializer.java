@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -689,7 +690,7 @@ public class OObjectEntitySerializer {
 
         } else {
           final Object result = serializeFieldValue(null, iFieldValue);
-          if (iFieldValue == result)
+          if (iFieldValue == result && !ORecordAbstract.class.isAssignableFrom(result.getClass()))
             throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
                 + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
 

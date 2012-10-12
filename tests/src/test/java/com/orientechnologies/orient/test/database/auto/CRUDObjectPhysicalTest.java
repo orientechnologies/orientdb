@@ -1103,59 +1103,175 @@ public class CRUDObjectPhysicalTest {
   @Test(dependsOnMethods = "mapStringObjectTest")
   public void oidentifableFieldsTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-
-    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
-    p.setName("Dean Winchester");
-
-    ODocument testEmbeddedDocument = new ODocument();
-    testEmbeddedDocument.field("testEmbeddedField", "testEmbeddedValue");
-
-    p.setEmbeddedDocument(testEmbeddedDocument);
-
-    ODocument testDocument = new ODocument();
-    testDocument.field("testField", "testValue");
-
-    p.setDocument(testDocument);
-
-    ORecordBytes testRecordBytes = new ORecordBytes(
-        "this is a bytearray test. if you read this Object database has stored it correctly".getBytes());
-
-    p.setByteArray(testRecordBytes);
-
-    database.save(p);
-
-    ORID rid = database.getRecordByUserObject(p, false).getIdentity();
-
-    database.close();
-
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    JavaComplexTestClass loaded = database.load(rid);
-
-    Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
     try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+      p.setName("Dean Winchester");
+
+      ODocument testEmbeddedDocument = new ODocument();
+      testEmbeddedDocument.field("testEmbeddedField", "testEmbeddedValue");
+
+      p.setEmbeddedDocument(testEmbeddedDocument);
+
+      ODocument testDocument = new ODocument();
+      testDocument.field("testField", "testValue");
+
+      p.setDocument(testDocument);
+
+      ORecordBytes testRecordBytes = new ORecordBytes(
+          "this is a bytearray test. if you read this Object database has stored it correctly".getBytes());
+
+      p.setByteArray(testRecordBytes);
+
+      database.save(p);
+
+      ORID rid = database.getRecordByUserObject(p, false).getIdentity();
+
+      database.close();
+
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      JavaComplexTestClass loaded = database.load(rid);
+
+      Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
       try {
-        loaded.getByteArray().toOutputStream(out);
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly".getBytes(),
-            out.toByteArray());
-        Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly",
-            new String(out.toByteArray()));
-      } finally {
-        out.close();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          loaded.getByteArray().toOutputStream(out);
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly".getBytes(),
+              out.toByteArray());
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctly",
+              new String(out.toByteArray()));
+        } finally {
+          out.close();
+        }
+      } catch (IOException ioe) {
+        Assert.assertTrue(false);
+        OLogManager.instance().error(this, "Error reading byte[]", ioe);
       }
-    } catch (IOException ioe) {
-      Assert.assertTrue(false);
-      OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      Assert.assertTrue(loaded.getDocument() instanceof ODocument);
+      Assert.assertEquals("testValue", loaded.getDocument().field("testField"));
+      Assert.assertTrue(loaded.getDocument().getIdentity().isPersistent());
+
+      Assert.assertTrue(loaded.getEmbeddedDocument() instanceof ODocument);
+      Assert.assertEquals("testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
+      Assert.assertFalse(loaded.getEmbeddedDocument().getIdentity().isValid());
+
+      database.close();
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      p = database.newInstance(JavaComplexTestClass.class);
+      byte[] thumbnailImageBytes = "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2"
+          .getBytes();
+      ORecordBytes oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
+      oRecordBytes.save();
+      p.setByteArray(oRecordBytes);
+      p = database.save(p);
+      Assert.assertTrue(p.getByteArray() instanceof ORecordBytes);
+      try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          p.getByteArray().toOutputStream(out);
+          Assert.assertEquals(
+              "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+              out.toByteArray());
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+              new String(out.toByteArray()));
+        } finally {
+          out.close();
+        }
+      } catch (IOException ioe) {
+        Assert.assertTrue(false);
+        OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      }
+      rid = database.getIdentity(p);
+
+      database.close();
+
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      loaded = database.load(rid);
+
+      Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+      try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          loaded.getByteArray().toOutputStream(out);
+          Assert.assertEquals(
+              "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+              out.toByteArray());
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+              new String(out.toByteArray()));
+        } finally {
+          out.close();
+        }
+      } catch (IOException ioe) {
+        Assert.assertTrue(false);
+        OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      }
+      database.close();
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      p = new JavaComplexTestClass();
+      thumbnailImageBytes = "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes();
+      oRecordBytes = new ORecordBytes(database.getUnderlying(), thumbnailImageBytes);
+      oRecordBytes.save();
+      p.setByteArray(oRecordBytes);
+      p = database.save(p);
+      Assert.assertTrue(p.getByteArray() instanceof ORecordBytes);
+      try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          p.getByteArray().toOutputStream(out);
+          Assert.assertEquals(
+              "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+              out.toByteArray());
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+              new String(out.toByteArray()));
+        } finally {
+          out.close();
+        }
+      } catch (IOException ioe) {
+        Assert.assertTrue(false);
+        OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      }
+      rid = database.getIdentity(p);
+
+      database.close();
+
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      loaded = database.load(rid);
+
+      Assert.assertTrue(loaded.getByteArray() instanceof ORecordBytes);
+      try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+          loaded.getByteArray().toOutputStream(out);
+          Assert.assertEquals(
+              "this is a bytearray test. if you read this Object database has stored it correctlyVERSION2".getBytes(),
+              out.toByteArray());
+          Assert.assertEquals("this is a bytearray test. if you read this Object database has stored it correctlyVERSION2",
+              new String(out.toByteArray()));
+        } finally {
+          out.close();
+        }
+      } catch (IOException ioe) {
+        Assert.assertTrue(false);
+        OLogManager.instance().error(this, "Error reading byte[]", ioe);
+      }
+    } finally {
+      database.close();
     }
-    Assert.assertTrue(loaded.getDocument() instanceof ODocument);
-    Assert.assertEquals("testValue", loaded.getDocument().field("testField"));
-    Assert.assertTrue(loaded.getDocument().getIdentity().isPersistent());
+  }
 
-    Assert.assertTrue(loaded.getEmbeddedDocument() instanceof ODocument);
-    Assert.assertEquals("testEmbeddedValue", loaded.getEmbeddedDocument().field("testEmbeddedField"));
-    Assert.assertFalse(loaded.getEmbeddedDocument().getIdentity().isValid());
-
-    database.close();
+  @Test(dependsOnMethods = "oidentifableFieldsTest")
+  public void oRecordBytesFieldsTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      OObjectIteratorClass<JavaComplexTestClass> browseClass = database.browseClass(JavaComplexTestClass.class);
+      for (JavaComplexTestClass ebookPropertyItem : browseClass) {
+        ORecordBytes coverThumbnail = ebookPropertyItem.getByteArray(); // The IllegalArgumentException is thrown here.
+      }
+    } catch (IllegalArgumentException iae) {
+      Assert.fail("ORecordBytes field getter should not throw this exception", iae);
+    } finally {
+      database.close();
+    }
   }
 
   @Test(dependsOnMethods = "mapEnumAndInternalObjects")
