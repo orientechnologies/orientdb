@@ -31,6 +31,9 @@ function OGraph(targetId, config) {
 		for (c in config)
 			this.config[c] = config[c];
 
+	this.displayedVertices = 0;
+	this.displayedEdges = 0;
+
 	this.sigRoot = document.getElementById(targetId);
 	this.sigInst = sigma.init(this.sigRoot).drawingProperties({
 		defaultLabelColor : '#fff'
@@ -283,6 +286,9 @@ function OGraph(targetId, config) {
 			"defaultEdgeType" : this.config.edgeType
 		});
 
+		this.displayedVertices = 0;
+		this.displayedEdges = 0;
+
 		if (this.config.depth)
 			// RELOAD THE NODE WITH A FETCH PLAN
 			if (typeof rootNode == "string")
@@ -303,12 +309,19 @@ function OGraph(targetId, config) {
 		}
 
 		this.sigInst.position(0, 0, 1).draw();
+
+		$("#output").val(
+				"Loaded graph of "
+						+ (this.displayedVertices + this.displayedEdges)
+						+ " items (" + this.displayedVertices
+						+ " vertices and " + this.displayedEdges
+						+ " edges) in " + stopTimer() + " sec.");
 	}
 
 	OGraph.prototype.drawVertex = function(node, rootNodeId, config) {
 		var nodeId = this.getEndpoint(node);
 		if (!nodeId) {
-			var nodeId = this.drawEndpoint(node, config);
+			nodeId = this.drawEndpoint(node, config);
 
 			// DRAW CONNECTED NODES
 			for (fieldName in node) {
@@ -343,10 +356,16 @@ function OGraph(targetId, config) {
 
 		var childId = this.drawVertex(child, nodeId);
 		if (childId && nodeId) {
+			if (this.config.bluePrintsGraphModel == "checked") {
+				var edges = this.sigInst.getEdgesOfVertex(nodeId, childId);
+				if (edges.length > 0)
+					return;
+			}
 
 			// CREATE THE EDGE
 			this.sigInst.addEdge(nodeId + "_" + name + "_" + childId, nodeId,
 					childId);
+			this.displayedEdges++;
 		}
 	}
 
@@ -453,6 +472,7 @@ function OGraph(targetId, config) {
 			}
 		}
 
+		this.displayedVertices++;
 		return nodeId;
 	}
 
@@ -495,6 +515,7 @@ function OGraph(targetId, config) {
 		if (this.config["fieldsTagId"])
 			$('#' + this.config["fieldsTagId"]).text("");
 		this.sigInst.emptyGraph();
+		startTimer();
 	}
 
 	this.init();

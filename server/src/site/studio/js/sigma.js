@@ -358,6 +358,14 @@ sigma.classes.EventDispatcher = function () {
             return a instanceof
             Array ? b : b[0]
         };
+        this.getEdgesOfVertex = function (v) {
+            var res = [];
+            for( e in d.edges ) {
+            	if( d.edges[e].source.id == v || d.edges[e].target.id == v )
+            		res.push(e);
+            }
+            return res;
+        };
         this.getNodes = function (a) {
             var e = ((a instanceof Array ? a : [a]) || []).map(function (a) {
                 return b(d.nodesIndex[a])
@@ -988,6 +996,9 @@ sigma.classes.EventDispatcher = function () {
         };
         this.getEdges = function (e) {
             return b.graph.getEdges(e)
+        };
+        this.getEdgesOfVertex = function (v) {
+        	return b.graph.getEdgesOfVertex(v)
         };
         this.activateMonitoring = function () {
             return b.monitor.activate()
