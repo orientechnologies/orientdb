@@ -53,7 +53,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   protected int                             maxSnapshots            = 0;
   protected int                             maxSummaries            = 0;
   protected final static Timer              timer                   = new Timer(true);
-  private TimerTask                         archiverTask;
+  protected TimerTask                       archiverTask;
 
   public interface OProfilerHookValue {
     public Object getValue();
