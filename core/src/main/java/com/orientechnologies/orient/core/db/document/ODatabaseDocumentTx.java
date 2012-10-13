@@ -96,7 +96,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
   @Override
-  public void freeze(boolean throwException) {
+  public void freeze(final boolean throwException) {
     if (!(getStorage() instanceof OStorageLocal)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
@@ -114,7 +114,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze(throwException);
 
-    Orient.instance().getProfiler().stopChrono("document.database.freeze", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.freeze", "Time to freeze the database", startTime);
   }
 
   @Override
@@ -136,7 +136,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze();
 
-    Orient.instance().getProfiler().stopChrono("document.database.freeze", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.freeze", "Time to freeze the database", startTime);
   }
 
   @Override
@@ -154,7 +154,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     releaseIndexes(indexes);
 
-    Orient.instance().getProfiler().stopChrono("document.database.release", startTime);
+    Orient.instance().getProfiler().stopChrono("document.database.release", "Time to release the database", startTime);
   }
 
   /**
@@ -363,7 +363,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         for (; i < clusterIds.length; ++i)
           if (clusterIds[i] == id)
             break;
-        
+
         if (i == clusterIds.length)
           throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
               + doc.getClassName());

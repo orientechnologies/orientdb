@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceExternalTimeout;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -54,21 +55,24 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
   static {
     final String profilerMetric = PROFILER.getProcessMetric("network.channel.binary");
 
-    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricGlobalTransmittedBytes.get();
-      }
-    });
-    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricGlobalReceivedBytes.get();
-      }
-    });
-    PROFILER.registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricGlobalFlushes.get();
-      }
-    });
+    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to all the network channels",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          public Object getValue() {
+            return metricGlobalTransmittedBytes.get();
+          }
+        });
+    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", "Bytes received from all the network channels", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          public Object getValue() {
+            return metricGlobalReceivedBytes.get();
+          }
+        });
+    PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channels have been flushed",
+        METRIC_TYPE.TIMES, new OProfilerHookValue() {
+          public Object getValue() {
+            return metricGlobalFlushes.get();
+          }
+        });
   }
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
@@ -110,21 +114,24 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
     profilerMetric = PROFILER.getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString()
         + socket.getLocalPort() + "".replace('.', '_'));
 
-    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricTransmittedBytes;
-      }
-    });
-    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricReceivedBytes;
-      }
-    });
-    PROFILER.registerHookValue(profilerMetric + ".flushes", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricFlushes;
-      }
-    });
+    PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to a network channel", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          public Object getValue() {
+            return metricTransmittedBytes;
+          }
+        });
+    PROFILER.registerHookValue(profilerMetric + ".receivedBytes", "Bytes received from a network channel", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          public Object getValue() {
+            return metricReceivedBytes;
+          }
+        });
+    PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channel has been flushed",
+        METRIC_TYPE.TIMES, new OProfilerHookValue() {
+          public Object getValue() {
+            return metricFlushes;
+          }
+        });
   }
 
   @Override

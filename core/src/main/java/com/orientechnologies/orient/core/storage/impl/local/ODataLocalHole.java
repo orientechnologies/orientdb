@@ -126,7 +126,7 @@ public class ODataLocalHole extends OSingleFileSegment {
     file.writeLong(p, iRecordOffset);
     file.writeInt(p + OBinaryProtocol.SIZE_LONG, iRecordSize);
 
-    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_HOLE_CREATE, timer);
+    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_HOLE_CREATE, "Time to create a hole in data segment", timer);
   }
 
   public synchronized ODataHoleInfo getCloserHole(final long iHolePosition, final int iHoleSize, final long iLowerRange,
@@ -185,7 +185,8 @@ public class ODataLocalHole extends OSingleFileSegment {
       ODataHoleInfo hole = availableHolesBySize.get(cursor);
       if (hole != null && hole.size == iRecordSize) {
         // PERFECT MATCH: DELETE THE HOLE
-        Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, timer);
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_DATA_RECYCLED_COMPLETE, "Time to recycle the hole space completely in data segment", timer);
         final long pos = hole.dataOffset;
         deleteHole(hole.holeOffset);
         return pos;
@@ -196,13 +197,15 @@ public class ODataLocalHole extends OSingleFileSegment {
       if (hole.size > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
         // GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
         final long pos = hole.dataOffset;
-        Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, timer);
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, "Time to recycle the hole space partially in data segment", timer);
         updateHole(hole, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
         return pos;
       }
     }
 
-    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, timer);
+    Orient.instance().getProfiler()
+        .stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, "Time to recycle a hole space in data segment, but without luck", timer);
 
     return -1;
   }
@@ -260,7 +263,8 @@ public class ODataLocalHole extends OSingleFileSegment {
     if (sizeChanged)
       file.writeInt(holePosition + OBinaryProtocol.SIZE_LONG, iNewRecordSize);
 
-    Orient.instance().getProfiler().stopChrono(PROFILER_DATA_HOLE_UPDATE, timer);
+    Orient.instance().getProfiler()
+.stopChrono(PROFILER_DATA_HOLE_UPDATE, "Time to update a hole in data segment", timer);
   }
 
   /**

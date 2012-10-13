@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,16 +49,24 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   private long                                                        metricReusedPages       = 0;
 
   public void init() {
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.mappedPages", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricMappedPages;
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPages", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricReusedPages;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.mappedPages", "Number of memory mapped pages used", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricMappedPages;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.reusedPages", "Number of times memory mapped pages have been reused",
+            METRIC_TYPE.TIMES, new OProfilerHookValue() {
+              public Object getValue() {
+                return metricReusedPages;
+              }
+            });
   }
 
   /**

@@ -116,7 +116,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       return result;
 
     } finally {
-      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.toStream"), timer);
+      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTree", timer);
     }
   }
 
@@ -176,7 +176,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
           OSerializationException.class, root);
     } finally {
-      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.fromStream"), timer);
+      profiler.stopChrono(profiler.getProcessMetric("mvrbtree.fromStream"), "Deserialize a MVRBTree", timer);
     }
     return this;
   }

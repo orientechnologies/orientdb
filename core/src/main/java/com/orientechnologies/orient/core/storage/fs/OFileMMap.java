@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OByteBufferUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -61,21 +62,33 @@ public class OFileMMap extends OAbstractFile {
   private static long                        metricNonPooledBufferUsed = 0;
 
   static {
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.pooledBufferCreated", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricPooledBufferCreated;
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.pooledBufferUsed", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricPooledBufferUsed;
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.nonPooledBufferUsed", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricNonPooledBufferUsed;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.pooledBufferCreated", "Number of file buffers created", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricPooledBufferCreated;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.pooledBufferUsed", "Number of times a file buffers has been reused",
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+              public Object getValue() {
+                return metricPooledBufferUsed;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.nonPooledBufferUsed", "Number of times a file buffers has not been reused",
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+              public Object getValue() {
+                return metricNonPooledBufferUsed;
+              }
+            });
   }
 
   @Override

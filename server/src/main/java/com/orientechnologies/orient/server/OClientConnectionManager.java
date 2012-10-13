@@ -28,6 +28,7 @@ import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -74,11 +75,15 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
       }
     }, delay, delay);
 
-    Orient.instance().getProfiler().registerHookValue("server.connections.actives", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricActiveConnections;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricActiveConnections;
+              }
+            });
   }
 
   /**

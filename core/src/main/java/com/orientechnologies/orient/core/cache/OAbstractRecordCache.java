@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.cache;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
@@ -136,23 +137,29 @@ public abstract class OAbstractRecordCache {
   public void startup() {
     underlying.startup();
 
-    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "enabled", new OProfilerHookValue() {
-      public Object getValue() {
-        return isEnabled();
-      }
-    });
+    Orient.instance().getProfiler()
+        .registerHookValue(profilerPrefix + "enabled", "Cache enabled", METRIC_TYPE.ENABLED, new OProfilerHookValue() {
+          public Object getValue() {
+            return isEnabled();
+          }
+        });
 
-    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "current", new OProfilerHookValue() {
-      public Object getValue() {
-        return getSize();
-      }
-    });
+    Orient.instance().getProfiler()
+        .registerHookValue(profilerPrefix + "current", "Number of entries in cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          public Object getValue() {
+            return getSize();
+          }
+        });
 
-    Orient.instance().getProfiler().registerHookValue(profilerPrefix + "max", new OProfilerHookValue() {
-      public Object getValue() {
-        return getMaxSize();
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue(profilerPrefix + "max", "Maximum number of entries in cache", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return getMaxSize();
+              }
+            });
   }
 
   /**

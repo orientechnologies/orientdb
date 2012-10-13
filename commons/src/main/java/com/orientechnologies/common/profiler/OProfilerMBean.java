@@ -19,7 +19,7 @@ import java.util.Date;
 
 public interface OProfilerMBean {
 
-  public void updateCounter(String iStatName, long iPlus);
+  public void updateCounter(String iStatName, String iDescription, long iPlus);
 
   public long getCounter(String iStatName);
 
@@ -29,7 +29,7 @@ public interface OProfilerMBean {
 
   public long startChrono();
 
-  public long stopChrono(String iName, long iStartTime);
+  public long stopChrono(String iName, String iDescription, long iStartTime);
 
   public String dumpChronos();
 

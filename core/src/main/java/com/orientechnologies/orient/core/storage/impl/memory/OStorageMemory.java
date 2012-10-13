@@ -307,7 +307,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in memory database", timer);
     }
   }
 
@@ -350,7 +350,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer);
     }
   }
 
@@ -403,7 +403,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer);
     }
   }
 
@@ -453,7 +453,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer);
     }
   }
 
@@ -707,7 +707,8 @@ public class OStorageMemory extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".changeRecordIdentity", timer);
+      Orient.instance().getProfiler()
+          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer);
     }
   }
 

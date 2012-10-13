@@ -89,9 +89,9 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
       if (dirty)
         OLogManager.instance().debug(this, "Cannot commit memory buffer to disk after %d retries", FORCE_RETRY);
       else
-        PROFILER.updateCounter(PROFILER.getProcessMetric("file.mmap.pagesCommitted"), +1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("file.mmap.pagesCommitted"), "Memory mapped pages committed to disk", +1);
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("file.mmap.commitPages"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("file.mmap.commitPages"), "Commit memory mapped pages to disk", timer);
 
       return !dirty;
 

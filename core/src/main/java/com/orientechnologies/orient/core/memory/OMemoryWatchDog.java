@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 
@@ -63,11 +64,15 @@ public class OMemoryWatchDog extends Thread {
   }
 
   public void run() {
-    Orient.instance().getProfiler().registerHookValue("system.memory.alerts", new OProfilerHookValue() {
-      public Object getValue() {
-        return alertTimes;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.memory.alerts", "Number of alerts received by JVM to free memory resources",
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+              public Object getValue() {
+                return alertTimes;
+              }
+            });
 
     while (true) {
       try {
@@ -96,7 +101,7 @@ public class OMemoryWatchDog extends Thread {
           }
         }
 
-        Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", timer);
+        Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", "WatchDog free resources", timer);
 
       } catch (Exception e) {
       } finally {

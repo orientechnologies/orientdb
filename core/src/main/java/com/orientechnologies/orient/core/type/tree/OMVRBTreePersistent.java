@@ -215,7 +215,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), "Clear a MVRBTree", timer);
     }
   }
 
@@ -245,7 +245,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.unload"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.unload"), "Unload a MVRBTree", timer);
     }
   }
 
@@ -371,7 +371,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
           checkTreeStructure(root);
       }
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.optimize"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.optimize"), "Optimize a MVRBTree", timer);
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Optimization completed in %d ms\n", System.currentTimeMillis() - timer);
@@ -446,7 +446,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       return v;
     } finally {
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.put"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.put"), "Put a value into a MVRBTree", timer);
     }
   }
 
@@ -461,7 +461,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       commitChanges();
 
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.putAll"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.putAll"), "Put multiple values into a MVRBTree", timer);
     }
   }
 
@@ -488,7 +488,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         }
       }
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.remove"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.remove"), "Remove a value from a MVRBTree", timer);
     }
 
     throw new OLowMemoryException("OMVRBTreePersistent.remove()");
@@ -536,7 +536,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     } finally {
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.commitChanges"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.commitChanges"), "Commit pending changes to a MVRBTree", timer);
     }
 
     return totalCommitted;
@@ -570,7 +570,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
       throw new OLowMemoryException("OMVRBTreePersistent.get()");
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.get"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.get"), "Get a value from a MVRBTree", timer);
     }
   }
 

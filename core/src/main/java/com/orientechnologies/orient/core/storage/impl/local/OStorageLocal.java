@@ -32,6 +32,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
@@ -205,7 +206,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".open", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".open", "Open a local database", timer);
     }
   }
 
@@ -288,7 +289,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".create", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".create", "Create a local database", timer);
     }
   }
 
@@ -345,7 +346,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".close", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a local database", timer);
     }
   }
 
@@ -420,7 +421,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".delete", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".drop", "Drop a local database", timer);
     }
   }
 
@@ -694,7 +695,7 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       if (iDataSegmentId >= dataSegments.length)
-        throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " does not exist in storage '" + name + "'");
+        throw new IllegalArgumentException("Data segment #" + iDataSegmentId + " does not exist in database '" + name + "'");
 
       return dataSegments[iDataSegmentId];
 
@@ -716,7 +717,7 @@ public class OStorageLocal extends OStorageEmbedded {
         if (d != null && d.getName().equalsIgnoreCase(iDataSegmentName))
           return d.getId();
       }
-      throw new IllegalArgumentException("Data segment '" + iDataSegmentName + "' does not exist in storage '" + name + "'");
+      throw new IllegalArgumentException("Data segment '" + iDataSegmentName + "' does not exist in database '" + name + "'");
 
     } finally {
       lock.releaseSharedLock();
@@ -823,7 +824,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
       if (iClusterId < 0 || iClusterId >= clusters.length)
         throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
-            + (clusters.length - 1) + ") in storage '" + name + "'");
+            + (clusters.length - 1) + ") in database '" + name + "'");
 
       final OCluster cluster = clusters[iClusterId];
       if (cluster == null)
@@ -887,7 +888,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
       for (int i = 0; i < iClusterIds.length; ++i) {
         if (iClusterIds[i] >= clusters.length)
-          throw new OConfigurationException("Cluster id " + iClusterIds[i] + " was not found in storage '" + name + "'");
+          throw new OConfigurationException("Cluster id " + iClusterIds[i] + " was not found in database '" + name + "'");
 
         if (iClusterIds[i] > -1) {
           final OCluster c = clusters[iClusterIds[i]];
@@ -922,7 +923,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   public long count(final int iClusterId) {
     if (iClusterId == -1)
-      throw new OStorageException("Cluster Id " + iClusterId + " is invalid in storage '" + name + "'");
+      throw new OStorageException("Cluster Id " + iClusterId + " is invalid in database '" + name + "'");
 
     // COUNT PHYSICAL CLUSTER IF ANY
     checkOpeness();
@@ -1174,7 +1175,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a local database", timer);
     }
   }
 
@@ -1199,7 +1200,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + "record.synch", timer);
+      Orient.instance().getProfiler().stopChrono("db." + name + "record.synch", "Synch a record to local database", timer);
     }
   }
 
@@ -1324,7 +1325,7 @@ public class OStorageLocal extends OStorageEmbedded {
       final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
 
       if (cluster == null)
-        throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in storage '" + name + "'");
+        throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in database '" + name + "'");
       return cluster;
 
     } finally {
@@ -1478,7 +1479,7 @@ public class OStorageLocal extends OStorageEmbedded {
       // CHECK FOR DUPLICATION OF NAMES
       if (clusterMap.containsKey(iCluster.getName()))
         throw new OConfigurationException("Cannot add segment '" + iCluster.getName()
-            + "' because it is already registered in storage '" + name + "'");
+            + "' because it is already registered in database '" + name + "'");
       // CREATE AND ADD THE NEW REF SEGMENT
       clusterMap.put(iCluster.getName(), iCluster);
       id = iCluster.getId();
@@ -1493,7 +1494,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {
     if (iClusterId > clusters.length - 1)
-      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in storage '" + name + "'");
+      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
   protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
@@ -1555,7 +1556,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer);
     }
   }
 
@@ -1600,7 +1601,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".changeRecordIdentity", timer);
+      Orient.instance().getProfiler()
+          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer);
     }
   }
 
@@ -1612,7 +1614,8 @@ public class OStorageLocal extends OStorageEmbedded {
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
     if (iRid.clusterPosition < 0)
-      throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in storage '" + name + '\'');
+      throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in database '" + name
+          + '\'');
 
     // NOT FOUND: SEARCH IT IN THE STORAGE
     final long timer = Orient.instance().getProfiler().startChrono();
@@ -1648,7 +1651,7 @@ public class OStorageLocal extends OStorageEmbedded {
       if (iAtomicLock)
         lock.releaseSharedLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from local database", timer);
     }
   }
 
@@ -1732,7 +1735,7 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to local database", timer);
     }
 
     return null;
@@ -1777,23 +1780,31 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer);
     }
 
     return null;
   }
 
   private void installProfilerHooks() {
-    Orient.instance().getProfiler().registerHookValue("db." + name + ".data.holes", new OProfilerHookValue() {
-      public Object getValue() {
-        return getHoles();
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("db." + name + ".data.holeSize", new OProfilerHookValue() {
-      public Object getValue() {
-        return getHoleSize();
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("db." + name + ".data.holes", "Number of the holes in local database", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return getHoles();
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("db." + name + ".data.holeSize", "Size of the holes in local database", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return getHoleSize();
+              }
+            });
   }
 
   private void formatMessage(final boolean iVerbose, final OCommandOutputListener iListener, final String iMessage,

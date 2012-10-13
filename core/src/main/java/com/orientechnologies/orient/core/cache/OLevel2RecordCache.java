@@ -107,7 +107,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       record = underlying.remove(iRID);
 
       if (record == null || record.isDirty()) {
-        Orient.instance().getProfiler().updateCounter(CACHE_MISS, 1);
+        Orient.instance().getProfiler().updateCounter(CACHE_MISS, "Record not found in Level2 Cache", +1);
         return null;
       }
 
@@ -122,7 +122,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       underlying.unlock(iRID);
     }
 
-    Orient.instance().getProfiler().updateCounter(CACHE_HIT, 1);
+    Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level2 Cache", +1);
     return record;
   }
 

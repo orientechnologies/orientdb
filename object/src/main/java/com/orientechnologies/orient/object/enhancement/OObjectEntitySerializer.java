@@ -1050,7 +1050,7 @@ public class OObjectEntitySerializer {
 
     OObjectSerializationThreadLocal.INSTANCE.get().remove(identityRecord);
 
-    Orient.instance().getProfiler().stopChrono("Object.toStream", timer);
+    Orient.instance().getProfiler().stopChrono("Object.toStream", "Serialize a POJO", timer);
 
     return (T) iProxiedPojo;
   }

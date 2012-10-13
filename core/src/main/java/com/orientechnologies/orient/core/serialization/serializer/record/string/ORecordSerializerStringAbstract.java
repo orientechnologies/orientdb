@@ -79,7 +79,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
     } finally {
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.fromStream"), timer);
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.fromStream"), "Deserialize record from stream", timer);
     }
   }
 
@@ -91,7 +92,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
           OSerializationLongIdThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);
     }
   }
 
@@ -165,62 +166,64 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     switch (iType) {
     case STRING:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.string2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.string2string"), "Serialize string to string", timer);
       break;
 
     case BOOLEAN:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.bool2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.bool2string"), "Serialize boolean to string", timer);
       break;
 
     case INTEGER:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.int2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.int2string"), "Serialize integer to string", timer);
       break;
 
     case FLOAT:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.float2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.float2string"), "Serialize float to string", timer);
       break;
 
     case DECIMAL:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.decimal2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.decimal2string"), "Serialize decimal to string",
+          timer);
       break;
 
     case LONG:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.long2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.long2string"), "Serialize long to string", timer);
       break;
 
     case DOUBLE:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.double2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.double2string"), "Serialize double to string", timer);
       break;
 
     case SHORT:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.short2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.short2string"), "Serialize short to string", timer);
       break;
 
     case BYTE:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.byte2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.byte2string"), "Serialize byte to string", timer);
       break;
 
     case BINARY:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.binary2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.binary2string"), "Serialize binary to string", timer);
       break;
 
     case DATE:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.date2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.date2string"), "Serialize date to string", timer);
       break;
 
     case DATETIME:
       simpleValueToStream(iBuffer, iType, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.datetime2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.datetime2string"), "Serialize datetime to string",
+          timer);
       break;
 
     case LINK:
@@ -228,35 +231,39 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         ((ORecordId) iValue).toString(iBuffer);
       else
         ((ORecord<?>) iValue).getIdentity().toString(iBuffer);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), "Serialize link to string", timer);
       break;
 
     case EMBEDDEDSET:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
           null, iBuffer, null, null, iValue, null, true);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
+          timer);
       break;
 
     case EMBEDDEDLIST:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
           null, iBuffer, null, null, iValue, null, true);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
+          "Serialize embeddedlist to string", timer);
       break;
 
     case EMBEDDEDMAP:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(), null,
           iBuffer, null, null, iValue, null, true);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedMap2string"), "Serialize embeddedmap to string",
+          timer);
       break;
 
     case EMBEDDED:
       OStringSerializerEmbedded.INSTANCE.toStream(iBuffer, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), timer);
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.embed2string"), "Serialize embedded to string", timer);
       break;
 
     case CUSTOM:
       OStringSerializerAnyStreamable.INSTANCE.toStream(iBuffer, iValue);
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.custom2string"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.custom2string"), "Serialize custom to string", timer);
       break;
 
     default:

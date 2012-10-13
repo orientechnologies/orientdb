@@ -152,7 +152,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       commitChanges();
 
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.putAll"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.putAll"), "Put multiple values in a MVRBTreeRID", timer);
     }
   }
 

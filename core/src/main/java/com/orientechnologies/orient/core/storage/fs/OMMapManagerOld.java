@@ -29,6 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -66,68 +67,110 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     maxMemory = OGlobalConfiguration.FILE_MMAP_MAX_MEMORY.getValueAsLong();
     setOverlapStrategy(OGlobalConfiguration.FILE_MMAP_OVERLAP_STRATEGY.getValueAsInteger());
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.totalMemory", new OProfilerHookValue() {
-      public Object getValue() {
-        return totalMemory;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.totalMemory", "Total memory used by memory mapping", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return totalMemory;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.maxMemory", new OProfilerHookValue() {
-      public Object getValue() {
-        return maxMemory;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.maxMemory", "Maximum memory usable by memory mapping", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return maxMemory;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.blockSize", new OProfilerHookValue() {
-      public Object getValue() {
-        return blockSize;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.blockSize", "Total block size used for memory mapping", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return blockSize;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.blocks", new OProfilerHookValue() {
-      public Object getValue() {
-        lock.readLock().lock();
-        try {
-          return bufferPoolLRU.size();
-        } finally {
-          lock.readLock().unlock();
-        }
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.blocks", "Total memory used by memory mapping", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                lock.readLock().lock();
+                try {
+                  return bufferPoolLRU.size();
+                } finally {
+                  lock.readLock().unlock();
+                }
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.alloc.strategy", new OProfilerHookValue() {
-      public Object getValue() {
-        return lastStrategy;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.alloc.strategy", "Memory mapping allocation strategy", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return lastStrategy;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.overlap.strategy", new OProfilerHookValue() {
-      public Object getValue() {
-        return overlapStrategy;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.overlap.strategy", "Memory mapping overlapping strategy", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return overlapStrategy;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.usedChannel", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricUsedChannel;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.usedChannel",
+            "Number of times the memory mapping has been bypassed to use direct file channel", METRIC_TYPE.TIMES,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricUsedChannel;
+              }
+            });
 
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPagesBetweenLast", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricReusedPagesBetweenLast;
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.reusedPages", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricReusedPages;
-      }
-    });
-    Orient.instance().getProfiler().registerHookValue("system.file.mmap.overlappedPageUsingChannel", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricOverlappedPageUsingChannel;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.reusedPagesBetweenLast",
+            "Number of times a memory mapped page has been reused in short time", METRIC_TYPE.TIMES, new OProfilerHookValue() {
+              public Object getValue() {
+                return metricReusedPagesBetweenLast;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.reusedPages", "Number of times a memory mapped page has been reused",
+            METRIC_TYPE.TIMES, new OProfilerHookValue() {
+              public Object getValue() {
+                return metricReusedPages;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.file.mmap.overlappedPageUsingChannel",
+            "Number of times a direct file channel access has been used because overlapping", METRIC_TYPE.TIMES,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricOverlappedPageUsingChannel;
+              }
+            });
   }
 
   public OMMapBufferEntry[] acquire(final OFileMMap iFile, final long iBeginOffset, final int iSize,
@@ -479,7 +522,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     try {
       return new OMMapBufferEntry(iFile, iFile.map(iBeginOffset, iSize), iBeginOffset, iSize);
     } finally {
-      Orient.instance().getProfiler().stopChrono("OMMapManager.loadPage", timer);
+      Orient.instance().getProfiler().stopChrono("OMMapManager.loadPage", "Load a memory mapped page in memory", timer);
     }
   }
 

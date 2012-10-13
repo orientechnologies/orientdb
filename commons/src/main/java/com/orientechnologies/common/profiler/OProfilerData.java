@@ -52,6 +52,8 @@ public class OProfilerData {
     public long   max     = 0;
     public long   average = 0;
     public long   total   = 0;
+    public String payLoad;
+    public String description;
 
     public void toJSON(final StringBuilder buffer) {
       buffer.append(String.format("\"%s\":{", name));
@@ -61,6 +63,8 @@ public class OProfilerData {
       buffer.append(String.format("\"%s\":%d,", "max", max));
       buffer.append(String.format("\"%s\":%d,", "average", average));
       buffer.append(String.format("\"%s\":%d", "total", total));
+      if (payLoad != null)
+        buffer.append(String.format("\"%s\":%d", "payload", payLoad));
       buffer.append("}");
     }
 
@@ -275,8 +279,8 @@ public class OProfilerData {
     }
   }
 
-  public long stopChrono(final String iName, final long iStartTime) {
-    return updateEntry(chronos, iName, System.currentTimeMillis() - iStartTime);
+  public long stopChrono(final String iName, final long iStartTime, final String iPayload) {
+    return updateEntry(chronos, iName, System.currentTimeMillis() - iStartTime, iPayload);
   }
 
   public String dumpChronos() {
@@ -284,7 +288,7 @@ public class OProfilerData {
   }
 
   public long updateStat(final String iName, final long iValue) {
-    return updateEntry(stats, iName, iValue);
+    return updateEntry(stats, iName, iValue, null);
   }
 
   public String dumpStats() {
@@ -417,7 +421,8 @@ public class OProfilerData {
     }
   }
 
-  protected synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue) {
+  protected synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue,
+      final String iPayload) {
     synchronized (iValues) {
       OProfilerEntry c = iValues.get(iName);
 
@@ -428,6 +433,7 @@ public class OProfilerData {
       }
 
       c.name = iName;
+      c.payLoad = iPayload;
       c.entries++;
       c.last = iValue;
       c.total += c.last;

@@ -151,8 +151,11 @@ public class OFunction {
     final Object result = command.execute(iArgs);
 
     if (Orient.instance().getProfiler().isRecording())
-      Orient.instance().getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute", start);
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
+              "Time to execute a function", start);
 
     return result;
   }

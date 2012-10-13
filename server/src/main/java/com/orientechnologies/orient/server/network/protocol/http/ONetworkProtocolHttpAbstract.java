@@ -99,7 +99,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   public void service() throws ONetworkProtocolException, IOException {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".requests", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".requests", "Execution of HTTP request", +1);
 
     ++connection.data.totalRequests;
     connection.data.commandInfo = null;
@@ -518,23 +518,26 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       readAllContent(request);
     } finally {
       if (connection.data.lastCommandReceived > -1)
-        Orient.instance().getProfiler()
-            .stopChrono("server.http." + listeningAddress + ".request", connection.data.lastCommandReceived);
+        Orient
+            .instance()
+            .getProfiler()
+            .stopChrono("server.http." + listeningAddress + ".request", "Execution of HTTP request",
+                connection.data.lastCommandReceived);
     }
   }
 
   protected void connectionClosed() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1);
     sendShutdown();
   }
 
   protected void timeout() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".timeout", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".timeout", "Timeout of HTTP connection", +1);
     sendShutdown();
   }
 
   protected void connectionError() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".error", +1);
+    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".error", "Error on HTTP connection", +1);
     sendShutdown();
   }
 

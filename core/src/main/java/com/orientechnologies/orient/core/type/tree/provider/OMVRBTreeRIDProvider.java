@@ -161,7 +161,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
       } finally {
         marshalling = false;
-        PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), timer);
+        PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTreeRID", timer);
       }
 
     iBuffer.append(buffer);

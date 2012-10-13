@@ -107,7 +107,10 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
       underlying.unlock(rid);
     }
 
-    Orient.instance().getProfiler().updateCounter(record != null ? CACHE_HIT : CACHE_MISS, 1L);
+    if (record != null)
+      Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L);
+    else
+      Orient.instance().getProfiler().updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L);
 
     return record;
   }

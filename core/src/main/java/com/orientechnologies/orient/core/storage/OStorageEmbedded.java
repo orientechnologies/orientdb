@@ -100,8 +100,11 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
 
     } finally {
-      Orient.instance().getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.getText(), beginTime);
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.getText(),
+              "Execution of command", beginTime);
     }
   }
 

@@ -371,7 +371,7 @@ public class OObjectSerializerHelper {
     // CALL AFTER UNMARSHALLING
     invokeCallback(iPojo, iRecord, OAfterDeserialization.class);
 
-    Orient.instance().getProfiler().stopChrono("Object.fromStream", timer);
+    Orient.instance().getProfiler().stopChrono("Object.fromStream", "Deserialize object from stream", timer);
 
     return iPojo;
   }
@@ -637,7 +637,7 @@ public class OObjectSerializerHelper {
 
     OSerializationThreadLocal.INSTANCE.get().remove(identityRecord);
 
-    Orient.instance().getProfiler().stopChrono("Object.toStream", timer);
+    Orient.instance().getProfiler().stopChrono("Object.toStream", "Serialize object to stream", timer);
 
     return iRecord;
   }

@@ -66,7 +66,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     K k = keys[iIndex];
     if (k == null)
       try {
-        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeKey"), 1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeKey"), "Deserialize a MVRBTree entry key", 1);
 
         k = (K) keyFromStream(iIndex);
 
@@ -87,7 +87,8 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     V v = values[iIndex];
     if (v == null)
       try {
-        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeValue"), 1);
+        PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.unserializeValue"), "Deserialize a MVRBTree entry value",
+            1);
 
         v = (V) valueFromStream(iIndex);
 
@@ -289,7 +290,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Can not unmarshall tree node with id ", e);
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.fromStream"), "Deserialize a MVRBTree entry", timer);
     }
   }
 
@@ -307,7 +308,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     } catch (IOException e) {
       throw new OSerializationException("Cannot marshall RB+Tree node", e);
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.toStream"), timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.entry.toStream"), "Serialize a MVRBTree entry", timer);
     }
   }
 
@@ -405,7 +406,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final OBinarySerializer<V> valueSerializer = (OBinarySerializer<V>) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
 
     if (serializedValues[i] <= 0) {
-      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), "Serialize a MVRBTree entry value", 1);
       valueSerializer.serialize(values[i], newBuffer, offset);
       offset += valueSerializer.getObjectSize(values[i]);
     } else {
@@ -420,7 +421,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   private int serializeKey(byte[] newBuffer, int offset, int i) {
     final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
     if (serializedKeys[i] <= 0) {
-      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeKey"), 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeKey"), "Serialize a MVRBTree entry key", 1);
       keySerializer.serialize(keys[i], newBuffer, offset);
       offset += keySerializer.getObjectSize(keys[i]);
     } else {
@@ -468,12 +469,16 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     }
 
     final OMemoryStream outStream = new OMemoryStream(outBuffer);
-    outStream.jump(offset);
+    try {
+      outStream.jump(offset);
 
-    for (int i = 0; i < size; ++i)
-      serializedValues[i] = outStream.set(serializeStreamValue(i));
+      for (int i = 0; i < size; ++i)
+        serializedValues[i] = outStream.set(serializeStreamValue(i));
 
-    buffer = outStream.toByteArray();
+      buffer = outStream.toByteArray();
+    } finally {
+      outStream.close();
+    }
 
     if (stream == null)
       stream = new OMemoryStream(buffer);
@@ -546,7 +551,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   protected byte[] serializeStreamValue(final int iIndex) throws IOException {
     if (serializedValues[iIndex] <= 0) {
       // NEW OR MODIFIED: MARSHALL CONTENT
-      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), 1);
+      PROFILER.updateCounter(PROFILER.getProcessMetric("mvrbtree.entry.serializeValue"), "Serialize a MVRBTree entry value", 1);
       return ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.toStream(values[iIndex]);
     }
     // RETURN ORIGINAL CONTENT
@@ -569,38 +574,43 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   private byte[] convertIntoNewSerializationFormat(byte[] stream) throws IOException {
     final OMemoryStream oldStream = new OMemoryStream(stream);
 
-    int oldPageSize = oldStream.getAsInteger();
+    try {
+      int oldPageSize = oldStream.getAsInteger();
 
-    ORecordId oldParentRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-    ORecordId oldLeftRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
-    ORecordId oldRightRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+      ORecordId oldParentRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+      ORecordId oldLeftRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
+      ORecordId oldRightRid = new ORecordId().fromStream(oldStream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
-    boolean oldColor = oldStream.getAsBoolean();
-    int oldSize = oldStream.getAsInteger();
+      boolean oldColor = oldStream.getAsBoolean();
+      int oldSize = oldStream.getAsInteger();
 
-    if (oldSize > oldPageSize)
-      throw new OConfigurationException("Loaded index with page size set to " + oldPageSize + " while the loaded was built with: "
-          + oldSize);
+      if (oldSize > oldPageSize)
+        throw new OConfigurationException("Loaded index with page size set to " + oldPageSize
+            + " while the loaded was built with: " + oldSize);
 
-    K[] oldKeys = (K[]) new Object[oldPageSize];
-    for (int i = 0; i < oldSize; ++i) {
-      oldKeys[i] = (K) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).streamKeySerializer.fromStream(oldStream.getAsByteArray());
+      K[] oldKeys = (K[]) new Object[oldPageSize];
+      for (int i = 0; i < oldSize; ++i) {
+        oldKeys[i] = (K) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).streamKeySerializer.fromStream(oldStream.getAsByteArray());
+      }
+
+      V[] oldValues = (V[]) new Object[oldPageSize];
+      for (int i = 0; i < oldSize; ++i) {
+        oldValues[i] = (V) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.fromStream(oldStream.getAsByteArray());
+      }
+
+      byte[] result;
+      if (((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
+        result = convertNewSerializationFormatBinarySerializer(oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid,
+            oldColor, oldKeys, oldValues);
+      else
+        result = convertNewSerializationFormatStreamSerializer(oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid,
+            oldColor, oldKeys, oldValues);
+
+      return result;
+
+    } finally {
+      oldStream.close();
     }
-
-    V[] oldValues = (V[]) new Object[oldPageSize];
-    for (int i = 0; i < oldSize; ++i) {
-      oldValues[i] = (V) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer.fromStream(oldStream.getAsByteArray());
-    }
-
-    byte[] result;
-    if (((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer instanceof OBinarySerializer)
-      result = convertNewSerializationFormatBinarySerializer(oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid, oldColor,
-          oldKeys, oldValues);
-    else
-      result = convertNewSerializationFormatStreamSerializer(oldSize, oldPageSize, oldParentRid, oldLeftRid, oldRightRid, oldColor,
-          oldKeys, oldValues);
-
-    return result;
   }
 
   private byte[] convertNewSerializationFormatBinarySerializer(int oldSize, int oldPageSize, ORecordId oldParentRid,
@@ -661,11 +671,16 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     }
 
     final OMemoryStream outStream = new OMemoryStream(outBuffer);
-    outStream.jump(offset);
+    try {
+      outStream.jump(offset);
 
-    for (int i = 0; i < oldSize; ++i)
-      outStream.set(valueSerializer.toStream(oldValues[i]));
+      for (int i = 0; i < oldSize; ++i)
+        outStream.set(valueSerializer.toStream(oldValues[i]));
 
-    return outStream.toByteArray();
+      return outStream.toByteArray();
+
+    } finally {
+      outStream.close();
+    }
   }
 }

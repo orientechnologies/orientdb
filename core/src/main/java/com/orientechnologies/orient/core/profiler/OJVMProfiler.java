@@ -34,60 +34,64 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
   private final int metricProcessors = Runtime.getRuntime().availableProcessors();
 
   public OJVMProfiler() {
-    registerHookValue(getSystemMetric("config.cpus"), new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.cpus"), "Number of CPUs", METRIC_TYPE.COUNTER, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return metricProcessors;
       }
     });
-    registerHookValue(getSystemMetric("config.os.name"), new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.os.name"), "Operative System name", METRIC_TYPE.TEXT, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return System.getProperty("os.name");
       }
     });
-    registerHookValue(getSystemMetric("config.os.version"), new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.os.version"), "Operative System version", METRIC_TYPE.TEXT, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return System.getProperty("os.version");
       }
     });
-    registerHookValue(getSystemMetric("config.os.arch"), new OProfilerHookValue() {
-      @Override
-      public Object getValue() {
-        return System.getProperty("os.arch");
-      }
-    });
-    registerHookValue(getSystemMetric("config.java.vendor"), new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.os.arch"), "Operative System architecture", METRIC_TYPE.TEXT,
+        new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return System.getProperty("os.arch");
+          }
+        });
+    registerHookValue(getSystemMetric("config.java.vendor"), "Java vendor", METRIC_TYPE.TEXT, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return System.getProperty("java.vendor");
       }
     });
-    registerHookValue(getSystemMetric("config.java.version"), new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.java.version"), "Java version", METRIC_TYPE.TEXT, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return System.getProperty("java.version");
       }
     });
-    registerHookValue(getProcessMetric("runtime.availableMemory"), new OProfilerHookValue() {
-      @Override
-      public Object getValue() {
-        return Runtime.getRuntime().freeMemory();
-      }
-    });
-    registerHookValue(getProcessMetric("runtime.maxMemory"), new OProfilerHookValue() {
-      @Override
-      public Object getValue() {
-        return Runtime.getRuntime().maxMemory();
-      }
-    });
-    registerHookValue(getProcessMetric("runtime.totalMemory"), new OProfilerHookValue() {
-      @Override
-      public Object getValue() {
-        return Runtime.getRuntime().totalMemory();
-      }
-    });
+    registerHookValue(getProcessMetric("runtime.availableMemory"), "Available memory for the process", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return Runtime.getRuntime().freeMemory();
+          }
+        });
+    registerHookValue(getProcessMetric("runtime.maxMemory"), "Maximum memory usable for the process", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return Runtime.getRuntime().maxMemory();
+          }
+        });
+    registerHookValue(getProcessMetric("runtime.totalMemory"), "Total memory used by the process", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return Runtime.getRuntime().totalMemory();
+          }
+        });
 
     final File[] roots = File.listRoots();
     for (final File root : roots) {
@@ -98,21 +102,21 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
 
       final String metricPrefix = "system.disk." + volumeName;
 
-      registerHookValue(metricPrefix + ".totalSpace", new OProfilerHookValue() {
+      registerHookValue(metricPrefix + ".totalSpace", "Total used disk space", METRIC_TYPE.SIZE, new OProfilerHookValue() {
         @Override
         public Object getValue() {
           return root.getTotalSpace();
         }
       });
 
-      registerHookValue(metricPrefix + ".freeSpace", new OProfilerHookValue() {
+      registerHookValue(metricPrefix + ".freeSpace", "Total free disk space", METRIC_TYPE.SIZE, new OProfilerHookValue() {
         @Override
         public Object getValue() {
           return root.getFreeSpace();
         }
       });
 
-      registerHookValue(metricPrefix + ".usableSpace", new OProfilerHookValue() {
+      registerHookValue(metricPrefix + ".usableSpace", "Total usable disk space", METRIC_TYPE.SIZE, new OProfilerHookValue() {
         @Override
         public Object getValue() {
           return root.getUsableSpace();

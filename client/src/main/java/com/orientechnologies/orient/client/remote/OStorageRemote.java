@@ -1588,8 +1588,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               throw new OStorageException("Cannot acquire a connection because the thread has been interrupted");
             }
 
-            final long elapsed = Orient.instance().getProfiler()
-                .stopChrono("system.network.connectionPool.waitingTime", startToWait);
+            final long elapsed = Orient
+                .instance()
+                .getProfiler()
+                .stopChrono("system.network.connectionPool.waitingTime", "Waiting for a free connection from the pool of channels",
+                    startToWait);
 
             if (debug)
               System.out.println("Waiting for connection = elapsed: " + elapsed);

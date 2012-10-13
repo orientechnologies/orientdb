@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,20 +41,26 @@ import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
  * @copyrights Orient Technologies.com
  */
 public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
-  protected long                            recordingFrom           = -1;
-  protected Map<OProfilerHookValue, String> hooks                   = new ConcurrentHashMap<OProfiler.OProfilerHookValue, String>();
-  protected Date                            lastReset               = new Date();
+  public enum METRIC_TYPE {
+    CHRONO, COUNTER, STAT, SIZE, ENABLED, TIMES, TEXT
+  }
 
-  protected OProfilerData                   realTime                = new OProfilerData();
-  protected OProfilerData                   lastSnapshot;
-  protected List<OProfilerData>             snapshots               = new ArrayList<OProfilerData>();
-  protected List<OProfilerData>             summaries               = new ArrayList<OProfilerData>();
+  protected long                                   recordingFrom           = -1;
+  protected Map<String, OProfilerHookValue>        hooks                   = new ConcurrentHashMap<String, OProfilerHookValue>();
+  protected Date                                   lastReset               = new Date();
 
-  protected int                             elapsedToCreateSnapshot = 0;
-  protected int                             maxSnapshots            = 0;
-  protected int                             maxSummaries            = 0;
-  protected final static Timer              timer                   = new Timer(true);
-  protected TimerTask                       archiverTask;
+  protected ConcurrentHashMap<String, String>      dictionary              = new ConcurrentHashMap<String, String>();
+  protected ConcurrentHashMap<String, METRIC_TYPE> types                   = new ConcurrentHashMap<String, METRIC_TYPE>();
+  protected OProfilerData                          realTime                = new OProfilerData();
+  protected OProfilerData                          lastSnapshot;
+  protected List<OProfilerData>                    snapshots               = new ArrayList<OProfilerData>();
+  protected List<OProfilerData>                    summaries               = new ArrayList<OProfilerData>();
+
+  protected int                                    elapsedToCreateSnapshot = 0;
+  protected int                                    maxSnapshots            = 0;
+  protected int                                    maxSummaries            = 0;
+  protected final static Timer                     timer                   = new Timer(true);
+  protected TimerTask                              archiverTask;
 
   public interface OProfilerHookValue {
     public Object getValue();
@@ -148,6 +155,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
       lastSnapshot = null;
       realTime.clear();
+      dictionary.clear();
+      types.clear();
 
       if (archiverTask != null)
         archiverTask.cancel();
@@ -205,15 +214,17 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     }
   }
 
-  public void updateCounter(final String iStatName, final long iPlus) {
-    if (iStatName == null || recordingFrom < 0)
+  public void updateCounter(final String iName, final String iDescription, final long iPlus) {
+    if (iName == null || recordingFrom < 0)
       return;
+
+    updateMetadata(iName, iDescription, METRIC_TYPE.COUNTER);
 
     acquireSharedLock();
     try {
       if (lastSnapshot != null)
-        lastSnapshot.updateCounter(iStatName, iPlus);
-      realTime.updateCounter(iStatName, iPlus);
+        lastSnapshot.updateCounter(iName, iPlus);
+      realTime.updateCounter(iName, iPlus);
     } finally {
       releaseSharedLock();
     }
@@ -302,6 +313,31 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     return buffer.toString();
   }
 
+  public String metadataToJSON() {
+    final StringBuilder buffer = new StringBuilder();
+
+    buffer.append("{ \"metadata\": {\n  ");
+    boolean first = true;
+    for (Entry<String, String> entry : dictionary.entrySet()) {
+      final String key = entry.getKey();
+
+      if (first)
+        first = false;
+      else
+        buffer.append(",\n  ");
+      buffer.append('"');
+      buffer.append(key);
+      buffer.append("\":{\"description\":\"");
+      buffer.append(entry.getValue());
+      buffer.append("\",\"type\":\"");
+      buffer.append(types.get(key));
+      buffer.append("\"}");
+    }
+    buffer.append("} }");
+
+    return buffer.toString();
+  }
+
   public String dump() {
     final float maxMem = Runtime.getRuntime().maxMemory() / 1000000f;
     final float totMem = Runtime.getRuntime().totalMemory() / 1000000f;
@@ -343,27 +379,35 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     return System.currentTimeMillis();
   }
 
-  public long stopChrono(final String iName, final long iStartTime) {
+  public long stopChrono(final String iName, final String iDescription, final long iStartTime) {
+    return stopChrono(iName, iDescription, iStartTime, null);
+  }
+
+  public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iPayload) {
     // CHECK IF CHRONOS ARE ACTIVED
     if (recordingFrom < 0)
       return -1;
+
+    updateMetadata(iName, iDescription, METRIC_TYPE.CHRONO);
 
     acquireSharedLock();
     try {
 
       if (lastSnapshot != null)
-        lastSnapshot.stopChrono(iName, iStartTime);
-      return realTime.stopChrono(iName, iStartTime);
+        lastSnapshot.stopChrono(iName, iStartTime, iPayload);
+      return realTime.stopChrono(iName, iStartTime, iPayload);
 
     } finally {
       releaseSharedLock();
     }
   }
 
-  public long updateStat(final String iName, final long iValue) {
+  public long updateStat(final String iName, final String iDescription, final long iValue) {
     // CHECK IF CHRONOS ARE ACTIVED
     if (recordingFrom < 0)
       return -1;
+
+    updateMetadata(iName, iDescription, METRIC_TYPE.STAT);
 
     acquireSharedLock();
     try {
@@ -426,19 +470,14 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
       buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
       buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-      final List<String> names = new ArrayList<String>(hooks.values());
+      final List<String> names = new ArrayList<String>(hooks.keySet());
       Collections.sort(names);
 
       for (String k : names) {
-        for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-          if (v.getValue().equals(k)) {
-            final OProfilerHookValue hook = v.getKey();
-            if (hook != null) {
-              final Object hookValue = hook.getValue();
-              buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
-            }
-            break;
-          }
+        final OProfilerHookValue v = hooks.get(k);
+        if (v != null) {
+          final Object hookValue = v.getValue();
+          buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
         }
       }
 
@@ -451,14 +490,8 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public Object getHookValue(final String iName) {
-    for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet()) {
-      if (v.getValue().equals(iName)) {
-        final OProfilerHookValue h = v.getKey();
-        if (h != null)
-          return h.getValue();
-      }
-    }
-    return null;
+    final OProfilerHookValue v = hooks.get(iName);
+    return v != null ? v.getValue() : null;
   }
 
   public String[] getCountersAsString() {
@@ -519,21 +552,18 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     }
   }
 
-  public void registerHookValue(final String iName, final OProfilerHookValue iHookValue) {
+  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
+      final OProfilerHookValue iHookValue) {
     unregisterHookValue(iName);
-    hooks.put(iHookValue, iName);
+    updateMetadata(iName, iDescription, iType);
+    hooks.put(iName, iHookValue);
   }
 
   public void unregisterHookValue(final String iName) {
     if (recordingFrom < 0)
       return;
 
-    for (Map.Entry<OProfilerHookValue, String> entry : hooks.entrySet()) {
-      if (entry.getValue().equals(iName)) {
-        hooks.remove(entry.getKey());
-        break;
-      }
-    }
+    hooks.remove(iName);
   }
 
   public void setAutoDump(final int iSeconds) {
@@ -559,9 +589,17 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
     final Map<String, Object> result = new HashMap<String, Object>();
 
-    for (Map.Entry<OProfilerHookValue, String> v : hooks.entrySet())
-      result.put(v.getValue(), v.getKey().getValue());
+    for (Map.Entry<String, OProfilerHookValue> v : hooks.entrySet())
+      result.put(v.getKey(), v.getValue().getValue());
 
     return result;
+  }
+
+  /**
+   * Updates the metric metadata.
+   */
+  protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
+    if (dictionary.putIfAbsent(iName, iDescription) == null)
+      types.put(iName, iType);
   }
 }

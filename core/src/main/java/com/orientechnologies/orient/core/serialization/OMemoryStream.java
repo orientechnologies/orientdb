@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
@@ -39,11 +40,15 @@ public class OMemoryStream extends OutputStream {
   private static long      metricResize          = 0;
 
   static {
-    Orient.instance().getProfiler().registerHookValue("system.memory.stream.resize", new OProfilerHookValue() {
-      public Object getValue() {
-        return metricResize;
-      }
-    });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return metricResize;
+              }
+            });
   }
 
   public OMemoryStream() {

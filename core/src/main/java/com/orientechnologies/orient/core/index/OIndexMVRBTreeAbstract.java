@@ -32,6 +32,7 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -143,7 +144,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
               iValueSerializer, indexDefinition.getTypes().length, maxUpdatesBeforeSave);
         }
       } else
-        map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1, maxUpdatesBeforeSave);
+        map = new OMVRBTreeDatabaseLazySave<Object, T>(iClusterIndexName, new OSimpleKeySerializer(), iValueSerializer, 1,
+            maxUpdatesBeforeSave);
 
       installHooks(iDatabase);
 
@@ -720,7 +722,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     final OJVMProfiler profiler = Orient.instance().getProfiler();
     final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getName(), "index." + name + '.');
 
-    profiler.registerHookValue(profilerPrefix + "items", new OProfilerHookValue() {
+    profiler.registerHookValue(profilerPrefix + "items", "Index size", METRIC_TYPE.SIZE, new OProfilerHookValue() {
       public Object getValue() {
         acquireSharedLock();
         try {
@@ -731,23 +733,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       }
     });
 
-    profiler.registerHookValue(profilerPrefix + "entryPointSize", new OProfilerHookValue() {
-      public Object getValue() {
-        return map != null ? map.getEntryPointSize() : "-";
-      }
-    });
+    profiler.registerHookValue(profilerPrefix + "entryPointSize", "Number of entrypoints in an index", METRIC_TYPE.SIZE,
+        new OProfilerHookValue() {
+          public Object getValue() {
+            return map != null ? map.getEntryPointSize() : "-";
+          }
+        });
 
-    profiler.registerHookValue(profilerPrefix + "maxUpdateBeforeSave", new OProfilerHookValue() {
-      public Object getValue() {
-        return map != null ? map.getMaxUpdatesBeforeSave() : "-";
-      }
-    });
+    profiler.registerHookValue(profilerPrefix + "maxUpdateBeforeSave", "Maximum number of updates in a index before force saving",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          public Object getValue() {
+            return map != null ? map.getMaxUpdatesBeforeSave() : "-";
+          }
+        });
 
-    profiler.registerHookValue(profilerPrefix + "optimizationThreshold", new OProfilerHookValue() {
-      public Object getValue() {
-        return map != null ? map.getOptimizeThreshold() : "-";
-      }
-    });
+    profiler.registerHookValue(profilerPrefix + "optimizationThreshold",
+        "Number of times as threshold to execute a background index optimization", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          public Object getValue() {
+            return map != null ? map.getOptimizeThreshold() : "-";
+          }
+        });
 
     Orient.instance().getMemoryWatchDog().addListener(watchDog);
     iDatabase.registerListener(this);
@@ -921,8 +926,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   private int lazyUpdates() {
-    return isAutomatic() ?
-        OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.getValueAsInteger() :
-        OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
+    return isAutomatic() ? OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.getValueAsInteger()
+        : OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
   }
 }
