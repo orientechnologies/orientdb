@@ -238,12 +238,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
         pair = entry.getValue();
 
-        if (pair.getValue() instanceof OSQLFilterItem)
-          pair.setValue(((OSQLFilterItem) pair.getValue()).getValue(record, null));
-        else if (pair.getValue() instanceof OSQLFunctionRuntime)
-          v = ((OSQLFunctionRuntime) pair.getValue()).execute(record, this);
+        v = pair.getValue();
 
-        map.put(pair.getKey(), pair.getValue());
+        if (v instanceof OSQLFilterItem)
+          v = ((OSQLFilterItem) v).getValue(record, null);
+        else if (pair.getValue() instanceof OSQLFunctionRuntime)
+          v = ((OSQLFunctionRuntime) v).execute(record, this);
+
+        map.put(pair.getKey(), v);
         recordUpdated = true;
       }
     }
