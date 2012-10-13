@@ -34,7 +34,7 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
   private final int metricProcessors = Runtime.getRuntime().availableProcessors();
 
   public OJVMProfiler() {
-    registerHookValue(getSystemMetric("config.cpus"), "Number of CPUs", METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+    registerHookValue(getSystemMetric("config.cpus"), "Number of CPUs", METRIC_TYPE.SIZE, new OProfilerHookValue() {
       @Override
       public Object getValue() {
         return metricProcessors;

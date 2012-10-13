@@ -136,7 +136,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         .instance()
         .getProfiler()
         .registerHookValue("system.file.mmap.usedChannel",
-            "Number of times the memory mapping has been bypassed to use direct file channel", METRIC_TYPE.TIMES,
+            "Number of times the memory mapping has been bypassed to use direct file channel", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return metricUsedChannel;
@@ -147,7 +147,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         .instance()
         .getProfiler()
         .registerHookValue("system.file.mmap.reusedPagesBetweenLast",
-            "Number of times a memory mapped page has been reused in short time", METRIC_TYPE.TIMES, new OProfilerHookValue() {
+            "Number of times a memory mapped page has been reused in short time", METRIC_TYPE.COUNTER, new OProfilerHookValue() {
               public Object getValue() {
                 return metricReusedPagesBetweenLast;
               }
@@ -156,7 +156,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         .instance()
         .getProfiler()
         .registerHookValue("system.file.mmap.reusedPages", "Number of times a memory mapped page has been reused",
-            METRIC_TYPE.TIMES, new OProfilerHookValue() {
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
               public Object getValue() {
                 return metricReusedPages;
               }
@@ -165,7 +165,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         .instance()
         .getProfiler()
         .registerHookValue("system.file.mmap.overlappedPageUsingChannel",
-            "Number of times a direct file channel access has been used because overlapping", METRIC_TYPE.TIMES,
+            "Number of times a direct file channel access has been used because overlapping", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return metricOverlappedPageUsingChannel;

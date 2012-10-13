@@ -42,7 +42,7 @@ import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
  */
 public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean {
   public enum METRIC_TYPE {
-    CHRONO, COUNTER, STAT, SIZE, ENABLED, TIMES, TEXT
+    CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
   }
 
   protected long                                   recordingFrom           = -1;

@@ -68,7 +68,7 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
           }
         });
     PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channels have been flushed",
-        METRIC_TYPE.TIMES, new OProfilerHookValue() {
+        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
           public Object getValue() {
             return metricGlobalFlushes.get();
           }
@@ -127,7 +127,7 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
           }
         });
     PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channel has been flushed",
-        METRIC_TYPE.TIMES, new OProfilerHookValue() {
+        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
           public Object getValue() {
             return metricFlushes;
           }

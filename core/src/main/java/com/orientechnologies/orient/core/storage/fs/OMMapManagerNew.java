@@ -62,7 +62,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
         .instance()
         .getProfiler()
         .registerHookValue("system.file.mmap.reusedPages", "Number of times memory mapped pages have been reused",
-            METRIC_TYPE.TIMES, new OProfilerHookValue() {
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
               public Object getValue() {
                 return metricReusedPages;
               }
