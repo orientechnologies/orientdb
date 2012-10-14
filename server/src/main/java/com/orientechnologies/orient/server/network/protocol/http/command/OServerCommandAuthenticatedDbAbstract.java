@@ -129,8 +129,12 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       throws IOException {
     // UNAUTHORIZED
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
+    String header = null;
+    if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
+        header  ="WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";   
+    }
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"", false);
+            "401 Unauthorized.", header, false);
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {

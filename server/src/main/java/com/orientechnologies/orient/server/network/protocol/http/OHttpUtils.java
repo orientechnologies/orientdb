@@ -42,6 +42,7 @@ public class OHttpUtils {
   public static final String HEADER_AUTHORIZATION                = "Authorization: ";
   public static final String HEADER_IF_MATCH                     = "If-Match: ";
   public static final String HEADER_X_FORWARDED_FOR              = "X-Forwarded-For: ";
+  public static final String HEADER_AUTHENTICATION	             = "OAuthentication: ";
 
   public static final String AUTHORIZATION_BASIC                 = "Basic";
   public static final String OSESSIONID                          = "OSESSIONID";

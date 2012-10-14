@@ -377,6 +377,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_X_FORWARDED_FOR))
             connection.data.caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
+          
+          else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHENTICATION))
+              iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
 
         }
 

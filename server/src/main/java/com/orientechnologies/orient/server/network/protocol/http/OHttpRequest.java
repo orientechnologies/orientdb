@@ -44,6 +44,7 @@ public class OHttpRequest {
   public String                             databaseName;
   public boolean                            isMultipart;
   public String                             ifMatch;
+  public String 							authentication;
 
   public final ONetworkProtocolData         data;
   public final ONetworkProtocolHttpAbstract executor;
