@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -46,7 +46,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     ODatabaseDocumentTx db = null;
 
-    final Object response;
+    Object response;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
@@ -61,12 +61,17 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         OSharedDocumentDatabase.release(db);
     }
 
+    if (response instanceof OIdentifiable) {
+      // CONVERT SIGLE VLUE IN A COLLECTION
+      final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+      resultSet.add((OIdentifiable) response);
+      response = resultSet;
+    }
+
     if (response instanceof List<?>)
       iResponse.writeRecords((List<OIdentifiable>) response);
     else if (response == null || response instanceof Integer)
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, response, null);
-    else if (response instanceof ODocument)
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, ((ODocument) response).toJSON(), null);
     else
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, response.toString(), null);
     return false;
