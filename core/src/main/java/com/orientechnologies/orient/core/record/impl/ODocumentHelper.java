@@ -494,6 +494,9 @@ public class ODocumentHelper {
         return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
     }
 
+    if( iCurrent == null)
+      return null;
+    
     final ODocument doc = ((ODocument) iCurrent.getRecord());
     doc.checkForFields(iFieldName);
     return doc._fieldValues.get(iFieldName);
