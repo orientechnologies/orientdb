@@ -136,6 +136,10 @@ public class OConsoleApplication {
 
         commandLine = iScanner.next().trim();
 
+        if (commandLine.startsWith("--") || commandLine.startsWith("//"))
+          // SKIP COMMENTS
+          continue;
+
         // JS CASE: MANAGE ENSEMBLING ALL TOGETHER
         if (commandLine.startsWith("js")) {
           // BEGIN: START TO COLLECT
