@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;

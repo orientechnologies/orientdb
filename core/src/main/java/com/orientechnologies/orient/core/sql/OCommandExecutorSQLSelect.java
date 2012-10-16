@@ -686,6 +686,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (upperBound < parserText.length() - 1)
       parserSetCurrentPosition(upperBound);
+    else
+      parserSetEndOfText();
 
     return parserGetCurrentPosition();
   }

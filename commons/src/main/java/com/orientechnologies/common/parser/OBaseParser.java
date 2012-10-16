@@ -295,6 +295,13 @@ public abstract class OBaseParser {
   }
 
   /**
+   * Sets the end of text as position
+   */
+  protected void parserSetEndOfText() {
+    parserCurrentPos = -1;
+  }
+
+  /**
    * Moves the current cursor position forward or backward of iOffset characters
    * 
    * @param iOffset
