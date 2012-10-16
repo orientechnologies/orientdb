@@ -85,6 +85,7 @@ public class OServer {
 
   private Random                                           random             = new Random();
   private Map<String, Object>                              variables          = new HashMap<String, Object>();
+  private String                                           databaseDirectory;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -110,6 +111,9 @@ public class OServer {
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
     startup(new File(config));
+
+    databaseDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
+    databaseDirectory = databaseDirectory.replace("//", "/");
   }
 
   public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
@@ -251,17 +255,17 @@ public class OServer {
     // SEARCH IN CONFIGURED PATHS
     String dbPath = configuration.getStoragePath(name);
 
-		if (dbPath == null) {
-			// SEARCH IN DEFAULT DATABASE DIRECTORY
-			dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name);
-			File f = new File(dbPath + "/default.odh");
-			if (!f.exists())
-				throw new OConfigurationException("Database '" + name + "' is not configured on server");
+    if (dbPath == null) {
+      // SEARCH IN DEFAULT DATABASE DIRECTORY
+      dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name);
+      File f = new File(dbPath + "/default.odh");
+      if (!f.exists())
+        throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
-			dbPath = "local:" + dbPath;
-		}
+      dbPath = "local:" + dbPath;
+    }
 
-		return dbPath;
+    return dbPath;
   }
 
   public Map<String, String> getAvailableStorageNames() {
@@ -273,15 +277,15 @@ public class OServer {
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
-		scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
 
-		for (OStorage storage : Orient.instance().getStorages()) {
-			final String storageUrl = storage.getURL();
-			if (storage.exists() && !storages.containsValue(storageUrl))
-				storages.put(storage.getName(), storageUrl);
-		}
+    for (OStorage storage : Orient.instance().getStorages()) {
+      final String storageUrl = storage.getURL();
+      if (storage.exists() && !storages.containsValue(storageUrl))
+        storages.put(storage.getName(), storageUrl);
+    }
 
-		return storages;
+    return storages;
   }
 
   public String getStorageURL(final String iName) {
@@ -300,7 +304,7 @@ public class OServer {
   }
 
   public String getDatabaseDirectory() {
-    return OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
+    return databaseDirectory;
   }
 
   public ThreadGroup getServerThreadGroup() {
