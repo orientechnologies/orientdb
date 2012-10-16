@@ -311,7 +311,7 @@ public class ObjectTreeTest {
     Assert.assertNotNull(test.getSet());
     Assert.assertEquals(test.getSet().size(), 100);
     database.save(test);
-    //Assert.assertEquals(test.getSet().size(), 100);
+    // Assert.assertEquals(test.getSet().size(), 100);
     ORID rid = database.getIdentity(test);
     close();
     open();
@@ -485,6 +485,8 @@ public class ObjectTreeTest {
     Assert.assertTrue((!test.getSet().contains(setChild2) || !test.getSet().contains(setChild3)));
     test.getSet().add(setChild4);
     database.save(test);
+    test = database.load(testRid);
+    Assert.assertTrue(!test.getList().contains(listChild3));
     listChild1 = database.load(list1Rid);
     listChild2 = database.load(list2Rid);
     listChild3 = database.load(list3Rid);

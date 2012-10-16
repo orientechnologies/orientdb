@@ -654,6 +654,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       if (iPojo != null) {
         if (iPojo instanceof Proxy) {
           ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).setDoc(iRecord);
+          ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).updateLoadedFieldMap(iPojo);
           return iPojo;
         } else
           return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
