@@ -370,6 +370,12 @@ public class ODocumentHelper {
           }
         }
       } else {
+        if( fieldName.length() == 0 ){
+          // NO FIELD NAME: THIS IS THE CASE OF NOT USEFUL . AFTER A ] OR .
+          beginPos = ++nextSeparatorPos;
+          continue;
+        }
+        
         if (fieldName.contains("("))
           value = evaluateFunction(value, fieldName);
         else {
