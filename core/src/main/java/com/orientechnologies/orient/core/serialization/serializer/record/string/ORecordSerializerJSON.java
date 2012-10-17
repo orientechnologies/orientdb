@@ -206,7 +206,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                   }
                 }
 
-              doc.field(fieldName, v);
+              if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
+                type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
+
+              if (type != null)
+                doc.field(fieldName, v, type);
+              else
+                doc.field(fieldName, v);
             }
           }
         }
