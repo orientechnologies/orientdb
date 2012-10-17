@@ -15,10 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
@@ -32,6 +35,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
   public static final String NAME = "sysdate";
 
   private final Date         now;
+  private SimpleDateFormat   format;
 
   /**
    * Get the date at construction to have the same date for all the iteration.
@@ -42,7 +46,13 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
   }
 
   public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-    return now;
+    if (iParameters.length == 0)
+      return now;
+
+    if (format == null)
+      format = new SimpleDateFormat((String) iParameters[0]);
+
+    return format.format(now);
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
@@ -50,7 +60,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: sysdate()";
+    return "Syntax error: sysdate([<format>])";
   }
 
   @Override

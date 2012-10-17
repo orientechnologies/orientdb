@@ -33,49 +33,47 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * 
  */
 public class OSQLFunctionDate extends OSQLFunctionAbstract {
-	public static final String	NAME	= "date";
+  public static final String NAME = "date";
 
-	private Date								date;
-	private SimpleDateFormat		format;
+  private Date               date;
+  private SimpleDateFormat   format;
 
-	/**
-	 * Get the date at construction to have the same date for all the iteration.
-	 */
-	public OSQLFunctionDate() {
-		super(NAME, 0, 2);
-		date = new Date();
-	}
+  /**
+   * Get the date at construction to have the same date for all the iteration.
+   */
+  public OSQLFunctionDate() {
+    super(NAME, 0, 2);
+    date = new Date();
+  }
 
-	public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters.length == 0)
-			return date;
+  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    if (iParameters.length == 0)
+      return date;
 
-		if (iParameters.length != 2)
-			throw new OCommandSQLParsingException(getSyntax());
+    if (iParameters.length != 2)
+      throw new OCommandSQLParsingException(getSyntax());
 
-		if (format == null)
-			format = new SimpleDateFormat((String) iParameters[1]);
+    if (format == null)
+      format = new SimpleDateFormat((String) iParameters[1]);
 
-		synchronized (format) {
-			try {
-				return format.parse((String) iParameters[0]);
-			} catch (ParseException e) {
-				throw new OQueryParsingException("Error on formatting date '" + iParameters[0] + "' using the format: " + iParameters[1], e);
-			}
-		}
-	}
+    try {
+      return format.parse((String) iParameters[0]);
+    } catch (ParseException e) {
+      throw new OQueryParsingException("Error on formatting date '" + iParameters[0] + "' using the format: " + iParameters[1], e);
+    }
+  }
 
-	public boolean aggregateResults(final Object[] configuredParameters) {
-		return false;
-	}
+  public boolean aggregateResults(final Object[] configuredParameters) {
+    return false;
+  }
 
-	public String getSyntax() {
-		return "Syntax error: date([<date-as-string>, <format>])";
-	}
+  public String getSyntax() {
+    return "Syntax error: date([<date-as-string>, <format>])";
+  }
 
-	@Override
-	public Object getResult() {
-		format = null;
-		return null;
-	}
+  @Override
+  public Object getResult() {
+    format = null;
+    return null;
+  }
 }
