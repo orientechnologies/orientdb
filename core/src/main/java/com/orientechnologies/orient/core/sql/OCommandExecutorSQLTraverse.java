@@ -74,7 +74,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
     if (!parsedTarget.parserIsEnded()) {
-      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos + 1);
+      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos);
 
       parserNextWord(true);
 
