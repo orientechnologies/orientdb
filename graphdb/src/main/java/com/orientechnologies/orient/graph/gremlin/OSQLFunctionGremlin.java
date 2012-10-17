@@ -93,7 +93,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
   }
 
   @Override
-  public boolean aggregateResults(final Object[] iConfiguredParameters) {
+  public boolean aggregateResults() {
     return false;
   }
 

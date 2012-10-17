@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.coll;
-
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
+package com.orientechnologies.orient.core.sql.functions;
 
 /**
- * Abstract class for multi-value based functions implementations.
+ * Abstract class to extend to build Custom SQL Functions that saves the configured parameters. Extend it and register it with:
+ * <code>OSQLParser.getInstance().registerStatelessFunction()</code> or
+ * <code>OSQLParser.getInstance().registerStatefullFunction()</code> to being used by the SQL engine.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSQLFunctionMultiValueAbstract<T> extends OSQLFunctionConfigurableAbstract {
+public abstract class OSQLFunctionConfigurableAbstract extends OSQLFunctionAbstract {
+  protected Object[] configuredParameters;
 
-  protected T        context;
-
-  public OSQLFunctionMultiValueAbstract(final String iName, final int iMinParams, final int iMaxParams) {
+  protected OSQLFunctionConfigurableAbstract(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
   }
 
   @Override
-  public boolean aggregateResults() {
-    return configuredParameters.length == 1;
-  }
-
-  @Override
-  public T getResult() {
-    return context;
+  public void config(final Object[] iConfiguredParameters) {
+    configuredParameters = iConfiguredParameters;
   }
 }

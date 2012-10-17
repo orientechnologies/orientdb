@@ -42,7 +42,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 		return null;
 	}
 
-	public boolean aggregateResults() {
+  public boolean aggregateResults() {
 		return true;
 	}
 

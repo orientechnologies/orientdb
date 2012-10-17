@@ -46,7 +46,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
   }
 
   public boolean aggregateResults() {
-    return function.aggregateResults(configuredParameters);
+    return function.aggregateResults();
   }
 
   public boolean filterResult() {
@@ -114,6 +114,8 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     for (int i = 0; i < funcParamsText.size(); ++i) {
       this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
     }
+
+    function.config(configuredParameters);
 
     // COPY STATIC VALUES
     this.runtimeParameters = new Object[configuredParameters.length];

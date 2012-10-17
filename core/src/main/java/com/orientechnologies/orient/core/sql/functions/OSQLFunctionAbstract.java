@@ -24,45 +24,48 @@ package com.orientechnologies.orient.core.sql.functions;
  * 
  */
 public abstract class OSQLFunctionAbstract implements OSQLFunction {
-	protected String	name;
-	protected int			minParams;
-	protected int			maxParams;
+  protected String name;
+  protected int    minParams;
+  protected int    maxParams;
 
-	public OSQLFunctionAbstract(final String iName, final int iMinParams, final int iMaxParams) {
-		this.name = iName;
-		this.minParams = iMinParams;
-		this.maxParams = iMaxParams;
-	}
+  public OSQLFunctionAbstract(final String iName, final int iMinParams, final int iMaxParams) {
+    this.name = iName;
+    this.minParams = iMinParams;
+    this.maxParams = iMaxParams;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public int getMinParams() {
-		return minParams;
-	}
+  public int getMinParams() {
+    return minParams;
+  }
 
-	public int getMaxParams() {
-		return maxParams;
-	}
+  public int getMaxParams() {
+    return maxParams;
+  }
 
-	@Override
-	public String toString() {
-		return name + "()";
-	}
+  @Override
+  public String toString() {
+    return name + "()";
+  }
 
-	public boolean aggregateResults(final Object[] iConfiguredParameters) {
-		return false;
-	}
+  public void config(final Object[] iConfiguredParameters) {
+  }
 
-	public boolean filterResult() {
-		return false;
-	}
+  public boolean aggregateResults() {
+    return false;
+  }
 
-	public Object getResult() {
-		return null;
-	}
+  public boolean filterResult() {
+    return false;
+  }
 
-	public void setResult(final Object iResult) {
-	}
+  public Object getResult() {
+    return null;
+  }
+
+  public void setResult(final Object iResult) {
+  }
 }

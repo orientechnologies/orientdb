@@ -40,7 +40,7 @@ public class ODatabaseFunction implements OSQLFunction {
   }
 
   @Override
-  public boolean aggregateResults(final Object[] configuredParameters) {
+  public boolean aggregateResults() {
     return false;
   }
 
@@ -86,5 +86,9 @@ public class ODatabaseFunction implements OSQLFunction {
 
   @Override
   public void setResult(final Object iResult) {
+  }
+
+  @Override
+  public void config(final Object[] configuredParameters) {
   }
 }

@@ -334,7 +334,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
         } else if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
-          if (f.getFunction().aggregateResults(f.getConfiguredParameters())) {
+          if (f.getFunction().aggregateResults()) {
             f.execute(iRecord, this);
             varValue = f.getFunction().getResult();
           } else
