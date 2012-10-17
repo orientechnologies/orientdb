@@ -25,6 +25,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -53,7 +54,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
     return executeInContext(null, iArgs);
   }
 
-  public Object executeInContext(final Map<String, Object> iContext, final Map<Object, Object> iArgs) {
+  public Object executeInContext(final OCommandContext iContext, final Map<Object, Object> iArgs) {
 
     parserText = request.getText();
 
@@ -90,7 +91,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
     } catch (NoSuchMethodException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
-      
+
     } finally {
       scriptManager.unbind(binding);
     }

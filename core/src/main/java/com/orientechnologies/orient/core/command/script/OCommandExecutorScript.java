@@ -22,6 +22,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -50,7 +51,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     return executeInContext(null, iArgs);
   }
 
-  public Object executeInContext(final Map<String, Object> iContext, final Map<Object, Object> iArgs) {
+  public Object executeInContext(final OCommandContext iContext, final Map<Object, Object> iArgs) {
     final String language = request.getLanguage();
     parserText = request.getText();
 

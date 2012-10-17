@@ -15,27 +15,31 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  */
 public interface OSQLFunctionFactory {
-    
-    /**
-     * @return Set of supported function names of this factory
-     */
-    Set<String> getFunctionNames();
-    
-    /**
-     * Create function for the given name.
-     * returned function may be a new instance each time or a constant.
-     * @param name
-     * @return OSQLFunction : created function
-     * @throws OCommandExecutionException : when function creation fail
-     */
-    OSQLFunction createFunction(String name) throws OCommandExecutionException;
-    
+
+  boolean hasFunction(String iName);
+
+  /**
+   * @return Set of supported function names of this factory
+   */
+  Set<String> getFunctionNames();
+
+  /**
+   * Create function for the given name. returned function may be a new instance each time or a constant.
+   * 
+   * @param name
+   * @return OSQLFunction : created function
+   * @throws OCommandExecutionException
+   *           : when function creation fail
+   */
+  OSQLFunction createFunction(String name) throws OCommandExecutionException;
+
 }

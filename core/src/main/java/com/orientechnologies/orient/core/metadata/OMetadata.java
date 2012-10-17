@@ -149,8 +149,6 @@ public class OMetadata {
             }
           }), database);
 
-    functionLibrary = new OFunctionLibraryImpl();
-
     functionLibrary = (OFunctionLibraryImpl) database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),
         new Callable<OFunctionLibrary>() {
           public OFunctionLibrary call() {
@@ -169,7 +167,7 @@ public class OMetadata {
     schema.reload();
     indexManager.load();
     security.load();
-    // functionLibrary.load();
+    functionLibrary.load();
   }
 
   /**

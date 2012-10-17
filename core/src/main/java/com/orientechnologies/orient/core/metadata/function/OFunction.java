@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
@@ -119,7 +120,7 @@ public class OFunction {
     return executeInContext(null, iArgs);
   }
 
-  public Object executeInContext(final Map<String, Object> iContext, final Object... iArgs) {
+  public Object executeInContext(final OCommandContext iContext, final Object... iArgs) {
     final OCommandExecutorFunction command = new OCommandExecutorFunction();
     command.parse(new OCommandFunction(getName()));
 

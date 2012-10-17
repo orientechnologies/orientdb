@@ -21,12 +21,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
@@ -98,7 +100,7 @@ public class OScriptManager {
 
     final StringBuilder code = new StringBuilder();
 
-    final String[] functions = db.getMetadata().getFunctionLibrary().getFunctionNames();
+    final Set<String> functions = db.getMetadata().getFunctionLibrary().getFunctionNames();
     for (String fName : functions) {
       final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(fName);
 
@@ -126,7 +128,7 @@ public class OScriptManager {
     return scriptEngine;
   }
 
-  public Bindings bind(final ScriptEngine iEngine, final ODatabaseRecordTx db, final Map<String, Object> iContext,
+  public Bindings bind(final ScriptEngine iEngine, final ODatabaseRecordTx db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
     final Bindings binding = iEngine.createBindings();
 
@@ -141,7 +143,7 @@ public class OScriptManager {
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
-      for (Entry<String, Object> a : iContext.entrySet())
+      for (Entry<String, Object> a : iContext.getVariables().entrySet())
         binding.put(a.getKey(), a.getValue());
     }
 

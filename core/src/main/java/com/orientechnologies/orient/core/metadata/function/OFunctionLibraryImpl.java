@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -55,24 +57,23 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
       for (ODocument d : result)
-        functions.put((String) d.field("name"), new OFunction(d));
+        functions.put(d.field("name").toString().toUpperCase(), new OFunction(d));
     }
   }
 
-  public String[] getFunctionNames() {
-    final String[] result = new String[functions.size()];
-    return functions.keySet().toArray(result);
+  public Set<String> getFunctionNames() {
+    return Collections.unmodifiableSet(functions.keySet());
   }
 
   public OFunction getFunction(final String iName) {
-    return functions.get(iName);
+    return functions.get(iName.toUpperCase());
   }
 
   public synchronized OFunction createFunction(final String iName) {
     init();
 
     final OFunction f = new OFunction().setName(iName);
-    functions.put(iName, f);
+    functions.put(iName.toUpperCase(), f);
 
     return f;
   }

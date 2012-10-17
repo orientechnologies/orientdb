@@ -616,7 +616,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         KEYWORD_LET_2FIND);
     if (upperBound == -1)
       // UP TO THE END
-      upperBound = parserText.length() - 1;
+      upperBound = parserText.length();
 
     Object projectionValue;
     final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
@@ -1050,7 +1050,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       request.getResultListener().result(result);
-    } else if (parsedTarget == null && let != null)
+    } else if (parsedTarget == null)
       // ONLY LET, APPLY TO THEM
       handleResult(applyProjections(lastRecord));
   }

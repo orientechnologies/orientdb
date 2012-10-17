@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
+import java.util.Set;
+
 /**
  * Manages stored functions.
  * 
@@ -22,7 +24,7 @@ package com.orientechnologies.orient.core.metadata.function;
  * 
  */
 public interface OFunctionLibrary {
-  public String[] getFunctionNames();
+  public Set<String> getFunctionNames();
 
   public OFunction getFunction(String iName);
 }

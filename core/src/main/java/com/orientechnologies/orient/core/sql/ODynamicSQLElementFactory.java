@@ -44,7 +44,11 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
     return FUNCTIONS.keySet();
   }
 
-  public OSQLFunction createFunction(String name) throws OCommandExecutionException {
+  public boolean hasFunction(final String name) {
+    return FUNCTIONS.containsKey(name);
+  }
+
+  public OSQLFunction createFunction(final String name) throws OCommandExecutionException {
     final Object obj = FUNCTIONS.get(name);
 
     if (obj == null) {
@@ -69,12 +73,11 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
     return COMMANDS.keySet();
   }
 
-  public OCommandExecutorSQLAbstract createCommand(String name) throws OCommandExecutionException {
+  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
-    if (clazz == null) {
+    if (clazz == null)
       throw new OCommandExecutionException("Unknowned command name :" + name);
-    }
 
     try {
       return clazz.newInstance();
@@ -87,5 +90,4 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
   public Set<OQueryOperator> getOperators() {
     return OPERATORS;
   }
-
 }

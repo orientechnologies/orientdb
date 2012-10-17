@@ -135,7 +135,7 @@ public class OSQLEngine {
     final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
     while (ite.hasNext()) {
       final OSQLFunctionFactory factory = ite.next();
-      if (factory.getFunctionNames().contains(iFunctionName)) {
+      if (factory.hasFunction(iFunctionName)) {
         return factory.createFunction(iFunctionName);
       }
     }

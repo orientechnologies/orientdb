@@ -1,2 +1,3 @@
 com.orientechnologies.orient.core.sql.functions.ODefaultSQLFunctionFactory
 com.orientechnologies.orient.core.sql.ODynamicSQLElementFactory
+com.orientechnologies.orient.core.metadata.function.ODatabaseFunctionFactory

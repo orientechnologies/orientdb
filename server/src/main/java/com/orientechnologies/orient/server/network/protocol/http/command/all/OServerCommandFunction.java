@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -53,9 +51,9 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
       if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
-        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "GET method is not allowed to execute function '" + parts[2]
-            + "' because has been declared as non idempotent. Use POST instead.",
-            null, true);
+        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "GET method is not allowed to execute function '" + parts[2]
+                + "' because has been declared as non idempotent. Use POST instead.", null, true);
         return false;
       }
 
@@ -64,19 +62,19 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         args[i - 3] = parts[i];
 
       // BIND CONTEXT VARIABLES
-      final Map<String, Object> context = new HashMap<String, Object>();
-      context.put("request", new OHttpRequestWrapper(iRequest));
-      context.put("response", new OHttpResponseWrapper(iResponse));
+      final OBasicCommandContext context = new OBasicCommandContext();
+      context.setVariable("request", new OHttpRequestWrapper(iRequest));
+      context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
       result = f.executeInContext(context, args);
 
       if (result != null) {
         if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, ((ODocument) result).toJSON(),
-              null, true);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
+              ((ODocument) result).toJSON(), null, true);
         } else
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, result,
-              null, true);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, result, null,
+              true);
       } else
         iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
 
@@ -90,8 +88,8 @@ public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstrac
         msg.append(currentException.getMessage());
       }
 
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, msg.toString(),
-          null, true);
+      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          msg.toString(), null, true);
 
     } finally {
       if (db != null)

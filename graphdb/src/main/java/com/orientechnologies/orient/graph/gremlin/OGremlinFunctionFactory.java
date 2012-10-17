@@ -40,16 +40,19 @@ public class OGremlinFunctionFactory implements OSQLFunctionFactory {
     return FUNCTIONS.keySet();
   }
 
-  public OSQLFunction createFunction(String name) {
+  public boolean hasFunction(final String name) {
+    return FUNCTIONS.containsKey(name);
+  }
+
+  public OSQLFunction createFunction(final String name) {
     final Object obj = FUNCTIONS.get(name);
 
-    if (obj == null) {
+    if (obj == null)
       throw new OCommandExecutionException("Unknowned function name :" + name);
-    }
 
-    if (obj instanceof OSQLFunction) {
+    if (obj instanceof OSQLFunction)
       return (OSQLFunction) obj;
-    } else {
+    else {
       // it's a class
       final Class<?> clazz = (Class<?>) obj;
       try {
