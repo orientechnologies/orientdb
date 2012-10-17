@@ -148,9 +148,10 @@ public class OScriptManager {
     if (iArgs != null) {
       for (Entry<Object, Object> a : iArgs.entrySet())
         binding.put(a.getKey().toString(), a.getValue());
-      binding.put("params", iArgs);
+
+      binding.put("params", new OJSMap(iArgs));
     } else
-      binding.put("params", new HashMap<Object, Object>());
+      binding.put("params", new OJSMap());
 
     return binding;
   }
