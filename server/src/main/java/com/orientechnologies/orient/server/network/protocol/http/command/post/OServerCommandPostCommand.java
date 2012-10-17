@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -68,8 +69,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       response = resultSet;
     }
 
-    if (response instanceof List<?>)
-      iResponse.writeRecords((List<OIdentifiable>) response);
+    if (response instanceof Iterable<?>)
+      response = ((Iterable<OIdentifiable>) response).iterator();
+
+    if (response instanceof Iterator<?>)
+      iResponse.writeRecords((Iterator<OIdentifiable>) response);
     else if (response == null || response instanceof Integer)
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, response, null);
     else

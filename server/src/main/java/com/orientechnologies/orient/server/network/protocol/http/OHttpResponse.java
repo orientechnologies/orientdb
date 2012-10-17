@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -58,13 +58,13 @@ public class OHttpResponse {
     callbackFunction = iCallbackFunction;
   }
 
-  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent,
-      final String iHeaders) throws IOException {
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
+      throws IOException {
     send(iCode, iReason, iContentType, iContent, iHeaders, true);
   }
 
-  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent,
-      final String iHeaders, final boolean iKeepAlive) throws IOException {
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders,
+      final boolean iKeepAlive) throws IOException {
     final String content;
     final String contentType;
 
@@ -136,11 +136,28 @@ public class OHttpResponse {
       out.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  public void writeRecords(final List<OIdentifiable> iRecords) throws IOException {
+  public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
+    if (iRecords == null)
+      return;
+
+    writeRecords(iRecords.iterator(), null);
+  }
+
+  public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+    if (iRecords == null)
+      return;
+
+    writeRecords(iRecords.iterator(), iFetchPlan);
+  }
+
+  public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
     writeRecords(iRecords, null);
   }
 
-  public void writeRecords(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+    if (iRecords == null)
+      return;
+
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
     json.beginObject();
@@ -149,7 +166,7 @@ public class OHttpResponse {
 
     // WRITE RECORDS
     json.beginCollection(1, true, "result");
-    formatCollection(iRecords, buffer, format);
+    formatMultiValue(iRecords, buffer, format);
     json.endCollection(1, true);
 
     json.endObject();
@@ -157,11 +174,13 @@ public class OHttpResponse {
     send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
-  public void formatCollection(final List<OIdentifiable> iRecords, final StringWriter buffer, final String format) {
-    if (iRecords != null) {
+  public void formatMultiValue(final Iterator<OIdentifiable> iIterator, final StringWriter buffer, final String format) {
+    if (iIterator != null) {
       int counter = 0;
       String objectJson;
-      for (OIdentifiable rec : iRecords) {
+
+      while (iIterator.hasNext()) {
+        final OIdentifiable rec = iIterator.next();
         if (rec != null)
           try {
             objectJson = rec.getRecord().toJSON(format);
