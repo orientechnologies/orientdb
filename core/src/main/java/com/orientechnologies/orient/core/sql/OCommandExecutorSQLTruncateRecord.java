@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract  implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_TRUNCATE = "TRUNCATE";
   public static final String KEYWORD_RECORD   = "RECORD";
   private Set<String>        records          = new HashSet<String>();
@@ -88,6 +88,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
       try {
         final ORecordId rid = new ORecordId(rec);
         database.getStorage().deleteRecord(rid, -1, 0, null);
+        database.getLevel1Cache().deleteRecord(rid);
       } catch (Throwable e) {
         throw new OCommandExecutionException("Error on executing command", e);
       }
