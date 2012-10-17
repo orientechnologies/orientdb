@@ -59,7 +59,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   private OJSONWriter     writer;
   private long            recordExported;
-  public static final int VERSION = 4;
+  public static final int VERSION = 5;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {

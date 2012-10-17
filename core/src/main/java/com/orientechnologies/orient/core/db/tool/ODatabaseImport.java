@@ -467,7 +467,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
     boolean recreateManualIndex = false;
-    if (exporterVersion < 4) {
+    if (exporterVersion <= 4) {
       recreateManualIndex = true;
 
       listener.onMessage("\nWARN: Exported database does not support manual index separation."
