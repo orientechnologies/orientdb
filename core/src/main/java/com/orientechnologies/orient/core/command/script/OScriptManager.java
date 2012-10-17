@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,9 +150,9 @@ public class OScriptManager {
       for (Entry<Object, Object> a : iArgs.entrySet())
         binding.put(a.getKey().toString(), a.getValue());
 
-      binding.put("params", new OJSMap(iArgs));
+      binding.put("params", iArgs.values());
     } else
-      binding.put("params", new OJSMap());
+      binding.put("params", Collections.emptyList());
 
     return binding;
   }
