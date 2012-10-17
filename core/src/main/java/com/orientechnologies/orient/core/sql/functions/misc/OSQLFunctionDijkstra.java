@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 
 /**
@@ -39,19 +41,21 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbst
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
-  public static final String        NAME = "dijkstra";
+public class OSQLFunctionDijkstra extends OSQLFunctionMathAbstract {
+  public static final String                NAME = "dijkstra";
 
-  private OGraphDatabase            db;
-  private Set<ODocument>            settledNodes;
-  private Set<ODocument>            unSettledNodes;
-  private Map<ODocument, ODocument> predecessors;
-  private Map<ODocument, Float>     distance;
-  private OIdentifiable             destinationVertex;
-  private String                    weightFieldName;
+  private OGraphDatabase                    db;
+  private Set<OIdentifiable>                settledNodes;
+  private Set<OIdentifiable>                unSettledNodes;
+  private Map<OIdentifiable, OIdentifiable> predecessors;
+  private Map<OIdentifiable, Float>         distance;
 
-  public OSQLFunctionDijkstraCount() {
-    super(NAME, 2, 2);
+  private OIdentifiable                     paramSourceVertex;
+  private OIdentifiable                     paramDestinationVertex;
+  private String                            paramWeightFieldName;
+
+  public OSQLFunctionDijkstra() {
+    super(NAME, 2, 3);
   }
 
   public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
@@ -59,24 +63,30 @@ public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
     db = (OGraphDatabase) (currentDatabase instanceof OGraphDatabase ? currentDatabase : new OGraphDatabase(
         (ODatabaseRecordTx) currentDatabase));
 
-    destinationVertex = (OIdentifiable) iParameters[0];
-    weightFieldName = (String) iParameters[1];
+    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], (ORecordInternal<?>) iCurrentRecord.getRecord(),
+        iRequester.getContext());
+    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], (ORecordInternal<?>) iCurrentRecord.getRecord(),
+        iRequester.getContext());
+    paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], (ORecordInternal<?>) iCurrentRecord.getRecord(),
+        iRequester.getContext());
 
-    settledNodes = new HashSet<ODocument>();
-    unSettledNodes = new HashSet<ODocument>();
-    distance = new HashMap<ODocument, Float>();
-    predecessors = new HashMap<ODocument, ODocument>();
-    distance.put((ODocument) iCurrentRecord.getRecord(), 0f);
-    unSettledNodes.add((ODocument) iCurrentRecord.getRecord());
+    settledNodes = new HashSet<OIdentifiable>();
+    unSettledNodes = new HashSet<OIdentifiable>();
+    distance = new HashMap<OIdentifiable, Float>();
+    predecessors = new HashMap<OIdentifiable, OIdentifiable>();
+    distance.put(paramSourceVertex, 0f);
+    unSettledNodes.add(paramSourceVertex);
+
+    iCurrentRecord.getRecord();
 
     while (unSettledNodes.size() > 0) {
-      ODocument node = getMinimum(unSettledNodes);
+      OIdentifiable node = getMinimum(unSettledNodes);
       settledNodes.add(node);
       unSettledNodes.remove(node);
       findMinimalDistances(node);
     }
 
-    return getPath(destinationVertex);
+    return getPath(paramDestinationVertex);
   }
 
   public boolean aggregateResults() {
@@ -84,7 +94,7 @@ public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: dijkstra(destinationVertex, weightEdgeFieldName)";
+    return "Syntax error: dijkstra(sourceVertex, destinationVertex, weightEdgeFieldName)";
   }
 
   @Override
@@ -92,9 +102,9 @@ public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
     return settledNodes;
   }
 
-  private void findMinimalDistances(final ODocument node) {
-    final List<ODocument> adjacentNodes = getNeighbors(node);
-    for (ODocument target : adjacentNodes) {
+  private void findMinimalDistances(final OIdentifiable node) {
+    final List<OIdentifiable> adjacentNodes = getNeighbors(node);
+    for (OIdentifiable target : adjacentNodes) {
       if (getShortestDistance(target) > getShortestDistance(node) + getDistance(node, target)) {
         distance.put(target, getShortestDistance(node) + getDistance(node, target));
         predecessors.put(target, node);
@@ -104,19 +114,19 @@ public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
 
   }
 
-  private float getDistance(final ODocument node, final ODocument target) {
+  private float getDistance(final OIdentifiable node, final OIdentifiable target) {
     Set<OIdentifiable> edges = db.getEdgesBetweenVertexes(node, target);
     final ODocument e = edges.iterator().next().getRecord();
     if (e != null) {
-      final Object fieldValue = e.field(weightFieldName);
+      final Object fieldValue = e.field(paramWeightFieldName);
       if (fieldValue != null && fieldValue instanceof Number)
         return ((Number) fieldValue).floatValue();
     }
     return 0;
   }
 
-  private List<ODocument> getNeighbors(final ODocument node) {
-    final List<ODocument> neighbors = new ArrayList<ODocument>();
+  private List<OIdentifiable> getNeighbors(final OIdentifiable node) {
+    final List<OIdentifiable> neighbors = new ArrayList<OIdentifiable>();
     final Set<OIdentifiable> outEdges = db.getOutEdges(node);
     for (OIdentifiable edge : outEdges) {
       final ODocument inVertex = db.getInVertex(edge);
@@ -127,20 +137,20 @@ public class OSQLFunctionDijkstraCount extends OSQLFunctionMathAbstract {
     return neighbors;
   }
 
-  private ODocument getMinimum(final Set<ODocument> vertexes) {
-    ODocument minimum = null;
-    for (ODocument vertex : vertexes) {
+  private OIdentifiable getMinimum(final Set<OIdentifiable> vertexes) {
+    OIdentifiable minimum = null;
+    for (OIdentifiable vertex : vertexes) {
       if (minimum == null || getShortestDistance(vertex) < getShortestDistance(minimum))
         minimum = vertex;
     }
     return minimum;
   }
 
-  private boolean isSettled(final ODocument vertex) {
+  private boolean isSettled(final OIdentifiable vertex) {
     return settledNodes.contains(vertex);
   }
 
-  private float getShortestDistance(final ODocument destination) {
+  private float getShortestDistance(final OIdentifiable destination) {
     final Float d = distance.get(destination);
     return d == null ? Float.MAX_VALUE : d;
   }

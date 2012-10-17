@@ -34,7 +34,11 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext     child;
   protected Map<String, Object> variables;
 
-  public Object getVariable(final String iName) {
+  public Object getVariable(String iName) {
+    if (iName == null)
+      return null;
+
+    iName = iName.toUpperCase();
     int pos = OStringSerializerHelper.getLowerIndexOf(iName, 0, ".", "[");
 
     String firstPart;
@@ -43,7 +47,7 @@ public class OBasicCommandContext implements OCommandContext {
       // UP TO THE PARENT
       firstPart = iName.substring(0, pos);
       lastPart = iName.substring(pos + 1);
-      if (firstPart.equalsIgnoreCase("PARENT") && parent != null)
+      if (firstPart.equals("PARENT") && parent != null)
         return parent.getVariable(lastPart);
     } else {
       firstPart = iName;
@@ -51,9 +55,9 @@ public class OBasicCommandContext implements OCommandContext {
     }
 
     Object result = null;
-    if (firstPart.equalsIgnoreCase("CONTEXT"))
+    if (firstPart.equals("CONTEXT"))
       result = getVariables();
-    else if (firstPart.equalsIgnoreCase("PARENT"))
+    else if (firstPart.equals("PARENT"))
       return parent;
     else {
       if (variables != null && variables.containsKey(firstPart))
@@ -68,7 +72,12 @@ public class OBasicCommandContext implements OCommandContext {
     return result;
   }
 
-  public OCommandContext setVariable(final String iName, final Object iValue) {
+  public OCommandContext setVariable(String iName, final Object iValue) {
+    if (iName == null)
+      return null;
+
+    iName = iName.toUpperCase();
+
     init();
     variables.put(iName, iValue);
     return this;

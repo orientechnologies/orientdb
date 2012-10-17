@@ -288,6 +288,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected boolean filter(final ORecordInternal<?> iRecord) {
+    context.setVariable("CURRENT", iRecord);
+
     if (iRecord instanceof ORecordSchemaAware<?>) {
       // CHECK THE TARGET CLASS
       final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;

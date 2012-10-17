@@ -225,6 +225,16 @@ public class OSQLHelper {
     return iObject;
   }
 
+  public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord, final OCommandContext iContext) {
+    if (iObject == null)
+      return null;
+
+    if (iObject instanceof OSQLFilterItem)
+      return ((OSQLFilterItem) iObject).getValue(iRecord, iContext);
+
+    return iObject;
+  }
+
   public static Object resolveFieldValue(final ODocument iDocument, final String iFieldName, final Object iFieldValue,
       final OCommandParameters iArguments) {
     if (iFieldValue instanceof OSQLFilterItemField) {

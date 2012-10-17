@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDijkstraCount;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDijkstra;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
@@ -71,7 +71,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
 
     // GEO FUNCTIONS
     FUNCTIONS.put(OSQLFunctionDistance.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDistance());
-    FUNCTIONS.put(OSQLFunctionDijkstraCount.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstraCount());
+    FUNCTIONS.put(OSQLFunctionDijkstra.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstra());
   }
 
   public Set<String> getFunctionNames() {

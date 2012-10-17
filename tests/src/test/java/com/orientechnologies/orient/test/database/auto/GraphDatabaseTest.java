@@ -29,7 +29,6 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
@@ -540,5 +539,11 @@ public class GraphDatabaseTest {
 
     ODatabaseHelper.deleteDatabase(database);
     database.close();
+  }
+
+  public void checkDijkstra() {
+    String subquery = "select $current, Dijkstra($current, #53:3, 'weight') as path from V where 1 > 0";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
+    Assert.assertFalse(result.isEmpty());
   }
 }
