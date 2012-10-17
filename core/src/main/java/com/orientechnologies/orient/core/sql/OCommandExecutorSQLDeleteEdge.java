@@ -83,8 +83,43 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
           // ASSIGN DEFAULT CLASS
           clazz = database.getMetadata().getSchema().getClass(OGraphDatabase.EDGE_CLASS_NAME);
 
-        final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));
+        final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+
+        final StringBuilder q = new StringBuilder();
+        q.append("select from ");
+        q.append(clazz.getName());
+
+        boolean where = false;
+        if (from != null) {
+          q.append(" ");
+          q.append(KEYWORD_WHERE);
+          q.append(" out = ");
+          q.append(from);
+          where = true;
+        }
+
+        if (to != null) {
+          q.append(" ");
+          if (!where) {
+            q.append(KEYWORD_WHERE);
+            where = true;
+          } else
+            q.append("and");
+          q.append(" in = ");
+          q.append(to);
+        }
+
+        if (condition != null) {
+          q.append(" ");
+          if (!where) {
+            q.append(KEYWORD_WHERE);
+            where = true;
+          } else
+            q.append("and");
+          q.append(condition);
+        }
+
+        query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
         break;
 
       } else if (temp.length() > 0) {
@@ -92,17 +127,16 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         clazz = database.getMetadata().getSchema().getClass(temp);
         if (clazz == null)
           throw new OCommandSQLParsingException("Class '" + temp + " was not found");
-
       }
-
-      if (from == null && to == null && rid == null && clazz == null)
-        // DELETE ALL EDGES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
 
       temp = parseOptionalWord(true);
       if (parserIsEnded())
         break;
     }
+
+    if (from == null && to == null && rid == null && clazz == null)
+      // DELETE ALL THE EDGES
+      query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
 
     return this;
   }
