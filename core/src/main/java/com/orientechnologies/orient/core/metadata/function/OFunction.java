@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -91,7 +92,7 @@ public class OFunction {
     return document.field("language");
   }
 
-  public OFunction setlanguage(final String iLanguage) {
+  public OFunction setLanguage(final String iLanguage) {
     document.field("language", iLanguage);
     return this;
   }
@@ -110,7 +111,7 @@ public class OFunction {
     return idempotent != null && idempotent;
   }
 
-  public OFunction setCode(final boolean iIdempotent) {
+  public OFunction setIdempotent(final boolean iIdempotent) {
     document.field("idempotent", iIdempotent);
     saveChanges();
     return this;
@@ -159,6 +160,10 @@ public class OFunction {
               "Time to execute a function", start);
 
     return result;
+  }
+
+  public ORID getId() {
+    return document.getIdentity();
   }
 
   /**

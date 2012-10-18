@@ -27,4 +27,12 @@ public interface OFunctionLibrary {
   public Set<String> getFunctionNames();
 
   public OFunction getFunction(String iName);
+
+  public OFunction createFunction(String iName);
+
+  public void create();
+
+  public void load();
+
+  public void close();
 }
