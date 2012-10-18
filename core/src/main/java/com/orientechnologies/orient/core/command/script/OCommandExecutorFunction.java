@@ -69,7 +69,9 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
       // COMPILE FUNCTION LIBRARY
-      scriptEngine.eval(scriptManager.getLibrary(db, f.getLanguage()));
+      final String lib = scriptManager.getLibrary(db, f.getLanguage());
+      if (lib != null)
+        scriptEngine.eval(lib);
 
       if (scriptEngine instanceof Invocable) {
         // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
@@ -85,7 +87,8 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
       } else {
         // INVOKE THE CODE SNIPPET
-        return scriptEngine.eval(invokeFunction(f, iArgs.values().toArray()), binding);
+        final Object[] args = iArgs == null ? null : iArgs.values().toArray();
+        return scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
       }
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
@@ -105,21 +108,4 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
   protected void throwSyntaxErrorException(String iText) {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
-
-  protected String invokeFunction(final OFunction f, Object[] iArgs) {
-    final StringBuilder code = new StringBuilder();
-
-    code.append(f.getName());
-    code.append('(');
-    int i = 0;
-    for (Object a : iArgs) {
-      if (i++ > 0)
-        code.append(',');
-      code.append(a);
-    }
-    code.append(");");
-
-    return code.toString();
-  }
-
 }

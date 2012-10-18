@@ -26,18 +26,19 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * 
  */
 public class ORubyScriptFormatter implements OScriptFormatter {
-  public String getFunction(final OFunction f) {
+  public String getFunctionDefinition(final OFunction f) {
 
     final StringBuilder fCode = new StringBuilder();
     fCode.append("def ");
     fCode.append(f.getName());
     fCode.append('(');
     int i = 0;
-    for (String p : f.getParameters()) {
-      if (i++ > 0)
-        fCode.append(',');
-      fCode.append(p);
-    }
+    if (f.getParameters() != null)
+      for (String p : f.getParameters()) {
+        if (i++ > 0)
+          fCode.append(',');
+        fCode.append(p);
+      }
     fCode.append(")\n");
 
     final Scanner scanner = new Scanner(f.getCode());
@@ -54,5 +55,24 @@ public class ORubyScriptFormatter implements OScriptFormatter {
     fCode.append("\nend\n");
 
     return fCode.toString();
+  }
+
+  @Override
+  public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
+    final StringBuilder code = new StringBuilder();
+
+    code.append(iFunction.getName());
+    code.append('(');
+    if (iArgs != null) {
+      int i = 0;
+      for (Object a : iArgs) {
+        if (i++ > 0)
+          code.append(',');
+        code.append(a);
+      }
+    }
+    code.append(");");
+
+    return code.toString();
   }
 }

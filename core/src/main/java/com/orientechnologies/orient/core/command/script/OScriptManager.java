@@ -31,11 +31,14 @@ import javax.script.ScriptEngineManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
+import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
 
 /**
  * Executes Script Commands.
@@ -56,6 +59,9 @@ public class OScriptManager {
     if (engines == null) {
       engines = new HashMap<String, ScriptEngine>();
       scriptEngineManager = new ScriptEngineManager();
+
+      registerEngine(OSQLScriptEngine.NAME, new OSQLScriptEngineFactory().getScriptEngine());
+
       for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
         registerEngine(f.getLanguageName().toLowerCase(), f.getScriptEngine());
 
@@ -68,20 +74,26 @@ public class OScriptManager {
         defaultLanguage = DEF_LANGUAGE;
       }
 
-      if (!engines.containsKey(OSQLScriptEngine.ENGINE))
-        registerEngine(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
-
+      registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
       registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
       registerFormatter("ruby", new ORubyScriptFormatter());
     }
   }
 
-  public String getFunction(final OFunction iFunction) {
+  public String getFunctionDefinition(final OFunction iFunction) {
     final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
     if (formatter == null)
-      throw new IllegalArgumentException("Cannot find script formatter for the language '" + DEF_LANGUAGE + "'");
+      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
 
-    return formatter.getFunction(iFunction);
+    return formatter.getFunctionDefinition(iFunction);
+  }
+
+  public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
+    final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
+    if (formatter == null)
+      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+
+    return formatter.getFunctionInvoke(iFunction, iArgs);
   }
 
   /**
@@ -96,7 +108,7 @@ public class OScriptManager {
   public String getLibrary(final ODatabaseComplex<?> db, final String iLanguage) {
     if (db == null)
       // NO DB = NO LIBRARY
-      return "";
+      return null;
 
     final StringBuilder code = new StringBuilder();
 
@@ -104,13 +116,19 @@ public class OScriptManager {
     for (String fName : functions) {
       final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(fName);
 
+      if (f.getLanguage() == null)
+        throw new OConfigurationException("Database function '" + fName + "' has no language");
+
       if (f.getLanguage().equalsIgnoreCase(iLanguage)) {
-        code.append(getFunction(f));
-        code.append("\n");
+        final String def = getFunctionDefinition(f);
+        if (def != null) {
+          code.append(def);
+          code.append("\n");
+        }
       }
     }
 
-    return code.toString();
+    return code.length() == 0 ? null : code.toString();
   }
 
   public ScriptEngine getEngine(final String iLanguage) {

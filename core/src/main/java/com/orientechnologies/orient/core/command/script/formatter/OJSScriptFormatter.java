@@ -24,22 +24,42 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * 
  */
 public class OJSScriptFormatter implements OScriptFormatter {
-  public String getFunction(final OFunction f) {
+  public String getFunctionDefinition(final OFunction f) {
 
     final StringBuilder fCode = new StringBuilder();
     fCode.append("function ");
     fCode.append(f.getName());
     fCode.append('(');
     int i = 0;
-    for (String p : f.getParameters()) {
-      if (i++ > 0)
-        fCode.append(',');
-      fCode.append(p);
-    }
+    if (f.getParameters() != null)
+      for (String p : f.getParameters()) {
+        if (i++ > 0)
+          fCode.append(',');
+        fCode.append(p);
+      }
     fCode.append(") {\n");
     fCode.append(f.getCode());
     fCode.append("\n}\n");
 
     return fCode.toString();
+  }
+
+  @Override
+  public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
+    final StringBuilder code = new StringBuilder();
+
+    code.append(iFunction.getName());
+    code.append('(');
+    if (iArgs != null) {
+      int i = 0;
+      for (Object a : iArgs) {
+        if (i++ > 0)
+          code.append(',');
+        code.append(a);
+      }
+    }
+    code.append(");");
+
+    return code.toString();
   }
 }

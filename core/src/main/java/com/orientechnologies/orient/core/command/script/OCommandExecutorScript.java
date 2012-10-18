@@ -63,7 +63,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     try {
       // COMPILE FUNCTION LIBRARY
-      parserText = scriptManager.getLibrary(db, language) + parserText;
+      String lib = scriptManager.getLibrary(db, language);
+      if (lib == null)
+        lib = "";
+
+      parserText = lib + parserText;
 
       return scriptEngine.eval(parserText, binding);
 

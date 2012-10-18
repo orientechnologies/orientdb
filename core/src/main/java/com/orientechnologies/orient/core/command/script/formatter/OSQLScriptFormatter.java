@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.orientechnologies.orient.core.command.script.formatter;
 
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 
 /**
- * Interface to provide script formatter in any language.
+ * SQL script formatter.
  * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli
  * 
  */
-public interface OScriptFormatter {
-  public String getFunctionDefinition(OFunction iFunction);
+public class OSQLScriptFormatter implements OScriptFormatter {
+  public String getFunctionDefinition(final OFunction f) {
+    return null;
+  }
 
-  public String getFunctionInvoke(OFunction iFunction, final Object[] iArgs);
+  @Override
+  public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
+    // TODO: BIND ARGS
+    return iFunction.getCode();
+  }
 }

@@ -47,6 +47,7 @@ public class OFunction {
    */
   public OFunction() {
     document = new ODocument(CLASS_NAME);
+    setLanguage("SQL");
   }
 
   /**
