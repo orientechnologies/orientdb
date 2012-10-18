@@ -93,7 +93,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
     sb.append(" the record ");
     sb.append(rid);
     sb.append(" because the version is not the latest. Probably you are ");
-    sb.append(operation.toLowerCase().substring(operation.length() - 1));
+    sb.append(operation.toLowerCase().substring(0, operation.length() - 1));
     sb.append("ing an old record or it has been modified by another user (db=v");
     sb.append(databaseVersion);
     sb.append(" your=v");
