@@ -46,6 +46,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
     commands.put(OCommandExecutorSQLCreateVertex.NAME, OCommandExecutorSQLCreateVertex.class);
     commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
+    commands.put(OCommandExecutorSQLCreateFunction.NAME, OCommandExecutorSQLCreateFunction.class);
     commands.put(OCommandExecutorSQLGrant.KEYWORD_GRANT, OCommandExecutorSQLGrant.class);
     commands.put(OCommandExecutorSQLRevoke.KEYWORD_REVOKE, OCommandExecutorSQLRevoke.class);
     commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
