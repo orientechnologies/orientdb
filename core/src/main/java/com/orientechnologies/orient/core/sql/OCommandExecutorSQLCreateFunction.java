@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * SQL CREATE FUNCTION command.
@@ -50,7 +51,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
     parserNextWord(false);
     name = parserGetLastWord();
     parserNextWord(false);
-    code = parserGetLastWord();
+    code = OStringSerializerHelper.getStringContent(parserGetLastWord());
 
     String temp = parseOptionalWord(true);
     while (temp != null) {
