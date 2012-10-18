@@ -100,8 +100,8 @@ public enum OGlobalConfiguration {
           + "but guarantee reliability on unreliable drives", Boolean.class, Boolean.FALSE),
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
-      "List of clusters to sync immediately after update separated by commas. Can be useful for manual index",
-      String.class, "manindex"),
+      "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
+      "manindex"),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
@@ -124,13 +124,15 @@ public enum OGlobalConfiguration {
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
+  INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
+      "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
+
   INDEX_AUTO_LAZY_UPDATES(
       "index.auto.lazyUpdates",
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
-  INDEX_MANUAL_LAZY_UPDATES(
-      "index.manual.lazyUpdates",
+  INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
 

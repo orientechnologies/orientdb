@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -122,7 +123,8 @@ public class OMetadata {
               instance.load();
 
             // rebuild indexes if index cluster wasn't closed properly
-            if (iLoad && (database.getStorage() instanceof OStorageLocal)
+            if (iLoad && OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
+                && (database.getStorage() instanceof OStorageLocal)
                 && !((OStorageLocal) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
               for (OIndex<?> idx : instance.getIndexes())
                 if (idx.isAutomatic()) {
