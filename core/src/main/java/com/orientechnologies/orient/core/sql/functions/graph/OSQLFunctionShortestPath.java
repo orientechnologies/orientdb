@@ -32,8 +32,9 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
  * 
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
-  public static final String   NAME = "shortestPath";
-  private static final Integer MIN  = new Integer(0);
+  public static final String   NAME     = "shortestPath";
+  private static final Integer MIN      = new Integer(0);
+  private static final Integer DISTANCE = new Integer(1);
 
   public OSQLFunctionShortestPath() {
     super(NAME, 2, 3);
@@ -73,7 +74,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
   }
 
   protected Integer getDistance(final OIdentifiable node, final OIdentifiable target) {
-    return 1;
+    return DISTANCE;
   }
 
   @Override
