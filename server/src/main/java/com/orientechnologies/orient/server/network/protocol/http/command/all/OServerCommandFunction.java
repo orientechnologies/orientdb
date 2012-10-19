@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
@@ -29,78 +28,67 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandFunction extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|function/*", "POST|function/*" };
+	private static final String[]	NAMES	= { "GET|function/*", "POST|function/*" };
 
-  @Override
-  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
+	@Override
+	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+		final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
 
-    iRequest.data.commandInfo = "Execute a function";
+		iRequest.data.commandInfo = "Execute a function";
 
-    ODatabaseDocumentTx db = null;
-    Object result = null;
+		ODatabaseDocumentTx db = null;
 
-    try {
-      db = getProfiledDatabaseInstance(iRequest);
+		try {
+			db = getProfiledDatabaseInstance(iRequest);
 
-      // FORCE RELOADING
-      db.getMetadata().getFunctionLibrary().load();
+			// FORCE RELOADING
+			db.getMetadata().getFunctionLibrary().load();
 
-      final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parts[2]);
-      if (f == null)
-        throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
+			final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parts[2]);
+			if (f == null)
+				throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
 
-      if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
-        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            "GET method is not allowed to execute function '" + parts[2]
-                + "' because has been declared as non idempotent. Use POST instead.", null, true);
-        return false;
-      }
+			if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
+				iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+						"GET method is not allowed to execute function '" + parts[2]
+								+ "' because has been declared as non idempotent. Use POST instead.", null, true);
+				return false;
+			}
 
-      final Object[] args = new Object[parts.length - 3];
-      for (int i = 3; i < parts.length; ++i)
-        args[i - 3] = parts[i];
+			final Object[] args = new Object[parts.length - 3];
+			for (int i = 3; i < parts.length; ++i)
+				args[i - 3] = parts[i];
 
-      // BIND CONTEXT VARIABLES
-      final OBasicCommandContext context = new OBasicCommandContext();
-      context.setVariable("request", new OHttpRequestWrapper(iRequest));
-      context.setVariable("response", new OHttpResponseWrapper(iResponse));
+			// BIND CONTEXT VARIABLES
+			final OBasicCommandContext context = new OBasicCommandContext();
+			context.setVariable("request", new OHttpRequestWrapper(iRequest));
+			context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
-      result = f.executeInContext(context, args);
+			iResponse.writeResult(f.executeInContext(context, args));
 
-      if (result != null) {
-        if (result instanceof ODocument && ((ODocument) result).isEmbedded()) {
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
-              ((ODocument) result).toJSON(), null, true);
-        } else
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, result, null,
-              true);
-      } else
-        iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+		} catch (OCommandScriptException e) {
+			// EXCEPTION
 
-    } catch (OCommandScriptException e) {
-      // EXCEPTION
+			final StringBuilder msg = new StringBuilder();
+			for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
+				if (msg.length() > 0)
+					msg.append("\n");
+				msg.append(currentException.getMessage());
+			}
 
-      final StringBuilder msg = new StringBuilder();
-      for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
-        if (msg.length() > 0)
-          msg.append("\n");
-        msg.append(currentException.getMessage());
-      }
+			iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+					msg.toString(), null, true);
 
-      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          msg.toString(), null, true);
+		} finally {
+			if (db != null)
+				OSharedDocumentDatabase.release(db);
+		}
 
-    } finally {
-      if (db != null)
-        OSharedDocumentDatabase.release(db);
-    }
+		return false;
+	}
 
-    return false;
-  }
-
-  @Override
-  public String[] getNames() {
-    return NAMES;
-  }
+	@Override
+	public String[] getNames() {
+		return NAMES;
+	}
 }
