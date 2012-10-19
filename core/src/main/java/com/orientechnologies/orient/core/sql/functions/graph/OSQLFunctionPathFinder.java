@@ -68,7 +68,7 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
     distance.put(paramSourceVertex, getMinimumDistance());
     unSettledNodes.add(paramSourceVertex);
 
-    while (unSettledNodes.size() > 0) {
+    while (continueTraversing()) {
       final OIdentifiable node = getMinimum(unSettledNodes);
       settledNodes.add(node);
       unSettledNodes.remove(node);
@@ -152,5 +152,9 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
 
   protected boolean isSettled(final OIdentifiable vertex) {
     return settledNodes.contains(vertex);
+  }
+
+  protected boolean continueTraversing() {
+    return unSettledNodes.size() > 0;
   }
 }
