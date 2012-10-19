@@ -27,37 +27,37 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
-  public static final String KEYWORD_EXPLAIN = "EXPLAIN";
+	public static final String	KEYWORD_EXPLAIN	= "EXPLAIN";
 
-  @SuppressWarnings("unchecked")
-  @Override
-  public OCommandExecutorSQLExplain parse(OCommandRequest iCommand) {
-    String cmd = ((OCommandSQL) iCommand).getText();
-    super.parse(new OCommandSQL(cmd.substring(KEYWORD_EXPLAIN.length())));
-    return this;
-  }
+	@SuppressWarnings("unchecked")
+	@Override
+	public OCommandExecutorSQLExplain parse(OCommandRequest iCommand) {
+		String cmd = ((OCommandSQL) iCommand).getText();
+		super.parse(new OCommandSQL(cmd.substring(KEYWORD_EXPLAIN.length())));
+		return this;
+	}
 
-  @Override
-  public Object execute(Map<Object, Object> iArgs) {
-    delegate.getContext().setRecordingMetrics(true);
+	@Override
+	public Object execute(Map<Object, Object> iArgs) {
+		delegate.getContext().setRecordingMetrics(true);
 
-    final long startTime = System.currentTimeMillis();
+		final long startTime = System.nanoTime();
 
-    final Object result = super.execute(iArgs);
-    final ODocument report = new ODocument(delegate.getContext().getVariables());
+		final Object result = super.execute(iArgs);
+		final ODocument report = new ODocument(delegate.getContext().getVariables());
 
-    report.field("elapsed", System.currentTimeMillis() - startTime);
+		report.field("elapsed", (System.nanoTime() - startTime) / 1000000000f);
 
-    if (result instanceof Collection<?>) {
-      report.field("resultType", "collection");
-      report.field("resultSize", ((Collection<?>) result).size());
-    } else if (result instanceof ODocument) {
-      report.field("resultType", "document");
-      report.field("resultSize", 1);
-    } else if (result instanceof Number) {
-      report.field("resultType", "number");
-    }
+		if (result instanceof Collection<?>) {
+			report.field("resultType", "collection");
+			report.field("resultSize", ((Collection<?>) result).size());
+		} else if (result instanceof ODocument) {
+			report.field("resultType", "document");
+			report.field("resultSize", 1);
+		} else if (result instanceof Number) {
+			report.field("resultType", "number");
+		}
 
-    return report;
-  }
+		return report;
+	}
 }
