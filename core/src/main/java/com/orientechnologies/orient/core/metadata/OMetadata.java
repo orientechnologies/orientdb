@@ -187,8 +187,8 @@ public class OMetadata {
 			schema.close();
 		if (security != null)
 			security.close();
-		if (functionLibrary != null)
-			functionLibrary.close();
+//		if (functionLibrary != null)
+//			functionLibrary.close();
 	}
 
 	protected ODatabaseRecord getDatabase() {

@@ -105,9 +105,10 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     if (function == null)
       throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
-    if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
-        && funcParamsText.size() > function.getMaxParams())
-      throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
+    // STRICT CHECK ON PARAMETERS
+    // if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
+    // && funcParamsText.size() > function.getMaxParams())
+    // throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
