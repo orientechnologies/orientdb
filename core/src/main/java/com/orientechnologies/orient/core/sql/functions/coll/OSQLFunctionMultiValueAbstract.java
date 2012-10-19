@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
  */
 public abstract class OSQLFunctionMultiValueAbstract<T> extends OSQLFunctionConfigurableAbstract {
 
-  protected T        context;
+  protected T context;
 
   public OSQLFunctionMultiValueAbstract(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
@@ -39,5 +39,10 @@ public abstract class OSQLFunctionMultiValueAbstract<T> extends OSQLFunctionConf
   @Override
   public T getResult() {
     return context;
+  }
+
+  @Override
+  public boolean shouldMergeDistributedResult() {
+    return true;
   }
 }

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -44,6 +43,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
   public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String IDENTITY_CLASSNAME     = "OIdentity";
   public static final String ALLOW_ALL_FIELD        = "_allow";
   public static final String ALLOW_READ_FIELD       = "_allowRead";
   public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
@@ -342,9 +342,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   protected OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
 
-    OClass identityClass = database.getMetadata().getSchema().getClass("OIdentity"); // SINCE 1.2.0
+    OClass identityClass = database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME); // SINCE 1.2.0
     if (identityClass == null)
-      identityClass = database.getMetadata().getSchema().createAbstractClass("OIdentity");
+      identityClass = database.getMetadata().getSchema().createAbstractClass(IDENTITY_CLASSNAME);
 
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
     if (roleClass == null)
@@ -388,13 +388,17 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     if (restrictedClass == null)
       restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
     if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
-      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema()
+          .getClass(IDENTITY_CLASSNAME));
     if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
-      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
     if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
-      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
     if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
-      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass("OIdentity"));
+      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
+          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
 
     return adminUser;
   }

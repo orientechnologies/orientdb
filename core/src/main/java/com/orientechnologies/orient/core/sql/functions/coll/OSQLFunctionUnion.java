@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -30,45 +31,57 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object>> {
-	public static final String	NAME	= "union";
+  public static final String NAME = "union";
 
-	public OSQLFunctionUnion() {
-		super(NAME, 1, -1);
-	}
+  public OSQLFunctionUnion() {
+    super(NAME, 1, -1);
+  }
 
-	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters.length == 1) {
-			// AGGREGATION MODE (STATEFULL)
-			final Object value = iParameters[0];
-			if (value != null) {
-				if (context == null)
-					context = new HashSet<Object>();
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    if (iParameters.length == 1) {
+      // AGGREGATION MODE (STATEFULL)
+      final Object value = iParameters[0];
+      if (value != null) {
+        if (context == null)
+          context = new HashSet<Object>();
 
-				if (value instanceof Collection<?>)
-					// INSERT EVERY SINGLE COLLECTION ITEM
-					context.addAll((Collection<?>) value);
-				else
-					context.add(value);
-			}
+        if (value instanceof Collection<?>)
+          // INSERT EVERY SINGLE COLLECTION ITEM
+          context.addAll((Collection<?>) value);
+        else
+          context.add(value);
+      }
 
-			return null;
-		} else {
-			// IN-LINE MODE (STATELESS)
-			final HashSet<Object> result = new HashSet<Object>();
-			for (Object value : iParameters) {
-				if (value != null)
-					if (value instanceof Collection<?>)
-						// INSERT EVERY SINGLE COLLECTION ITEM
-						result.addAll((Collection<?>) value);
-					else
-						result.add(value);
-			}
+      return null;
+    } else {
+      // IN-LINE MODE (STATELESS)
+      final HashSet<Object> result = new HashSet<Object>();
+      for (Object value : iParameters) {
+        if (value != null)
+          if (value instanceof Collection<?>)
+            // INSERT EVERY SINGLE COLLECTION ITEM
+            result.addAll((Collection<?>) value);
+          else
+            result.add(value);
+      }
 
-			return result;
-		}
-	}
+      return result;
+    }
+  }
 
-	public String getSyntax() {
-		return "Syntax error: union(<field>*)";
-	}
+  public String getSyntax() {
+    return "Syntax error: union(<field>*)";
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    final Collection<Object> result = new HashSet<Object>();
+    for (Object iParameter : resultsToMerge) {
+      final Collection<Object> items = (Collection<Object>) iParameter;
+      if (items != null) {
+        result.addAll(items);
+      }
+    }
+    return result;
+  }
 }

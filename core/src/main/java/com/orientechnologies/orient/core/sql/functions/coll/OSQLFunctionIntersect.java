@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -30,44 +31,62 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Object>> {
-	public static final String	NAME	= "intersect";
+  public static final String NAME = "intersect";
 
-	public OSQLFunctionIntersect() {
-		super(NAME, 1, 1);
-	}
+  public OSQLFunctionIntersect() {
+    super(NAME, 1, -1);
+  }
 
-	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		Object value = iParameters[0];
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    Object value = iParameters[0];
 
-		if (value == null || !(value instanceof Collection<?>))
-			return null;
+    if (value == null || !(value instanceof Collection<?>))
+      return null;
 
-		final Collection<?> coll = (Collection<?>) value;
+    final Collection<?> coll = (Collection<?>) value;
 
-		if (iParameters.length == 1) {
-			// AGGREGATION MODE (STATEFULL)
-			if (context == null) {
-				// ADD ALL THE ITEMS OF THE FIRST COLLECTION
-				context = new HashSet<Object>(coll);
-			} else {
-				// INTERSECT IT AGAINST THE CURRENT COLLECTION
-				context.retainAll(coll);
-			}
-			return null;
-		} else {
-			// IN-LINE MODE (STATELESS)
-			final HashSet<Object> result = new HashSet<Object>(coll);
+    if (iParameters.length == 1) {
+      // AGGREGATION MODE (STATEFULL)
+      if (context == null) {
+        // ADD ALL THE ITEMS OF THE FIRST COLLECTION
+        context = new HashSet<Object>(coll);
+      } else {
+        // INTERSECT IT AGAINST THE CURRENT COLLECTION
+        context.retainAll(coll);
+      }
+      return null;
+    } else {
+      // IN-LINE MODE (STATELESS)
+      final HashSet<Object> result = new HashSet<Object>(coll);
 
-			for (int i = 1; i < iParameters.length; ++i) {
-				value = iParameters[i];
-				result.retainAll((Collection<?>) value);
-			}
+      for (int i = 1; i < iParameters.length; ++i) {
+        value = iParameters[i];
+        result.retainAll((Collection<?>) value);
+      }
 
-			return result;
-		}
-	}
+      return result;
+    }
+  }
 
-	public String getSyntax() {
-		return "Syntax error: intersect(<field>*)";
-	}
+  public String getSyntax() {
+    return "Syntax error: intersect(<field>*)";
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    final Collection<Object> result = new HashSet<Object>();
+    if (!resultsToMerge.isEmpty()) {
+      final Collection<Object> items = (Collection<Object>) resultsToMerge.get(0);
+      if (items != null) {
+        result.addAll(items);
+      }
+    }
+    for (int i = 1; i < resultsToMerge.size(); i++) {
+      final Collection<Object> items = (Collection<Object>) resultsToMerge.get(i);
+      if (items != null) {
+        result.retainAll(items);
+      }
+    }
+    return result;
+  }
 }

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -26,42 +28,58 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "max";
+  public static final String NAME = "max";
 
-	private Comparable<Object>	context;
+  private Comparable<Object> context;
 
-	public OSQLFunctionMax() {
-		super(NAME, 1, 1);
-	}
+  public OSQLFunctionMax() {
+    super(NAME, 1, 1);
+  }
 
-	@SuppressWarnings("unchecked")
-	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
-			// PRECONDITIONS
-			return null;
+  @SuppressWarnings("unchecked")
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
+      // PRECONDITIONS
+      return null;
 
-		final Comparable<Object> value = (Comparable<Object>) iParameters[0];
+    final Comparable<Object> value = (Comparable<Object>) iParameters[0];
 
-		if (context == null)
-			// FIRST TIME
-			context = value;
-		else if (context.compareTo(value) < 0)
-			// BIGGER
-			context = value;
+    if (context == null)
+      // FIRST TIME
+      context = value;
+    else if (context.compareTo(value) < 0)
+      // BIGGER
+      context = value;
 
-		return value;
-	}
+    return value;
+  }
 
-	public boolean aggregateResults() {
-		return true;
-	}
+  public boolean aggregateResults() {
+    return true;
+  }
 
-	public String getSyntax() {
-		return "Syntax error: max(<field>)";
-	}
+  public String getSyntax() {
+    return "Syntax error: max(<field>)";
+  }
 
-	@Override
-	public Object getResult() {
-		return context;
-	}
+  @Override
+  public Object getResult() {
+    return context;
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    Comparable<Object> context = null;
+    for (Object iParameter : resultsToMerge) {
+      final Comparable<Object> value = (Comparable<Object>) iParameter;
+
+      if (context == null)
+        // FIRST TIME
+        context = value;
+      else if (context.compareTo(value) < 0)
+        // BIGGER
+        context = value;
+    }
+    return context;
+  }
 }

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
@@ -27,36 +29,46 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbst
  * 
  */
 public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
-	public static final String	NAME	= "count";
+  public static final String NAME  = "count";
 
-	private long								total	= 0;
+  private long               total = 0;
 
-	public OSQLFunctionCount() {
-		super(NAME, 1, 1);
-	}
+  public OSQLFunctionCount() {
+    super(NAME, 1, 1);
+  }
 
-	public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		if (iParameters[0] != null)
-			total++;
+  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+    if (iParameters[0] != null)
+      total++;
 
-		return null;
-	}
+    return null;
+  }
 
   public boolean aggregateResults() {
-		return true;
-	}
+    return true;
+  }
 
-	public String getSyntax() {
-		return "Syntax error: count(<field>|*)";
-	}
+  public String getSyntax() {
+    return "Syntax error: count(<field>|*)";
+  }
 
-	@Override
-	public Object getResult() {
-		return total;
-	}
+  @Override
+  public Object getResult() {
+    return total;
+  }
 
-	@Override
-	public void setResult(final Object iResult) {
-		total = ((Number) iResult).longValue();
-	}
+  @Override
+  public void setResult(final Object iResult) {
+    total = ((Number) iResult).longValue();
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    long total = 0;
+    for (Object iParameter : resultsToMerge) {
+      final long value = (Long) iParameter;
+      total += value;
+    }
+    return total;
+  }
 }

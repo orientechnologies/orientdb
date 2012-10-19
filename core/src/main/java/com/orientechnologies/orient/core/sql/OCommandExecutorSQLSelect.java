@@ -61,12 +61,15 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
@@ -153,6 +156,112 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return this;
+  }
+
+  /**
+   * Determine clusters that are used in select operation
+   * 
+   * @return set of involved clusters
+   */
+  public Set<Integer> getInvolvedClusters() {
+
+    final Set<Integer> clusters = new HashSet<Integer>();
+    if (parsedTarget.getTargetRecords() != null) {
+      for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
+        clusters.add(identifiable.getIdentity().getClusterId());
+      }
+    }
+    if (parsedTarget.getTargetClasses() != null) {
+      final OStorage storage = getDatabase().getStorage();
+      for (String clazz : parsedTarget.getTargetClasses().values()) {
+        clusters.add(storage.getClusterIdByName(clazz));
+      }
+    }
+    if (parsedTarget.getTargetClusters() != null) {
+      final OStorage storage = getDatabase().getStorage();
+      for (String clazz : parsedTarget.getTargetClusters().values()) {
+        clusters.add(storage.getClusterIdByName(clazz));
+      }
+    }
+    if (parsedTarget.getTargetIndex() != null) {
+      // TODO indexes??
+    }
+    return clusters;
+  }
+
+  /**
+   * Add condition so that query will be executed only on the given id range. That is used to verify that query will be executed on
+   * the single node
+   * 
+   * @param fromId
+   * @param toId
+   * @return this
+   */
+  public OCommandExecutorSQLSelect boundToLocalNode(long fromId, long toId) {
+    if (fromId == toId) {
+      // single node in dht
+      return this;
+    }
+
+    // determine clusters
+    final Set<Integer> clusters = getInvolvedClusters();
+
+    if (!clusters.isEmpty()) {
+      // make condition
+      final OSQLFilterCondition nodeCondition;
+      if (fromId < toId) {
+        // (fromId..toId]
+        nodeCondition = getConditionForClusters(clusters, fromId, toId);
+      } else {
+        // (fromId..MAX_LONG] u (-1..toId]
+        nodeCondition = new OSQLFilterCondition(getConditionForClusters(clusters, fromId, Long.MAX_VALUE), new OQueryOperatorOr(),
+            getConditionForClusters(clusters, -1L, toId));
+      }
+
+      if (compiledFilter == null) {
+        compiledFilter = OSQLEngine.getInstance().parseCondition("", getContext(), KEYWORD_WHERE);
+      }
+
+      final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
+      if (rootCondition != null) {
+        compiledFilter.setRootCondition(new OSQLFilterCondition(nodeCondition, new OQueryOperatorAnd(), rootCondition));
+      } else {
+        compiledFilter.setRootCondition(nodeCondition);
+      }
+    }
+    return this;
+  }
+
+  protected static OSQLFilterCondition getConditionForClusters(Set<Integer> clusterIds, long fromId, long toId) {
+    if (clusterIds.isEmpty()) {
+      throw new IllegalStateException();
+    }
+    final Iterator<Integer> clusters = clusterIds.iterator();
+    OSQLFilterCondition condition = getConditionForCluster(clusters.next(), fromId, toId);
+    while (clusters.hasNext()) {
+      condition = new OSQLFilterCondition(condition, new OQueryOperatorOr(), getConditionForCluster(clusters.next(), fromId, toId));
+    }
+    return condition;
+  }
+
+  protected static OSQLFilterCondition getConditionForCluster(int clusterId, long fromId, long toId) {
+    final ORecordId fromRecordId = new ORecordId(clusterId, fromId);
+    final ORecordId toRecordId = new ORecordId(clusterId, toId);
+
+    final OSQLFilterCondition fromCondition = new OSQLFilterCondition(new OSQLFilterItemField(null, "@rid"),
+        new OQueryOperatorMajor(), fromRecordId);
+    final OSQLFilterCondition toCondition = new OSQLFilterCondition(new OSQLFilterItemField(null, "@rid"),
+        new OQueryOperatorMinorEquals(), toRecordId);
+
+    return new OSQLFilterCondition(fromCondition, new OQueryOperatorAnd(), toCondition);
+  }
+
+  /**
+   * 
+   * @return {@code ture} if any of the sql functions perform aggreagation, {@code false} otherwise
+   */
+  public boolean isAnyFunctionAggregates() {
+    return anyFunctionAggregates;
   }
 
   public boolean hasNext() {

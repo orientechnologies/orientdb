@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import java.util.List;
+
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+
 /**
  * Abstract class to extend to build Custom SQL Functions. Extend it and register it with:
  * <code>OSQLParser.getInstance().registerStatelessFunction()</code> or
@@ -67,5 +72,21 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
   }
 
   public void setResult(final Object iResult) {
+  }
+
+  public boolean shouldMergeDistributedResult() {
+    return false;
+  }
+
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    throw new IllegalStateException("By default SQL function execution result can not be merged");
+  }
+
+  protected boolean returnDistributedResult() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OAutoshardedStorage;
+  }
+
+  protected long getDistributedStorageId() {
+    return ((OAutoshardedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()).getStorageId();
   }
 }

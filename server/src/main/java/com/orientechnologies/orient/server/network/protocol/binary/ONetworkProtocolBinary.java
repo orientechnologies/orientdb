@@ -959,37 +959,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // ASYNCHRONOUS
         final StringBuilder empty = new StringBuilder();
         final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-        final int txId = clientTxId;
 
         final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
-        command.setResultListener(new OCommandResultListener() {
-          @Override
-          public boolean result(final Object iRecord) {
-            if (empty.length() == 0)
-              try {
-                sendOk(txId);
-                empty.append("-");
-              } catch (IOException e1) {
-              }
-
-            try {
-              channel.writeByte((byte) 1); // ONE MORE RECORD
-              writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
-
-              if (fetchPlan != null && iRecord instanceof ODocument) {
-                final ODocument doc = (ODocument) iRecord;
-                final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
-                final OFetchContext context = new ORemoteFetchContext();
-                OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context);
-              }
-
-            } catch (IOException e) {
-              return false;
-            }
-
-            return true;
-          }
-        });
+        command.setResultListener(new AsyncResultListener(empty, clientTxId, fetchPlan, recordsToSend));
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();
 
@@ -1380,6 +1352,48 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
     } finally {
       endResponse();
+    }
+  }
+
+  public class AsyncResultListener implements OCommandResultListener {
+
+    private final StringBuilder        empty;
+    private final int                  txId;
+    private final Map<String, Integer> fetchPlan;
+    private final Set<ODocument>       recordsToSend;
+
+    public AsyncResultListener(StringBuilder empty, int txId, Map<String, Integer> fetchPlan, Set<ODocument> recordsToSend) {
+      this.empty = empty;
+      this.txId = txId;
+      this.fetchPlan = fetchPlan;
+      this.recordsToSend = recordsToSend;
+    }
+
+    @Override
+    public boolean result(Object iRecord) {
+      if (empty.length() == 0)
+        try {
+          sendOk(txId);
+          empty.append("-");
+        } catch (IOException e1) {
+        }
+
+      try {
+        channel.writeByte((byte) 1); // ONE MORE RECORD
+        writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
+
+        if (fetchPlan != null && iRecord instanceof ODocument) {
+          final ODocument doc = (ODocument) iRecord;
+          final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+          final OFetchContext context = new ORemoteFetchContext();
+          OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context);
+        }
+
+      } catch (IOException e) {
+        return false;
+      }
+
+      return true;
     }
   }
 }

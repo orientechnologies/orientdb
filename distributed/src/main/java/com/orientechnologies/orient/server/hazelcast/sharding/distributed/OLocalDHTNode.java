@@ -14,15 +14,22 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -284,6 +291,61 @@ public class OLocalDHTNode implements ODHTNode {
     result = result | executeDeleteRecord(storageName, iRecordId, iVersion);
 
     return result;
+  }
+
+  @Override
+  public Object command(String storageName, OCommandRequestText request) {
+
+    while (state != NodeState.STABLE) {
+      log("Wait till node will be joined.");
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+
+    final ODatabaseDocumentTx database = openDatabase(storageName);
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(request);
+
+    executor.setProgressListener(request.getProgressListener());
+    executor.parse(request);
+
+    final long from;
+    if (predecessor.get() == -1) {
+      if (fingerPoints.get(0) == id) {
+        // single node in dht
+        from = id;
+      } else {
+        throw new OCommandExecutionException("Predecessor node has failed");
+      }
+    } else {
+      from = predecessor.get();
+    }
+
+    if (executor instanceof OCommandExecutorSQLDelegate
+        && ((OCommandExecutorSQLDelegate) executor).getDelegate() instanceof OCommandExecutorSQLSelect) {
+      ((OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor).getDelegate()).boundToLocalNode(from, id);
+    } else if (executor instanceof OCommandExecutorSQLSelect) {
+      ((OCommandExecutorSQLSelect) executor).boundToLocalNode(from, id);
+    }
+
+    if (request.isIdempotent() && !executor.isIdempotent())
+      throw new OCommandExecutionException("Cannot execute non idempotent command");
+
+    try {
+      final Object result = executor.execute(request.getParameters());
+      request.setContext(executor.getContext());
+
+      return result;
+    } catch (OException e) {
+      // PASS THROUGHT
+      throw e;
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Error on execution of command: " + request, e);
+    } finally {
+      closeDatabase(database);
+    }
   }
 
   @Override

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -126,4 +128,19 @@ public interface OSQLFunction {
    */
   public void setResult(Object iResult);
 
+  /**
+   * This methods correspond to distributed query execution
+   * 
+   * @return {@code true} if results that comes from different nodes need to be merged to obtain valid one, {@code false} otherwise
+   */
+  public boolean shouldMergeDistributedResult();
+
+  /**
+   * This methods correspond to distributed query execution
+   * 
+   * @param resultsToMerge
+   *          is the results that comes from different nodes
+   * @return is the valid merged result
+   */
+  public Object mergeDistributedResult(List<Object> resultsToMerge);
 }

@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -47,7 +49,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
         throw new IllegalArgumentException("Map function: expected a map or two parameters as key, value");
     } else
       context.put(iParameters[0], iParameters[1]);
-    return context;
+    return prepareResult(context);
   }
 
   public String getSyntax() {
@@ -60,8 +62,33 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
 
   @Override
   public Map<Object, Object> getResult() {
-    final Map<Object, Object> res = (Map<Object, Object>) context;
+    final Map<Object, Object> res = context;
     context = null;
-    return res;
+    return prepareResult(res);
+  }
+
+  protected Map<Object, Object> prepareResult(Map<Object, Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", res);
+      return Collections.<Object, Object> singletonMap("doc", doc);
+    } else {
+      return res;
+    }
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    final Map<Long, Map<Object, Object>> chunks = new HashMap<Long, Map<Object, Object>>();
+    for (Object iParameter : resultsToMerge) {
+      final Map<String, Object> container = (Map<String, Object>) ((Map<Object, Object>) iParameter).get("doc");
+      chunks.put((Long) container.get("node"), (Map<Object, Object>) container.get("context"));
+    }
+    final Map<Object, Object> result = new HashMap<Object, Object>();
+    for (Map<Object, Object> chunk : chunks.values()) {
+      result.putAll(chunk);
+    }
+    return result;
   }
 }

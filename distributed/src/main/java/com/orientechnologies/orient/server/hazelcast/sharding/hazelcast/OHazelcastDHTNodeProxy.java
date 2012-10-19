@@ -12,10 +12,14 @@ import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
 
 /**
@@ -86,6 +90,11 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   @Override
   public boolean deleteRecord(String storageName, ORecordId iRecordId, int iVersion) {
     return callOnRemoteMember(new DeleteRecordNodeCall(nodeId, member.getUuid(), storageName, iRecordId, iVersion), false);
+  }
+
+  @Override
+  public Object command(String storageName, OCommandRequestText request) {
+    return callOnRemoteMember(new CommandCall(nodeId, member.getUuid(), storageName, request), false);
   }
 
   @Override
@@ -478,6 +487,59 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       storageName = (String) in.readObject();
       iRecordId = (ORecordId) in.readObject();
       iVersion = in.readInt();
+    }
+  }
+
+  private static final class CommandCall extends NodeCall<Object> {
+
+    private String              storageName;
+    private OCommandRequestText request;
+
+    public CommandCall() {
+    }
+
+    public CommandCall(long nodeId, String memberUUID, String storageName, OCommandRequestText request) {
+      super(nodeId, memberUUID);
+      this.storageName = storageName;
+      this.request = request;
+    }
+
+    @Override
+    protected Object call(ODHTNode node) {
+      ODatabaseRecordThreadLocal.INSTANCE.get().open("replicator", "replicator");
+      try {
+        return OCommandResultSerializationHelper.writeToStream(node.command(storageName, request));
+      } catch (IOException e) {
+        throw new OCommandExecutionException("Failed to serialize result", e);
+      } finally {
+        ODatabaseRecordThreadLocal.INSTANCE.get().close();
+      }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+      super.writeExternal(out);
+      out.writeObject(storageName);
+      out.writeObject(request.getClass());
+      final byte[] requestBytes = request.toStream();
+      out.writeInt(requestBytes.length);
+      out.write(requestBytes);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+      super.readExternal(in);
+      storageName = (String) in.readObject();
+      final Class<OCommandRequestText> clazz = (Class<OCommandRequestText>) in.readObject();
+      final int size = in.readInt();
+      final byte[] requestBytes = new byte[size];
+      in.readFully(requestBytes);
+      try {
+        request = clazz.newInstance();
+      } catch (final Exception e) {
+        throw new OCommandExecutionException("Failed to deserialize query", e);
+      }
+      request.fromStream(requestBytes);
     }
   }
 }

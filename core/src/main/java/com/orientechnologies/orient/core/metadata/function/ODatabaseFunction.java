@@ -91,4 +91,14 @@ public class ODatabaseFunction implements OSQLFunction {
   @Override
   public void config(final Object[] configuredParameters) {
   }
+
+  @Override
+  public boolean shouldMergeDistributedResult() {
+    return false;
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    return null;
+  }
 }

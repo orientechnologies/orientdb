@@ -120,4 +120,8 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
   public void setDHTConfiguration(ODHTConfiguration dhtConfiguration) {
     this.dhtConfiguration = dhtConfiguration;
   }
+
+  public OLocalDHTNode getLocalNode() {
+    return localNode;
+  }
 }

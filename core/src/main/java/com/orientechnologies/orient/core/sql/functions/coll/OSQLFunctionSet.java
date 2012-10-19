@@ -16,7 +16,11 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -50,7 +54,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
           context.add(value);
       }
     }
-    return context;
+    return prepareResult(context);
   }
 
   public String getSyntax() {
@@ -63,8 +67,33 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
 
   @Override
   public Set<Object> getResult() {
-    final Set<Object> res = (Set<Object>) context;
+    final Set<Object> res = context;
     context = null;
-    return res;
+    return prepareResult(res);
+  }
+
+  protected Set<Object> prepareResult(Set<Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", context);
+      return Collections.<Object> singleton(doc);
+    } else {
+      return res;
+    }
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    final Map<Long, Collection<Object>> chunks = new HashMap<Long, Collection<Object>>();
+    for (Object iParameter : resultsToMerge) {
+      final Map<String, Object> container = (Map<String, Object>) ((Collection) iParameter).iterator().next();
+      chunks.put((Long) container.get("node"), (Collection<Object>) container.get("context"));
+    }
+    final Collection<Object> result = new HashSet<Object>();
+    for (Collection<Object> chunk : chunks.values()) {
+      result.addAll(chunk);
+    }
+    return result;
   }
 }

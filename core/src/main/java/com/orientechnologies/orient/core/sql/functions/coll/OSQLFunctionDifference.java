@@ -16,7 +16,11 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -32,6 +36,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<Object>> {
   public static final String NAME = "difference";
 
+  private Set<Object>        rejected;
+
   public OSQLFunctionDifference() {
     super(NAME, 1, -1);
   }
@@ -46,37 +52,80 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
       // AGGREGATION MODE (STATEFULL)
       if (context == null) {
         context = new HashSet<Object>();
-        if (value instanceof Collection<?>)
-          // INSERT EVERY SINGLE COLLECTION ITEM
-          context.addAll((Collection<?>) value);
-        else
-          context.add(value);
+        rejected = new HashSet<Object>();
+      }
+      if (value instanceof Collection<?>) {
+        addItemsToResult((Collection<Object>) value, context, rejected);
       } else {
-        if (value instanceof Collection<?>)
-          // INSERT EVERY SINGLE COLLECTION ITEM
-          context.removeAll((Collection<?>) value);
-        else
-          context.remove(value);
+        addItemToResult(value, context, rejected);
       }
 
       return null;
     } else {
-      if (!(value instanceof Collection<?>))
-        return null;
-
       // IN-LINE MODE (STATELESS)
-      final HashSet<Object> result = new HashSet<Object>((Collection<?>) value);
+      final Set<Object> result = new HashSet<Object>((Collection<?>) value);
+      final Set<Object> rejected = new HashSet<Object>();
 
-      for (int i = 1; i < iParameters.length; ++i) {
-        value = iParameters[i];
-        result.removeAll((Collection<?>) value);
+      for (Object iParameter : iParameters) {
+        if (iParameter instanceof Collection<?>) {
+          addItemsToResult((Collection<Object>) value, context, rejected);
+        } else {
+          addItemToResult(value, context, rejected);
+        }
       }
 
       return result;
     }
   }
 
+  @Override
+  public Set<Object> getResult() {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("result", context);
+      doc.put("rejected", rejected);
+      return Collections.<Object> singleton(doc);
+    } else {
+      return super.getResult();
+    }
+  }
+
+  private static void addItemToResult(Object o, Set<Object> accepted, Set<Object> rejected) {
+    if (!accepted.contains(o) && !rejected.contains(o)) {
+      accepted.add(o);
+    } else {
+      accepted.remove(o);
+      rejected.add(o);
+    }
+  }
+
+  private static void addItemsToResult(Collection<Object> co, Set<Object> accepted, Set<Object> rejected) {
+    for (Object o : co) {
+      addItemToResult(o, accepted, rejected);
+    }
+  }
+
   public String getSyntax() {
     return "Syntax error: difference(<field>*)";
+  }
+
+  @Override
+  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+    final Set<Object> result = new HashSet<Object>();
+    final Set<Object> rejected = new HashSet<Object>();
+    for (Object item : resultsToMerge) {
+      rejected.addAll(unwrap(item, "rejected"));
+    }
+    for (Object item : resultsToMerge) {
+      addItemsToResult(unwrap(item, "result"), result, rejected);
+    }
+    return result;
+  }
+
+  private Set<Object> unwrap(Object obj, String field) {
+    final Set<Object> objAsSet = (Set<Object>) obj;
+    final Map<String, Object> objAsMap = (Map<String, Object>) objAsSet.iterator().next();
+    final Set<Object> objAsField = (Set<Object>) objAsMap.get(field);
+    return objAsField;
   }
 }

@@ -9,16 +9,17 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
-import com.orientechnologies.orient.server.hazelcast.sharding.OAutoshardedStorage;
+import com.orientechnologies.orient.server.hazelcast.sharding.OAutoshardedStorageImpl;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
 import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
 
@@ -75,8 +76,8 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   @Override
   public void onOpen(ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex<?>) {
-      iDatabase
-          .replaceStorage(new OAutoshardedStorage(serverInstance, (OStorageEmbedded) iDatabase.getStorage(), dhtConfiguration));
+      iDatabase.replaceStorage(new OAutoshardedStorageImpl(serverInstance, (OStorageEmbedded) iDatabase.getStorage(),
+							dhtConfiguration));
     }
   }
 
@@ -96,6 +97,9 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
       clusters.add(ORole.CLASS_NAME.toLowerCase());
       clusters.add(OUser.CLASS_NAME.toLowerCase());
       clusters.add(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase());
+      clusters.add(OSecurityShared.RESTRICTED_CLASSNAME.toLowerCase());
+      clusters.add(OSecurityShared.IDENTITY_CLASSNAME.toLowerCase());
+      clusters.add(OFunction.CLASS_NAME.toLowerCase());
     }
 
     @Override
