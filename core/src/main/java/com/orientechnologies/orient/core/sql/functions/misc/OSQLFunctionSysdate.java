@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.misc;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -39,7 +40,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
    * Get the date at construction to have the same date for all the iteration.
    */
   public OSQLFunctionSysdate() {
-    super(NAME, 0, 1);
+    super(NAME, 0, 2);
     now = new Date();
   }
 
@@ -47,8 +48,11 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
     if (iParameters.length == 0)
       return now;
 
-    if (format == null)
+    if (format == null) {
       format = new SimpleDateFormat((String) iParameters[0]);
+      if (iParameters.length == 2)
+        format.setTimeZone(TimeZone.getTimeZone(iParameters[1].toString()));
+    }
 
     return format.format(now);
   }
@@ -58,7 +62,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: sysdate([<format>])";
+    return "Syntax error: sysdate([<format>] [,<timezone>])";
   }
 
   @Override

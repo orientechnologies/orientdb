@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.misc;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,7 +43,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
    * Get the date at construction to have the same date for all the iteration.
    */
   public OSQLFunctionDate() {
-    super(NAME, 0, 2);
+    super(NAME, 0, 3);
     date = new Date();
   }
 
@@ -50,11 +51,14 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
     if (iParameters.length == 0)
       return date;
 
-    if (iParameters.length != 2)
+    if (iParameters.length < 2)
       throw new OCommandSQLParsingException(getSyntax());
 
-    if (format == null)
+    if (format == null) {
       format = new SimpleDateFormat((String) iParameters[1]);
+      if (iParameters.length == 3)
+        format.setTimeZone(TimeZone.getTimeZone(iParameters[2].toString()));
+    }
 
     try {
       return format.parse((String) iParameters[0]);
@@ -68,7 +72,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: date([<date-as-string>, <format>])";
+    return "Syntax error: date([<date-as-string>] [,<format>] [,<timezone>])";
   }
 
   @Override
