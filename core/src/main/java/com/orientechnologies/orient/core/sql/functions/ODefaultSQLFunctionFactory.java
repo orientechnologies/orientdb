@@ -30,13 +30,14 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnion;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionDijkstra;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionShortestPath;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDijkstra;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 
@@ -71,7 +72,10 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
 
     // GEO FUNCTIONS
     FUNCTIONS.put(OSQLFunctionDistance.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDistance());
+
+    // GRAPH FUNCTIONS
     FUNCTIONS.put(OSQLFunctionDijkstra.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstra());
+    FUNCTIONS.put(OSQLFunctionShortestPath.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionShortestPath());
   }
 
   public Set<String> getFunctionNames() {

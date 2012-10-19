@@ -52,6 +52,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     NO_LOCKING, DATABASE_LEVEL_LOCKING, RECORD_LEVEL_LOCKING
   }
 
+  public enum DIRECTION {
+    BOTH, IN, OUT
+  }
+
   public static final String TYPE                   = "graph";
 
   public static final String VERTEX_CLASS_NAME      = "OGraphVertex";
@@ -388,7 +392,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       commitBlock(safeMode);
 
       return true;
-      
+
     } catch (RuntimeException e) {
       rollbackBlock(safeMode);
       throw e;
