@@ -289,13 +289,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (iRecordId == null)
       return null;
 
-    ODocument record = rid2Records.get(iRecordId);
-    if (record == null) {
-      // GET THE ASSOCIATED DOCUMENT
-      record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
-      if (record == null)
-        return null;
-    }
+    // GET THE ASSOCIATED DOCUMENT
+    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+    if (record == null)
+      return null;
 
     return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record, null);
   }
@@ -515,8 +512,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
         for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
           switch (entry.type) {
           case ORecordOperation.CREATED:
-            rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
-
           case ORecordOperation.UPDATED:
             break;
 
@@ -548,16 +543,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
       // BY PASS DOCUMENT DB
       ((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
-
-      if (getTransaction().getCurrentRecordEntries() != null)
-        for (ORecordOperation recordEntry : getTransaction().getCurrentRecordEntries()) {
-          rid2Records.remove(recordEntry.getRecord().getIdentity());
-        }
-
-      if (getTransaction().getAllRecordEntries() != null)
-        for (ORecordOperation recordEntry : getTransaction().getAllRecordEntries()) {
-          rid2Records.remove(recordEntry.getRecord().getIdentity());
-        }
 
     } finally {
       getTransaction().close();
@@ -698,19 +683,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public Object getUserObjectByRecord(OIdentifiable iRecord, String iFetchPlan, boolean iCreate) {
-    if (!(iRecord instanceof ODocument))
-      return null;
+  public Object getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan, final boolean iCreate) {
+    final ODocument document = iRecord.getRecord();
 
-    // PASS FOR rid2Records MAP BECAUSE IDENTITY COULD BE CHANGED IF WAS NEW AND IN TX
-    ODocument record = rid2Records.get(iRecord.getIdentity());
-
-    if (record == null)
-      record = (ODocument) iRecord;
-
-    Object pojo = OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), getEntityManager(), record, null);
-
-    return pojo;
+    return OObjectEntityEnhancer.getInstance().getProxiedInstance(document.getClassName(), getEntityManager(), document, null);
   }
 
   /**
@@ -718,17 +694,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   @Override
   public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
-    if (!(iRecord instanceof ODocument))
-      return;
-
-    final ODocument doc = (ODocument) iRecord;
-
-    if (retainObjects) {
-
-      final ORID rid = iRecord.getIdentity();
-      if (rid.isValid())
-        rid2Records.put(rid, doc);
-    }
   }
 
   public void registerUserObjectAfterLinkSave(ORecordInternal<?> iRecord) {
@@ -736,11 +701,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public void unregisterPojo(final Object iObject, final ODocument iRecord) {
-    if (iRecord != null) {
-      final ORID rid = iRecord.getIdentity();
-      if (rid.isValid())
-        rid2Records.remove(rid);
-    }
   }
 
   public void registerClassMethodFilter(Class<?> iClass, OObjectMethodFilter iMethodFilter) {
