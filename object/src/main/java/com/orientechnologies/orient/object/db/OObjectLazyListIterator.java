@@ -32,53 +32,54 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
  */
 @SuppressWarnings({ "unchecked" })
 public class OObjectLazyListIterator<TYPE> implements Iterator<TYPE>, Serializable {
-	private static final long						serialVersionUID	= 3714399452499077452L;
+  private static final long           serialVersionUID = 3714399452499077452L;
 
-	private final ProxyObject						sourceRecord;
-	private final OObjectLazyList<TYPE>	list;
-	private String											fetchPlan;
-	private int													cursor						= 0;
-	private int													lastRet						= -1;
+  private final ProxyObject           sourceRecord;
+  private final OObjectLazyList<TYPE> list;
+  private String                      fetchPlan;
+  private int                         cursor           = 0;
+  private int                         lastRet          = -1;
 
-	public OObjectLazyListIterator(final OObjectLazyList<TYPE> iSourceList, final ProxyObject iSourceRecord) {
-		this.list = iSourceList;
-		this.sourceRecord = iSourceRecord;
-	}
+  public OObjectLazyListIterator(final OObjectLazyList<TYPE> iSourceList, final ProxyObject iSourceRecord) {
+    this.list = iSourceList;
+    this.sourceRecord = iSourceRecord;
+  }
 
-	public TYPE next() {
-		return next(fetchPlan);
-	}
+  public TYPE next() {
+    return next(fetchPlan);
+  }
 
-	public TYPE next(final String iFetchPlan) {
-		final Object value = list.get(cursor);
-		lastRet = cursor++;
-		return (TYPE) value;
-	}
+  public TYPE next(final String iFetchPlan) {
+    final Object value = list.get(cursor);
+    lastRet = cursor++;
+    return (TYPE) value;
+  }
 
-	public boolean hasNext() {
-		return cursor < (list.size());
-	}
+  public boolean hasNext() {
+    return cursor < (list.size());
+  }
 
-	public void remove() {
-		if (lastRet == -1)
-			throw new IllegalStateException();
-		try {
-			list.remove(lastRet);
-			if (lastRet < cursor)
-				cursor--;
-			lastRet = -1;
-		} catch (IndexOutOfBoundsException e) {
-			throw new ConcurrentModificationException();
-		}
-		if (sourceRecord != null)
-			((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
-	}
+  public void remove() {
+    if (lastRet == -1)
+      throw new IllegalStateException();
+    try {
+      list.remove(lastRet);
+      if (lastRet < cursor)
+        cursor--;
+      lastRet = -1;
+    } catch (IndexOutOfBoundsException e) {
+      throw new ConcurrentModificationException();
+    }
+    if (sourceRecord != null) {
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    }
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public void setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-	}
+  public void setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+  }
 }

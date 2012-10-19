@@ -68,7 +68,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
   public Iterator<TYPE> iterator() {
     return (Iterator<TYPE>) new OObjectLazyIterator<TYPE>(getDatabase(), sourceRecord, (!converted ? underlying.iterator()
-        : super.iterator()), convertToRecord);
+        : super.iterator()), convertToRecord, orphanRemoval);
   }
 
   public int size() {
@@ -98,7 +98,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     setDirty();
     boolean thisModified = super.add(e);
     OIdentifiable record = getDatabase().getRecordByUserObject(e, false);
-    ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+    if (sourceRecord != null)
+      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
     boolean underlyingModified = underlying.add(record);
     return thisModified || underlyingModified;
   }
@@ -106,7 +107,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   public boolean remove(final Object o) {
     setDirty();
     OIdentifiable record = getDatabase().getRecordByUserObject(o, false);
-    if (orphanRemoval && record != null)
+    if (orphanRemoval && record != null && sourceRecord != null)
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
     boolean thisModified = super.remove(o);
     boolean underlyingModified = underlying.remove(record);
@@ -128,7 +129,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     boolean modified = super.addAll(c);
     for (Object o : c) {
       OIdentifiable record = database.getRecordByUserObject(o, false);
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      if (sourceRecord != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
       if (!underlying.add(record))
         modified = true;
     }
@@ -146,10 +148,11 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
       toRetain.add(record);
     }
     for (OIdentifiable underlyingRec : underlying) {
-      if (toRetain.contains(underlyingRec)) {
+      if (toRetain.contains(underlyingRec) && sourceRecord != null) {
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(underlyingRec.getIdentity());
       } else {
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(underlyingRec.getIdentity());
+        if (sourceRecord != null)
+          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(underlyingRec.getIdentity());
         toRemove.add(underlyingRec);
         modified = true;
       }
@@ -163,9 +166,10 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   public void clear() {
     setDirty();
     super.clear();
-    if (orphanRemoval)
-      for (OIdentifiable value : underlying)
+    if (orphanRemoval && sourceRecord != null)
+      for (OIdentifiable value : underlying) {
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+      }
     underlying.clear();
   }
 
@@ -175,7 +179,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     boolean modified = super.removeAll(c);
     for (Object o : c) {
       OIdentifiable record = database.getRecordByUserObject(o, false);
-      if (orphanRemoval && record != null)
+      if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
       if (!underlying.remove(database.getRecordByUserObject(o, false)))
         modified = true;

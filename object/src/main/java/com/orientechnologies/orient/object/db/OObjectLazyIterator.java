@@ -45,13 +45,15 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   private String                            fetchPlan;
   final private boolean                     autoConvert2Object;
   private OIdentifiable                     currentElement;
+  private boolean                           orphanRemoval    = false;
 
   public OObjectLazyIterator(final ODatabasePojoAbstract<TYPE> database, final ProxyObject iSourceRecord,
-      final Iterator<? extends Object> iIterator, final boolean iConvertToRecord) {
+      final Iterator<? extends Object> iIterator, final boolean iConvertToRecord, boolean iOrphanRemoval) {
     this.database = database;
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
     autoConvert2Object = iConvertToRecord;
+    this.orphanRemoval = iOrphanRemoval;
   }
 
   public TYPE next() {
@@ -89,10 +91,12 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   }
 
   public void remove() {
-    ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
     underlying.remove();
-    if (sourceRecord != null)
+    if (sourceRecord != null) {
+      if (orphanRemoval)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    }
   }
 
   public String getFetchPlan() {

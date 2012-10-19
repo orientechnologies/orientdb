@@ -89,7 +89,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
         record = (OIdentifiable) e;
         converted = false;
         OIdentifiable o = underlying.put(iKey, record);
-        if (orphanRemoval) {
+        if (orphanRemoval && sourceRecord != null) {
           if (record != null)
             ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
           if (o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity()))
@@ -101,7 +101,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
         // OIdentifiable oldValue = get(iKey) != null ? getDatabase().getRecordByUserObject(get(iKey), true) : null;
         OIdentifiable oldValue = underlying.get(iKey);
         underlying.put(iKey, record);
-        if (orphanRemoval) {
+        if (orphanRemoval && sourceRecord != null) {
           if (record != null)
             ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
           if (((record == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity()))))
@@ -117,7 +117,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   @Override
   public Object remove(final Object iKey) {
     OIdentifiable record = underlying.remove((String) iKey);
-    if (orphanRemoval && record != null)
+    if (orphanRemoval && record != null && sourceRecord != null)
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
     setDirty();
     return super.remove(iKey);
@@ -126,7 +126,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   @Override
   public void clear() {
     converted = true;
-    if (orphanRemoval)
+    if (orphanRemoval && sourceRecord != null)
       for (OIdentifiable value : underlying.values())
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
     underlying.clear();
