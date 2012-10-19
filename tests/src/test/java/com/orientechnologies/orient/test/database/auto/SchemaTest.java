@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = "schema")
@@ -360,5 +361,41 @@ public class SchemaTest {
 
     database.close();
 
+  }
+
+  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  public void invalidClusterWrongClusterId() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+    try {
+      database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
+
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  public void invalidClusterWrongClusterName() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+
+    try {
+      database.command(new OCommandSQL("create class Antani cluster blaaa")).execute();
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  public void invalidClusterWrongKeywords() {
+    database = new ODatabaseFlat(url);
+    database.open("admin", "admin");
+
+    try {
+      database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
+    } finally {
+      database.close();
+    }
   }
 }
