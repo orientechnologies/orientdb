@@ -121,9 +121,7 @@ public enum OGlobalConfiguration {
   BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
       "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
-  // TREEMAP
-  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
-
+  // INDEX
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
@@ -135,6 +133,9 @@ public enum OGlobalConfiguration {
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
+
+  // TREEMAP
+  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
   MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
       "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
@@ -234,6 +235,7 @@ public enum OGlobalConfiguration {
 
   USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
       + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
+      
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
