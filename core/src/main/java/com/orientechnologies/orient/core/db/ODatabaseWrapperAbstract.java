@@ -306,7 +306,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     underlying.unregisterListener(iListener);
   }
 
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return getStorage().callInLock(iCallable, iExclusiveLock);
   }
 

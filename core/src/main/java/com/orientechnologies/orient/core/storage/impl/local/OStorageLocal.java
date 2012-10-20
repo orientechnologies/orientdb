@@ -1451,10 +1451,13 @@ public class OStorageLocal extends OStorageEmbedded {
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
     OCluster cluster = clusterMap.get(iConfig.getName());
 
-    if (cluster != null) {
-      if (cluster instanceof OClusterLocal)
+    if (cluster instanceof OClusterLocal && iConfig instanceof OStoragePhysicalClusterLHPEPSConfiguration)
+      clusterMap.remove(iConfig.getName());
+    else if (cluster != null) {
+      if (cluster instanceof OClusterLocal) {
         // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
         ((OClusterLocal) cluster).configure(this, iConfig);
+      }
       return -1;
     }
 

@@ -348,7 +348,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   public void truncate() throws IOException {
     storage.checkForClusterPermissions(getName());
-    
+
     acquireExclusiveLock();
     try {
       long localSize = size;
@@ -449,6 +449,11 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
       clearCache();
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
