@@ -374,18 +374,18 @@ public class OrientJdbcResultSet implements ResultSet {
     return getDate(fieldNames[getFieldIndex(columnIndex)]);
   }
 
-  public Date getDate(String columnLabel) throws SQLException {
+  public Date getDate(final String columnLabel) throws SQLException {
     try {
       setDatabaseOnThreadLocalInstance();
 
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
-      return new Date(date.getTime());
+      return date != null ? new Date(date.getTime()) : null;
     } catch (Exception e) {
       throw new SQLException("An error occured during the retrieval of the date value at column '" + columnLabel + "'", e);
     }
   }
 
-  public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+  public Date getDate(final int columnIndex, final Calendar cal) throws SQLException {
     return getDate(fieldNames[getFieldIndex(columnIndex)], cal);
   }
 
