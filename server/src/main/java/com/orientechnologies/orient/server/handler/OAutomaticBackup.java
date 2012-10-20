@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.handler;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -78,9 +77,8 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
       // CREATE BACKUP FOLDER(S) IF ANY
       filePath.mkdirs();
 
-    OLogManager.instance().info(this,
-        "Automatic backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
-        targetDirectory);
+    OLogManager.instance().info(this, "Automatic backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
+        delay, firstTime, targetDirectory);
 
     final TimerTask timerTask = new TimerTask() {
       @Override
@@ -118,9 +116,11 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
                 });
 
             final String exportFilePath = targetDirectory + fileName;
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbName.getValue());
-
+            ODatabaseDocumentTx db = null;
             try {
+              
+              db = new ODatabaseDocumentTx(dbName.getValue());
+
               db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
               db.open("admin", "aaa");
 
@@ -139,12 +139,15 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
                       + (System.currentTimeMillis() - begin) + "ms");
               ok++;
 
-            } catch (IOException e) {
+            } catch (Exception e) {
+
               OLogManager.instance().error(this,
                   "[OAutomaticBackup] - Error on exporting database '" + dbName.getValue() + "' to file: " + exportFilePath, e);
               errors++;
+
             } finally {
-              db.close();
+              if (db != null)
+                db.close();
             }
           }
         }
