@@ -111,7 +111,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
             try {
               database.getStorage().getClusterById(clusterIds[i]);
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
               throw new OCommandSQLParsingException("Cluster with id " + clusterIds[i] + " does not exists", parserText, oldPos);
             }
           }
