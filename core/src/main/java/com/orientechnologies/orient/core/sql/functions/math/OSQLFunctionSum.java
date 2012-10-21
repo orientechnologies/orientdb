@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Compute the averahe value for a field. Uses the context to save the last average number. When different Number class are used,
@@ -28,86 +29,70 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
-  public static final String NAME = "sum";
+	public static final String	NAME	= "sum";
 
-  private Number             sum;
+	private Number							sum;
 
-  public OSQLFunctionSum() {
-    super(NAME, 1, 1);
-  }
+	public OSQLFunctionSum() {
+		super(NAME, 1, 1);
+	}
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
-    Number value = (Number) iParameters[0];
+	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
+		final Number value = (Number) iParameters[0];
 
-    if (value != null && value instanceof Number) {
-      if (sum == null)
-        // FIRST TIME
-        sum = value;
-      else {
-        Number contextValue = getContextValue(sum, value.getClass());
-        if (contextValue instanceof Integer) {
-          sum = sum.intValue() + value.intValue();
+		if (value != null && value instanceof Number) {
+			if (sum == null)
+				// FIRST TIME
+				sum = value;
+			else
+				sum = OType.increment(sum, value);
+		}
+		return null;
+	}
 
-        } else if (contextValue instanceof Long) {
-          sum = sum.longValue() + value.longValue();
+	public boolean aggregateResults() {
+		return true;
+	}
 
-        } else if (contextValue instanceof Short) {
-          sum = sum.shortValue() + value.shortValue();
+	public String getSyntax() {
+		return "Syntax error: sum(<field>)";
+	}
 
-        } else if (contextValue instanceof Float) {
-          sum = sum.floatValue() + value.floatValue();
+	@Override
+	public Object getResult() {
+		return sum;
+	}
 
-        } else if (contextValue instanceof Double) {
-          sum = sum.doubleValue() + value.doubleValue();
-        }
-      }
-    }
-    return null;
-  }
+	@Override
+	public Object mergeDistributedResult(List<Object> resultsToMerge) {
+		Number sum = null;
+		for (Object iParameter : resultsToMerge) {
+			Number value = (Number) iParameter;
 
-  public boolean aggregateResults() {
-    return true;
-  }
+			if (value != null && value instanceof Number) {
+				if (sum == null)
+					// FIRST TIME
+					sum = value;
+				else {
+					Number contextValue = getContextValue(sum, value.getClass());
+					if (contextValue instanceof Integer) {
+						sum = sum.intValue() + value.intValue();
 
-  public String getSyntax() {
-    return "Syntax error: sum(<field>)";
-  }
+					} else if (contextValue instanceof Long) {
+						sum = sum.longValue() + value.longValue();
 
-  @Override
-  public Object getResult() {
-    return sum;
-  }
+					} else if (contextValue instanceof Short) {
+						sum = sum.shortValue() + value.shortValue();
 
-  @Override
-  public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Number sum = null;
-    for (Object iParameter : resultsToMerge) {
-      Number value = (Number) iParameter;
+					} else if (contextValue instanceof Float) {
+						sum = sum.floatValue() + value.floatValue();
 
-      if (value != null && value instanceof Number) {
-        if (sum == null)
-          // FIRST TIME
-          sum = value;
-        else {
-          Number contextValue = getContextValue(sum, value.getClass());
-          if (contextValue instanceof Integer) {
-            sum = sum.intValue() + value.intValue();
-
-          } else if (contextValue instanceof Long) {
-            sum = sum.longValue() + value.longValue();
-
-          } else if (contextValue instanceof Short) {
-            sum = sum.shortValue() + value.shortValue();
-
-          } else if (contextValue instanceof Float) {
-            sum = sum.floatValue() + value.floatValue();
-
-          } else if (contextValue instanceof Double) {
-            sum = sum.doubleValue() + value.doubleValue();
-          }
-        }
-      }
-    }
-    return sum;
-  }
+					} else if (contextValue instanceof Double) {
+						sum = sum.doubleValue() + value.doubleValue();
+					}
+				}
+			}
+		}
+		return sum;
+	}
 }
