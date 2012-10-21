@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.functions;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -40,12 +40,12 @@ public interface OSQLFunction {
    *          : current record
    * @param iFuncParams
    *          : function parameters, number is ensured to be within minParams and maxParams.
-   * @param iRequester
+   * @param iContext
    *          : object calling this function
    * @return function result, can be null. Special cases : can be null if function aggregate results, can be null if function filter
    *         results : this mean result is excluded
    */
-  public Object execute(OIdentifiable o, Object[] iFuncParams, OCommandExecutor iRequester);
+  public Object execute(OIdentifiable o, Object[] iFuncParams, OCommandContext iContext);
 
   /**
    * Configure the function.
@@ -71,7 +71,7 @@ public interface OSQLFunction {
    * must return true.
    * <p>
    * Function should return null for the
-   * {@linkplain #execute(com.orientechnologies.orient.core.db.record.OIdentifiable, java.lang.Object[], com.orientechnologies.orient.core.command.OCommandExecutor)
+   * {@linkplain #execute(com.orientechnologies.orient.core.db.record.OIdentifiable, java.lang.Object[], OCommandContext)
    * execute} method if the record must be excluded.
    * 
    * @return true if the function acts as a record filter.

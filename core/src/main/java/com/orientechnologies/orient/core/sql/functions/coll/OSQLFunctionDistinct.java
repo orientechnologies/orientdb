@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
@@ -29,31 +29,31 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * 
  */
 public class OSQLFunctionDistinct extends OSQLFunctionAbstract {
-	public static final String	NAME		= "distinct";
+  public static final String NAME    = "distinct";
 
-	private Set<Object>					context	= new HashSet<Object>();
+  private Set<Object>        context = new HashSet<Object>();
 
-	public OSQLFunctionDistinct() {
-		super(NAME, 1, 1);
-	}
+  public OSQLFunctionDistinct() {
+    super(NAME, 1, 1);
+  }
 
-	public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
-		final Object value = iParameters[0];
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
+    final Object value = iParameters[0];
 
-		if (value != null && !context.contains(value)) {
-			context.add(value);
-			return value;
-		}
+    if (value != null && !context.contains(value)) {
+      context.add(value);
+      return value;
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	@Override
-	public boolean filterResult() {
-		return true;
-	}
+  @Override
+  public boolean filterResult() {
+    return true;
+  }
 
-	public String getSyntax() {
-		return "Syntax error: distinct(<field>)";
-	}
+  public String getSyntax() {
+    return "Syntax error: distinct(<field>)";
+  }
 }

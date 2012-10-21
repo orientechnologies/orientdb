@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
@@ -44,7 +44,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
     now = new Date();
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     if (iParameters.length == 0)
       return now;
 

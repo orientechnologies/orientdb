@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -42,7 +42,7 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     super(NAME, 1, -1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     if (iParameters[0] == null)
       return null;
 

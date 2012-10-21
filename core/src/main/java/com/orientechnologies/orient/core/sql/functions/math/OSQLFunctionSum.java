@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -36,7 +36,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     Number value = (Number) iParameters[0];
 
     if (value != null && value instanceof Number) {
@@ -62,7 +62,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
         }
       }
     }
-    return value;
+    return null;
   }
 
   public boolean aggregateResults() {

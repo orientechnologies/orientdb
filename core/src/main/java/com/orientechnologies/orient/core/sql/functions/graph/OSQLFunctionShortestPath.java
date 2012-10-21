@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.graph;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase.DIRECTION;
@@ -40,19 +40,19 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
     super(NAME, 2, 3);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, final OCommandContext iContext) {
     final ODatabaseRecord currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
     db = (OGraphDatabase) (currentDatabase instanceof OGraphDatabase ? currentDatabase : new OGraphDatabase(
         (ODatabaseRecordTx) currentDatabase));
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iRequester.getContext());
-    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iRequester.getContext());
+    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iContext);
+    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iContext);
     if (iParameters.length > 2)
       paramDirection = DIRECTION.valueOf(iParameters[2].toString().toUpperCase());
 
-    return super.execute(iParameters, iRequester);
+    return super.execute(iParameters, iContext);
   }
 
   public String getSyntax() {

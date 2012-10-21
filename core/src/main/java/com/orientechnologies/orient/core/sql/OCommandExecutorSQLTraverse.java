@@ -145,7 +145,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     for (OIdentifiable r : result)
       handleResult(r);
 
-    return handleResult();
+    return getResult();
   }
 
   public boolean hasNext() {

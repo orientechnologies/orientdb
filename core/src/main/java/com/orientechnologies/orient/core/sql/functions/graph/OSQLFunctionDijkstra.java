@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.graph;
 
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase.DIRECTION;
@@ -44,20 +44,20 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
     super(NAME, 3, 4);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     final ODatabaseRecord currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
     db = (OGraphDatabase) (currentDatabase instanceof OGraphDatabase ? currentDatabase : new OGraphDatabase(
         (ODatabaseRecordTx) currentDatabase));
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iRequester.getContext());
-    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iRequester.getContext());
-    paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iRequester.getContext());
+    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iContext);
+    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iContext);
+    paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iContext);
     if (iParameters.length > 3)
       paramDirection = DIRECTION.valueOf(iParameters[3].toString().toUpperCase());
 
-    return super.execute(iParameters, iRequester);
+    return super.execute(iParameters, iContext);
   }
 
   public String getSyntax() {

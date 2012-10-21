@@ -17,14 +17,13 @@ package com.orientechnologies.orient.graph.gremlin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -50,7 +49,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, final OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, final OCommandContext iContext) {
     if (!(iCurrentRecord instanceof ODocument))
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
       return null;
@@ -60,34 +59,31 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     if (result == null)
       result = new ArrayList<Object>();
 
-    if (iRequester != null && iRequester.getParameters() != null)
-      currentParameters = new HashMap<Object, Object>();
+    final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], null, currentParameters, result,
+        new OGremlinHelper.OGremlinCallback() {
 
-    final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], iRequester != null ? iRequester.getParameters()
-        : null, currentParameters, result, new OGremlinHelper.OGremlinCallback() {
+          @Override
+          public boolean call(ScriptEngine iEngine, OrientGraph iGraph) {
+            final ODocument document = (ODocument) iCurrentRecord;
+            if (db.isVertex(document)) {
+              // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
+              OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
+                  .asList(new ODocument[] { document })).iterator().next();
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
 
-      @Override
-      public boolean call(ScriptEngine iEngine, OrientGraph iGraph) {
-        final ODocument document = (ODocument) iCurrentRecord;
-        if (db.isVertex(document)) {
-          // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
-              .asList(new ODocument[] { document })).iterator().next();
-          iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+            } else if (db.isEdge(document)) {
+              // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
+              OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
+                  .asList(new ODocument[] { document })).iterator().next();
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+            } else
 
-        } else if (db.isEdge(document)) {
-          // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-          OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
-              .asList(new ODocument[] { document })).iterator().next();
-          iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
-        } else
+              // UNKNOWN CLASS: IGNORE IT
+              return false;
 
-          // UNKNOWN CLASS: IGNORE IT
-          return false;
-
-        return true;
-      }
-    }, null);
+            return true;
+          }
+        }, null);
 
     return scriptResult;
   }

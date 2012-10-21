@@ -116,16 +116,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return true;
   }
 
-  public List<OIdentifiable> getResult() {
-    if (tempResult != null)
-      return tempResult;
-
-    if (request instanceof OSQLSynchQuery)
-      return (List<OIdentifiable>) ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
-
-    return null;
-  }
-
   /**
    * Assign the right TARGET if found.
    * 
@@ -164,7 +154,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return true;
   }
 
-  protected Object handleResult() {
+  protected Object getResult() {
     if (tempResult != null) {
       for (OIdentifiable d : tempResult)
         if (d != null)
@@ -335,10 +325,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         } else if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
           if (f.getFunction().aggregateResults()) {
-            f.execute(iRecord, this);
+            f.execute(iRecord, context);
             varValue = f.getFunction().getResult();
           } else
-            varValue = f.execute(iRecord, this);
+            varValue = f.execute(iRecord, context);
         } else
           varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim());
 

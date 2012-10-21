@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.metadata.function;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
@@ -35,8 +35,8 @@ public class ODatabaseFunction implements OSQLFunction {
   }
 
   @Override
-  public Object execute(final OIdentifiable o, final Object[] iFuncParams, final OCommandExecutor iRequester) {
-    return f.executeInContext(iRequester.getContext(), iFuncParams);
+  public Object execute(final OIdentifiable o, final Object[] iFuncParams, final OCommandContext iContext) {
+    return f.executeInContext(iContext, iFuncParams);
   }
 
   @Override

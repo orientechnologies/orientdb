@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase.DIRECTION;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -60,7 +60,7 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
 
   protected abstract T sumDistances(T iDistance1, T iDistance2);
 
-  public Object execute(final Object[] iParameters, final OCommandExecutor iRequester) {
+  public Object execute(final Object[] iParameters, final OCommandContext iContext) {
     settledNodes = new HashSet<OIdentifiable>();
     unSettledNodes = new HashSet<OIdentifiable>();
     distance = new HashMap<OIdentifiable, T>();

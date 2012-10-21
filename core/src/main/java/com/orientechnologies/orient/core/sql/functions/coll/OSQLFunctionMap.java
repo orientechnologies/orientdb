@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -37,7 +37,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     if (context == null)
       context = new HashMap<Object, Object>();
 

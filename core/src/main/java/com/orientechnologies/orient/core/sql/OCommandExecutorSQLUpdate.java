@@ -208,7 +208,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       if (v instanceof OSQLFilterItem)
         v = ((OSQLFilterItem) v).getValue(record, context);
       else if (v instanceof OSQLFunctionRuntime)
-        v = ((OSQLFunctionRuntime) v).execute(record, this);
+        v = ((OSQLFunctionRuntime) v).execute(record, context);
 
       coll.add(v);
       recordUpdated = true;
@@ -241,9 +241,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         v = pair.getValue();
 
         if (v instanceof OSQLFilterItem)
-          v = ((OSQLFilterItem) v).getValue(record, null);
+          v = ((OSQLFilterItem) v).getValue(record, context);
         else if (pair.getValue() instanceof OSQLFunctionRuntime)
-          v = ((OSQLFunctionRuntime) v).execute(record, this);
+          v = ((OSQLFunctionRuntime) v).execute(record, context);
 
         map.put(pair.getKey(), v);
         recordUpdated = true;

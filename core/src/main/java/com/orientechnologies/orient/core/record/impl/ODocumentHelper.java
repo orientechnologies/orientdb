@@ -72,7 +72,7 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_FIELDS  = "@fields";
   public static final String ATTRIBUTE_RAW     = "@raw";
 
-  public static void sort(List<OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
+  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
     if (ioResultSet != null)
       Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
   }
@@ -370,12 +370,12 @@ public class ODocumentHelper {
           }
         }
       } else {
-        if( fieldName.length() == 0 ){
+        if (fieldName.length() == 0) {
           // NO FIELD NAME: THIS IS THE CASE OF NOT USEFUL . AFTER A ] OR .
           beginPos = ++nextSeparatorPos;
           continue;
         }
-        
+
         if (fieldName.contains("("))
           value = evaluateFunction(value, fieldName);
         else {
@@ -500,9 +500,9 @@ public class ODocumentHelper {
         return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
     }
 
-    if( iCurrent == null)
+    if (iCurrent == null)
       return null;
-    
+
     final ODocument doc = ((ODocument) iCurrent.getRecord());
     doc.checkForFields(iFieldName);
     return doc._fieldValues.get(iFieldName);

@@ -19,7 +19,6 @@ import java.util.List;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -61,16 +60,16 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
    * @param iRequester
    * @return
    */
-  public Object execute(final OIdentifiable o, final OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable o, final OCommandContext iContext) {
     // RESOLVE VALUES USING THE CURRENT RECORD
     for (int i = 0; i < configuredParameters.length; ++i) {
       if (configuredParameters[i] instanceof OSQLFilterItemField)
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(o, null);
       else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iRequester);
+        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iContext);
     }
 
-    final Object functionResult = function.execute(o, runtimeParameters, iRequester);
+    final Object functionResult = function.execute(o, runtimeParameters, iContext);
 
     return transformValue(o, functionResult);
   }

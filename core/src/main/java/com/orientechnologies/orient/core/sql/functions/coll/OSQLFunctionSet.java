@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -40,7 +40,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     // AGGREGATION MODE (STATEFULL)
     for (Object value : iParameters) {
       if (value != null) {

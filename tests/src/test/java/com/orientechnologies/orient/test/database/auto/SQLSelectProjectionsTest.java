@@ -71,7 +71,7 @@ public class SQLSelectProjectionsTest {
     OObjectDatabaseTx db = new OObjectDatabaseTx(url);
     db.open("admin", "admin");
 
-    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
+    List<ODocument> result = db.getUnderlying().query(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
 
     Assert.assertTrue(result.size() != 0);
 

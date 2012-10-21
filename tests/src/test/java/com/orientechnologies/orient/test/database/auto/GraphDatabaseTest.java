@@ -487,8 +487,14 @@ public class GraphDatabaseTest {
     database.createEdge(countryDoc1, cityDoc1).field("label", "owns").save();
     database.createEdge(countryDoc1, cityDoc2).field("label", "owns").save();
 
-    String subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
+    String subquery = "select out[label='owns'].in from V where name = 'UK'";
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
+
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(((List<ODocument>) result.get(0).field("out")).size(), 2);
+
+    subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
+    result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {

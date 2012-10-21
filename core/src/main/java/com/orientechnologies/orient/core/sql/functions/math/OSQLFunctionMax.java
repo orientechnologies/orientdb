@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -37,7 +37,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandExecutor iRequester) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
     if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
       // PRECONDITIONS
       return null;
@@ -51,7 +51,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
       // BIGGER
       context = value;
 
-    return value;
+    return null;
   }
 
   public boolean aggregateResults() {
