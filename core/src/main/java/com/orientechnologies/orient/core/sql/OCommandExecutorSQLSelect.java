@@ -1204,10 +1204,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 	@Override
 	public Object getResult() {
 		if (groupedResult != null) {
-			for (ORuntimeResult g : groupedResult.values()) {
-				final ODocument doc = g.getResult();
-				if (doc != null)
-					request.getResultListener().result(doc);
+			for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
+				if (g.getKey() != null) {
+					final ODocument doc = g.getValue().getResult();
+					if (doc != null)
+						request.getResultListener().result(doc);
+				}
 			}
 
 			if (request instanceof OSQLSynchQuery)
