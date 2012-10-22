@@ -13,13 +13,12 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.OAggregatorResultListener;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
 
 /**
@@ -93,7 +92,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   @Override
-  public Object command(String storageName, OCommandRequestText request) {
+  public Object command(String storageName, OCommandRequestText request, boolean serializeResult) {
     return callOnRemoteMember(new CommandCall(nodeId, member.getUuid(), storageName, request), false);
   }
 
@@ -506,14 +505,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
 
     @Override
     protected Object call(ODHTNode node) {
-      ODatabaseRecordThreadLocal.INSTANCE.get().open("replicator", "replicator");
-      try {
-        return OCommandResultSerializationHelper.writeToStream(node.command(storageName, request));
-      } catch (IOException e) {
-        throw new OCommandExecutionException("Failed to serialize result", e);
-      } finally {
-        ODatabaseRecordThreadLocal.INSTANCE.get().close();
-      }
+      return node.command(storageName, request, true);
     }
 
     @Override
@@ -540,6 +532,9 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
         throw new OCommandExecutionException("Failed to deserialize query", e);
       }
       request.fromStream(requestBytes);
+      if (request.getResultListener() == null) {
+        request.setResultListener(new OAggregatorResultListener());
+      }
     }
   }
 }

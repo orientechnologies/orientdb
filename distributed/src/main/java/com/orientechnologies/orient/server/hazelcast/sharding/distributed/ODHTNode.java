@@ -35,7 +35,7 @@ public interface ODHTNode {
 
   boolean deleteRecord(String storageName, ORecordId iRecordId, int iVersion);
 
-  Object command(String storageName, OCommandRequestText request);
+  Object command(String storageName, OCommandRequestText request, boolean serializeResult);
 
   boolean isLocal();
 }

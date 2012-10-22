@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,13 +34,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OAggregatorResultListener;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
  * This class helps to merge result sets from several query executors
@@ -49,13 +51,18 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
  */
 public class ODistributedQueryHelper {
 
+  private static final String                     RESULT_FIELD         = "result";
+  private static final Set<Class>                 ALWAYS_DISTRIBUTABLE = new HashSet<Class>();
+
   private boolean                                 distributable        = false;
+  private final boolean                           select;
   private boolean                                 anyFunctionAggregate = false;
   private final List<OPair<String, OSQLFunction>> mergers              = new ArrayList<OPair<String, OSQLFunction>>();
   private OPair<String, OSQLFunctionDistinct>     distinct             = null;
   private List<OPair<String, String>>             order                = null;
-  private final OCommandResultListener            asyncResultListener;
-
+  private int                                     limit                = -1;
+  private int                                     processed            = 0;
+  private OCommandResultListener                  resultListener;
   private final OCommandRequestText               iCommand;
   private final List<OIdentifiable>               tempResult           = new ArrayList<OIdentifiable>();
 
@@ -69,15 +76,10 @@ public class ODistributedQueryHelper {
     final OCommandExecutor realExecutor = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
         .getDelegate() : executor;
 
-    // if ((realExecutor instanceof OCommandDistributedConditionalReplicateRequest &&
-    // ((OCommandDistributedConditionalReplicateRequest) realExecutor).isReplicated()) ||
-    // realExecutor instanceof OCommandDistributedReplicateRequest) {
-    // distributable = true;
-    // }
-
     if (realExecutor instanceof OCommandExecutorSQLSelect) {
       final OCommandExecutorSQLSelect selectExecutor = (OCommandExecutorSQLSelect) realExecutor;
 
+      select = true;
       distributable = true;
 
       for (Integer c : selectExecutor.getInvolvedClusters()) {
@@ -89,7 +91,7 @@ public class ODistributedQueryHelper {
 
       order = selectExecutor.getOrderedFields();
       anyFunctionAggregate = selectExecutor.isAnyFunctionAggregates();
-
+      limit = selectExecutor.getLimit();
       if (selectExecutor.getProjections() != null) {
         for (Map.Entry<String, Object> projection : selectExecutor.getProjections().entrySet()) {
           if (projection.getValue() instanceof OSQLFunctionRuntime) {
@@ -102,14 +104,14 @@ public class ODistributedQueryHelper {
           }
         }
       }
-
-    }
-
-    if (iCommand.getResultListener() != null
-        && iCommand.getResultListener().getClass().equals(ONetworkProtocolBinary.AsyncResultListener.class)) {
-      asyncResultListener = iCommand.getResultListener();
+      if (iCommand.getResultListener() != null && !(iCommand.getResultListener() instanceof OSQLSynchQuery)) {
+        resultListener = iCommand.getResultListener();
+      } else {
+        resultListener = null;
+      }
     } else {
-      asyncResultListener = null;
+      select = false;
+      distributable = ALWAYS_DISTRIBUTABLE.contains(realExecutor.getClass());
     }
   }
 
@@ -117,10 +119,11 @@ public class ODistributedQueryHelper {
     if (!distributable) {
       throw new IllegalStateException("Non-distributable command");
     }
-    if (asyncResultListener != null && iCommand instanceof OSQLSynchQuery) {
-      iCommand.setResultListener((OSQLSynchQuery) iCommand);
+    if (select) {
+      return new OSQLAsynchQuery(iCommand.getText(), new OAggregatorResultListener());
+    } else {
+      return iCommand;
     }
-    return iCommand;
   }
 
   public boolean isDistributable() {
@@ -128,12 +131,10 @@ public class ODistributedQueryHelper {
   }
 
   public void addToResult(Object result) {
-    if (asyncMode()) {
-      for (Object o : resultAsCollection(result)) {
-        asyncResultListener.result(o);
-      }
-    } else {
-      tempResult.addAll(resultAsCollection(result));
+    final Collection<OIdentifiable> resultAsCollection = resultAsCollection(result);
+    synchronized (tempResult) {
+      tempResult.addAll(resultAsCollection);
+      processed += resultAsCollection.size();
     }
   }
 
@@ -147,7 +148,7 @@ public class ODistributedQueryHelper {
     } else if (result instanceof Integer) {
       // insert/update/delete result
       final ODocument wrapper = new ODocument();
-      wrapper.field("result", result, OType.INTEGER);
+      wrapper.field(RESULT_FIELD, result, OType.INTEGER);
       return Collections.<OIdentifiable> singleton(wrapper);
     } else {
       throw new IllegalArgumentException("Invalid result type");
@@ -155,58 +156,71 @@ public class ODistributedQueryHelper {
   }
 
   public Object getResult() {
-    final Map<String, Object> values = new HashMap<String, Object>();
-    for (OPair<String, OSQLFunction> merger : mergers) {
-      final List<Object> dataToMerge = new ArrayList<Object>();
-      for (OIdentifiable o : tempResult) {
-        dataToMerge.add(((ODocument) o).field(merger.getKey()));
+    if (select) {
+      final Map<String, Object> values = new HashMap<String, Object>();
+      for (OPair<String, OSQLFunction> merger : mergers) {
+        final List<Object> dataToMerge = new ArrayList<Object>();
+        for (OIdentifiable o : tempResult) {
+          dataToMerge.add(((ODocument) o).field(merger.getKey()));
+        }
+        values.put(merger.getKey(), merger.getValue().mergeDistributedResult(dataToMerge));
       }
-      values.put(merger.getKey(), merger.getValue().mergeDistributedResult(dataToMerge));
-    }
-    if (distinct != null) {
-      final List<OIdentifiable> resultToMerge = new ArrayList<OIdentifiable>(tempResult);
-      tempResult.clear();
-      for (OIdentifiable record : resultToMerge) {
-        Object ret = distinct.getValue().execute(record, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
-        if (ret != null) {
-          final ODocument result = new ODocument().setOrdered(true); // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
-          result.field(distinct.getKey(), ret);
-          tempResult.add(result);
+      if (distinct != null) {
+        final List<OIdentifiable> resultToMerge = new ArrayList<OIdentifiable>(tempResult);
+        tempResult.clear();
+        for (OIdentifiable record : resultToMerge) {
+          Object ret = distinct.getValue().execute(record, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
+          if (ret != null) {
+            final ODocument result = new ODocument().setOrdered(true); // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
+            result.field(distinct.getKey(), ret);
+            tempResult.add(result);
+          }
         }
       }
-    }
-    if (anyFunctionAggregate && !tempResult.isEmpty()) {
-      // left only one result
-      final OIdentifiable doc = tempResult.get(0);
-      tempResult.clear();
-      tempResult.add(doc);
-    }
-    // inject values
-    if (!values.isEmpty()) {
-      for (Map.Entry<String, Object> entry : values.entrySet()) {
-        for (OIdentifiable item : tempResult) {
-          ((ODocument) item).field(entry.getKey(), entry.getValue());
+      if (anyFunctionAggregate && !tempResult.isEmpty()) {
+        // left only one result
+        final OIdentifiable doc = tempResult.get(0);
+        tempResult.clear();
+        tempResult.add(doc);
+      }
+      // inject values
+      if (!values.isEmpty()) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+          for (OIdentifiable item : tempResult) {
+            ((ODocument) item).field(entry.getKey(), entry.getValue());
+          }
         }
       }
-    }
-    if (order != null) {
-      ODocumentHelper.sort(tempResult, order);
-    }
-    if (!tempResult.isEmpty() && tempResult.get(0).getIdentity().getClusterId() == -2) {
-      long pos = 0;
-      for (OIdentifiable id : tempResult) {
-        ((ORecordId) id.getIdentity()).clusterPosition = pos++;
+      if (order != null) {
+        ODocumentHelper.sort(tempResult, order);
       }
-    }
-    if (asyncResultListener != null) {
-      for (Object o : tempResult) {
-        asyncResultListener.result(o);
+      if (!tempResult.isEmpty() && tempResult.get(0).getIdentity().getClusterId() == -2) {
+        processed = 0;
+        for (OIdentifiable id : tempResult) {
+          ((ORecordId) id.getIdentity()).clusterPosition = processed++;
+        }
       }
+      if (limit != -1 && tempResult.size() > limit) {
+        do {
+          tempResult.remove(tempResult.size() - 1);
+        } while (tempResult.size() > limit);
+      }
+      if (resultListener != null) {
+        for (Object o : tempResult) {
+          resultListener.result(o);
+        }
+      }
+      return tempResult;
+    } else {
+      int result = 0;
+      for (OIdentifiable obj : tempResult) {
+        result += ((ODocument) obj).<Integer> field(RESULT_FIELD);
+      }
+      return result;
     }
-    return tempResult;
   }
 
   public boolean asyncMode() {
-    return asyncResultListener != null && !anyFunctionAggregate && order == null && distinct == null && mergers.isEmpty();
+    return resultListener != null && !anyFunctionAggregate && order == null && distinct == null && mergers.isEmpty();
   }
 }

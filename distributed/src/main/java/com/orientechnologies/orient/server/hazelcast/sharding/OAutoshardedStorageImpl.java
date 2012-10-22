@@ -7,7 +7,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
@@ -15,7 +22,6 @@ import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
@@ -50,6 +56,11 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   private final Set<Integer>       undistributedClusters = new HashSet<Integer>();
 
+  /**
+   * For parallel query execution on different nodes
+   */
+  private final ExecutorService    distributedQueryExecutors;
+
   public OAutoshardedStorageImpl(ServerInstance serverInstance, OStorageEmbedded wrapped, ODHTConfiguration dhtConfiguration) {
     this.serverInstance = serverInstance;
     this.wrapped = wrapped;
@@ -57,6 +68,22 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     for (String clusterName : dhtConfiguration.getUndistributableClusters()) {
       undistributedClusters.add(wrapped.getClusterIdByName(clusterName));
     }
+
+    final int cl = Runtime.getRuntime().availableProcessors() * 4;
+    distributedQueryExecutors = new ThreadPoolExecutor(0, cl, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(cl),
+        new ThreadFactory() {
+
+          private final AtomicInteger i = new AtomicInteger(0);
+
+          @Override
+          public Thread newThread(Runnable r) {
+            final Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "DistributedQueryExecutor-"
+                + i.getAndIncrement());
+            t.setDaemon(true);
+            t.setPriority(Thread.NORM_PRIORITY);
+            return t;
+          }
+        });
   }
 
   @Override
@@ -149,17 +176,32 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return wrapped.command(iCommand);
     }
 
-    iCommand = helper.getPreparedRemoteCommand();
-    try {
-      for (final ODHTNode node : getDHTNodes()) {
-        Object result = node.command(wrapped.getName(), iCommand);
-        if (result != null && !node.isLocal()) {
-          result = OCommandResultSerializationHelper.readFromStream((byte[]) result);
+    final OCommandRequestText distributedCommand = helper.getPreparedRemoteCommand();
+
+    final List<ODHTNode> nodes = getDHTNodes();
+    final List<Future> tasks = new ArrayList<Future>(nodes.size());
+    for (final ODHTNode node : nodes) {
+      tasks.add(distributedQueryExecutors.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Object result = node.command(wrapped.getName(), distributedCommand, false);
+            if (result != null && !node.isLocal()) {
+              result = OCommandResultSerializationHelper.readFromStream((byte[]) result);
+            }
+            helper.addToResult(result);
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Error deserializing result from node " + node.getNodeId(), e);
+          }
         }
-        helper.addToResult(result);
+      }));
+    }
+    for (final Future task : tasks) {
+      try {
+        task.get();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error getting task", e);
       }
-    } catch (IOException e) {
-      throw new OCommandExecutionException("Failed to deserialize result", e);
     }
 
     return helper.getResult();

@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
 
 /**
  * @author Andrey Lomakin
@@ -294,7 +295,7 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public Object command(String storageName, OCommandRequestText request) {
+  public Object command(String storageName, OCommandRequestText request, boolean serializeResult) {
 
     while (state != NodeState.STABLE) {
       log("Wait till node will be joined.");
@@ -334,9 +335,11 @@ public class OLocalDHTNode implements ODHTNode {
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 
     try {
-      final Object result = executor.execute(request.getParameters());
+      Object result = executor.execute(request.getParameters());
       request.setContext(executor.getContext());
-
+      if (serializeResult) {
+        result = OCommandResultSerializationHelper.writeToStream(result);
+      }
       return result;
     } catch (OException e) {
       // PASS THROUGHT
