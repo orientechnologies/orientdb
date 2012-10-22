@@ -310,4 +310,12 @@ public class OHttpResponseWrapper {
 		response.flush();
 		return this;
 	}
+
+	public String getContentType() {
+		return response.getContentType();
+	}
+
+	public void setContentType(final String contentType) {
+		response.setContentType(contentType);
+	}
 }

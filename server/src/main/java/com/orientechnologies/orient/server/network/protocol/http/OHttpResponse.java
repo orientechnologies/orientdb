@@ -46,6 +46,7 @@ public class OHttpResponse {
 	public String								headers;
 	public String[]							additionalHeaders;
 	public String								characterSet;
+	public String								contentType;
 	public String								serverInfo;
 	public String								sessionId;
 	public String								callbackFunction;
@@ -160,8 +161,11 @@ public class OHttpResponse {
 				writeRecords((Iterator<OIdentifiable>) iResult);
 			else if (iResult == null || iResult instanceof Integer)
 				send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
-			else
-				send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult.toString(), null);
+			else {
+				if (contentType == null)
+					contentType = OHttpUtils.CONTENT_TEXT_PLAIN;
+				send(OHttpUtils.STATUS_OK_CODE, "OK", contentType, iResult.toString(), null);
+			}
 		}
 	}
 
@@ -266,5 +270,13 @@ public class OHttpResponse {
 
 	public void flush() throws IOException {
 		out.flush();
+	}
+
+	public String getContentType() {
+		return contentType;
+	}
+
+	public void setContentType(String contentType) {
+		this.contentType = contentType;
 	}
 }
