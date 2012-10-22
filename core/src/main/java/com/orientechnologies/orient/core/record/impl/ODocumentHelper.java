@@ -122,6 +122,12 @@ public class ODocumentHelper {
             }
           }
           return (RET) newValue;
+        } else if (OMultiValue.isMultiValue(iValue)) {
+          // GENERIC MULTI VALUE
+          for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
+            ((Collection<Object>) newValue).add(s);
+          }
+          return (RET) newValue;
         }
       } else {
         return (RET) iValue;
@@ -150,6 +156,12 @@ public class ODocumentHelper {
             for (String s : items) {
               ((Collection<Object>) newValue).add(s);
             }
+          }
+          return (RET) newValue;
+        } else if (OMultiValue.isMultiValue(iValue)) {
+          // GENERIC MULTI VALUE
+          for (Object s : OMultiValue.getMultiValueIterable(iValue)) {
+            ((Collection<Object>) newValue).add(s);
           }
           return (RET) newValue;
         }
