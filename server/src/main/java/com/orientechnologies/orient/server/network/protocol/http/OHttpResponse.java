@@ -143,25 +143,26 @@ public class OHttpResponse {
 	public void writeResult(Object iResult) throws InterruptedException, IOException {
 		if (iResult == null)
 			send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+		else {
+			if (iResult instanceof OIdentifiable) {
+				// CONVERT SIGLE VLUE IN A COLLECTION
+				final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+				resultSet.add((OIdentifiable) iResult);
+				iResult = resultSet;
+			}
 
-		if (iResult instanceof OIdentifiable) {
-			// CONVERT SIGLE VLUE IN A COLLECTION
-			final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-			resultSet.add((OIdentifiable) iResult);
-			iResult = resultSet;
+			if (iResult instanceof Iterable<?>)
+				iResult = ((Iterable<OIdentifiable>) iResult).iterator();
+			else if (iResult.getClass().isArray())
+				iResult = OMultiValue.getMultiValueIterator(iResult);
+
+			if (iResult instanceof Iterator<?>)
+				writeRecords((Iterator<OIdentifiable>) iResult);
+			else if (iResult == null || iResult instanceof Integer)
+				send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
+			else
+				send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult.toString(), null);
 		}
-
-		if (iResult instanceof Iterable<?>)
-			iResult = ((Iterable<OIdentifiable>) iResult).iterator();
-		else if (iResult.getClass().isArray())
-			iResult = OMultiValue.getMultiValueIterator( iResult );
-
-		if (iResult instanceof Iterator<?>)
-			writeRecords((Iterator<OIdentifiable>) iResult);
-		else if (iResult == null || iResult instanceof Integer)
-			send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
-		else
-			send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult.toString(), null);
 	}
 
 	public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
