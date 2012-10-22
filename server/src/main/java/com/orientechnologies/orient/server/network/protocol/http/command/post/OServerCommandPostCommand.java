@@ -27,7 +27,6 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 	private static final String[]	NAMES	= { "POST|command/*" };
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit]");
 

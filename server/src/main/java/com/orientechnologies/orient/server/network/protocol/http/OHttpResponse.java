@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -152,6 +153,8 @@ public class OHttpResponse {
 
 		if (iResult instanceof Iterable<?>)
 			iResult = ((Iterable<OIdentifiable>) iResult).iterator();
+		else if (iResult.getClass().isArray())
+			iResult = OMultiValue.getMultiValueIterator( iResult );
 
 		if (iResult instanceof Iterator<?>)
 			writeRecords((Iterator<OIdentifiable>) iResult);
