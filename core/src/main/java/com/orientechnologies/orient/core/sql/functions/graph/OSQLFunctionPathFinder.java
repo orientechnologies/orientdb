@@ -123,21 +123,21 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
 
   protected List<OIdentifiable> getNeighbors(final OIdentifiable node) {
     final List<OIdentifiable> neighbors = new ArrayList<OIdentifiable>();
+    if (node != null) {
+      if (paramDirection == DIRECTION.BOTH || paramDirection == DIRECTION.OUT)
+        for (OIdentifiable edge : db.getOutEdges(node)) {
+          final ODocument inVertex = db.getInVertex(edge);
+          if (inVertex != null && !isSettled(inVertex))
+            neighbors.add(inVertex);
+        }
 
-    if (paramDirection == DIRECTION.BOTH || paramDirection == DIRECTION.OUT)
-      for (OIdentifiable edge : db.getOutEdges(node)) {
-        final ODocument inVertex = db.getInVertex(edge);
-        if (inVertex != null && !isSettled(inVertex))
-          neighbors.add(inVertex);
-      }
-
-    if (paramDirection == DIRECTION.BOTH || paramDirection == DIRECTION.IN)
-      for (OIdentifiable edge : db.getInEdges(node)) {
-        final ODocument outVertex = db.getOutVertex(edge);
-        if (outVertex != null && !isSettled(outVertex))
-          neighbors.add(outVertex);
-      }
-
+      if (paramDirection == DIRECTION.BOTH || paramDirection == DIRECTION.IN)
+        for (OIdentifiable edge : db.getInEdges(node)) {
+          final ODocument outVertex = db.getOutVertex(edge);
+          if (outVertex != null && !isSettled(outVertex))
+            neighbors.add(outVertex);
+        }
+    }
     return neighbors;
   }
 
