@@ -444,7 +444,6 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    */
   public Set<OIdentifiable> getEdgesBetweenVertexes(final OIdentifiable iVertex1, final OIdentifiable iVertex2,
       final String[] iLabels, final String[] iClassNames) {
-
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
     if (iVertex1 != null && iVertex2 != null) {
@@ -496,6 +495,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return
    */
   public Set<OIdentifiable> getOutEdges(final OIdentifiable iVertex, final String iLabel) {
+    if (iVertex == null)
+      return null;
+
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
@@ -538,6 +540,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return
    */
   public Set<OIdentifiable> getOutEdgesHavingProperties(final OIdentifiable iVertex, final Map<String, Object> iProperties) {
+    if (iVertex == null)
+      return null;
+
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
@@ -554,6 +559,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return
    */
   public Set<OIdentifiable> getOutEdgesHavingProperties(final OIdentifiable iVertex, Iterable<String> iProperties) {
+    if (iVertex == null)
+      return null;
+
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
@@ -565,6 +573,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public Set<OIdentifiable> getInEdges(final OIdentifiable iVertex, final String iLabel) {
+    if (iVertex == null)
+      return null;
+
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
@@ -606,6 +617,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return
    */
   public Set<OIdentifiable> getInEdgesHavingProperties(final OIdentifiable iVertex, Iterable<String> iProperties) {
+    if (iVertex == null)
+      return null;
+
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
@@ -622,11 +636,17 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
    * @return
    */
   public Set<OIdentifiable> getInEdgesHavingProperties(final ODocument iVertex, final Map<String, Object> iProperties) {
+    if (iVertex == null)
+      return null;
+
     checkVertexClass(iVertex);
     return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_IN), iProperties);
   }
 
   public ODocument getInVertex(final OIdentifiable iEdge) {
+    if (iEdge == null)
+      return null;
+
     final ODocument e = (ODocument) iEdge.getRecord();
 
     checkEdgeClass(e);
@@ -644,6 +664,9 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public ODocument getOutVertex(final OIdentifiable iEdge) {
+    if (iEdge == null)
+      return null;
+
     final ODocument e = (ODocument) iEdge.getRecord();
 
     checkEdgeClass(e);
