@@ -29,136 +29,133 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-  protected boolean             recordMetrics = false;
-  protected OCommandContext     parent;
-  protected OCommandContext     child;
-  protected Map<String, Object> variables;
+	protected boolean							recordMetrics	= false;
+	protected OCommandContext			parent;
+	protected OCommandContext			child;
+	protected Map<String, Object>	variables;
 
-  public Object getVariable(String iName) {
-    if (iName == null)
-      return null;
+	public Object getVariable(final String iName) {
+		if (iName == null)
+			return null;
 
-    iName = iName.toUpperCase();
-    int pos = OStringSerializerHelper.getLowerIndexOf(iName, 0, ".", "[");
+		int pos = OStringSerializerHelper.getLowerIndexOf(iName, 0, ".", "[");
 
-    String firstPart;
-    String lastPart;
-    if (pos > -1) {
-      // UP TO THE PARENT
-      firstPart = iName.substring(0, pos);
-      lastPart = iName.substring(pos + 1);
-      if (firstPart.equals("PARENT") && parent != null)
-        return parent.getVariable(lastPart);
-    } else {
-      firstPart = iName;
-      lastPart = null;
-    }
+		String firstPart;
+		String lastPart;
+		if (pos > -1) {
+			// UP TO THE PARENT
+			firstPart = iName.substring(0, pos);
+			lastPart = iName.substring(pos + 1);
+			if (firstPart.equalsIgnoreCase("PARENT") && parent != null)
+				return parent.getVariable(lastPart);
+		} else {
+			firstPart = iName;
+			lastPart = null;
+		}
 
-    Object result = null;
-    if (firstPart.equals("CONTEXT"))
-      result = getVariables();
-    else if (firstPart.equals("PARENT"))
-      return parent;
-    else {
-      if (variables != null && variables.containsKey(firstPart))
-        result = variables.get(firstPart);
-      else if (child != null)
-        result = child.getVariable(firstPart);
-    }
+		Object result = null;
+		if (firstPart.equalsIgnoreCase("CONTEXT"))
+			result = getVariables();
+		else if (firstPart.equalsIgnoreCase("PARENT"))
+			return parent;
+		else {
+			if (variables != null && variables.containsKey(firstPart))
+				result = variables.get(firstPart);
+			else if (child != null)
+				result = child.getVariable(firstPart);
+		}
 
-    if (pos > -1)
-      result = ODocumentHelper.getFieldValue(result, lastPart);
+		if (pos > -1)
+			result = ODocumentHelper.getFieldValue(result, lastPart);
 
-    return result;
-  }
+		return result;
+	}
 
-  public OCommandContext setVariable(String iName, final Object iValue) {
-    if (iName == null)
-      return null;
+	public OCommandContext setVariable(final String iName, final Object iValue) {
+		if (iName == null)
+			return null;
 
-    iName = iName.toUpperCase();
+		init();
+		variables.put(iName, iValue);
+		return this;
+	}
 
-    init();
-    variables.put(iName, iValue);
-    return this;
-  }
+	public long updateMetric(final String iName, final long iValue) {
+		if (!recordMetrics)
+			return -1;
 
-  public long updateMetric(final String iName, final long iValue) {
-    if (!recordMetrics)
-      return -1;
+		init();
+		Long value = (Long) variables.get(iName);
+		if (value == null)
+			value = iValue;
+		else
+			value = new Long(value.longValue() + iValue);
+		variables.put(iName, value);
+		return value.longValue();
+	}
 
-    init();
-    Long value = (Long) variables.get(iName);
-    if (value == null)
-      value = iValue;
-    else
-      value = new Long(value.longValue() + iValue);
-    variables.put(iName, value);
-    return value.longValue();
-  }
+	/**
+	 * Returns a read-only map with all the variables.
+	 */
+	public Map<String, Object> getVariables() {
+		final HashMap<String, Object> map = new HashMap<String, Object>();
+		if (child != null)
+			map.putAll(child.getVariables());
 
-  /**
-   * Returns a read-only map with all the variables.
-   */
-  public Map<String, Object> getVariables() {
-    final HashMap<String, Object> map = new HashMap<String, Object>();
-    if (child != null)
-      map.putAll(child.getVariables());
+		if (variables != null)
+			map.putAll(variables);
 
-    if (variables != null)
-      map.putAll(variables);
+		return map;
+	}
 
-    return map;
-  }
+	/**
+	 * Set the inherited context avoiding to copy all the values every time.
+	 * 
+	 * @return
+	 */
+	public OCommandContext setChild(final OCommandContext iContext) {
+		if (iContext == null) {
+			// REMOVE IT
+			child.setParent(null);
+			child = null;
 
-  /**
-   * Set the inherited context avoiding to copy all the values every time.
-   * 
-   * @return
-   */
-  public OCommandContext setChild(final OCommandContext iContext) {
-    if (iContext == null) {
-      // REMOVE IT
-      child.setParent(null);
-      child = null;
+		} else if (child != iContext) {
+			// ADD IT
+			// if (child != null)
+			// throw new IllegalStateException("Current context already has a child context");
 
-    } else if (child != iContext) {
-      // ADD IT
-      // if (child != null)
-      // throw new IllegalStateException("Current context already has a child context");
+			child = iContext;
+			iContext.setParent(this);
+		}
+		return this;
+	}
 
-      child = iContext;
-      iContext.setParent(this);
-    }
-    return this;
-  }
+	public OCommandContext setParent(final OCommandContext iParentContext) {
+		if (parent != iParentContext) {
+			// if (parent != null)
+			// throw new IllegalStateException("Current context already has a parent context");
 
-  public OCommandContext setParent(final OCommandContext iParentContext) {
-    if (parent != iParentContext) {
-      // if (parent != null)
-      // throw new IllegalStateException("Current context already has a parent context");
+			parent = iParentContext;
+		}
+		return this;
+	}
 
-      parent = iParentContext;
-    }
-    return this;
-  }
+	@Override
+	public String toString() {
+		return getVariables().toString();
+	}
 
-  @Override
-  public String toString() {
-    return getVariables().toString();
-  }
+	private void init() {
+		if (variables == null)
+			variables = new HashMap<String, Object>();
+	}
 
-  private void init() {
-    if (variables == null)
-      variables = new HashMap<String, Object>();
-  }
+	public boolean isRecordingMetrics() {
+		return recordMetrics;
+	}
 
-  public boolean isRecordingMetrics() {
-    return recordMetrics;
-  }
-
-  public OCommandContext setRecordingMetrics(boolean recordMetrics) {
-    this.recordMetrics = recordMetrics;
-    return this;
-  }
+	public OCommandContext setRecordingMetrics(boolean recordMetrics) {
+		this.recordMetrics = recordMetrics;
+		return this;
+	}
 }

@@ -33,7 +33,7 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
   }
 
   public Object getValue(final OIdentifiable iRecord, final OCommandContext iContext) {
-    if (iRecord == null || iContext == null)
+    if (iContext == null)
       return null;
 
     return transformValue(iRecord, iContext.getVariable(name));
