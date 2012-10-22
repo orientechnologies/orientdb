@@ -304,8 +304,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 							((OLazyIterator<OIdentifiable>) it).update(newRid);
 					}
 
-					if (!coll.convertRecords2Links())
-						throw new OSerializationException("Cannot convert record to links because some entries is not persistent");
+					coll.convertRecords2Links();
+					// if (!coll.convertRecords2Links())
+					// throw new OSerializationException("Cannot convert record to links because some entries is not persistent");
 
 					iOutput.append(buffer);
 
