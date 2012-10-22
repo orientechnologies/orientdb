@@ -418,7 +418,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public double getDouble(String columnLabel) throws SQLException {
 		try {
-			return (Double) document.field(columnLabel, OType.DOUBLE);
+			final Double r = document.field(columnLabel, OType.DOUBLE);
+			return r != null ? r : 0;
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the double value at column '" + columnLabel + "'", e);
 		}
@@ -441,7 +442,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public float getFloat(String columnLabel) throws SQLException {
 		try {
-			return (Float) (document.field(columnLabel, OType.FLOAT));
+			final Float r = document.field(columnLabel, OType.FLOAT);
+			return r != null ? r : 0;
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the float value at column '" + columnLabel + "'", e);
 		}
@@ -460,7 +462,9 @@ public class OrientJdbcResultSet implements ResultSet {
 		if ("@version".equals(columnLabel))
 			return document.getVersion();
 		try {
-			return (Integer) document.field(columnLabel, OType.INTEGER);
+			final Integer r = document.field(columnLabel, OType.INTEGER);
+			return r != null ? r : 0;
+
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the integer value at column '" + columnLabel + "'", e);
 		}
@@ -472,7 +476,8 @@ public class OrientJdbcResultSet implements ResultSet {
 
 	public long getLong(String columnLabel) throws SQLException {
 		try {
-			return (Long) document.field(columnLabel, OType.LONG);
+			Long r = document.field(columnLabel, OType.LONG);
+			return r != null ? r : 0;
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the long value at column '" + columnLabel + "'", e);
 		}
@@ -585,7 +590,9 @@ public class OrientJdbcResultSet implements ResultSet {
 	@SuppressWarnings("boxing")
 	public short getShort(String columnLabel) throws SQLException {
 		try {
-			return (Short) document.field(columnLabel, OType.SHORT);
+			final Short r = document.field(columnLabel, OType.SHORT);
+			return r != null ? r : 0;
+
 		} catch (Exception e) {
 			throw new SQLException("An error occured during the retrieval of the short value at column '" + columnLabel + "'", e);
 		}
