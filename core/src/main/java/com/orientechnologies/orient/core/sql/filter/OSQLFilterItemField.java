@@ -38,7 +38,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     super(iQueryToParse, iName);
   }
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
 
