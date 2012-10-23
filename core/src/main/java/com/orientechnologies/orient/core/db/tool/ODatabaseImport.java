@@ -468,33 +468,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     boolean recreateManualIndex = false;
     if (exporterVersion <= 4) {
+      removeDefaultClusters();
       recreateManualIndex = true;
-
-      listener.onMessage("\nWARN: Exported database does not support manual index separation."
-          + " Manual index cluster will be dropped.");
-
-      // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
-      // all clusters and recreate cluster for manual indexes in the end.
-      database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
-
-      final OSchema schema = database.getMetadata().getSchema();
-      schema.dropClass(OUser.CLASS_NAME);
-      schema.dropClass(ORole.CLASS_NAME);
-      schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
-      schema.dropClass(OFunction.CLASS_NAME);
-      schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-      schema.save();
-
-      database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
-
-      database.getStorage().setDefaultClusterId(
-          database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));
-
-      // Starting from v4 schema has been moved to internal cluster.
-      // Create a stub at #2:0 to prevent cluster position shifting.
-      new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
-
-      database.getMetadata().getSecurity().create();
     }
 
     @SuppressWarnings("unused")
@@ -540,10 +515,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         clusterId = database.addCluster(type, name, null, null);
       }
 
-      if (clusterId != id)
-        throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId + " different from the original: "
-            + id + ". To continue the import drop the cluster '" + database.getClusterNameById(clusterId - 1) + "' that has "
-            + database.countClusterElements(clusterId - 1) + " records");
+      if (clusterId != id) {
+        if (database.countClusterElements(clusterId - 1) == 0) {
+          listener.onMessage("Found previous version: migrating old clusters...");
+          removeDefaultClusters();
+          // clusterId = database.addCluster(type, name, null, null);
+          recreateManualIndex = true;
+        } else
+          throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
+              + " different from the original: " + id + ". To continue the import drop the cluster '"
+              + database.getClusterNameById(clusterId - 1) + "' that has " + database.countClusterElements(clusterId - 1)
+              + " records");
+      }
 
       listener.onMessage("OK, assigned id=" + clusterId);
 
@@ -563,6 +546,34 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone. Imported " + total + " clusters");
 
     return total;
+  }
+
+  protected void removeDefaultClusters() {
+    listener.onMessage("\nWARN: Exported database does not support manual index separation."
+        + " Manual index cluster will be dropped.");
+
+    // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
+    // all clusters and recreate cluster for manual indexes in the end.
+    database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+
+    final OSchema schema = database.getMetadata().getSchema();
+    schema.dropClass(OUser.CLASS_NAME);
+    schema.dropClass(ORole.CLASS_NAME);
+    schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
+    schema.dropClass(OFunction.CLASS_NAME);
+    schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    schema.save();
+
+    database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
+
+    database.getStorage().setDefaultClusterId(
+        database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));
+
+    // Starting from v4 schema has been moved to internal cluster.
+    // Create a stub at #2:0 to prevent cluster position shifting.
+    new ODocument().save(OStorage.CLUSTER_DEFAULT_NAME);
+
+    database.getMetadata().getSecurity().create();
   }
 
   private long importRecords() throws Exception {
