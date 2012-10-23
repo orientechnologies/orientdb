@@ -118,6 +118,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public OIdentifiable internalPut(final OIdentifiable e, final OIdentifiable v) {
+    if( e == null )
+      return null;
+    
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
     if (e.getIdentity().isNew()) {
