@@ -895,7 +895,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final TYPE iType, final OIdentifiable id) {
-    if (!OHookThreadLocal.INSTANCE.push(id))
+    if (id == null || !OHookThreadLocal.INSTANCE.push(id))
       return RESULT.RECORD_NOT_CHANGED;
 
     try {
