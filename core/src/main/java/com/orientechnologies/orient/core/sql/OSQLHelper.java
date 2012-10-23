@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -260,7 +261,20 @@ public class OSQLHelper {
       return;
 
     // BIND VALUES
-    for (Entry<String, Object> field : iFields.entrySet())
-      iDocument.field(field.getKey(), resolveFieldValue(iDocument, field.getKey(), field.getValue(), iArguments));
+    for (Entry<String, Object> field : iFields.entrySet()) {
+      final String fieldName = field.getKey();
+      Object fieldValue = field.getValue();
+
+      if (fieldValue != null) {
+        final String fieldValueString = fieldValue.toString();
+        if (fieldValueString.startsWith("(") && fieldValueString.endsWith(")")) {
+          // SUB-COMMAND
+          final OCommandSQL cmd = new OCommandSQL(fieldValueString.substring(1, fieldValueString.length() - 1));
+          fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
+        }
+      }
+
+      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments));
+    }
   }
 }
