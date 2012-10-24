@@ -160,7 +160,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       final Map<String, Object> fields = new LinkedHashMap<String, Object>();
       for (int i = 0; i < values.size(); ++i)
         fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
-      
+
       newRecords.add(fields);
       blockStart = blockEnd;
     }
@@ -248,6 +248,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>[,]*]";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]";
   }
 }

@@ -23,11 +23,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -271,6 +273,19 @@ public class OSQLHelper {
           // SUB-COMMAND
           final OCommandSQL cmd = new OCommandSQL(fieldValueString.substring(1, fieldValueString.length() - 1));
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
+
+          // CHECK FOR CONVERSIONS
+          if (iDocument.getSchemaClass() != null) {
+            final OProperty prop = iDocument.getSchemaClass().getProperty(fieldName);
+            if (prop != null) {
+              if (prop.getType() == OType.LINK) {
+                if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getSize(fieldValue) == 1)
+                  // GET THE FIRST ITEM AS UNIQUE LINK
+                  fieldValue = OMultiValue.getFirstValue(fieldValue);
+              }
+            }
+          }
+
         }
       }
 
