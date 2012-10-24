@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -149,7 +151,12 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
   }
 
   @SuppressWarnings("unchecked")
-  protected void generateGraphDbOutput(List<OIdentifiable> iRecords, final OJSONWriter json) throws IOException {
+  protected void generateGraphDbOutput(final List<OIdentifiable> iRecords, final OJSONWriter json) throws IOException {
+    // CREATE A SET TO SPEED UP SEARCHES ON VERTICES
+    final Set<ORID> vertexes = new HashSet<ORID>();
+    for (OIdentifiable id : iRecords)
+      vertexes.add(id.getIdentity());
+
     final Set<OIdentifiable> edges = new LinkedHashSet<OIdentifiable>();
     for (OIdentifiable rec : iRecords) {
       if (rec.getRecord() instanceof ODocument) {
@@ -162,9 +169,21 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         for (String field : doc.fieldNames()) {
           final Object v = doc.field(field);
           if (v != null) {
-            if (OGraphDatabase.VERTEX_FIELD_OUT.equals(field) || OGraphDatabase.VERTEX_FIELD_IN.equals(field))
-              edges.addAll((Collection<ODocument>) v);
-            else
+            if (OGraphDatabase.VERTEX_FIELD_OUT.equals(field)) {
+              final Collection<ODocument> edgeSet = (Collection<ODocument>) v;
+              for (ODocument e : edgeSet) {
+                if (vertexes.contains(e.field("in")))
+                  // VERTEX IS PART OF RESULT SET: ADD THE EDGE
+                  edges.add(e);
+              }
+            } else if (OGraphDatabase.VERTEX_FIELD_IN.equals(field)) {
+              final Collection<ODocument> edgeSet = (Collection<ODocument>) v;
+              for (ODocument e : edgeSet) {
+                if (vertexes.contains(e.field("out")))
+                  // VERTEX IS PART OF RESULT SET: ADD THE EDGE
+                  edges.add(e);
+              }
+            } else
               json.writeAttribute(3, false, field, v);
           }
         }
