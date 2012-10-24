@@ -384,8 +384,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   protected void deleteOrphans(OObjectProxyMethodHandler handler) {
-    for (ORID orphan : handler.getOrphans())
-      underlying.delete(orphan);
+    for (ORID orphan : handler.getOrphans()){
+      deleteCascade((ODocument) underlying.load(orphan));
+    	underlying.delete(orphan);
+    }
     handler.getOrphans().clear();
   }
 
