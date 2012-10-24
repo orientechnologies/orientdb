@@ -361,6 +361,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       roleClass.createProperty("mode", OType.BYTE);
     if (!roleClass.existsProperty("rules"))
       roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+    if (!roleClass.existsProperty("inheritedRole"))
+      roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
     OClass userClass = database.getMetadata().getSchema().getClass("OUser");
     if (userClass == null)
@@ -420,6 +422,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       if (p == null)
         p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
       p.createIndex(INDEX_TYPE.UNIQUE);
+
+      final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
+      if (!roleClass.existsProperty("inheritedRole"))
+        roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
     }
   }
 
