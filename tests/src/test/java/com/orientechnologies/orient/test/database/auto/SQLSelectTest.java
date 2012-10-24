@@ -519,7 +519,7 @@ public class SQLSelectTest {
 
   @Test
   public void queryWhereInpreparred() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where name in ( :name )"))
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where name in [ :name ]"))
         .execute("admin");
 
     Assert.assertEquals(result.size(), 1);

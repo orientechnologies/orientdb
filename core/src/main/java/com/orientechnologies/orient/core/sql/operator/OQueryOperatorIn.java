@@ -117,7 +117,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       else if (inKeyValue instanceof OSQLFilterItem)
         inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, iContext);
       else
-        throw new IllegalArgumentException("Key is not valid");
+        throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
 
       final List<Object> inKeys = new ArrayList<Object>();
 

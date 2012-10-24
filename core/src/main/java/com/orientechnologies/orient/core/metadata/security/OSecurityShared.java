@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -373,6 +375,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("roles"))
       userClass.createProperty("roles", OType.LINKSET, roleClass);
+    if (!userClass.existsProperty("status"))
+      userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
 
     // CREATE ROLES AND USERS
     ORole adminRole = getRole(ORole.ADMIN);
@@ -407,6 +411,16 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public void load() {
+    // @COMPATIBILITY <1.3.0
+    final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
+    if (userClass != null) {
+      if (!userClass.existsProperty("status"))
+        userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
+      OProperty p = userClass.getProperty("name");
+      if (p == null)
+        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      p.createIndex(INDEX_TYPE.UNIQUE);
+    }
   }
 
   private ODatabaseRecord getDatabase() {
