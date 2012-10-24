@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -57,14 +58,11 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     if (iLeft == null || iRight == null)
       return false;
 
-    if (iLeft instanceof ORecord<?>) {
-      // RECORD & ORID
-      return comparesValues(iRight, (ORecord<?>) iLeft);
-
-    } else if (iRight instanceof ORecord<?>) {
-
-      return comparesValues(iLeft, (ORecord<?>) iRight);
-    }
+    // RECORD & ORID
+    if (iLeft instanceof ORecord<?>)
+      return comparesValues(iRight, (ORecord<?>) iLeft, true);
+    else if (iRight instanceof ORecord<?>)
+      return comparesValues(iLeft, (ORecord<?>) iRight, true);
 
     // ALL OTHER CASES
     final Object right = OType.convert(iRight, iLeft.getClass());
@@ -73,7 +71,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     return iLeft.equals(right);
   }
 
-  protected static boolean comparesValues(final Object iValue, final ORecord<?> iRecord) {
+  protected static boolean comparesValues(final Object iValue, final ORecord<?> iRecord, final boolean iConsiderIn) {
     // ORID && RECORD
     final ORID other = ((ORecord<?>) iRecord).getIdentity();
 
@@ -82,8 +80,16 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final String[] firstFieldName = ((ODocument) iRecord).fieldNames();
       if (firstFieldName.length > 0) {
         Object fieldValue = ((ODocument) iRecord).field(firstFieldName[0]);
-        if (fieldValue != null)
+        if (fieldValue != null) {
+          if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+              if (o != null && o.equals(iValue))
+                return true;
+            }
+          }
+
           return fieldValue.equals(iValue);
+        }
       }
       return false;
     }
