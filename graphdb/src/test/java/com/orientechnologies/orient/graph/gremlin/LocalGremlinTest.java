@@ -23,7 +23,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 public class LocalGremlinTest {
   public static void main(String[] args) {
     LocalGremlinTest instance = new LocalGremlinTest();
-    
+
     long start = System.currentTimeMillis();
     instance.function();
     System.out.println("function: " + (System.currentTimeMillis() - start));
@@ -56,7 +56,7 @@ public class LocalGremlinTest {
 
     ODocument vertex1 = (ODocument) db.createVertex().field("label", "car").save();
     ODocument vertex2 = (ODocument) db.createVertex().field("label", "pilot").save();
-    ODocument edge = (ODocument) db.createEdge(vertex1, vertex2).field("label", "drives").save();
+    db.createEdge(vertex1, vertex2).field("label", "drives").save();
 
     List<?> result = db.query(new OSQLSynchQuery<Object>(
         "select gremlin('current.out.in') as value from V where out.size() > 0 limit 3"));
@@ -111,7 +111,7 @@ public class LocalGremlinTest {
         .execute();
 
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals(1, ((Collection) ((ODocument) result.get(0)).field("gremlin")).iterator().next());
+    Assert.assertEquals(1, ((Collection<?>) ((ODocument) result.get(0)).field("gremlin")).iterator().next());
 
     db.close();
   }

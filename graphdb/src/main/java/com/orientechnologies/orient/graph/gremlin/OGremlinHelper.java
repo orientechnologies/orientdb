@@ -55,7 +55,7 @@ public class OGremlinHelper {
   private int                                        maxEngines   = 0;
   private int                                        maxGraphs    = 0;
 
-//  private OResourcePool<Object, ScriptEngine>        enginePool;
+  // private OResourcePool<Object, ScriptEngine> enginePool;
   private OResourcePool<OGraphDatabase, OrientGraph> graphPool;
 
   public static interface OGremlinCallback {
@@ -75,23 +75,23 @@ public class OGremlinHelper {
       // ALREADY CREATED
       return;
 
-//    enginePool = new OResourcePool<Object, ScriptEngine>(maxEngines, new OResourcePoolListener<Object, ScriptEngine>() {
-//
-//      @Override
-//      public ScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
-//        try {
-//          return getGroovyEngine();
-//        } catch (Throwable e) {
-//          throw new OConfigurationException("Error on loading Gremlin engine", e);
-//        }
-//      }
-//
-//      @Override
-//      public boolean reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
-//        iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-//        return true;
-//      }
-//    });
+    // enginePool = new OResourcePool<Object, ScriptEngine>(maxEngines, new OResourcePoolListener<Object, ScriptEngine>() {
+    //
+    // @Override
+    // public ScriptEngine createNewResource(Object iKey, Object... iAdditionalArgs) {
+    // try {
+    // return getGroovyEngine();
+    // } catch (Throwable e) {
+    // throw new OConfigurationException("Error on loading Gremlin engine", e);
+    // }
+    // }
+    //
+    // @Override
+    // public boolean reuseResource(Object iKey, Object[] iAdditionalArgs, ScriptEngine iReusedEngine) {
+    // iReusedEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+    // return true;
+    // }
+    // });
 
     graphPool = new OResourcePool<OGraphDatabase, OrientGraph>(maxGraphs, new OResourcePoolListener<OGraphDatabase, OrientGraph>() {
 
@@ -112,13 +112,13 @@ public class OGremlinHelper {
    * Destroys the helper by cleaning all the in memory objects.
    */
   public void destroy() {
-//    if (enginePool != null) {
-//      for (ScriptEngine engine : enginePool.getResources()) {
-//        engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-//      }
-//      enginePool.close();
-//    }
-//
+    // if (enginePool != null) {
+    // for (ScriptEngine engine : enginePool.getResources()) {
+    // engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+    // }
+    // enginePool.close();
+    // }
+    //
     if (graphPool != null) {
       for (OrientGraph graph : graphPool.getResources()) {
         graph.shutdown();
@@ -134,8 +134,8 @@ public class OGremlinHelper {
 
   public void releaseEngine(final ScriptEngine engine) {
     checkStatus();
-//    engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-//    enginePool.returnResource(engine);
+    // engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+    // enginePool.returnResource(engine);
   }
 
   public OrientGraph acquireGraph(final OGraphDatabase iDatabase) {
@@ -157,8 +157,7 @@ public class OGremlinHelper {
       try {
         engine.getBindings(ScriptContext.ENGINE_SCOPE).put("g", graph);
 
-        final String output = iConfiguredParameters != null ? OGremlinHelper.bindParameters(engine, iConfiguredParameters,
-            iCurrentParameters) : null;
+        final String output = OGremlinHelper.bindParameters(engine, iConfiguredParameters, iCurrentParameters);
 
         if (iBeforeExecution != null)
           if (!iBeforeExecution.call(engine, graph))
@@ -238,18 +237,16 @@ public class OGremlinHelper {
 
   public static String bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters,
       Map<Object, Object> iCurrentParameters) {
-    if (iParameters == null || iParameters.isEmpty())
-      return null;
-
-    // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
-    // Therefore, clone the parameters map trying to recycle previous instances
-    for (Entry<Object, Object> param : iParameters.entrySet()) {
-      final String key = (String) param.getKey();
-      final Object objectToClone = param.getValue();
-      final Object previousItem = iCurrentParameters.get(key); // try to recycle it
-      final Object newItem = OGremlinHelper.cloneObject(objectToClone, previousItem);
-      iCurrentParameters.put(key, newItem);
-    }
+    if (iParameters != null && !iParameters.isEmpty())
+      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+      // Therefore, clone the parameters map trying to recycle previous instances
+      for (Entry<Object, Object> param : iParameters.entrySet()) {
+        final String key = (String) param.getKey();
+        final Object objectToClone = param.getValue();
+        final Object previousItem = iCurrentParameters.get(key); // try to recycle it
+        final Object newItem = OGremlinHelper.cloneObject(objectToClone, previousItem);
+        iCurrentParameters.put(key, newItem);
+      }
 
     String output = null;
     for (Entry<Object, Object> param : iCurrentParameters.entrySet()) {

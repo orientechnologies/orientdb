@@ -325,6 +325,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
+    if (iArgs != null)
+      // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
+      for (Entry<Object, Object> arg : iArgs.entrySet())
+        context.setVariable(arg.getKey().toString(), arg.getValue());
+
     if (!optimizeExecution()) {
       fetchLimit = getQueryFetchLimit();
 

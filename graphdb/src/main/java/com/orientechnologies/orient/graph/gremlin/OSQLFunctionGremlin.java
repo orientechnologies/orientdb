@@ -41,9 +41,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * 
  */
 public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
-  public static final String  NAME = "gremlin";
-  private List<Object>        result;
-  private Map<Object, Object> currentParameters;
+  public static final String NAME = "gremlin";
+  private List<Object>       result;
 
   public OSQLFunctionGremlin() {
     super(NAME, 1, 1);
@@ -59,7 +58,8 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     if (result == null)
       result = new ArrayList<Object>();
 
-    final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], null, currentParameters, result,
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], null, (Map) iContext.getVariables(), result,
         new OGremlinHelper.OGremlinCallback() {
 
           @Override
