@@ -164,10 +164,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (request instanceof OSQLSynchQuery)
       return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
 
-    if (request.getResultListener() != null && request.getResultListener() instanceof OAggregatorResultListener) {
-      return ((OAggregatorResultListener) request.getResultListener()).getResult();
-    }
-
     return null;
   }
 

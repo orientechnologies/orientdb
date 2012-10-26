@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelcastResultListener;
 
 /**
  * This class provides ability to serialize and deserialize query execution result using default streams
@@ -44,6 +45,16 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  * @since 20.09.12 15:56
  */
 public class OCommandResultSerializationHelper {
+
+  private static final byte NULL_MARKER       = (byte) 'n';
+  private static final byte RECORD_MARKER     = (byte) 'r';
+  private static final byte COLLECTION_MARKER = (byte) 'c';
+  private static final byte INTEGER_MARKER    = (byte) 'i';
+  private static final byte LONG_MARKER       = (byte) 'l';
+  private static final byte BOOLEAN_MARKER    = (byte) 'b';
+  private static final byte OTHER_MARKER      = (byte) 'o';
+  private static final byte END_MARKER        = (byte) 'e';
+
   public static byte[] writeToStream(Object result) throws IOException {
     final ByteArrayOutputStream stream = new ByteArrayOutputStream();
     writeToStream(result, stream);
@@ -56,22 +67,31 @@ public class OCommandResultSerializationHelper {
 
   public static void writeToStream(Object result, OutputStream stream) throws IOException {
     if (result == null) {
-      stream.write((byte) 'n');
+      stream.write(NULL_MARKER);
     } else if (result instanceof OIdentifiable) {
-      stream.write((byte) 'r');
+      stream.write(RECORD_MARKER);
       writeIdentifiable((OIdentifiable) result, stream);
     } else if (result instanceof Collection<?>) {
       final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;
-      stream.write((byte) 'l');
+      stream.write(COLLECTION_MARKER);
       stream.write(OBinaryProtocol.int2bytes(list.size()));
       for (OIdentifiable o : list) {
         writeIdentifiable(o, stream);
       }
     } else if (result instanceof Integer) {
-      stream.write((byte) 'i');
+      stream.write(INTEGER_MARKER);
       stream.write(OBinaryProtocol.int2bytes((Integer) result));
+    } else if (result instanceof Long) {
+      stream.write(LONG_MARKER);
+      stream.write(OBinaryProtocol.long2bytes((Long) result));
+    } else if (result instanceof Boolean) {
+      stream.write(BOOLEAN_MARKER);
+      stream.write(((Boolean) result) ? 1 : 0);
+    } else if (result instanceof OHazelcastResultListener.EndOfResult) {
+      stream.write(END_MARKER);
+      stream.write(OBinaryProtocol.long2bytes(((OHazelcastResultListener.EndOfResult) result).getNodeId()));
     } else {
-      stream.write((byte) 'a');
+      stream.write(OTHER_MARKER);
       final StringBuilder value = new StringBuilder();
       ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
       final byte[] bytes = value.toString().getBytes();
@@ -83,13 +103,13 @@ public class OCommandResultSerializationHelper {
   public static Object readFromStream(InputStream stream) throws IOException {
     final byte type = (byte) stream.read();
     switch (type) {
-    case 'n': {
+    case NULL_MARKER: {
       return null;
     }
-    case 'r': {
+    case RECORD_MARKER: {
       return readIdentifiable(stream);
     }
-    case 'l': {
+    case COLLECTION_MARKER: {
       final int size = OBinaryProtocol.bytes2int(stream);
       final List<OIdentifiable> result = new ArrayList<OIdentifiable>(size);
       for (int i = 0; i < size; i++) {
@@ -97,10 +117,20 @@ public class OCommandResultSerializationHelper {
       }
       return result;
     }
-    case 'i': {
+    case INTEGER_MARKER: {
       return OBinaryProtocol.bytes2int(stream);
     }
-    case 'a': {
+    case LONG_MARKER: {
+      return OBinaryProtocol.bytes2long(stream);
+    }
+    case BOOLEAN_MARKER: {
+      return stream.read() == 1;
+    }
+    case END_MARKER: {
+      final long nodeId = OBinaryProtocol.bytes2long(stream);
+      return new OHazelcastResultListener.EndOfResult(nodeId);
+    }
+    case OTHER_MARKER: {
       final int len = OBinaryProtocol.bytes2int(stream);
       final byte[] bytes = readFully(stream, 0, len);
       final String value = new String(bytes);

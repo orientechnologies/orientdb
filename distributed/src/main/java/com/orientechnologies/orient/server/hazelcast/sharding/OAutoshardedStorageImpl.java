@@ -1,20 +1,10 @@
 package com.orientechnologies.orient.server.hazelcast.sharding;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
@@ -59,7 +49,6 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   /**
    * For parallel query execution on different nodes
    */
-  private final ExecutorService    distributedQueryExecutors;
 
   public OAutoshardedStorageImpl(ServerInstance serverInstance, OStorageEmbedded wrapped, ODHTConfiguration dhtConfiguration) {
     this.serverInstance = serverInstance;
@@ -68,22 +57,6 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     for (String clusterName : dhtConfiguration.getUndistributableClusters()) {
       undistributedClusters.add(wrapped.getClusterIdByName(clusterName));
     }
-
-    final int cl = Runtime.getRuntime().availableProcessors() * 4;
-    distributedQueryExecutors = new ThreadPoolExecutor(0, cl, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(cl),
-        new ThreadFactory() {
-
-          private final AtomicInteger i = new AtomicInteger(0);
-
-          @Override
-          public Thread newThread(Runnable r) {
-            final Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "DistributedQueryExecutor-"
-                + i.getAndIncrement());
-            t.setDaemon(true);
-            t.setPriority(Thread.NORM_PRIORITY);
-            return t;
-          }
-        });
   }
 
   @Override
@@ -171,40 +144,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   @Override
   public Object command(OCommandRequestText iCommand) {
-    final ODistributedQueryHelper helper = new ODistributedQueryHelper(iCommand, undistributedClusters);
-    if (!helper.isDistributable()) {
-      return wrapped.command(iCommand);
-    }
-
-    final OCommandRequestText distributedCommand = helper.getPreparedRemoteCommand();
-
-    final List<ODHTNode> nodes = getDHTNodes();
-    final List<Future> tasks = new ArrayList<Future>(nodes.size());
-    for (final ODHTNode node : nodes) {
-      tasks.add(distributedQueryExecutors.submit(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            Object result = node.command(wrapped.getName(), distributedCommand, false);
-            if (result != null && !node.isLocal()) {
-              result = OCommandResultSerializationHelper.readFromStream((byte[]) result);
-            }
-            helper.addToResult(result);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "Error deserializing result from node " + node.getNodeId(), e);
-          }
-        }
-      }));
-    }
-    for (final Future task : tasks) {
-      try {
-        task.get();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error getting task", e);
-      }
-    }
-
-    return helper.getResult();
+    return OQueryExecutorsFactory.INSTANCE.getExecutor(iCommand, wrapped, serverInstance, undistributedClusters).execute();
   }
 
   public boolean existsResource(final String iName) {
@@ -419,30 +359,6 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   @Override
   public String getType() {
     return "autoshareded";
-  }
-
-  /**
-   * Provide list of nodes in the cluster (local node will be included too)
-   * 
-   * @return list of nodes in the cluster
-   */
-  protected List<ODHTNode> getDHTNodes() {
-    final List<ODHTNode> nodes = new ArrayList<ODHTNode>();
-    final Set<Long> processed = new HashSet<Long>();
-
-    ODHTNode node = serverInstance.getLocalNode();
-    nodes.add(node);
-    processed.add(node.getNodeId());
-    long successor = node.getSuccessor();
-
-    while (!processed.contains(successor)) {
-      node = serverInstance.findById(successor);
-      nodes.add(node);
-      processed.add(successor);
-      successor = node.getSuccessor();
-    }
-
-    return nodes;
   }
 
   @Override

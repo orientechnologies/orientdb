@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -957,7 +958,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       if (asynch) {
         // ASYNCHRONOUS
-        final StringBuilder empty = new StringBuilder();
+        final AtomicBoolean empty = new AtomicBoolean(true);
         final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 
         final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
@@ -965,7 +966,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();
 
-        if (empty.length() == 0)
+        if (empty.get())
           try {
             sendOk(clientTxId);
           } catch (IOException e1) {
@@ -1357,12 +1358,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   public class AsyncResultListener implements OCommandResultListener {
 
-    private final StringBuilder        empty;
+    private final AtomicBoolean        empty;
     private final int                  txId;
     private final Map<String, Integer> fetchPlan;
     private final Set<ODocument>       recordsToSend;
 
-    public AsyncResultListener(StringBuilder empty, int txId, Map<String, Integer> fetchPlan, Set<ODocument> recordsToSend) {
+    public AsyncResultListener(AtomicBoolean empty, int txId, Map<String, Integer> fetchPlan, Set<ODocument> recordsToSend) {
       this.empty = empty;
       this.txId = txId;
       this.fetchPlan = fetchPlan;
@@ -1371,10 +1372,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     @Override
     public boolean result(Object iRecord) {
-      if (empty.length() == 0)
+      if (empty.compareAndSet(true, false))
         try {
           sendOk(txId);
-          empty.append("-");
         } catch (IOException e1) {
         }
 

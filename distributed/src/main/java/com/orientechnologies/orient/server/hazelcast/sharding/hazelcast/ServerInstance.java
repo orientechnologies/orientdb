@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.server.hazelcast.sharding.hazelcast;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +31,7 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
 
   private final ConcurrentHashMap<Long, Member>   idMemberMap = new ConcurrentHashMap<Long, Member>();
   private volatile OLocalDHTNode                  localNode;
-  private volatile HazelcastInstance              hazelcastInstance;
+  private volatile static HazelcastInstance       hazelcastInstance;
   private final Timer                             timer       = new Timer("DHT timer", true);
   private String                                  configFile;
   private ODHTConfiguration                       dhtConfiguration;
@@ -73,6 +76,10 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
         localNode.fixFingers();
       }
     }, 10000, 10000);
+  }
+
+  public static HazelcastInstance getHazelcast() {
+    return hazelcastInstance;
   }
 
   public ODHTNode findSuccessor(long key) {
@@ -123,5 +130,23 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
 
   public OLocalDHTNode getLocalNode() {
     return localNode;
+  }
+
+  /**
+   * Provide list of nodes in the cluster (local node will be included too)
+   * 
+   * @return list of nodes in the cluster
+   */
+  public List<ODHTNode> getDHTNodes() {
+    final Set<Long> ids = idMemberMap.keySet();
+    final List<ODHTNode> nodes = new ArrayList<ODHTNode>(ids.size() + 1);
+    nodes.add(localNode);
+    for (final Long id : ids) {
+      final ODHTNode node = findById(id);
+      if (node != null) {
+        nodes.add(node);
+      }
+    }
+    return nodes;
   }
 }

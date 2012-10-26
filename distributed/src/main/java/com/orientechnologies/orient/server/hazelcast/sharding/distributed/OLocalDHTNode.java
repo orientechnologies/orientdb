@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
+import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelcastResultListener;
 
 /**
  * @author Andrey Lomakin
@@ -324,21 +325,32 @@ public class OLocalDHTNode implements ODHTNode {
       from = predecessor.get();
     }
 
+    final OCommandExecutorSQLSelect selectExecutor;
     if (executor instanceof OCommandExecutorSQLDelegate
         && ((OCommandExecutorSQLDelegate) executor).getDelegate() instanceof OCommandExecutorSQLSelect) {
-      ((OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor).getDelegate()).boundToLocalNode(from, id);
+
+      selectExecutor = ((OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor).getDelegate());
     } else if (executor instanceof OCommandExecutorSQLSelect) {
-      ((OCommandExecutorSQLSelect) executor).boundToLocalNode(from, id);
+      selectExecutor = ((OCommandExecutorSQLSelect) executor);
+    } else {
+      selectExecutor = null;
     }
 
     if (request.isIdempotent() && !executor.isIdempotent())
       throw new OCommandExecutionException("Cannot execute non idempotent command");
+
+    if (selectExecutor != null) {
+      selectExecutor.boundToLocalNode(from, id);
+    }
 
     try {
       Object result = executor.execute(request.getParameters());
       request.setContext(executor.getContext());
       if (serializeResult) {
         result = OCommandResultSerializationHelper.writeToStream(result);
+      }
+      if (selectExecutor != null && request.getResultListener() instanceof OHazelcastResultListener) {
+        request.getResultListener().result(new OHazelcastResultListener.EndOfResult(id));
       }
       return result;
     } catch (OException e) {

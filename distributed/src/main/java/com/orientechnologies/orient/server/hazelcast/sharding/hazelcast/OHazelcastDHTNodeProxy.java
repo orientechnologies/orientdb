@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.sql.OAggregatorResultListener;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
@@ -516,6 +515,14 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       final byte[] requestBytes = request.toStream();
       out.writeInt(requestBytes.length);
       out.write(requestBytes);
+      if (request.getResultListener() instanceof OHazelcastResultListener) {
+        final OHazelcastResultListener listener = (OHazelcastResultListener) request.getResultListener();
+        out.writeLong(listener.getStorageId());
+        out.writeLong(listener.getSelectId());
+      } else {
+        out.writeLong(-1);
+        out.writeLong(-1);
+      }
     }
 
     @Override
@@ -532,8 +539,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
         throw new OCommandExecutionException("Failed to deserialize query", e);
       }
       request.fromStream(requestBytes);
-      if (request.getResultListener() == null) {
-        request.setResultListener(new OAggregatorResultListener());
+      final long storageId = in.readLong();
+      final long selectId = in.readLong();
+      if (storageId != -1 && selectId != -1) {
+        request.setResultListener(new OHazelcastResultListener(ServerInstance.getHazelcast(), storageId, selectId));
       }
     }
   }
