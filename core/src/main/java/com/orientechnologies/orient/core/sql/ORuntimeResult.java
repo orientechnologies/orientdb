@@ -75,27 +75,32 @@ public class ORuntimeResult {
     // APPLY PROJECTIONS
     final ODocument inputDocument = (ODocument) (iRecord != null ? iRecord.getRecord() : null);
 
-    Object projectionValue;
-    for (Entry<String, Object> projection : iProjections.entrySet()) {
-      final Object v = projection.getValue();
+    if (iProjections.isEmpty())
+      // SELECT * CASE
+      inputDocument.copy(iValue);
+    else {
+      Object projectionValue;
+      for (Entry<String, Object> projection : iProjections.entrySet()) {
+        final Object v = projection.getValue();
 
-      if (v.equals("*")) {
-        // COPY ALL
-        inputDocument.copy(iValue);
-        projectionValue = null;
-      } else if (v instanceof OSQLFilterItemVariable) {
-        // RETURN A VARIABLE FROM THE CONTEXT
-        projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iContext);
-      } else if (v instanceof OSQLFilterItemField)
-        projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iContext);
-      else if (v instanceof OSQLFunctionRuntime) {
-        final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
-        projectionValue = f.execute(inputDocument, iContext);
-      } else
-        projectionValue = v;
+        if (v.equals("*")) {
+          // COPY ALL
+          inputDocument.copy(iValue);
+          projectionValue = null;
+        } else if (v instanceof OSQLFilterItemVariable) {
+          // RETURN A VARIABLE FROM THE CONTEXT
+          projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iContext);
+        } else if (v instanceof OSQLFilterItemField)
+          projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iContext);
+        else if (v instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
+          projectionValue = f.execute(inputDocument, iContext);
+        } else
+          projectionValue = v;
 
-      if (projectionValue != null)
-        iValue.field(projection.getKey(), projectionValue);
+        if (projectionValue != null)
+          iValue.field(projection.getKey(), projectionValue);
+      }
     }
 
     return iValue;

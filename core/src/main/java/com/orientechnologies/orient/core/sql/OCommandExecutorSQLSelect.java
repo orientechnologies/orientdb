@@ -415,7 +415,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (iRecord == null)
       return;
 
-    if (projections != null) {
+    if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(resultCount, projections, context, iRecord);
