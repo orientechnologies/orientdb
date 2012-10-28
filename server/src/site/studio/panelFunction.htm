@@ -115,7 +115,7 @@
 			var snippet = "";
 			for( row in functions ) {
 				var funcName = functions[row].name;
-				snippet += "<button id='funcLoad"+row+"' class='btn btn-mini' onclick='editFunction(\""+row+"\")' rel='tooltip' data-placement='right' data-original-title='Loads the function <b>" + funcName+"</b> in the editor'>"+funcName+"</button>";
+				snippet += "<a id='funcLoad"+row+"' class='btn btn-mini' onclick='editFunction(\""+row+"\")' rel='tooltip' data-placement='right' data-original-title='Loads the function <b>" + funcName+"</b> in the editor'>"+funcName+"</a>";
 			}
 			$('#functions').html(snippet);
 		}
