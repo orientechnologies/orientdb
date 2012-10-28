@@ -28,7 +28,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;

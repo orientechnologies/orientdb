@@ -1228,7 +1228,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
         if (g.getKey() != null || groupedResult.size() == 1) {
           final ODocument doc = g.getValue().getResult();
-          if (doc != null)
+          if (doc != null && !doc.isEmpty())
             request.getResultListener().result(doc);
         }
       }
