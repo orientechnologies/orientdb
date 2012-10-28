@@ -426,6 +426,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
       if (!roleClass.existsProperty("inheritedRole"))
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
+      p = roleClass.getProperty("name");
+      if (p == null)
+        p = roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      p.createIndex(INDEX_TYPE.UNIQUE);
     }
   }
 
