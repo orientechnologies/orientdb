@@ -27,6 +27,10 @@ public class OCommandScriptException extends OException {
 		super(iMessage, null);
 	}
 
+	public OCommandScriptException(String iMessage, Throwable cause) {
+		super(iMessage, cause);
+	}
+
 	public OCommandScriptException(String iMessage, String iText, int iPosition, Throwable cause) {
 		super(iMessage, cause);
 		text = iText;
