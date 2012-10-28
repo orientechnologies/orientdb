@@ -11,6 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -20,10 +24,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 /**
  * @author Michael Hiess
@@ -83,7 +83,7 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j);
+              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j, "RID was " + dummy.getId());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -193,8 +193,10 @@ public class MultipleDBTest {
               ODocument dummy = new ODocument("DummyObject");
               dummy.field("name", "name" + j);
 
+              Assert.assertEquals(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(), dbUrl);
+
               dummy = tx.save(dummy);
-              Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j);
+              Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j, "RID was " + dummy.getIdentity());
 
               // Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 
