@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -77,6 +78,9 @@ public class MultipleDBTest {
             long start = System.currentTimeMillis();
             for (int j = 0; j < operations_write; j++) {
               DummyObject dummy = new DummyObject("name" + j);
+
+              Assert.assertEquals(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(), dbUrl);
+
               dummy = tx.save(dummy);
 
               Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j);
