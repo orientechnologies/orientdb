@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  */
 @SuppressWarnings("unchecked")
 public class OScriptDocumentDatabaseWrapper {
-	private ODatabaseDocumentTx	database;
+	protected ODatabaseDocumentTx	database;
 
 	public OScriptDocumentDatabaseWrapper(final ODatabaseDocumentTx database) {
 		this.database = database;
@@ -68,14 +68,14 @@ public class OScriptDocumentDatabaseWrapper {
 	}
 
 	public OIdentifiable[] query(final String iText, Object... iParameters) {
-		final List<OIdentifiable> res = database.query(new OSQLSynchQuery<Object>(iText), iParameters);
+		final List<OIdentifiable> res = database.query(new OSQLSynchQuery<Object>(iText), convertParameters(iParameters));
 		if (res == null)
 			return new OIdentifiable[] {};
 		return res.toArray(new OIdentifiable[res.size()]);
 	}
 
 	public Object command(final String iText, Object... iParameters) {
-		Object res = database.command(new OCommandSQL(iText)).execute(iParameters);
+		Object res = database.command(new OCommandSQL(iText)).execute(convertParameters(iParameters));
 		if (res instanceof List) {
 			final List<OIdentifiable> list = (List<OIdentifiable>) res;
 			return list.toArray(new OIdentifiable[list.size()]);
@@ -387,5 +387,18 @@ public class OScriptDocumentDatabaseWrapper {
 
 	public String getType() {
 		return database.getType();
+	}
+
+	protected Object[] convertParameters(final Object[] iParameters) {
+		if (iParameters != null)
+			for (int i = 0; i < iParameters.length; ++i) {
+				final Object p = iParameters[i];
+				if (p != null) {
+//					if (p instanceof sun.org.mozilla.javascript.internal.IdScriptableObject) {
+//						iParameters[i] = ((sun.org.mozilla.javascript.internal.NativeDate) p).to;
+					//					}
+				}
+			}
+		return iParameters;
 	}
 }
