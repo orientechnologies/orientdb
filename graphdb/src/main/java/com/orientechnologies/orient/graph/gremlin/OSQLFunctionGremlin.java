@@ -48,7 +48,8 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, final OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      final OCommandContext iContext) {
     if (!(iCurrentRecord instanceof ODocument))
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
       return null;

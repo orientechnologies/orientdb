@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
 /**
@@ -35,7 +36,7 @@ public class ODatabaseFunction implements OSQLFunction {
   }
 
   @Override
-  public Object execute(final OIdentifiable o, final Object[] iFuncParams, final OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
     return f.executeInContext(iContext, iFuncParams);
   }
 

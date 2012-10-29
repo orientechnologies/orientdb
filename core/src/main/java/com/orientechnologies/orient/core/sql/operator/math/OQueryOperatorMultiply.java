@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.operator.math;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -35,8 +36,8 @@ public class OQueryOperatorMultiply extends OQueryOperator {
 	}
 
 	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-			final Object iRight, OCommandContext iContext) {
+	public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
+			final Object iLeft, final Object iRight, OCommandContext iContext) {
 		if (iRight == null || iLeft == null)
 			return null;
 

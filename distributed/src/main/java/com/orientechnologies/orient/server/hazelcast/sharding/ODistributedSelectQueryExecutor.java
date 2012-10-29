@@ -173,7 +173,7 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
       final List<OIdentifiable> resultToMerge = new ArrayList<OIdentifiable>(result);
       result.clear();
       for (OIdentifiable record : resultToMerge) {
-        Object ret = distinct.getValue().execute(record, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
+        Object ret = distinct.getValue().execute(record, null, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
         if (ret != null) {
           final ODocument resultItem = new ODocument().setOrdered(true); // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
           ((ORecordId) resultItem.getIdentity()).clusterId = -2;

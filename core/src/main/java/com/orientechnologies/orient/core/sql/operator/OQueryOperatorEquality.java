@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 
@@ -47,8 +48,8 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       final Object iLeft, final Object iRight, OCommandContext iContext);
 
   @Override
-  public Object evaluateRecord(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
+  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
+      final Object iLeft, final Object iRight, OCommandContext iContext) {
     if (iLeft instanceof OQueryRuntimeValueMulti) {
       // LEFT = MULTI
       final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;

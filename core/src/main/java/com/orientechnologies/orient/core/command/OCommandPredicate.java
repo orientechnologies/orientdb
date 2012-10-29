@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Command predicate to be evaluated against a record and a context.
@@ -30,9 +31,10 @@ public interface OCommandPredicate {
    * 
    * @param iRecord
    *          Target record
+   * @param iCurrentResult TODO
    * @param iContext
    *          Context of execution
    * @return The result of predicate
    */
-  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext);
+  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext);
 }

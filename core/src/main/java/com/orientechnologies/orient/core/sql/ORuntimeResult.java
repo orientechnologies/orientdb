@@ -94,7 +94,7 @@ public class ORuntimeResult {
           projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iContext);
         else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
-          projectionValue = f.execute(inputDocument, iContext);
+          projectionValue = f.execute(inputDocument, iValue, iContext);
         } else
           projectionValue = v;
 

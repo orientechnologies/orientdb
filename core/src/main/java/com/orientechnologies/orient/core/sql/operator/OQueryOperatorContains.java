@@ -74,7 +74,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           } else
             continue;
 
-          if ((Boolean) condition.evaluate(id, iContext) == Boolean.TRUE)
+          if ((Boolean) condition.evaluate(id, null, iContext) == Boolean.TRUE)
             return true;
         }
       } else {
@@ -91,7 +91,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       if (condition != null) {
         for (final OIdentifiable o : iterable) {
-          if ((Boolean) condition.evaluate(o, iContext) == Boolean.TRUE)
+          if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.TRUE)
             return true;
         }
       } else {

@@ -301,7 +301,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     assignLetClauses(iRecord);
     if (compiledFilter == null)
       return true;
-    return (Boolean) compiledFilter.evaluate(iRecord, context);
+    return (Boolean) compiledFilter.evaluate(iRecord, null, context);
   }
 
   protected void assignLetClauses(final ORecord<?> iRecord) {
@@ -325,10 +325,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         } else if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
           if (f.getFunction().aggregateResults()) {
-            f.execute(iRecord, context);
+            f.execute(iRecord, null, context);
             varValue = f.getFunction().getResult();
           } else
-            varValue = f.execute(iRecord, context);
+            varValue = f.execute(iRecord, null, context);
         } else
           varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim());
 
@@ -437,7 +437,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     if (precalculate) {
       // all fields are static, we can calculate it only once.
-      return function.execute(null, null); // we can pass nulls here, they wont be used
+      return function.execute(null, null, null); // we can pass nulls here, they wont be used
     } else {
       return function;
     }

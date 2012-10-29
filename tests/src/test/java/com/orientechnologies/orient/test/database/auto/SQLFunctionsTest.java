@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -33,6 +31,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -104,27 +104,27 @@ public class SQLFunctionsTest {
     database.close();
   }
 
-    @Test
-    public void queryCountWithConditions() {
-      database.open("admin", "admin");
+  @Test
+  public void queryCountWithConditions() {
+    database.open("admin", "admin");
 
-      OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
-      indexed.createProperty("key", OType.STRING);
-      indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
-      database.<ODocument>newInstance("Indexed").field("key","one").save();
-      database.<ODocument>newInstance("Indexed").field("key","two").save();
+    OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
+    indexed.createProperty("key", OType.STRING);
+    indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
+    database.<ODocument> newInstance("Indexed").field("key", "one").save();
+    database.<ODocument> newInstance("Indexed").field("key", "two").save();
 
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();
 
-      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();
-
-      Assert.assertTrue(result.size() == 1);
-      for (ODocument d : result) {
-        Assert.assertNotNull(d.field("total"));
-        Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
-      }
-
-      database.close();
+    Assert.assertTrue(result.size() == 1);
+    for (ODocument d : result) {
+      Assert.assertNotNull(d.field("total"));
+      Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
     }
+
+    database.close();
+  }
 
   @Test
   public void queryDistinct() {
@@ -202,7 +202,7 @@ public class SQLFunctionsTest {
       Set<Object> citiesFound = d.field("names");
       Assert.assertTrue(citiesFound.size() > 1);
     }
-    
+
     database.close();
   }
 
@@ -360,7 +360,8 @@ public class SQLFunctionsTest {
         return "bigger(<first>, <second>)";
       }
 
-      public Object execute(OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
+      public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+          OCommandContext iContext) {
         if (iParameters[0] == null || iParameters[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS
           return null;

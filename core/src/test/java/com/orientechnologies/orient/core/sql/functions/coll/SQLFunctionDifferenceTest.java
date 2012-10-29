@@ -46,7 +46,7 @@ public class SQLFunctionDifferenceTest {
     final Set<Object> expectedResult = new HashSet<Object>(Arrays.asList(3, 4, 5));
 
     for (Object i : income) {
-      differenceFunction.execute(null, new Object[] { i }, null);
+      differenceFunction.execute(null, null, new Object[] { i }, null);
     }
 
     final Set<Object> actualResult = differenceFunction.getResult();
@@ -74,7 +74,7 @@ public class SQLFunctionDifferenceTest {
 
     for (int j = 0; j < 3; j++) {
       for (Object i : incomes.get(j)) {
-        differences.get(j).execute(null, new Object[] { i }, null);
+        differences.get(j).execute(null, null, new Object[] { i }, null);
       }
     }
 

@@ -82,7 +82,7 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
 				for (final ORecordSchemaAware<?> o : collection) {
-					if ((Boolean) condition.evaluate(o, iContext) == Boolean.FALSE)
+					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}
 			} else {
@@ -99,7 +99,7 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 			if (condition != null) {
 				for (final ORecordSchemaAware<?> o : collection) {
-					if ((Boolean) condition.evaluate(o, iContext) == Boolean.FALSE)
+					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}
 			} else {

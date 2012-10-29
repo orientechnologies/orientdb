@@ -56,7 +56,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
     command.getContext().addTraversed(target);
 
     if (command.getPredicate() != null) {
-      final Object conditionResult = command.getPredicate().evaluate(target, command.getContext());
+      final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
         return drop();
     }

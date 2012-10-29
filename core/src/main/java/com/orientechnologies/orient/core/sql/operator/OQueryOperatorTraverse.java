@@ -109,7 +109,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
           return false;
         }
 
-      if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, iContext) == Boolean.TRUE)
+      if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, null, iContext) == Boolean.TRUE)
         return true;
 
       // TRAVERSE THE DOCUMENT ITSELF

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -88,11 +89,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return this;
   }
 
-  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
+  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
-    return rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iContext);
+    return rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iCurrentResult, iContext);
   }
 
   private Object extractConditions(final OSQLFilterCondition iParentCondition) {

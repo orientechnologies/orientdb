@@ -67,7 +67,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
+          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, null, iContext))
             return true;
         }
       } else
@@ -80,7 +80,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, iContext))
+          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, null, iContext))
             return true;
           else
             return map.containsValue(iLeft);

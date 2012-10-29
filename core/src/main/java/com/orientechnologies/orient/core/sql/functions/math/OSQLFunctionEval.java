@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 /**
@@ -28,36 +29,41 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
  * 
  */
 public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
-  public static final String NAME = "eval";
+	public static final String	NAME	= "eval";
 
-  private OSQLPredicate      predicate;
+	private OSQLPredicate				predicate;
 
-  public OSQLFunctionEval() {
-    super(NAME, 1, 1);
-  }
+	public OSQLFunctionEval() {
+		super(NAME, 1, 1);
+	}
 
-  public Object execute(final OIdentifiable iRecord, final Object[] iParameters, OCommandContext iContext) {
-    if (predicate == null)
-      predicate = new OSQLPredicate((String) iParameters[0]);
+	public Object execute(final OIdentifiable iRecord, final ODocument iCurrentResult, final Object[] iParameters,
+			OCommandContext iContext) {
+		if (predicate == null)
+			predicate = new OSQLPredicate((String) iParameters[0]);
 
-    return predicate.evaluate(iRecord.getRecord(), iContext);
-  }
+		try {
+			return predicate.evaluate(iRecord.getRecord(), iCurrentResult, iContext);
+		} catch (Exception e) {
+			return null;
+		}
+	}
 
-  public boolean aggregateResults() {
-    return false;
-  }
+	public boolean aggregateResults() {
+		return false;
+	}
 
-  public String getSyntax() {
-    return "Syntax error: eval(<expression>)";
-  }
+	public String getSyntax() {
+		return "Syntax error: eval(<expression>)";
+	}
 
-  @Override
-  public Object getResult() {
-    return null;
-  }
+	@Override
+	public Object getResult() {
+		return null;
+	}
 
-  @Override
-  public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    return null;
-  }
+	@Override
+	public Object mergeDistributedResult(List<Object> resultsToMerge) {
+		return null;
+	}
 }

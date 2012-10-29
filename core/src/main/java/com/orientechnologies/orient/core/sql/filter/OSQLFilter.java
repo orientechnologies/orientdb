@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Parsed query. It's built once a query is parsed.
@@ -27,49 +28,49 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
-  public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
-    super();
-    context = iContext;
-    parserText = iText;
-    parserTextUpperCase = iText.toUpperCase();
+	public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+		super();
+		context = iContext;
+		parserText = iText;
+		parserTextUpperCase = iText.toUpperCase();
 
-    try {
-      final int lastPos = parserGetCurrentPosition();
-      final String lastText = parserText;
-      final String lastTextUpperCase = parserTextUpperCase;
+		try {
+			final int lastPos = parserGetCurrentPosition();
+			final String lastText = parserText;
+			final String lastTextUpperCase = parserTextUpperCase;
 
-      text(parserText.substring(lastPos));
+			text(parserText.substring(lastPos));
 
-      parserText = lastText;
-      parserTextUpperCase = lastTextUpperCase;
-      parserMoveCurrentPosition(lastPos);
+			parserText = lastText;
+			parserTextUpperCase = lastTextUpperCase;
+			parserMoveCurrentPosition(lastPos);
 
-    } catch (OQueryParsingException e) {
-      if (e.getText() == null)
-        // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
-        throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+		} catch (OQueryParsingException e) {
+			if (e.getText() == null)
+				// QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
+				throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
 
-      throw e;
-    } catch (Throwable t) {
-      throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
-    }
-  }
+			throw e;
+		} catch (Throwable t) {
+			throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
+		}
+	}
 
-  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
-    if (rootCondition == null)
-      return true;
+	public Object evaluate(final ORecord<?> iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+		if (rootCondition == null)
+			return true;
 
-    return rootCondition.evaluate(iRecord, iContext);
-  }
+		return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
+	}
 
-  public OSQLFilterCondition getRootCondition() {
-    return rootCondition;
-  }
+	public OSQLFilterCondition getRootCondition() {
+		return rootCondition;
+	}
 
-  @Override
-  public String toString() {
-    if (rootCondition != null)
-      return "Parsed: " + rootCondition.toString();
-    return "Unparsed: " + parserText;
-  }
+	@Override
+	public String toString() {
+		if (rootCondition != null)
+			return "Parsed: " + rootCondition.toString();
+		return "Unparsed: " + parserText;
+	}
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Computes the sum of field. Uses the context to save the last sum number. When different Number class are used, take the class
@@ -37,7 +38,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     final Number value = (Number) iParameters[0];
 
     if (value != null) {
@@ -47,7 +48,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
       else
         sum = OType.increment(sum, value);
     }
-    return null;
+    return sum;
   }
 
   public boolean aggregateResults() {

@@ -21,6 +21,7 @@ import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -36,104 +37,106 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  */
 public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
-  public OSQLFunction function;
-  public Object[]     configuredParameters;
-  public Object[]     runtimeParameters;
+	public OSQLFunction	function;
+	public Object[]			configuredParameters;
+	public Object[]			runtimeParameters;
 
-  public OSQLFunctionRuntime(final OBaseParser iQueryToParse, final String iText) {
-    super(iQueryToParse, iText);
-  }
+	public OSQLFunctionRuntime(final OBaseParser iQueryToParse, final String iText) {
+		super(iQueryToParse, iText);
+	}
 
-  public boolean aggregateResults() {
-    return function.aggregateResults();
-  }
+	public boolean aggregateResults() {
+		return function.aggregateResults();
+	}
 
-  public boolean filterResult() {
-    return function.filterResult();
-  }
+	public boolean filterResult() {
+		return function.filterResult();
+	}
 
-  /**
-   * Execute a function.
-   * 
-   * @param o
-   *          Current record
-   * @param iRequester
-   * @return
-   */
-  public Object execute(final OIdentifiable o, final OCommandContext iContext) {
-    // RESOLVE VALUES USING THE CURRENT RECORD
-    for (int i = 0; i < configuredParameters.length; ++i) {
-      if (configuredParameters[i] instanceof OSQLFilterItemField)
-        runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(o, null);
-      else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(o, iContext);
-    }
+	/**
+	 * Execute a function.
+	 * 
+	 * @param iCurrentRecord
+	 *          Current record
+	 * @param iCurrentResult
+	 *          TODO
+	 * @param iRequester
+	 * @return
+	 */
+	public Object execute(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+		// RESOLVE VALUES USING THE CURRENT RECORD
+		for (int i = 0; i < configuredParameters.length; ++i) {
+			if (configuredParameters[i] instanceof OSQLFilterItemField)
+				runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, null);
+			else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
+				runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentResult, iContext);
+		}
 
-    final Object functionResult = function.execute(o, runtimeParameters, iContext);
+		final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
 
-    return transformValue(o, functionResult);
-  }
+		return transformValue(iCurrentRecord, functionResult);
+	}
 
-  public Object getResult() {
-    return transformValue(null, function.getResult());
-  }
+	public Object getResult() {
+		return transformValue(null, function.getResult());
+	}
 
-  public void setResult(final Object iValue) {
-    function.setResult(iValue);
-  }
+	public void setResult(final Object iValue) {
+		function.setResult(iValue);
+	}
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
-    return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null);
-  }
+	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+		return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null, null);
+	}
 
-  @Override
-  public String getRoot() {
-    return function.getName();
-  }
+	@Override
+	public String getRoot() {
+		return function.getName();
+	}
 
-  @Override
-  protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
-    final int beginParenthesis = iText.indexOf('(');
+	@Override
+	protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
+		final int beginParenthesis = iText.indexOf('(');
 
-    // SEARCH FOR THE FUNCTION
-    final String funcName = iText.substring(0, beginParenthesis);
+		// SEARCH FOR THE FUNCTION
+		final String funcName = iText.substring(0, beginParenthesis);
 
-    final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
+		final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
-    function = OSQLEngine.getInstance().getFunction(funcName);
-    if (function == null)
-      throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
+		function = OSQLEngine.getInstance().getFunction(funcName);
+		if (function == null)
+			throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
-    // STRICT CHECK ON PARAMETERS
-    // if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
-    // && funcParamsText.size() > function.getMaxParams())
-    // throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
+		// STRICT CHECK ON PARAMETERS
+		// if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
+		// && funcParamsText.size() > function.getMaxParams())
+		// throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
 
-    // PARSE PARAMETERS
-    this.configuredParameters = new Object[funcParamsText.size()];
-    for (int i = 0; i < funcParamsText.size(); ++i) {
-      this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
-    }
+		// PARSE PARAMETERS
+		this.configuredParameters = new Object[funcParamsText.size()];
+		for (int i = 0; i < funcParamsText.size(); ++i) {
+			this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
+		}
 
-    function.config(configuredParameters);
+		function.config(configuredParameters);
 
-    // COPY STATIC VALUES
-    this.runtimeParameters = new Object[configuredParameters.length];
-    for (int i = 0; i < configuredParameters.length; ++i) {
-      if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
-        runtimeParameters[i] = configuredParameters[i];
-    }
-  }
+		// COPY STATIC VALUES
+		this.runtimeParameters = new Object[configuredParameters.length];
+		for (int i = 0; i < configuredParameters.length; ++i) {
+			if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
+				runtimeParameters[i] = configuredParameters[i];
+		}
+	}
 
-  public OSQLFunction getFunction() {
-    return function;
-  }
+	public OSQLFunction getFunction() {
+		return function;
+	}
 
-  public Object[] getConfiguredParameters() {
-    return configuredParameters;
-  }
+	public Object[] getConfiguredParameters() {
+		return configuredParameters;
+	}
 
-  public Object[] getRuntimeParameters() {
-    return runtimeParameters;
-  }
+	public Object[] getRuntimeParameters() {
+		return runtimeParameters;
+	}
 }
