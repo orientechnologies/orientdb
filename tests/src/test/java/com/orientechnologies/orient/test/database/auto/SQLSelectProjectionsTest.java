@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.testng.Assert;
@@ -23,6 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -333,6 +335,26 @@ public class SQLSelectProjectionsTest {
 
       for (ODocument d : result)
         Assert.assertEquals(d.field("result"), 5);
+
+    } finally {
+      database.close();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public void queryProjectionContextArray() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(
+          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out where out.size() > 0")).execute();
+      Assert.assertFalse(result.isEmpty());
+
+      for (ODocument d : result) {
+        Assert.assertTrue(d.containsField("a"));
+        Assert.assertTrue(d.containsField("a0"));
+        Assert.assertEquals(d.field("a0"), ((Collection<OIdentifiable>) d.field("a")).iterator().next());
+      }
 
     } finally {
       database.close();

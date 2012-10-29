@@ -210,30 +210,6 @@ public class ODocumentHelper {
     if (value == null)
       return null;
 
-    if (value instanceof Collection || value.getClass().isArray()) {
-      final List<Object> tempResult = new ArrayList<Object>();
-      for (Object o : OMultiValue.getMultiValueIterable(value)) {
-        final Object result = ODocumentHelper.getFieldValue(o, iFieldName);
-        if (result != null) {
-          if (OMultiValue.isMultiValue(result)) {
-            // MULTI-VALUE: FLATTEN THE COLLECTION
-            for (Object item : OMultiValue.getMultiValueIterable(result))
-              tempResult.add(item);
-
-          } else
-            tempResult.add(result);
-        }
-      }
-      return (RET) tempResult;
-    } else
-      return (RET) getSingleFieldValue(value, iFieldName);
-  }
-
-  @SuppressWarnings("unchecked")
-  protected static <RET> RET getSingleFieldValue(Object value, final String iFieldName) {
-    if (value == null)
-      return null;
-
     final int fieldNameLength = iFieldName.length();
     if (fieldNameLength == 0)
       return (RET) value;
@@ -413,7 +389,12 @@ public class ODocumentHelper {
           else if (value instanceof Collection<?>) {
             final List<Object> values = new ArrayList<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value))
-              values.add(getIdentifiableValue((OIdentifiable) v, fieldName));
+              if (v instanceof OIdentifiable)
+                values.add(getIdentifiableValue((OIdentifiable) v, fieldName));
+              else if (v instanceof Map)
+                values.add(((Map<?, ?>) v).get(fieldName));
+              else
+                return null;
             value = values;
           } else
             return null;
