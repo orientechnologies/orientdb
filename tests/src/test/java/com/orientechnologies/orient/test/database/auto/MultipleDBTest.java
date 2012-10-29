@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -40,7 +41,6 @@ public class MultipleDBTest {
 
   @Test
   public void testObjectMultipleDBsThreaded() throws Exception {
-
     final int operations_write = 1000;
     final int operations_read = 1;
     final int dbs = 10;
@@ -83,7 +83,9 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j, "RID was " + dummy.getId());
+              if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+                // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
+                Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j, "RID was " + dummy.getId());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -196,7 +198,10 @@ public class MultipleDBTest {
               Assert.assertEquals(ODatabaseRecordThreadLocal.INSTANCE.get().getURL(), dbUrl);
 
               dummy = tx.save(dummy);
-              Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j, "RID was " + dummy.getIdentity());
+
+              if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+                // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
+                Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j, "RID was " + dummy.getIdentity());
 
               // Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 
