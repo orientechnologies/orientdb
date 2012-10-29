@@ -71,7 +71,8 @@ public class SQLSelectProjectionsTest {
     OObjectDatabaseTx db = new OObjectDatabaseTx(url);
     db.open("admin", "admin");
 
-    List<ODocument> result = db.getUnderlying().query(new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
+    List<ODocument> result = db.getUnderlying().query(
+        new OSQLSynchQuery<ODocument>(" select nick, followings, followers from Profile "));
 
     Assert.assertTrue(result.size() != 0);
 
@@ -317,6 +318,21 @@ public class SQLSelectProjectionsTest {
         Assert.assertTrue(d.fieldNames().length <= 1);
         Assert.assertNotNull(d.field("raw"));
       }
+
+    } finally {
+      database.close();
+    }
+  }
+
+  public void queryProjectionEval() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select eval('1 + 4') as result")).execute();
+      Assert.assertEquals(result.size(), 1);
+
+      for (ODocument d : result)
+        Assert.assertEquals(d.field("result"), 5);
 
     } finally {
       database.close();
