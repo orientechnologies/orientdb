@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +29,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -38,245 +40,250 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-	public static final String	JSON_FORMAT		= "type,indent:2,rid,version,attribSameRow,class";
-	public static final char[]	URL_SEPARATOR	= { '/' };
+  public static final String JSON_FORMAT   = "type,indent:2,rid,version,attribSameRow,class";
+  public static final char[] URL_SEPARATOR = { '/' };
 
-	private final OutputStream	out;
-	public final String					httpVersion;
-	public String								headers;
-	public String[]							additionalHeaders;
-	public String								characterSet;
-	public String								contentType;
-	public String								serverInfo;
-	public String								sessionId;
-	public String								callbackFunction;
+  private final OutputStream out;
+  public final String        httpVersion;
+  public String              headers;
+  public String[]            additionalHeaders;
+  public String              characterSet;
+  public String              contentType;
+  public String              serverInfo;
+  public String              sessionId;
+  public String              callbackFunction;
 
-	public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
-			final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
-		out = iOutStream;
-		httpVersion = iHttpVersion;
-		additionalHeaders = iAdditionalHeaders;
-		characterSet = iResponseCharSet;
-		serverInfo = iServerInfo;
-		sessionId = iSessionId;
-		callbackFunction = iCallbackFunction;
-	}
+  public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
+      final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
+    out = iOutStream;
+    httpVersion = iHttpVersion;
+    additionalHeaders = iAdditionalHeaders;
+    characterSet = iResponseCharSet;
+    serverInfo = iServerInfo;
+    sessionId = iSessionId;
+    callbackFunction = iCallbackFunction;
+  }
 
-	public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
-			throws IOException {
-		send(iCode, iReason, iContentType, iContent, iHeaders, true);
-	}
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
+      throws IOException {
+    send(iCode, iReason, iContentType, iContent, iHeaders, true);
+  }
 
-	public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders,
-			final boolean iKeepAlive) throws IOException {
-		final String content;
-		final String contentType;
+  public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders,
+      final boolean iKeepAlive) throws IOException {
+    final String content;
+    final String contentType;
 
-		if (callbackFunction != null) {
-			content = callbackFunction + "(" + iContent + ")";
-			contentType = "text/javascript";
-		} else {
-			content = iContent != null ? iContent.toString() : null;
-			contentType = iContentType;
-		}
+    if (callbackFunction != null) {
+      content = callbackFunction + "(" + iContent + ")";
+      contentType = "text/javascript";
+    } else {
+      content = iContent != null ? iContent.toString() : null;
+      contentType = iContentType;
+    }
 
-		final boolean empty = content == null || content.length() == 0;
+    final boolean empty = content == null || content.length() == 0;
 
-		writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-		writeHeaders(contentType, iKeepAlive);
+    writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
+    writeHeaders(contentType, iKeepAlive);
 
-		if (additionalHeaders != null)
-			for (String h : additionalHeaders)
-				writeLine(h);
+    if (additionalHeaders != null)
+      for (String h : additionalHeaders)
+        writeLine(h);
 
-		if (iHeaders != null)
-			writeLine(iHeaders);
+    if (iHeaders != null)
+      writeLine(iHeaders);
 
-		final String sessId = sessionId != null ? sessionId : "-";
+    final String sessId = sessionId != null ? sessionId : "-";
 
-		writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
+    writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
-		final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
+    final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
 
-		writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
-		writeLine(null);
+    writeLine(null);
 
-		if (binaryContent != null)
-			out.write(binaryContent);
-		out.flush();
-	}
+    if (binaryContent != null)
+      out.write(binaryContent);
+    out.flush();
+  }
 
-	public void writeStatus(final int iStatus, final String iReason) throws IOException {
-		writeLine(httpVersion + " " + iStatus + " " + iReason);
-	}
+  public void writeStatus(final int iStatus, final String iReason) throws IOException {
+    writeLine(httpVersion + " " + iStatus + " " + iReason);
+  }
 
-	public void writeHeaders(final String iContentType) throws IOException {
-		writeHeaders(iContentType, true);
-	}
+  public void writeHeaders(final String iContentType) throws IOException {
+    writeHeaders(iContentType, true);
+  }
 
-	public void writeHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
-		if (headers != null)
-			writeLine(headers);
+  public void writeHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
+    if (headers != null)
+      writeLine(headers);
 
-		writeLine("Date: " + new Date());
-		writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
-		writeLine("Server: " + serverInfo);
-		writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+    writeLine("Date: " + new Date());
+    writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
+    writeLine("Server: " + serverInfo);
+    writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
 
-		// INCLUDE COMMON CUSTOM HEADERS
-		if (additionalHeaders != null)
-			for (String h : additionalHeaders)
-				writeLine(h);
-	}
+    // INCLUDE COMMON CUSTOM HEADERS
+    if (additionalHeaders != null)
+      for (String h : additionalHeaders)
+        writeLine(h);
+  }
 
-	public void writeLine(final String iContent) throws IOException {
-		writeContent(iContent);
-		out.write(OHttpUtils.EOL);
-	}
+  public void writeLine(final String iContent) throws IOException {
+    writeContent(iContent);
+    out.write(OHttpUtils.EOL);
+  }
 
-	public void writeContent(final String iContent) throws IOException {
-		if (iContent != null)
-			out.write(OBinaryProtocol.string2bytes(iContent));
-	}
+  public void writeContent(final String iContent) throws IOException {
+    if (iContent != null)
+      out.write(OBinaryProtocol.string2bytes(iContent));
+  }
 
-	@SuppressWarnings("unchecked")
-	public void writeResult(Object iResult) throws InterruptedException, IOException {
-		if (iResult == null)
-			send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
-		else {
-			if (iResult instanceof OIdentifiable) {
-				// CONVERT SIGLE VLUE IN A COLLECTION
-				final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-				resultSet.add((OIdentifiable) iResult);
-				iResult = resultSet;
-			}
+  @SuppressWarnings("unchecked")
+  public void writeResult(Object iResult) throws InterruptedException, IOException {
+    if (iResult == null)
+      send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+    else {
+      if (iResult instanceof Collection<?>) {
+        if (!((Collection<?>) iResult).isEmpty() && !(((Collection<?>) iResult).iterator().next() instanceof OIdentifiable))
+          iResult = new ODocument().field("result", iResult);
+      }
 
-			if (iResult instanceof Iterable<?>)
-				iResult = ((Iterable<OIdentifiable>) iResult).iterator();
-			else if (iResult.getClass().isArray())
-				iResult = OMultiValue.getMultiValueIterator(iResult);
+      if (iResult instanceof OIdentifiable) {
+        // CONVERT SIGLE VLUE IN A COLLECTION
+        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+        resultSet.add((OIdentifiable) iResult);
+        iResult = resultSet.iterator();
+      }
 
-			if (iResult instanceof Iterator<?>)
-				writeRecords((Iterator<OIdentifiable>) iResult);
-			else if (iResult == null || iResult instanceof Integer)
-				send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
-			else {
-				if (contentType == null)
-					contentType = OHttpUtils.CONTENT_TEXT_PLAIN;
-				send(OHttpUtils.STATUS_OK_CODE, "OK", contentType, iResult.toString(), null);
-			}
-		}
-	}
+      if (iResult instanceof Iterable<?>)
+        iResult = ((Iterable<OIdentifiable>) iResult).iterator();
+      else if (iResult.getClass().isArray())
+        iResult = OMultiValue.getMultiValueIterator(iResult);
 
-	public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
-		if (iRecords == null)
-			return;
+      if (iResult instanceof Iterator<?>)
+        writeRecords((Iterator<OIdentifiable>) iResult);
+      else if (iResult == null || iResult instanceof Integer)
+        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
+      else {
+        if (contentType == null)
+          contentType = OHttpUtils.CONTENT_TEXT_PLAIN;
+        send(OHttpUtils.STATUS_OK_CODE, "OK", contentType, iResult.toString(), null);
+      }
+    }
+  }
 
-		writeRecords(iRecords.iterator(), null);
-	}
+  public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
+    if (iRecords == null)
+      return;
 
-	public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
-		if (iRecords == null)
-			return;
+    writeRecords(iRecords.iterator(), null);
+  }
 
-		writeRecords(iRecords.iterator(), iFetchPlan);
-	}
+  public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+    if (iRecords == null)
+      return;
 
-	public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
-		writeRecords(iRecords, null);
-	}
+    writeRecords(iRecords.iterator(), iFetchPlan);
+  }
 
-	public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
-		if (iRecords == null)
-			return;
+  public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
+    writeRecords(iRecords, null);
+  }
 
-		final StringWriter buffer = new StringWriter();
-		final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
-		json.beginObject();
+  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+    if (iRecords == null)
+      return;
 
-		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+    final StringWriter buffer = new StringWriter();
+    final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+    json.beginObject();
 
-		// WRITE RECORDS
-		json.beginCollection(1, true, "result");
-		formatMultiValue(iRecords, buffer, format);
-		json.endCollection(1, true);
+    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
 
-		json.endObject();
+    // WRITE RECORDS
+    json.beginCollection(1, true, "result");
+    formatMultiValue(iRecords, buffer, format);
+    json.endCollection(1, true);
 
-		send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-	}
+    json.endObject();
 
-	public void formatMultiValue(final Iterator<OIdentifiable> iIterator, final StringWriter buffer, final String format) {
-		if (iIterator != null) {
-			int counter = 0;
-			String objectJson;
+    send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+  }
 
-			while (iIterator.hasNext()) {
-				final OIdentifiable rec = iIterator.next();
-				if (rec != null)
-					try {
-						objectJson = rec.getRecord().toJSON(format);
+  public void formatMultiValue(final Iterator<OIdentifiable> iIterator, final StringWriter buffer, final String format) {
+    if (iIterator != null) {
+      int counter = 0;
+      String objectJson;
 
-						if (counter++ > 0)
-							buffer.append(", ");
+      while (iIterator.hasNext()) {
+        final OIdentifiable rec = iIterator.next();
+        if (rec != null)
+          try {
+            objectJson = rec.getRecord().toJSON(format);
 
-						buffer.append(objectJson);
-					} catch (Exception e) {
-						OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-					}
-			}
-		}
-	}
+            if (counter++ > 0)
+              buffer.append(", ");
 
-	public void writeRecord(final ORecord<?> iRecord) throws IOException {
-		writeRecord(iRecord, null);
-	}
+            buffer.append(objectJson);
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+          }
+      }
+    }
+  }
 
-	public void writeRecord(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
-		final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
-		if (iRecord != null)
-			send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
-	}
+  public void writeRecord(final ORecord<?> iRecord) throws IOException {
+    writeRecord(iRecord, null);
+  }
 
-	public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
-			final long iSize) throws IOException {
-		writeStatus(iCode, iReason);
-		writeHeaders(iContentType);
-		writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
-		writeLine(null);
+  public void writeRecord(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
+    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+    if (iRecord != null)
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
+  }
 
-		if (iContent != null) {
-			int b;
-			while ((b = iContent.read()) > -1)
-				out.write(b);
-		}
+  public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
+      final long iSize) throws IOException {
+    writeStatus(iCode, iReason);
+    writeHeaders(iContentType);
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
+    writeLine(null);
 
-		out.flush();
-	}
+    if (iContent != null) {
+      int b;
+      while ((b = iContent.read()) > -1)
+        out.write(b);
+    }
 
-	/**
-	 * Stores additional headers to send
-	 * 
-	 * @param iHeader
-	 */
-	public void setHeader(final String iHeader) {
-		headers = iHeader;
-	}
+    out.flush();
+  }
 
-	public OutputStream getOutputStream() {
-		return out;
-	}
+  /**
+   * Stores additional headers to send
+   * 
+   * @param iHeader
+   */
+  public void setHeader(final String iHeader) {
+    headers = iHeader;
+  }
 
-	public void flush() throws IOException {
-		out.flush();
-	}
+  public OutputStream getOutputStream() {
+    return out;
+  }
 
-	public String getContentType() {
-		return contentType;
-	}
+  public void flush() throws IOException {
+    out.flush();
+  }
 
-	public void setContentType(String contentType) {
-		this.contentType = contentType;
-	}
+  public String getContentType() {
+    return contentType;
+  }
+
+  public void setContentType(String contentType) {
+    this.contentType = contentType;
+  }
 }
