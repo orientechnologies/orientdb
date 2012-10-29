@@ -501,7 +501,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    OMVRBTreeRIDSet result = null;
+    Set<OIdentifiable> result = null;
 
     acquireReadLock(iVertex);
     try {
@@ -516,7 +516,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           return Collections.emptySet();
 
       // FILTER BY LABEL
-      result = new OMVRBTreeRIDSet();
+      result = new HashSet<OIdentifiable>();
       if (set != null)
         for (OIdentifiable item : set) {
           if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
@@ -579,7 +579,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    OMVRBTreeRIDSet result = null;
+    Set<OIdentifiable> result = null;
 
     acquireReadLock(iVertex);
     try {
@@ -594,7 +594,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           return Collections.emptySet();
 
       // FILTER BY LABEL
-      result = new OMVRBTreeRIDSet();
+      result = new HashSet<OIdentifiable>();
       if (set != null)
         for (OIdentifiable item : set) {
           if (iLabel == null || iLabel.equals(((ODocument) item).field(LABEL)))
