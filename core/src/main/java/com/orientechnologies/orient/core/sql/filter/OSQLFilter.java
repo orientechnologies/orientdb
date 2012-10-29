@@ -55,11 +55,11 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     }
   }
 
-  public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
+  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
-    return (Boolean) rootCondition.evaluate(iRecord, iContext);
+    return rootCondition.evaluate(iRecord, iContext);
   }
 
   public OSQLFilterCondition getRootCondition() {

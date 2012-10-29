@@ -19,64 +19,45 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 /**
- * Computes the sum of field. Uses the context to save the last sum number. When different Number class are used, take the class
- * with most precision.
+ * Evaluates a complex expression.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
-  public static final String NAME = "sum";
+public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
+  public static final String NAME = "eval";
 
-  private Number             sum;
+  private OSQLPredicate      predicate;
 
-  public OSQLFunctionSum() {
+  public OSQLFunctionEval() {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object[] iParameters, OCommandContext iContext) {
-    final Number value = (Number) iParameters[0];
+  public Object execute(final OIdentifiable iRecord, final Object[] iParameters, OCommandContext iContext) {
+    if (predicate == null)
+      predicate = new OSQLPredicate((String) iParameters[0]);
 
-    if (value != null) {
-      if (sum == null)
-        // FIRST TIME
-        sum = value;
-      else
-        sum = OType.increment(sum, value);
-    }
-    return null;
+    return predicate.evaluate(iRecord.getRecord(), iContext);
   }
 
   public boolean aggregateResults() {
-    return true;
+    return false;
   }
 
   public String getSyntax() {
-    return "Syntax error: sum(<field>)";
+    return "Syntax error: eval(<expression>)";
   }
 
   @Override
   public Object getResult() {
-    return sum;
+    return null;
   }
 
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Number sum = null;
-    for (Object iParameter : resultsToMerge) {
-      final Number value = (Number) iParameter;
-
-      if (value != null) {
-        if (sum == null)
-          // FIRST TIME
-          sum = value;
-        else
-          sum = OType.increment(sum, value);
-      }
-    }
-    return sum;
+    return null;
   }
 }

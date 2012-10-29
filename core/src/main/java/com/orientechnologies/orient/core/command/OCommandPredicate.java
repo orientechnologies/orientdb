@@ -32,7 +32,7 @@ public interface OCommandPredicate {
    *          Target record
    * @param iContext
    *          Context of execution
-   * @return true or false
+   * @return The result of predicate
    */
-  public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext);
+  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext);
 }

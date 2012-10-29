@@ -67,6 +67,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
     return context;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     Comparable<Object> context = null;

@@ -217,7 +217,7 @@ public class TraverseTest {
   public void traverseAPIIterating() {
     int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(new OCommandPredicate() {
-      public boolean evaluate(ORecord<?> iRecord, OCommandContext iContext) {
+      public Object evaluate(ORecord<?> iRecord, OCommandContext iContext) {
         return ((Integer) iContext.getVariable("depth")) <= 2;
       }
     })) {

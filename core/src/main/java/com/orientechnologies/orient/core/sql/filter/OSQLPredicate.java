@@ -88,11 +88,11 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return this;
   }
 
-  public boolean evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
+  public Object evaluate(final ORecord<?> iRecord, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
-    return (Boolean) rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iContext);
+    return rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iContext);
   }
 
   private Object extractConditions(final OSQLFilterCondition iParentCondition) {

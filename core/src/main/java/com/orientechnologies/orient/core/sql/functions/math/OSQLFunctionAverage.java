@@ -82,6 +82,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     Number sum = null;
