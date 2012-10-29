@@ -22,44 +22,44 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<String>> {
-  protected String fieldName;
+	protected String	fieldName;
 
-  public OTraverseFieldProcess(final OTraverse iCommand, final Iterator<String> iTarget) {
-    super(iCommand, iTarget);
-  }
+	public OTraverseFieldProcess(final OTraverse iCommand, final Iterator<String> iTarget) {
+		super(iCommand, iTarget);
+	}
 
-  public OIdentifiable process() {
-    while (target.hasNext()) {
-      fieldName = target.next();
+	public OIdentifiable process() {
+		while (target.hasNext()) {
+			fieldName = target.next();
 
-      final Object fieldValue = ((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget().rawField(fieldName);
+			final Object fieldValue = ((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget().rawField(fieldName);
 
-      if (fieldValue != null) {
-        final OTraverseAbstractProcess<?> subProcess;
+			if (fieldValue != null) {
+				final OTraverseAbstractProcess<?> subProcess;
 
-        if (OMultiValue.isMultiValue(fieldValue))
-          subProcess = new OTraverseMultiValueProcess(command, OMultiValue.getMultiValueIterator(fieldValue));
-        else if (fieldValue instanceof OIdentifiable)
-          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord());
-        else
-          continue;
+				if (OMultiValue.isMultiValue(fieldValue))
+					subProcess = new OTraverseMultiValueProcess(command, OMultiValue.getMultiValueIterator(fieldValue));
+				else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument)
+					subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord());
+				else
+					continue;
 
-        final OIdentifiable subValue = subProcess.process();
-        if (subValue != null)
-          return subValue;
-      }
-    }
+				final OIdentifiable subValue = subProcess.process();
+				if (subValue != null)
+					return subValue;
+			}
+		}
 
-    return drop();
-  }
+		return drop();
+	}
 
-  @Override
-  public String getStatus() {
-    return fieldName != null ? fieldName : null;
-  }
+	@Override
+	public String getStatus() {
+		return fieldName != null ? fieldName : null;
+	}
 
-  @Override
-  public String toString() {
-    return fieldName != null ? "[field:" + fieldName + "]" : null;
-  }
+	@Override
+	public String toString() {
+		return fieldName != null ? "[field:" + fieldName + "]" : null;
+	}
 }
