@@ -350,7 +350,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
             final String[] sessionItems = sessionPair.split(";");
             for (String sessionItem : sessionItems) {
-              final String[] sessionPairItems = sessionItem.split("=");
+              final String[] sessionPairItems = sessionItem.trim().split("=");
               if (sessionPairItems.length == 2 && OHttpUtils.OSESSIONID.equals(sessionPairItems[0])) {
                 iRequest.sessionId = sessionPairItems[1];
                 break;

@@ -59,7 +59,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization,
         ':') : null;
 
-    if (iRequest.sessionId == null || iRequest.sessionId.length() == 1) {
+    final OHttpSession currentSession;
+    if (iRequest.sessionId != null && iRequest.sessionId.length() > 1)
+      currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+    else
+      currentSession = null;
+
+    if (currentSession == null) {
       // NO SESSION
       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
@@ -69,13 +75,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     } else {
       // CHECK THE SESSION VALIDITY
-      final OHttpSession currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
-      if (currentSession == null) {
-        // SESSION EXPIRED
-        sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
-        return false;
-
-      } else if (!currentSession.getDatabaseName().equals(iRequest.databaseName)) {
+      if (!currentSession.getDatabaseName().equals(iRequest.databaseName)) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
         OLogManager.instance().warn(this,
@@ -106,6 +106,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
+      iResponse.sessionId = iRequest.sessionId;
       return true;
 
     } catch (OSecurityAccessException e) {
@@ -131,10 +132,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
     String header = null;
     if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
-        header  ="WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";   
+      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
     }
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            "401 Unauthorized.", header, false);
+        "401 Unauthorized.", header, false);
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
