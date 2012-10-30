@@ -278,7 +278,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected boolean filter(final ORecordInternal<?> iRecord) {
-    context.setVariable("CURRENT", iRecord);
+    context.setVariable("current", iRecord);
 
     if (iRecord instanceof ORecordSchemaAware<?>) {
       // CHECK THE TARGET CLASS
@@ -320,7 +320,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           subQuery.reset();
           subQuery.resetPagination();
           subQuery.setContext(context);
-          subQuery.getContext().setVariable("CURRENT", iRecord);
+          subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
         } else if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
