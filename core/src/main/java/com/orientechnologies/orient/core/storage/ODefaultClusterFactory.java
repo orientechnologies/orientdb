@@ -60,4 +60,12 @@ public class ODefaultClusterFactory implements OClusterFactory {
   public String[] getSupported() {
     return TYPES;
   }
+
+  @Override
+  public boolean isSupported(final String iClusterType) {
+    for (String type : TYPES)
+      if (type.equalsIgnoreCase(iClusterType))
+        return true;
+    return false;
+  }
 }

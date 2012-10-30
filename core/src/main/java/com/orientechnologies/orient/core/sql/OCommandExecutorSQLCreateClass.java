@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
- * SQL CREATE PROPERTY command: Creates a new property in the target class.
+ * SQL CREATE CLASS command: Creates a new property in the target class.
  * 
  * @author Luca Garulli
  * 
@@ -71,7 +71,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
     className = word.toString();
     if (className == null)
-      throw new OCommandSQLParsingException("Class " + className + " already exists", parserText, oldPos);
+      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
     oldPos = pos;
 
