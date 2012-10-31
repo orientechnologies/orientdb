@@ -338,7 +338,7 @@ public class OJSONWriter {
       for (OIdentifiable rec : iRecords) {
         if (rec != null)
           try {
-            objectJson = rec.getRecord().toJSON(iFormat);
+            objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
             if (counter++ > 0)
               buffer.append(", ");
