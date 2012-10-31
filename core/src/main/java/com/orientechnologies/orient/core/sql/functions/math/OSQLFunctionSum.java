@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -38,9 +39,17 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    final Number value = (Number) iParameters[0];
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
+    if (iParameters[0] instanceof Number)
+      sum((Number) iParameters[0]);
+    else if (OMultiValue.isMultiValue(iParameters[0]))
+      for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+        sum((Number) n);
+    return sum;
+  }
 
+  protected void sum(final Number value) {
     if (value != null) {
       if (sum == null)
         // FIRST TIME
@@ -48,7 +57,6 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
       else
         sum = OType.increment(sum, value);
     }
-    return sum;
   }
 
   public boolean aggregateResults() {

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -43,18 +44,24 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    Number value = (Number) iParameters[0];
+    if (iParameters[0] instanceof Number)
+      sum((Number) iParameters[0]);
+    else if (OMultiValue.isMultiValue(iParameters[0]))
+      for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+        sum((Number) n);
 
-    total++;
+    return null;
+  }
 
+  protected void sum(Number value) {
     if (value != null) {
+      total++;
       if (sum == null)
         // FIRST TIME
         sum = value;
       else
         sum = OType.increment(sum, value);
     }
-    return null;
   }
 
   public String getSyntax() {
