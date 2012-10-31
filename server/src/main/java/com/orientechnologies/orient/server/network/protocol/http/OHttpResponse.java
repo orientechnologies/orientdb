@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -147,32 +146,31 @@ public class OHttpResponse {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
-      if (iResult instanceof Collection<?>) {
-        if (!((Collection<?>) iResult).isEmpty() && !(((Collection<?>) iResult).iterator().next() instanceof OIdentifiable))
-          iResult = new ODocument().field("result", iResult);
-      }
+      if (OMultiValue.isMultiValue(iResult)
+          && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
+        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+        resultSet.add(new ODocument().field("value", iResult));
+        iResult = resultSet.iterator();
 
-      if (iResult instanceof OIdentifiable) {
-        // CONVERT SIGLE VLUE IN A COLLECTION
+      } else if (iResult instanceof OIdentifiable) {
+        // CONVERT SIGLE VALUE IN A COLLECTION
         final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
         resultSet.add((OIdentifiable) iResult);
         iResult = resultSet.iterator();
-      }
-
-      if (iResult instanceof Iterable<?>)
+      } else if (iResult instanceof Iterable<?>)
         iResult = ((Iterable<OIdentifiable>) iResult).iterator();
-      else if (iResult.getClass().isArray())
+      else if (OMultiValue.isMultiValue(iResult))
         iResult = OMultiValue.getMultiValueIterator(iResult);
-
-      if (iResult instanceof Iterator<?>)
-        writeRecords((Iterator<OIdentifiable>) iResult);
-      else if (iResult == null || iResult instanceof Integer)
-        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, iResult, null);
       else {
-        if (contentType == null)
-          contentType = OHttpUtils.CONTENT_TEXT_PLAIN;
-        send(OHttpUtils.STATUS_OK_CODE, "OK", contentType, iResult.toString(), null);
+        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
+        resultSet.add(new ODocument().field("value", iResult));
+        iResult = resultSet.iterator();
       }
+
+      if (iResult == null)
+        send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+      else if (iResult instanceof Iterator<?>)
+        writeRecords((Iterator<OIdentifiable>) iResult);
     }
   }
 
