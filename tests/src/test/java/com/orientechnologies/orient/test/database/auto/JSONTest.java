@@ -101,7 +101,7 @@ public class JSONTest {
     list.add(second);
 
     try {
-      String jsonResult = OJSONWriter.listToJSON(list);
+      String jsonResult = OJSONWriter.listToJSON(list, null);
       ODocument doc = new ODocument();
       doc.fromJSON("{\"result\": " + jsonResult + "}");
       Collection<ODocument> result = doc.field("result");
