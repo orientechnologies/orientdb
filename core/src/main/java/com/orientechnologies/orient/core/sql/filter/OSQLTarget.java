@@ -81,7 +81,7 @@ public class OSQLTarget extends OBaseParser {
     final char c = parserGetCurrentChar();
 
     if (c == '$') {
-      targetVariable = parserRequiredWord(true, "No valid target");
+      targetVariable = parserRequiredWord(false, "No valid target");
       targetVariable = targetVariable.substring(1);
     } else if (c == '#' || Character.isDigit(c)) {
       // UNIQUE RID

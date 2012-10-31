@@ -47,9 +47,13 @@ public class OBasicCommandContext implements OCommandContext {
       if (iName.charAt(pos) == '.')
         pos++;
       lastPart = iName.substring(pos);
-      if (firstPart.equalsIgnoreCase("PARENT") && parent != null)
+      if (firstPart.equalsIgnoreCase("PARENT") && parent != null) {
         // UP TO THE PARENT
-        return parent.getVariable(lastPart);
+        if (lastPart.startsWith("$"))
+          return parent.getVariable(lastPart.substring(1));
+        else
+          return ODocumentHelper.getFieldValue(parent, lastPart);
+      }
     } else {
       firstPart = iName;
       lastPart = null;
