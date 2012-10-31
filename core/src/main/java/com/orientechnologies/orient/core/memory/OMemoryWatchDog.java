@@ -18,8 +18,8 @@ package com.orientechnologies.orient.core.memory;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -32,10 +32,10 @@ import com.orientechnologies.orient.core.Orient;
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-  private final Set<Listener>      listeners    = new HashSet<Listener>(128);
-  private int                      alertTimes   = 0;
-  protected ReferenceQueue<Object> monitorQueue = new ReferenceQueue<Object>();
-  protected SoftReference<Object>  monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
+  private final Map<Listener, Object> listeners    = new IdentityHashMap<Listener, Object>(128);
+  private int                         alertTimes   = 0;
+  protected ReferenceQueue<Object>    monitorQueue = new ReferenceQueue<Object>();
+  protected SoftReference<Object>     monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
 
   public static interface Listener {
     /**
@@ -92,7 +92,7 @@ public class OMemoryWatchDog extends Thread {
         final long timer = Orient.instance().getProfiler().startChrono();
 
         synchronized (listeners) {
-          for (Listener listener : listeners) {
+          for (Listener listener : listeners.keySet()) {
             try {
               listener.memoryUsageLow(freeMemory, freeMemoryPer);
             } catch (Exception e) {
@@ -113,20 +113,20 @@ public class OMemoryWatchDog extends Thread {
 
   public Collection<Listener> getListeners() {
     synchronized (listeners) {
-      return listeners;
+      return listeners.keySet();
     }
   }
 
   public Listener addListener(final Listener listener) {
     synchronized (listeners) {
-      listeners.add(listener);
+      listeners.put(listener, listener);
     }
     return listener;
   }
 
   public boolean removeListener(final Listener listener) {
     synchronized (listeners) {
-      return listeners.remove(listener);
+      return listeners.remove(listener) != null;
     }
   }
 
