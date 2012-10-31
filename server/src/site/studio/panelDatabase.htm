@@ -8,9 +8,11 @@
 </style>
 <div id="tab-database" class="row-fluid">
 	<div class="span12">
-		<button onclick="javascript:askDatabaseInfo()" class="btn" id="dbRefresh"
-		 		rel="tooltip" data-placement="right" data-original-title="Refreshes the database information from the Server">
-				Refresh <img border="0" alt="Refresh" src="images/execute.png" align="top" />
+		<button onclick="javascript:askDatabaseInfo()" class="btn"
+			id="dbRefresh" rel="tooltip" data-placement="right"
+			data-original-title="Refreshes the database information from the Server">
+			Refresh <img border="0" alt="Refresh" src="images/execute.png"
+				align="top" />
 		</button>
 		<div id="tabs-db">
 			<ul>
@@ -19,7 +21,8 @@
 				<li><a href="#tab-db-allocation"><span>Allocation</span> </a></li>
 				<li><a href="#tab-db-security"><span>Security</span> </a></li>
 				<li><a href="#tab-db-config"><span>Configuration</span> </a></li>
-				<li><a href="#tab-db-importExport"><span>Import\Export</span> </a></li>
+				<li><a href="#tab-db-importExport"><span>Import\Export</span>
+				</a></li>
 			</ul>
 			<div id="tab-db-schema">
 				<table style="width: 100%;" cellspacing="0" cellpadding="5">
@@ -35,25 +38,33 @@
 										<table>
 											<tr>
 												<td>
-													<button id="queryClass" class="btn" style="text-align: left"
-													 		rel="tooltip" data-placement="right" data-original-title="Executes a query, wihtout filters, against the selected class">
-														Query <img border="0" alt="Query" src="images/execute.png" align="top" />
+													<button id="queryClass" class="btn"
+														style="text-align: left" rel="tooltip"
+														data-placement="right"
+														data-original-title="Executes a query, wihtout filters, against the selected class">
+														Query <img border="0" alt="Query" src="images/execute.png"
+															align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="createObject" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Creates a new object of the selected class">
-														Create object <img border="0" alt="Create object" src="images/set.png" align="top" />
+													<button id="createObject" class="btn"
+														style="text-align: left" rel="tooltip"
+														data-placement="right"
+														data-original-title="Creates a new object of the selected class">
+														Create object <img border="0" alt="Create object"
+															src="images/set.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
 													<button id="addClass" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Creates a new class">
-														Add class <img border="0" alt="New record" src="images/add.png" align="top" />
+														rel="tooltip" data-placement="right"
+														data-original-title="Creates a new class">
+														Add class <img border="0" alt="New record"
+															src="images/add.png" align="top" />
 													</button>
 												</td>
 												<td>
@@ -61,16 +72,21 @@
 											<tr>
 												<td>
 													<button id="dropClass" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Drops a class">
-														Drop class <img border="0" alt="Drop record" src="images/delete.png" align="top" />
+														rel="tooltip" data-placement="right"
+														data-original-title="Drops a class">
+														Drop class <img border="0" alt="Drop record"
+															src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
 										</table>
 									</td>
-									<td valign="top" class="help hidden-phone">Select the class to display the properties associated. Each class can store its records into
-										one or multiple <b>Clusters</b> (see "Structure" tab). A class can be <b>schema-less</b> (has no properties), <b>schema-full</b> (all
-										properties as mandatories) or with a <b>partial schema</b>.
+									<td valign="top" class="help hidden-phone">Select the
+										class to display the properties associated. Each class can
+										store its records into one or multiple <b>Clusters</b> (see
+										"Structure" tab). A class can be <b>schema-less</b> (has no
+										properties), <b>schema-full</b> (all properties as
+										mandatories) or with a <b>partial schema</b>.
 									</td>
 								</tr>
 							</table>
@@ -81,7 +97,8 @@
 							<table width="100%">
 								<tr>
 									<td valign="top" width="750">
-										<table id="classProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+										<table id="classProperties" style="width: 100%;"
+											cellspacing="0" cellpadding="5" border="1">
 										</table>
 									</td>
 									<td valign="top" align="left">
@@ -93,17 +110,23 @@
 											</tr>
 											<tr>
 												<td>
-													<button id="addProperty" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Adds a new property in the selected class">
-														Add property <img border="0" alt="New record" src="images/add.png" align="top" />
+													<button id="addProperty" class="btn"
+														style="text-align: left" rel="tooltip"
+														data-placement="right"
+														data-original-title="Adds a new property in the selected class">
+														Add property <img border="0" alt="New record"
+															src="images/add.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
-													<button id="dropProperty" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Drops a property from the selected class">
-														Drop property <img border="0" alt="Delete record" src="images/delete.png" align="top" />
+													<button id="dropProperty" class="btn"
+														style="text-align: left" rel="tooltip"
+														data-placement="right"
+														data-original-title="Drops a property from the selected class">
+														Drop property <img border="0" alt="Delete record"
+															src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
@@ -118,7 +141,8 @@
 							<table width="100%">
 								<tr>
 									<td valign="top" width="750">
-										<table id="classIndexes" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+										<table id="classIndexes" style="width: 100%;" cellspacing="0"
+											cellpadding="5" border="1">
 										</table>
 									</td>
 									<td valign="top" align="left">
@@ -131,16 +155,20 @@
 											<tr>
 												<td>
 													<button id="addIndex" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Adds a new index against the selected property">
-														Add index <img border="0" alt="Add index" src="images/add.png" align="top" />
+														rel="tooltip" data-placement="right"
+														data-original-title="Adds a new index against the selected property">
+														Add index <img border="0" alt="Add index"
+															src="images/add.png" align="top" />
 													</button>
 												</td>
 											</tr>
 											<tr>
 												<td>
 													<button id="dropIndex" class="btn" style="text-align: left"
-															rel="tooltip" data-placement="right" data-original-title="Drops the selected index">
-														Drop index <img border="0" alt="Delete index" src="images/delete.png" align="top" />
+														rel="tooltip" data-placement="right"
+														data-original-title="Drops the selected index">
+														Drop index <img border="0" alt="Delete index"
+															src="images/delete.png" align="top" />
 													</button>
 												</td>
 											</tr>
@@ -155,15 +183,22 @@
 			<div id="tab-db-structure">
 				<table style="width: 100%;" cellpadding='5'>
 					<tr>
-						<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a> </b> are sets of
-							records grouped by a mean. Any mean you want to assign. You can use a Cluster like a Table of the Relational DBMS world, namely to group records
-							of the same type. Or you could want to group records by different logics. <br /> <br /> There are two kinds of clusters: <b><a
-								href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a> </b> and <b><a
-								href="http://code.google.com/p/orient/wiki/Concepts#In-Memory_cluster">In-memory</a> </b>. The first one is persistent, the second one is volatile.</td>
+						<td valign="top" class="help hidden-phone"><b><a
+								href="http://code.google.com/p/orient/wiki/Concepts#Cluster">Clusters</a>
+						</b> are sets of records grouped by a mean. Any mean you want to
+							assign. You can use a Cluster like a Table of the Relational DBMS
+							world, namely to group records of the same type. Or you could
+							want to group records by different logics. <br /> <br /> There
+							are two kinds of clusters: <b><a
+								href="http://code.google.com/p/orient/wiki/Concepts#Local_Physical_Cluster">Physical</a>
+						</b> and <b><a
+								href="http://code.google.com/p/orient/wiki/Concepts#In-Memory_cluster">In-memory</a>
+						</b>. The first one is persistent, the second one is volatile.</td>
 					</tr>
 					<tr>
 						<td valign="top">
-							<table id="databaseClusters" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
+							<table id="databaseClusters" style="width: 900px;"
+								cellspacing="0" cellpadding="5" border="1">
 							</table>
 						</td>
 					</tr>
@@ -172,18 +207,24 @@
 							<table>
 								<tr>
 									<td>
-										<button id="addPhysicalCluster" class="btn" style="text-align: left">
-											Add Physical Cluster <img border="0" alt="Add Physical Cluster" src="images/add.png" align="top" />
+										<button id="addPhysicalCluster" class="btn"
+											style="text-align: left">
+											Add Physical Cluster <img border="0"
+												alt="Add Physical Cluster" src="images/add.png" align="top" />
 										</button>
 									</td>
 									<td>
-										<button id="addMemoryCluster" class="btn" style="text-align: left">
-											Add In-Memory Cluster <img border="0" alt="Add Memory Cluster" src="images/add.png" align="top" />
+										<button id="addMemoryCluster" class="btn"
+											style="text-align: left">
+											Add In-Memory Cluster <img border="0"
+												alt="Add Memory Cluster" src="images/add.png" align="top" />
 										</button>
 									</td>
 									<td>
-										<button id="removeCluster" class="btn" style="text-align: left">
-											Remove Cluster <img border="0" alt="Remove Cluster" src="images/delete.png" align="top" />
+										<button id="removeCluster" class="btn"
+											style="text-align: left">
+											Remove Cluster <img border="0" alt="Remove Cluster"
+												src="images/delete.png" align="top" />
 										</button>
 									</td>
 								</tr>
@@ -191,21 +232,27 @@
 						</td>
 					</tr>
 					<tr>
-						<td valign="top" class="help hidden-phone"><b><a href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data segments</a> </b>
-							are the segments that contain data pointed by Clusters.</td>
+						<td valign="top" class="help hidden-phone"><b><a
+								href="http://code.google.com/p/orient/wiki/Concepts#Data_Segment">Data
+									segments</a> </b> are the segments that contain data pointed by
+							Clusters.</td>
 					</tr>
 					<tr>
 						<td valign="top">
-							<table id="databaseDataSegments" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
+							<table id="databaseDataSegments" style="width: 900px;"
+								cellspacing="0" cellpadding="5" border="1">
 							</table>
 						</td>
 					</tr>
 					<tr>
-						<td valign="top" class="help hidden-phone"><b>Tx Segment</b> handles the transaction log for the entire database. It's used in Transactions.</td>
+						<td valign="top" class="help hidden-phone"><b>Tx Segment</b>
+							handles the transaction log for the entire database. It's used in
+							Transactions.</td>
 					</tr>
 					<tr>
 						<td valign="top">
-							<table id="databaseTxSegment" style="width: 900px;" cellspacing="0" cellpadding="5" border="1">
+							<table id="databaseTxSegment" style="width: 900px;"
+								cellspacing="0" cellpadding="5" border="1">
 							</table>
 						</td>
 					</tr>
@@ -214,7 +261,8 @@
 			<div id="tab-db-allocation">
 				<table style="width: 100%;" cellpadding="5">
 					<tr>
-						<td valign="top" class="help hidden-phone"><canvas id="allocation-canvas" width="850" height="500"></canvas></td>
+						<td valign="top" class="help hidden-phone"><canvas
+								id="allocation-canvas" width="850" height="500"></canvas></td>
 						<td>
 						<td valign="top">
 							<table>
@@ -226,18 +274,21 @@
 											</tr>
 											<tr>
 												<td>Data:</td>
-												<td id='data-value' style='background-color: #00FF00' align="center">?</td>
+												<td id='data-value' style='background-color: #00FF00'
+													align="center">?</td>
 											</tr>
 											<tr>
 												<td>Free:</td>
-												<td id='holes-value' style='background-color: #FF0000' align="center">?</td>
+												<td id='holes-value' style='background-color: #FF0000'
+													align="center">?</td>
 											</tr>
 										</table>
 									</td>
 								</tr>
 								<tr>
 									<td>
-										<table id='allocation-data' cellpadding="2" cellspacing="2" width="100%" border="0"></table>
+										<table id='allocation-data' cellpadding="2" cellspacing="2"
+											width="100%" border="0"></table>
 									</td>
 								</tr>
 							</table>
@@ -252,18 +303,21 @@
 						<li><a href="#tab-security-roles"><span>Roles</span> </a></li>
 					</ul>
 					<div id="tab-security-users">
-						<table id="databaseUsers" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+						<table id="databaseUsers" style="width: 100%;" cellspacing="0"
+							cellpadding="5" border="1">
 						</table>
 					</div>
 					<div id="tab-security-roles">
 						<table style="width: 100%;" cellpadding="5" cellspacing="0">
 							<tr>
 								<td width="300">
-									<table id="databaseRoles" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+									<table id="databaseRoles" style="width: 100%;" cellspacing="0"
+										cellpadding="5" border="1">
 									</table>
 								</td>
 								<td width="500">
-									<table id="databaseRolesRules" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+									<table id="databaseRolesRules" style="width: 100%;"
+										cellspacing="0" cellpadding="5" border="1">
 									</table>
 								</td>
 							</tr>
@@ -275,14 +329,16 @@
 				<table style="width: 100%;" cellpadding="5">
 					<tr>
 						<td valign="top">
-							<table id="databaseConfig" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+							<table id="databaseConfig" style="width: 100%;" cellspacing="0"
+								cellpadding="5" border="1">
 							</table>
 						</td>
 						<td valign="top" class="help hidden-phone"></td>
 					</tr>
 					<tr>
 						<td valign="top">
-							<table id="databaseConfigProperties" style="width: 100%;" cellspacing="0" cellpadding="5" border="1">
+							<table id="databaseConfigProperties" style="width: 100%;"
+								cellspacing="0" cellpadding="5" border="1">
 							</table>
 						</td>
 						<td valign="top" class="help hidden-phone"></td>
@@ -299,16 +355,21 @@
 						<table style="width: 100%;" cellpadding="5">
 							<tr>
 								<td valign="top">
-									<button id="exportDatabase" class="ui-button-text exportButton" style="text-align: left; width: 100%;">Export Database</button>
+									<button id="exportDatabase" class="ui-button-text exportButton"
+										style="text-align: left; width: 100%;">Export
+										Database</button>
 								</td>
-								<td valign="top" class="help hidden-phone">Orient server can export databases as JSON data. Click the <b>Export Database</b> button to
-									download a gzip compressed file containing said JSON file.
+								<td valign="top" class="help hidden-phone">Orient server
+									can export databases as JSON data. Click the <b>Export
+										Database</b> button to download a gzip compressed file containing
+									said JSON file.
 								</td>
 							</tr>
 							<tr>
 								<td valign="top">
 									<div id="importDatabaseContainer">
-										<form id="importDatabase" class="file_upload" enctype="multipart/form-data" method="POST">
+										<form id="importDatabase" class="file_upload"
+											enctype="multipart/form-data" method="POST">
 											<input type="file" multiple="" name="databaseFile" />
 											<button type="button">Upload</button>
 											<div class="file_upload_label">Import Database</div>
@@ -319,11 +380,16 @@
 										</table>
 									</div>
 								</td>
-								<td valign="top" class="help hidden-phone">Import a previously exported database. JSON data.<br /> <b>Requirements:</b>
+								<td valign="top" class="help hidden-phone">Import a
+									previously exported database. JSON data.<br /> <b>Requirements:</b>
 									<ul>
 										<li>Supported only JSON text file types.</li>
-										<li>The default max request content lenght is 100000 bytes.<br />To change it add the following entry (value expressed in bytes) in the
-											<b>orientdb-server-config.xml</b>:<br> <code>&lt;entry name=&#34;network.http.maxLength&#34; value=&#34;&#34; &#47;&gt;</code></li>
+										<li>The default max request content lenght is 100000
+											bytes.<br />To change it add the following entry (value
+											expressed in bytes) in the <b>orientdb-server-config.xml</b>:<br>
+											<code>&lt;entry name=&#34;network.http.maxLength&#34;
+												value=&#34;&#34; &#47;&gt;</code>
+										</li>
 									</ul>
 								</td>
 							</tr>
@@ -345,18 +411,23 @@
 									</td>
 								</tr>
 								<tr>
-									<td><select id="importRecordsFormat" class="input-mini"><option value="csv">CSV</option></select></td>
+									<td><select id="importRecordsFormat" class="input-mini"><option
+												value="csv">CSV</option></select></td>
 									<td>
 										<div id="impexp-classes"></div>
 									</td>
-									<td><input type="text" id="importRecordsSeparator" value="," class="input-mini" style="width: 20px;" /></td>
-									<td><input type="text" id="importRecordsStringDelimiter" value='"' class="input-mini" style="width: 20px;" /></td>
-									<td><input type="text" id="importRecordsLocale" class="input-mini" style="width: 80px;"></td>
+									<td><input type="text" id="importRecordsSeparator"
+										value="," class="input-mini" style="width: 20px;" /></td>
+									<td><input type="text" id="importRecordsStringDelimiter"
+										value='"' class="input-mini" style="width: 20px;" /></td>
+									<td><input type="text" id="importRecordsLocale"
+										class="input-mini" style="width: 80px;"></td>
 								</tr>
 							</table>
 							<table style='width: auto;'>
 								<tr>
-									<td><label>Input</label> <textarea style='width: auto;' id="importRecordsContent" rows="20" cols="190"></textarea></td>
+									<td><label>Input</label> <textarea style='width: auto;'
+											id="importRecordsContent" rows="20" cols="190"></textarea></td>
 								</tr>
 							</table>
 						</div>
@@ -746,8 +817,9 @@
 												'delGridRow',
 												selectedRow,
 												{
-													reloadAfterSubmit : false,
+													reloadAfterSubmit : true,
 													closeOnEscape : true,
+													closeAfterDelete : true,
 													delData : [
 															selectedClassName,
 															propName ],
@@ -908,8 +980,9 @@
 						var indexName = $('#classIndexes').jqGrid('getRowData',
 								selectedRow)["name"];
 						$("#classIndexes").jqGrid('delGridRow', selectedRow, {
-							reloadAfterSubmit : false,
+							reloadAfterSubmit : true,
 							closeOnEscape : true,
+							closeAfterDelete : true,
 							delData : [ selectedClassName, indexName ],
 							afterSubmit : function(response, postdata) {
 								$("#output").val(response.responseText);
@@ -923,8 +996,8 @@
 		fillDynaTable(
 				$('#databaseClasses'),
 				"Classes",
-				[ 'name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster',
-						'records' ],
+				[ 'name', 'superClass', 'alias', 'abstract', 'clusters',
+						'defaultCluster', 'records' ],
 				[ {
 					name : 'name',
 					index : 'name',
@@ -1018,8 +1091,9 @@
 												'delGridRow',
 												selectedRow,
 												{
-													reloadAfterSubmit : false,
+													reloadAfterSubmit : true,
 													closeOnEscape : true,
+													closeAfterDelete : true,
 													delData : [ selectedClassName ],
 													afterSubmit : function(
 															response, postdata) {
@@ -1252,8 +1326,7 @@
 							$('#output').val(responseText);
 						}
 					});
-		
-	
+
 	function displayClass(clsName) {
 		$('#tabs-db').tabs('select', 0);
 
@@ -1268,7 +1341,7 @@
 	}
 
 	showDatabaseInfo();
-	
+
 	$(function() {
 		initTooltips();
 	});
