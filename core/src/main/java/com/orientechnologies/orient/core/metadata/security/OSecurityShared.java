@@ -414,26 +414,33 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
   public void load() {
     // @COMPATIBILITY <1.3.0
+
+    // USER
     final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
     if (userClass != null) {
       if (!userClass.existsProperty("status")) {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
       }
       OProperty p = userClass.getProperty("name");
-      if (p == null) {
+      if (p == null)
         p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
-        p.createIndex(INDEX_TYPE.UNIQUE);
-      }
 
+      if (userClass.getInvolvedIndexes("name") == null)
+        p.createIndex(INDEX_TYPE.UNIQUE);
+
+      // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
       if (!roleClass.existsProperty("inheritedRole")) {
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
       }
+
       p = roleClass.getProperty("name");
-      if (p == null) {
+      if (p == null)
         p = roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+
+      if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
-      }
+
     }
   }
 
