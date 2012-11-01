@@ -210,7 +210,7 @@ public class OHttpResponseWrapper {
 	 * @return The object itself for fluent chained calls
 	 */
 	public OHttpResponseWrapper writeRecord(final ORecord<?> iRecord, final String iFetchPlan) throws IOException {
-		response.writeRecord(iRecord, iFetchPlan);
+		response.writeRecord(iRecord, iFetchPlan, null);
 		return this;
 	}
 

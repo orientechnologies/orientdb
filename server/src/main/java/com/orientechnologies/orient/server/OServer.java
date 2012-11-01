@@ -373,7 +373,7 @@ public class OServer {
   @SuppressWarnings("unchecked")
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(final Class<? extends ONetworkProtocol> iProtocolClass) {
     for (OServerNetworkListener l : networkListeners)
-      if (l.getProtocolType().equals(iProtocolClass))
+      if (iProtocolClass.isAssignableFrom(l.getProtocolType()))
         return (RET) l;
 
     return null;

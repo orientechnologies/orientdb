@@ -95,7 +95,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, Object[] commands)
+      throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
   }

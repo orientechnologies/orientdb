@@ -73,6 +73,7 @@ public class OServerNetworkListener extends Thread {
         }
       }
     }
+
     start();
   }
 
@@ -147,13 +148,7 @@ public class OServerNetworkListener extends Thread {
           protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-          protocol.config(server, socket, configuration);
-
-          if (commands != null)
-            // REGISTER ADDITIONAL COMMANDS
-            for (OServerCommand c : commands) {
-              protocol.registerCommand(c);
-            }
+          protocol.config(server, socket, configuration, commands);
 
         } catch (Throwable e) {
           if (active)

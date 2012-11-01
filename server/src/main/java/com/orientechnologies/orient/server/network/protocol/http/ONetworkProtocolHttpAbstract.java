@@ -21,11 +21,8 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
@@ -51,29 +48,30 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String               COMMAND_SEPARATOR = "|";
-  private static int                        requestMaxContentLength;                                  // MAX = 10Kb
-  private static int                        socketTimeout;
+  private static final String                 COMMAND_SEPARATOR = "|";
+  private static int                          requestMaxContentLength;                // MAX = 10Kb
+  private static int                          socketTimeout;
 
-  protected OClientConnection               connection;
-  protected OChannelTextServer              channel;
-  protected OUser                           account;
-  protected OHttpRequest                    request;
-  protected OHttpResponse                   response;
+  protected OClientConnection                 connection;
+  protected OChannelTextServer                channel;
+  protected OUser                             account;
+  protected OHttpRequest                      request;
+  protected OHttpResponse                     response;
 
-  private final StringBuilder               requestContent    = new StringBuilder();
-  private final Map<String, OServerCommand> exactCommands     = new HashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand> wildcardCommands  = new HashMap<String, OServerCommand>();
-  private String                            responseCharSet;
-  private String[]                          additionalResponseHeaders;
-  private String                            listeningAddress  = "?";
+  private final StringBuilder                 requestContent    = new StringBuilder();
+  private String                              responseCharSet;
+  private String[]                            additionalResponseHeaders;
+  private String                              listeningAddress  = "?";
+
+  protected static OHttpNetworkCommandManager cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.getThreadGroup(), "IO-HTTP");
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration) throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
+      final Object[] commands) throws IOException {
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
     if (addHeaders != null)
       additionalResponseHeaders = addHeaders.split(";");
@@ -128,25 +126,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
       final String commandString = getCommandString(command);
 
-      // TRY TO FIND EXACT MATCH
-      OServerCommand cmd = exactCommands.get(commandString);
-
-      if (cmd == null) {
-        // TRY WITH WILDCARD COMMANDS
-        // TODO: OPTIMIZE SEARCH!
-        String partLeft, partRight;
-        for (Entry<String, OServerCommand> entry : wildcardCommands.entrySet()) {
-          final int wildcardPos = entry.getKey().indexOf('*');
-          partLeft = entry.getKey().substring(0, wildcardPos);
-          partRight = entry.getKey().substring(wildcardPos + 1);
-
-          if (commandString.startsWith(partLeft) && commandString.endsWith(partRight)) {
-            cmd = entry.getValue();
-            break;
-          }
-        }
-      }
-
+      final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
       if (cmd != null)
         try {
           if (cmd.beforeExecute(request, response))
@@ -258,22 +238,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
   }
 
-  /**
-   * Register all the names for the same instance
-   * 
-   * @param iServerCommandInstance
-   */
-  @Override
-  public void registerCommand(final Object iServerCommandInstance) {
-    OServerCommand cmd = (OServerCommand) iServerCommandInstance;
-
-    for (String name : cmd.getNames())
-      if (OStringSerializerHelper.contains(name, '*'))
-        wildcardCommands.put(name, cmd);
-      else
-        exactCommands.put(name, cmd);
-  }
-
   protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
       final String iContent) throws IOException {
     final boolean empty = iContent == null || iContent.length() == 0;
@@ -377,9 +341,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_X_FORWARDED_FOR))
             connection.data.caller = line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
-          
+
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHENTICATION))
-              iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
+            iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
 
         }
 
@@ -602,5 +566,26 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
   public String[] getAdditionalResponseHeaders() {
     return additionalResponseHeaders;
+  }
+
+  public OHttpNetworkCommandManager getCommandManager() {
+    return cmdManager;
+  }
+
+  /**
+   * Initializes the protocol ony the first time creating the static commands. This is to avoid a change in the server configuration
+   * file.
+   * 
+   * @param commands
+   */
+  protected void init(final Object[] commands) {
+    if (commands != null && commands.length > 0)
+      synchronized (getClass()) {
+        if (cmdManager == null) {
+          cmdManager = new OHttpNetworkCommandManager();
+          for (Object cmd : commands)
+            cmdManager.registerCommand(cmd);
+        }
+      }
   }
 }

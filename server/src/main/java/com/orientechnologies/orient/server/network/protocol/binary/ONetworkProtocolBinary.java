@@ -90,11 +90,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, final Object[] iCommands)
+      throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(iSocket, this);
 
-    super.config(iServer, iSocket, iConfig);
+    super.config(iServer, iSocket, iConfig, iCommands);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);

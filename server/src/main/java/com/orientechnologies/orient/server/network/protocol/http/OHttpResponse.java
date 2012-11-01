@@ -141,8 +141,12 @@ public class OHttpResponse {
       out.write(OBinaryProtocol.string2bytes(iContent));
   }
 
-  @SuppressWarnings("unchecked")
   public void writeResult(Object iResult) throws InterruptedException, IOException {
+    writeResult(iResult, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void writeResult(Object iResult, final String iFormat) throws InterruptedException, IOException {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
@@ -170,7 +174,7 @@ public class OHttpResponse {
       if (iResult == null)
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
       else if (iResult instanceof Iterator<?>)
-        writeRecords((Iterator<OIdentifiable>) iResult);
+        writeRecords((Iterator<OIdentifiable>) iResult, null, iFormat);
     }
   }
 
@@ -178,29 +182,32 @@ public class OHttpResponse {
     if (iRecords == null)
       return;
 
-    writeRecords(iRecords.iterator(), null);
+    writeRecords(iRecords.iterator(), null, null);
   }
 
   public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
     if (iRecords == null)
       return;
 
-    writeRecords(iRecords.iterator(), iFetchPlan);
+    writeRecords(iRecords.iterator(), iFetchPlan, null);
   }
 
   public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
-    writeRecords(iRecords, null);
+    writeRecords(iRecords, null, null);
   }
 
-  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan, String iFormat) throws IOException {
     if (iRecords == null)
       return;
 
+    if (iFormat == null)
+      iFormat = JSON_FORMAT;
+
     final StringWriter buffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(buffer, JSON_FORMAT);
+    final OJSONWriter json = new OJSONWriter(buffer, iFormat);
     json.beginObject();
 
-    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+    final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
 
     // WRITE RECORDS
     json.beginCollection(1, true, "result");
@@ -235,11 +242,14 @@ public class OHttpResponse {
   }
 
   public void writeRecord(final ORecord<?> iRecord) throws IOException {
-    writeRecord(iRecord, null);
+    writeRecord(iRecord, null, null);
   }
 
-  public void writeRecord(final ORecord<?> iRecord, String iFetchPlan) throws IOException {
-    final String format = iFetchPlan != null ? JSON_FORMAT + ",fetchPlan:" + iFetchPlan : JSON_FORMAT;
+  public void writeRecord(final ORecord<?> iRecord, final String iFetchPlan, String iFormat) throws IOException {
+    if (iFormat == null)
+      iFormat = JSON_FORMAT;
+
+    final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
     if (iRecord != null)
       send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
   }

@@ -30,7 +30,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
     super(group, name);
   }
 
-  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration) throws IOException;
+  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration, Object[] commands)
+      throws IOException;
 
   public abstract String getType();
 
@@ -41,9 +42,6 @@ public abstract class ONetworkProtocol extends OSoftThread {
     if (c != null)
       return c.socket.getLocalAddress().getHostAddress();
     return null;
-  }
-
-  public void registerCommand(final Object iServerCommandInstance) {
   }
 
   public OServer getServer() {

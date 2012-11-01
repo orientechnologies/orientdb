@@ -25,45 +25,45 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|documentbyclass/*" };
+  private static final String[] NAMES = { "GET|documentbyclass/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		ODatabaseDocumentTx db = null;
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    ODatabaseDocumentTx db = null;
 
-		final String[] urlParts = checkSyntax(iRequest.url, 4,
-				"Syntax error: documentbyclass/<database>/<class-name>/<record-position>[/fetchPlan]");
+    final String[] urlParts = checkSyntax(iRequest.url, 4,
+        "Syntax error: documentbyclass/<database>/<class-name>/<record-position>[/fetchPlan]");
 
-		final String fetchPlan = urlParts.length > 4 ? urlParts[4] : null;
+    final String fetchPlan = urlParts.length > 4 ? urlParts[4] : null;
 
-		iRequest.data.commandInfo = "Load document";
+    iRequest.data.commandInfo = "Load document";
 
-		final ORecord<?> rec;
-		try {
+    final ORecord<?> rec;
+    try {
 
-			db = getProfiledDatabaseInstance(iRequest);
-			if (db.getMetadata().getSchema().getClass(urlParts[2]) == null) {
-				throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
-			}
-			final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
-			rec = db.load(new ORecordId(rid), fetchPlan);
+      db = getProfiledDatabaseInstance(iRequest);
+      if (db.getMetadata().getSchema().getClass(urlParts[2]) == null) {
+        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      }
+      final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
+      rec = db.load(new ORecordId(rid), fetchPlan);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
 
-		if (rec == null)
-		  iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
-					+ "' was not found.", null);
-		else
-		  iResponse.writeRecord(rec, fetchPlan);
-		return false;
-	}
+    if (rec == null)
+      iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+          + "' was not found.", null);
+    else
+      iResponse.writeRecord(rec, fetchPlan, null);
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 
 }
