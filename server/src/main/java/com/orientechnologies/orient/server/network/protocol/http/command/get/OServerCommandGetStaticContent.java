@@ -97,7 +97,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
     }
 
     iResponse.setHeader(header);
-    return super.beforeExecute(iRequest, iResponse);
+    return true;
   }
 
   @Override
