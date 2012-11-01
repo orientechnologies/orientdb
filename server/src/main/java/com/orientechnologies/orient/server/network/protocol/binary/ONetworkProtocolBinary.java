@@ -1215,10 +1215,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private void sendDatabaseInformation() throws IOException {
     final Collection<? extends OCluster> clusters = connection.database.getStorage().getClusterInstances();
+    int clusterCount = 0;
+    for (OCluster c : clusters) {
+      if (c != null) {
+        ++clusterCount;
+      }
+    }
     if (connection.data.protocolVersion >= 7)
-      channel.writeShort((short) clusters.size());
+      channel.writeShort((short) clusterCount);
     else
-      channel.writeInt(clusters.size());
+      channel.writeInt(clusterCount);
 
     for (OCluster c : clusters) {
       if (c != null) {
