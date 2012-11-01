@@ -1779,9 +1779,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (networkPool.size() == 0) {
         // ALWAYS CREATE AT LEAST ONE CONNECTION
         final OChannelBinaryClient firstChannel = createNetworkConnection();
-        networkPool.add(firstChannel);
         serviceThread = new OAsynchChannelServiceThread(asynchEventListener, firstChannel, "OrientDB <- Asynch Client ("
             + firstChannel.socket.getRemoteSocketAddress() + ")");
+        networkPool.add(firstChannel);
       }
 
       // CREATE THE MINIMUM POOL

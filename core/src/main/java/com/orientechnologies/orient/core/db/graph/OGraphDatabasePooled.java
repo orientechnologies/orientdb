@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
@@ -45,7 +46,8 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     if (isClosed())
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
     getLevel1Cache().invalidate();
-    getMetadata().reload();
+    //getMetadata().reload();
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
     checkForGraphSchema();
   }
 
@@ -84,7 +86,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     checkOpeness();
     rollback();
 
-    getMetadata().close();
+    //getMetadata().close();
     ((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
     getLevel1Cache().clear();
 

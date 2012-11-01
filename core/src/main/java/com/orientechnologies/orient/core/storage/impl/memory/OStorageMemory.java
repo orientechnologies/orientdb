@@ -647,6 +647,8 @@ public class OStorageMemory extends OStorageEmbedded {
         // GET THE DEFAULT CLUSTER
         iClusterId = defaultClusterId;
 
+      checkClusterSegmentIndexRange(iClusterId);
+
       return clusters.get(iClusterId);
 
     } finally {
@@ -811,6 +813,11 @@ public class OStorageMemory extends OStorageEmbedded {
   @Override
   public String getType() {
     return OEngineMemory.NAME;
+  }
+
+  private void checkClusterSegmentIndexRange(final int iClusterId) {
+    if (iClusterId > clusters.size() - 1)
+      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
 }
