@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
+import com.orientechnologies.common.util.OPair;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -311,6 +312,13 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     }
 
     return buffer.toString();
+  }
+
+  public Map<String, OPair<String, METRIC_TYPE>> getMetadata() {
+    final Map<String, OPair<String, METRIC_TYPE>> metadata = new HashMap<String, OPair<String, METRIC_TYPE>>();
+    for (Entry<String, String> entry : dictionary.entrySet())
+      metadata.put(entry.getKey(), new OPair<String, METRIC_TYPE>(entry.getValue(), types.get(entry.getKey())));
+    return metadata;
   }
 
   public String metadataToJSON() {
