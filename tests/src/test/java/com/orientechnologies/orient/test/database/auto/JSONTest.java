@@ -588,4 +588,15 @@ public class JSONTest {
     // LOOK FOR "quotes": \"\",\"oops\":\"123\"
     Assert.assertTrue(res.contains("\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
+
+  public void testDates() {
+    Date now = new Date(1350518475000l);
+
+    ODocument doc = new ODocument();
+    doc.field("date", now);
+    String json = doc.toJSON();
+
+    ODocument unmarshalled = new ODocument().fromJSON(json);
+    Assert.assertEquals(unmarshalled.field("date"), now);
+  }
 }

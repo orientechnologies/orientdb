@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,20 +38,25 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-  private static final String DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:6";
-  private Writer              out;
-  private boolean             prettyPrint    = true;
-  private boolean             firstAttribute = true;
-  private final String        format;
+  private static final String           DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:6";
+  private Writer                        out;
+  private boolean                       prettyPrint    = true;
+  private boolean                       firstAttribute = true;
+  private final String                  format;
+  private static final SimpleDateFormat dateFormat;
+
+  static {
+    dateFormat = new SimpleDateFormat(ORecordSerializerJSON.DEF_DATE_FORMAT);
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
+
+  public OJSONWriter(final Writer out) {
+    this(out, DEF_FORMAT);
+  }
 
   public OJSONWriter(final Writer out, final String iJsonFormat) {
     this.out = out;
     format = iJsonFormat;
-  }
-
-  public OJSONWriter(final Writer out) {
-    this.out = out;
-    this.format = DEF_FORMAT;
   }
 
   public OJSONWriter beginObject() throws IOException {
@@ -246,24 +252,15 @@ public class OJSONWriter {
       buffer.append(']');
 
     } else if (iValue instanceof Map<?, ?>) {
-      final Map<Object, Object> map = (Map<Object, Object>) iValue;
-      buffer.append('{');
-      int i = 0;
-      Entry<Object, Object> entry;
-      for (Iterator<Entry<Object, Object>> it = map.entrySet().iterator(); it.hasNext(); ++i) {
-        entry = it.next();
-        if (i > 0)
-          buffer.append(", ");
-        buffer.append(writeValue(entry.getKey(), iFormat));
-        buffer.append(": ");
-        buffer.append(writeValue(entry.getValue(), iFormat));
-      }
-      buffer.append('}');
+      mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
 
     } else if (iValue instanceof Date) {
-      final SimpleDateFormat dateFormat = new SimpleDateFormat(ORecordSerializerJSON.DEF_DATE_FORMAT);
       buffer.append('"');
-      buffer.append(dateFormat.format(iValue));
+      final String d;
+      synchronized (dateFormat) {
+        d = dateFormat.format(iValue);
+      }
+      buffer.append(d);
       buffer.append('"');
     } else if (iValue instanceof String) {
       final String v = (String) iValue;
@@ -351,6 +348,28 @@ public class OJSONWriter {
     }
     json.endCollection(0, false);
 
+    return buffer.toString();
+  }
+
+  public static String mapToJSON(Map<?, ?> iMap) throws IOException {
+    return mapToJSON(iMap, null, new StringBuilder());
+  }
+
+  public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) throws IOException {
+    buffer.append('{');
+    if (iMap != null) {
+      int i = 0;
+      Entry<?, ?> entry;
+      for (Iterator<?> it = iMap.entrySet().iterator(); it.hasNext(); ++i) {
+        entry = (Entry<?, ?>) it.next();
+        if (i > 0)
+          buffer.append(", ");
+        buffer.append(writeValue(entry.getKey(), iFormat));
+        buffer.append(": ");
+        buffer.append(writeValue(entry.getValue(), iFormat));
+      }
+    }
+    buffer.append('}');
     return buffer.toString();
   }
 

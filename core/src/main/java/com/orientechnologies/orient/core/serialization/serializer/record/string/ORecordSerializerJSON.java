@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
@@ -66,7 +67,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Double               MAX_FLOAT             = new Double(Float.MAX_VALUE);
   private static final Double               MIN_FLOAT             = new Double(Float.MIN_VALUE);
 
-  private SimpleDateFormat                  dateFormat            = new SimpleDateFormat(DEF_DATE_FORMAT);
+  private final static SimpleDateFormat     dateFormat;
+
+  static {
+    dateFormat = new SimpleDateFormat(DEF_DATE_FORMAT);
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
 
   @Override
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields) {
@@ -427,7 +433,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         } catch (NumberFormatException e) {
           try {
             // TRY TO PARSE AS DATE
-            return dateFormat.parseObject(iFieldValueAsString);
+            synchronized (dateFormat) {
+              return dateFormat.parseObject(iFieldValueAsString);
+            }
           } catch (ParseException ex) {
             throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
           }
