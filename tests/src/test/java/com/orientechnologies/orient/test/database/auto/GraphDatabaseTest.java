@@ -552,4 +552,25 @@ public class GraphDatabaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
     Assert.assertFalse(result.isEmpty());
   }
+
+  public void testSQLManagementOfUnderlyingDocumentsInGraphs() {
+    database.command(new OCommandSQL("create class V1 extends V")).execute();
+    database.command(new OCommandSQL("create class E1 extends E")).execute();
+    OIdentifiable v1 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+    OIdentifiable v2 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+    OIdentifiable v3 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+    List<OIdentifiable> e1 = database.command(
+        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+    List<OIdentifiable> e2 = database.command(
+        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
+    database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v2);
+    database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v3);
+    database.command(new OCommandSQL("delete from E1 where @rid = ?")).execute(e1.get(0));
+    database.command(new OCommandSQL("delete from E1 where @rid = ?")).execute(e2.get(0));
+    database.command(new OCommandSQL("create property V1.ctime DATETIME"));
+    database.command(new OCommandSQL("update V1 set ctime=sysdate() where name = 'madeInSqlLand'"));
+
+    database.command(new OCommandSQL("drop class V1")).execute();
+    database.command(new OCommandSQL("drop class E1")).execute();
+  }
 }
