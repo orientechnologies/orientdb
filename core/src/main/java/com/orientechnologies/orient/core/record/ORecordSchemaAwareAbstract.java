@@ -356,6 +356,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   protected static void validateLink(final OProperty p, final Object fieldValue) {
+    if (fieldValue == null)
+      throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+          + " but contains a null record (probably a deleted record?)");
+
     final ORecord<?> linkedRecord;
     if (fieldValue instanceof OIdentifiable)
       linkedRecord = ((OIdentifiable) fieldValue).getRecord();
