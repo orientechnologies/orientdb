@@ -26,60 +26,62 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
-	public ODocumentWrapperNoClass() {
-	}
+  private static final long serialVersionUID = 1L;
 
-	public ODocumentWrapperNoClass(final ODocument iDocument) {
-		super(iDocument);
-	}
+  public ODocumentWrapperNoClass() {
+  }
 
-	@Override
-	public void fromStream(ODocument iDocument) {
-		super.fromStream(iDocument);
-		fromStream();
-	}
+  public ODocumentWrapperNoClass(final ODocument iDocument) {
+    super(iDocument);
+  }
 
-	protected abstract void fromStream();
+  @Override
+  public void fromStream(ODocument iDocument) {
+    super.fromStream(iDocument);
+    fromStream();
+  }
 
-	@Override
-	public <RET extends ODocumentWrapper> RET load() {
-		super.load();
-		fromStream();
-		return (RET) this;
-	}
+  protected abstract void fromStream();
 
-	@Override
-	public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
-		super.load(iFetchPlan);
-		fromStream();
-		return (RET) this;
-	}
+  @Override
+  public <RET extends ODocumentWrapper> RET load() {
+    super.load();
+    fromStream();
+    return (RET) this;
+  }
 
-	@Override
-	public <RET extends ODocumentWrapper> RET reload() {
-		super.reload();
-		fromStream();
-		return (RET) this;
-	}
+  @Override
+  public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
+    super.load(iFetchPlan);
+    fromStream();
+    return (RET) this;
+  }
 
-	@Override
-	public <RET extends ODocumentWrapper> RET reload(final String iFetchPlan) {
-		super.reload(iFetchPlan);
-		fromStream();
-		return (RET) this;
-	}
+  @Override
+  public <RET extends ODocumentWrapper> RET reload() {
+    super.reload();
+    fromStream();
+    return (RET) this;
+  }
 
-	@Override
-	public <RET extends ODocumentWrapper> RET save() {
-		toStream();
-		super.save();
-		return (RET) this;
-	}
+  @Override
+  public <RET extends ODocumentWrapper> RET reload(final String iFetchPlan) {
+    super.reload(iFetchPlan);
+    fromStream();
+    return (RET) this;
+  }
 
-	@Override
-	public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
-		toStream();
-		super.save(iClusterName);
-		return (RET) this;
-	}
+  @Override
+  public <RET extends ODocumentWrapper> RET save() {
+    toStream();
+    super.save();
+    return (RET) this;
+  }
+
+  @Override
+  public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
+    toStream();
+    super.save(iClusterName);
+    return (RET) this;
+  }
 }

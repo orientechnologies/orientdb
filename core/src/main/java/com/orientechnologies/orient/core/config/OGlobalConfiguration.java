@@ -56,6 +56,8 @@ public enum OGlobalConfiguration {
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
       Boolean.class, Boolean.FALSE),
 
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 5000),
+
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),
 
@@ -235,7 +237,7 @@ public enum OGlobalConfiguration {
 
   USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
       + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
-      
+
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 

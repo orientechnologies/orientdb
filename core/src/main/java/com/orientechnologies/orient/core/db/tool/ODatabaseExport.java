@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.io.OIOException;
@@ -90,41 +89,35 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseExport exportDatabase() {
-    database.callInLock(new Callable<Object>() {
+    try {
+      listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-      public Object call() {
-        try {
-          listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
+      database.getLevel1Cache().setEnable(false);
+      database.getLevel2Cache().setEnable(false);
 
-          database.getLevel1Cache().setEnable(false);
-          database.getLevel2Cache().setEnable(false);
+      long time = System.currentTimeMillis();
 
-          long time = System.currentTimeMillis();
+      if (includeInfo)
+        exportInfo();
+      exportClusters();
+      if (includeSchema)
+        exportSchema();
+      if (includeRecords)
+        exportRecords();
+      if (includeIndexDefinitions)
+        exportIndexDefinitions();
+      if (includeManualIndexes)
+        exportManualIndexes();
 
-          if (includeInfo)
-            exportInfo();
-          exportClusters();
-          if (includeSchema)
-            exportSchema();
-          if (includeRecords)
-            exportRecords();
-          if (includeIndexDefinitions)
-            exportIndexDefinitions();
-          if (includeManualIndexes)
-            exportManualIndexes();
+      listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
 
-          listener.onMessage("\n\nDatabase export completed in " + (System.currentTimeMillis() - time) + "ms");
-
-          writer.flush();
-        } catch (Exception e) {
-          e.printStackTrace();
-          throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
-        } finally {
-          close();
-        }
-        return null;
-      }
-    }, false);
+      writer.flush();
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
+    } finally {
+      close();
+    }
     return this;
   }
 

@@ -45,7 +45,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   protected volatile STATUS                 status  = STATUS.CLOSED;
   protected OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
-                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0, true);
+                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+                                                        OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger(), true);
 
   public OStorageAbstract(final String iName, final String iURL, final String iMode) {
     if (OStringSerializerHelper.contains(iName, '/'))
