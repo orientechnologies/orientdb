@@ -76,7 +76,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
     String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n");
     if (subjectName == null)
-      throwSyntaxErrorException("Invalid subject name. Expected cluster, class or index");
+      throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
     if (OStringParser.startsWithIgnoreCase(subjectName, OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
       // INDEX

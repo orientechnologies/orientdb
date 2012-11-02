@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -61,6 +62,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
 
   private OQuery<?>                          query;
+  private OSQLFilter                         compiledFilter;
   private int                                recordCount       = 0;
   private String                             subjectName;
   private static final Object                EMPTY_VALUE       = new Object();
@@ -82,9 +84,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     query = null;
     recordCount = 0;
 
-    parserRequiredKeyword("UPDATE");
+    parserRequiredKeyword(KEYWORD_UPDATE);
 
-    subjectName = parserRequiredWord(true, "Invalid target");
+    subjectName = parserRequiredWord(true, "Invalid target", " =><,\r\n");
+    if (subjectName == null)
+      throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
     parserNextWord(true);
     String word = parserGetLastWord();
@@ -116,7 +120,16 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     final String additionalStatement = parserGetLastWord();
 
-    if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
+    if (subjectName.startsWith("(")) {
+      subjectName = subjectName.trim();
+      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+
+      if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
+          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+        compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
+            KEYWORD_WHERE);
+
+    } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
@@ -148,6 +161,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   @SuppressWarnings("unchecked")
   public boolean result(final Object iRecord) {
     final ODocument record = (ODocument) iRecord;
+
+    if (compiledFilter != null) {
+      // ADDITIONAL FILTERING
+      if (!(Boolean) compiledFilter.evaluate(record, null, context))
+        return false;
+    }
 
     boolean recordUpdated = false;
 
