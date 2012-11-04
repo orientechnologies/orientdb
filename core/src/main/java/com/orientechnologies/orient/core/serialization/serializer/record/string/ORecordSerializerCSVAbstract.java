@@ -521,7 +521,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 				if (iType == OType.EMBEDDEDLIST)
 					coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
 				else {
-					return new OMVRBTreeRIDSet().fromStream(new StringBuilder(value));
+					return new OMVRBTreeRIDSet()
+                            .setAutoConvert(false)
+                            .fromStream(new StringBuilder(value));
 				}
 			}
 		} else
