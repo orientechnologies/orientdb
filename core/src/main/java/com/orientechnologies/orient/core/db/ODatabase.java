@@ -51,7 +51,7 @@ public interface ODatabase {
   }
 
   public static enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE
   }
 
   /**

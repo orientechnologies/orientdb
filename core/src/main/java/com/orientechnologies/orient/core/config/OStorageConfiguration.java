@@ -26,6 +26,7 @@ import java.util.TimeZone;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -44,29 +45,31 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID      = new ORecordId(0, 0);
+  public static final ORecordId             CONFIG_RID       = new OImmutableRecordId(0, 0);
+  public static final String                DEFAULT_TIMEZONE = "UTC";
 
-  public static final int                   CURRENT_VERSION = 3;
+  public static final int                   CURRENT_VERSION  = 4;
 
-  public int                                version         = -1;
+  public int                                version          = -1;
   public String                             name;
   public String                             schemaRecordId;
   public String                             dictionaryRecordId;
   public String                             indexMgrRecordId;
 
-  public String                             localeLanguage  = Locale.getDefault().getLanguage();
-  public String                             localeCountry   = Locale.getDefault().getCountry();
-  public String                             dateFormat      = "yyyy-MM-dd";
-  public String                             dateTimeFormat  = "yyyy-MM-dd HH:mm:ss";
+  public String                             localeLanguage   = Locale.getDefault().getLanguage();
+  public String                             localeCountry    = Locale.getDefault().getCountry();
+  public String                             dateFormat       = "yyyy-MM-dd";
+  public String                             dateTimeFormat   = "yyyy-MM-dd HH:mm:ss";
+  public TimeZone                           timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
 
   public final OStorageSegmentConfiguration fileTemplate;
 
-  public List<OStorageClusterConfiguration> clusters        = new ArrayList<OStorageClusterConfiguration>();
-  public List<OStorageDataConfiguration>    dataSegments    = new ArrayList<OStorageDataConfiguration>();
+  public List<OStorageClusterConfiguration> clusters         = new ArrayList<OStorageClusterConfiguration>();
+  public List<OStorageDataConfiguration>    dataSegments     = new ArrayList<OStorageDataConfiguration>();
 
-  public OStorageTxConfiguration            txSegment       = new OStorageTxConfiguration();
+  public OStorageTxConfiguration            txSegment        = new OStorageTxConfiguration();
 
-  public List<OStorageEntryConfiguration>   properties      = new ArrayList<OStorageEntryConfiguration>();
+  public List<OStorageEntryConfiguration>   properties       = new ArrayList<OStorageEntryConfiguration>();
 
   private transient Locale                  localeInstance;
   private transient DecimalFormatSymbols    unusualSymbols;
@@ -116,16 +119,16 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public SimpleDateFormat getDateFormatInstance() {
-    SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
+    final SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
     dateFormatInstance.setLenient(false);
-    dateFormatInstance.setTimeZone(TimeZone.getTimeZone("UTC"));
+    dateFormatInstance.setTimeZone(timeZone);
     return dateFormatInstance;
   }
 
   public SimpleDateFormat getDateTimeFormatInstance() {
-    SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
+    final SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
     dateTimeFormatInstance.setLenient(false);
-    dateTimeFormatInstance.setTimeZone(TimeZone.getTimeZone("UTC"));
+    dateTimeFormatInstance.setTimeZone(timeZone);
     return dateTimeFormatInstance;
   }
 
@@ -155,6 +158,10 @@ public class OStorageConfiguration implements OSerializableStream {
     localeCountry = read(values[index++]);
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
+
+    // @COMPATIBILTY 1.2.0
+    if (version >= 4)
+      timeZone = TimeZone.getTimeZone(read(values[index++]));
 
     // @COMPATIBILTY
     if (version > 1)
@@ -259,6 +266,8 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, localeCountry);
     write(buffer, dateFormat);
     write(buffer, dateTimeFormat);
+
+    write(buffer, timeZone.getID());
 
     phySegmentToStream(buffer, fileTemplate);
 

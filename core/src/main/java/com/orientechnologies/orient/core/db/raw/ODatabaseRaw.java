@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
@@ -251,7 +252,7 @@ public class ODatabaseRaw implements ODatabase {
       if (iForceCreate || iRid.clusterPosition < 0) {
         // CREATE
         final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-								iRecordType, iMode, (ORecordCallback<Long>) iCallBack);
+            iRecordType, iMode, (ORecordCallback<Long>) iCallBack);
         return new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
@@ -512,6 +513,14 @@ public class ODatabaseRaw implements ODatabase {
         db = new OGraphDatabase(url);
 
       return db.getMetadata().getSchema().existsClass("OGraphVertex");
+    case DATEFORMAT:
+      return storage.getConfiguration().dateFormat;
+
+    case DATETIMEFORMAT:
+      return storage.getConfiguration().dateTimeFormat;
+
+    case TIMEZONE:
+      return storage.getConfiguration().timeZone.getID();
     }
 
     return null;
@@ -527,6 +536,7 @@ public class ODatabaseRaw implements ODatabase {
     case STATUS:
       setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
+
     case DEFAULTCLUSTERID:
       if (iValue != null) {
         if (iValue instanceof Number)
@@ -535,6 +545,7 @@ public class ODatabaseRaw implements ODatabase {
           storage.setDefaultClusterId(storage.getClusterIdByName(iValue.toString()));
       }
       break;
+
     case TYPE:
       if (stringValue.equalsIgnoreCase("graph")) {
         if (getDatabaseOwner() instanceof OGraphDatabase)
@@ -545,7 +556,21 @@ public class ODatabaseRaw implements ODatabase {
           new OGraphDatabase(url).checkForGraphSchema();
       } else
         throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
+      break;
 
+    case DATEFORMAT:
+      storage.getConfiguration().dateFormat = stringValue;
+      storage.getConfiguration().update();
+      break;
+
+    case DATETIMEFORMAT:
+      storage.getConfiguration().dateTimeFormat = stringValue;
+      storage.getConfiguration().update();
+      break;
+
+    case TIMEZONE:
+      storage.getConfiguration().timeZone = TimeZone.getTimeZone(stringValue);
+      storage.getConfiguration().update();
       break;
 
     default:
