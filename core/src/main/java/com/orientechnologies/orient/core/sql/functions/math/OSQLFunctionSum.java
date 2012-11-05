@@ -36,17 +36,24 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
   private Number             sum;
 
   public OSQLFunctionSum() {
-    super(NAME, 1, 1);
+    super(NAME, 1, -1);
   }
 
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] instanceof Number)
-      sum((Number) iParameters[0]);
-    else if (OMultiValue.isMultiValue(iParameters[0]))
-      for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
-        sum((Number) n);
-    return sum;
+    if (iParameters.length == 0) {
+      if (iParameters[0] instanceof Number)
+        sum((Number) iParameters[0]);
+      else if (OMultiValue.isMultiValue(iParameters[0]))
+        for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+          sum((Number) n);
+      return sum;
+    } else {
+      sum = null;
+      for (int i = 0; i < iParameters.length; ++i)
+        sum((Number) iParameters[i]);
+      return sum;
+    }
   }
 
   protected void sum(final Number value) {
@@ -59,12 +66,13 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
     }
   }
 
+  @Override
   public boolean aggregateResults() {
-    return true;
+    return configuredParameters.length == 1;
   }
 
   public String getSyntax() {
-    return "Syntax error: sum(<field>)";
+    return "Syntax error: sum(<field> [,<field>*])";
   }
 
   @Override

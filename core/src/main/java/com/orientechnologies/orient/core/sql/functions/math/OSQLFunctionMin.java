@@ -34,33 +34,43 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   private Comparable<Object> context;
 
   public OSQLFunctionMin() {
-    super(NAME, 1, 1);
+    super(NAME, 1, -1);
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
       // PRECONDITIONS
       return null;
 
-    final Comparable<Object> value = (Comparable<Object>) iParameters[0];
+    if (iParameters.length == 1) {
+      final Comparable<Object> value = (Comparable<Object>) iParameters[0];
 
-    if (context == null)
-      // FIRST TIME
-      context = value;
-    else if (context.compareTo(value) > 0)
-      // BIGGER
-      context = value;
+      if (context == null)
+        // FIRST TIME
+        context = value;
+      else if (context.compareTo(value) > 0)
+        // BIGGER
+        context = value;
 
-    return null;
+      return null;
+    } else {
+      Object min = null;
+      for (int i = 0; i < iParameters.length; ++i) {
+        if (min == null || ((Comparable) iParameters[i]).compareTo(min) < 0)
+          min = iParameters[i];
+      }
+      return min;
+    }
   }
 
   public boolean aggregateResults() {
-    return true;
+    return configuredParameters.length == 1;
   }
 
   public String getSyntax() {
-    return "Syntax error: min(<field>)";
+    return "Syntax error: min(<field> [,<field>*])";
   }
 
   @Override

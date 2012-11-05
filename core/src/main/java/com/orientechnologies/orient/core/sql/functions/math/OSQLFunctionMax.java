@@ -34,33 +34,43 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   private Comparable<Object> context;
 
   public OSQLFunctionMax() {
-    super(NAME, 1, 1);
+    super(NAME, 1, -1);
   }
 
-  @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
       // PRECONDITIONS
       return null;
 
-    final Comparable<Object> value = (Comparable<Object>) iParameters[0];
+    if (iParameters.length == 1) {
+      final Comparable<Object> value = (Comparable<Object>) iParameters[0];
 
-    if (context == null)
-      // FIRST TIME
-      context = value;
-    else if (context.compareTo(value) < 0)
-      // BIGGER
-      context = value;
+      if (context == null)
+        // FIRST TIME
+        context = value;
+      else if (context.compareTo(value) < 0)
+        // BIGGER
+        context = value;
 
-    return null;
+      return null;
+    } else {
+      Object max = null;
+      for (int i = 0; i < iParameters.length; ++i) {
+        if (max == null || ((Comparable) iParameters[i]).compareTo(max) > 0)
+          max = iParameters[i];
+      }
+      return max;
+    }
   }
 
   public boolean aggregateResults() {
-    return true;
+    return configuredParameters.length == 1;
   }
 
   public String getSyntax() {
-    return "Syntax error: max(<field>)";
+    return "Syntax error: max(<field> [,<field>*])";
   }
 
   @Override

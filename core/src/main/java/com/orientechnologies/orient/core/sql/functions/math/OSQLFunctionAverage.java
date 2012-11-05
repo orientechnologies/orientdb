@@ -40,15 +40,23 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   private int                total = 0;
 
   public OSQLFunctionAverage() {
-    super(NAME, 1, 1);
+    super(NAME, 1, -1);
   }
 
   public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters[0] instanceof Number)
-      sum((Number) iParameters[0]);
-    else if (OMultiValue.isMultiValue(iParameters[0]))
-      for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
-        sum((Number) n);
+    if (iParameters.length == 0) {
+      if (iParameters[0] instanceof Number)
+        sum((Number) iParameters[0]);
+      else if (OMultiValue.isMultiValue(iParameters[0]))
+        for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+          sum((Number) n);
+
+    } else {
+      sum = null;
+      for (int i = 0; i < iParameters.length; ++i)
+        sum((Number) iParameters[i]);
+      return getResult();
+    }
 
     return null;
   }
@@ -65,7 +73,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: avg(<field>)";
+    return "Syntax error: avg(<field> [,<field>*])";
   }
 
   @Override
@@ -117,5 +125,10 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       return ((BigDecimal) sum).divide(new BigDecimal(total));
 
     return null;
+  }
+
+  @Override
+  public boolean aggregateResults() {
+    return configuredParameters.length == 1;
   }
 }
