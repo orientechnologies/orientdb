@@ -57,8 +57,8 @@ public class OStorageConfiguration implements OSerializableStream {
   public String                             dictionaryRecordId;
   public String                             indexMgrRecordId;
 
-  public String                             localeLanguage   = Locale.getDefault().getLanguage();
-  public String                             localeCountry    = Locale.getDefault().getCountry();
+  private String                            localeLanguage   = Locale.getDefault().getLanguage();
+  private String                            localeCountry    = Locale.getDefault().getCountry();
   public String                             dateFormat       = "yyyy-MM-dd";
   public String                             dateTimeFormat   = "yyyy-MM-dd HH:mm:ss";
   private TimeZone                          timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
@@ -460,4 +460,13 @@ public class OStorageConfiguration implements OSerializableStream {
     this.charset = charset;
   }
 
+  public void setLocaleLanguage(final String iValue) {
+    localeLanguage = iValue;
+    localeInstance = null;
+  }
+
+  public void setLocaleCountry(final String iValue) {
+    localeCountry = iValue;
+    localeInstance = null;
+  }
 }

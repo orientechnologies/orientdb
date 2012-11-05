@@ -527,6 +527,9 @@ public class ODatabaseRaw implements ODatabase {
 
     case LOCALELANGUAGE:
       return storage.getConfiguration().getLocaleLanguage();
+
+    case CHARSET:
+      return storage.getConfiguration().getCharset();
     }
 
     return null;
@@ -580,14 +583,17 @@ public class ODatabaseRaw implements ODatabase {
       break;
 
     case LOCALECOUNTRY:
-      storage.getConfiguration().localeCountry = stringValue;
-      storage.getConfiguration().resetLocaleInstance();
+      storage.getConfiguration().setLocaleCountry(stringValue);
       storage.getConfiguration().update();
       break;
 
     case LOCALELANGUAGE:
-      storage.getConfiguration().localeLanguage = stringValue;
-      storage.getConfiguration().resetLocaleInstance();
+      storage.getConfiguration().setLocaleLanguage(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case CHARSET:
+      storage.getConfiguration().setCharset(stringValue);
       storage.getConfiguration().update();
       break;
 
