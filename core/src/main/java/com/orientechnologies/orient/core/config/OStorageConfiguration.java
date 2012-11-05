@@ -118,6 +118,10 @@ public class OStorageConfiguration implements OSerializableStream {
     return localeInstance;
   }
 
+  public void resetLocaleInstance() {
+    localeInstance = null;
+  }
+
   public SimpleDateFormat getDateFormatInstance() {
     final SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
     dateFormatInstance.setLenient(false);
