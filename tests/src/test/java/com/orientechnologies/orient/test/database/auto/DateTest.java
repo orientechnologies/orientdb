@@ -23,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.util.ODateHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,69 +32,69 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
 public class DateTest {
-	private ODatabaseDocument	database;
+  private ODatabaseDocument database;
 
-	@Parameters(value = "url")
-	public DateTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public DateTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void testDateConversion() throws ParseException {
-		database.open("admin", "admin");
+  @Test
+  public void testDateConversion() throws ParseException {
+    database.open("admin", "admin");
 
-		final long begin = System.currentTimeMillis();
+    final long begin = System.currentTimeMillis();
 
-		ODocument doc1 = new ODocument("Order");
-		doc1.field("context", "test");
-		doc1.field("date", new Date());
-		doc1.save();
+    ODocument doc1 = new ODocument("Order");
+    doc1.field("context", "test");
+    doc1.field("date", new Date());
+    doc1.save();
 
-		ODocument doc2 = new ODocument("Order");
-		doc2.field("context", "test");
-		doc2.field("date", System.currentTimeMillis());
-		doc2.save();
+    ODocument doc2 = new ODocument("Order");
+    doc2.field("context", "test");
+    doc2.field("date", System.currentTimeMillis());
+    doc2.save();
 
-		doc2.reload();
-		Assert.assertTrue(doc2.field("date", OType.DATE) instanceof Date);
+    doc2.reload();
+    Assert.assertTrue(doc2.field("date", OType.DATE) instanceof Date);
 
-		doc2.reload();
-		Assert.assertTrue(doc2.field("date", Date.class) instanceof Date);
+    doc2.reload();
+    Assert.assertTrue(doc2.field("date", Date.class) instanceof Date);
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'test'")).execute(begin);
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'test'")).execute(begin);
 
-		Assert.assertEquals(result.size(), 2);
-		database.close();
-	}
+    Assert.assertEquals(result.size(), 2);
+    database.close();
+  }
 
-	@Test
-	public void testDatePrecision() throws ParseException {
-		database.open("admin", "admin");
+  @Test
+  public void testDatePrecision() throws ParseException {
+    database.open("admin", "admin");
 
-		final long begin = System.currentTimeMillis();
+    final long begin = System.currentTimeMillis();
 
-		String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
+    String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
 
-		ODocument doc = new ODocument("Order");
-		doc.field("context", "testPrecision");
-		doc.field("date", new Date(), OType.DATE);
-		doc.save();
+    ODocument doc = new ODocument("Order");
+    doc.field("context", "testPrecision");
+    doc.field("date", ODateHelper.now(), OType.DATE);
+    doc.save();
 
-		List<ODocument> result = database.command(
-				new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'testPrecision'")).execute(dateAsString);
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'testPrecision'")).execute(dateAsString);
 
-		Assert.assertEquals(result.size(), 1);
-		database.close();
-	}
+    Assert.assertEquals(result.size(), 1);
+    database.close();
+  }
 
-	@Test
-	public void testDateTypes() throws ParseException {
-		ODocument doc = new ODocument();
-		doc.field("context", "test");
-		doc.field("date", System.currentTimeMillis(), OType.DATE);
+  @Test
+  public void testDateTypes() throws ParseException {
+    ODocument doc = new ODocument();
+    doc.field("context", "test");
+    doc.field("date", System.currentTimeMillis(), OType.DATE);
 
-		Assert.assertTrue(doc.field("date") instanceof Date);
+    Assert.assertTrue(doc.field("date") instanceof Date);
 
-	}
+  }
 }
