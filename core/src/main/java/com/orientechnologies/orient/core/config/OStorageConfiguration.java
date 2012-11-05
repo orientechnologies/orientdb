@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -117,12 +118,14 @@ public class OStorageConfiguration implements OSerializableStream {
   public SimpleDateFormat getDateFormatInstance() {
     SimpleDateFormat dateFormatInstance = new SimpleDateFormat(dateFormat);
     dateFormatInstance.setLenient(false);
+    dateFormatInstance.setTimeZone(TimeZone.getTimeZone("UTC"));
     return dateFormatInstance;
   }
 
   public SimpleDateFormat getDateTimeFormatInstance() {
     SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(dateTimeFormat);
     dateTimeFormatInstance.setLenient(false);
+    dateTimeFormatInstance.setTimeZone(TimeZone.getTimeZone("UTC"));
     return dateTimeFormatInstance;
   }
 
