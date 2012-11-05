@@ -78,7 +78,7 @@ public class DateTest {
 
     ODocument doc = new ODocument("Order");
     doc.field("context", "testPrecision");
-    doc.field("date", ODateHelper.now(), OType.DATE);
+    doc.field("date", ODateHelper.now(), OType.DATETIME);
     doc.save();
 
     List<ODocument> result = database.command(
