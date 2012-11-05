@@ -253,8 +253,8 @@ function ODatabase(databasePath) {
 		iFetchPlan = this.URLEncode(iFetchPlan);
 		$.ajax({
 			type : "GET",
-			url : this.urlPrefix + 'query/' + this.encodedDatabaseName + '/sql/'
-					+ iQuery + iLimit + iFetchPlan + this.urlSuffix,
+			url : this.urlPrefix + 'query/' + this.encodedDatabaseName
+					+ '/sql/' + iQuery + iLimit + iFetchPlan + this.urlSuffix,
 			context : this,
 			async : false,
 			contentType : "application/json; charset=utf-8",
@@ -454,8 +454,8 @@ function ODatabase(databasePath) {
 		$
 				.ajax({
 					type : "DELETE",
-					url : this.urlPrefix + 'index/' + this.encodedDatabaseName + '/'
-							+ iIndexName + "/" + iKey + this.urlSuffix,
+					url : this.urlPrefix + 'index/' + this.encodedDatabaseName
+							+ '/' + iIndexName + "/" + iKey + this.urlSuffix,
 					context : this,
 					async : false,
 					success : function(msg) {
@@ -644,42 +644,60 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResponse();
 	}
-	
 
-	ODatabase.prototype.executeFunction = function(iName, iParameters) {
+	ODatabase.prototype.executeFunction = function(iName, iParameters,
+			iSuccessCallback, iErrorCallback) {
+		return this.executeLogic(iName, iParameters, "function",
+				iSuccessCallback, iSuccessCallback);
+	}
+
+	ODatabase.prototype.executeAction = function(iName, iParameters,
+			iSuccessCallback, c) {
+		return this.executeLogic(iName, iParameters, "action",
+				iSuccessCallback, iSuccessCallback);
+	}
+
+	ODatabase.prototype.executeLogic = function(iName, iParameters, iType,
+			iSuccessCallback, iErrorCallback) {
 		if (this.databaseInfo == null)
 			this.open();
 
 		var dataType = this.evalResponse ? null : 'text';
-		
+
 		var params = "";
-		if( iParameters )
-			for( p in iParameters )
+		if (iParameters)
+			for (p in iParameters)
 				params += '/' + iParameters[p];
+
+		var asynchCall = iSuccessCallback != null;
 
 		iName = this.URLEncode(iName);
 		$.ajax({
 			type : "POST",
-			url : this.urlPrefix + 'function/' + this.encodedDatabaseName + '/'
-					+ iName + params
-					+ this.urlSuffix,
+			url : this.urlPrefix + iType + '/' + this.encodedDatabaseName + '/'
+					+ iName + params + this.urlSuffix,
 			context : this,
-			async : false,
+			async : asynchCall,
 			'dataType' : dataType,
 			contentType : "application/json; charset=utf-8",
 			processData : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
 				this.handleResponse(msg);
+				if (iSuccessCallback != null)
+					iSuccessCallback(this.getCommandResponse());
 			},
 			error : function(msg) {
 				this.handleResponse(null);
 				this.setErrorMessage('Function error: ' + msg.responseText);
+				if (iErrorCallback != null)
+					iErrorCallback(this.getCommandResponse());
 			}
 		});
-		return this.getCommandResponse();
+		
+		if (!asynchCall)
+			return this.getCommandResponse();
 	}
-
 
 	ODatabase.prototype.serverInfo = function() {
 		$.ajax({
@@ -830,11 +848,11 @@ function ODatabase(databasePath) {
 
 		$.ajax({
 			type : "POST",
-			url : this.urlPrefix + 'importRecords/' + $('#header-database').val()
-					+ '/' + cfg["format"] + '/' + cfg["class"] + '/'
-					+ cfg["separator"] + '/' + cfg["stringDelimiter"]
-					+ cfg["decimalSeparator"] + '/' + cfg["thousandsSeparator"]
-					+ '/' + this.urlSuffix,
+			url : this.urlPrefix + 'importRecords/'
+					+ $('#header-database').val() + '/' + cfg["format"] + '/'
+					+ cfg["class"] + '/' + cfg["separator"] + '/'
+					+ cfg["stringDelimiter"] + cfg["decimalSeparator"] + '/'
+					+ cfg["thousandsSeparator"] + '/' + this.urlSuffix,
 			data : content,
 			context : this,
 			contentType : "application/json; charset=utf-8",
