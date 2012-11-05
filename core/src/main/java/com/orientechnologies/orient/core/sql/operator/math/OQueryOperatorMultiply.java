@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator.math;
 
+import java.util.Date;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -31,39 +33,43 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
  */
 public class OQueryOperatorMultiply extends OQueryOperator {
 
-	public OQueryOperatorMultiply() {
-		super("*", 10, false);
-	}
+  public OQueryOperatorMultiply() {
+    super("*", 10, false);
+  }
 
-	@Override
-	public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-			final Object iLeft, final Object iRight, OCommandContext iContext) {
-		if (iRight == null || iLeft == null)
-			return null;
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
+      Object iLeft, Object iRight, OCommandContext iContext) {
+    if (iRight == null || iLeft == null)
+      return null;
 
-		if (iLeft instanceof Number && iRight instanceof Number) {
-			final Number l = (Number) iLeft;
-			final Number r = (Number) iRight;
-			if (l instanceof Integer)
-				return l.intValue() * r.intValue();
-			else if (l instanceof Long)
-				return l.longValue() * r.longValue();
-			else if (l instanceof Short)
-				return l.shortValue() * r.shortValue();
-			else if (l instanceof Float)
-				return l.floatValue() * r.floatValue();
-			else if (l instanceof Double)
-				return l.doubleValue() * r.doubleValue();
-		}
+    if (iLeft instanceof Date)
+      iLeft = ((Date) iLeft).getTime();
+    if (iRight instanceof Date)
+      iRight = ((Date) iRight).getTime();
 
-		return null;
-	}
+    if (iLeft instanceof Number && iRight instanceof Number) {
+      final Number l = (Number) iLeft;
+      final Number r = (Number) iRight;
+      if (l instanceof Integer)
+        return l.intValue() * r.intValue();
+      else if (l instanceof Long)
+        return l.longValue() * r.longValue();
+      else if (l instanceof Short)
+        return l.shortValue() * r.shortValue();
+      else if (l instanceof Float)
+        return l.floatValue() * r.floatValue();
+      else if (l instanceof Double)
+        return l.doubleValue() * r.doubleValue();
+    }
+
+    return null;
+  }
 
   @Override
   public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-      return OIndexReuseType.NO_INDEX;
+    return OIndexReuseType.NO_INDEX;
   }
-
 
   @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {
