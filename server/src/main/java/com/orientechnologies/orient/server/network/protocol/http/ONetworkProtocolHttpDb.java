@@ -21,6 +21,7 @@ import java.net.Socket;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
@@ -109,6 +110,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     cmdManager.registerCommand(new OServerCommandOptions());
 
     cmdManager.registerCommand(new OServerCommandFunction());
+    cmdManager.registerCommand(new OServerCommandAction());
 
     super.config(server, iSocket, iConfiguration, iCommands);
     connection.data.serverInfo = ORIENT_SERVER_DB;

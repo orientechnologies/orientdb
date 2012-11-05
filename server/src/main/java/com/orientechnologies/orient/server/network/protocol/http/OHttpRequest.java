@@ -44,7 +44,7 @@ public class OHttpRequest {
   public String                             databaseName;
   public boolean                            isMultipart;
   public String                             ifMatch;
-  public String 							authentication;
+  public String                             authentication;
 
   public final ONetworkProtocolData         data;
   public final ONetworkProtocolHttpAbstract executor;
@@ -59,5 +59,9 @@ public class OHttpRequest {
 
   public InputStream getInputStream() {
     return in;
+  }
+
+  public String getParameter(final String iName) {
+    return parameters != null ? parameters.get(iName) : null;
   }
 }
