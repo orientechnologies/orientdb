@@ -528,6 +528,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  private void addClusterIdToIndexes(int iId) {
+      String clusterName = getDatabase().getClusterNameById(iId);
+      for (OIndex<?> index : getIndexes()) {
+          if (index.getInternal() != null) {
+            index.getInternal().addCluster(clusterName);
+          }
+      }
+  }
+
   public OClass addClusterIdInternal(final int iId) {
     for (int currId : clusterIds)
       if (currId == iId)
@@ -543,6 +552,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(polymorphicClusterIds);
 
     setDirty();
+    addClusterIdToIndexes(iId);
+
     return this;
   }
 

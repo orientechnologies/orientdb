@@ -62,6 +62,7 @@
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexCustomKeyTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ByteArrayKeyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest"/>
