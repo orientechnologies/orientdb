@@ -520,13 +520,13 @@ public class ODatabaseRaw implements ODatabase {
       return storage.getConfiguration().dateTimeFormat;
 
     case TIMEZONE:
-      return storage.getConfiguration().timeZone.getID();
+      return storage.getConfiguration().getTimeZone().getID();
 
     case LOCALECOUNTRY:
-      return storage.getConfiguration().localeCountry;
+      return storage.getConfiguration().getLocaleCountry();
 
     case LOCALELANGUAGE:
-      return storage.getConfiguration().localeLanguage;
+      return storage.getConfiguration().getLocaleLanguage();
     }
 
     return null;
@@ -575,7 +575,7 @@ public class ODatabaseRaw implements ODatabase {
       break;
 
     case TIMEZONE:
-      storage.getConfiguration().timeZone = TimeZone.getTimeZone(stringValue);
+      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue));
       storage.getConfiguration().update();
       break;
 
@@ -584,7 +584,7 @@ public class ODatabaseRaw implements ODatabase {
       storage.getConfiguration().resetLocaleInstance();
       storage.getConfiguration().update();
       break;
-      
+
     case LOCALELANGUAGE:
       storage.getConfiguration().localeLanguage = stringValue;
       storage.getConfiguration().resetLocaleInstance();

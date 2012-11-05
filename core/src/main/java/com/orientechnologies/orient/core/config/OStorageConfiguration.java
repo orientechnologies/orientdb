@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 public class OStorageConfiguration implements OSerializableStream {
   public static final ORecordId             CONFIG_RID       = new OImmutableRecordId(0, 0);
   public static final String                DEFAULT_TIMEZONE = "UTC";
+  public static final String                DEFAULT_CHARSET  = "UTF-8";
 
   public static final int                   CURRENT_VERSION  = 4;
 
@@ -60,7 +61,8 @@ public class OStorageConfiguration implements OSerializableStream {
   public String                             localeCountry    = Locale.getDefault().getCountry();
   public String                             dateFormat       = "yyyy-MM-dd";
   public String                             dateTimeFormat   = "yyyy-MM-dd HH:mm:ss";
-  public TimeZone                           timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
+  private TimeZone                          timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
+  private String                            charset          = DEFAULT_CHARSET;
 
   public final OStorageSegmentConfiguration fileTemplate;
 
@@ -164,8 +166,10 @@ public class OStorageConfiguration implements OSerializableStream {
     dateTimeFormat = read(values[index++]);
 
     // @COMPATIBILTY 1.2.0
-    if (version >= 4)
+    if (version >= 4) {
       timeZone = TimeZone.getTimeZone(read(values[index++]));
+      charset = read(values[index++]);
+    }
 
     // @COMPATIBILTY
     if (version > 1)
@@ -272,6 +276,7 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, dateTimeFormat);
 
     write(buffer, timeZone.getID());
+    write(buffer, charset);
 
     phySegmentToStream(buffer, fileTemplate);
 
@@ -430,4 +435,29 @@ public class OStorageConfiguration implements OSerializableStream {
       update();
     }
   }
+
+  public TimeZone getTimeZone() {
+    return timeZone;
+  }
+
+  public void setTimeZone(final TimeZone timeZone) {
+    this.timeZone = timeZone;
+  }
+
+  public String getLocaleLanguage() {
+    return localeLanguage;
+  }
+
+  public String getLocaleCountry() {
+    return localeCountry;
+  }
+
+  public String getCharset() {
+    return charset;
+  }
+
+  public void setCharset(String charset) {
+    this.charset = charset;
+  }
+
 }
