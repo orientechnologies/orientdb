@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator.math;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -61,6 +63,20 @@ public class OQueryOperatorMultiply extends OQueryOperator {
         return l.floatValue() * r.floatValue();
       else if (l instanceof Double)
         return l.doubleValue() * r.doubleValue();
+      else if (l instanceof BigDecimal) {
+        if (r instanceof BigDecimal)
+          return ((BigDecimal) l).multiply((BigDecimal) r);
+        else if (r instanceof Float)
+          return ((BigDecimal) l).multiply(new BigDecimal(r.floatValue()));
+        else if (r instanceof Double)
+          return ((BigDecimal) l).multiply(new BigDecimal(r.doubleValue()));
+        else if (r instanceof Long)
+          return ((BigDecimal) l).multiply(new BigDecimal(r.longValue()));
+        else if (r instanceof Integer)
+          return ((BigDecimal) l).multiply(new BigDecimal(r.intValue()));
+        else if (r instanceof Short)
+          return ((BigDecimal) l).multiply(new BigDecimal(r.shortValue()));
+      }
     }
 
     return null;
