@@ -24,20 +24,21 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * 
  */
 public class OFunctionUtilWrapper {
-	private OFunction	f;
+  private OFunction f;
 
-	public OFunctionUtilWrapper(final OFunction f) {
-		this.f = f;
-	}
+  public OFunctionUtilWrapper(final OFunction f) {
+    this.f = f;
+  }
 
-	public boolean exists(final Object... iValues) {
-		for (Object o : iValues)
-			if (o != null && !o.equals("undefined"))
-				return true;
-		return false;
-	}
+  public boolean exists(final Object... iValues) {
+    if (iValues != null)
+      for (Object o : iValues)
+        if (o != null && !o.equals("undefined"))
+          return true;
+    return false;
+  }
 
-	public Object value(final Object iValue) {
-		return iValue != null ? iValue : null;
-	}
+  public Object value(final Object iValue) {
+    return iValue != null ? iValue : null;
+  }
 }
