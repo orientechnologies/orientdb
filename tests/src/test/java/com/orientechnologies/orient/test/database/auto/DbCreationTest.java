@@ -112,8 +112,8 @@ public class DbCreationTest {
   public void testChangeLocale() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.getStorage().getConfiguration().localeLanguage = Locale.ENGLISH.getLanguage();
-    database.getStorage().getConfiguration().localeCountry = Locale.ENGLISH.getCountry();
+    database.getStorage().getConfiguration().setLocaleLanguage( Locale.ENGLISH.getLanguage());
+    database.getStorage().getConfiguration().setLocaleCountry( Locale.ENGLISH.getCountry());
     database.getStorage().getConfiguration().update();
     database.close();
   }
