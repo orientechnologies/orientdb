@@ -245,7 +245,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     switch (iType) {
 
     case LINK: {
-      if (!iRecord.getIdentity().isValid() && iRecord instanceof ODocument && ((ODocument) iRecord).isEmbedded()) {
+      if (!((OIdentifiable) iValue).getIdentity().isValid() && iValue instanceof ODocument && ((ODocument) iValue).isEmbedded()) {
         // WRONG: IT'S EMBEDDED!
         fieldToStream(iRecord, iOutput, iObjHandler, OType.EMBEDDED, iLinkedClass, iLinkedType, iName, iValue, iMarshalledRecords,
             iSaveOnlyDirty);
