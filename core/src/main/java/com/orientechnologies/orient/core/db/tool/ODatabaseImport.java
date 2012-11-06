@@ -557,11 +557,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
 
     final OSchema schema = database.getMetadata().getSchema();
-    schema.dropClass(OUser.CLASS_NAME);
-    schema.dropClass(ORole.CLASS_NAME);
-    schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
-    schema.dropClass(OFunction.CLASS_NAME);
-    schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    if (schema.existsClass(OUser.CLASS_NAME))
+      schema.dropClass(OUser.CLASS_NAME);
+    if (schema.existsClass(ORole.CLASS_NAME))
+      schema.dropClass(ORole.CLASS_NAME);
+    if (schema.existsClass(OSecurityShared.RESTRICTED_CLASSNAME))
+      schema.dropClass(OSecurityShared.RESTRICTED_CLASSNAME);
+    if (schema.existsClass(OFunction.CLASS_NAME))
+      schema.dropClass(OFunction.CLASS_NAME);
+    if (schema.existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+      schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
     schema.save();
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
