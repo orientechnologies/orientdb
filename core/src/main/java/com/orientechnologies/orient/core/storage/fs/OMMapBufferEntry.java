@@ -30,7 +30,8 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
   private static final int          FORCE_DELAY;
   private static final int          FORCE_RETRY;
 
-  static Class<?>                   sunClass = null;
+  static Method                     cleanerMethod;
+
   volatile OFileMMap                file;
   volatile MappedByteBuffer         buffer;
   final long                        beginOffset;
@@ -44,7 +45,8 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
 
     // GET SUN JDK METHOD TO CLEAN MMAP BUFFERS
     try {
-      sunClass = Class.forName("sun.nio.ch.DirectBuffer");
+      final Class<?> sunClass = Class.forName("sun.nio.ch.DirectBuffer");
+      cleanerMethod = sunClass.getMethod("cleaner");
     } catch (Exception e) {
       // IGNORE IT AND USE GC TO FREE RESOURCES
     }
@@ -119,12 +121,12 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
         if (dirty)
           buffer.force();
 
-        if (sunClass != null) {
+        if (cleanerMethod != null) {
           // USE SUN JVM SPECIAL METHOD TO FREE RESOURCES
           try {
-            final Method m = sunClass.getMethod("cleaner");
-            final Object cleaner = m.invoke(buffer);
-            cleaner.getClass().getMethod("clean").invoke(cleaner);
+            final Object cleaner = cleanerMethod.invoke(buffer);
+            if (cleaner != null)
+              cleaner.getClass().getMethod("clean").invoke(cleaner);
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on calling Sun's MMap buffer clean", e);
           }
