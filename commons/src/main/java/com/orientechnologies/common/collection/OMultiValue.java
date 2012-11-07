@@ -94,7 +94,9 @@ public class OMultiValue {
       return null;
 
     try {
-      if (iObject instanceof Collection<?>)
+      if (iObject instanceof List<?>)
+        return ((List<Object>) iObject).get(0);
+      else if (iObject instanceof Collection<?>)
         return ((Collection<Object>) iObject).iterator().next();
       else if (iObject instanceof Map<?, ?>)
         return ((Map<?, Object>) iObject).values().iterator().next();
@@ -103,6 +105,43 @@ public class OMultiValue {
     } catch (Exception e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
+    }
+
+    return null;
+  }
+
+  /**
+   * Returns the last item of the Multi-value object (array, collection or map)
+   * 
+   * @param iObject
+   *          Multi-value object (array, collection or map)
+   * @return The last item if any
+   */
+  public static Object getLastValue(final Object iObject) {
+    if (iObject == null)
+      return null;
+
+    if (!isMultiValue(iObject))
+      return null;
+
+    try {
+      if (iObject instanceof List<?>)
+        return ((List<Object>) iObject).get(((List<Object>) iObject).size() - 1);
+      else if (iObject instanceof Collection<?>) {
+        Object last = null;
+        for (Object o : (Collection<Object>) iObject)
+          last = o;
+        return last;
+      } else if (iObject instanceof Map<?, ?>) {
+        Object last = null;
+        for (Object o : ((Map<?, Object>) iObject).values())
+          last = o;
+        return last;
+      } else if (iObject.getClass().isArray())
+        return Array.get(iObject, Array.getLength(iObject) - 1);
+    } catch (Exception e) {
+      // IGNORE IT
+      OLogManager.instance().debug(iObject, "Error on reading the last item of the Multi-value field '%s'", iObject);
     }
 
     return null;
@@ -162,8 +201,8 @@ public class OMultiValue {
   public static Iterable<Object> getMultiValueIterable(final Object iObject) {
     if (iObject == null)
       return null;
-    
-    if( iObject instanceof Iterable<?>)
+
+    if (iObject instanceof Iterable<?>)
       return (Iterable<Object>) iObject;
 
     if (!isMultiValue(iObject))

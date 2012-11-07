@@ -23,17 +23,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
- * Extract the first item of multi values (arrays, collections and maps) or return the same value for non multi-value types.
+ * Extract the last item of multi values (arrays, collections and maps) or return the same value for non multi-value types.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
-  public static final String NAME  = "first";
+public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
+  public static final String NAME = "last";
+  private Object             last;
 
-  private Object             first = this;
-
-  public OSQLFunctionFirst() {
+  public OSQLFunctionLast() {
     super(NAME, 1, 1);
   }
 
@@ -45,11 +44,9 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
       value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iContext);
 
     if (OMultiValue.isMultiValue(value))
-      value = OMultiValue.getFirstValue(value);
+      value = OMultiValue.getLastValue(value);
 
-    if (first == this)
-      // ONLY THE FIRST TIME
-      first = value;
+    last = value;
 
     return value;
   }
@@ -60,7 +57,7 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
 
   @Override
   public Object getResult() {
-    return first;
+    return last;
   }
 
   @Override
@@ -69,6 +66,6 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: first(<field>)";
+    return "Syntax error: last(<field>)";
   }
 }

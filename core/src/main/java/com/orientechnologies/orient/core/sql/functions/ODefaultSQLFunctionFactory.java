@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifferen
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionFirst;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionLast;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionList;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
@@ -61,6 +62,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     FUNCTIONS.put(OSQLFunctionIntersect.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIntersect.class);
     FUNCTIONS.put(OSQLFunctionDifference.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDifference.class);
     FUNCTIONS.put(OSQLFunctionFirst.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionFirst.class);
+    FUNCTIONS.put(OSQLFunctionLast.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionLast.class);
     FUNCTIONS.put(OSQLFunctionList.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionList.class);
     FUNCTIONS.put(OSQLFunctionSet.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionSet.class);
     FUNCTIONS.put(OSQLFunctionMap.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMap.class);
