@@ -69,7 +69,7 @@ public class Orient extends OSharedResourceAbstract {
   protected static final OrientShutdownHook             shutdownHook         = new OrientShutdownHook();
   protected static final Timer                          timer                = new Timer(true);
   protected static final ThreadGroup                    threadGroup          = new ThreadGroup("OrientDB");
-  protected static Orient                               instance             = new Orient();
+  protected static final Orient                         instance             = new Orient();
 
   private final OMemoryWatchDog                         memoryWatchDog;
   private final OJVMProfiler                            profiler;
