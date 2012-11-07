@@ -648,13 +648,13 @@ function ODatabase(databasePath) {
 	ODatabase.prototype.executeFunction = function(iName, iParameters,
 			iSuccessCallback, iErrorCallback) {
 		return this.executeLogic(iName, iParameters, "function",
-				iSuccessCallback, iSuccessCallback);
+				iSuccessCallback, iErrorCallback);
 	}
 
 	ODatabase.prototype.executeAction = function(iName, iParameters,
-			iSuccessCallback, c) {
+			iSuccessCallback, iErrorCallback) {
 		return this.executeLogic(iName, iParameters, "action",
-				iSuccessCallback, iSuccessCallback);
+				iSuccessCallback, iErrorCallback);
 	}
 
 	ODatabase.prototype.executeLogic = function(iName, iParameters, iType,
@@ -689,7 +689,8 @@ function ODatabase(databasePath) {
 			},
 			error : function(msg) {
 				this.handleResponse(null);
-				this.setErrorMessage('Function error: ' + msg.responseText);
+				this.setErrorMessage('Function error: ' + msg.responseText
+						+ msg.statusText);
 				if (iErrorCallback != null)
 					iErrorCallback(this.getCommandResponse());
 			}
