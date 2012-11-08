@@ -50,9 +50,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 public class Orient extends OSharedResourceAbstract {
-  /**
-   * 
-   */
   public static final String                            ORIENTDB_HOME        = "ORIENTDB_HOME";
   public static final String                            URL_SYNTAX           = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 

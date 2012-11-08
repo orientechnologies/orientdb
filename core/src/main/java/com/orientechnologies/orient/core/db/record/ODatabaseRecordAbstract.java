@@ -17,9 +17,10 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.exception.OException;
@@ -72,19 +73,19 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-  private OMetadata                       metadata;
-  private OUser                           user;
-  private static final String             DEF_RECORD_FORMAT   = "csv";
-  private byte                            recordType;
-  private String                          recordFormat;
-  private Set<ORecordHook>                hooks               = new HashSet<ORecordHook>();
-  private final Set<ORecordHook>          unmodifiableHooks;
-  private boolean                         retainRecords       = true;
-  private OLevel1RecordCache              level1Cache;
-  private boolean                         mvcc;
-  private boolean                         validation;
-  private ODictionary<ORecordInternal<?>> dictionary;
-  private ODataSegmentStrategy            dataSegmentStrategy = new ODefaultDataSegmentStrategy();
+  private OMetadata                                   metadata;
+  private OUser                                       user;
+  private static final String                         DEF_RECORD_FORMAT   = "csv";
+  private byte                                        recordType;
+  private String                                      recordFormat;
+  private Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private final Set<ORecordHook>                      unmodifiableHooks;
+  private boolean                                     retainRecords       = true;
+  private OLevel1RecordCache                          level1Cache;
+  private boolean                                     mvcc;
+  private boolean                                     validation;
+  private ODictionary<ORecordInternal<?>>             dictionary;
+  private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
@@ -92,7 +93,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     underlying.setOwner(this);
 
-    unmodifiableHooks = Collections.unmodifiableSet(hooks);
+    unmodifiableHooks = Collections.unmodifiableSet(hooks.keySet());
 
     databaseOwner = this;
 
@@ -133,9 +134,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             }
           }
         }
-        registerHook(new ORestrictedAccessHook());
-        registerHook(new OUserTrigger());
-        registerHook(new OClassIndexManager());
+        registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
+        registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
+        registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -168,9 +169,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       getStorage().getConfiguration().update();
 
       if (!(getStorage() instanceof OStorageProxy)) {
-        registerHook(new ORestrictedAccessHook());
-        registerHook(new OUserTrigger());
-        registerHook(new OClassIndexManager());
+        registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
+        registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
+        registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
@@ -671,6 +672,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           }
       }
 
+      // if (!iRecord.isDirty())
+      // return (RET) iRecord;
+
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = !mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
 
@@ -867,9 +871,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
-  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
-    hooks.add(iHookImpl);
+  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+    Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
+    tmp.put(iHookImpl, iPosition);
+    hooks.clear();
+    for (ORecordHook.HOOK_POSITION p : ORecordHook.HOOK_POSITION.values()) {
+      for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> e : tmp.entrySet()) {
+        if (e.getValue() == p)
+          hooks.put(e.getKey(), e.getValue());
+      }
+    }
     return (DB) this;
+  }
+
+  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
+    return registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
@@ -904,7 +920,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return RESULT.RECORD_NOT_CHANGED;
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks) {
+      for (ORecordHook hook : hooks.keySet()) {
         final RESULT res = hook.onTrigger(iType, rec);
 
         if (res == RESULT.RECORD_CHANGED)

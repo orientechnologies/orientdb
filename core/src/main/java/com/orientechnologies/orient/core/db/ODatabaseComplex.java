@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -350,6 +351,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabaseComplex<?>> DB registerHook(ORecordHook iHookImpl);
+
+  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, HOOK_POSITION iPosition);
 
   /**
    * Retrieves all the registered hooks.

@@ -315,6 +315,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (DBTYPE) this;
   }
 
+    public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl,ORecordHook.HOOK_POSITION iPosition){
+        underlying.registerHook(iHookImpl,iPosition);
+        return (DBTYPE) this;
+    }
+
   public RESULT callbackHooks(final TYPE iType, final OIdentifiable iObject) {
     return underlying.callbackHooks(iType, iObject);
   }
