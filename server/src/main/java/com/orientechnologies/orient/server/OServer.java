@@ -37,6 +37,8 @@ import javax.management.NotCompliantMBeanException;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -102,6 +104,23 @@ public class OServer {
       Orient.instance().getProfiler().startRecording();
 
     shutdownHook = new OServerShutdownHook();
+
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              @Override
+              public Object getValue() {
+                final StringBuilder dbs = new StringBuilder();
+                for (String dbName : getAvailableStorageNames().keySet()) {
+                  if (dbs.length() > 0)
+                    dbs.append(',');
+                  return dbs.append(dbName);
+                }
+                return dbs.toString();
+              }
+            });
   }
 
   public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
@@ -571,13 +590,6 @@ public class OServer {
   }
 
   protected void defaultSettings() {
-    // OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
-    // OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
-    // OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-    // OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-    // OGlobalConfiguration.FILE_LOCK.setValue(true);
-    // OGlobalConfiguration.MVRBTREE_LAZY_UPDATES.setValue(1);
-    // OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.setValue(false);
     OGlobalConfiguration.TX_USE_LOG.setValue(true);
     OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
   }
