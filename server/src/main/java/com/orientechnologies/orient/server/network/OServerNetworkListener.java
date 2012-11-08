@@ -69,7 +69,8 @@ public class OServerNetworkListener extends Thread {
               OServerCommandConfiguration.class);
           commands[i] = c.newInstance(new Object[] { iCommands[i] });
         } catch (Exception e) {
-          throw new IllegalArgumentException("Cannot create custom command '" + iCommands[i] + "'", e);
+          throw new IllegalArgumentException("Cannot create custom command invoking the constructor: "
+              + iCommands[i].implementation + "(" + iCommands[i] + ")", e);
         }
       }
     }

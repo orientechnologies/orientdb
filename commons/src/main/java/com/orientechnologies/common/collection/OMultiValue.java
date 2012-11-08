@@ -16,6 +16,7 @@
 package com.orientechnologies.common.collection;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +55,10 @@ public class OMultiValue {
    */
   public static boolean isMultiValue(final Object iObject) {
     return iObject == null ? false : isMultiValue(iObject.getClass());
+  }
+
+  public static boolean isIterable(final Object iObject) {
+    return iObject == null ? false : iObject instanceof Iterable<?> ? true : iObject instanceof Iterator<?>;
   }
 
   /**
@@ -214,6 +219,14 @@ public class OMultiValue {
       return ((Map<?, Object>) iObject).values();
     if (iObject.getClass().isArray())
       return new OIterableObjectArray<Object>(iObject);
+
+    if (iObject instanceof Iterator<?>) {
+      final List<Object> temp = new ArrayList<Object>();
+      for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();)
+        temp.add(it.next());
+      return temp;
+    }
+
     return null;
   }
 
