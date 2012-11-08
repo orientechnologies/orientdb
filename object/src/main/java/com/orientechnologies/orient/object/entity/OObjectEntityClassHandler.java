@@ -25,24 +25,24 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
  */
 public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
 
-	private static final OObjectEntityClassHandler	instance	= new OObjectEntityClassHandler();
+  private static final OObjectEntityClassHandler instance = new OObjectEntityClassHandler();
 
-	@Override
-	public void registerEntityClass(Class<?> iClass) {
-		if (!OObjectEntitySerializer.isToSerialize(iClass))
-			registerEntityClass(iClass.getSimpleName(), iClass);
-	}
+  @Override
+  public void registerEntityClass(Class<?> iClass) {
+    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum())
+      registerEntityClass(iClass.getSimpleName(), iClass);
+  }
 
-	@Override
-	public void registerEntityClass(String iClassName, Class<?> iClass) {
-		if (!OObjectEntitySerializer.isToSerialize(iClass)) {
-			OObjectEntitySerializer.registerClass(iClass);
-			super.registerEntityClass(iClassName, iClass);
-		}
-	}
+  @Override
+  public void registerEntityClass(String iClassName, Class<?> iClass) {
+    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum()) {
+      OObjectEntitySerializer.registerClass(iClass);
+      super.registerEntityClass(iClassName, iClass);
+    }
+  }
 
-	public static synchronized OObjectEntityClassHandler getInstance() {
-		return instance;
-	}
+  public static synchronized OObjectEntityClassHandler getInstance() {
+    return instance;
+  }
 
 }
