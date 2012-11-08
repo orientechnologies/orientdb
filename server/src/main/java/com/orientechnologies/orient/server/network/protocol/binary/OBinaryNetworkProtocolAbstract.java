@@ -107,6 +107,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
     clientTxId = 0;
 
+    final long timer = Orient.instance().getProfiler().startChrono();
+
     try {
       requestType = channel.readByte();
       clientTxId = channel.readInt();
@@ -131,6 +133,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } catch (Throwable t) {
       sendError(clientTxId, t);
     } finally {
+      Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer);
+
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
   }

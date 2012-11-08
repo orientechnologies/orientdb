@@ -97,8 +97,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   public void service() throws ONetworkProtocolException, IOException {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".requests", "Execution of HTTP request", +1);
-
     ++connection.data.totalRequests;
     connection.data.commandInfo = null;
     connection.data.commandDetail = null;
@@ -488,8 +486,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         Orient
             .instance()
             .getProfiler()
-            .stopChrono("server.http." + listeningAddress + ".request", "Execution of HTTP request",
+            .stopChrono("server.http." + listeningAddress + ".requests", "Execution of HTTP request",
                 connection.data.lastCommandReceived);
+      Orient.instance().getProfiler()
+          .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived);
     }
   }
 
