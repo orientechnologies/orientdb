@@ -207,12 +207,6 @@ public class OMultiValue {
     if (iObject == null)
       return null;
 
-    if (iObject instanceof Iterable<?>)
-      return (Iterable<Object>) iObject;
-
-    if (!isMultiValue(iObject))
-      return null;
-
     if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject);
     if (iObject instanceof Map<?, ?>)
@@ -225,7 +219,8 @@ public class OMultiValue {
       for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();)
         temp.add(it.next());
       return temp;
-    }
+    } else if (iObject instanceof Iterable<?>)
+      return (Iterable<Object>) iObject;
 
     return null;
   }

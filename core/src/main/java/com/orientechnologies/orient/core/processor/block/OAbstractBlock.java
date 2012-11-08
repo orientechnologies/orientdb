@@ -15,23 +15,31 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
+import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class OAbstractBlock implements OProcessorBlock {
 
-  public static boolean isBlock(final Object iValue) {
-    return iValue instanceof ODocument && ((ODocument) iValue).containsField(("type"))
-        && ((ODocument) iValue).containsField(("content"));
+  protected Object delegate(final String iElementName, final OConfigurableProcessor iManager, final Object iContent,
+      final ODocument iContext, final boolean iReadOnly) {
+    try {
+      return iManager.process(iContent, iContext, iReadOnly);
+    } catch (Exception e) {
+      throw new OProcessException("Error on processing '" + iElementName + "' field of '" + getName() + "' block", e);
+    }
   }
 
-  public static void checkForBlock(final Object iValue) {
+  public void checkForBlock(final Object iValue) {
     if (!isBlock(iValue))
-      throw new OProcessException("Expecting content block but found object of type " + iValue.getClass());
+      throw new OProcessException("Block '" + getName() + "' was expecting a block but found object of type " + iValue.getClass());
+  }
+
+  public static boolean isBlock(final Object iValue) {
+    return iValue instanceof ODocument && ((ODocument) iValue).containsField(("type"));
   }
 
   public static Object resolveInContext(final Object iContent, final ODocument iContext) {
@@ -41,7 +49,10 @@ public abstract class OAbstractBlock implements OProcessorBlock {
 
             @Override
             public String resolve(final String iVariable) {
-              return iContext.field(iVariable);
+              final Object val = iContext.field(iVariable);
+              if (val != null)
+                return val.toString();
+              return null;
             }
 
           });

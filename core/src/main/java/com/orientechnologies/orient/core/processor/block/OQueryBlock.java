@@ -27,17 +27,22 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OQueryBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
-    if (!(iContent instanceof ODocument))
+  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+    if (!(iConfig instanceof ODocument))
       throw new OTransactionException("QueryBlock: expected document as content");
 
-    final String command = parse((ODocument) iContent, iContext);
+    final String command = parse((ODocument) iConfig, iContext);
 
     // CREATE THE RIGHT COMMAND BASED ON IDEMPOTENCY
     final OCommandRequestText cmd = iReadOnly ? new OSQLSynchQuery<OIdentifiable>(command.toString()) : new OCommandSQL(
         command.toString());
 
     return cmd.execute();
+  }
+
+  @Override
+  public String getName() {
+    return "query";
   }
 
   protected String parse(final ODocument iContent, final ODocument iContext) {

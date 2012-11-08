@@ -21,18 +21,23 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTableBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
-    if (!(iContent instanceof ODocument))
+  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+    if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
-    final ODocument content = (ODocument) iContent;
+    final ODocument content = (ODocument) iConfig;
 
     final ODocument table = new ODocument();
 
-    table.field("header", iManager.process((ODocument) content.field("header"), iContext, iReadOnly));
-    table.field("body", iManager.process((ODocument) content.field("body"), iContext, iReadOnly));
-    table.field("footer", iManager.process((ODocument) content.field("footer"), iContext, iReadOnly));
+    table.field("header", delegate("header", iManager, content.field("header"), iContext, iReadOnly));
+    table.field("body", delegate("body", iManager, content.field("body"), iContext, iReadOnly));
+    table.field("footer", delegate("footer", iManager, content.field("footer"), iContext, iReadOnly));
 
     return table;
+  }
+
+  @Override
+  public String getName() {
+    return "table";
   }
 }

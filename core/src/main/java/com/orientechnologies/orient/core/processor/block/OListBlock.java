@@ -25,12 +25,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OListBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
-    if (!OMultiValue.isIterable(iContent))
+  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+    final Object value = ((ODocument) iConfig).field("value");
+
+    if (!OMultiValue.isIterable(value))
       throw new OProcessException("Content in not multi-value (collection, array, map)");
 
     final List<Object> list = new ArrayList<Object>();
-    for (Object item : OMultiValue.getMultiValueIterable(iContent)) {
+    for (Object item : OMultiValue.getMultiValueIterable(value)) {
       final Object result;
       if (isBlock(item))
         result = iManager.process(null, (ODocument) item, iContext, iReadOnly);
@@ -41,5 +43,10 @@ public class OListBlock extends OAbstractBlock {
     }
 
     return list;
+  }
+
+  @Override
+  public String getName() {
+    return "list";
   }
 }

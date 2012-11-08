@@ -20,7 +20,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTextBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
-    return resolveInContext(iContent, iContext).toString();
+  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+    return resolveInContext(iConfig.field("value"), iContext).toString();
+  }
+
+  @Override
+  public String getName() {
+    return "text";
   }
 }

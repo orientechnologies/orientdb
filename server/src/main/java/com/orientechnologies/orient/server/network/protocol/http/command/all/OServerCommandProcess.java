@@ -76,8 +76,10 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       final ODocument template = new ODocument();
       template.fromJSON(templateContent, "noMap");
 
-      final Object result = OProcessorManager.getInstance().process("configurable", template, context,
-          iRequest.httpMethod.equals("GET"));
+      Object result = OProcessorManager.getInstance().process("configurable", template, context, iRequest.httpMethod.equals("GET"));
+
+      if (result instanceof ODocument)
+        result = ((ODocument) result).field("result");
 
       iResponse.writeResult(result, "");
 

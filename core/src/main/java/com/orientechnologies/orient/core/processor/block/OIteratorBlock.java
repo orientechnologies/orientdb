@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.processor.block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
@@ -25,11 +27,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIteratorBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
-    if (!(iContent instanceof ODocument))
+  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+    if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
-    final ODocument content = (ODocument) iContent;
+    final ODocument content = (ODocument) iConfig;
 
     final Object foreach = content.field("foreach");
     if (!(foreach instanceof ODocument))
@@ -47,10 +49,21 @@ public class OIteratorBlock extends OAbstractBlock {
 
     final List<Object> list = new ArrayList<Object>();
     for (Object item : OMultiValue.getMultiValueIterable(result)) {
-      checkForBlock(item);
-      list.add(iManager.process(executeBlockType, item, iContext, iReadOnly));
+      if (item instanceof Map.Entry)
+        item = ((Entry<?, ?>) item).getValue();
+
+      iContext.field("content", item);
+
+      final Object v = iManager.process(executeBlockType, (ODocument) execute, iContext, iReadOnly);
+      if (v != null)
+        list.add(v);
     }
 
     return list;
+  }
+
+  @Override
+  public String getName() {
+    return "iterator";
   }
 }

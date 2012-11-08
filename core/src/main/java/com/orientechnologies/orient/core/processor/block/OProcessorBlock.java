@@ -19,5 +19,7 @@ import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OProcessorBlock {
-  public Object process(OConfigurableProcessor iManager, Object iContent, ODocument iContext, boolean iReadOnly);
+  public Object process(OConfigurableProcessor iManager, ODocument iConfig, ODocument iContext, boolean iReadOnly);
+
+  public String getName();
 }
