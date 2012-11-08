@@ -44,9 +44,6 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      // FORCE RELOADING
-      db.getMetadata().getFunctionLibrary().load();
-
       final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parts[2]);
       if (f == null)
         throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");

@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -136,6 +137,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
         registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
+        registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
       } else
         // REMOTE CREATE DUMMY USER
@@ -171,6 +173,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (!(getStorage() instanceof OStorageProxy)) {
         registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
+        registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
       }
 
