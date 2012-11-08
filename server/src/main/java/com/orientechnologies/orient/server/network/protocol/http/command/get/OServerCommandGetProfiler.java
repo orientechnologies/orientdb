@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "GET|profiler/*" };
+  private static final String[] NAMES = { "GET|profiler/*", "POST|profiler/*" };
 
   public OServerCommandGetProfiler() {
     super("server.profiler");
@@ -47,6 +47,11 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       } else if (command.equalsIgnoreCase("stop")) {
         Orient.instance().getProfiler().stopRecording();
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Recording stopped", null);
+
+      } else if (command.equalsIgnoreCase("reset")) {
+        Orient.instance().getProfiler().stopRecording();
+        Orient.instance().getProfiler().startRecording();
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Profiler restarted", null);
 
       } else if (command.equalsIgnoreCase("configure")) {
         Orient.instance().getProfiler().configure(parts[2]);
