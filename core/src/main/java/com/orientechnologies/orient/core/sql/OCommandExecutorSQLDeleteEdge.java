@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 /**
@@ -47,6 +49,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
   private int                removed = 0;
   private ODatabaseRecord    database;
   private OCommandRequest    query;
+  private OSQLFilter         compiledFilter;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -85,41 +88,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
 
-        final StringBuilder q = new StringBuilder();
-        q.append("select from ");
-        q.append(clazz.getName());
-
-        boolean where = false;
-        if (from != null) {
-          q.append(" ");
-          q.append(KEYWORD_WHERE);
-          q.append(" out = ");
-          q.append(from);
-          where = true;
-        }
-
-        if (to != null) {
-          q.append(" ");
-          if (!where) {
-            q.append(KEYWORD_WHERE);
-            where = true;
-          } else
-            q.append("and");
-          q.append(" in = ");
-          q.append(to);
-        }
-
-        if (condition != null) {
-          q.append(" ");
-          if (!where) {
-            q.append(KEYWORD_WHERE);
-            where = true;
-          } else
-            q.append("and");
-          q.append(condition);
-        }
-
-        query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
+        compiledFilter = OSQLEngine.getInstance().parseCondition(condition, getContext(), KEYWORD_WHERE);
         break;
 
       } else if (temp.length() > 0) {
@@ -134,7 +103,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         break;
     }
 
-    if (from == null && to == null && rid == null && clazz == null)
+    if (from == null && to == null && rid == null && clazz == null && compiledFilter == null)
       // DELETE ALL THE EDGES
       query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
 
@@ -174,6 +143,15 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         else
           throw new OCommandExecutionException("Invalid target");
 
+        if (compiledFilter != null) {
+          // ADDITIONAL FILTERING
+          for (Iterator<OIdentifiable> it = edges.iterator(); it.hasNext();) {
+            final OIdentifiable edge = it.next();
+            if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context))
+              it.remove();
+          }
+        }
+
         // DELETE THE FOUND EDGES
         removed = edges.size();
         for (OIdentifiable edge : edges)
@@ -193,6 +171,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
    */
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
+
+    if (compiledFilter != null) {
+      // ADDITIONAL FILTERING
+      if (!(Boolean) compiledFilter.evaluate((ODocument) id.getRecord(), null, context))
+        return false;
+    }
+
     if (id.getIdentity().isValid()) {
 
       if (((OGraphDatabase) database).removeEdge(id)) {

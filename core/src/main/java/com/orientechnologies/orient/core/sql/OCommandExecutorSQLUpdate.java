@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -160,7 +161,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
    */
   @SuppressWarnings("unchecked")
   public boolean result(final Object iRecord) {
-    final ODocument record = (ODocument) iRecord;
+    final ODocument record = (ODocument) ((OIdentifiable) iRecord).getRecord();
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
