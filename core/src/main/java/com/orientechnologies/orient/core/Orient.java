@@ -285,31 +285,42 @@ public class Orient extends OSharedResourceAbstract {
 
       active = false;
 
-      shutdownHook.cancel();
-      profiler.shutdown();
+      if (shutdownHook != null)
+        shutdownHook.cancel();
+      if (profiler != null)
+        profiler.shutdown();
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
-      // CALL THE SHUTDOWN ON ALL THE LISTENERS
-      for (OOrientListener l : listeners) {
-        l.onShutdown();
+      if (listeners != null)
+        // CALL THE SHUTDOWN ON ALL THE LISTENERS
+        for (OOrientListener l : listeners) {
+          if (l != null)
+            l.onShutdown();
+        }
+
+      if (databaseFactory != null)
+        // CLOSE ALL DATABASES
+        databaseFactory.shutdown();
+
+      if (storages != null) {
+        // CLOSE ALL THE STORAGES
+        final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
+        for (OStorage stg : storagesCopy) {
+          OLogManager.instance().debug(this, "Shutting down storage: " + stg.getName() + "...");
+          stg.close(true);
+        }
       }
 
-      // CLOSE ALL DATABASES
-      databaseFactory.shutdown();
+      if (OMMapManagerLocator.getInstance() != null)
+        OMMapManagerLocator.getInstance().shutdown();
 
-      // CLOSE ALL THE STORAGES
-      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-      for (OStorage stg : storagesCopy) {
-        OLogManager.instance().debug(this, "Shutting down storage: " + stg.getName() + "...");
-        stg.close(true);
-      }
+      if (threadGroup != null)
+        // STOP ALL THE PENDING THREADS
+        threadGroup.interrupt();
 
-      OMMapManagerLocator.getInstance().shutdown();
-
-      // STOP ALL THE PENDING THREADS
-      threadGroup.interrupt();
-      listeners.clear();
+      if (listeners != null)
+        listeners.clear();
 
       OLogManager.instance().debug(this, "Orient Engine shutdown complete");
 
