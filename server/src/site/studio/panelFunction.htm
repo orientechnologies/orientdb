@@ -50,8 +50,11 @@
 			</div>
 		</div>
 		<div class="row-fluid">
-			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>
-			<div id="funcParameters" class="span10"></div>
+			<label class="span2">Parameters:</label>
+			<div id="funcParametersBox" class="span10">
+				<span id="funcParameters"></span>
+				<a id="funcParametersAdd" href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a>
+			</div>
 		</div>
 		<div class="row-fluid">
 			<div class="span12" style="border: 1px solid gray;">
@@ -61,7 +64,7 @@
 		</div>
 		<div class="row-fluid">
 			<form id="funcExecution" class="form-inline span12">
-				<label id="funcRuntimeName"></label> <label><h3>(</h3></label> <span id="funcRuntimeParameters"></span> <label><h3>)</h3></label>
+				<label id="funcRuntimeName"></label> <label><h4>(</h4></label> <span id="funcRuntimeParameters"></span> <label><h4>)</h4></label>
 				<a class="btn btn-success" onclick="javascript:executeFunction()"> <img border="0" alt="Execute" src="images/execute.png" /> Execute</a>
 			</form>
 		</div>
@@ -182,12 +185,12 @@
 		if( !name )
 			name = '';
 		
-		$('#funcParameters').append('<input id="funcParam' + totalParameters + '" class="input-small" value="' + name + '"/><a id="funcRemove' + totalParameters + '" onclick="delParam(' + totalParameters + ')"><i class="icon-trash"></a>');
+		$('#funcParameters').append('<input id="funcParam' + totalParameters + '" class="input-mini" value="' + name + '"/><a id="funcRemove' + totalParameters + '" onclick="delParam(' + totalParameters + ')"><i class="icon-trash"></a>');
 		
 		if( totalParameters > 0 )
 			$('#funcRuntimeParameters').append(',&nbsp;');
 		
-		$('#funcRuntimeParameters').append('<input id="funcRuntimeParam' + totalParameters + '" class="input-small" value=""/>');
+		$('#funcRuntimeParameters').append('<input id="funcRuntimeParam' + totalParameters + '" class="input-mini" value=""/>');
 		
 		totalParameters++;
 	}
