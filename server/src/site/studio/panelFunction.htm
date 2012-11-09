@@ -2,10 +2,12 @@
 	<div class="span2">
 		<div class="row-fluid">
 			<div class="span10">Stored functions in database:</div>
-			<div class="span1">
+			<div class="span2">
 				<a href="#" onclick='javascript:loadFunctions()'><i class="icon-refresh"></i></a>
 			</div>
-			<div id="functions" class="btn-group btn-group-vertical" style="border: 1px solid gray; width: 90%; height: 450px;"></div>
+			<div class="span12">
+				<select id="functions" multiple="multiple" style="border: 1px solid gray; width: 90%; height: 450px;"></select>
+			</div>
 		</div>
 	</div>
 	<div class="span10">
@@ -46,11 +48,6 @@
 				<label id="labelIdempotent" rel="tooltip" data-placement="left" data-original-title="Tells if the function is idempotent. Idempotent only functions can be executed using the HTTP GET method">Idempotent</label>
 				<input id="funcIdempotent"  rel="tooltip" data-placement="left" data-original-title="Tells if the function is idempotent. Idempotent only functions can be executed using the HTTP GET method" type="checkbox"/>
 			</div>
-			
-<!-- 		<div class="span1">
-				<label>@rid&nbsp;</label> <input id="funcRid" value="" class="input-mini" />
-			</div>
- -->
 		</div>
 		<div class="row-fluid">
 			<label class="span2">Parameters: <a href="#" onclick="javascript:addParam()"><i class="icon-plus"></i></a></label>
@@ -108,14 +105,16 @@
 
 		startTimer();
 		
-		var commandResult = orientServer.executeCommand("select from OFunction");
+		var commandResult = orientServer.executeCommand("select from OFunction order by name");
 	
 		if (commandResult) {
 			functions = commandResult.result;
 			var snippet = "";
 			for( row in functions ) {
 				var funcName = functions[row].name;
-				snippet += "<a id='funcLoad"+row+"' class='btn btn-mini' onclick='editFunction(\""+row+"\")' rel='tooltip' data-placement='right' data-original-title='Loads the function <b>" + funcName+"</b> in the editor'>"+funcName+"</a>";
+				if( snippet.length > 0 )
+					snippet += "<br/>";
+				snippet += "<option id='funcLoad"+row+"' onclick='editFunction(\""+row+"\")' rel='tooltip' data-placement='left' data-original-title='Loads the function <b>" + funcName+"</b> in the editor'>"+funcName+"</option>";
 			}
 			$('#functions').html(snippet);
 		}
