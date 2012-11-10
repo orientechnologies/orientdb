@@ -104,23 +104,6 @@ public class OServer {
       Orient.instance().getProfiler().startRecording();
 
     shutdownHook = new OServerShutdownHook();
-
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder();
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  return dbs.append(dbName);
-                }
-                return dbs.toString();
-              }
-            });
   }
 
   public void startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
@@ -133,6 +116,23 @@ public class OServer {
 
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = databaseDirectory.replace("//", "/");
+    
+    Orient
+    .instance()
+    .getProfiler()
+    .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+        new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder();
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
   }
 
   public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
