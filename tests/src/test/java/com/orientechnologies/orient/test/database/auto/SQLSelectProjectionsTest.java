@@ -360,4 +360,25 @@ public class SQLSelectProjectionsTest {
       database.close();
     }
   }
+
+  public void ifNullFunction() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull('a', 'b')")).execute();
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(result.get(0).field("ifnull"), "a");
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull('a', 'b', 'c')")).execute();
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(result.get(0).field("ifnull"), "c");
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT ifnull(null, 'b')")).execute();
+      Assert.assertFalse(result.isEmpty());
+      Assert.assertEquals(result.get(0).field("ifnull"), "b");
+
+    } finally {
+      database.close();
+    }
+  }
 }

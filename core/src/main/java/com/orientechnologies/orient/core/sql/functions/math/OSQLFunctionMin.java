@@ -37,7 +37,7 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
     super(NAME, 1, -1);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
