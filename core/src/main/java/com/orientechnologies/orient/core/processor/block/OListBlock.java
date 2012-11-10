@@ -16,31 +16,53 @@
 package com.orientechnologies.orient.core.processor.block;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OListBlock extends OAbstractBlock {
+  @SuppressWarnings("unchecked")
   @Override
-  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
-    final Object value = ((ODocument) iConfig).field("value");
+  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+      final boolean iReadOnly) {
 
-    if (!OMultiValue.isIterable(value))
-      throw new OProcessException("Content in not multi-value (collection, array, map)");
+    final Object source = resolveInContext(getFieldOfClass(iConfig, "source", String.class), iContext);
+    final Object values = resolveInContext(getRequiredField(iConfig, "values"), iContext);
+    final String bind = getFieldOfClass(iConfig, "bind", String.class);
+    final Boolean merge = getFieldOfClass(iConfig, "merge", Boolean.class);
+
+    if (!OMultiValue.isIterable(values))
+      throw new OProcessException("Field 'values' in not a multi-value (collection, array, map). Found type '" + values.getClass()
+          + "'");
 
     final List<Object> list = new ArrayList<Object>();
-    for (Object item : OMultiValue.getMultiValueIterable(value)) {
+    for (Object item : OMultiValue.getMultiValueIterable(values)) {
       final Object result;
-      if (isBlock(item))
-        result = iManager.process(null, (ODocument) item, iContext, iReadOnly);
-      else
-        result = resolveInContext(item, iContext);
 
-      list.add(result);
+      if (isBlock(item))
+        result = iManager.process((ODocument) item, iContext, iReadOnly);
+      else {
+        if (source != null)
+          item = ODocumentHelper.getFieldValue(source, item.toString());
+
+        result = resolveInContext(item, iContext);
+      }
+
+      if (result != null)
+        if (merge != null && merge && result instanceof List<?>)
+          list.addAll((Collection<? extends Object>) result);
+        else
+          list.add(result);
     }
+
+    if (bind != null)
+      iContext.setVariable(bind, list);
 
     return list;
   }

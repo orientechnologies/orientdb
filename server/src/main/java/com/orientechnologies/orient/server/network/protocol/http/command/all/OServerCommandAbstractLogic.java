@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.OFunctionUtilWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -63,7 +62,6 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       final OBasicCommandContext context = new OBasicCommandContext();
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
-      context.setVariable("util", new OFunctionUtilWrapper(f));
 
       handleResult(iRequest, iResponse, f.executeInContext(context, args));
 

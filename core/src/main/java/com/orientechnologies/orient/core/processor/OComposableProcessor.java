@@ -16,43 +16,46 @@
 package com.orientechnologies.orient.core.processor;
 
 import com.orientechnologies.common.factory.ODynamicFactory;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.block.OFunctionBlock;
 import com.orientechnologies.orient.core.processor.block.OIteratorBlock;
+import com.orientechnologies.orient.core.processor.block.OLetBlock;
 import com.orientechnologies.orient.core.processor.block.OListBlock;
 import com.orientechnologies.orient.core.processor.block.OProcessorBlock;
 import com.orientechnologies.orient.core.processor.block.OQueryBlock;
+import com.orientechnologies.orient.core.processor.block.OScriptBlock;
 import com.orientechnologies.orient.core.processor.block.OTableBlock;
 import com.orientechnologies.orient.core.processor.block.OTextBlock;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OConfigurableProcessor extends ODynamicFactory<String, OProcessorBlock> implements OProcessor {
+public class OComposableProcessor extends ODynamicFactory<String, OProcessorBlock> implements OProcessor {
 
-  public OConfigurableProcessor() {
+  public OComposableProcessor() {
     register(new OIteratorBlock());
+    register(new OFunctionBlock());
+    register(new OLetBlock());
     register(new OListBlock());
     register(new OQueryBlock());
+    register(new OScriptBlock());
     register(new OTableBlock());
     register(new OTextBlock());
   }
 
-  public Object process(final Object iContent, final ODocument iContext, final boolean iReadOnly) {
+  public Object process(final Object iContent, final OCommandContext iContext, final boolean iReadOnly) {
     if (!(iContent instanceof ODocument))
-      throw new OProcessException("Configurable processor needs a document");
+      throw new OProcessException("Composable processor needs a document");
 
     final ODocument document = (ODocument) iContent;
 
     final String type = document.field("type");
     if (type == null)
-      throw new OProcessException("Configurable processor needs 'type' field");
+      throw new OProcessException("Composable processor needs 'type' field");
 
-    final Object res = process(type, document, iContext, iReadOnly);
-
-    final ODocument result = new ODocument().field("result", res);
-    if (res instanceof ODocument)
-      ((ODocument) res).addOwner(result);
-    return result;
+    return process(type, document, iContext, iReadOnly);
   }
 
-  public Object process(final String iType, final ODocument iContent, final ODocument iContext, final boolean iReadOnly) {
+  public Object process(final String iType, final ODocument iContent, final OCommandContext iContext, final boolean iReadOnly) {
     if (iContent == null)
       throw new OProcessException("Cannot find block type '" + iType + "'");
 
@@ -60,7 +63,21 @@ public class OConfigurableProcessor extends ODynamicFactory<String, OProcessorBl
     if (block == null)
       throw new OProcessException("Cannot find block type '" + iType + "'");
 
-    return block.process(this, (ODocument) iContent, iContext, iReadOnly);
+    final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
+    iContext.setVariable("depthLevel", depthLevel == null ? 0 : depthLevel + 1);
+
+    if (depthLevel == null)
+      OLogManager.instance().info(this, "Start processing...");
+
+    final long start = System.currentTimeMillis();
+    try {
+      return block.process(this, (ODocument) iContent, iContext, iReadOnly);
+    } finally {
+      iContext.setVariable("depthLevel", depthLevel == null ? 0 : depthLevel);
+
+      if (depthLevel == null)
+        OLogManager.instance().info(this, "End of processing. Elapsed %dms", (System.currentTimeMillis() - start));
+    }
   }
 
   public void register(final OProcessorBlock iValue) {

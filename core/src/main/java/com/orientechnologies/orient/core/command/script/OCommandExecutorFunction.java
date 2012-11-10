@@ -28,8 +28,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 
 /**
  * Executes Script Commands.
@@ -39,81 +42,86 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
  * 
  */
 public class OCommandExecutorFunction extends OCommandExecutorAbstract {
-	protected OCommandFunction	request;
+  protected OCommandFunction request;
 
-	public OCommandExecutorFunction() {
-	}
+  public OCommandExecutorFunction() {
+  }
 
-	@SuppressWarnings("unchecked")
-	public OCommandExecutorFunction parse(final OCommandRequest iRequest) {
-		request = (OCommandFunction) iRequest;
-		return this;
-	}
+  @SuppressWarnings("unchecked")
+  public OCommandExecutorFunction parse(final OCommandRequest iRequest) {
+    request = (OCommandFunction) iRequest;
+    return this;
+  }
 
-	public Object execute(final Map<Object, Object> iArgs) {
-		return executeInContext(null, iArgs);
-	}
+  public Object execute(final Map<Object, Object> iArgs) {
+    return executeInContext(null, iArgs);
+  }
 
-	public Object executeInContext(final OCommandContext iContext, final Map<Object, Object> iArgs) {
+  public Object executeInContext(final OCommandContext iContext, final Map<Object, Object> iArgs) {
 
-		parserText = request.getText();
+    parserText = request.getText();
 
-		final ODatabaseRecordTx db = (ODatabaseRecordTx) getDatabase();
+    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && !(db instanceof ODatabaseRecordTx))
+      db = db.getUnderlying();
 
-		final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
-		final OScriptManager scriptManager = Orient.instance().getScriptManager();
-		final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
-		final Bindings binding = scriptManager.bind(scriptEngine, db, iContext, iArgs);
+    final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
 
-		try {
-			scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
+    iContext.setVariable("util", new OFunctionUtilWrapper(f));
 
-			// COMPILE FUNCTION LIBRARY
-			final String lib = scriptManager.getLibrary(db, f.getLanguage());
-			if (lib != null)
-				try {
-					scriptEngine.eval(lib);
-				} catch (ScriptException e) {
-					throw new OCommandScriptException("Error on evaluation of the script library. Error: " + e.getMessage()
-							+ "\nScript library was:\n" + lib);
-				}
+    final OScriptManager scriptManager = Orient.instance().getScriptManager();
+    final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
+    final Bindings binding = scriptManager.bind(scriptEngine, (ODatabaseRecordTx) db, iContext, iArgs);
 
-			if (scriptEngine instanceof Invocable) {
-				// INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
-				final Invocable invocableEngine = (Invocable) scriptEngine;
-				Object[] args = null;
-				if (iArgs != null) {
-					args = new Object[iArgs.size()];
-					int i = 0;
-					for (Entry<Object, Object> arg : iArgs.entrySet())
-						args[i++] = arg.getValue();
-				}
-				return invocableEngine.invokeFunction(parserText, args);
+    try {
+      scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
-			} else {
-				// INVOKE THE CODE SNIPPET
-				final Object[] args = iArgs == null ? null : iArgs.values().toArray();
-				return scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
-			}
-		} catch (ScriptException e) {
-			throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
-		} catch (NoSuchMethodException e) {
-			throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
-		} catch (OCommandScriptException e) {
-			// PASS THROUGH
-			throw e;
+      // COMPILE FUNCTION LIBRARY
+      final String lib = scriptManager.getLibrary(db, f.getLanguage());
+      if (lib != null)
+        try {
+          scriptEngine.eval(lib);
+        } catch (ScriptException e) {
+          throw new OCommandScriptException("Error on evaluation of the script library. Error: " + e.getMessage()
+              + "\nScript library was:\n" + lib);
+        }
 
-		} finally {
-			scriptManager.unbind(binding);
-		}
-	}
+      if (scriptEngine instanceof Invocable) {
+        // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
+        final Invocable invocableEngine = (Invocable) scriptEngine;
+        Object[] args = null;
+        if (iArgs != null) {
+          args = new Object[iArgs.size()];
+          int i = 0;
+          for (Entry<Object, Object> arg : iArgs.entrySet())
+            args[i++] = arg.getValue();
+        }
+        return invocableEngine.invokeFunction(parserText, args);
 
-	public boolean isIdempotent() {
-		return false;
-	}
+      } else {
+        // INVOKE THE CODE SNIPPET
+        final Object[] args = iArgs == null ? null : iArgs.values().toArray();
+        return scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
+      }
+    } catch (ScriptException e) {
+      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+    } catch (NoSuchMethodException e) {
+      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+    } catch (OCommandScriptException e) {
+      // PASS THROUGH
+      throw e;
 
-	@Override
-	protected void throwSyntaxErrorException(String iText) {
-		throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
-	}
+    } finally {
+      scriptManager.unbind(binding);
+    }
+  }
+
+  public boolean isIdempotent() {
+    return false;
+  }
+
+  @Override
+  protected void throwSyntaxErrorException(String iText) {
+    throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
+  }
 }

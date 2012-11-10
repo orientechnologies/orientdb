@@ -52,12 +52,16 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   }
 
   public void load() {
+    functions.clear();
+
     // LOAD ALL THE FUNCTIONS IN MEMORY
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction"));
-      for (ODocument d : result)
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
+      for (ODocument d : result) {
+        d.reload();
         functions.put(d.field("name").toString().toUpperCase(), new OFunction(d));
+      }
     }
   }
 

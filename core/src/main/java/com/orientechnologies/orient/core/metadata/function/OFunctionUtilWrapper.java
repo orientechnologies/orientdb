@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.http;
-
-import com.orientechnologies.orient.core.metadata.function.OFunction;
+package com.orientechnologies.orient.core.metadata.function;
 
 /**
  * Wrapper of function with additional utility methods to help inside functions.
@@ -33,7 +31,7 @@ public class OFunctionUtilWrapper {
   public boolean exists(final Object... iValues) {
     if (iValues != null)
       for (Object o : iValues)
-        if (o != null && !o.equals("undefined"))
+        if (o != null && !o.equals("undefined") && !o.equals("null"))
           return true;
     return false;
   }

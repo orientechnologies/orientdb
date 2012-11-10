@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.processor;
 
 import com.orientechnologies.common.factory.ODynamicFactory;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.command.OCommandContext;
 
 public class OProcessorManager extends ODynamicFactory<String, OProcessor> {
   private static OProcessorManager instance = new OProcessorManager();
@@ -25,7 +25,7 @@ public class OProcessorManager extends ODynamicFactory<String, OProcessor> {
     return instance;
   }
 
-  public Object process(final String iType, final Object iContent, final ODocument iContext, final boolean iReadOnly) {
+  public Object process(final String iType, final Object iContent, final OCommandContext iContext, final boolean iReadOnly) {
     final OProcessor t = registry.get(iType);
     if (t == null)
       throw new OProcessException("Cannot find processor type '" + iType + "'");

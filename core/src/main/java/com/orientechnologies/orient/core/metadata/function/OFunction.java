@@ -134,7 +134,8 @@ public class OFunction {
     if (iArgs.length > 0) {
       args = new LinkedHashMap<Object, Object>();
       for (int i = 0; i < iArgs.length; ++i) {
-        final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
+        // final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
+        final Object argValue = iArgs[i];
 
         if (i < params.size())
           args.put(params.get(i), argValue);
@@ -165,6 +166,11 @@ public class OFunction {
 
   public ORID getId() {
     return document.getIdentity();
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 
   /**

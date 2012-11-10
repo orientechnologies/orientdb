@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.processor;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.command.OCommandContext;
 
 public interface OProcessor {
-  public Object process(Object iInput, ODocument iContext, final boolean iReadOnly);
+  public Object process(Object iInput, OCommandContext iContext, final boolean iReadOnly);
 }

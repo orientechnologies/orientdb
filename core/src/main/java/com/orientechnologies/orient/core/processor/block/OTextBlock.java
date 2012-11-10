@@ -15,13 +15,23 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OTextBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
-    return resolveInContext(iConfig.field("value"), iContext).toString();
+  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+      final boolean iReadOnly) {
+
+    Object value = resolveInContext(getRequiredField(iConfig, "value"), iContext);
+
+    final Object source = resolveInContext(getFieldOfClass(iConfig, "source", String.class), iContext);
+    if (source != null)
+      value = ODocumentHelper.getFieldValue(source, value.toString());
+
+    return resolveInContext(value, iContext).toString();
   }
 
   @Override

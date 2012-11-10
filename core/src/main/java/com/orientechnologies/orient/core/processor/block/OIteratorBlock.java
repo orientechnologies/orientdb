@@ -21,25 +21,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIteratorBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+      final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
-    final ODocument content = (ODocument) iConfig;
-
-    final Object foreach = content.field("foreach");
-    if (!(foreach instanceof ODocument))
-      throw new OProcessException("'foreach' must be a block");
-
-    final Object execute = content.field("execute");
-    if (!(execute instanceof ODocument))
-      throw new OProcessException("'execute' must be a block");
+    final ODocument foreach = getRequiredFieldOfClass(iConfig, "foreach", ODocument.class);
+    final ODocument execute = getRequiredFieldOfClass(iConfig, "execute", ODocument.class);
 
     final Object result = iManager.process((ODocument) foreach, iContext, iReadOnly);
     if (!OMultiValue.isIterable(result))
@@ -47,17 +42,22 @@ public class OIteratorBlock extends OAbstractBlock {
 
     final String executeBlockType = ((ODocument) execute).field("type");
 
+    int iterated = 0;
     final List<Object> list = new ArrayList<Object>();
-    for (Object item : OMultiValue.getMultiValueIterable(result)) {
-      if (item instanceof Map.Entry)
-        item = ((Entry<?, ?>) item).getValue();
+    for (Object current : OMultiValue.getMultiValueIterable(result)) {
+      if (current instanceof Map.Entry)
+        current = ((Entry<?, ?>) current).getValue();
 
-      iContext.field("content", item);
+      assignVariable(iContext, "current", current);
 
-      final Object v = iManager.process(executeBlockType, (ODocument) execute, iContext, iReadOnly);
+      final Object v = iManager.process(executeBlockType, execute, iContext, iReadOnly);
       if (v != null)
         list.add(v);
+
+      iterated++;
     }
+
+    debug(iContext, "Iterated " + iterated + " items, returned " + list.size());
 
     return list;
   }

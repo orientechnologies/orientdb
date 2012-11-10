@@ -15,23 +15,28 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTableBlock extends OAbstractBlock {
   @Override
-  public Object process(OConfigurableProcessor iManager, final ODocument iConfig, final ODocument iContext, final boolean iReadOnly) {
+  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext, final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
+
+    final ODocument header = getRequiredFieldOfClass(iConfig, "header", ODocument.class);
+    final ODocument body = getRequiredFieldOfClass(iConfig, "body", ODocument.class);
+    final ODocument footer = getRequiredFieldOfClass(iConfig, "footer", ODocument.class);
 
     final ODocument content = (ODocument) iConfig;
 
     final ODocument table = new ODocument();
 
-    table.field("header", delegate("header", iManager, content.field("header"), iContext, iReadOnly));
-    table.field("body", delegate("body", iManager, content.field("body"), iContext, iReadOnly));
-    table.field("footer", delegate("footer", iManager, content.field("footer"), iContext, iReadOnly));
+    table.field("header", delegate("header", iManager, header, iContext, iReadOnly));
+    table.field("body", delegate("body", iManager, body, iContext, iReadOnly));
+    table.field("footer", delegate("footer", iManager, footer, iContext, iReadOnly));
 
     return table;
   }

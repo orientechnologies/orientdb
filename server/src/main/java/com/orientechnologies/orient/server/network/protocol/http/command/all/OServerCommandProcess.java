@@ -20,9 +20,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.processor.OConfigurableProcessor;
+import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessorManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -48,7 +50,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
         extension = cfg.value;
     }
 
-    OProcessorManager.getInstance().register("configurable", new OConfigurableProcessor());
+    OProcessorManager.getInstance().register("configurable", new OComposableProcessor());
   }
 
   @Override
@@ -67,9 +69,17 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
         args[i - 3] = parts[i];
 
       // BIND CONTEXT VARIABLES
-      final ODocument context = new ODocument();
-      context.field("request", new OHttpRequestWrapper(iRequest, (String[]) args));
-      context.field("response", new OHttpResponseWrapper(iResponse));
+      final OCommandContext context = new OBasicCommandContext();
+      int argIdx = 0;
+      for (Object arg : args)
+        context.setVariable("arg" + (argIdx++), arg);
+
+      context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
+      context.setVariable("response", new OHttpResponseWrapper(iResponse));
+
+      final String debugMode = iRequest.getParameter("debug");
+      if (debugMode != null && Boolean.parseBoolean(debugMode))
+        context.setVariable("debugMode", Boolean.TRUE);
 
       final String templateContent = loadTemplate(name);
 

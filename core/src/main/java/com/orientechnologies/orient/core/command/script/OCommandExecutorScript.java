@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 /**
@@ -55,11 +56,13 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     final String language = request.getLanguage();
     parserText = request.getText();
 
-    final ODatabaseRecordTx db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && !(db instanceof ODatabaseRecordTx))
+      db = db.getUnderlying();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(language);
-    final Bindings binding = scriptManager.bind(scriptEngine, db, iContext, iArgs);
+    final Bindings binding = scriptManager.bind(scriptEngine, (ODatabaseRecordTx) db, iContext, iArgs);
 
     try {
       // COMPILE FUNCTION LIBRARY
