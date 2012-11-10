@@ -525,7 +525,11 @@ public abstract class OStringSerializerHelper {
 
   public static List<String> getParameters(final String iText) {
     final List<String> params = new ArrayList<String>();
-    getParameters(iText, 0, -1, params);
+    try {
+      getParameters(iText, 0, -1, params);
+    } catch (Exception e) {
+      throw new OCommandSQLParsingException("Error on reading parameters in: " + iText);
+    }
     return params;
   }
 

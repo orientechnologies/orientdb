@@ -56,7 +56,7 @@ public class OByteBufferUtils {
    *          to read second part of value
    * @return merged value
    */
-  public static short mergeShortFromBuffers(ByteBuffer buffer, ByteBuffer buffer1) {
+  public static short mergeShortFromBuffers(final ByteBuffer buffer, final ByteBuffer buffer1) {
     short result = 0;
     result = (short) (result | (buffer.get() & MASK));
     result = (short) (result << SIZE_OF_BYTE_IN_BITS);
@@ -74,9 +74,9 @@ public class OByteBufferUtils {
    *          to read second part of value
    * @return merged value
    */
-  public static int mergeIntFromBuffers(ByteBuffer buffer, ByteBuffer buffer1) {
+  public static int mergeIntFromBuffers(final ByteBuffer buffer, final ByteBuffer buffer1) {
     int result = 0;
-    int remaining = buffer.remaining();
+    final int remaining = buffer.remaining();
     for (int i = 0; i < remaining; ++i) {
       result = result | (buffer.get() & MASK);
       result = result << SIZE_OF_BYTE_IN_BITS;
@@ -99,9 +99,9 @@ public class OByteBufferUtils {
    *          to read second part of value
    * @return merged value
    */
-  public static long mergeLongFromBuffers(ByteBuffer buffer, ByteBuffer buffer1) {
+  public static long mergeLongFromBuffers(final ByteBuffer buffer, final ByteBuffer buffer1) {
     long result = 0;
-    int remaining = buffer.remaining();
+    final int remaining = buffer.remaining();
     for (int i = 0; i < remaining; ++i) {
       result = result | (MASK & buffer.get());
       result = result << SIZE_OF_BYTE_IN_BITS;
@@ -122,7 +122,7 @@ public class OByteBufferUtils {
    * @param buffer1
    *          to write second part of value
    */
-  public static void splitShortToBuffers(ByteBuffer buffer, ByteBuffer buffer1, short iValue) {
+  public static void splitShortToBuffers(final ByteBuffer buffer, final ByteBuffer buffer1, final short iValue) {
     buffer.put((byte) (MASK & (iValue >>> SIZE_OF_BYTE_IN_BITS)));
     buffer1.put((byte) (MASK & iValue));
   }
@@ -136,8 +136,8 @@ public class OByteBufferUtils {
    * @param buffer1
    *          to write second part of value
    */
-  public static void splitIntToBuffers(ByteBuffer buffer, ByteBuffer buffer1, int iValue) {
-    int remaining = buffer.remaining();
+  public static void splitIntToBuffers(final ByteBuffer buffer, final ByteBuffer buffer1, final int iValue) {
+    final int remaining = buffer.remaining();
     int i;
     for (i = 0; i < remaining; ++i) {
       buffer.put((byte) (MASK & (iValue >>> SIZE_OF_BYTE_IN_BITS * (SIZE_OF_INT - i - 1))));
@@ -156,8 +156,8 @@ public class OByteBufferUtils {
    * @param buffer1
    *          to write second part of value
    */
-  public static void splitLongToBuffers(ByteBuffer buffer, ByteBuffer buffer1, long iValue) {
-    int remaining = buffer.remaining();
+  public static void splitLongToBuffers(final ByteBuffer buffer, final ByteBuffer buffer1, final long iValue) {
+    final int remaining = buffer.remaining();
     int i;
     for (i = 0; i < remaining; ++i) {
       buffer.put((byte) (iValue >> SIZE_OF_BYTE_IN_BITS * (SIZE_OF_LONG - i - 1)));
