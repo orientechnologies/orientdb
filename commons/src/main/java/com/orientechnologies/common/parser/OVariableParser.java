@@ -24,32 +24,34 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Luca Garulli (luca.garulli--at--assetdata.it)
  */
 public class OVariableParser {
-	public static String resolveVariables(final String iText, final String iBegin, final String iEnd,
-			final OVariableParserListener iListener) {
-		if (iListener == null)
-			throw new IllegalArgumentException("Missed VariableParserListener listener");
+  public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
+      final OVariableParserListener iListener) {
+    if (iListener == null)
+      throw new IllegalArgumentException("Missed VariableParserListener listener");
 
-		int beginPos = iText.lastIndexOf(iBegin);
-		if (beginPos == -1)
-			return iText;
+    int beginPos = iText.lastIndexOf(iBegin);
+    if (beginPos == -1)
+      return iText;
 
-		int endPos = iText.indexOf(iEnd, beginPos + 1);
-		if (endPos == -1)
-			return iText;
+    int endPos = iText.indexOf(iEnd, beginPos + 1);
+    if (endPos == -1)
+      return iText;
 
-		String pre = iText.substring(0, beginPos);
-		String var = iText.substring(beginPos + iBegin.length(), endPos);
-		String post = iText.substring(endPos + iEnd.length());
+    String pre = iText.substring(0, beginPos);
+    String var = iText.substring(beginPos + iBegin.length(), endPos);
+    String post = iText.substring(endPos + iEnd.length());
 
-		String resolved = iListener.resolve(var);
+    Object resolved = iListener.resolve(var);
 
-		if (resolved == null) {
-			OLogManager.instance().error(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
-			resolved = "null";
-		}
-
-		String path = pre + resolved + post;
-
-		return resolveVariables(path, iBegin, iEnd, iListener);
-	}
+    if (resolved == null) {
+      OLogManager.instance().error(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+      resolved = "null";
+    } else if (pre.length() > 0 || post.length() > 0) {
+      String path = resolved.toString();
+      path = pre + resolved + post;
+      return resolveVariables(path, iBegin, iEnd, iListener);
+    }
+    
+    return resolved;
+  }
 }

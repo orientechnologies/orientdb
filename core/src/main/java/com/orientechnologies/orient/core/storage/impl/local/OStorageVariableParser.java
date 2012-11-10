@@ -30,7 +30,7 @@ public class OStorageVariableParser implements OVariableParserListener {
 	}
 
 	public String resolveVariables(String iPath) {
-		return OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, this);
+		return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, this);
 	}
 
 	public String convertPathToRelative(String iPath) {

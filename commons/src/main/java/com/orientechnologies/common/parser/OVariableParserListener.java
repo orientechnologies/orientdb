@@ -22,5 +22,5 @@ package com.orientechnologies.common.parser;
  * 
  */
 public interface OVariableParserListener {
-	public String resolve(String iVariable);
+	public Object resolve(String iVariable);
 }

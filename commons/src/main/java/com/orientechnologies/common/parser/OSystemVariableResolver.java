@@ -31,7 +31,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
 		if (iPath == null)
 			return null;
 
-		return OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance);
+		return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance);
 	}
 
 	public String resolve(final String variable) {

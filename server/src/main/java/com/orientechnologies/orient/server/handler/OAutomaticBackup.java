@@ -100,7 +100,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
             include = false;
 
           if (include) {
-            final String fileName = OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
+            final String fileName = (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
                   @Override
                   public String resolve(final String iVariable) {
@@ -118,7 +118,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
             final String exportFilePath = targetDirectory + fileName;
             ODatabaseDocumentTx db = null;
             try {
-              
+
               db = new ODatabaseDocumentTx(dbName.getValue());
 
               db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
