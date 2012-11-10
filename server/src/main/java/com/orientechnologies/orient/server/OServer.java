@@ -64,6 +64,7 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -80,6 +81,7 @@ public class OServer {
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols   = new HashMap<String, Class<? extends ONetworkProtocol>>();
   protected List<OServerNetworkListener>                   networkListeners   = new ArrayList<OServerNetworkListener>();
   protected List<OServerLifecycleListener>                 lifecycleListeners = new ArrayList<OServerLifecycleListener>();
+  protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   protected static ThreadGroup                             threadGroup;
 
@@ -116,23 +118,23 @@ public class OServer {
 
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = databaseDirectory.replace("//", "/");
-    
+
     Orient
-    .instance()
-    .getProfiler()
-    .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-        new OProfilerHookValue() {
-          @Override
-          public Object getValue() {
-            final StringBuilder dbs = new StringBuilder();
-            for (String dbName : getAvailableStorageNames().keySet()) {
-              if (dbs.length() > 0)
-                dbs.append(',');
-              dbs.append(dbName);
-            }
-            return dbs.toString();
-          }
-        });
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              @Override
+              public Object getValue() {
+                final StringBuilder dbs = new StringBuilder();
+                for (String dbName : getAvailableStorageNames().keySet()) {
+                  if (dbs.length() > 0)
+                    dbs.append(',');
+                  dbs.append(dbName);
+                }
+                return dbs.toString();
+              }
+            });
   }
 
   public void startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
@@ -455,6 +457,7 @@ public class OServer {
 
       loadStorages();
       loadUsers();
+      hookManager = new OConfigurableHooksManager(iConfiguration);
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);

@@ -34,6 +34,10 @@ public class OServerConfiguration {
 	@XmlElementRef(type = OServerHandlerConfiguration.class)
 	public List<OServerHandlerConfiguration>	handlers;
 
+	@XmlElementWrapper
+	@XmlElementRef(type = OServerHookConfiguration.class)
+	public List<OServerHookConfiguration>	hooks;
+
 	@XmlElementRef(type = OServerNetworkConfiguration.class)
 	public OServerNetworkConfiguration				network;
 
