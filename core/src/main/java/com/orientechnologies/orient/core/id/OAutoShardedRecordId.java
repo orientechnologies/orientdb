@@ -64,22 +64,55 @@ public class OAutoShardedRecordId extends ORecordId {
   }
 
   @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder(12);
+    buffer.append(PREFIX);
+    buffer.append(clusterId);
+    buffer.append(SEPARATOR);
+    buffer.append(String.format("%1$016x", clusterPosition));
+    buffer.append(String.format("%1$016x", mostSigDHTClusterId));
+    buffer.append(String.format("%1$016x", leastSigDHTClusterId));
+
+    return buffer.toString();
+  }
+
+  @Override
   public int compareTo(OIdentifiable iOther) {
-    int result = super.compareTo(iOther);
-    if (result != 0)
-      return result;
+    if (iOther == this)
+      return 0;
+
+    if (iOther == null)
+      return 1;
+
     final OAutoShardedRecordId otherRid = (OAutoShardedRecordId) iOther.getIdentity();
 
-    if (mostSigDHTClusterId > otherRid.mostSigDHTClusterId)
+    final int otherClusterId = otherRid.getClusterId();
+    if (clusterId > otherClusterId)
       return 1;
-    else if (mostSigDHTClusterId < otherRid.mostSigDHTClusterId)
+    else if (clusterId < otherClusterId)
       return -1;
 
-    if (leastSigDHTClusterId > otherRid.leastSigDHTClusterId)
-      return 1;
-    else if (leastSigDHTClusterId < otherRid.leastSigDHTClusterId)
-      return -1;
+    int result = compareUnsignedLongs(getClusterPosition(), otherRid.getClusterPosition());
+    if (result != 0)
+      return result;
 
-    return 0;
+    result = compareUnsignedLongs(mostSigDHTClusterId, otherRid.mostSigDHTClusterId);
+    if (result != 0)
+      return result;
+
+    result = compareUnsignedLongs(leastSigDHTClusterId, otherRid.leastSigDHTClusterId);
+
+    return result;
+  }
+
+  private static int compareUnsignedLongs(long longOne, long longTwo) {
+    if (longOne == longTwo)
+      return 0;
+
+    return lessThanUnsigned(longOne, longTwo) ? -1 : 1;
+  }
+
+  private static boolean lessThanUnsigned(long longOne, long longTwo) {
+    return (longOne + Long.MIN_VALUE) < (longTwo + Long.MIN_VALUE);
   }
 }
