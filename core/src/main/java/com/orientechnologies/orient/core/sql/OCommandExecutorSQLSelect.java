@@ -1201,7 +1201,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public Object getResult() {
-    if (groupedResult != null) {
+    if (tempResult != null && !tempResult.isEmpty()) {
+      return super.getResult();
+    } else if (groupedResult != null) {
       for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
         if (g.getKey() != null || groupedResult.size() == 1) {
           final ODocument doc = g.getValue().getResult();
@@ -1218,7 +1220,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean optimizeExecution() {
-    if (compiledFilter != null && compiledFilter.getRootCondition() == null && projections != null && projections.size() == 1) {
+    if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && projections != null
+        && projections.size() == 1) {
       final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
 
       if (entry.getValue() instanceof OSQLFunctionRuntime) {

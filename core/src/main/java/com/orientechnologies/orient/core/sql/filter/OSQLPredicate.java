@@ -70,6 +70,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   }
 
   public OSQLPredicate text(final String iText) {
+    if (iText == null)
+      throw new OCommandSQLParsingException("Query text is null");
+    
     try {
       parserText = iText;
       parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
