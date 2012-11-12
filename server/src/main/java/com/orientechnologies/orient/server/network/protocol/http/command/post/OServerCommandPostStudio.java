@@ -126,6 +126,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
         if (fields.get("mandatory") != null)
           prop.setMandatory("on".equals(fields.get("mandatory")));
+        if (fields.get("readonly") != null)
+          prop.setReadonly("on".equals(fields.get("readonly")));
         if (fields.get("notNull") != null)
           prop.setNotNull("on".equals(fields.get("notNull")));
         if (fields.get("min") != null)

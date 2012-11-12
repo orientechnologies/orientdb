@@ -699,7 +699,7 @@
 		fillDynaTable(
 				$('#classProperties'),
 				"Properties",
-				[ 'name', 'type', 'linkedType', 'linkedClass', 'mandatory',
+				[ 'name', 'type', 'linkedType', 'linkedClass', 'mandatory','readonly',
 						'notNull', 'min', 'max' ],
 				[
 						{
@@ -755,6 +755,12 @@
 							formatter : 'checkbox',
 							edittype : 'checkbox',
 							editable : true
+						}, {
+							name : 'readonly',
+							index : 'readonly',
+							width : 90,
+							formatter : 'checkbox',
+							edittype : 'checkbox',							editable : true
 						}, {
 							name : 'notNull',
 							index : 'notNull',

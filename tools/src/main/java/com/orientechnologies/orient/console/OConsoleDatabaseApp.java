@@ -955,14 +955,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (cls.properties().size() > 0) {
       out.println("Properties:");
-      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+-----------+-----------+");
-      out.println(" NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | NOT NULL |    MIN    |    MAX    |");
-      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+-----------+-----------+");
+      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+");
+      out.println(" NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    |");
+      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+");
 
       for (final OProperty p : cls.properties()) {
         try {
-          out.printf(" %-30s| %-12s| %-30s| %-10s| %-9s| %-10s| %-10s|\n", p.getName(), p.getType(),
-              p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isNotNull(),
+          out.printf(" %-30s| %-12s| %-30s| %-10s| %-10s| %-9s| %-10s| %-10s|\n", p.getName(), p.getType(),
+              p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(),p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "");
         } catch (Exception e) {
         }

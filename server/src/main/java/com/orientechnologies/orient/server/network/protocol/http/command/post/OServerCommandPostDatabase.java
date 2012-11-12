@@ -269,6 +269,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
         json.writeAttribute(4, true, "type", prop.getType().toString());
         json.writeAttribute(4, true, "mandatory", prop.isMandatory());
+        json.writeAttribute(4, true, "readonly", prop.isReadonly());
         json.writeAttribute(4, true, "notNull", prop.isNotNull());
         json.writeAttribute(4, true, "min", prop.getMin());
         json.writeAttribute(4, true, "max", prop.getMax());

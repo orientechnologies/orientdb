@@ -432,6 +432,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             writer.writeAttribute(0, false, "type", p.getType().toString());
             if (p.isMandatory())
               writer.writeAttribute(0, false, "mandatory", p.isMandatory());
+            if (p.isReadonly())
+              writer.writeAttribute(0, false, "readonly", p.isReadonly());
             if (p.isNotNull())
               writer.writeAttribute(0, false, "not-null", p.isNotNull());
             if (p.getLinkedClass() != null)

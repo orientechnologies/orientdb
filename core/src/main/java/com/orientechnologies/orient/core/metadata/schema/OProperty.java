@@ -27,8 +27,9 @@ import com.orientechnologies.orient.core.index.OIndex;
  * 
  */
 public interface OProperty extends Comparable<OProperty> {
-  public static enum ATTRIBUTES {
-    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM
+
+    public static enum ATTRIBUTES {
+    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY
   }
 
   public String getName();
@@ -61,6 +62,9 @@ public interface OProperty extends Comparable<OProperty> {
 
   public OProperty setMandatory(boolean mandatory);
 
+  boolean isReadonly();
+
+  OPropertyImpl setReadonly(boolean iReadonly);
   /**
    * Min behavior depends on the Property OType.
    * <p>

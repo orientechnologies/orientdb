@@ -85,7 +85,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   protected static final String[]                                        EMPTY_STRINGS    = new String[] {};
 
-  private long                                                            serializationId  = -1;
+  private long                                                           serializationId  = -1;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -668,6 +668,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
             // SAVE VALUE: UNCHANGED
             return this;
           }
+
+          if (OType.isSimpleType(iPropertyValue) && iPropertyValue.equals(oldValue))
+            // SAVE VALUE: UNCHANGED
+            return this;
+
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iFieldName,
               getIdentity());
@@ -1505,11 +1510,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     }
   }
 
-	/**
-	 * ID which is used to track document instance identity during serialization.
-	 *
-	 * @return ID which is used to track document instance identity during serialization.
-	 */
+  /**
+   * ID which is used to track document instance identity during serialization.
+   * 
+   * @return ID which is used to track document instance identity during serialization.
+   */
   public long getSerializationId() {
     return serializationId;
   }

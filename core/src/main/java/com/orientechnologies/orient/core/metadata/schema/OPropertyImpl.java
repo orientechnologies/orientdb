@@ -66,6 +66,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private String              min;
   private String              max;
   private String              regexp;
+  private boolean             readonly;
   private Map<String, String> customFields;
 
   /**
@@ -301,6 +302,25 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     this.mandatory = iMandatory;
   }
+    
+    
+    public boolean isReadonly() {
+    return readonly;
+  }
+
+  public OPropertyImpl setReadonly(final boolean iReadonly) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter property %s readonly %s", getFullName(), iReadonly);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    this.readonly = iReadonly;
+
+    return this;
+  }
+
+  public void setReadonlyInternal(final boolean iReadonly) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    this.readonly = iReadonly;
+  }
 
   public String getMin() {
     return min;
@@ -434,6 +454,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return getMin();
     case MANDATORY:
       return isMandatory();
+    case READONLY:
+      return isReadonly();
     case MAX:
       return getMax();
     case NAME:
@@ -468,6 +490,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     case MANDATORY:
       setMandatoryInternal(Boolean.parseBoolean(stringValue));
+      break;
+    case READONLY:
+      setReadonlyInternal(Boolean.parseBoolean(stringValue));
       break;
     case MAX:
       setMaxInternal(isNull ? null : stringValue);
@@ -518,6 +543,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     case MANDATORY:
       setMandatory(Boolean.parseBoolean(stringValue));
+      break;
+    case READONLY:
+      setReadonly(Boolean.parseBoolean(stringValue));
       break;
     case MAX:
       setMax(stringValue);
@@ -582,6 +610,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       type = OType.getById(((Integer) document.field("type")).byteValue());
 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
+    readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
 
     min = (String) (document.containsField("min") ? document.field("min") : null);
@@ -614,11 +643,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("name", name);
       document.field("type", type.id);
       document.field("mandatory", mandatory);
+      document.field("readonly", readonly);
       document.field("notNull", notNull);
 
       document.field("min", min);
       document.field("max", max);
       document.field("regexp", regexp);
+
 
       if (linkedType != null)
         document.field("linkedType", linkedType.id);

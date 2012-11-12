@@ -392,6 +392,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     String linkedClass = null;
     OType linkedType = null;
     boolean mandatory = false;
+    boolean readonly = false;
     boolean notNull = false;
     Map<String, String> customFields = null;
 
@@ -410,6 +411,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         linkedClass = value;
       else if (attrib.equals("\"mandatory\""))
         mandatory = Boolean.parseBoolean(value);
+      else if (attrib.equals("\"readonly\""))
+        readonly = Boolean.parseBoolean(value);
       else if (attrib.equals("\"not-null\""))
         notNull = Boolean.parseBoolean(value);
       else if (attrib.equals("\"linked-type\""))
@@ -424,6 +427,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       prop = (OPropertyImpl) iClass.createProperty(propName, type);
 
     prop.setMandatory(mandatory);
+    prop.setReadonly(readonly);
     prop.setNotNull(notNull);
 
     if (min != null)
