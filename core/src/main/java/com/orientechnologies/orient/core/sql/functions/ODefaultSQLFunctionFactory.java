@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCoalesce;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
@@ -54,6 +55,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     // MISC FUNCTIONS
+    FUNCTIONS.put(OSQLFunctionCoalesce.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionCoalesce());
     FUNCTIONS.put(OSQLFunctionIfNull.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIfNull());
     FUNCTIONS.put(OSQLFunctionFormat.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionFormat());
     FUNCTIONS.put(OSQLFunctionDate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDate.class);
