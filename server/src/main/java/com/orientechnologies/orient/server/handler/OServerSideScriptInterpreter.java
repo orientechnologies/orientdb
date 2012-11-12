@@ -53,7 +53,7 @@ public class OServerSideScriptInterpreter extends OServerHandlerAbstract {
 		if (!enabled)
 			return;
 
-		OLogManager.instance().info(this, "Installing Script interpreter. WARN: clients can execute any kind of code into the server.");
+		OLogManager.instance().info(this, "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server.");
 
 		// REGISTER THE SECURE COMMAND SCRIPT
 		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
