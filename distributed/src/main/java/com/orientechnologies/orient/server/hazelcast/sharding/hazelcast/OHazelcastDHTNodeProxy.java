@@ -148,7 +148,8 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class GetSuccessorNodeCall extends NodeCall<Long> {
-    public GetSuccessorNodeCall() {
+      
+    private GetSuccessorNodeCall() {
     }
 
     private GetSuccessorNodeCall(long nodeId, String memberUUID) {
@@ -162,7 +163,8 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class GetPredecessorNodeCall extends NodeCall<Long> {
-    public GetPredecessorNodeCall() {
+      
+    private GetPredecessorNodeCall() {
     }
 
     private GetPredecessorNodeCall(long nodeId, String memberUUID) {
@@ -176,9 +178,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class JoinNodeCall extends NodeCall<Boolean> {
+      
     private long joinNodeId;
 
-    public JoinNodeCall() {
+    private JoinNodeCall() {
     }
 
     private JoinNodeCall(long nodeId, String memberUUID, long joinNodeId) {
@@ -205,9 +208,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class NotifyNodeCall extends NodeCall<Void> {
+      
     private long notifyNodeId;
 
-    public NotifyNodeCall() {
+    private NotifyNodeCall() {
     }
 
     private NotifyNodeCall(long nodeId, String memberUUID, long notifyNodeId) {
@@ -236,9 +240,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class FindSuccessorNodeCall extends NodeCall<Long> {
+      
     private long keyId;
 
-    public FindSuccessorNodeCall() {
+    private FindSuccessorNodeCall() {
     }
 
     private FindSuccessorNodeCall(long nodeId, String memberUUID, long keyId) {
@@ -265,9 +270,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class NotifyMigrationEndNodeCall extends NodeCall<Void> {
+      
     private long notifierId;
 
-    public NotifyMigrationEndNodeCall() {
+    private NotifyMigrationEndNodeCall() {
     }
 
     private NotifyMigrationEndNodeCall(long nodeId, String memberUUID, long notifierId) {
@@ -295,9 +301,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class RequestMigrationNodeCall extends NodeCall<Void> {
+      
     private long requesterId;
 
-    public RequestMigrationNodeCall() {
+    private RequestMigrationNodeCall() {
     }
 
     private RequestMigrationNodeCall(long nodeId, String memberUUID, long requesterId) {
@@ -332,10 +339,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private int       recordVersion;
     private byte      recordType;
 
-    public CreateRecordNodeCall() {
+    private CreateRecordNodeCall() {
     }
 
-    public CreateRecordNodeCall(long nodeId, String memberUUID, String storageName, ORecordId iRecordId, byte[] iContent,
+    private CreateRecordNodeCall(long nodeId, String memberUUID, String storageName, ORecordId iRecordId, byte[] iContent,
         int iRecordVersion, byte iRecordType) {
       super(nodeId, memberUUID);
       this.storageName = storageName;
@@ -355,7 +362,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.writeExternal(out);
       out.writeObject(storageName);
       out.writeObject(recordId);
-      out.writeObject(content);
+      writeBytes(out, content);
       out.writeInt(recordVersion);
       out.writeByte(recordType);
     }
@@ -365,7 +372,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.readExternal(in);
       storageName = (String) in.readObject();
       recordId = (ORecordId) in.readObject();
-      content = (byte[]) in.readObject();
+      content = readBytes(in);
       recordVersion = in.readInt();
       recordType = in.readByte();
     }
@@ -376,13 +383,13 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private String storageName;
     private ORID   iRid;
 
-    public LoadRecordNodeCall(long nodeId, String uuid, String storageName, ORID iRid) {
+    private LoadRecordNodeCall() {
+    }
+
+    private LoadRecordNodeCall(long nodeId, String uuid, String storageName, ORID iRid) {
       super(nodeId, uuid);
       this.storageName = storageName;
       this.iRid = iRid;
-    }
-
-    public LoadRecordNodeCall() {
     }
 
     @Override
@@ -405,14 +412,15 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     }
   }
 
-  private static class UpdateRecordNodeCall extends NodeCall<Integer> {
+  private static final class UpdateRecordNodeCall extends NodeCall<Integer> {
+
     private String    storageName;
     private ORecordId iRecordId;
     private byte[]    iContent;
     private int       iVersion;
     private byte      iRecordType;
 
-    public UpdateRecordNodeCall() {
+    private UpdateRecordNodeCall() {
     }
 
     public UpdateRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, byte[] iContent, int iVersion,
@@ -435,7 +443,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.writeExternal(out);
       out.writeObject(storageName);
       out.writeObject(iRecordId);
-      out.writeObject(iContent);
+      writeBytes(out, iContent);
       out.writeInt(iVersion);
       out.writeByte(iRecordType);
     }
@@ -445,21 +453,22 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.readExternal(in);
       storageName = (String) in.readObject();
       iRecordId = (ORecordId) in.readObject();
-      iContent = (byte[]) in.readObject();
+      iContent = readBytes(in);
       iVersion = in.readInt();
       iRecordType = in.readByte();
     }
   }
 
-  private static class DeleteRecordNodeCall extends NodeCall<Boolean> {
+  private static final  class DeleteRecordNodeCall extends NodeCall<Boolean> {
+
     private String    storageName;
     private ORecordId iRecordId;
     private int       iVersion;
 
-    public DeleteRecordNodeCall() {
+    private DeleteRecordNodeCall() {
     }
 
-    public DeleteRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, int iVersion) {
+    private DeleteRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, int iVersion) {
       super(nodeId, uuid);
       this.storageName = storageName;
       this.iRecordId = iRecordId;
@@ -493,10 +502,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private String              storageName;
     private OCommandRequestText request;
 
-    public CommandCall() {
+    private CommandCall() {
     }
 
-    public CommandCall(long nodeId, String memberUUID, String storageName, OCommandRequestText request) {
+    private CommandCall(long nodeId, String memberUUID, String storageName, OCommandRequestText request) {
       super(nodeId, memberUUID);
       this.storageName = storageName;
       this.request = request;
@@ -512,9 +521,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.writeExternal(out);
       out.writeObject(storageName);
       out.writeObject(request.getClass());
-      final byte[] requestBytes = request.toStream();
-      out.writeInt(requestBytes.length);
-      out.write(requestBytes);
+      writeBytes(out, request.toStream());
       if (request.getResultListener() instanceof OHazelcastResultListener) {
         final OHazelcastResultListener listener = (OHazelcastResultListener) request.getResultListener();
         out.writeLong(listener.getStorageId());
@@ -530,9 +537,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.readExternal(in);
       storageName = (String) in.readObject();
       final Class<OCommandRequestText> clazz = (Class<OCommandRequestText>) in.readObject();
-      final int size = in.readInt();
-      final byte[] requestBytes = new byte[size];
-      in.readFully(requestBytes);
+      final byte[] requestBytes = readBytes(in);
       try {
         request = clazz.newInstance();
       } catch (final Exception e) {
@@ -545,5 +550,17 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
         request.setResultListener(new OHazelcastResultListener(ServerInstance.getHazelcast(), storageId, selectId));
       }
     }
+  }
+
+  private static void writeBytes(ObjectOutput out, byte[] data) throws IOException {
+    out.writeInt(data.length);
+    out.write(data);
+  }
+
+  private static byte[] readBytes(ObjectInput in) throws IOException {
+    final int size = in.readInt();
+    final byte[] data = new byte[size];
+    in.readFully(data);
+    return data;
   }
 }

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.server.OServer;
@@ -92,8 +93,10 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
     public DHTConfiguration() {
       clusters = new HashSet<String>();
 
+      clusters.add(OStorage.CLUSTER_DEFAULT_NAME.toLowerCase());
       clusters.add(OMetadata.CLUSTER_INTERNAL_NAME.toLowerCase());
       clusters.add(OMetadata.CLUSTER_INDEX_NAME.toLowerCase());
+      clusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME.toLowerCase());
       clusters.add(ORole.CLASS_NAME.toLowerCase());
       clusters.add(OUser.CLASS_NAME.toLowerCase());
       clusters.add(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase());

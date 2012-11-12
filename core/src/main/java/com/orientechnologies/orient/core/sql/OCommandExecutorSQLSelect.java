@@ -211,55 +211,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return this;
     }
 
-    // determine clusters
-    final Set<Integer> clusters = getInvolvedClusters();
+    final OSQLFilterCondition nodeCondition;
+    if (fromId < toId) {
+      nodeCondition = getConditionForRidPosRange(fromId, toId);
+    } else {
+      nodeCondition = new OSQLFilterCondition(getConditionForRidPosRange(fromId, Long.MAX_VALUE), new OQueryOperatorOr(),
+          getConditionForRidPosRange(-1L, toId));
+    }
 
-    if (!clusters.isEmpty()) {
-      // make condition
-      final OSQLFilterCondition nodeCondition;
-      if (fromId < toId) {
-        // (fromId..toId]
-        nodeCondition = getConditionForClusters(clusters, fromId, toId);
-      } else {
-        // (fromId..MAX_LONG] u (-1..toId]
-        nodeCondition = new OSQLFilterCondition(getConditionForClusters(clusters, fromId, Long.MAX_VALUE), new OQueryOperatorOr(),
-            getConditionForClusters(clusters, -1L, toId));
-      }
+    if (compiledFilter == null) {
+      compiledFilter = OSQLEngine.getInstance().parseCondition("", getContext(), KEYWORD_WHERE);
+    }
 
-      if (compiledFilter == null) {
-        compiledFilter = OSQLEngine.getInstance().parseCondition("", getContext(), KEYWORD_WHERE);
-      }
-
-      final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-      if (rootCondition != null) {
-        compiledFilter.setRootCondition(new OSQLFilterCondition(nodeCondition, new OQueryOperatorAnd(), rootCondition));
-      } else {
-        compiledFilter.setRootCondition(nodeCondition);
-      }
+    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
+    if (rootCondition != null) {
+      compiledFilter.setRootCondition(new OSQLFilterCondition(nodeCondition, new OQueryOperatorAnd(), rootCondition));
+    } else {
+      compiledFilter.setRootCondition(nodeCondition);
     }
     return this;
   }
 
-  protected static OSQLFilterCondition getConditionForClusters(Set<Integer> clusterIds, long fromId, long toId) {
-    if (clusterIds.isEmpty()) {
-      throw new IllegalStateException();
-    }
-    final Iterator<Integer> clusters = clusterIds.iterator();
-    OSQLFilterCondition condition = getConditionForCluster(clusters.next(), fromId, toId);
-    while (clusters.hasNext()) {
-      condition = new OSQLFilterCondition(condition, new OQueryOperatorOr(), getConditionForCluster(clusters.next(), fromId, toId));
-    }
-    return condition;
-  }
+  protected static OSQLFilterCondition getConditionForRidPosRange(long fromId, long toId) {
 
-  protected static OSQLFilterCondition getConditionForCluster(int clusterId, long fromId, long toId) {
-    final ORecordId fromRecordId = new ORecordId(clusterId, fromId);
-    final ORecordId toRecordId = new ORecordId(clusterId, toId);
-
-    final OSQLFilterCondition fromCondition = new OSQLFilterCondition(new OSQLFilterItemField(null, "@rid"),
-        new OQueryOperatorMajor(), fromRecordId);
-    final OSQLFilterCondition toCondition = new OSQLFilterCondition(new OSQLFilterItemField(null, "@rid"),
-        new OQueryOperatorMinorEquals(), toRecordId);
+    final OSQLFilterCondition fromCondition = new OSQLFilterCondition(new OSQLFilterItemField(null,
+        ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMajor(), fromId);
+    final OSQLFilterCondition toCondition = new OSQLFilterCondition(
+        new OSQLFilterItemField(null, ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMinorEquals(), toId);
 
     return new OSQLFilterCondition(fromCondition, new OQueryOperatorAnd(), toCondition);
   }

@@ -22,21 +22,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAlterClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAlterCluster;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAlterProperty;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateProperty;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDropClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDropCluster;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDropIndex;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDropProperty;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRebuildIndex;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLTruncateClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLTruncateCluster;
+import com.orientechnologies.orient.core.sql.*;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
 
@@ -51,23 +37,24 @@ public class OQueryExecutorsFactory {
   public static final OQueryExecutorsFactory INSTANCE             = new OQueryExecutorsFactory();
 
   private static final Set<Class>            ALWAYS_DISTRIBUTABLE = new HashSet<Class>(Arrays.<Class> asList(
-                                                                      OCommandExecutorSQLCreateClass.class,// int
-                                                                      OCommandExecutorSQLAlterClass.class,// null
-                                                                      OCommandExecutorSQLTruncateClass.class,// long
-                                                                      OCommandExecutorSQLDropClass.class,// boolean
+          OCommandExecutorSQLCreateClass.class,// int
+          OCommandExecutorSQLAlterClass.class,// null
+          OCommandExecutorSQLTruncateClass.class,// long
+          OCommandExecutorSQLDropClass.class,// boolean
 
-                                                                      OCommandExecutorSQLAlterCluster.class,// null
-                                                                      OCommandExecutorSQLTruncateCluster.class,// long
-                                                                      OCommandExecutorSQLDropCluster.class,// boolean
+          OCommandExecutorSQLCreateCluster.class,// int
+          OCommandExecutorSQLAlterCluster.class,// null
+          OCommandExecutorSQLTruncateCluster.class,// long
+          OCommandExecutorSQLDropCluster.class,// boolean
 
-                                                                      OCommandExecutorSQLCreateProperty.class,// int
-                                                                      OCommandExecutorSQLAlterProperty.class,// null
-                                                                      OCommandExecutorSQLDropProperty.class,// null
+          OCommandExecutorSQLCreateProperty.class,// int
+          OCommandExecutorSQLAlterProperty.class,// null
+          OCommandExecutorSQLDropProperty.class,// null
 
-                                                                      OCommandExecutorSQLCreateIndex.class,// long
-                                                                      OCommandExecutorSQLRebuildIndex.class,// long
-                                                                      OCommandExecutorSQLDropIndex.class// null
-                                                                      ));
+          OCommandExecutorSQLCreateIndex.class,// long
+          OCommandExecutorSQLRebuildIndex.class,// long
+          OCommandExecutorSQLDropIndex.class// null
+  ));
 
   private OQueryExecutorsFactory() {
   }

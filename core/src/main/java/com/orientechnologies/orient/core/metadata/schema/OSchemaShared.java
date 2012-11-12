@@ -110,7 +110,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     int clusterId = getDatabase().getClusterIdByName(iClassName);
     if (clusterId == -1)
       // CREATE A NEW CLUSTER
-      clusterId = getDatabase().addCluster(iType.toString(), iClassName, null, null);
+      clusterId = createCluster(iType.toString(), iClassName);
 
     return createClass(iClassName, iSuperClass, clusterId);
   }
@@ -125,13 +125,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClass getOrCreateClass(final String iClassName) {
     return getDatabase().getStorage().callInLock(new Callable<OClass>() {
-      @Override
-      public OClass call() throws Exception {
-        OClass cls = classes.get(iClassName.toLowerCase());
-        if (cls == null)
-          cls = createClass(iClassName);
-        return cls;
-      }
+        @Override
+        public OClass call() throws Exception {
+            OClass cls = classes.get(iClassName.toLowerCase());
+            if (cls == null)
+                cls = createClass(iClassName);
+            return cls;
+        }
     }, true);
   }
 
@@ -155,6 +155,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   @Override
   public OClass createAbstractClass(final String iClassName, final OClass iSuperClass) {
     return createClass(iClassName, iSuperClass, -1);
+  }
+
+  private int createCluster(String iType, String iClassName) {
+    return getDatabase().command(new OCommandSQL("create cluster " + iClassName + " "+iType)).<Integer>execute();
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
@@ -332,31 +336,31 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final String key = iClassName.toLowerCase();
 
     getDatabase().getStorage().callInLock(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
+        @Override
+        public Object call() throws Exception {
 
-        final OClass cls = classes.get(key);
-        if (cls == null)
-          throw new OSchemaException("Class " + iClassName + " was not found in current database");
+            final OClass cls = classes.get(key);
+            if (cls == null)
+                throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-        if (cls.getBaseClasses().hasNext())
-          throw new OSchemaException("Class " + iClassName
-              + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+            if (cls.getBaseClasses().hasNext())
+                throw new OSchemaException("Class " + iClassName
+                        + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
-        if (cls.getSuperClass() != null) {
-          // REMOVE DEPENDENCY FROM SUPERCLASS
-          ((OClassImpl) cls.getSuperClass()).removeBaseClassInternal(cls);
+            if (cls.getSuperClass() != null) {
+                // REMOVE DEPENDENCY FROM SUPERCLASS
+                ((OClassImpl) cls.getSuperClass()).removeBaseClassInternal(cls);
+            }
+
+            dropClassIndexes(cls);
+
+            classes.remove(key);
+
+            if (cls.getShortName() != null)
+                // REMOVE THE ALIAS TOO
+                classes.remove(cls.getShortName().toLowerCase());
+            return null;
         }
-
-        dropClassIndexes(cls);
-
-        classes.remove(key);
-
-        if (cls.getShortName() != null)
-          // REMOVE THE ALIAS TOO
-          classes.remove(cls.getShortName().toLowerCase());
-        return null;
-      }
     }, true);
   }
 
@@ -568,11 +572,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
 
     db.getStorage().callInLock(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        saveInternal(OMetadata.CLUSTER_INTERNAL_NAME);
-        return null;
-      }
+        @Override
+        public Object call() throws Exception {
+            saveInternal(OMetadata.CLUSTER_INTERNAL_NAME);
+            return null;
+        }
     }, true);
   }
 

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -118,8 +119,15 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
 
   @Override
   public Object execute() {
-    int remainingExecutors = runCommandOnAllNodes(new OSQLAsynchQuery(iCommand.getText(), new OHazelcastResultListener(
-        ServerInstance.getHazelcast(), storageId, selectId)));
+    if (iCommand.getParameters().size() == 1) {
+        final Map.Entry<Object, Object> entry = iCommand.getParameters().entrySet().iterator().next();
+        if (entry.getKey().equals(Integer.valueOf(0)) && entry.getValue() == null) {
+            iCommand.getParameters().clear();
+        }
+    }
+    int remainingExecutors = runCommandOnAllNodes(new OSQLAsynchQuery(iCommand.getText(), iCommand.getLimit(),
+        iCommand instanceof OQueryAbstract ? ((OQueryAbstract) iCommand).getFetchPlan() : null, iCommand.getParameters(),
+        new OHazelcastResultListener(ServerInstance.getHazelcast(), storageId, selectId)));
 
     int processed = 0;
     final List<OIdentifiable> result = new ArrayList<OIdentifiable>();

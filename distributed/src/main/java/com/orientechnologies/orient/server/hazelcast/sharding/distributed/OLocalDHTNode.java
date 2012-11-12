@@ -20,14 +20,17 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -238,9 +241,12 @@ public class OLocalDHTNode implements ODHTNode {
     try {
       final ODatabaseDocumentTx database = openDatabase(storageName);
       try {
-
-        return new ORawBuffer(database.load(iRid));
-
+        final ORecordInternal<?> record = database.load(iRid);
+        if (record != null) {
+          return new ORawBuffer(record);
+        } else {
+          return null;
+        }
       } finally {
         closeDatabase(database);
       }
@@ -251,19 +257,37 @@ public class OLocalDHTNode implements ODHTNode {
 
   @Override
   public int updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
+    final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
 
     lockManager.acquireLock(Thread.currentThread(), iRecordId, OLockManager.LOCK.EXCLUSIVE);
     try {
       final ODatabaseDocumentTx database = openDatabase(storageName);
       try {
-        record.fill(iRecordId, iVersion, iContent, true);
-        if (iRecordId.getClusterId() == -1)
-          record.save();
-        else
-          record.save(database.getClusterNameById(iRecordId.getClusterId()));
+        newRecord.fill(iRecordId, iVersion, iContent, true);
+        final ORecordInternal<?> currentRecord;
+        if (newRecord instanceof ODocument) {
+          currentRecord = database.load(iRecordId);
+          if (currentRecord == null) {
+            throw new ORecordNotFoundException(iRecordId.toString());
+          }
+          ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
+        } else {
+          currentRecord = newRecord;
+        }
+        currentRecord.setVersion(iVersion);
 
-        return record.getVersion();
+        if (iRecordId.getClusterId() == -1)
+          currentRecord.save();
+        else
+          currentRecord.save(database.getClusterNameById(iRecordId.getClusterId()));
+
+        if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId)
+            && !database.getStatus().equals(ODatabase.STATUS.IMPORTING)) {
+          // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
+          database.getMetadata().getIndexManager().reload();
+        }
+
+        return currentRecord.getVersion();
       } finally {
         closeDatabase(database);
       }

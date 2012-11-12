@@ -753,28 +753,27 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = mvcc ? iVersion : -1;
-      OStorageOperationResult<Boolean> operationResult = null;
 
       try {
-        operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+        final OStorageOperationResult<Boolean> operationResult = underlying.delete(rid, realVersion, iRequired,
+            (byte) iMode.ordinal());
+        if (iCallTriggers) {
+          if (!operationResult.isMoved()) {
+            callbackHooks(TYPE.AFTER_DELETE, rec);
+          } else {
+            callbackHooks(TYPE.DELETE_REPLICATED, rec);
+          }
+        }
+
+        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+        if (!operationResult.isMoved()) {
+          getLevel1Cache().deleteRecord(rid);
+        }
       } catch (Throwable t) {
         if (iCallTriggers)
           callbackHooks(TYPE.DELETE_FAILED, rec);
+        throw t;
       }
-
-      if (iCallTriggers) {
-        if (operationResult == null || !operationResult.isMoved()) {
-          callbackHooks(TYPE.AFTER_DELETE, rec);
-        } else {
-          callbackHooks(TYPE.DELETE_REPLICATED, rec);
-        }
-      }
-
-      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-      if (operationResult == null || !operationResult.isMoved()) {
-        getLevel1Cache().deleteRecord(rid);
-      }
-
     } catch (OException e) {
       // RE-THROW THE EXCEPTION
       throw e;

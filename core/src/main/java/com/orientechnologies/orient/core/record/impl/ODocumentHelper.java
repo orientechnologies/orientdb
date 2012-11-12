@@ -65,6 +65,8 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 public class ODocumentHelper {
   public static final String ATTRIBUTE_THIS    = "@this";
   public static final String ATTRIBUTE_RID     = "@rid";
+  public static final String ATTRIBUTE_RID_ID  = "@rid_id";
+  public static final String ATTRIBUTE_RID_POS = "@rid_pos";
   public static final String ATTRIBUTE_VERSION = "@version";
   public static final String ATTRIBUTE_CLASS   = "@class";
   public static final String ATTRIBUTE_TYPE    = "@type";
@@ -477,6 +479,10 @@ public class ODocumentHelper {
         return iCurrent.getRecord();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
         return iCurrent.getIdentity();
+      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_ID))
+        return iCurrent.getIdentity().getClusterId();
+      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
+        return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
         return ((ODocument) iCurrent.getRecord()).getVersion();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))

@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 
+import java.util.Map;
+
 /**
  * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called for each
  * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
@@ -47,6 +49,12 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
 
   public OSQLAsynchQuery(final String iText, final OCommandResultListener iResultListener) {
     this(iText, -1, iResultListener);
+  }
+
+  public OSQLAsynchQuery(final String iText, final int iLimit, final String iFetchPlan, final Map<Object, Object> iArgs, final OCommandResultListener iResultListener) {
+    this(iText, iLimit, iResultListener);
+    this.fetchPlan = iFetchPlan;
+    this.parameters = iArgs;
   }
 
   public OSQLAsynchQuery(final String iText, final int iLimit, final OCommandResultListener iResultListener) {
