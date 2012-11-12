@@ -644,25 +644,34 @@ function ODatabase(databasePath) {
 		});
 		return this.getCommandResponse();
 	}
-
+	ODatabase.prototype.process = function(iName, iParameters,
+			iSuccessCallback, iErrorCallback, iAdditionalArguments) {
+		return this.executeLogic(iName, iParameters, "process",
+				iSuccessCallback, iErrorCallback, iAdditionalArguments);
+	}
 	ODatabase.prototype.executeFunction = function(iName, iParameters,
-			iSuccessCallback, iErrorCallback) {
+			iSuccessCallback, iErrorCallback, iAdditionalArguments) {
 		return this.executeLogic(iName, iParameters, "function",
-				iSuccessCallback, iErrorCallback);
+				iSuccessCallback, iErrorCallback, iAdditionalArguments);
 	}
 
 	ODatabase.prototype.executeAction = function(iName, iParameters,
-			iSuccessCallback, iErrorCallback) {
+			iSuccessCallback, iErrorCallback, iAdditionalArguments) {
 		return this.executeLogic(iName, iParameters, "action",
-				iSuccessCallback, iErrorCallback);
+				iSuccessCallback, iErrorCallback, iAdditionalArguments);
 	}
 
 	ODatabase.prototype.executeLogic = function(iName, iParameters, iType,
-			iSuccessCallback, iErrorCallback) {
+			iSuccessCallback, iErrorCallback, iAdditionalArguments) {
 		if (this.databaseInfo == null)
 			this.open();
 
 		var dataType = this.evalResponse ? null : 'text';
+
+		if (!iAdditionalArguments)
+			iAdditionalArguments = "";
+		else
+			iAdditionalArguments = "/" + iAdditionalArguments;
 
 		var params = "";
 		if (iParameters)
@@ -675,7 +684,7 @@ function ODatabase(databasePath) {
 		$.ajax({
 			type : "POST",
 			url : this.urlPrefix + iType + '/' + this.encodedDatabaseName + '/'
-					+ iName + params + this.urlSuffix,
+					+ iName + params + iAdditionalArguments + this.urlSuffix,
 			context : this,
 			async : asynchCall,
 			'dataType' : dataType,
@@ -695,7 +704,7 @@ function ODatabase(databasePath) {
 					iErrorCallback(this.getCommandResponse());
 			}
 		});
-		
+
 		if (!asynchCall)
 			return this.getCommandResponse();
 	}

@@ -89,6 +89,14 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return this;
   }
 
+  public Object evaluate() {
+    return evaluate(null, null, null);
+  }
+
+  public Object evaluate(final OCommandContext iContext) {
+    return evaluate(null, null, iContext);
+  }
+
   public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
@@ -145,7 +153,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     // EXTRACT ITEMS
     Object left = extractConditionItem(true, 1);
 
-    if (checkForEnd(left.toString()))
+    if (left != null && checkForEnd(left.toString()))
       return null;
 
     OQueryOperator oper;

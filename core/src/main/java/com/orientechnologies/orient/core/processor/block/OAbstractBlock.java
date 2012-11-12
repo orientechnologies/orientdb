@@ -23,8 +23,19 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 public abstract class OAbstractBlock implements OProcessorBlock {
+  protected abstract Object processBlock(OComposableProcessor iManager, ODocument iConfig, OCommandContext iContext,
+      boolean iReadOnly);
+
+  @Override
+  public Object process(OComposableProcessor iManager, ODocument iConfig, OCommandContext iContext, boolean iReadOnly) {
+    if (!checkForCondition(iConfig, iContext))
+      return null;
+
+    return processBlock(iManager, iConfig, iContext, iReadOnly);
+  }
 
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final Object iContent,
       final OCommandContext iContext, final boolean iReadOnly) {
@@ -35,6 +46,27 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     }
   }
 
+  public boolean checkForCondition(final ODocument iConfig, final OCommandContext iContext) {
+    final String condition = getFieldOfClass(iConfig, "if", String.class);
+    if (condition != null) {
+      Object result = evaluate(iContext, condition);
+      return result != null && (Boolean) result;
+    }
+    return true;
+  }
+
+  public Object evaluate(final OCommandContext iContext, final String iExpression) {
+    if (iExpression == null)
+      throw new OProcessException("Null expression");
+
+    final OSQLPredicate predicate = new OSQLPredicate((String) resolveInContext(iExpression, iContext));
+    final Object result = predicate.evaluate(iContext);
+
+    debug(iContext, "Evaluated expression '" + iExpression + "' = " + result);
+
+    return result;
+  }
+
   public void assignVariable(final OCommandContext iContext, final String iName, final Object iValue) {
     if (iName != null) {
       iContext.setVariable(iName, iValue);
@@ -42,13 +74,18 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     }
   }
 
-  protected void debug(final OCommandContext iContext, final String iText) {
+  protected void debug(final OCommandContext iContext, final String iText, Object... iArgs) {
     if (isDebug(iContext)) {
       final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
-      StringBuilder spaces = new StringBuilder();
+      final StringBuilder text = new StringBuilder();
       for (int i = 0; i < depthLevel; ++i)
-        spaces.append(' ');
-      OLogManager.instance().info(this, "%s[ProcessBlock %s] %s", spaces, getName(), iText);
+        text.append('-');
+      text.append('>');
+      text.append('{');
+      text.append(getName());
+      text.append("} ");
+      text.append(iText);
+      OLogManager.instance().info(this, text.toString(), getName(), iText, iArgs);
     }
   }
 
@@ -98,8 +135,14 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   }
 
   public boolean isDebug(final OCommandContext iContext) {
-    final Boolean debug = (Boolean) iContext.getVariable("debugMode");
-    return debug != null && debug;
+    final Object debug = iContext.getVariable("debugMode");
+    if (debug != null) {
+      if (debug instanceof Boolean)
+        return (Boolean) debug;
+      else
+        return Boolean.parseBoolean((String) debug);
+    }
+    return false;
   }
 
   public static boolean isBlock(final Object iValue) {

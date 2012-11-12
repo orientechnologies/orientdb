@@ -23,12 +23,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OQueryBlock extends OAbstractBlock {
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(final OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OTransactionException("QueryBlock: expected document as content");
@@ -39,9 +38,11 @@ public class OQueryBlock extends OAbstractBlock {
 
     debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command + "...");
 
+    final OCommandRequestText cmd = new OSQLSynchQuery<OIdentifiable>(command.toString());
+
     // CREATE THE RIGHT COMMAND BASED ON IDEMPOTENCY
-    final OCommandRequestText cmd = iReadOnly ? new OSQLSynchQuery<OIdentifiable>(command.toString()) : new OCommandSQL(
-        command.toString());
+    // final OCommandRequestText cmd = iReadOnly ? new OSQLSynchQuery<OIdentifiable>(command.toString()) : new OCommandSQL(
+    // command.toString());
 
     return cmd;
   }

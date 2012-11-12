@@ -22,15 +22,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTableBlock extends OAbstractBlock {
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext, final boolean iReadOnly) {
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+      final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
     final ODocument header = getRequiredFieldOfClass(iConfig, "header", ODocument.class);
     final ODocument body = getRequiredFieldOfClass(iConfig, "body", ODocument.class);
     final ODocument footer = getRequiredFieldOfClass(iConfig, "footer", ODocument.class);
-
-    final ODocument content = (ODocument) iConfig;
 
     final ODocument table = new ODocument();
 

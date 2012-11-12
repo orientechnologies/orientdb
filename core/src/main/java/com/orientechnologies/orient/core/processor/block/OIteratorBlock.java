@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIteratorBlock extends OAbstractBlock {
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");

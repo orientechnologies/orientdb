@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLetBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
     final Boolean copy = getFieldOfClass(iConfig, "copy", Boolean.class);
 
@@ -41,11 +41,13 @@ public class OLetBlock extends OAbstractBlock {
       if (values instanceof ODocument) {
         final ODocument doc = ((ODocument) values);
         for (String fieldName : doc.fieldNames())
-          iContext.setVariable(resolveInContext(fieldName, iContext).toString(), resolveInContext(doc.field(fieldName), iContext));
+          assignVariable(iContext, resolveInContext(fieldName, iContext).toString(),
+              resolveInContext(doc.field(fieldName), iContext));
       } else if (values instanceof Map<?, ?>) {
-        for (Entry<Object, Object> entry : ((Map<Object, Object>) values).entrySet())
-          iContext.setVariable(resolveInContext(entry.getKey(), iContext).toString(),
+        for (Entry<Object, Object> entry : ((Map<Object, Object>) values).entrySet()) {
+          assignVariable(iContext, resolveInContext(entry.getKey(), iContext).toString(),
               getValue(resolveInContext(entry.getValue(), iContext), copy));
+        }
 
       } else
         throw new OProcessException("Field 'values' in not a multi-value (collection, array, map). Found type '"

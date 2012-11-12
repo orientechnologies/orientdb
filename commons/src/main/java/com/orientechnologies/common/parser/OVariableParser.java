@@ -44,11 +44,12 @@ public class OVariableParser {
     Object resolved = iListener.resolve(var);
 
     if (resolved == null) {
-      OLogManager.instance().error(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+      OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
       resolved = "null";
-    } else if (pre.length() > 0 || post.length() > 0) {
-      String path = resolved.toString();
-      path = pre + resolved + post;
+    }
+
+    if (pre.length() > 0 || post.length() > 0) {
+      final String path = pre + resolved.toString() + post;
       return resolveVariables(path, iBegin, iEnd, iListener);
     }
     

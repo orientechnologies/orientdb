@@ -29,13 +29,14 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 public class OListBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
 
     final Object source = resolveInContext(getFieldOfClass(iConfig, "source", String.class), iContext);
     final Object values = resolveInContext(getRequiredField(iConfig, "values"), iContext);
     final String bind = getFieldOfClass(iConfig, "bind", String.class);
     final Boolean merge = getFieldOfClass(iConfig, "merge", Boolean.class);
+    final Object onNull = getField(iConfig, "onNull");
 
     if (!OMultiValue.isIterable(values))
       throw new OProcessException("Field 'values' in not a multi-value (collection, array, map). Found type '" + values.getClass()
@@ -54,11 +55,13 @@ public class OListBlock extends OAbstractBlock {
         result = resolveInContext(item, iContext);
       }
 
-      if (result != null)
-        if (merge != null && merge && result instanceof List<?>)
-          list.addAll((Collection<? extends Object>) result);
-        else
-          list.add(result);
+      if (result == null) {
+        if (onNull != null)
+          list.add(onNull);
+      } else if (merge != null && merge && result instanceof List<?>)
+        list.addAll((Collection<? extends Object>) result);
+      else
+        list.add(result);
     }
 
     if (bind != null)

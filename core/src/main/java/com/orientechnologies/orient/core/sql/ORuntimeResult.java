@@ -79,10 +79,14 @@ public class ORuntimeResult {
       // SELECT * CASE
       inputDocument.copy(iValue);
     else {
-      Object projectionValue;
+
       for (Entry<String, Object> projection : iProjections.entrySet()) {
         final Object v = projection.getValue();
 
+        if (v == null)
+          continue;
+
+        final Object projectionValue;
         if (v.equals("*")) {
           // COPY ALL
           inputDocument.copy(iValue);

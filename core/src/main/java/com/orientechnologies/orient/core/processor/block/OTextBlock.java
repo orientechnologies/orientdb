@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OTextBlock extends OAbstractBlock {
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
 
     Object value = resolveInContext(getRequiredField(iConfig, "value"), iContext);

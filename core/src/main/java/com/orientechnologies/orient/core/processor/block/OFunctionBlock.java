@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.processor.block;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OFunctionBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   @Override
-  public Object process(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
+  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
     final String function = getRequiredFieldOfClass(iConfig, "function", String.class);
 
@@ -38,7 +39,13 @@ public class OFunctionBlock extends OAbstractBlock {
       args = new Object[configuredArgs.size()];
       int argIdx = 0;
       for (Object arg : configuredArgs) {
-        args[argIdx++] = resolveInContext(arg, iContext);
+        Object value = resolveInContext(arg, iContext);
+
+        if (value instanceof List<?>)
+          // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
+          value = ((List<?>) value).toArray();
+
+        args[argIdx++] = value;
       }
     } else
       args = null;
@@ -51,7 +58,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
     final Object result = f.executeInContext(iContext, args);
 
-    debug(iContext, "-> Returned " + result);
+    debug(iContext, "<- Returned " + result);
 
     final String ret = getField(iConfig, "return");
     assignVariable(iContext, ret, result);
