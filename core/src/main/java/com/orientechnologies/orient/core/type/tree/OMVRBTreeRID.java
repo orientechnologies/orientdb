@@ -92,7 +92,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   public OMVRBTreeRID(final OMVRBTreeRID iSource) {
     super(new OMVRBTreeRIDProvider((OMVRBTreeRIDProvider) iSource.getProvider()));
     ((OMVRBTreeRIDProvider) dataProvider).setTree(this);
-    if (((OMVRBTreeRIDProvider) iSource.getProvider()).isEmbeddedStreaming())
+
+    if (iSource.getProvider().isDirty() && ((OMVRBTreeRIDProvider) iSource.getProvider()).isEmbeddedStreaming())
       putAll(iSource.keySet());
     else
       load();
@@ -118,9 +119,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public OIdentifiable internalPut(final OIdentifiable e, final OIdentifiable v) {
-    if( e == null )
+    if (e == null)
       return null;
-    
+
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
     if (e.getIdentity().isNew()) {

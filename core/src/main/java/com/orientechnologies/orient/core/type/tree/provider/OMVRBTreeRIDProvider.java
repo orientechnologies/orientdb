@@ -83,6 +83,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
+    record.unsetDirty();
   }
 
   public OMVRBTreeRIDProvider(final String iClusterName) {
