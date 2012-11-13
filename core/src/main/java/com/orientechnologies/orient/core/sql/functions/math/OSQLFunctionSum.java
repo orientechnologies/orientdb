@@ -41,7 +41,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
 
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters.length == 0) {
+    if (iParameters.length == 1) {
       if (iParameters[0] instanceof Number)
         sum((Number) iParameters[0]);
       else if (OMultiValue.isMultiValue(iParameters[0]))
