@@ -70,7 +70,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   public void assignVariable(final OCommandContext iContext, final String iName, final Object iValue) {
     if (iName != null) {
       iContext.setVariable(iName, iValue);
-      debug(iContext, "Assigned context variable " + iName + "=" + iValue);
+      debug(iContext, "Assigned context variable %s=%s", iName, iValue);
     }
   }
 
@@ -85,7 +85,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       text.append(getName());
       text.append("} ");
       text.append(iText);
-      OLogManager.instance().info(this, text.toString(), getName(), iText, iArgs);
+      OLogManager.instance().info(this, text.toString(), iArgs);
     }
   }
 
