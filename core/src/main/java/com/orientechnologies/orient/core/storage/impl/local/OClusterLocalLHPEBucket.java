@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
+import com.orientechnologies.orient.core.id.OClusterPositionNodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 /**
@@ -16,7 +18,7 @@ public final class OClusterLocalLHPEBucket {
 
   private static final int              VALUE_SIZE           = 17;
 
-  private static final int              KEY_SIZE             = 8;
+  private static final int              KEY_SIZE             = 192;
 
   private static final int              BUCKET_SIZE_SIZE     = 1;
 
@@ -33,7 +35,7 @@ public final class OClusterLocalLHPEBucket {
 
   private long                          overflowBucketIndex  = -2;
 
-  private final long[]                  keys                 = new long[BUCKET_CAPACITY];
+  private final ONodeId[]               keys                 = new ONodeId[BUCKET_CAPACITY];
   private final OPhysicalPosition[]     positions            = new OPhysicalPosition[BUCKET_CAPACITY];
 
   private final boolean[]               positionsToUpdate    = new boolean[BUCKET_CAPACITY];
@@ -49,9 +51,6 @@ public final class OClusterLocalLHPEBucket {
       final boolean overflowBucket) {
     this.buffer = buffer;
 
-    for (int i = 0; i < keys.length; i++)
-      keys[i] = -1;
-
     this.clusterLocal = clusterLocal;
     this.position = position;
     this.isOverflowBucket = overflowBucket;
@@ -59,9 +58,6 @@ public final class OClusterLocalLHPEBucket {
 
   public OClusterLocalLHPEBucket(final OClusterLocalLHPEPS clusterLocal, final long position, final boolean overflowBucket) {
     this.buffer = new byte[BUCKET_SIZE_IN_BYTES];
-
-    for (int i = 0; i < keys.length; i++)
-      keys[i] = -1;
 
     this.clusterLocal = clusterLocal;
     this.position = position;
@@ -95,7 +91,7 @@ public final class OClusterLocalLHPEBucket {
   public void addPhysicalPosition(OPhysicalPosition physicalPosition) {
     int index = buffer[0];
 
-    setKey(physicalPosition.clusterPosition, index);
+    setKey(((OClusterPositionNodeId) physicalPosition.clusterPosition).getNodeId(), index);
 
     positions[index] = physicalPosition;
     buffer[0]++;
@@ -106,17 +102,17 @@ public final class OClusterLocalLHPEBucket {
   }
 
   public void removePhysicalPosition(int index) {
-    buffer[0]--;
-
-    if (buffer[0] > 0) {
-      setKey(getKey(buffer[0]), index);
-      positions[index] = getPhysicalPosition(buffer[0]);
-
-      keysToUpdate[index] = true;
-      positionsToUpdate[index] = true;
-    }
-
-    addToStoreList();
+    // buffer[0]--;
+    //
+    // if (buffer[0] > 0) {
+    // setKey(getKey(buffer[0]), index);
+    // positions[index] = getPhysicalPosition(buffer[0]);
+    //
+    // keysToUpdate[index] = true;
+    // positionsToUpdate[index] = true;
+    // }
+    //
+    // addToStoreList();
   }
 
   public void setOverflowBucket(long overflowBucket) {
@@ -135,19 +131,19 @@ public final class OClusterLocalLHPEBucket {
   }
 
   public long getKey(int index) {
-    if (nativeAcceleration)
-      return CONVERTER.getLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE);
-
-    long result = keys[index];
-
-    if (result > -1)
-      return result;
-
-    result = CONVERTER.getLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE);
-
-    keys[index] = result;
-
-    return result;
+    // if (nativeAcceleration)
+    // return CONVERTER.getLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE);
+    //
+    // long result = keys[index];
+    //
+    // if (result > -1)
+    // return result;
+    //
+    // result = CONVERTER.getLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE);
+    //
+    // keys[index] = result;
+    //
+    return -1;
   }
 
   public OPhysicalPosition getPhysicalPosition(int index) {
@@ -160,7 +156,7 @@ public final class OClusterLocalLHPEBucket {
 
     int position = BUCKET_SIZE_SIZE + BUCKET_CAPACITY * KEY_SIZE + VALUE_SIZE * index;
 
-    physicalPosition.clusterPosition = getKey(index);
+    // physicalPosition.clusterPosition = getKey(index);
 
     physicalPosition.dataSegmentId = CONVERTER.getInt(buffer, position);
     position += 4;
@@ -220,7 +216,7 @@ public final class OClusterLocalLHPEBucket {
     if (!nativeAcceleration)
       for (int i = 0; i < size; i++) {
         if (keysToUpdate[i]) {
-          CONVERTER.putLong(buffer, position, keys[i]);
+          // CONVERTER.putLong(buffer, position, keys[i]);
           keysToUpdate[i] = false;
         }
 
@@ -253,13 +249,13 @@ public final class OClusterLocalLHPEBucket {
       CONVERTER.putLong(buffer, OVERFLOW_POS, overflowBucketIndex + 1);
   }
 
-  private void setKey(final long key, int index) {
-    if (nativeAcceleration) {
-      CONVERTER.putLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE, key);
-    } else {
-      keys[index] = key;
-      keysToUpdate[index] = true;
-    }
+  private void setKey(final ONodeId key, int index) {
+    // if (nativeAcceleration) {
+    // CONVERTER.putLong(buffer, index * KEY_SIZE + BUCKET_SIZE_SIZE, key);
+    // } else {
+    // keys[index] = key;
+    // keysToUpdate[index] = true;
+    // }
   }
 
   private void addToStoreList() {

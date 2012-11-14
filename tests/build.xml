@@ -9,7 +9,7 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng.jar"/>
 
-    <target name="test" depends="test-memory, test-local, test-local-lh, test-remote, test-remote-lh">
+    <target name="test" depends="test-memory, test-local, test-remote">
     </target>
 
     <target name="test-init">
@@ -75,15 +75,15 @@
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" />
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false" />
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
 
@@ -92,7 +92,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-			<jvmarg value="-Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <jvmarg value="-Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -105,12 +105,12 @@
 
         <echo>SHUTDOWNING THE SERVER...</echo>
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
 
@@ -122,14 +122,14 @@
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
                  value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
                  value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
 
@@ -138,7 +138,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-			<jvmarg value="-Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <jvmarg value="-Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -152,12 +152,12 @@
         <echo>SHUTDOWNING THE SERVER...</echo>
 
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-			<env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml" />
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
         <sleep seconds="10"/>

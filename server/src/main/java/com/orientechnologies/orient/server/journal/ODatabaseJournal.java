@@ -25,6 +25,7 @@ import java.util.List;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -203,7 +204,7 @@ public class ODatabaseJournal {
 
       if (iRid != null)
         // UPDATE THE CLUSTER POSITION: THIS IS THE CASE OF CREATE RECORD
-        file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, iRid.clusterPosition);
+        file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, iRid.clusterPosition.longValue());
 
       file.synch();
 
@@ -259,7 +260,7 @@ public class ODatabaseJournal {
         offset = writeOperationLogHeader(iOperationType, varSize);
 
         file.writeShort(offset + OFFSET_VARDATA, (short) rid.clusterId);
-        file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, rid.clusterPosition);
+        file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, rid.clusterPosition.longValue());
         break;
       }
 
@@ -316,12 +317,12 @@ public class ODatabaseJournal {
 
       switch (operationType) {
       case RECORD_CREATE: {
-        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
-            + OBinaryProtocol.SIZE_SHORT));
+        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
+            .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
 
         if (rid.isNew())
           // GET LAST RID
-          rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
+          rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(storage.getClusterDataRange(rid.clusterId)[1]);
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         if (record != null)
@@ -330,8 +331,8 @@ public class ODatabaseJournal {
       }
 
       case RECORD_UPDATE: {
-        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
-            + OBinaryProtocol.SIZE_SHORT));
+        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
+            .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         if (record != null)
@@ -340,8 +341,8 @@ public class ODatabaseJournal {
       }
 
       case RECORD_DELETE: {
-        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), file.readLong(offset + OFFSET_VARDATA
-            + OBinaryProtocol.SIZE_SHORT));
+        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
+            .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : -1);
         break;

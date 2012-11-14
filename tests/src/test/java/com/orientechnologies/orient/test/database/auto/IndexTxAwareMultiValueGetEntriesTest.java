@@ -13,6 +13,8 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
@@ -59,7 +61,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 
     final int clusterId = database.getDefaultClusterId();
 
-    final List<Long> positions = getValidPositions(clusterId);
+    final List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(0)));
     index.put(1, new ORecordId(clusterId, positions.get(1)));
@@ -93,7 +95,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    final List<Long> positions = getValidPositions(clusterId);
+    final List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(0)));
     index.put(1, new ORecordId(clusterId, positions.get(1)));
@@ -129,7 +131,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 
     final int clusterId = database.getDefaultClusterId();
 
-    final List<Long> positions = getValidPositions(clusterId);
+    final List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(0)));
     index.put(1, new ORecordId(clusterId, positions.get(1)));
@@ -144,7 +146,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     database.begin();
 
     index.clear();
-    index.put(2, new ORecordId(clusterId, 3));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
     final Collection<?> resultTwo = ((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2));
@@ -167,7 +169,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
-    final List<Long> positions = getValidPositions(clusterId);
+    final List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(0)));
     index.put(1, new ORecordId(clusterId, positions.get(1)));
@@ -202,7 +204,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 
     final int clusterId = database.getDefaultClusterId();
 
-    final List<Long> positions = getValidPositions(clusterId);
+    final List<OClusterPosition> positions = getValidPositions(clusterId);
 
     final ORecordId firstRecordId = new ORecordId(clusterId, positions.get(0));
     index.put(1, firstRecordId);
@@ -238,14 +240,14 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    List<Long> positions = getValidPositions(clusterId);
+    List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(2, new ORecordId(clusterId, positions.get(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 
     database.commit();
 
@@ -260,18 +262,18 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    List<Long> positions = getValidPositions(clusterId);
+    List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(2, new ORecordId(clusterId, positions.get(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
     database.commit();
 
     index.put(1, new ORecordId(clusterId, positions.get(3)));
 
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 3);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 3);
   }
 
   @Test
@@ -282,7 +284,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    List<Long> positions = getValidPositions(clusterId);
+    List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(2, new ORecordId(clusterId, positions.get(2)));
@@ -290,11 +292,11 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     index.remove(1, new ORecordId(clusterId, positions.get(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 
     database.commit();
 
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
   }
 
   @Test
@@ -305,7 +307,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    List<Long> positions = getValidPositions(clusterId);
+    List<OClusterPosition> positions = getValidPositions(clusterId);
 
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(2, new ORecordId(clusterId, positions.get(2)));
@@ -313,11 +315,11 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     index.remove(1, null);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
 
     database.commit();
 
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 1);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 1);
   }
 
   @Test
@@ -328,7 +330,7 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     Assert.assertTrue(index instanceof OIndexTxAwareMultiValue);
 
     final int clusterId = database.getDefaultClusterId();
-    List<Long> positions = getValidPositions(clusterId);
+    List<OClusterPosition> positions = getValidPositions(clusterId);
     index.put(1, new ORecordId(clusterId, positions.get(1)));
     index.put(2, new ORecordId(clusterId, positions.get(2)));
 
@@ -336,15 +338,15 @@ public class IndexTxAwareMultiValueGetEntriesTest {
     index.put(1, new ORecordId(clusterId, positions.get(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetEntriesTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
 
     database.commit();
 
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).getEntries(Arrays.asList(1, 2)).size(), 2);
+    Assert.assertEquals(index.getEntries(Arrays.asList(1, 2)).size(), 2);
   }
 
-  private List<Long> getValidPositions(int clusterId) {
-    final List<Long> positions = new ArrayList<Long>();
+  private List<OClusterPosition> getValidPositions(int clusterId) {
+    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 

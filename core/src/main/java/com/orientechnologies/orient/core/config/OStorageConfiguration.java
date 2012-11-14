@@ -26,6 +26,7 @@ import java.util.TimeZone;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -45,7 +46,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID       = new OImmutableRecordId(0, 0);
+  public static final ORecordId             CONFIG_RID       = new OImmutableRecordId(0,
+                                                                 OClusterPositionFactory.INSTANCE.valueOf(0));
+
   public static final String                DEFAULT_TIMEZONE = "UTC";
   public static final String                DEFAULT_CHARSET  = "UTF-8";
 

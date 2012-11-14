@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -423,7 +424,7 @@ public class OObjectSerializerHelper {
           if (cls == null)
             throw new OConfigurationException("Class " + iPojo.getClass() + " is not managed by current database");
 
-          return new ORecordId(cls.getDefaultClusterId(), ((Number) id).longValue());
+          return new ORecordId(cls.getDefaultClusterId(), OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue()));
         } else if (id instanceof String)
           return new ORecordId((String) id);
       }
@@ -547,7 +548,7 @@ public class OObjectSerializerHelper {
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
-          ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
+          ((ORecordId) iRecord.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue());
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))

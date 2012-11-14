@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterLocalLHPEStatisti
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -395,60 +396,61 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    acquireExclusiveLock();
-    try {
-      long[] pos = calculatePageIndex(iPPosition.clusterPosition);
-      long position = pos[0];
-      final long offset = pos[1];
-
-      final int prevChainLength = getMainBucketOverflowChainLength(position);
-
-      int chainLength = 0;
-
-      OClusterLocalLHPEBucket currentBucket = loadMainBucket(position);
-
-      while (true) {
-        for (int i = 0; i < currentBucket.getSize(); i++) {
-          long bucketKey = currentBucket.getKey(i);
-
-          if (bucketKey == iPPosition.clusterPosition)
-            return false;
-        }
-
-        if (currentBucket.getOverflowBucket() > -1) {
-          currentBucket = loadOverflowBucket(currentBucket.getOverflowBucket());
-          chainLength++;
-        } else
-          break;
-      }
-
-      iPPosition.recordVersion = 0;
-      if (currentBucket.getSize() < OClusterLocalLHPEBucket.BUCKET_CAPACITY)
-        currentBucket.addPhysicalPosition(iPPosition);
-      else {
-        final OverflowBucketInfo bucketInfo = popOverflowBucket();
-
-        final OClusterLocalLHPEBucket overflowBucket = bucketInfo.bucket;
-
-        currentBucket.setOverflowBucket(bucketInfo.index);
-        overflowBucket.addPhysicalPosition(iPPosition);
-
-        chainLength++;
-        updateMainBucketOverflowChainLength(position, chainLength);
-        updateBucketGroupOverflowChainLength(offset, chainLength - prevChainLength);
-      }
-
-      size++;
-
-      splitBucketIfNeeded();
-
-      storeBuckets();
-
-      return true;
-    } finally {
-      clearCache();
-      releaseExclusiveLock();
-    }
+    // acquireExclusiveLock();
+    // try {
+    // long[] pos = calculatePageIndex(iPPosition.clusterPosition);
+    // long position = pos[0];
+    // final long offset = pos[1];
+    //
+    // final int prevChainLength = getMainBucketOverflowChainLength(position);
+    //
+    // int chainLength = 0;
+    //
+    // OClusterLocalLHPEBucket currentBucket = loadMainBucket(position);
+    //
+    // while (true) {
+    // for (int i = 0; i < currentBucket.getSize(); i++) {
+    // long bucketKey = currentBucket.getKey(i);
+    //
+    // if (bucketKey == iPPosition.clusterPosition)
+    // return false;
+    // }
+    //
+    // if (currentBucket.getOverflowBucket() > -1) {
+    // currentBucket = loadOverflowBucket(currentBucket.getOverflowBucket());
+    // chainLength++;
+    // } else
+    // break;
+    // }
+    //
+    // iPPosition.recordVersion = 0;
+    // if (currentBucket.getSize() < OClusterLocalLHPEBucket.BUCKET_CAPACITY)
+    // currentBucket.addPhysicalPosition(iPPosition);
+    // else {
+    // final OverflowBucketInfo bucketInfo = popOverflowBucket();
+    //
+    // final OClusterLocalLHPEBucket overflowBucket = bucketInfo.bucket;
+    //
+    // currentBucket.setOverflowBucket(bucketInfo.index);
+    // overflowBucket.addPhysicalPosition(iPPosition);
+    //
+    // chainLength++;
+    // updateMainBucketOverflowChainLength(position, chainLength);
+    // updateBucketGroupOverflowChainLength(offset, chainLength - prevChainLength);
+    // }
+    //
+    // size++;
+    //
+    // splitBucketIfNeeded();
+    //
+    // storeBuckets();
+    //
+    // return true;
+    // } finally {
+    // clearCache();
+    // releaseExclusiveLock();
+    // }
+    return false;
   }
 
   @Override
@@ -457,17 +459,38 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    acquireSharedLock();
-    try {
-      final BucketInfo bucketInfo = findBucket(iPPosition.clusterPosition);
-      if (bucketInfo == null)
-        return null;
+    // acquireSharedLock();
+    // try {
+    // final BucketInfo bucketInfo = findBucket(iPPosition.clusterPosition);
+    // if (bucketInfo == null)
+    // return null;
+    //
+    // return bucketInfo.bucket.getPhysicalPosition(bucketInfo.index);
+    // } finally {
+    // clearCache();
+    // releaseSharedLock();
+    // }
+    return null;
+  }
 
-      return bucketInfo.bucket.getPhysicalPosition(bucketInfo.index);
-    } finally {
-      clearCache();
-      releaseSharedLock();
-    }
+  @Override
+  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
+    // To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
+    // To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void updateRecordType(OClusterPosition iPosition, byte iRecordType) throws IOException {
+    // To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
+    // To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override

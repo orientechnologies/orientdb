@@ -18,15 +18,16 @@ package com.orientechnologies.orient.test.java.collection;
 
 import java.util.Random;
 
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.OBuddyMemory;
 import com.orientechnologies.common.directmemory.collections.ODirectMemoryHashMap;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -34,7 +35,7 @@ import org.testng.annotations.Test;
  */
 public class DirectMemoryHashMapSpeedTest extends CollectionBaseAbstractSpeedTest {
   private static final int                            COUNT  = 1000000;
-  private static final ORID                           rid    = new ORecordId(10, 100);
+  private static final ORID                           rid    = new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(100));
 
   private ODirectMemoryHashMap<String, OIdentifiable> hashMap;
   private Random                                      random = new Random();

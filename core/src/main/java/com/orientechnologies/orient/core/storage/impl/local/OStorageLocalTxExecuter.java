@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -130,7 +131,8 @@ public class OStorageLocalTxExecuter {
     return -1;
   }
 
-  protected boolean deleteRecord(final int iTxId, final OCluster iClusterSegment, final long iPosition, final int iVersion) {
+  protected boolean deleteRecord(final int iTxId, final OCluster iClusterSegment, final OClusterPosition iPosition,
+      final int iVersion) {
     try {
       final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
@@ -254,9 +256,9 @@ public class OStorageLocalTxExecuter {
                       .getRecordType()));
         else
           txEntry.getRecord().setVersion(
-									iTx.getDatabase().getStorage()
-													.updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
-													.getResult());
+              iTx.getDatabase().getStorage()
+                  .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
+                  .getResult());
       }
       break;
     }

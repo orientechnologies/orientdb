@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -235,7 +236,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           // ASSIGN A UNIQUE SERIAL TEMPORARY ID
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
             rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-          rid.clusterPosition = newObjectCounter--;
+          rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(newObjectCounter--);
 
           iRecord.onAfterIdentityChanged(iRecord);
         } else

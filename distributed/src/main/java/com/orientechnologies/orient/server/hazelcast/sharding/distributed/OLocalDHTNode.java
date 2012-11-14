@@ -642,7 +642,7 @@ public class OLocalDHTNode implements ODHTNode {
             final ORecordInternal<?> rec = it.next();
             lockManager.acquireLock(Thread.currentThread(), rec.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
             try {
-              final long successorId = findSuccessor(rec.getIdentity().getClusterPosition());
+              final long successorId = findSuccessor(rec.getIdentity().getClusterPosition().longValue());
               if (successorId != id) {
                 final ODHTNode node = nodeLookup.findById(successorId);
 

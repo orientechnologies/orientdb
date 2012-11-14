@@ -51,7 +51,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
     final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
     OMVRBTreeEntryPersistent<K, V> entry;
     for (ORID rid : keys) {
-      if (rid.getClusterPosition() < -1) {
+      if (rid.getClusterPosition().isTemporary()) {
         // FIX IT IN CACHE
         entry = (OMVRBTreeEntryPersistent<K, V>) searchNodeInCache(rid);
 

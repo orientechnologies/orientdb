@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -249,10 +250,10 @@ public class ODatabaseRaw implements ODatabase {
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
     try {
-      if (iForceCreate || iRid.clusterPosition < 0) {
+      if (iForceCreate || iRid.clusterPosition.isNew()) {
         // CREATE
         final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-            iRecordType, iMode, (ORecordCallback<Long>) iCallBack);
+            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iCallBack);
         return new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {

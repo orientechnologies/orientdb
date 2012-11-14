@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -109,9 +111,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   @Override
-  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     if (currentClusterId == -1)
-      return new long[] { -1, -1 };
+      return new OClusterPosition[] { OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION };
 
     checkOpeness();
 
@@ -119,7 +121,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     try {
       final OCluster cluster = getClusterById(currentClusterId);
       final OPhysicalPosition[] physicalPositions = cluster.getPositionsByEntryPos(entry);
-      final long[] positions = new long[physicalPositions.length];
+      final OClusterPosition[] positions = new OClusterPosition[physicalPositions.length];
 
       for (int i = 0; i < positions.length; i++)
         positions[i] = physicalPositions[i].clusterPosition;
@@ -160,7 +162,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       if (originalId.getClusterId() == newId.getClusterId())
         throw new OStorageException("Record identity can not be moved inside of the same non LH based cluster.");
 
-      if (newId.getClusterPosition() <= destinationCluster.getLastEntryPosition())
+      if (newId.getClusterPosition().longValue() <= destinationCluster.getLastEntryPosition())
         throw new OStorageException("New position " + newId.getClusterPosition() + " of " + originalId + " record inside of "
             + destinationCluster.getName() + " cluster and can not be used as destination");
 
@@ -180,17 +182,17 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       if (!destinationCluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with id " + newId + " has already exists in cluster " + destinationCluster.getName());
     } else {
-      final int diff = (int) (newId.getClusterPosition() - destinationCluster.getLastEntryPosition() - 1);
+      final int diff = (int) (newId.getClusterPosition().longValue() - destinationCluster.getLastEntryPosition() - 1);
 
-      final long startPos = destinationCluster.getLastEntryPosition() + 1;
-      long pos = startPos;
+      final OClusterPosition startPos = OClusterPositionFactory.INSTANCE.valueOf(destinationCluster.getLastEntryPosition() + 1);
+      OClusterPosition pos = startPos;
 
       final OPhysicalPosition physicalPosition = new OPhysicalPosition(pos);
       for (int i = 0; i < diff; i++) {
         physicalPosition.clusterPosition = pos;
 
         destinationCluster.addPhysicalPosition(physicalPosition);
-        pos++;
+        pos = pos.inc();
       }
 
       destinationCluster.addPhysicalPosition(ppos);
@@ -198,7 +200,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       pos = startPos;
       for (int i = 0; i < diff; i++) {
         destinationCluster.removePhysicalPosition(pos);
-        pos++;
+        pos = pos.inc();
       }
     }
 

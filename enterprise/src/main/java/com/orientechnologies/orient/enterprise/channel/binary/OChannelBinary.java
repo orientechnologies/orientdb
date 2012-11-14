@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -220,7 +222,10 @@ public abstract class OChannelBinary extends OChannel {
   }
 
   public ORecordId readRID() throws IOException {
-    return new ORecordId(readShort(), readLong());
+    final int clusterId = readShort();
+
+    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(readBytes());
+    return new ORecordId(clusterId, clusterPosition);
   }
 
   public OChannelBinary writeByte(final byte iContent) throws IOException {
@@ -317,7 +322,7 @@ public abstract class OChannelBinary extends OChannel {
 
   public void writeRID(final ORID iRID) throws IOException {
     writeShort((short) iRID.getClusterId());
-    writeLong(iRID.getClusterPosition());
+    writeBytes(iRID.getClusterPosition().toStream());
   }
 
   public void clearInput() throws IOException {

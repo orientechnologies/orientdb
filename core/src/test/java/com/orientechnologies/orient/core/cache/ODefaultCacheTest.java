@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -124,7 +125,7 @@ public class ODefaultCacheTest {
     OCache sut = enabledCache();
 
     // When new record put into
-    ORecordId id = new ORecordId(1, 1);
+    ORecordId id = new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1));
     ODocument record = new ODocument(id);
     sut.put(record);
 
@@ -138,8 +139,8 @@ public class ODefaultCacheTest {
     final int initialSize = sut.size();
 
     // When some records with same identity put in several times
-    ODocument first = new ODocument(new ORecordId(1, 1));
-    ODocument last = new ODocument(new ORecordId(1, 1));
+    ODocument first = new ODocument(new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    ODocument last = new ODocument(new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
     sut.put(first);
     sut.put(last);
 
@@ -150,7 +151,7 @@ public class ODefaultCacheTest {
   public void removesOnlyOnce() {
     // Given an enabled cache with records in it
     OCache sut = enabledCache();
-    ORecordId id = new ORecordId(1, 1);
+    ORecordId id = new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1));
     ODocument record = new ODocument(id);
     sut.put(record);
     sut.remove(id);
@@ -168,7 +169,7 @@ public class ODefaultCacheTest {
 
     // When stored more distinct elements than cache limit allows
     for (int i = sut.limit() + 2; i > 0; i--)
-      sut.put(new ODocument(new ORecordId(i, i)));
+      sut.put(new ODocument(new ORecordId(i, OClusterPositionFactory.INSTANCE.valueOf(i))));
 
     // Then size of cache should be exactly as it's limit
     assertEquals(sut.size(), sut.limit(), "Cache doesn't meet limit requirements");
@@ -186,8 +187,8 @@ public class ODefaultCacheTest {
 
   private OCache enabledNonEmptyCache() {
     OCache cache = enabledCache();
-    cache.put(new ODocument(new ORecordId(1, 1)));
-    cache.put(new ODocument(new ORecordId(2, 2)));
+    cache.put(new ODocument(new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1))));
+    cache.put(new ODocument(new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2))));
     return cache;
   }
 

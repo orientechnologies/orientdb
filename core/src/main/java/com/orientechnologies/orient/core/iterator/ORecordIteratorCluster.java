@@ -105,7 +105,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
 
     boolean thereAreRecordsToBrowse;
 
-    if (current.clusterPosition <= -2)
+    if (current.clusterPosition.isTemporary())
       thereAreRecordsToBrowse = false;
     else if (currentEntry < lastClusterEntry)
       thereAreRecordsToBrowse = true;

@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -133,7 +134,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
       boolean thereAreRecordsToBrowse;
-      if (current.clusterPosition <= -2)
+      if (current.clusterPosition.isTemporary())
         thereAreRecordsToBrowse = false;
       else if (currentEntry == lastClusterEntry
           && (currentPositions.length == 0 || currentPositionIndex >= currentPositions.length))
@@ -147,7 +148,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
           break;
         }
 
-        final long currentPosition = currentPosition();
+        final OClusterPosition currentPosition = currentPosition();
         if (outsideOfTheRange(currentPosition))
           continue;
 
@@ -179,11 +180,11 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     return false;
   }
 
-  private boolean outsideOfTheRange(long currentPosition) {
-    if (beginRange != null && currentPosition < beginRange.getClusterPosition())
+  private boolean outsideOfTheRange(OClusterPosition currentPosition) {
+    if (beginRange != null && currentPosition.compareTo(beginRange.getClusterPosition()) < 0)
       return true;
 
-    if (endRange != null && currentPosition > endRange.getClusterPosition())
+    if (endRange != null && currentPosition.compareTo(endRange.getClusterPosition()) > 0)
       return true;
 
     return false;
@@ -358,9 +359,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   }
 
   protected void config() {
-    if( clusterIds.length == 0 )
+    if (clusterIds.length == 0)
       return;
-    
+
     currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
     updateClusterRange();
