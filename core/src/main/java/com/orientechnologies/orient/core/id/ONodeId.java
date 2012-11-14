@@ -29,6 +29,11 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.MersenneTwister;
 
 /**
+ * Id of the server node in autoshareded storage. It is presented as 192 bit number with values from -2<sup>192</sup>+1 till
+ * 2<sup>192</sup>-1.
+ * 
+ * Internally it presents as unsigned 192 bit number with signature flag.
+ * 
  * @author Andrey Lomakin
  * @since 12.11.12
  */

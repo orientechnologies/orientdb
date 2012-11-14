@@ -19,6 +19,8 @@ package com.orientechnologies.orient.core.id;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
+ * 64 bit signed presentation of {@link OClusterPosition} instance. With values from -2<sup>63</sup> till 2<sup>63</sup>-1.
+ * 
  * @author Andrey Lomakin
  * @since 12.11.12
  */

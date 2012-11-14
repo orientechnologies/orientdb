@@ -17,6 +17,10 @@
 package com.orientechnologies.orient.core.id;
 
 /**
+ * 
+ * 192 bit signed presentation of {@link OClusterPosition} instance. With values from -2<sup>192</sup>+1 till 2<sup>192</sup>-1. It
+ * is based on {@link ONodeId} class so conversion from nodeid to cluster position for autosharded storage is pretty simple task.
+ * 
  * @author Andrey Lomakin
  * @since 12.11.12
  */

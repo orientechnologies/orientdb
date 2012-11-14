@@ -25,6 +25,8 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
+ * Factory is used to create new instances of {@link OClusterPosition} class.
+ * 
  * @author Andrey Lomakin
  * @since 12.11.12
  */
@@ -45,6 +47,10 @@ public abstract class OClusterPositionFactory {
 
   public abstract OClusterPosition fromStream(byte[] content, int start);
 
+  /**
+   * @return Size of {@link OClusterPosition} instance in serialized form.
+   * @see com.orientechnologies.orient.core.id.OClusterPosition#toStream()
+   */
   public abstract int getSerializedSize();
 
   public OClusterPosition fromStream(byte[] content) {
