@@ -59,7 +59,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (iExpression == null)
       throw new OProcessException("Null expression");
 
-    final OSQLPredicate predicate = new OSQLPredicate((String) resolveInContext(iExpression, iContext));
+    final OSQLPredicate predicate = new OSQLPredicate((String) resolve(iExpression, iContext));
     final Object result = predicate.evaluate(iContext);
 
     debug(iContext, "Evaluated expression '" + iExpression + "' = " + result);
@@ -149,9 +149,10 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     return iValue instanceof ODocument && ((ODocument) iValue).containsField(("type"));
   }
 
-  public static Object resolveInContext(final Object iContent, final OCommandContext iContext) {
+  public static Object resolve(final Object iContent, final OCommandContext iContext) {
+    Object value = null;
     if (iContent instanceof String)
-      return OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
+      value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
           OSystemVariableResolver.VAR_END, new OVariableParserListener() {
 
             @Override
@@ -160,6 +161,19 @@ public abstract class OAbstractBlock implements OProcessorBlock {
             }
 
           });
-    return iContent;
+    else
+      value = iContent;
+
+    if (value instanceof String)
+      value = OVariableParser.resolveVariables((String) value, "={", "}", new OVariableParserListener() {
+
+        @Override
+        public Object resolve(final String iVariable) {
+          return new OSQLPredicate(iVariable).evaluate(iContext);
+        }
+
+      });
+    
+    return value;
   }
 }

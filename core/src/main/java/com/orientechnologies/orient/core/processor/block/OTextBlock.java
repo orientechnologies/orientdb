@@ -25,13 +25,13 @@ public class OTextBlock extends OAbstractBlock {
   public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
 
-    Object value = resolveInContext(getRequiredField(iConfig, "value"), iContext);
+    Object value = resolve(getRequiredField(iConfig, "value"), iContext);
 
-    final Object source = resolveInContext(getFieldOfClass(iConfig, "source", String.class), iContext);
+    final Object source = resolve(getFieldOfClass(iConfig, "source", String.class), iContext);
     if (source != null)
       value = ODocumentHelper.getFieldValue(source, value.toString());
 
-    return resolveInContext(value, iContext).toString();
+    return resolve(value, iContext).toString();
   }
 
   @Override

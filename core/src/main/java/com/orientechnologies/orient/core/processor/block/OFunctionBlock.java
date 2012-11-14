@@ -39,7 +39,7 @@ public class OFunctionBlock extends OAbstractBlock {
       args = new Object[configuredArgs.size()];
       int argIdx = 0;
       for (Object arg : configuredArgs) {
-        Object value = resolveInContext(arg, iContext);
+        Object value = resolve(arg, iContext);
 
         if (value instanceof List<?>)
           // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT

@@ -34,15 +34,25 @@ public class OQueryBlock extends OAbstractBlock {
 
     String command = parse((ODocument) iConfig, iContext);
 
-    command = (String) resolveInContext(command, iContext);
+    command = (String) resolve(command, iContext);
 
     debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command + "...");
 
     final OCommandRequestText cmd = new OSQLSynchQuery<OIdentifiable>(command.toString());
 
+    cmd.getContext().setParent(iContext);
+
     // CREATE THE RIGHT COMMAND BASED ON IDEMPOTENCY
     // final OCommandRequestText cmd = iReadOnly ? new OSQLSynchQuery<OIdentifiable>(command.toString()) : new OCommandSQL(
     // command.toString());
+
+    final String returnVariable = getFieldOfClass(iConfig, "return", String.class);
+    if (returnVariable != null) {
+      final List<?> result = cmd.execute();
+      debug(iContext, "Returned %d records", result.size());
+      assignVariable(iContext, returnVariable, result);
+      return null;
+    }
 
     return cmd;
   }
@@ -64,6 +74,7 @@ public class OQueryBlock extends OAbstractBlock {
 
     generateProjections(iContent, command);
     generateTarget(iContent, command);
+    generateLet(iContent, command);
     generateLimit(iContent, command);
     generateFilter(iContent, command);
     generateGroupBy(iContent, command);
@@ -108,6 +119,14 @@ public class OQueryBlock extends OAbstractBlock {
     if (target != null) {
       iCommandText.append(" from ");
       iCommandText.append(target);
+    }
+  }
+
+  private void generateLet(ODocument iInput, final StringBuilder iCommandText) {
+    final String let = getField(iInput, "let");
+    if (let != null) {
+      iCommandText.append(" let ");
+      iCommandText.append(let);
     }
   }
 

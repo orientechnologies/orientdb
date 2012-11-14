@@ -32,8 +32,8 @@ public class OListBlock extends OAbstractBlock {
   public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
       final boolean iReadOnly) {
 
-    final Object source = resolveInContext(getFieldOfClass(iConfig, "source", String.class), iContext);
-    final Object values = resolveInContext(getRequiredField(iConfig, "values"), iContext);
+    final Object source = resolve(getFieldOfClass(iConfig, "source", String.class), iContext);
+    final Object values = resolve(getRequiredField(iConfig, "values"), iContext);
     final String bind = getFieldOfClass(iConfig, "bind", String.class);
     final Boolean merge = getFieldOfClass(iConfig, "merge", Boolean.class);
     final Object onNull = getField(iConfig, "onNull");
@@ -52,7 +52,7 @@ public class OListBlock extends OAbstractBlock {
         if (source != null)
           item = ODocumentHelper.getFieldValue(source, item.toString());
 
-        result = resolveInContext(item, iContext);
+        result = resolve(item, iContext);
       }
 
       if (result == null) {

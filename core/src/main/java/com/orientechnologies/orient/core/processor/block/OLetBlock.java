@@ -41,12 +41,12 @@ public class OLetBlock extends OAbstractBlock {
       if (values instanceof ODocument) {
         final ODocument doc = ((ODocument) values);
         for (String fieldName : doc.fieldNames())
-          assignVariable(iContext, resolveInContext(fieldName, iContext).toString(),
-              resolveInContext(doc.field(fieldName), iContext));
+          assignVariable(iContext, resolve(fieldName, iContext).toString(),
+              resolve(doc.field(fieldName), iContext));
       } else if (values instanceof Map<?, ?>) {
         for (Entry<Object, Object> entry : ((Map<Object, Object>) values).entrySet()) {
-          assignVariable(iContext, resolveInContext(entry.getKey(), iContext).toString(),
-              getValue(resolveInContext(entry.getValue(), iContext), copy));
+          assignVariable(iContext, resolve(entry.getKey(), iContext).toString(),
+              getValue(resolve(entry.getValue(), iContext), copy));
         }
 
       } else
@@ -58,7 +58,13 @@ public class OLetBlock extends OAbstractBlock {
 
       Object value = getRequiredField(iConfig, "value");
       if (value instanceof String)
-        value = resolveInContext(value, iContext);
+        value = resolve(value, iContext);
+      else if (value instanceof List<?>) {
+        List<Object> list = (List<Object>) value;
+        for (int i = 0; i < list.size(); ++i)
+          list.set(i, resolve(list.get(i), iContext));
+
+      }
       assignVariable(iContext, name, getValue(value, copy));
     }
 
