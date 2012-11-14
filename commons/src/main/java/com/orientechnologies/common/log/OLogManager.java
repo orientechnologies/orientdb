@@ -44,7 +44,7 @@ public class OLogManager {
         if (iException != null)
           log.log(iLevel, msg, iException);
         else
-          log.log(iLevel, msg, iAdditionalArgs);
+          log.log(iLevel, msg);
       }
     }
   }

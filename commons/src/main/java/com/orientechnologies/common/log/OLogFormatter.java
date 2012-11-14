@@ -9,70 +9,73 @@ import java.util.logging.LogRecord;
 
 public class OLogFormatter extends Formatter {
 
-	private static final DateFormat	dateFormat	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+  private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 
-	/**
-	 * The end-of-line character for this platform.
-	 */
-	private static final String			EOL					= System.getProperty("line.separator");
+  /**
+   * The end-of-line character for this platform.
+   */
+  private static final String     EOL        = System.getProperty("line.separator");
 
-	@Override
-	public String format(final LogRecord record) {
-		if (record.getThrown() == null) {
-			return customFormatMessage(record);
-		}
+  @Override
+  public String format(final LogRecord record) {
+    if (record.getThrown() == null) {
+      return customFormatMessage(record);
+    }
 
-		// FORMAT THE STACK TRACE
-		final StringBuilder buffer = new StringBuilder();
-		buffer.append(record.getMessage());
+    // FORMAT THE STACK TRACE
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(record.getMessage());
 
-		Throwable current = record.getThrown();
+    Throwable current = record.getThrown();
 
-		while (current != null) {
-			buffer.append(EOL).append(current.getMessage());
+    while (current != null) {
+      buffer.append(EOL).append(current.getMessage());
 
-			for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
-				buffer.append(EOL).append("-> ");
-				buffer.append(stackTraceElement.toString());
-			}
-			current = current.getCause();
-		}
+      for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
+        buffer.append(EOL).append("-> ");
+        buffer.append(stackTraceElement.toString());
+      }
+      current = current.getCause();
+    }
 
-		return buffer.toString();
-	}
+    return buffer.toString();
+  }
 
-	private String customFormatMessage(final LogRecord iRecord) {
-		Level iLevel = iRecord.getLevel();
-		String iMessage = iRecord.getMessage();
-		Object[] iAdditionalArgs = iRecord.getParameters();
-		String iRequester = getSourceClassSimpleName(iRecord.getLoggerName());
+  private String customFormatMessage(final LogRecord iRecord) {
+    Level iLevel = iRecord.getLevel();
+    String iMessage = iRecord.getMessage();
+    Object[] iAdditionalArgs = iRecord.getParameters();
+    String iRequester = getSourceClassSimpleName(iRecord.getLoggerName());
 
-		final StringBuilder buffer = new StringBuilder();
-		buffer.append(EOL);
-		synchronized (dateFormat) {
-			buffer.append(dateFormat.format(new Date()));
-		}
-		buffer.append(' ');
-		buffer.append(iLevel.getName().substring(0, 4));
-		buffer.append(' ');
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(EOL);
+    synchronized (dateFormat) {
+      buffer.append(dateFormat.format(new Date()));
+    }
+    buffer.append(' ');
+    buffer.append(iLevel.getName().substring(0, 4));
+    buffer.append(' ');
 
-		// FORMAT THE MESSAGE
-		try {
-			buffer.append(String.format(iMessage, iAdditionalArgs));
-		} catch (Exception e) {
-			buffer.append(iMessage);
-		}
+    // FORMAT THE MESSAGE
+    try {
+      if (iAdditionalArgs != null)
+        buffer.append(String.format(iMessage, iAdditionalArgs));
+      else
+        buffer.append(iMessage);
+    } catch (Exception e) {
+      buffer.append(iMessage);
+    }
 
-		if (iRequester != null) {
-			buffer.append(" [");
-			buffer.append(iRequester);
-			buffer.append(']');
-		}
+    if (iRequester != null) {
+      buffer.append(" [");
+      buffer.append(iRequester);
+      buffer.append(']');
+    }
 
-		return buffer.toString();
-	}
+    return buffer.toString();
+  }
 
-	private String getSourceClassSimpleName(final String iSourceClassName) {
-		return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
-	}
+  private String getSourceClassSimpleName(final String iSourceClassName) {
+    return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
+  }
 }
