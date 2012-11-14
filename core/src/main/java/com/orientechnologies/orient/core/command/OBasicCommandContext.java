@@ -34,9 +34,12 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext     child;
   protected Map<String, Object> variables;
 
-  public Object getVariable(final String iName) {
+  public Object getVariable(String iName) {
     if (iName == null)
       return null;
+
+    if (iName.startsWith("$"))
+      iName = iName.substring(1);
 
     int pos = OStringSerializerHelper.getLowerIndexOf(iName, 0, ".", "[");
 
@@ -72,17 +75,27 @@ public class OBasicCommandContext implements OCommandContext {
     }
 
     if (pos > -1)
-      result = ODocumentHelper.getFieldValue(result, lastPart);
+      result = ODocumentHelper.getFieldValue(result, lastPart, this);
 
     return result;
   }
 
-  public OCommandContext setVariable(final String iName, final Object iValue) {
+  public OCommandContext setVariable(String iName, final Object iValue) {
     if (iName == null)
       return null;
 
+    if (iName.startsWith("$"))
+      iName = iName.substring(1);
+
     init();
-    variables.put(iName, iValue);
+
+    int pos = OStringSerializerHelper.getHigherIndexOf(iName, 0, ".", "[");
+    if (pos > -1) {
+      Object nested = getVariable(iName.substring(0, pos));
+      if (nested != null && nested instanceof OCommandContext)
+        ((OCommandContext) nested).setVariable(iName.substring(pos + 1), iValue);
+    } else
+      variables.put(iName, iValue);
     return this;
   }
 

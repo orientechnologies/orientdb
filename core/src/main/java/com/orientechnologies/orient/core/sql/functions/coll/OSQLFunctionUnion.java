@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns, a
@@ -38,11 +39,16 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters.length == 1) {
       // AGGREGATION MODE (STATEFULL)
-      final Object value = iParameters[0];
+      Object value = iParameters[0];
       if (value != null) {
+
+        if (value instanceof OSQLFilterItemVariable)
+          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+
         if (context == null)
           context = new HashSet<Object>();
 
@@ -58,12 +64,17 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
       // IN-LINE MODE (STATELESS)
       final HashSet<Object> result = new HashSet<Object>();
       for (Object value : iParameters) {
-        if (value != null)
+        if (value != null) {
+
+          if (value instanceof OSQLFilterItemVariable)
+            value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+
           if (value instanceof Collection<?>)
             // INSERT EVERY SINGLE COLLECTION ITEM
             result.addAll((Collection<?>) value);
           else
             result.add(value);
+        }
       }
 
       return result;

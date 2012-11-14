@@ -28,6 +28,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -70,7 +71,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               if (op.minArguments > 0) {
                 arguments = OStringSerializerHelper.getParameters(part);
                 if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
-                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + op.keyword + "' needs "
+                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + op.keyword
+                      + "' needs "
                       + (op.minArguments == op.maxArguments ? op.minArguments : op.minArguments + "-" + op.maxArguments)
                       + " argument(s) while has been received " + arguments.size(), 0);
               } else
@@ -144,9 +146,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               } else if (ioResult instanceof OIdentifiable)
                 ioResult = ((OIdentifiable) ioResult).getRecord();
 
-              if (ioResult != null) {
-                ioResult = ODocumentHelper.getFieldValue(ioResult, op.value.get(0));
-              }
+              if (ioResult != null)
+                if (ioResult instanceof OCommandContext)
+                  ioResult = ((OCommandContext) ioResult).getVariable(op.value.get(0));
+                else
+                  ioResult = ODocumentHelper.getFieldValue(ioResult, op.value.get(0));
             }
 
             // OTHER OPERATORS

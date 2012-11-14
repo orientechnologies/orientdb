@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -38,8 +39,12 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     Object value = iParameters[0];
+
+    if (value instanceof OSQLFilterItemVariable)
+      value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
 
     if (value == null || !(value instanceof Collection<?>))
       return null;
@@ -62,6 +67,10 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
 
       for (int i = 1; i < iParameters.length; ++i) {
         value = iParameters[i];
+
+        if (value instanceof OSQLFilterItemVariable)
+          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+
         result.retainAll((Collection<?>) value);
       }
 
