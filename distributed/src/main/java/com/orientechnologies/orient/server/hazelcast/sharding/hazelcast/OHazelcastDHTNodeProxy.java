@@ -148,8 +148,8 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class GetSuccessorNodeCall extends NodeCall<Long> {
-      
-    private GetSuccessorNodeCall() {
+
+    public GetSuccessorNodeCall() {
     }
 
     private GetSuccessorNodeCall(long nodeId, String memberUUID) {
@@ -163,8 +163,8 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class GetPredecessorNodeCall extends NodeCall<Long> {
-      
-    private GetPredecessorNodeCall() {
+
+    public GetPredecessorNodeCall() {
     }
 
     private GetPredecessorNodeCall(long nodeId, String memberUUID) {
@@ -178,10 +178,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class JoinNodeCall extends NodeCall<Boolean> {
-      
+
     private long joinNodeId;
 
-    private JoinNodeCall() {
+    public JoinNodeCall() {
     }
 
     private JoinNodeCall(long nodeId, String memberUUID, long joinNodeId) {
@@ -208,10 +208,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class NotifyNodeCall extends NodeCall<Void> {
-      
+
     private long notifyNodeId;
 
-    private NotifyNodeCall() {
+    public NotifyNodeCall() {
     }
 
     private NotifyNodeCall(long nodeId, String memberUUID, long notifyNodeId) {
@@ -240,10 +240,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class FindSuccessorNodeCall extends NodeCall<Long> {
-      
+
     private long keyId;
 
-    private FindSuccessorNodeCall() {
+    public FindSuccessorNodeCall() {
     }
 
     private FindSuccessorNodeCall(long nodeId, String memberUUID, long keyId) {
@@ -270,10 +270,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class NotifyMigrationEndNodeCall extends NodeCall<Void> {
-      
+
     private long notifierId;
 
-    private NotifyMigrationEndNodeCall() {
+    public NotifyMigrationEndNodeCall() {
     }
 
     private NotifyMigrationEndNodeCall(long nodeId, String memberUUID, long notifierId) {
@@ -301,10 +301,10 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   private static final class RequestMigrationNodeCall extends NodeCall<Void> {
-      
+
     private long requesterId;
 
-    private RequestMigrationNodeCall() {
+    public RequestMigrationNodeCall() {
     }
 
     private RequestMigrationNodeCall(long nodeId, String memberUUID, long requesterId) {
@@ -339,7 +339,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private int       recordVersion;
     private byte      recordType;
 
-    private CreateRecordNodeCall() {
+    public CreateRecordNodeCall() {
     }
 
     private CreateRecordNodeCall(long nodeId, String memberUUID, String storageName, ORecordId iRecordId, byte[] iContent,
@@ -383,7 +383,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private String storageName;
     private ORID   iRid;
 
-    private LoadRecordNodeCall() {
+    public LoadRecordNodeCall() {
     }
 
     private LoadRecordNodeCall(long nodeId, String uuid, String storageName, ORID iRid) {
@@ -420,7 +420,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private int       iVersion;
     private byte      iRecordType;
 
-    private UpdateRecordNodeCall() {
+    public UpdateRecordNodeCall() {
     }
 
     public UpdateRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, byte[] iContent, int iVersion,
@@ -459,13 +459,13 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     }
   }
 
-  private static final  class DeleteRecordNodeCall extends NodeCall<Boolean> {
+  private static final class DeleteRecordNodeCall extends NodeCall<Boolean> {
 
     private String    storageName;
     private ORecordId iRecordId;
     private int       iVersion;
 
-    private DeleteRecordNodeCall() {
+    public DeleteRecordNodeCall() {
     }
 
     private DeleteRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, int iVersion) {
@@ -502,7 +502,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     private String              storageName;
     private OCommandRequestText request;
 
-    private CommandCall() {
+    public CommandCall() {
     }
 
     private CommandCall(long nodeId, String memberUUID, String storageName, OCommandRequestText request) {
