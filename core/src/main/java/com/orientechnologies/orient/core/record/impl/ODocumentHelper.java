@@ -33,6 +33,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -207,8 +208,12 @@ public class ODocumentHelper {
     return (RET) iValue;
   }
 
-  @SuppressWarnings("unchecked")
   public static <RET> RET getFieldValue(Object value, final String iFieldName) {
+    return getFieldValue(value, iFieldName, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <RET> RET getFieldValue(Object value, final String iFieldName, final OCommandContext iContext) {
     if (value == null)
       return null;
 
@@ -256,18 +261,35 @@ public class ODocumentHelper {
         if (end == -1)
           throw new IllegalArgumentException("Missed closed ']'");
 
-        final String index = OStringSerializerHelper.getStringContent(iFieldName.substring(nextSeparatorPos + 1, end));
+        String indexPart = iFieldName.substring(nextSeparatorPos + 1, end);
+        if (indexPart.length() == 0)
+          return null;
+
+        Object index = indexPart;
+        if (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'')
+          index = OStringSerializerHelper.getStringContent(indexPart);
+        else if (indexPart.charAt(0) == '$') {
+          final Object ctxValue = iContext.getVariable(indexPart);
+          if (ctxValue == null)
+            return null;
+          index = ctxValue;
+        } else if (!Character.isDigit(indexPart.charAt(0)))
+          // GET FROM CURRENT VALUE
+          index = indexPart; //getFieldValue(value, indexPart);
+
         nextSeparatorPos = end;
+
+        final String indexAsString = index != null ? index.toString() : null;
 
         if (value instanceof OIdentifiable) {
           final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
               .getRecord() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
-          final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=', ' ');
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
+          final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
           if (indexParts.size() == 1 && indexCondition.size() == 1)
             // SINGLE VALUE
-            value = ((ODocument) record).field(index);
+            value = ((ODocument) record).field(indexAsString);
           else if (indexParts.size() > 1) {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
@@ -289,7 +311,7 @@ public class ODocumentHelper {
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
           if (indexParts.size() == 1)
             // SINGLE VALUE
             value = ((Map<?, ?>) value).get(index);
@@ -303,16 +325,16 @@ public class ODocumentHelper {
           }
         } else if (value instanceof Collection<?> || value.getClass().isArray()) {
           // MULTI VALUE
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(index, ',');
-          final List<String> indexRanges = OStringSerializerHelper.smartSplit(index, '-');
-          final List<String> indexCondition = OStringSerializerHelper.smartSplit(index, '=', ' ');
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
+          final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-');
+          final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
           if (indexParts.size() == 1 && indexRanges.size() == 1 && indexCondition.size() == 1) {
             // SINGLE VALUE
             if (value instanceof Map<?, ?>)
               value = getMapEntry((Map<String, ?>) value, index);
             else
-              value = OMultiValue.getValue(value, Integer.parseInt(index));
+              value = OMultiValue.getValue(value, Integer.parseInt(indexAsString));
 
           } else if (indexParts.size() > 1) {
 
@@ -442,30 +464,31 @@ public class ODocumentHelper {
    * @return
    */
   @SuppressWarnings("unchecked")
-  public static Object getMapEntry(final Map<String, ?> iMap, final String iName) {
-    if (iMap == null || iName == null)
+  public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
+    if (iMap == null || iKey == null)
       return null;
 
-    String fieldName;
-    int pos = iName.indexOf('.');
-    if (pos > -1)
-      fieldName = iName.substring(0, pos);
-    else
-      fieldName = iName;
+    if (iKey instanceof String) {
+      String iName = (String) iKey;
+      int pos = iName.indexOf('.');
+      if (pos > -1)
+        iName = iName.substring(0, pos);
 
-    final Object value = iMap.get(fieldName);
-    if (value == null)
-      return null;
+      final Object value = iMap.get(iName);
+      if (value == null)
+        return null;
 
-    if (pos > -1) {
-      final String restFieldName = iName.substring(pos + 1);
-      if (value instanceof ODocument)
-        return getFieldValue(value, restFieldName);
-      else if (value instanceof Map<?, ?>)
-        return getMapEntry((Map<String, ?>) value, restFieldName);
-    }
+      if (pos > -1) {
+        final String restFieldName = iName.substring(pos + 1);
+        if (value instanceof ODocument)
+          return getFieldValue(value, restFieldName);
+        else if (value instanceof Map<?, ?>)
+          return getMapEntry((Map<String, ?>) value, restFieldName);
+      }
 
-    return value;
+      return value;
+    } else
+      return iMap.get(iKey);
   }
 
   public static Object getIdentifiableValue(final OIdentifiable iCurrent, final String iFieldName) {
