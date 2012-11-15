@@ -610,7 +610,14 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
+	/**
+	 * This is to maintain the compatibility with previous version.
+	 */
 	ODatabase.prototype.executeCommand = function(iCommand, iLanguage, iLimit) {
+		return this.command(iCommand, iLanguage, iLimit);
+	}
+
+	ODatabase.prototype.command = function(iCommand, iLanguage, iLimit) {
 		if (this.databaseInfo == null)
 			this.open();
 

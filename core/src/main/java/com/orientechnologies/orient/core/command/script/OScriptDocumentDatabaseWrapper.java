@@ -82,11 +82,25 @@ public class OScriptDocumentDatabaseWrapper {
     return res.toArray(new OIdentifiable[res.size()]);
   }
 
+  /**
+   * To maintain the compatibility with JS API.
+   */
+  public Object executeCommand(final String iText) {
+    return command(iText, (Object[]) null);
+  }
+
+  /**
+   * To maintain the compatibility with JS API.
+   */
+  public Object executeCommand(final String iText, final Object... iParameters) {
+    return command(iText, iParameters);
+  }
+
   public Object command(final String iText) {
     return command(iText, (Object[]) null);
   }
 
-  public Object command(final String iText, Object... iParameters) {
+  public Object command(final String iText, final Object... iParameters) {
     Object res = database.command(new OCommandSQL(iText)).execute(convertParameters(iParameters));
     if (res instanceof List) {
       final List<OIdentifiable> list = (List<OIdentifiable>) res;
