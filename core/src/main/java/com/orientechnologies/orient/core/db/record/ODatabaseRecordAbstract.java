@@ -675,8 +675,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           }
       }
 
-      // if (!iRecord.isDirty())
-      // return (RET) iRecord;
+      if (!iRecord.isDirty())
+       return (RET) iRecord;
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = !mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
