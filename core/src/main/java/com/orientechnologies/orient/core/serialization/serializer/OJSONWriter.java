@@ -205,21 +205,14 @@ public class OJSONWriter {
     if (iValue == null)
       buffer.append("null");
 
-    else if (iValue instanceof ORecordId) {
-      final ORecordId rid = (ORecordId) iValue;
-      buffer.append('\"');
-      rid.toString(buffer);
-      buffer.append('\"');
-
-    } else if (iValue instanceof ORecord<?>) {
-      final ORecord<?> linked = (ORecord<?>) iValue;
+    else if (iValue instanceof OIdentifiable) {
+      final OIdentifiable linked = (OIdentifiable) iValue;
       if (linked.getIdentity().isValid()) {
         buffer.append('\"');
         linked.getIdentity().toString(buffer);
         buffer.append('\"');
-      } else {
-        buffer.append(linked.toJSON(iFormat));
-      }
+      } else
+        buffer.append(linked.getRecord().toJSON(iFormat));
 
     } else if (iValue.getClass().isArray()) {
 
