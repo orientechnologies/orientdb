@@ -72,7 +72,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   public OSQLPredicate text(final String iText) {
     if (iText == null)
       throw new OCommandSQLParsingException("Query text is null");
-    
+
     try {
       parserText = iText;
       parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
@@ -80,6 +80,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       parserSkipWhiteSpaces();
 
       rootCondition = (OSQLFilterCondition) extractConditions(null);
+
+      optimize();
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
         // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
@@ -400,5 +402,28 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   public void setRootCondition(final OSQLFilterCondition iCondition) {
     rootCondition = iCondition;
+  }
+
+  protected void optimize() {
+    if (rootCondition != null)
+      computePrefetchFieldList(rootCondition, new HashSet<String>());
+  }
+
+  protected Set<String> computePrefetchFieldList(final OSQLFilterCondition iCondition, final Set<String> iFields) {
+    Object left = iCondition.getLeft();
+    Object right = iCondition.getRight();
+    if (left instanceof OSQLFilterItemField) {
+      ((OSQLFilterItemField) left).setPreLoadedFields(iFields);
+      iFields.add(((OSQLFilterItemField) left).getRoot());
+    } else if (left instanceof OSQLFilterCondition)
+      computePrefetchFieldList((OSQLFilterCondition) left, iFields);
+
+    if (right instanceof OSQLFilterItemField) {
+      ((OSQLFilterItemField) right).setPreLoadedFields(iFields);
+      iFields.add(((OSQLFilterItemField) right).getRoot());
+    } else if (right instanceof OSQLFilterCondition)
+      computePrefetchFieldList((OSQLFilterCondition) right, iFields);
+
+    return iFields;
   }
 }

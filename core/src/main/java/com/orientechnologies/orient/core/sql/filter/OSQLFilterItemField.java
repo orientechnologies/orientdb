@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
@@ -32,7 +33,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
  * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
-  protected String name;
+  protected Set<String> preLoadedFields;
+  protected String[]    preLoadedFieldsArray;
+  protected String      name;
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
     super(iQueryToParse, iName);
@@ -44,8 +47,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     final ODocument doc = (ODocument) iRecord.getRecord();
 
+    if (preLoadedFieldsArray == null && preLoadedFields != null && preLoadedFields.size() > 0 && preLoadedFields.size() < 5) {
+      // TRANSFORM THE SET IN ARRAY ONLY THE FIRST TIME AND IF FIELDS ARE MORE THAN ONE, OTHERWISE GO WITH THE DEFAULT BEHAVIOR
+      preLoadedFieldsArray = new String[preLoadedFields.size()];
+      preLoadedFields.toArray(preLoadedFieldsArray);
+    }
+
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(name))
+    if (doc.deserializeFields(preLoadedFieldsArray))
       // FIELD FOUND
       return transformValue(iRecord, ODocumentHelper.getFieldValue(doc, name));
 
@@ -127,5 +136,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     public boolean isLong() {
       return operationsChain != null && operationsChain.size() > 0;
     }
+  }
+
+  public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
+    this.preLoadedFields = iPrefetchedFieldList;
   }
 }
