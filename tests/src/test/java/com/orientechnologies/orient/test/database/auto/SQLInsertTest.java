@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -34,9 +35,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
- * If some of the tests start to fail then check cluster number
- * in queries, e.g #7:1. It can be because the order of clusters
- * could be affected due to adding or removing cluster from storage.
+ * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
+ * be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-insert")
 public class SQLInsertTest {
@@ -53,7 +53,7 @@ public class SQLInsertTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-    List<Long> positions = getValidPositions(addressId);
+    List<OClusterPosition> positions = getValidPositions(addressId);
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
@@ -88,7 +88,7 @@ public class SQLInsertTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-    List<Long> positions = getValidPositions(addressId);
+    List<OClusterPosition> positions = getValidPositions(addressId);
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
@@ -247,7 +247,7 @@ public class SQLInsertTest {
   public void updateMultipleFields() {
     database.open("admin", "admin");
 
-    List<Long> positions = getValidPositions(3);
+    List<OClusterPosition> positions = getValidPositions(3);
 
     OIdentifiable result = database.command(
         new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #3:"
@@ -261,13 +261,13 @@ public class SQLInsertTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, +positions.get(0)));
+    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, positions.get(0)));
 
     database.close();
   }
 
-  private List<Long> getValidPositions(int clusterId) {
-    final List<Long> positions = new ArrayList<Long>();
+  private List<OClusterPosition> getValidPositions(int clusterId) {
+    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 

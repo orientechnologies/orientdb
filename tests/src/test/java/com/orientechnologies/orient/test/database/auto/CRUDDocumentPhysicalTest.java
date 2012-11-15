@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -575,17 +577,17 @@ public class CRUDDocumentPhysicalTest {
       // RELOAD THE DOCUMENT, THIS WILL PUT IT IN L1 CACHE
       doc = database.load(docRid, "*:-1");
       doc = testInvalidFetchPlanInvalidateL1Cache(doc, docRid);
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 0));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 1));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 2));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 0));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 1));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 2));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 0));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 1));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 2));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 0));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 1));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
       // CLOSE DB AND RE-TEST THE LOAD TO MAKE SURE
     } finally {
       database.close();
@@ -594,17 +596,17 @@ public class CRUDDocumentPhysicalTest {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
     try {
       doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 1));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 2));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 0));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 1));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 2));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 0));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 1));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 2));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 0));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
+      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
       doc = database.load(docRid);
       doc.delete();
     } finally {
@@ -789,9 +791,9 @@ public class CRUDDocumentPhysicalTest {
         record.field("location", "Italy");
         record.field("salary", (i + 300));
 
-        database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<Long>() {
+        database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
-          public void call(ORecordId iRID, Long iParameter) {
+          public void call(ORecordId iRID, OClusterPosition iParameter) {
             System.out.println("asynchInsertion callback for record " + iRID + ": " + callBackCalled.incrementAndGet());
           }
         });

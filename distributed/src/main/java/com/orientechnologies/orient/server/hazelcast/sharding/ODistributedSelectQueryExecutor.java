@@ -32,6 +32,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -120,10 +121,10 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
   @Override
   public Object execute() {
     if (iCommand.getParameters().size() == 1) {
-        final Map.Entry<Object, Object> entry = iCommand.getParameters().entrySet().iterator().next();
-        if (entry.getKey().equals(Integer.valueOf(0)) && entry.getValue() == null) {
-            iCommand.getParameters().clear();
-        }
+      final Map.Entry<Object, Object> entry = iCommand.getParameters().entrySet().iterator().next();
+      if (entry.getKey().equals(Integer.valueOf(0)) && entry.getValue() == null) {
+        iCommand.getParameters().clear();
+      }
     }
     int remainingExecutors = runCommandOnAllNodes(new OSQLAsynchQuery(iCommand.getText(), iCommand.getLimit(),
         iCommand instanceof OQueryAbstract ? ((OQueryAbstract) iCommand).getFetchPlan() : null, iCommand.getParameters(),
@@ -181,7 +182,8 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
       final List<OIdentifiable> resultToMerge = new ArrayList<OIdentifiable>(result);
       result.clear();
       for (OIdentifiable record : resultToMerge) {
-        Object ret = distinct.getValue().execute(record, null, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
+        Object ret = distinct.getValue()
+            .execute(record, null, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
         if (ret != null) {
           final ODocument resultItem = new ODocument().setOrdered(true); // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
           ((ORecordId) resultItem.getIdentity()).clusterId = -2;
@@ -215,7 +217,7 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
     if (!result.isEmpty() && result.get(0).getIdentity().getClusterId() == -2) {
       long position = 0;
       for (OIdentifiable id : result) {
-        ((ORecordId) id.getIdentity()).clusterPosition = position++;
+        ((ORecordId) id.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(position);
       }
     }
     if (resultListener != null) {

@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -66,7 +67,7 @@ public class ORuntimeResult {
     final ODocument doc = new ODocument().setOrdered(true);
     // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
     ((ORecordId) doc.getIdentity()).clusterId = -2;
-    ((ORecordId) doc.getIdentity()).clusterPosition = iProgressive;
+    ((ORecordId) doc.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(iProgressive);
     return doc;
   }
 

@@ -8,6 +8,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
@@ -43,14 +44,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testPut() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
@@ -59,7 +60,7 @@ public class IndexTxAwareOneValueGetTest {
 
     database.begin();
 
-    index.put(3, new ORecordId(clusterId, 3));
+    index.put(3, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNotNull(index.get(3));
@@ -74,14 +75,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testClear() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
@@ -105,14 +106,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testClearAndPut() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
@@ -122,7 +123,7 @@ public class IndexTxAwareOneValueGetTest {
     database.begin();
 
     index.clear();
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNull(index.get(1));
@@ -137,14 +138,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testRemove() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     database.commit();
 
@@ -169,14 +170,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testRemoveAndPut() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     database.commit();
 
@@ -187,7 +188,7 @@ public class IndexTxAwareOneValueGetTest {
     database.begin();
 
     index.remove(1);
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNotNull(index.get(1));
@@ -198,15 +199,15 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testMultiPut() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNotNull(((OIndexTxAwareOneValue) index).get(1));
@@ -217,34 +218,34 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testPutAfterTransaction() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNotNull(index.get(1));
     database.commit();
 
-    index.put(2, new ORecordId(clusterId, 2));
+    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     Assert.assertNotNull(index.get(2));
   }
 
   @Test
   public void testRemoveOneWithinTransaction() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
     index.remove(1);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
@@ -257,14 +258,14 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testRemoveAllWithinTransaction() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
     index.remove(1);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
@@ -277,16 +278,16 @@ public class IndexTxAwareOneValueGetTest {
 
   @Test
   public void testPutAfterRemove() {
-		database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getIndexManager().reload();
     database.begin();
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("idxTxAwareOneValueGetTest");
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, 1));
-    index.remove(1, new ORecordId(clusterId, 1));
-    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.remove(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetTest"));
     Assert.assertNotNull(index.get(1));

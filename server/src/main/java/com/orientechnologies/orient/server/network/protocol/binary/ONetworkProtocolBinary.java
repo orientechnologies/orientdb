@@ -49,6 +49,8 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -465,15 +467,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final int clusterId = channel.readShort();
     final long entry = channel.readLong();
 
-    long[] pos = connection.database.getStorage().getClusterPositionsForEntry(clusterId, entry);
+    OClusterPosition[] pos = connection.database.getStorage().getClusterPositionsForEntry(clusterId, entry);
 
     beginResponse();
     try {
       sendOk(clientTxId);
 
       channel.writeInt(pos.length);
-      for (long position : pos)
-        channel.writeLong(position);
+      for (OClusterPosition position : pos)
+        channel.writeBytes(position.toStream());
 
     } finally {
       endResponse();
@@ -486,10 +488,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkDatabase();
 
     final int originalClusterId = channel.readShort();
-    final long originalClusterPosition = channel.readLong();
+    final OClusterPosition originalClusterPosition = OClusterPositionFactory.INSTANCE.fromStream(channel.readBytes());
 
     final int destinationClusterId = channel.readShort();
-    final long destinationClusterPosition = channel.readLong();
+    final OClusterPosition destinationClusterPosition = OClusterPositionFactory.INSTANCE.fromStream(channel.readBytes());
 
     connection.database.getStorage().changeRecordIdentity(new ORecordId(originalClusterId, originalClusterPosition),
         new ORecordId(destinationClusterId, destinationClusterPosition));
@@ -1109,7 +1111,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       beginResponse();
       try {
         sendOk(clientTxId);
-        channel.writeLong(record.getIdentity().getClusterPosition());
+        channel.writeBytes(record.getIdentity().getClusterPosition().toStream());
         if (connection.data.protocolVersion >= 11)
           channel.writeInt(record.getVersion());
       } finally {
@@ -1127,7 +1129,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 9)
       ignoreCache = channel.readByte() == 1;
 
-    if (rid.clusterId == 0 && rid.clusterPosition == 0) {
+    if (rid.clusterId == 0 && rid.clusterPosition.longValue() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);

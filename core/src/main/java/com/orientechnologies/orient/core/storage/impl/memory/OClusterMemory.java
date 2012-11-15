@@ -22,6 +22,8 @@ import java.util.List;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -211,7 +213,7 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
         iPPosition.clusterPosition = recycledPosition.clusterPosition;
         iPPosition.recordVersion = recycledPosition.recordVersion + 1;
 
-        entries.set((int) recycledPosition.clusterPosition, iPPosition);
+        entries.set(recycledPosition.clusterPosition.intValue(), iPPosition);
 
       } else {
         iPPosition.clusterPosition = allocateRecord(iPPosition);
@@ -226,26 +228,26 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     return true;
   }
 
-  protected long allocateRecord(final OPhysicalPosition iPPosition) {
-    return entries.size();
+  protected OClusterPosition allocateRecord(final OPhysicalPosition iPPosition) {
+    return OClusterPositionFactory.INSTANCE.valueOf(entries.size());
   }
 
-  public void updateRecordType(final long iPosition, final byte iRecordType) throws IOException {
+  public void updateRecordType(final OClusterPosition iPosition, final byte iRecordType) throws IOException {
     acquireExclusiveLock();
     try {
 
-      entries.get((int) iPosition).recordType = iRecordType;
+      entries.get(iPosition.intValue()).recordType = iRecordType;
 
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public void updateVersion(long iPosition, int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
     acquireExclusiveLock();
     try {
 
-      entries.get((int) iPosition).recordVersion = iVersion;
+      entries.get(iPosition.intValue()).recordVersion = iVersion;
 
     } finally {
       releaseExclusiveLock();
@@ -255,10 +257,10 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
     acquireSharedLock();
     try {
-      if (iPPosition.clusterPosition < 0 || iPPosition.clusterPosition > getLastEntryPosition())
+      if (iPPosition.clusterPosition.intValue() < 0 || iPPosition.clusterPosition.intValue() > getLastEntryPosition())
         return null;
 
-      return entries.get((int) iPPosition.clusterPosition);
+      return entries.get((int) iPPosition.clusterPosition.intValue());
 
     } finally {
       releaseSharedLock();
@@ -267,34 +269,34 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
 
   @Override
   public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
-    OPhysicalPosition ppos = getPhysicalPosition(new OPhysicalPosition(entryPosition));
+    OPhysicalPosition ppos = getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(entryPosition)));
     if (ppos == null)
       return new OPhysicalPosition[0];
 
     return new OPhysicalPosition[] { ppos };
   }
 
-  public void removePhysicalPosition(final long iPosition) {
+  public void removePhysicalPosition(final OClusterPosition iPosition) {
     acquireExclusiveLock();
     try {
 
-      final OPhysicalPosition ppos = entries.get((int) iPosition);
+      final OPhysicalPosition ppos = entries.get(iPosition.intValue());
 
       // ADD AS HOLE
       removed.add(ppos);
 
-      entries.set((int) iPosition, null);
+      entries.set(iPosition.intValue(), null);
 
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public void updateDataSegmentPosition(final long iPosition, final int iDataSegmentId, final long iDataPosition) {
+  public void updateDataSegmentPosition(final OClusterPosition iPosition, final int iDataSegmentId, final long iDataPosition) {
     acquireExclusiveLock();
     try {
 
-      final OPhysicalPosition ppos = entries.get((int) iPosition);
+      final OPhysicalPosition ppos = entries.get(iPosition.intValue());
       ppos.dataSegmentId = iDataSegmentId;
       ppos.dataSegmentPos = iDataPosition;
 

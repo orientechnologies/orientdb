@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -104,16 +105,16 @@ public class OClusterRemote implements OCluster {
     return null;
   }
 
-  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
+  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
   }
 
-  public void removePhysicalPosition(long iPosition) throws IOException {
+  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
   }
 
-  public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
+  public void updateRecordType(OClusterPosition iPosition, byte iRecordType) throws IOException {
   }
 
-  public void updateVersion(long iPosition, int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
   }
 
   public long getEntries() {

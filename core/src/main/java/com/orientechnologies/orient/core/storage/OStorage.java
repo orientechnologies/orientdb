@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -81,7 +82,7 @@ public interface OStorage extends OSharedContainer {
 
   // CRUD OPERATIONS
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
-      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<Long> iCallback);
+      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback);
@@ -206,7 +207,7 @@ public interface OStorage extends OSharedContainer {
 
   public boolean dropDataSegment(String iName);
 
-  public long[] getClusterPositionsForEntry(int currentClusterId, long entry);
+  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry);
 
   /**
    * Returns the current storage's status

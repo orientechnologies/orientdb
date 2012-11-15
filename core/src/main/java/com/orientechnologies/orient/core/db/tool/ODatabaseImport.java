@@ -654,7 +654,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
 
-      if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition() == 1)
+      if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition().longValue() == 1)
         // JUMP INTERNAL RECORDS
         return null;
 
@@ -704,7 +704,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
 
     // SAVE THE RECORD
-    if (record.getIdentity().getClusterPosition() < nextAvailablePos) {
+    if (record.getIdentity().getClusterPosition().longValue() < nextAvailablePos) {
       // REWRITE PREVIOUS RECORD WITH THE SAME VERSION, SO USE A NEGATIVE NUMBER
       record.setVersion(Integer.MIN_VALUE + record.getVersion());
 
@@ -715,9 +715,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     } else {
       String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
 
-      if (record.getIdentity().getClusterPosition() > nextAvailablePos) {
+      if (record.getIdentity().getClusterPosition().longValue() > nextAvailablePos) {
         // CREATE HOLES
-        int holes = (int) (record.getIdentity().getClusterPosition() - nextAvailablePos);
+        int holes = (int) (record.getIdentity().getClusterPosition().longValue() - nextAvailablePos);
 
         ODocument tempRecord = new ODocument();
         for (int i = 0; i < holes; ++i) {
@@ -728,7 +728,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       // APPEND THE RECORD
-      record.setIdentity(-1, -1);
+      record.setIdentity(-1, ORecordId.CLUSTER_POS_INVALID);
       if (record instanceof ODocument)
         record.save(clusterName);
       else
@@ -742,7 +742,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       recordInternal.delete();
 
     String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
-    record.setIdentity(-1, -1);
+    record.setIdentity(-1, ORecordId.CLUSTER_POS_INVALID);
     if (record instanceof ODocument)
       record.save(clusterName);
     else

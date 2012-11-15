@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 
@@ -47,7 +48,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 
     final ORecordId rid = new ORecordId(clusterId);
     for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
-      rid.clusterPosition = i;
+      rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(i);
 
       buffer = db.read(rid, null, false).getResult();
       if (buffer != null)

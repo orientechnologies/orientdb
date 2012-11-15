@@ -25,6 +25,8 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -37,10 +39,10 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * Record structure:<br/>
  * <code>
  * +-----------------------------------------------------------------------------------------+--------------------+<br/>
- * | .................... FIXED SIZE AREA = 24 bytes ....................................... | VARIABLE SIZE AREA |<br/>
+ * | .................... FIXED SIZE AREA = 24 or 208 bytes ................................ | VARIABLE SIZE AREA |<br/>
  * +--------+--------+---------+------------+----------------+--------+--------+-------------+--------------------+<br/>
  * | STATUS | OPERAT | TX ID . | CLUSTER ID | CLUSTER OFFSET | TYPE . |VERSION | RECORD SIZE | RECORD CONTENT ... |<br/>
- * | 1 byte | 1 byte | 4 bytes | 2 bytes .. | 8 bytes ...... | 1 byte |4 bytes | 4 bytes ... | ? bytes .......... |<br/>
+ * | 1 byte | 1 byte | 4 bytes | 2 bytes .. | 8 or 192 bytes | 1 byte |4 bytes | 4 bytes ... | ? bytes .......... |<br/>
  * +--------+--------|---------+------------+----------------+--------+--------+-------------+--------------------+<br/>
  * > 25 bytes
  * </code><br/>
@@ -60,8 +62,10 @@ public class OTxSegment extends OSingleFileSegment {
   private static final int                DEF_START_SIZE        = 262144;
 
   private static final int                OFFSET_TX_ID          = 2;
-  private static final int                OFFSET_RECORD_SIZE    = 25;
-  private static final int                OFFSET_RECORD_CONTENT = 29;
+  private static final int                CLUSTER_OFFSET_SIZE   = OClusterPositionFactory.INSTANCE.getSerializedSize();
+  private static final int                OFFSET_RECORD_SIZE    = 17 + CLUSTER_OFFSET_SIZE;
+  private static final int                OFFSET_RECORD_CONTENT = 21 + CLUSTER_OFFSET_SIZE;
+
   private final boolean                   synchEnabled;
   private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -108,7 +112,7 @@ public class OTxSegment extends OSingleFileSegment {
   /**
    * Appends a log entry
    */
-  public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final long iClusterOffset,
+  public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final OClusterPosition iClusterOffset,
       final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
 
     final int contentSize = iRecordContent != null ? iRecordContent.length : 0;
@@ -131,8 +135,9 @@ public class OTxSegment extends OSingleFileSegment {
       file.writeShort(offset, (short) iClusterId);
       offset += OBinaryProtocol.SIZE_SHORT;
 
-      file.writeLong(offset, iClusterOffset);
-      offset += OBinaryProtocol.SIZE_LONG;
+      final byte[] clusterContent = iClusterOffset.toStream();
+      file.write(offset, clusterContent);
+      offset += CLUSTER_OFFSET_SIZE;
 
       file.writeByte(offset, iRecordType);
       offset += OBinaryProtocol.SIZE_BYTE;
@@ -306,8 +311,10 @@ public class OTxSegment extends OSingleFileSegment {
       rid.clusterId = file.readShort(offset);
       offset += OBinaryProtocol.SIZE_SHORT;
 
-      rid.clusterPosition = file.readLong(offset);
-      offset += OBinaryProtocol.SIZE_LONG;
+      final byte[] content = new byte[OClusterPositionFactory.INSTANCE.getSerializedSize()];
+      file.read(offset, content, content.length);
+      rid.clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(content);
+      offset += CLUSTER_OFFSET_SIZE;
 
       final byte recordType = file.readByte(offset);
       offset += OBinaryProtocol.SIZE_BYTE;

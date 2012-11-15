@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -42,13 +44,15 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * <br/>
  * +--------------+--------------+--------------+----------------------+<br/>
  * | CONTENT SIZE | CLUSTER ID . | CLUSTER POS. | CONTENT ............ |<br/>
- * | 4 bytes .... | 2 bytes .... | 8 bytes .... | <RECORD SIZE> bytes. |<br/>
+ * | 4 bytes .... | 2 bytes .... | 8 or 192 | <RECORD SIZE> bytes. |<br/>
  * +--------------+--------------+--------------+----------------------+<br/>
  * = 14+? bytes<br/>
  */
 public class ODataLocal extends OMultiFileSegment implements ODataSegment {
-  static final String                           DEF_EXTENSION   = ".oda";
-  public static final int                       RECORD_FIX_SIZE = 14;
+  static final String                           DEF_EXTENSION    = ".oda";
+  private static final int                      CLUSTER_POS_SIZE = OClusterPositionFactory.INSTANCE.getSerializedSize();
+  public static final int                       RECORD_FIX_SIZE  = 6 + CLUSTER_POS_SIZE;
+
   protected final int                           id;
   protected final ODataLocalHole                holeSegment;
   protected int                                 defragMaxHoleDistance;
@@ -62,9 +66,10 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
   private final String                          PROFILER_MOVE_RECORD;
   private final String                          PROFILER_HOLE_CREATE;
   private final String                          PROFILER_DEFRAG;
-  private final OSharedResourceAdaptiveExternal lock            = new OSharedResourceAdaptiveExternal(
-                                                                    OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-                                                                    0, true);
+  private final OSharedResourceAdaptiveExternal lock             = new OSharedResourceAdaptiveExternal(
+                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT
+                                                                         .getValueAsBoolean(),
+                                                                     0, true);
 
   public ODataLocal(final OStorageLocal iStorage, final OStorageDataConfiguration iConfig, final int iId) throws IOException {
     super(iStorage, iConfig, DEF_EXTENSION, 0);
@@ -270,13 +275,14 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
   public ORecordId getRecordRid(final long iPosition) throws IOException {
     acquireSharedLock();
     try {
-
       final long[] pos = getRelativePosition(iPosition);
       final OFile file = files[(int) pos[0]];
 
-      return new ORecordId(file.readShort(pos[1] + OBinaryProtocol.SIZE_INT), file.readLong(pos[1] + OBinaryProtocol.SIZE_INT
-          + OBinaryProtocol.SIZE_SHORT));
+      final int clusterId = file.readShort(pos[1] + OBinaryProtocol.SIZE_INT);
+      final byte[] clusterContent = new byte[CLUSTER_POS_SIZE];
+      file.read(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, clusterContent, CLUSTER_POS_SIZE);
 
+      return new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.fromStream(clusterContent));
     } finally {
       releaseSharedLock();
     }
@@ -295,7 +301,7 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
       file.writeShort(pos, (short) rid.getClusterId());
       pos += OBinaryProtocol.SIZE_SHORT;
 
-      file.writeLong(pos, rid.getClusterPosition());
+      file.write(pos, rid.getClusterPosition().toStream());
     } finally {
       releaseExclusiveLock();
     }
@@ -612,8 +618,10 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final int clusterId = file.readShort(pos[1] + OBinaryProtocol.SIZE_INT);
-    final long clusterPosition = file.readLong(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT);
+    final byte[] clusterPositionContent = new byte[CLUSTER_POS_SIZE];
+    file.read(pos[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, clusterPositionContent, CLUSTER_POS_SIZE);
 
+    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(clusterPositionContent);
     final byte[] content = new byte[recordSize];
     file.read(pos[1] + RECORD_FIX_SIZE, content, recordSize);
 
@@ -638,14 +646,14 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     return recordSize + RECORD_FIX_SIZE;
   }
 
-  private void writeRecord(final long[] iFilePosition, final int iClusterSegment, final long iClusterPosition, final byte[] iContent)
-      throws IOException {
+  private void writeRecord(final long[] iFilePosition, final int iClusterSegment, final OClusterPosition iClusterPosition,
+      final byte[] iContent) throws IOException {
     final OFile file = files[(int) iFilePosition[0]];
 
     file.writeInt(iFilePosition[1], iContent != null ? iContent.length : 0);
     file.writeShort(iFilePosition[1] + OBinaryProtocol.SIZE_INT, (short) iClusterSegment);
     // TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
-    file.writeLong(iFilePosition[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, iClusterPosition);
+    file.write(iFilePosition[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, iClusterPosition.toStream());
 
     file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);
   }
