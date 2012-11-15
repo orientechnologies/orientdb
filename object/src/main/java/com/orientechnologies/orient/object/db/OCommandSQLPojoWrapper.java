@@ -54,7 +54,7 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
           obj = doc;
         else
           // CONVERT THE DOCUMENT INSIDE THE LIST
-          obj = database.getUserObjectByRecord(doc, null, true);
+          obj = database.getUserObjectByRecord(doc, getFetchPlan(), true);
 
         resultPojo.add(obj);
       }
@@ -63,7 +63,7 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
     } else if (result instanceof ODocument) {
       if (((ODocument) result).getClassName() != null)
         // CONVERT THE SINGLE DOCUMENT
-        result = database.getUserObjectByRecord((ODocument) result, null, true);
+        result = database.getUserObjectByRecord((ODocument) result, getFetchPlan(), true);
     }
 
     return (RET) result;
@@ -82,4 +82,14 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
     return command.isIdempotent();
   }
 
+  @Override
+  public String getFetchPlan() {
+    return command.getFetchPlan();
+  }
+
+  @Override
+  public <RET extends OCommandRequest> RET setFetchPlan(final String iFetchPlan) {
+    command.setFetchPlan(iFetchPlan);
+    return null;
+  }
 }
