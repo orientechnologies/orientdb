@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -1174,21 +1173,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       handleResult(ORuntimeResult.createProjectionDocument(resultCount));
   }
 
-  private static boolean checkIndexExistence(OClass iSchemaClass, OIndexSearchResult result) {
-    if (!iSchemaClass.areIndexed(result.fields())) {
+  private static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
+    if (!iSchemaClass.areIndexed(result.fields()))
       return false;
-    }
 
     if (result.lastField.isLong()) {
       final int fieldCount = result.lastField.getItemCount();
-      OClass oClass = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
+      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
 
       for (int i = 1; i < fieldCount; i++) {
-        if (!oClass.areIndexed(result.lastField.getItemName(i))) {
+        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
           return false;
         }
 
-        oClass = oClass.getProperty(result.lastField.getItemName(i)).getLinkedClass();
+        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
       }
     }
     return true;
