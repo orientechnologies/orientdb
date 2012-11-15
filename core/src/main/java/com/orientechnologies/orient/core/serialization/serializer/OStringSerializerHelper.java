@@ -611,7 +611,8 @@ public abstract class OStringSerializerHelper {
   public static String decode(final String iText) {
     int pos = -1;
 
-    for (int i = 0; i < iText.length(); ++i)
+    final int textSize = iText.length();
+    for (int i = 0; i < textSize; ++i)
       if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
         pos = i;
         break;
@@ -622,7 +623,6 @@ public abstract class OStringSerializerHelper {
       return iText;
 
     // CHANGE THE INPUT STRING
-    final int textSize = iText.length();
     final StringBuilder buffer = new StringBuilder(textSize);
     buffer.append(iText.substring(0, pos));
 
@@ -657,11 +657,12 @@ public abstract class OStringSerializerHelper {
   }
 
   public static String java2unicode(final String iInput) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
+    final int inputSize = iInput.length();
 
     char ch;
     String hex;
-    for (int i = 0; i < iInput.length(); i++) {
+    for (int i = 0; i < inputSize; i++) {
       ch = iInput.charAt(i);
 
       if (ch >= 0x0020 && ch <= 0x007e) // Does the char need to be converted to unicode?
@@ -669,7 +670,7 @@ public abstract class OStringSerializerHelper {
       else // Yes.
       {
         result.append("\\u"); // standard unicode format.
-        hex = Integer.toHexString(iInput.charAt(i) & 0xFFFF); // Get hex value of the char.
+        hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
         for (int j = 0; j < 4 - hex.length(); j++)
           // Prepend zeros because unicode requires 4 digits
           result.append('0');

@@ -269,11 +269,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new IllegalArgumentException("Name is null");
 
     iName = iName.trim();
+    
+    final int nameSize = iName.length(); 
 
-    if (iName.length() == 0)
+    if (nameSize == 0)
       throw new IllegalArgumentException("Name is empty");
 
-    for (int i = 0; i < iName.length(); ++i) {
+    for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
       if (c == ':' || c == ',' || c == ' ')
         // INVALID CHARACTER
