@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -71,7 +70,7 @@ public class ODefaultCacheCleanUpTest {
   private ODefaultCache.OLinkedHashMapCache filledCacheBackend() {
     ODefaultCache.OLinkedHashMapCache cache = new ODefaultCache.OLinkedHashMapCache(100, 0.75f, 100);
     for (int i = 100; i > 0; i--) {
-      ODocument entry = new ODocument(new ORecordId(i, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      ODocument entry = new ODocument(new ORecordId(i, i));
       cache.put(entry.getIdentity(), entry);
     }
     return cache;
@@ -91,7 +90,7 @@ public class ODefaultCacheCleanUpTest {
     ODefaultCache cache = new ODefaultCache(null, 100);
     cache.startup();
     for (int i = 100; i > 0; i--)
-      cache.put(new ODocument(new ORecordId(i, OClusterPositionFactory.INSTANCE.valueOf(i))));
+      cache.put(new ODocument(new ORecordId(i, i)));
     return cache;
   }
 }

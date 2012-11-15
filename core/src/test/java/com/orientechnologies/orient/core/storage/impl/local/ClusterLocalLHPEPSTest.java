@@ -14,7 +14,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -55,26 +54,25 @@ public class ClusterLocalLHPEPSTest {
     OGlobalConfiguration.USE_LHPEPS_CLUSTER.setValue(false);
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyPut() throws IOException {
     OCluster localCluster = getCluster();
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+      localCluster.addPhysicalPosition(new OPhysicalPosition(i));
+      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))), i
-          + " key is absent");
+      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)), i + " key is absent");
     }
 
     for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
-      Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+      Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyPutRandom() throws IOException {
     OCluster localCluster = getCluster();
 
@@ -86,39 +84,38 @@ public class ClusterLocalLHPEPSTest {
       if (key < 0)
         key = -key;
 
-      if (localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key)))) {
+      if (localCluster.addPhysicalPosition(new OPhysicalPosition(key))) {
         keys.add(key);
-        Assert
-            .assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(key)));
       }
     }
 
     for (long key : keys)
-      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key))));
+      Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(key)));
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyDelete() throws IOException {
     OCluster localCluster = getCluster();
 
     for (int i = 0; i < KEYS_COUNT; i++)
-      localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i)));
+      localCluster.addPhysicalPosition(new OPhysicalPosition(i));
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        localCluster.removePhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i));
+        localCluster.removePhysicalPosition(i);
       // Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
       else
-        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyDeleteRandom() throws IOException {
     OCluster localCluster = getCluster();
     Set<Long> longs = new HashSet<Long>();
@@ -129,87 +126,80 @@ public class ClusterLocalLHPEPSTest {
       if (key < 0)
         key = -key;
 
-      localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key)));
+      localCluster.addPhysicalPosition(new OPhysicalPosition(key));
       longs.add(key);
     }
 
     for (long key : longs) {
       if (key % 3 == 0) {
-        localCluster.removePhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key));
+        localCluster.removePhysicalPosition(key);
       }
     }
 
     for (long key : longs) {
       if (key % 3 == 0)
-        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key))));
+        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(key)));
       else
-        Assert
-            .assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(key))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(key)));
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyAddDelete() throws IOException {
     OCluster localCluster = getCluster();
 
     for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+      Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(i)));
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        localCluster.removePhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i));
+        localCluster.removePhysicalPosition(i);
 
       if (i % 2 == 0)
-        Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE
-            .valueOf(KEYS_COUNT + i))));
+        Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(KEYS_COUNT + i)));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
       else
-        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(i))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(i)));
 
       if (i % 2 == 0)
-        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE
-            .valueOf(KEYS_COUNT + i))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(KEYS_COUNT + i)));
     }
   }
 
-  @Test(enabled = false)
+  @Test
   public void testKeyAddDeleteRandom() throws IOException {
     OCluster localCluster = getCluster();
     List<Long> longs = getUniqueRandomValuesArray(2 * KEYS_COUNT);
 
     // add
     for (int i = 0; i < KEYS_COUNT; i++) {
-      localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs.get(i))));
+      localCluster.addPhysicalPosition(new OPhysicalPosition(longs.get(i)));
     }
 
     // remove+add
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0) {
-        localCluster.removePhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs.get(i)));
+        localCluster.removePhysicalPosition(longs.get(i));
       }
 
       if (i % 2 == 0) {
-        localCluster
-            .addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs.get(i + KEYS_COUNT))));
+        localCluster.addPhysicalPosition(new OPhysicalPosition(longs.get(i + KEYS_COUNT)));
       }
     }
 
     // check removed ok
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs
-            .get(i)))));
+        Assert.assertNull(localCluster.getPhysicalPosition(new OPhysicalPosition(longs.get(i))));
       else
-        Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs
-            .get(i)))));
+        Assert.assertNotNull(localCluster.addPhysicalPosition(new OPhysicalPosition(longs.get(i))));
 
       if (i % 2 == 0)
-        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(longs
-            .get(KEYS_COUNT + i)))));
+        Assert.assertNotNull(localCluster.getPhysicalPosition(new OPhysicalPosition(longs.get(KEYS_COUNT + i))));
     }
   }
 

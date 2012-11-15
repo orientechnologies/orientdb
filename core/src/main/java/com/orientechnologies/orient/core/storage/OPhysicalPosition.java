@@ -21,14 +21,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition>, Externalizable {
   // POSITION IN THE CLUSTER
-  public OClusterPosition  clusterPosition;
+  public long              clusterPosition;
   // ID OF DATA SEGMENT
   public int               dataSegmentId;
   // POSITION OF CHUNK EXPRESSES AS OFFSET IN BYTES INSIDE THE DATA SEGMENT
@@ -40,14 +38,13 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
   // SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
   public int               recordSize;
 
-  private static final int BINARY_SIZE   = OClusterPositionFactory.INSTANCE.getSerializedSize() + OBinaryProtocol.SIZE_INT
-                                             + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
-                                             + OBinaryProtocol.SIZE_INT;
+  private static final int BINARY_SIZE   = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
+                                             + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_INT;
 
   public OPhysicalPosition() {
   }
 
-  public OPhysicalPosition(final OClusterPosition iClusterPosition) {
+  public OPhysicalPosition(final long iClusterPosition) {
     clusterPosition = iClusterPosition;
   }
 
@@ -57,7 +54,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     recordType = iRecordType;
   }
 
-  public OPhysicalPosition(final OClusterPosition iClusterPosition, final int iVersion) {
+  public OPhysicalPosition(final long iClusterPosition, final int iVersion) {
     clusterPosition = iClusterPosition;
     recordVersion = iVersion;
   }
@@ -84,8 +81,8 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
     int pos = 0;
 
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iStream);
-    pos += OClusterPositionFactory.INSTANCE.getSerializedSize();
+    clusterPosition = OBinaryProtocol.bytes2long(iStream, pos);
+    pos += OBinaryProtocol.SIZE_LONG;
 
     dataSegmentId = OBinaryProtocol.bytes2int(iStream, pos);
     pos += OBinaryProtocol.SIZE_INT;
@@ -108,9 +105,8 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     byte[] buffer = new byte[BINARY_SIZE];
     int pos = 0;
 
-    final byte[] clusterContent = clusterPosition.toStream();
-    System.arraycopy(clusterContent, 0, buffer, 0, clusterContent.length);
-    pos += clusterContent.length;
+    OBinaryProtocol.long2bytes(clusterPosition, buffer, pos);
+    pos += OBinaryProtocol.SIZE_LONG;
 
     OBinaryProtocol.int2bytes(dataSegmentId, buffer, pos);
     pos += OBinaryProtocol.SIZE_INT;
@@ -144,9 +140,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
   }
 
   public void writeExternal(final ObjectOutput out) throws IOException {
-    final byte[] clusterContent = clusterPosition.toStream();
-    out.write(clusterContent);
-
+    out.writeLong(clusterPosition);
     out.writeInt(dataSegmentId);
     out.writeLong(dataSegmentPos);
     out.writeByte(recordType);
@@ -155,8 +149,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
   }
 
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(in);
-
+    clusterPosition = in.readLong();
     dataSegmentId = in.readInt();
     dataSegmentPos = in.readLong();
     recordType = in.readByte();

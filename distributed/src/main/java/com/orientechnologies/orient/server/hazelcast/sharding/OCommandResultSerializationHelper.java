@@ -29,8 +29,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -171,12 +169,12 @@ public class OCommandResultSerializationHelper {
 
   public static void writeRecordId(ORID id, OutputStream stream) throws IOException {
     stream.write(OBinaryProtocol.short2bytes((short) id.getClusterId()));
-    stream.write(id.getClusterPosition().toStream());
+    stream.write(OBinaryProtocol.long2bytes(id.getClusterPosition()));
   }
 
   public static ORecordId readRecordId(InputStream stream) throws IOException {
     final short clusterId = (short) OBinaryProtocol.bytes2short(stream);
-    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(stream);
+    final long clusterPosition = OBinaryProtocol.bytes2long(stream);
     return new ORecordId(clusterId, clusterPosition);
   }
 

@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -129,7 +128,7 @@ public class ODistributedStorage implements OStorage {
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRecordId,
       final byte[] iContent, final int iRecordVersion, final byte iRecordType, final int iMode,
-      final ORecordCallback<OClusterPosition> iCallback) {
+      final ORecordCallback<Long> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -413,7 +412,7 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
   }
 

@@ -28,15 +28,15 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
- * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
- * be affected due to adding or removing cluster from storage.
+ * If some of the tests start to fail then check cluster number
+ * in queries, e.g #7:1. It can be because the order of clusters
+ * could be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-update", sequential = true)
 public class SQLUpdateTest {
@@ -52,7 +52,7 @@ public class SQLUpdateTest {
   public void updateWithWhereOperator() {
     database.open("admin", "admin");
 
-    List<OClusterPosition> positions = getValidPositions(4);
+    List<Long> positions = getValidPositions(4);
 
     Integer records = (Integer) database.command(
         new OCommandSQL("update Profile set salary = 120.30, location = 4:" + positions.get(2)
@@ -105,7 +105,7 @@ public class SQLUpdateTest {
 
     List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 
-    List<OClusterPosition> positions = getValidPositions(13);
+    List<Long> positions = getValidPositions(13);
 
     for (ODocument doc : docs) {
 
@@ -160,36 +160,38 @@ public class SQLUpdateTest {
     database.close();
   }
 
-  @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
-  public void updateMapsWithPutOperatorAndWhere() {
-    database.open("admin", "admin");
+    @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
+    public void updateMapsWithPutOperatorAndWhere() {
+      database.open("admin", "admin");
 
-    ODocument doc = (ODocument) database.command(
-        new OCommandSQL(
-            "insert into cluster:default (equaledges, name, properties) values ('no', 'updateMapsWithPutOperatorAndWhere', {} )"))
-        .execute();
+      ODocument doc = (ODocument) database
+          .command(
+              new OCommandSQL(
+                  "insert into cluster:default (equaledges, name, properties) values ('no', 'updateMapsWithPutOperatorAndWhere', {} )"))
+          .execute();
 
-    Integer records = (Integer) database.command(
-        new OCommandSQL("update " + doc.getIdentity()
-            + " put properties = 'one', 'two' where name = 'updateMapsWithPutOperatorAndWhere'")).execute();
+      Integer records = (Integer) database.command(
+          new OCommandSQL("update " + doc.getIdentity()
+              + " put properties = 'one', 'two' where name = 'updateMapsWithPutOperatorAndWhere'")).execute();
 
-    Assert.assertEquals(records.intValue(), 1);
+      Assert.assertEquals(records.intValue(), 1);
 
-    ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
+      ODocument loadedDoc = database.load(doc.getIdentity(), "*:-1", true);
 
-    Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
+      Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
 
-    @SuppressWarnings("unchecked")
-    Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
-    Assert.assertEquals(entries.size(), 1);
+      @SuppressWarnings("unchecked")
+      Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
+      Assert.assertEquals(entries.size(), 1);
 
-    Assert.assertNull(entries.get("round"));
-    Assert.assertNull(entries.get("blaaa"));
+      Assert.assertNull(entries.get("round"));
+      Assert.assertNull(entries.get("blaaa"));
 
-    Assert.assertEquals(entries.get("one"), "two");
+      Assert.assertEquals(entries.get("one"), "two");
 
-    database.close();
-  }
+      database.close();
+    }
+
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateAllOperator() {
@@ -336,8 +338,8 @@ public class SQLUpdateTest {
     Assert.assertEquals(expectedGender, oDoc.field("gender"));
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
 
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 

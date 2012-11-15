@@ -384,7 +384,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
     OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> entry;
     for (ORID rid : keys) {
-      if (rid.getClusterPosition().isTemporary()) {
+      if (rid.getClusterPosition() < -1) {
         // FIX IT IN CACHE
         entry = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) searchNodeInCache(rid);
 

@@ -22,31 +22,31 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public interface ORID extends OIdentifiable, OSerializableStream {
-  public static final char             PREFIX              = '#';
-  public static final char             SEPARATOR           = ':';
-  public static final int              CLUSTER_MAX         = 32767;
-  public static final int              CLUSTER_ID_INVALID  = -1;
-  public static final OClusterPosition CLUSTER_POS_INVALID = OClusterPosition.INVALID_POSITION;
+	public static final char	PREFIX							= '#';
+	public static final char	SEPARATOR						= ':';
+	public static final int		CLUSTER_MAX					= 32767;
+	public static final int		CLUSTER_ID_INVALID	= -1;
+	public static final int		CLUSTER_POS_INVALID	= -1;
 
-  public int getClusterId();
+	public int getClusterId();
 
-  public OClusterPosition getClusterPosition();
+	public long getClusterPosition();
 
-  public void reset();
+	public void reset();
 
-  public boolean isPersistent();
+	public boolean isPersistent();
 
-  public boolean isValid();
+	public boolean isValid();
 
-  public boolean isNew();
+	public boolean isNew();
 
-  public boolean isTemporary();
+	public boolean isTemporary();
 
-  public ORID copy();
+	public ORID copy();
 
-  public String next();
+	public String next();
 
-  public int toStream(OutputStream iStream) throws IOException;
+	public int toStream(OutputStream iStream) throws IOException;
 
-  public StringBuilder toString(StringBuilder iBuffer);
+	public StringBuilder toString(StringBuilder iBuffer);
 }

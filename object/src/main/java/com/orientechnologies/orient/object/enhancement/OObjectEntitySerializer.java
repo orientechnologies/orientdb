@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -62,7 +63,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -779,7 +779,7 @@ public class OObjectEntitySerializer {
       if (f.getType().equals(String.class))
         setFieldValue(f, iObject, iValue.toString());
       else if (f.getType().equals(Long.class))
-        setFieldValue(f, iObject, iValue.getClusterPosition().longValue());
+        setFieldValue(f, iObject, Long.valueOf(iValue.getClusterPosition()));
       else if (f.getType().equals(Object.class))
         setFieldValue(f, iObject, iValue);
     }
@@ -949,7 +949,7 @@ public class OObjectEntitySerializer {
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
-          ((ORecordId) iRecord.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue());
+          ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))

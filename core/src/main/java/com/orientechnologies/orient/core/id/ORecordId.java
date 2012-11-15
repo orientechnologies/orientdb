@@ -32,22 +32,22 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class ORecordId implements ORID {
   private static final long     serialVersionUID       = 247070594054408657L;
 
+  public static final int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG;
+
   public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
   public static final byte[]    EMPTY_RECORD_ID_STREAM = EMPTY_RECORD_ID.toStream();
 
-  public int                    clusterId              = CLUSTER_ID_INVALID;                                      // INT TO AVOID
-                                                                                                                   // JVM
-                                                                                                                   // PENALITY, BUT
-                                                                                                                   // IT'S STORED
-                                                                                                                   // AS SHORT
-  public OClusterPosition       clusterPosition        = OClusterPosition.INVALID_POSITION;
-  public static final int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT
-                                                           + OClusterPositionFactory.INSTANCE.getSerializedSize();
+  public int                    clusterId              = CLUSTER_ID_INVALID;                                    // INT TO AVOID
+                                                                                                                 // JVM
+                                                                                                                 // PENALITY, BUT
+                                                                                                                 // IT'S STORED
+                                                                                                                 // AS SHORT
+  public long                   clusterPosition        = CLUSTER_POS_INVALID;
 
   public ORecordId() {
   }
 
-  public ORecordId(final int iClusterId, final OClusterPosition iPosition) {
+  public ORecordId(final int iClusterId, final long iPosition) {
     clusterId = iClusterId;
     checkClusterLimits();
     clusterPosition = iPosition;
@@ -79,19 +79,19 @@ public class ORecordId implements ORID {
   }
 
   public boolean isValid() {
-    return clusterPosition.isValid();
+    return clusterPosition != CLUSTER_POS_INVALID;
   }
 
   public boolean isPersistent() {
-    return clusterId > -1 && clusterPosition.isPersistent();
+    return clusterId > -1 && clusterPosition > -1;
   }
 
   public boolean isNew() {
-    return clusterPosition.isNew();
+    return clusterPosition < 0;
   }
 
   public boolean isTemporary() {
-    return clusterId != -1 && clusterPosition.isTemporary();
+    return clusterId != -1 && clusterPosition < -1;
   }
 
   @Override
@@ -110,7 +110,7 @@ public class ORecordId implements ORID {
     return iBuffer;
   }
 
-  public static String generateString(final int iClusterId, final OClusterPosition iPosition) {
+  public static String generateString(final int iClusterId, final long iPosition) {
     final StringBuilder buffer = new StringBuilder(12);
     buffer.append(PREFIX);
     buffer.append(iClusterId);
@@ -120,7 +120,16 @@ public class ORecordId implements ORID {
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + clusterId;
+    result = prime * result + (int) (clusterPosition ^ (clusterPosition >>> 32));
+    return result;
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
     if (this == obj)
       return true;
     if (obj == null)
@@ -128,19 +137,11 @@ public class ORecordId implements ORID {
     if (!(obj instanceof OIdentifiable))
       return false;
     final ORecordId other = (ORecordId) ((OIdentifiable) obj).getIdentity();
-
     if (clusterId != other.clusterId)
       return false;
-    if (!clusterPosition.equals(other.clusterPosition))
+    if (clusterPosition != other.clusterPosition)
       return false;
     return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = clusterId;
-    result = 31 * result + clusterPosition.hashCode();
-    return result;
   }
 
   public int compareTo(final OIdentifiable iOther) {
@@ -152,9 +153,14 @@ public class ORecordId implements ORID {
 
     final int otherClusterId = iOther.getIdentity().getClusterId();
     if (clusterId == otherClusterId) {
-      final OClusterPosition otherClusterPos = iOther.getIdentity().getClusterPosition();
+      final long otherClusterPos = iOther.getIdentity().getClusterPosition();
 
-      return clusterPosition.compareTo(otherClusterPos);
+      if (clusterPosition == otherClusterPos)
+        return 0;
+      else if (clusterPosition > otherClusterPos)
+        return 1;
+      else if (clusterPosition < otherClusterPos)
+        return -1;
     } else if (clusterId > otherClusterId)
       return 1;
 
@@ -185,47 +191,40 @@ public class ORecordId implements ORID {
 
   public ORecordId fromStream(final InputStream iStream) throws IOException {
     clusterId = OBinaryProtocol.bytes2short(iStream);
-
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iStream);
+    clusterPosition = OBinaryProtocol.bytes2long(iStream);
     return this;
   }
 
   public ORecordId fromStream(final OMemoryStream iStream) {
     clusterId = iStream.getAsShort();
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iStream.getAsByteArrayFixed(OClusterPositionFactory.INSTANCE
-        .getSerializedSize()));
+    clusterPosition = iStream.getAsLong();
     return this;
   }
 
   public ORecordId fromStream(final byte[] iBuffer) {
     if (iBuffer != null) {
       clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
-
-      clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iBuffer, OBinaryProtocol.SIZE_SHORT);
+      clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OBinaryProtocol.SIZE_SHORT);
     }
     return this;
   }
 
   public int toStream(final OutputStream iStream) throws IOException {
     final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
-    iStream.write(clusterPosition.toStream());
+    OBinaryProtocol.long2bytes(clusterPosition, iStream);
     return beginOffset;
   }
 
   public int toStream(final OMemoryStream iStream) throws IOException {
     final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
-    iStream.write(clusterPosition.toStream());
+    OBinaryProtocol.long2bytes(clusterPosition, iStream);
     return beginOffset;
   }
 
   public byte[] toStream() {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    byte[] buffer = new byte[OBinaryProtocol.SIZE_SHORT + serializedSize];
-
+    byte[] buffer = new byte[PERSISTENT_SIZE];
     OBinaryProtocol.short2bytes((short) clusterId, buffer, 0);
-    System.arraycopy(clusterPosition.toStream(), 0, buffer, OBinaryProtocol.SIZE_SHORT, serializedSize);
-
+    OBinaryProtocol.long2bytes(clusterPosition, buffer, OBinaryProtocol.SIZE_SHORT);
     return buffer;
   }
 
@@ -233,7 +232,7 @@ public class ORecordId implements ORID {
     return clusterId;
   }
 
-  public OClusterPosition getClusterPosition() {
+  public long getClusterPosition() {
     return clusterPosition;
   }
 
@@ -259,7 +258,7 @@ public class ORecordId implements ORID {
 
     clusterId = Integer.parseInt(parts.get(0));
     checkClusterLimits();
-    clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(parts.get(1));
+    clusterPosition = Long.parseLong(parts.get(1));
   }
 
   public void copyFrom(final ORID iSource) {
@@ -271,7 +270,7 @@ public class ORecordId implements ORID {
   }
 
   public String next() {
-    return generateString(clusterId, clusterPosition.inc());
+    return generateString(clusterId, clusterPosition + 1);
   }
 
   public ORID getIdentity() {

@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -86,8 +85,7 @@ public class MultipleDBTest {
 
               if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
                 // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-                Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
-                    "RID was " + dummy.getId());
+                Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j, "RID was " + dummy.getId());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -203,8 +201,7 @@ public class MultipleDBTest {
 
               if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
                 // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-                Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
-                    "RID was " + dummy.getIdentity());
+                Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), j, "RID was " + dummy.getIdentity());
 
               // Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 

@@ -26,20 +26,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -59,6 +51,12 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -213,7 +211,7 @@ public class IndexTest {
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
-    final List<OClusterPosition> positions = getValidPositions(3);
+    final List<Long> positions = getValidPositions(3);
 
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
@@ -301,7 +299,7 @@ public class IndexTest {
     Collection<OIdentifiable> indexCollection = index.getValuesMajor(3, false);
     Assert.assertEquals(indexCollection.size(), 2);
     for (OIdentifiable identifiable : indexCollection) {
-      valuesMajorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
+      valuesMajorResults.remove(identifiable.getIdentity().getClusterPosition());
     }
     Assert.assertEquals(valuesMajorResults.size(), 0);
 
@@ -309,14 +307,13 @@ public class IndexTest {
     indexCollection = index.getValuesMajor(3, true);
     Assert.assertEquals(indexCollection.size(), 3);
     for (OIdentifiable identifiable : indexCollection) {
-      valuesMajorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
+      valuesMajorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition());
     }
     Assert.assertEquals(valuesMajorInclusiveResults.size(), 0);
 
     indexCollection = index.getValuesMajor(5, true);
     Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
-        OClusterPositionFactory.INSTANCE.valueOf(5));
+    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(), 5L);
 
     indexCollection = index.getValuesMajor(5, false);
     Assert.assertEquals(indexCollection.size(), 0);
@@ -342,8 +339,7 @@ public class IndexTest {
     Assert.assertEquals(indexCollection.size(), 2);
     for (ODocument doc : indexCollection) {
       valuesMajorResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
+      Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
     }
     Assert.assertEquals(valuesMajorResults.size(), 0);
 
@@ -352,16 +348,14 @@ public class IndexTest {
     Assert.assertEquals(indexCollection.size(), 3);
     for (ODocument doc : indexCollection) {
       valuesMajorInclusiveResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
+      Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
     }
     Assert.assertEquals(valuesMajorInclusiveResults.size(), 0);
 
     indexCollection = index.getEntriesMajor(5, true);
     Assert.assertEquals(indexCollection.size(), 1);
     Assert.assertEquals(indexCollection.iterator().next().<Integer> field("key"), Integer.valueOf(5));
-    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10,
-        OClusterPositionFactory.INSTANCE.valueOf(5)));
+    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10, 5));
 
     indexCollection = index.getEntriesMajor(5, false);
     Assert.assertEquals(indexCollection.size(), 0);
@@ -386,7 +380,7 @@ public class IndexTest {
     Collection<OIdentifiable> indexCollection = index.getValuesMinor(3, false);
     Assert.assertEquals(indexCollection.size(), 3);
     for (OIdentifiable identifiable : indexCollection) {
-      valuesMinorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
+      valuesMinorResults.remove(identifiable.getIdentity().getClusterPosition());
     }
     Assert.assertEquals(valuesMinorResults.size(), 0);
 
@@ -394,14 +388,13 @@ public class IndexTest {
     indexCollection = index.getValuesMinor(3, true);
     Assert.assertEquals(indexCollection.size(), 4);
     for (OIdentifiable identifiable : indexCollection) {
-      valuesMinorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
+      valuesMinorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition());
     }
     Assert.assertEquals(valuesMinorInclusiveResults.size(), 0);
 
     indexCollection = index.getValuesMinor(0, true);
     Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
-        OClusterPositionFactory.INSTANCE.valueOf(0));
+    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(), 0L);
 
     indexCollection = index.getValuesMinor(0, false);
     Assert.assertEquals(indexCollection.size(), 0);
@@ -427,8 +420,7 @@ public class IndexTest {
     Assert.assertEquals(indexCollection.size(), 3);
     for (ODocument doc : indexCollection) {
       valuesMinorResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
+      Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
     }
     Assert.assertEquals(valuesMinorResults.size(), 0);
 
@@ -437,16 +429,14 @@ public class IndexTest {
     Assert.assertEquals(indexCollection.size(), 4);
     for (ODocument doc : indexCollection) {
       valuesMinorInclusiveResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
+      Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
     }
     Assert.assertEquals(valuesMinorInclusiveResults.size(), 0);
 
     indexCollection = index.getEntriesMinor(0, true);
     Assert.assertEquals(indexCollection.size(), 1);
     Assert.assertEquals(indexCollection.iterator().next().<Integer> field("key"), Integer.valueOf(0));
-    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10,
-        OClusterPositionFactory.INSTANCE.valueOf(0)));
+    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10, 0));
 
     indexCollection = index.getEntriesMinor(0, false);
     Assert.assertEquals(indexCollection.size(), 0);
@@ -472,8 +462,7 @@ public class IndexTest {
     Assert.assertEquals(indexCollection.size(), 3);
     for (ODocument doc : indexCollection) {
       betweenResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
+      Assert.assertEquals(doc.<ORecordId> rawField("rid"), new ORecordId(10, doc.<Integer> field("key").longValue()));
     }
     Assert.assertEquals(betweenResults.size(), 0);
 
@@ -834,7 +823,7 @@ public class IndexTest {
     final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(1, 3));
     Assert.assertEquals(indexCollection.size(), 2);
     for (final OIdentifiable identifiable : indexCollection) {
-      multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());
+      multiGetResults.remove(Long.valueOf(identifiable.getIdentity().getClusterPosition()).intValue());
     }
     Assert.assertEquals(multiGetResults.size(), 0);
 
@@ -859,7 +848,7 @@ public class IndexTest {
     final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(0, 2));
     Assert.assertEquals(indexCollection.size(), 4);
     for (final OIdentifiable identifiable : indexCollection) {
-      multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());
+      multiGetResults.remove(Long.valueOf(identifiable.getIdentity().getClusterPosition()).intValue());
     }
     Assert.assertEquals(multiGetResults.size(), 0);
 
@@ -1325,8 +1314,8 @@ public class IndexTest {
       anotherChildClassDocument.field("testParentProperty", 11L);
       anotherChildClassDocument.save();
 
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(childClassDocument.getIdentity()));
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(anotherChildClassDocument.getIdentity()));
+      Assert.assertFalse(new ORecordId(-1, -1).equals(childClassDocument));
+      Assert.assertFalse(new ORecordId(-1, -1).equals(anotherChildClassDocument));
     } finally {
       db.close();
     }
@@ -1534,8 +1523,8 @@ public class IndexTest {
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.getUnderlying()
         .browseCluster(database.getClusterNameById(clusterId));

@@ -20,7 +20,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import com.hazelcast.nio.DataSerializable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 /**
@@ -43,13 +42,13 @@ public class OHazelcastPhysicalPosition extends OPhysicalPosition implements Dat
 
   @Override
   public void readData(final DataInput in) throws IOException {
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(in);
+    clusterPosition = in.readLong();
     recordVersion = in.readInt();
   }
 
   @Override
   public void writeData(final DataOutput out) throws IOException {
-    out.write(clusterPosition.toStream());
+    out.writeLong(clusterPosition);
     out.writeInt(recordVersion);
   }
 }

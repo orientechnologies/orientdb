@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -56,7 +55,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected long                        firstClusterEntry      = -1;
   protected long                        lastClusterEntry       = -1;
 
-  protected OClusterPosition[]          currentPositions;
+  protected long[]                      currentPositions;
   protected int                         currentPositionIndex;
 
   protected long                        currentEntry           = -1;
@@ -69,7 +68,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
     dbStorage = iLowLevelDatabase.getStorage();
 
-    current.clusterPosition = OClusterPosition.INVALID_POSITION; // DEFAULT = START FROM THE BEGIN
+    current.clusterPosition = -1; // DEFAULT = START FROM THE BEGIN
   }
 
   public abstract boolean hasPrevious();
@@ -87,7 +86,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected ORecordInternal<?> getTransactionEntry() {
     final boolean noPhysicalRecordToBrowse;
 
-    if (current.clusterPosition.isTemporary())
+    if (current.clusterPosition <= -2)
       noPhysicalRecordToBrowse = true;
     else if (directionForward)
       noPhysicalRecordToBrowse = (lastClusterEntry == currentEntry && (currentPositionIndex >= currentPositions.length || currentPositions.length == 0))
@@ -293,9 +292,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     return true;
   }
 
-  protected OClusterPosition currentPosition() {
+  protected long currentPosition() {
     if (currentPositionIndex < 0 || currentPositionIndex >= currentPositions.length)
-      return OClusterPosition.INVALID_POSITION;
+      return -1;
 
     return currentPositions[currentPositionIndex];
   }

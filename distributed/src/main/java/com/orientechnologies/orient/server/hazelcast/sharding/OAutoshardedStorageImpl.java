@@ -12,8 +12,6 @@ import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
@@ -68,7 +66,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   @Override
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
-      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback) {
+      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<Long> iCallback) {
     if (undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
@@ -78,9 +76,9 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     while (true) {
       try {
         if (iRecordId.isNew())
-          iRecordId.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(Math.abs(positionGenerator.nextLong()));
+          iRecordId.clusterPosition = Math.abs(positionGenerator.nextLong());
 
-        final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition.longValue());
+        final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition);
         if (node.isLocal()) {
           OLogManager.instance().info(this, "Record " + iRecordId.toString() + " has been distributed to this node.");
 
@@ -107,7 +105,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
     }
 
-    final ODHTNode node = serverInstance.findSuccessor(iRid.clusterPosition.longValue());
+    final ODHTNode node = serverInstance.findSuccessor(iRid.clusterPosition);
 
     if (node.isLocal())
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
@@ -122,7 +120,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     }
 
-    final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition.longValue());
+    final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition);
     if (node.isLocal())
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     else
@@ -137,7 +135,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
 
-    final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition.longValue());
+    final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition);
     if (node.isLocal())
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     else
@@ -349,7 +347,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
   }
 

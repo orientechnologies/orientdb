@@ -49,8 +49,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -484,7 +482,7 @@ public class OStorageLocal extends OStorageEmbedded {
                 int tot = ((OClusterLocal) c).holeSegment.getHoles();
                 for (int i = 0; i < tot; ++i) {
                   final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
-                  if (recycledPosition == physicalPosition.clusterPosition.longValue()) {
+                  if (recycledPosition == physicalPosition.clusterPosition) {
                     // FOUND
                     found = true;
                     break;
@@ -512,8 +510,7 @@ public class OStorageLocal extends OStorageEmbedded {
             for (int i = 0; i < totalHoles; ++i) {
               long recycledPosition = -1;
               try {
-                ppos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(((OClusterLocal) c).holeSegment.getEntryPosition(i)
-                    / OClusterLocal.RECORD_SIZE);
+                ppos.clusterPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
                 OPhysicalPosition physicalPosition = c.getPhysicalPosition(ppos);
 
                 if (physicalPosition.recordVersion > -1) {
@@ -942,7 +939,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<OClusterPosition> iCallback) {
+      final int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -1519,7 +1516,7 @@ public class OStorageLocal extends OStorageEmbedded {
       boolean sequentialPositionGeneration = false;
       if (iClusterSegment.generatePositionBeforeCreation()) {
         if (iRid.isNew()) {
-          iRid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
+          iRid.clusterPosition = positionGenerator++;
           sequentialPositionGeneration = true;
         } // GENERATED EXTERNALLY
       } else {
@@ -1576,7 +1573,7 @@ public class OStorageLocal extends OStorageEmbedded {
           // iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
           lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 
-          iRid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
+          iRid.clusterPosition = positionGenerator++;
           ppos.clusterPosition = iRid.clusterPosition;
 
           lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -1619,7 +1616,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
-    if (!iRid.isPersistent())
+    if (iRid.clusterPosition < 0)
       throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in database '" + name
           + '\'');
 

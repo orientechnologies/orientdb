@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,66 +31,66 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @Test
 public class OMVRBTreeTest {
-  private ODatabaseDocument database;
+	private ODatabaseDocument	database;
 
-  @Test(enabled = false)
-  public static void main(String[] args) {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:temp");
-    db.create();
-    db.close();
+	@Test(enabled = false)
+	public static void main(String[] args) {
+		ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:temp");
+		db.create();
+		db.close();
 
-    OMVRBTreeTest test = new OMVRBTreeTest("memory:temp");
-    test.treeSet();
-  }
+		OMVRBTreeTest test = new OMVRBTreeTest("memory:temp");
+		test.treeSet();
+	}
 
-  @Parameters(value = "url")
-  public OMVRBTreeTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public OMVRBTreeTest(String iURL) {
+		database = new ODatabaseDocumentTx(iURL);
+	}
 
-  @Test
-  public void treeSet() {
-    database.open("admin", "admin");
-    int total = 1000;
+	@Test
+	public void treeSet() {
+		database.open("admin", "admin");
+		int total = 1000;
 
-    OMVRBTreeRIDSet set = new OMVRBTreeRIDSet("index");
-    for (int i = 0; i < total; ++i)
-      set.add(new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(i)));
+		OMVRBTreeRIDSet set = new OMVRBTreeRIDSet("index");
+		for (int i = 0; i < total; ++i)
+			set.add(new ORecordId(10, i));
 
-    Assert.assertEquals(set.size(), total);
-    ODocument doc = set.toDocument();
-    doc.save();
-    database.close();
+		Assert.assertEquals(set.size(), total);
+		ODocument doc = set.toDocument();
+		doc.save();
+		database.close();
 
-    database.open("admin", "admin");
-    OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity()).setAutoConvert(false);
-    Assert.assertEquals(set2.size(), total);
+		database.open("admin", "admin");
+		OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity()).setAutoConvert(false);
+		Assert.assertEquals(set2.size(), total);
 
-    // ITERABLE
-    int i = 0;
-    for (OIdentifiable rid : set2) {
-      Assert.assertEquals(rid.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(i));
-      // System.out.println("Adding " + rid);
-      i++;
-    }
-    Assert.assertEquals(i, total);
+		// ITERABLE
+		int i = 0;
+		for (OIdentifiable rid : set2) {
+			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i);
+			// System.out.println("Adding " + rid);
+			i++;
+		}
+		Assert.assertEquals(i, total);
 
-    final ORID rootRID = doc.field("root", ORecordId.class);
+		final ORID rootRID = doc.field("root", ORecordId.class);
 
-    // ITERATOR REMOVE
-    i = 0;
-    for (Iterator<OIdentifiable> it = set2.iterator(); it.hasNext();) {
-      final OIdentifiable rid = it.next();
-      Assert.assertEquals(rid.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(i));
-      // System.out.println("Removing " + rid);
-      it.remove();
-      i++;
-    }
-    Assert.assertEquals(i, total);
-    Assert.assertEquals(set2.size(), 0);
+		// ITERATOR REMOVE
+		i = 0;
+		for (Iterator<OIdentifiable> it = set2.iterator(); it.hasNext();) {
+			final OIdentifiable rid = it.next();
+			Assert.assertEquals(rid.getIdentity().getClusterPosition(), i);
+			// System.out.println("Removing " + rid);
+			it.remove();
+			i++;
+		}
+		Assert.assertEquals(i, total);
+		Assert.assertEquals(set2.size(), 0);
 
-    Assert.assertNull(database.load(rootRID));
+		Assert.assertNull(database.load(rootRID));
 
-    database.close();
-  }
+		database.close();
+	}
 }

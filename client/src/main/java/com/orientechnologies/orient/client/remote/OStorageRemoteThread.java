@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -137,8 +136,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<OClusterPosition> iCallback) {
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     delegate.setSessionId(sessionId);
     return delegate.createRecord(iDataSegmentId, iRid, iContent, 0, iRecordType, iMode, iCallback);
   }
@@ -177,7 +175,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     delegate.setSessionId(sessionId);
     return delegate.getClusterPositionsForEntry(currentClusterId, entry);
   }

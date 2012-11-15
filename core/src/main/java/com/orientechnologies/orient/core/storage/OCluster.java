@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.storage;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -79,16 +78,16 @@ public interface OCluster {
    * Updates position in data segment (usually on defrag).
    */
 
-  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
+  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
 
   /**
    * Removes the Logical Position entry.
    */
-  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException;
+  public void removePhysicalPosition(long iPosition) throws IOException;
 
-  public void updateRecordType(OClusterPosition iPosition, final byte iRecordType) throws IOException;
+  public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
 
-  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException;
+  public void updateVersion(long iPosition, int iVersion) throws IOException;
 
   public long getEntries();
 

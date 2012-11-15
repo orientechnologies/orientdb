@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
@@ -23,44 +22,44 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * Interface for internal use only. Don't use this methods unless you're writing an internal component.
  */
 public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
-  /**
-   * Internal only. Fills in one shot the record.
-   */
-  public ORecordAbstract<?> fill(ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
+	/**
+	 * Internal only. Fills in one shot the record.
+	 */
+	public ORecordAbstract<?> fill(ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
 
-  /**
-   * Internal only. Changes the identity of the record.
-   */
-  public ORecordAbstract<?> setIdentity(int iClusterId, OClusterPosition iClusterPosition);
+	/**
+	 * Internal only. Changes the identity of the record.
+	 */
+	public ORecordAbstract<?> setIdentity(int iClusterId, long iClusterPosition);
 
-  /**
-   * Internal only. Changes the identity of the record.
-   */
-  public ORecordAbstract<?> setIdentity(ORecordId iIdentity);
+	/**
+	 * Internal only. Changes the identity of the record.
+	 */
+	public ORecordAbstract<?> setIdentity(ORecordId iIdentity);
 
-  /**
-   * Internal only. Unsets the dirty status of the record.
-   */
-  public void unsetDirty();
+	/**
+	 * Internal only. Unsets the dirty status of the record.
+	 */
+	public void unsetDirty();
 
-  /**
-   * Internal only. Sets the version.
-   */
-  public void setVersion(int iVersion);
+	/**
+	 * Internal only. Sets the version.
+	 */
+	public void setVersion(int iVersion);
 
-  /**
-   * Internal only. Return the record type.
-   */
-  public byte getRecordType();
+	/**
+	 * Internal only. Return the record type.
+	 */
+	public byte getRecordType();
 
-  /**
-   * Internal only. Executes a flat copy of the record.
-   * 
-   * @see #copy()
-   */
-  public <RET extends ORecord<T>> RET flatCopy();
+	/**
+	 * Internal only. Executes a flat copy of the record.
+	 * 
+	 * @see #copy()
+	 */
+	public <RET extends ORecord<T>> RET flatCopy();
 
-  public void addListener(final ORecordListener iListener);
+	public void addListener(final ORecordListener iListener);
 
-  public void removeListener(final ORecordListener listener);
+	public void removeListener(final ORecordListener listener);
 }

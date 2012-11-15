@@ -59,8 +59,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -303,8 +301,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, int iRecordVersion, final byte iRecordType, int iMode,
-      final ORecordCallback<OClusterPosition> iCallback) {
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -334,7 +331,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            iRid.clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(network.readBytes());
+            iRid.clusterPosition = network.readLong();
             ppos.clusterPosition = iRid.clusterPosition;
             if (network.getSrvProtocolVersion() >= 11)
               ppos.recordVersion = network.readInt();
@@ -351,13 +348,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final int sessionId = getSessionId();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
-                final OClusterPosition result;
+                final Long result;
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   System.out.println("BEGIN ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
                   beginResponse(network);
-                  result = OClusterPositionFactory.INSTANCE.fromStream(network.readBytes());
+                  result = network.readLong();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readInt();
                 } finally {
@@ -604,7 +601,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public long[] getClusterPositionsForEntry(int currentClusterId, long entry) {
     checkConnection();
 
     do {
@@ -624,10 +621,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           beginResponse(network);
 
           final int length = network.readInt();
-          final OClusterPosition[] result = new OClusterPosition[length];
+          final long[] result = new long[length];
 
           for (int i = 0; i < length; i++)
-            result[i] = OClusterPositionFactory.INSTANCE.fromStream(network.readBytes());
+            result[i] = network.readLong();
 
           return result;
         } finally {
@@ -740,10 +737,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY);
 
           network.writeShort((short) originalId.getClusterId());
-          network.writeBytes(originalId.getClusterPosition().toStream());
+          network.writeLong(originalId.getClusterPosition());
 
           network.writeShort((short) newId.getClusterId());
-          network.writeBytes(newId.getClusterPosition().toStream());
+          network.writeLong(newId.getClusterPosition());
 
         } finally {
           endRequest(network);
@@ -1746,7 +1743,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.type);
-    iNetwork.writeRID(txEntry.getRecord().getIdentity());
+    iNetwork.writeShort((short) txEntry.getRecord().getIdentity().getClusterId());
+    iNetwork.writeLong(txEntry.getRecord().getIdentity().getClusterPosition());
     iNetwork.writeByte(txEntry.getRecord().getRecordType());
 
     switch (txEntry.type) {

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 public class OImmutableRecordId extends ORecordId {
   private static final long serialVersionUID = 1L;
 
-  public OImmutableRecordId(final int iClusterId, final OClusterPosition iClusterPosition) {
+  public OImmutableRecordId(final int iClusterId, final long iClusterPosition) {
     super(iClusterId, iClusterPosition);
   }
 

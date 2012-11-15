@@ -22,7 +22,6 @@ import java.io.ObjectOutput;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -70,7 +69,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
-    rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(-1);
+    rid.clusterPosition = -1;
     try {
       record.fill(rid, version, content, true);
       if (rid.getClusterId() != -1)

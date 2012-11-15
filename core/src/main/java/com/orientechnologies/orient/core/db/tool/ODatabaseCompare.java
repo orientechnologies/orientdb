@@ -26,7 +26,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -422,9 +421,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         storage = storage2;
 
       for (int i = 0; i <= clusterMax; ++i) {
-        final OClusterPosition[] positions = storage.getClusterPositionsForEntry(clusterId, i);
+        final long[] positions = storage.getClusterPositionsForEntry(clusterId, i);
 
-        for (OClusterPosition position : positions) {
+        for (long position : positions) {
           rid.clusterPosition = position;
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))

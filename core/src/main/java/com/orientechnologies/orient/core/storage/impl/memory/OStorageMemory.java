@@ -35,8 +35,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -285,13 +283,12 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<OClusterPosition> iCallback) {
+      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
     try {
-      final ODataSegmentMemory data = getDataSegmentById(iDataSegmentId);
+      final ODataSegmentMemory data = (ODataSegmentMemory) getDataSegmentById(iDataSegmentId);
 
       final long offset = data.createRecord(iContent);
       final OCluster cluster = getClusterById(iRid.clusterId);
@@ -330,9 +327,9 @@ public class OStorageMemory extends OStorageEmbedded {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
 
       try {
-        final OClusterPosition lastPos = OClusterPositionFactory.INSTANCE.valueOf(iClusterSegment.getLastEntryPosition());
+        final long lastPos = iClusterSegment.getLastEntryPosition();
 
-        if (iRid.clusterPosition.compareTo(lastPos) > 0)
+        if (iRid.clusterPosition > lastPos)
           throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
               + iClusterSegment.getName() + "' is 0-" + lastPos);
 
