@@ -27,14 +27,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OQueryBlock extends OAbstractBlock {
   @Override
-  public Object processBlock(final OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
-      final boolean iReadOnly) {
+  public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
+      ODocument iOutput, final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OTransactionException("QueryBlock: expected document as content");
 
-    String command = parse((ODocument) iConfig, iContext);
+    String command = parse(iContext, (ODocument) iConfig);
 
-    command = (String) resolve(command, iContext);
+    command = (String) resolveValue(iContext, command);
 
     debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command + "...");
 
@@ -46,12 +46,11 @@ public class OQueryBlock extends OAbstractBlock {
     // final OCommandRequestText cmd = iReadOnly ? new OSQLSynchQuery<OIdentifiable>(command.toString()) : new OCommandSQL(
     // command.toString());
 
-    final String returnVariable = getFieldOfClass(iConfig, "return", String.class);
+    final String returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
     if (returnVariable != null) {
       final List<?> result = cmd.execute();
       debug(iContext, "Returned %d records", result.size());
-      assignVariable(iContext, returnVariable, result);
-      return null;
+      return result;
     }
 
     return cmd;
@@ -62,8 +61,8 @@ public class OQueryBlock extends OAbstractBlock {
     return "query";
   }
 
-  protected String parse(final ODocument iContent, final OCommandContext iContext) {
-    final Object code = getField(iContent, "code");
+  protected String parse(final OCommandContext iContext, final ODocument iContent) {
+    final Object code = getField(iContext, iContent, "code");
     if (code != null)
       // CODE MODE
       return code.toString();
@@ -72,21 +71,21 @@ public class OQueryBlock extends OAbstractBlock {
     final StringBuilder command = new StringBuilder();
     command.append("select ");
 
-    generateProjections(iContent, command);
-    generateTarget(iContent, command);
-    generateLet(iContent, command);
-    generateLimit(iContent, command);
-    generateFilter(iContent, command);
-    generateGroupBy(iContent, command);
-    generateOrderBy(iContent, command);
-    generateLimit(iContent, command);
+    generateProjections(iContext, iContent, command);
+    generateTarget(iContext, iContent, command);
+    generateLet(iContext, iContent, command);
+    generateLimit(iContext, iContent, command);
+    generateFilter(iContext, iContent, command);
+    generateGroupBy(iContext, iContent, command);
+    generateOrderBy(iContext, iContent, command);
+    generateLimit(iContext, iContent, command);
 
     return command.toString();
   }
 
   @SuppressWarnings("unchecked")
-  private void generateProjections(ODocument iInput, final StringBuilder iCommandText) {
-    final Object fields = getField(iInput, "fields");
+  private void generateProjections(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final Object fields = getField(iContext, iInput, "fields");
 
     if (fields instanceof String)
       iCommandText.append(fields.toString());
@@ -114,48 +113,48 @@ public class OQueryBlock extends OAbstractBlock {
     }
   }
 
-  private void generateTarget(ODocument iInput, final StringBuilder iCommandText) {
-    final String target = getField(iInput, "target");
+  private void generateTarget(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final String target = getField(iContext, iInput, "target");
     if (target != null) {
       iCommandText.append(" from ");
       iCommandText.append(target);
     }
   }
 
-  private void generateLet(ODocument iInput, final StringBuilder iCommandText) {
-    final String let = getField(iInput, "let");
+  private void generateLet(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final String let = getField(iContext, iInput, "let");
     if (let != null) {
       iCommandText.append(" let ");
       iCommandText.append(let);
     }
   }
 
-  private void generateFilter(ODocument iInput, final StringBuilder iCommandText) {
-    final String filter = getField(iInput, "filter");
+  private void generateFilter(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final String filter = getField(iContext, iInput, "filter");
     if (filter != null) {
       iCommandText.append(" where ");
       iCommandText.append(filter);
     }
   }
 
-  private void generateGroupBy(ODocument iInput, final StringBuilder iCommandText) {
-    final String groupBy = getField(iInput, "groupBy");
+  private void generateGroupBy(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final String groupBy = getField(iContext, iInput, "groupBy");
     if (groupBy != null) {
       iCommandText.append(" group by ");
       iCommandText.append(groupBy);
     }
   }
 
-  private void generateOrderBy(ODocument iInput, final StringBuilder iCommandText) {
-    final String orderBy = getField(iInput, "orderBy");
+  private void generateOrderBy(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final String orderBy = getField(iContext, iInput, "orderBy");
     if (orderBy != null) {
       iCommandText.append(" order by ");
       iCommandText.append(orderBy);
     }
   }
 
-  private void generateLimit(ODocument iInput, final StringBuilder iCommandText) {
-    final Integer limit = getField(iInput, "limit");
+  private void generateLimit(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
+    final Integer limit = getField(iContext, iInput, "limit");
     if (limit != null) {
       iCommandText.append(" limit ");
       iCommandText.append(limit);

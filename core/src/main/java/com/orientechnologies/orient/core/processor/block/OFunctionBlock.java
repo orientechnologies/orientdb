@@ -29,17 +29,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OFunctionBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   @Override
-  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
-      final boolean iReadOnly) {
-    final String function = getRequiredFieldOfClass(iConfig, "function", String.class);
+  public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
+      ODocument iOutput, final boolean iReadOnly) {
+    final String function = getRequiredFieldOfClass(iContext, iConfig, "function", String.class);
 
     final Object[] args;
-    final Collection<Object> configuredArgs = getFieldOfClass(iConfig, "args", Collection.class);
+    final Collection<Object> configuredArgs = getFieldOfClass(iContext, iConfig, "args", Collection.class);
     if (configuredArgs != null) {
       args = new Object[configuredArgs.size()];
       int argIdx = 0;
       for (Object arg : configuredArgs) {
-        Object value = resolve(arg, iContext);
+        Object value = resolveValue(iContext, arg);
 
         if (value instanceof List<?>)
           // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
@@ -56,14 +56,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
     debug(iContext, "Calling: " + function + "(" + Arrays.toString(args) + ")...");
 
-    final Object result = f.executeInContext(iContext, args);
-
-    debug(iContext, "<- Returned " + result);
-
-    final String ret = getField(iConfig, "return");
-    assignVariable(iContext, ret, result);
-
-    return null;
+    return f.executeInContext(iContext, args);
   }
 
   @Override

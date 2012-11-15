@@ -20,7 +20,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OProcessorBlock {
-  public Object process(OComposableProcessor iManager, ODocument iConfig, OCommandContext iContext, boolean iReadOnly);
+  public Object process(OComposableProcessor iManager, OCommandContext iContext, ODocument iConfig, ODocument iOutput,
+      boolean iReadOnly);
 
   public String getName();
 }

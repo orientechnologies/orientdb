@@ -15,38 +15,50 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import com.orientechnologies.common.collection.OMultiValue;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OScriptBlock extends OAbstractBlock {
+public class OOutputBlock extends OAbstractBlock {
+  @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    final String language = getFieldOrDefault(iContext, iConfig, "language", "javascript");
 
-    Object code = getRequiredField(iContext, iConfig, "code");
+    final Object value = getRequiredField(iContext, iConfig, "value");
 
-    if (OMultiValue.isMultiValue(code)) {
-      // CONCATS THE SNIPPET IN A BIG ONE
-      final StringBuilder buffer = new StringBuilder();
-      for (Object o : OMultiValue.getMultiValueIterable(code)) {
-        if (buffer.length() > 0)
-          buffer.append(";");
-        buffer.append(o.toString());
+    Object result;
+    if (isBlock(value))
+      result = delegate("value", iManager, value, iContext, iOutput, iReadOnly);
+    else
+      result = value;
+
+    final Object source = getField(iContext, iConfig, "source");
+    if (source instanceof ODocument && result instanceof List<?>) {
+      final List<Object> list = new ArrayList<Object>();
+      for (Object o : (List<Object>) result) {
+        if (o != null)
+          list.add(((ODocument) source).field(o.toString()));
       }
-      code = buffer.toString();
+      result = list;
     }
 
-    final OCommandScript script = new OCommandScript(language, code.toString());
-    script.getContext().setParent(iContext);
-    return script.execute();
+    final String field = getFieldOfClass(iContext, iConfig, "field", String.class);
+    if (field != null) {
+      // WRITE TO THE OUTPUT
+      iOutput.field(field, result);
+      return iOutput;
+    }
+
+    // NO FIELD: RETURN THE VALUE
+    return result;
   }
 
   @Override
   public String getName() {
-    return "script";
+    return "output";
   }
 }

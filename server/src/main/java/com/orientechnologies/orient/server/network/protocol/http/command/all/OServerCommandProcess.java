@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
@@ -50,7 +45,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
         extension = cfg.value;
     }
 
-    OProcessorManager.getInstance().register("configurable", new OComposableProcessor());
+    OProcessorManager.getInstance().register("composable", new OComposableProcessor().setPath(path).setExtension(extension));
   }
 
   @Override
@@ -81,12 +76,8 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       if (debugMode != null && Boolean.parseBoolean(debugMode))
         context.setVariable("debugMode", Boolean.TRUE);
 
-      final String templateContent = loadTemplate(name);
-
-      final ODocument template = new ODocument();
-      template.fromJSON(templateContent, "noMap");
-
-      Object result = OProcessorManager.getInstance().process("configurable", template, context, iRequest.httpMethod.equals("GET"));
+      final OComposableProcessor processEngine = (OComposableProcessor) OProcessorManager.getInstance().get("composable");
+      Object result = processEngine.processFromFile(name, context, iRequest.httpMethod.equals("GET"));
 
       if (result instanceof ODocument)
         result = ((ODocument) result).field("result");
@@ -112,25 +103,6 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
     }
 
     return false;
-  }
-
-  protected String loadTemplate(final String iPath) throws IOException {
-    final File file = new File(path + "/" + iPath + extension);
-    final BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
-
-    try {
-      final long contentSize = file.length();
-
-      // READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
-      final byte[] buffer = new byte[(int) contentSize];
-      for (int i = 0; i < contentSize; ++i)
-        buffer[i] = (byte) is.read();
-
-      return new String(buffer);
-
-    } finally {
-      is.close();
-    }
   }
 
   @Override

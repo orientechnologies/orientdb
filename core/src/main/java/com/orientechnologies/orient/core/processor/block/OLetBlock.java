@@ -32,40 +32,37 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLetBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   @Override
-  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
-      final boolean iReadOnly) {
-    final Boolean copy = getFieldOfClass(iConfig, "copy", Boolean.class);
+  public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
+      ODocument iOutput, final boolean iReadOnly) {
+    final Boolean copy = getFieldOfClass(iContext, iConfig, "copy", Boolean.class);
+    final ODocument target = getFieldOfClass(iContext, iConfig, "target", ODocument.class);
 
-    Object values = getField(iConfig, "values");
-    if (values != null) {
-      if (values instanceof ODocument) {
-        final ODocument doc = ((ODocument) values);
-        for (String fieldName : doc.fieldNames())
-          assignVariable(iContext, resolve(fieldName, iContext).toString(),
-              resolve(doc.field(fieldName), iContext));
-      } else if (values instanceof Map<?, ?>) {
-        for (Entry<Object, Object> entry : ((Map<Object, Object>) values).entrySet()) {
-          assignVariable(iContext, resolve(entry.getKey(), iContext).toString(),
-              getValue(resolve(entry.getValue(), iContext), copy));
+    final Object value = getRawField(iConfig, "value");
+    if (value != null) {
+      if (value instanceof ODocument) {
+        final ODocument doc = ((ODocument) value);
+        for (String fieldName : doc.fieldNames()) {
+          final Object v = resolveValue(iContext, doc.field(fieldName));
+          if (target != null) {
+            debug(iContext, "Set value %s in document field '%s'", v, fieldName);
+            target.field(fieldName, v);
+          } else
+            assignVariable(iContext, fieldName, v);
+        }
+      } else if (value instanceof Map<?, ?>) {
+        for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
+          final Object v = resolveValue(iContext, getValue(entry.getValue(), copy));
+          if (target != null) {
+            debug(iContext, "Set value %s in document field '%s'", v, entry.getKey());
+            target.field(entry.getKey().toString(), v);
+          } else
+            assignVariable(iContext, entry.getKey().toString(), v);
         }
 
-      } else
-        throw new OProcessException("Field 'values' in not a multi-value (collection, array, map). Found type '"
-            + values.getClass() + "'");
-
-    } else {
-      final String name = getRequiredFieldOfClass(iConfig, "name", String.class);
-
-      Object value = getRequiredField(iConfig, "value");
-      if (value instanceof String)
-        value = resolve(value, iContext);
-      else if (value instanceof List<?>) {
-        List<Object> list = (List<Object>) value;
-        for (int i = 0; i < list.size(); ++i)
-          list.set(i, resolve(list.get(i), iContext));
-
+      } else {
+        final String name = getRequiredFieldOfClass(iContext, iConfig, "name", String.class);
+        assignVariable(iContext, name, getValue(getRequiredField(iContext, iConfig, "value"), copy));
       }
-      assignVariable(iContext, name, getValue(value, copy));
     }
 
     return null;

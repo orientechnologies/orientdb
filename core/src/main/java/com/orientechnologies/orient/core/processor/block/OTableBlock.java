@@ -22,20 +22,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTableBlock extends OAbstractBlock {
   @Override
-  public Object processBlock(OComposableProcessor iManager, final ODocument iConfig, final OCommandContext iContext,
-      final boolean iReadOnly) {
+  public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
+      ODocument iOutput, final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
-    final ODocument header = getRequiredFieldOfClass(iConfig, "header", ODocument.class);
-    final ODocument body = getRequiredFieldOfClass(iConfig, "body", ODocument.class);
-    final ODocument footer = getRequiredFieldOfClass(iConfig, "footer", ODocument.class);
+    final Object header = getRequiredField(iContext, iConfig, "header");
+    final Object body = getRequiredField(iContext, iConfig, "body");
+    final Object footer = getRequiredField(iContext, iConfig, "footer");
 
     final ODocument table = new ODocument();
 
-    table.field("header", delegate("header", iManager, header, iContext, iReadOnly));
-    table.field("body", delegate("body", iManager, body, iContext, iReadOnly));
-    table.field("footer", delegate("footer", iManager, footer, iContext, iReadOnly));
+    table.field("header", isBlock(header) ? delegate("header", iManager, header, iContext, iOutput, iReadOnly) : header);
+    table.field("body", isBlock(body) ? delegate("body", iManager, body, iContext, iOutput, iReadOnly) : body);
+    table.field("footer", isBlock(footer) ? delegate("footer", iManager, footer, iContext, iOutput, iReadOnly) : footer);
 
     return table;
   }

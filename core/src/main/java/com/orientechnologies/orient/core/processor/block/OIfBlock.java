@@ -15,38 +15,36 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OScriptBlock extends OAbstractBlock {
+public class OIfBlock extends OAbstractBlock {
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    final String language = getFieldOrDefault(iContext, iConfig, "language", "javascript");
+    Object ifClause = getRequiredFieldOfClass(iContext, iConfig, "if", String.class);
+    Object thenClause = getRequiredFieldOfClass(iContext, iConfig, "then", String.class);
+    Object elseClause = getFieldOfClass(iContext, iConfig, "else", String.class);
 
-    Object code = getRequiredField(iContext, iConfig, "code");
+    Object ifResult = delegate("if", iManager, ifClause, iContext, iOutput, iReadOnly);
 
-    if (OMultiValue.isMultiValue(code)) {
-      // CONCATS THE SNIPPET IN A BIG ONE
-      final StringBuilder buffer = new StringBuilder();
-      for (Object o : OMultiValue.getMultiValueIterable(code)) {
-        if (buffer.length() > 0)
-          buffer.append(";");
-        buffer.append(o.toString());
-      }
-      code = buffer.toString();
-    }
+    final boolean execute;
+    if (ifResult instanceof Boolean)
+      execute = (Boolean) ifResult;
+    else
+      execute = Boolean.parseBoolean(thenClause.toString());
 
-    final OCommandScript script = new OCommandScript(language, code.toString());
-    script.getContext().setParent(iContext);
-    return script.execute();
+    if (execute)
+      return delegate("then", iManager, thenClause, iContext, iOutput, iReadOnly);
+    else if (elseClause != null)
+      return delegate("else", iManager, elseClause, iContext, iOutput, iReadOnly);
+
+    return null;
   }
 
   @Override
   public String getName() {
-    return "script";
+    return "if";
   }
 }
