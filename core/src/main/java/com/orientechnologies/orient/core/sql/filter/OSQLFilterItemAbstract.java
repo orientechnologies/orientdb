@@ -201,6 +201,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             ioResult = ioResult != null ? ioResult.toString() : null;
           else if (operator == OSQLFilterFieldOperator.ASINTEGER.id)
             ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
+          else if (operator == OSQLFilterFieldOperator.ASLONG.id)
+            if (ioResult instanceof Date)
+              ioResult = ((Date) ioResult).getTime();
+            else
+              ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
             ioResult = ioResult != null ? new Float(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
