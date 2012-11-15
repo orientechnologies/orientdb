@@ -56,6 +56,14 @@ public class OBasicCommandContext implements OCommandContext {
           return parent.getVariable(lastPart.substring(1));
         else
           return ODocumentHelper.getFieldValue(parent, lastPart);
+      } else if (firstPart.equalsIgnoreCase("ROOT") && parent != null) {
+        OCommandContext p = this;
+        while (p.getParent() != null)
+          p = p.getParent();
+        if (lastPart.startsWith("$"))
+          return p.getVariable(lastPart.substring(1));
+        else
+          return ODocumentHelper.getFieldValue(p, lastPart);
       }
     } else {
       firstPart = iName;
@@ -67,7 +75,12 @@ public class OBasicCommandContext implements OCommandContext {
       result = getVariables();
     else if (firstPart.equalsIgnoreCase("PARENT"))
       return parent;
-    else {
+    else if (firstPart.equalsIgnoreCase("ROOT")) {
+      OCommandContext p = this;
+      while (p.getParent() != null)
+        p = p.getParent();
+      return p;
+    } else {
       if (variables != null && variables.containsKey(firstPart))
         result = variables.get(firstPart);
       else if (child != null)
@@ -140,22 +153,20 @@ public class OBasicCommandContext implements OCommandContext {
 
     } else if (child != iContext) {
       // ADD IT
-      // if (child != null)
-      // throw new IllegalStateException("Current context already has a child context");
-
       child = iContext;
       iContext.setParent(this);
     }
     return this;
   }
 
-  public OCommandContext setParent(final OCommandContext iParentContext) {
-    if (parent != iParentContext) {
-      // if (parent != null)
-      // throw new IllegalStateException("Current context already has a parent context");
+  public OCommandContext getParent() {
+    return parent;
+  }
 
+  public OCommandContext setParent(final OCommandContext iParentContext) {
+    if (parent != iParentContext)
       parent = iParentContext;
-    }
+
     return this;
   }
 
@@ -173,7 +184,7 @@ public class OBasicCommandContext implements OCommandContext {
     return recordMetrics;
   }
 
-  public OCommandContext setRecordingMetrics(boolean recordMetrics) {
+  public OCommandContext setRecordingMetrics(final boolean recordMetrics) {
     this.recordMetrics = recordMetrics;
     return this;
   }

@@ -30,6 +30,8 @@ public interface OCommandContext {
 
   public Map<String, Object> getVariables();
 
+  public OCommandContext getParent();
+
   public OCommandContext setParent(OCommandContext iParentContext);
 
   public OCommandContext setChild(OCommandContext context);
