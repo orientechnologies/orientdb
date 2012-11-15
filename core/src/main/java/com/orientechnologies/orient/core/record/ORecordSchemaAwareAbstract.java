@@ -349,9 +349,16 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
     if (p.isReadonly() && iRecord instanceof ODocument) {
       for (String f : ((ODocument) iRecord).getDirtyFields())
-        if (f.equals(p.getName()))
-          throw new OValidationException("The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: "
-              + ((ODocument) iRecord).field(f));
+        if (f.equals(p.getName())) {
+          // check if the field is actually changed by equal.
+          // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
+          Object orgVal = ((ODocument) iRecord).getOriginalValue(f);
+          boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
+          if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
+              || (!fieldValue.equals(orgVal)))
+            throw new OValidationException("The field '" + p.getFullName()
+                + "' is immutable and cannot be altered. Field value is: " + ((ODocument) iRecord).field(f));
+        }
     }
   }
 
