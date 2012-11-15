@@ -33,7 +33,6 @@ public class OExecuteBlock extends OAbstractBlock {
       ODocument iOutput, final boolean iReadOnly) {
 
     final ODocument foreach = getFieldOfClass(iContext, iConfig, "foreach", ODocument.class);
-    final Object doClause = getRequiredField(iContext, iConfig, "do");
     String returnType = (String) getFieldOfClass(iContext, iConfig, "returnType", String.class);
 
     Object returnValue = null;
@@ -58,6 +57,7 @@ public class OExecuteBlock extends OAbstractBlock {
         assignVariable(iContext, "current", current);
 
         debug(iContext, "Executing...");
+        final Object doClause = getRequiredField(iContext, iConfig, "do");
         returnValue = executeDo(iManager, iContext, doClause, returnType, returnValue, iOutput, iReadOnly);
         debug(iContext, "Done");
 
@@ -66,6 +66,7 @@ public class OExecuteBlock extends OAbstractBlock {
 
     } else {
       debug(iContext, "Executing...");
+      final Object doClause = getRequiredField(iContext, iConfig, "do");
       returnValue = executeDo(iManager, iContext, doClause, returnType, returnValue, iOutput, iReadOnly);
       debug(iContext, "Done");
     }

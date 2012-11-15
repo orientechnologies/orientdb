@@ -25,7 +25,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
+import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -45,16 +47,23 @@ public abstract class OAbstractBlock implements OProcessorBlock {
 
     returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
 
-    debug(iContext, "Executing %s...", iConfig.field("type"));
+    debug(iContext, "Executing {%s} block...", iConfig.field("type"));
 
     final Object result = processBlock(iManager, iContext, iConfig, iOutput, iReadOnly);
 
-    debug(iContext, "Returned %s...", result);
+    printReturn(iContext, result);
 
     if (returnVariable != null)
-      iContext.setVariable(returnVariable, result);
+      assignVariable(iContext, returnVariable, result);
 
     return result;
+  }
+
+  protected void printReturn(OCommandContext iContext, final Object result) {
+    if (result != null && !(result instanceof OCommandRequest) && result instanceof Iterable<?>)
+      debug(iContext, "Returned %s", OCollections.toString((Iterable<?>) result));
+    else
+      debug(iContext, "Returned %s", result);
   }
 
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final Object iContent,

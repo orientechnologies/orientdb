@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.block.OExecuteBlock;
 import com.orientechnologies.orient.core.processor.block.OFunctionBlock;
 import com.orientechnologies.orient.core.processor.block.OIfBlock;
+import com.orientechnologies.orient.core.processor.block.OIterateBlock;
 import com.orientechnologies.orient.core.processor.block.OLetBlock;
 import com.orientechnologies.orient.core.processor.block.OOutputBlock;
 import com.orientechnologies.orient.core.processor.block.OProcessorBlock;
@@ -40,8 +41,9 @@ public class OComposableProcessor extends ODynamicFactory<String, OProcessorBloc
   private String extension;
 
   public OComposableProcessor() {
-    register(new OIfBlock());
     register(new OFunctionBlock());
+    register(new OIfBlock());
+    register(new OIterateBlock());
     register(new OLetBlock());
     register(new OExecuteBlock());
     register(new OOutputBlock());
