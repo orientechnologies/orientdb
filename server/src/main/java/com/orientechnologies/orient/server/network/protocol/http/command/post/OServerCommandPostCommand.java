@@ -28,13 +28,14 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit]");
+		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
 
 		// TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
 		final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
 		final String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
 		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
-
+	  final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+	  
 		iRequest.data.commandInfo = "Command";
 		iRequest.data.commandDetail = text;
 
@@ -48,6 +49,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 			final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
 			cmd.setText(text);
 			cmd.setLimit(limit);
+			cmd.setFetchPlan(fetchPlan);
 			response = db.command(cmd).execute();
 
 		} finally {

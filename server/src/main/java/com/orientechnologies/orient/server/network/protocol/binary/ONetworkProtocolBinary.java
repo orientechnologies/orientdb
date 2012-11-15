@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -949,8 +948,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
         .readBytes());
 
-    final OQuery<?> query = (OQuery<?>) (command instanceof OQuery<?> ? command : null);
-
     connection.data.commandDetail = command.getText();
 
     // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
@@ -962,7 +959,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         final AtomicBoolean empty = new AtomicBoolean(true);
         final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 
-        final Map<String, Integer> fetchPlan = query != null ? OFetchHelper.buildFetchPlan(query.getFetchPlan()) : null;
+        final Map<String, Integer> fetchPlan = command != null ? OFetchHelper.buildFetchPlan(command.getFetchPlan()) : null;
         command.setResultListener(new AsyncResultListener(empty, clientTxId, fetchPlan, recordsToSend));
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();

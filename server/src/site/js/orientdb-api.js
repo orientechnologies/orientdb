@@ -613,11 +613,13 @@ function ODatabase(databasePath) {
 	/**
 	 * This is to maintain the compatibility with previous version.
 	 */
-	ODatabase.prototype.executeCommand = function(iCommand, iLanguage, iLimit) {
-		return this.command(iCommand, iLanguage, iLimit);
+	ODatabase.prototype.executeCommand = function(iCommand, iLanguage, iLimit,
+			iFetchPlan) {
+		return this.command(iCommand, iLanguage, iLimit, iFetchPlan);
 	}
 
-	ODatabase.prototype.command = function(iCommand, iLanguage, iLimit) {
+	ODatabase.prototype.command = function(iCommand, iLanguage, iLimit,
+			iFetchPlan) {
 		if (this.databaseInfo == null)
 			this.open();
 
@@ -627,13 +629,18 @@ function ODatabase(databasePath) {
 		if (!iLimit)
 			iLimit = -1;
 
+		if (iFetchPlan == null || iFetchPlan == '')
+			iFetchPlan = '';
+		else
+			iFetchPlan = "/" + this.URLEncode(iFetchPlan);
+
 		var dataType = this.evalResponse ? null : 'text';
 
 		iCommand = this.URLEncode(iCommand);
 		$.ajax({
 			type : "POST",
 			url : this.urlPrefix + 'command/' + this.encodedDatabaseName + '/'
-					+ iLanguage + '/' + iCommand + "/" + iLimit
+					+ iLanguage + '/' + iCommand + "/" + iLimit + iFetchPlan
 					+ this.urlSuffix,
 			context : this,
 			async : false,

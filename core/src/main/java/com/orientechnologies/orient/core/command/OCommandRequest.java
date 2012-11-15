@@ -38,10 +38,43 @@ public interface OCommandRequest {
    *          -1 = no limit. 1 to N to limit the result set.
    * @return
    */
-  public OCommandRequest setLimit(final int iLimit);
+  public OCommandRequest setLimit(int iLimit);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */
   public boolean isIdempotent();
+
+  /**
+   * Returns the fetch plan if any
+   * 
+   * @return Fetch plan as unique string or null if it was not defined.
+   */
+  public String getFetchPlan();
+
+  /**
+   * Set the fetch plan. The format is:
+   * 
+   * <pre>
+   * &lt;field&gt;:&lt;depth-level&gt;*
+   * </pre>
+   * 
+   * Where:
+   * <ul>
+   * <li><b>field</b> is the name of the field to specify the depth-level. <b>*</b> wildcard means any fields</li>
+   * <li><b>depth-level</b> is the depth level to fetch. -1 means infinite, 0 means no fetch at all and 1-N the depth level value.</li>
+   * </ul>
+   * Uses the blank spaces to separate the fields strategies.<br/>
+   * Example:
+   * 
+   * <pre>
+   * children:-1 parent:0 sibling:3 *:0
+   * </pre>
+   * 
+   * <br/>
+   * 
+   * @param iFetchPlan
+   * @return
+   */
+  public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 }

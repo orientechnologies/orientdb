@@ -29,71 +29,82 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-	protected OCommandResultListener	resultListener;
-	protected OProgressListener				progressListener;
-	protected int											limit	= -1;
-	protected Map<Object, Object>			parameters;
+  protected OCommandResultListener resultListener;
+  protected OProgressListener      progressListener;
+  protected int                    limit     = -1;
+  protected Map<Object, Object>    parameters;
+  protected String                 fetchPlan = null;
 
-	protected OCommandRequestAbstract() {
-	}
+  protected OCommandRequestAbstract() {
+  }
 
-	public OCommandResultListener getResultListener() {
-		return resultListener;
-	}
+  public OCommandResultListener getResultListener() {
+    return resultListener;
+  }
 
-	public void setResultListener(OCommandResultListener iListener) {
-		resultListener = iListener;
-	}
+  public void setResultListener(OCommandResultListener iListener) {
+    resultListener = iListener;
+  }
 
-	public Map<Object, Object> getParameters() {
-		return parameters;
-	}
+  public Map<Object, Object> getParameters() {
+    return parameters;
+  }
 
-	protected void setParameters(final Object... iArgs) {
-		if (iArgs.length > 0)
-			parameters = convertToParameters(iArgs);
-	}
+  protected void setParameters(final Object... iArgs) {
+    if (iArgs.length > 0)
+      parameters = convertToParameters(iArgs);
+  }
 
-	@SuppressWarnings("unchecked")
-	protected Map<Object, Object> convertToParameters(final Object... iArgs) {
-		final Map<Object, Object> params;
+  @SuppressWarnings("unchecked")
+  protected Map<Object, Object> convertToParameters(final Object... iArgs) {
+    final Map<Object, Object> params;
 
-		if (iArgs.length == 1 && iArgs[0] instanceof Map) {
-			params = (Map<Object, Object>) iArgs[0];
-		} else {
-			params = new HashMap<Object, Object>(iArgs.length);
-			for (int i = 0; i < iArgs.length; ++i) {
-				Object par = iArgs[i];
+    if (iArgs.length == 1 && iArgs[0] instanceof Map) {
+      params = (Map<Object, Object>) iArgs[0];
+    } else {
+      params = new HashMap<Object, Object>(iArgs.length);
+      for (int i = 0; i < iArgs.length; ++i) {
+        Object par = iArgs[i];
 
-				if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
-					// USE THE RID ONLY
-					par = ((OIdentifiable) par).getIdentity();
+        if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
+          // USE THE RID ONLY
+          par = ((OIdentifiable) par).getIdentity();
 
-				params.put(i, par);
-			}
-		}
-		return params;
-	}
+        params.put(i, par);
+      }
+    }
+    return params;
+  }
 
-	public OProgressListener getProgressListener() {
-		return progressListener;
-	}
+  public OProgressListener getProgressListener() {
+    return progressListener;
+  }
 
-	public OCommandRequestAbstract setProgressListener(OProgressListener progressListener) {
-		this.progressListener = progressListener;
-		return this;
-	}
+  public OCommandRequestAbstract setProgressListener(OProgressListener progressListener) {
+    this.progressListener = progressListener;
+    return this;
+  }
 
-	public void reset() {
-	}
+  public void reset() {
+  }
 
-	public int getLimit() {
-		return limit;
-	}
+  public int getLimit() {
+    return limit;
+  }
 
-	public OCommandRequestAbstract setLimit(final int limit) {
-		this.limit = limit;
-		return this;
-	}
+  public OCommandRequestAbstract setLimit(final int limit) {
+    this.limit = limit;
+    return this;
+  }
+
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <RET extends OCommandRequest> RET setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+    return (RET) this;
+  }
 
 }

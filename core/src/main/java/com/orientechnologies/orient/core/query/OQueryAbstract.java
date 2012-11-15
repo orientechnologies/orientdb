@@ -42,7 +42,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
   /**
    * Sets the fetch plan to use.
    */
-  public OQuery<T> setFetchPlan(final String fetchPlan) {
+  public OQueryAbstract setFetchPlan(final String fetchPlan) {
     OFetchHelper.checkFetchPlanValid(fetchPlan);
     if (fetchPlan != null && fetchPlan.length() == 0)
       this.fetchPlan = null;
