@@ -56,7 +56,7 @@ public class OBasicCommandContext implements OCommandContext {
           return parent.getVariable(lastPart.substring(1));
         else
           return ODocumentHelper.getFieldValue(parent, lastPart);
-      } else if (firstPart.equalsIgnoreCase("ROOT") && parent != null) {
+      } else if (firstPart.equalsIgnoreCase("ROOT") ) {
         OCommandContext p = this;
         while (p.getParent() != null)
           p = p.getParent();
