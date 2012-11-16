@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
  * @author Andrey Lomakin
  * @since 16.11.12
  */
-@Test
+@Test(enabled = false)
 public class NodeIdTest {
 
   public void testOneOneAddValues() {
