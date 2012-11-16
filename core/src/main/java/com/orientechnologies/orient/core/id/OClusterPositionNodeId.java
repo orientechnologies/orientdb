@@ -25,7 +25,8 @@ package com.orientechnologies.orient.core.id;
  * @since 12.11.12
  */
 public final class OClusterPositionNodeId extends OClusterPosition {
-  private final ONodeId nodeId;
+  private static final ONodeId INVALID_NODE_ID = ONodeId.valueOf(-1);
+  private final ONodeId        nodeId;
 
   public ONodeId getNodeId() {
     return nodeId;
@@ -47,51 +48,74 @@ public final class OClusterPositionNodeId extends OClusterPosition {
 
   @Override
   public boolean isValid() {
-    throw new UnsupportedOperationException();
+    return !nodeId.equals(INVALID_NODE_ID);
   }
 
   @Override
   public boolean isPersistent() {
-    throw new UnsupportedOperationException();
+    return nodeId.compareTo(INVALID_NODE_ID) > 0;
   }
 
   @Override
   public boolean isNew() {
-    throw new UnsupportedOperationException();
+    return nodeId.compareTo(ONodeId.ZERO) < 0;
   }
 
   @Override
   public boolean isTemporary() {
-    throw new UnsupportedOperationException();
+    return nodeId.compareTo(INVALID_NODE_ID) < 0;
   }
 
   @Override
   public byte[] toStream() {
-    throw new UnsupportedOperationException();
+    return nodeId.toStream();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OClusterPositionNodeId that = (OClusterPositionNodeId) o;
+
+    return nodeId.equals(that.nodeId);
+  }
+
+  @Override
+  public int hashCode() {
+    return nodeId.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return nodeId.toString();
   }
 
   @Override
   public int compareTo(OClusterPosition o) {
-    throw new UnsupportedOperationException();
+    final OClusterPositionNodeId clusterPositionNodeId = (OClusterPositionNodeId) o;
+    return nodeId.compareTo(clusterPositionNodeId.getNodeId());
   }
 
   @Override
   public int intValue() {
-    throw new UnsupportedOperationException();
+    return nodeId.intValue();
   }
 
   @Override
   public long longValue() {
-    throw new UnsupportedOperationException();
+    return nodeId.longValue();
   }
 
   @Override
   public float floatValue() {
-    throw new UnsupportedOperationException();
+    return nodeId.floatValue();
   }
 
   @Override
   public double doubleValue() {
-    throw new UnsupportedOperationException();
+    return nodeId.doubleValue();
   }
 }

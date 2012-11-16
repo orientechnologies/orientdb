@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.id;
 
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -43,102 +44,137 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   public static final int              NODE_SIZE_BYTES        = CHUNKS_SIZE * OIntegerSerializer.INT_SIZE;
   public static final int              NODE_SIZE_BITS         = NODE_SIZE_BYTES * 8;
 
+  public static final int              SERIALIZED_SIZE        = NODE_SIZE_BYTES + 1;
   private static final long            LONG_INT_MASK          = 0xFFFFFFFFL;
-
   private static final int             UNSIGNED_INT_MAX_VALUE = 0xFFFFFFFF;
 
   public static final ONodeId          MAX_VALUE              = new ONodeId(new int[] { UNSIGNED_INT_MAX_VALUE,
-      UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE });
+      UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE }, 1);
 
-  public static final ONodeId          MIN_VALUE              = new ONodeId(new int[CHUNKS_SIZE]);
+  public static final ONodeId          MIN_VALUE              = new ONodeId(new int[] { UNSIGNED_INT_MAX_VALUE,
+      UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE, UNSIGNED_INT_MAX_VALUE }, -1);
 
-  public static final ONodeId          ONE                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 1 });
-  public static final ONodeId          ZERO                   = MIN_VALUE;
+  public static final ONodeId          ZERO                   = new ONodeId(new int[CHUNKS_SIZE], 0);
+  public static final ONodeId          ONE                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 1 }, 1);
+  public static final ONodeId          TWO                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 2 }, 1);
+  public static final ONodeId          THREE                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 3 }, 1);
+  public static final ONodeId          FOUR                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 4 }, 1);
+  public static final ONodeId          FIVE                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 5 }, 1);
+  public static final ONodeId          SIX                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 6 }, 1);
+  public static final ONodeId          SEVEN                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 7 }, 1);
+  public static final ONodeId          EIGHT                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 8 }, 1);
+  public static final ONodeId          NINE                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 9 }, 1);
+  public static final ONodeId          TEN                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 10 }, 1);
+  public static final ONodeId          ELEVEN                 = new ONodeId(new int[] { 0, 0, 0, 0, 0, 11 }, 1);
+  public static final ONodeId          TWELVE                 = new ONodeId(new int[] { 0, 0, 0, 0, 0, 12 }, 1);
 
   private static final MersenneTwister random                 = new MersenneTwister();
   private static byte[]                CURRENT_MAC            = getMac();
-
   private static final AtomicLong      version                = new AtomicLong();
-
   static {
     random.setSeed(OLongSerializer.INSTANCE.deserialize(new SecureRandom().generateSeed(OLongSerializer.LONG_SIZE), 0));
   }
 
   private final int[]                  chunks;
+  private final int                    signum;
 
-  public ONodeId() {
-    this(new int[CHUNKS_SIZE]);
-  }
-
-  private ONodeId(int[] chunks) {
+  private ONodeId(int[] chunks, int signum) {
     this.chunks = chunks;
+    this.signum = signum;
   }
 
   @Override
   public int compareTo(ONodeId o) {
-    for (int i = 0; i < CHUNKS_SIZE; i++) {
-      final long chunk = chunks[i] & LONG_INT_MASK;
-      final long otherChunk = o.chunks[i] & LONG_INT_MASK;
-
-      if (chunk == otherChunk)
-        continue;
-
-      if (chunk > otherChunk)
-        return 1;
-
+    if (signum > o.signum)
+      return 1;
+    else if (signum < o.signum)
       return -1;
-    }
 
-    return 0;
+    if (signum == 0 && o.signum == 0)
+      return 0;
+
+    final int result = compareChunks(chunks, o.chunks);
+    if (signum < 0)
+      return -result;
+
+    return result;
   }
 
   public ONodeId add(final ONodeId idToAdd) {
-    int[] chunksToAdd = idToAdd.chunks;
-    int[] result = new int[CHUNKS_SIZE];
+    if (idToAdd.signum == 0)
+      return new ONodeId(chunks, signum);
 
-    int index = CHUNKS_SIZE;
-    long sum = 0;
-
-    while (index > 0) {
-      index--;
-      sum = (chunks[index] & LONG_INT_MASK) + (chunksToAdd[index] & LONG_INT_MASK) + (sum >>> 32);
-      result[index] = (int) sum;
+    final int[] result;
+    if (signum == idToAdd.signum) {
+      result = addArrays(chunks, idToAdd.chunks);
+      return new ONodeId(result, signum);
     }
 
-    return new ONodeId(result);
+    final int cmp = compareChunks(chunks, idToAdd.chunks);
+    if (cmp == 0)
+      return ZERO;
+
+    if (cmp > 0)
+      result = substructArrays(chunks, idToAdd.chunks);
+    else
+      result = substructArrays(idToAdd.chunks, chunks);
+
+    if (Arrays.equals(ZERO.chunks, result))
+      return ZERO;
+
+    return new ONodeId(result, cmp == signum ? 1 : 0);
   }
 
   public ONodeId subtract(final ONodeId idToSubtract) {
-    int[] chunksToSubtract = idToSubtract.chunks;
-    int[] result = new int[CHUNKS_SIZE];
+    if (idToSubtract.signum == 0)
+      return this;
 
-    int index = CHUNKS_SIZE;
-    long difference = 0;
+    if (signum == 0)
+      return new ONodeId(idToSubtract.chunks, -idToSubtract.signum);
 
-    while (index > 0) {
-      index--;
-      difference = (chunks[index] & LONG_INT_MASK) - (chunksToSubtract[index] & LONG_INT_MASK) + (difference >> 32);
-      result[index] = (int) difference;
-    }
+    if (signum != idToSubtract.signum)
+      return new ONodeId(addArrays(chunks, idToSubtract.chunks), signum);
 
-    return new ONodeId(result);
+    int cmp = compareChunks(chunks, idToSubtract.chunks);
+    if (cmp == 0)
+      return ZERO;
+
+    final int[] result;
+    if (cmp > 0)
+      result = substructArrays(chunks, idToSubtract.chunks);
+    else
+      result = substructArrays(idToSubtract.chunks, chunks);
+
+    if (Arrays.equals(ZERO.chunks, result))
+      return ZERO;
+
+    return new ONodeId(result, cmp == signum ? 1 : 0);
   }
 
   public ONodeId multiply(final int value) {
+    if (value == 0)
+      return ZERO;
+
     final int[] result = new int[CHUNKS_SIZE];
 
+    boolean allchunkszero = true;
     long carry = 0;
     for (int j = CHUNKS_SIZE - 1; j >= 0; j--) {
       final long product = (chunks[j] & LONG_INT_MASK) * (value & LONG_INT_MASK) + carry;
       result[j] = (int) product;
+      allchunkszero = allchunkszero && result[j] == 0;
       carry = product >>> 32;
     }
 
-    return new ONodeId(result);
+    return new ONodeId(result, signum);
   }
 
   public ONodeId shiftLeft(final int shift) {
     int nInts = shift >>> 5;
+
+    if (nInts == CHUNKS_SIZE)
+      return ZERO;
+
     final int nBits = shift & 0x1f;
     final int result[] = new int[CHUNKS_SIZE];
 
@@ -155,11 +191,18 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     } else
       System.arraycopy(chunks, nInts, result, 0, CHUNKS_SIZE - nInts);
 
-    return new ONodeId(result);
+    if (Arrays.equals(ZERO.chunks, result))
+      return ZERO;
+
+    return new ONodeId(result, signum);
   }
 
   public ONodeId shiftRight(final int shift) {
     int nInts = shift >>> 5;
+
+    if (nInts == CHUNKS_SIZE)
+      return ZERO;
+
     int nBits = shift & 0x1f;
     final int result[] = new int[CHUNKS_SIZE];
 
@@ -176,7 +219,94 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     } else
       System.arraycopy(chunks, 0, result, nInts, CHUNKS_SIZE - nInts);
 
-    return new ONodeId(result);
+    if (Arrays.equals(ZERO.chunks, result))
+      return ZERO;
+
+    return new ONodeId(result, signum);
+  }
+
+  public static ONodeId generateUniqueId() {
+    final long clusterPosition = random.nextLong(Long.MAX_VALUE);
+
+    final int[] chunks = new int[CHUNKS_SIZE];
+    final long millis = System.currentTimeMillis();
+    final long localVersion = version.getAndDecrement();
+
+    chunks[0] = (int) (clusterPosition >>> 32);
+    chunks[1] = (int) clusterPosition;
+
+    chunks[2] = (int) (localVersion >>> 32);
+    chunks[3] = (int) localVersion;
+
+    chunks[4] = OIntegerSerializer.INSTANCE.deserialize(CURRENT_MAC, 0);
+    chunks[5] = ((CURRENT_MAC[4] & 0xFF) << 24) + ((CURRENT_MAC[5] & 0xFF) << 16) + (int) ((millis >>> 3) & 0xFFFF);
+
+    return new ONodeId(chunks, 1);
+  }
+
+  private static int[] addArrays(int[] chunksToAddOne, int[] chunksToAddTwo) {
+    int[] result = new int[CHUNKS_SIZE];
+
+    int index = CHUNKS_SIZE;
+    long sum = 0;
+
+    while (index > 0) {
+      index--;
+      sum = (chunksToAddTwo[index] & LONG_INT_MASK) + (chunksToAddOne[index] & LONG_INT_MASK) + (sum >>> 32);
+      result[index] = (int) sum;
+    }
+    return result;
+  }
+
+  private static int compareChunks(int[] chunksOne, int[] chunksTwo) {
+    for (int i = 0; i < CHUNKS_SIZE; i++) {
+      final long chunk = chunksOne[i] & LONG_INT_MASK;
+      final long otherChunk = chunksTwo[i] & LONG_INT_MASK;
+
+      if (chunk == otherChunk)
+        continue;
+
+      if (chunk > otherChunk)
+        return 1;
+      return -1;
+    }
+
+    return 0;
+  }
+
+  private static int[] substructArrays(int[] chunksOne, int[] chunksTwo) {
+    int[] result = new int[CHUNKS_SIZE];
+
+    int index = CHUNKS_SIZE;
+    long difference = 0;
+
+    while (index > 0) {
+      index--;
+      difference = (chunksOne[index] & LONG_INT_MASK) - (chunksTwo[index] & LONG_INT_MASK) + (difference >> 32);
+      result[index] = (int) difference;
+    }
+    return result;
+  }
+
+  private static void multiplyAndAdd(int[] chunks, int multiplier, int summand) {
+    long carry = 0;
+    for (int j = CHUNKS_SIZE - 1; j >= 0; j--) {
+      final long product = (chunks[j] & LONG_INT_MASK) * (multiplier & LONG_INT_MASK) + carry;
+      chunks[j] = (int) product;
+      carry = product >>> 32;
+    }
+
+    if (summand == 0)
+      return;
+
+    long sum = (chunks[CHUNKS_SIZE - 1] & LONG_INT_MASK) + (summand & LONG_INT_MASK);
+    chunks[CHUNKS_SIZE - 1] = (int) sum;
+
+    int j = CHUNKS_SIZE - 2;
+    while (j >= 0 && sum > 0) {
+      sum = (chunks[j] & LONG_INT_MASK) + (sum >>> 32);
+      chunks[j] = (int) sum;
+    }
   }
 
   public int intValue() {
@@ -190,15 +320,29 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
   @Override
   public float floatValue() {
-    return longValue();
+    return Float.parseFloat(toString());
   }
 
   @Override
   public double doubleValue() {
-    return longValue();
+    return Double.parseDouble(toString());
   }
 
   public byte[] toStream() {
+    final byte[] bytes = new byte[SERIALIZED_SIZE];
+
+    int pos = 0;
+    for (int i = 0; i < CHUNKS_SIZE; i++) {
+      OIntegerSerializer.INSTANCE.serialize(chunks[i], bytes, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+    }
+
+    bytes[pos] = (byte) signum;
+
+    return bytes;
+  }
+
+  public byte[] toByteArray() {
     final byte[] bytes = new byte[NODE_SIZE_BYTES];
 
     int pos = 0;
@@ -217,76 +361,157 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    ONodeId nodeId = (ONodeId) o;
+    ONodeId oNodeId = (ONodeId) o;
 
-    if (!Arrays.equals(chunks, nodeId.chunks))
+    if (signum != oNodeId.signum)
       return false;
+    return Arrays.equals(chunks, oNodeId.chunks);
 
-    return true;
   }
 
   @Override
   public int hashCode() {
-    return chunks != null ? Arrays.hashCode(chunks) : 0;
+    int result = Arrays.hashCode(chunks);
+    result = 31 * result + signum;
+    return result;
   }
 
-  @Override
   public String toString() {
-    return "0x" + toHexString();
+    return new BigInteger(signum, toByteArray()).toString();
+  }
+
+  public static ONodeId valueOf(long value) {
+    final ONodeId constant = findInConstantPool(value);
+    if (constant != null)
+      return constant;
+
+    final int signum;
+
+    if (value > 0)
+      signum = 1;
+    else {
+      signum = -1;
+      value = -value;
+    }
+
+    final int[] chunks = new int[CHUNKS_SIZE];
+    chunks[5] = (int) (value & LONG_INT_MASK);
+    chunks[4] = (int) (value >>> 32);
+
+    return new ONodeId(chunks, signum);
+  }
+
+  public static ONodeId parseString(String value) {
+    final int intChunkLength = 9;
+    final int longChunkLength = 18;
+
+    int signum;
+
+    int pos;
+    if (value.charAt(0) == '-') {
+      pos = 1;
+      signum = -1;
+    } else {
+      pos = 0;
+      signum = 1;
+    }
+
+    while (pos < value.length() && Character.digit(value.charAt(pos), 10) == 0)
+      pos++;
+
+    if (pos == value.length())
+      return ZERO;
+
+    int chunkToRead = Math.min(pos + longChunkLength, value.length());
+    long initialValue = Long.parseLong(value.substring(pos, chunkToRead));
+
+    int[] result = new int[CHUNKS_SIZE];
+    result[CHUNKS_SIZE - 1] = (int) initialValue;
+    result[CHUNKS_SIZE - 2] = (int) (initialValue >>> 32);
+
+    while (pos < value.length()) {
+      chunkToRead = Math.min(pos + intChunkLength, value.length());
+      int parsedValue = Integer.parseInt(value.substring(pos, chunkToRead));
+      multiplyAndAdd(result, 1000000000, parsedValue);
+      pos = chunkToRead;
+    }
+
+    return new ONodeId(result, signum);
+  }
+
+  public static ONodeId parseHexSting(String value) {
+    int pos;
+    if (value.charAt(0) == '-')
+      pos = 1;
+    else
+      pos = 0;
+
+    final int[] chunks = new int[6];
+    for (int i = 0; i < CHUNKS_SIZE; i++) {
+      final String chunk = value.substring(pos, pos + OIntegerSerializer.INT_SIZE * 2);
+
+      chunks[i] = (int) Long.parseLong(chunk, 16);
+      pos += OIntegerSerializer.INT_SIZE * 2;
+    }
+
+    if (Arrays.equals(ZERO.chunks, chunks))
+      return ZERO;
+
+    return new ONodeId(chunks, 1);
   }
 
   public String toHexString() {
     final StringBuilder builder = new StringBuilder();
+    if (signum < 0)
+      builder.append("-");
+
     for (int chunk : chunks)
       builder.append(String.format("%1$08x", chunk));
 
     return builder.toString();
   }
 
-  public static ONodeId valueOf(long value) {
+  private static ONodeId findInConstantPool(long value) {
     if (value == 0)
       return ZERO;
 
     if (value == 1)
       return ONE;
 
-    final int[] chunks = new int[CHUNKS_SIZE];
-    chunks[5] = (int) (value & LONG_INT_MASK);
-    chunks[4] = (int) (value >>> 32);
+    if (value == 2)
+      return TWO;
 
-    return new ONodeId(chunks);
-  }
+    if (value == 3)
+      return THREE;
 
-  public static ONodeId valueOf(String value) {
-    if (value.length() != NODE_SIZE_BYTES * 2)
-      throw new IllegalArgumentException("Invalid length of provided node id should be " + (NODE_SIZE_BYTES * 2));
+    if (value == 4)
+      return FOUR;
 
-    final int[] chunks = new int[6];
-    for (int i = 0; i < CHUNKS_SIZE; i++) {
-      final String chunk = value.substring(i * OIntegerSerializer.INT_SIZE * 2, (i + 1) * OIntegerSerializer.INT_SIZE * 2);
+    if (value == 5)
+      return FIVE;
 
-      chunks[i] = (int) Long.parseLong(chunk, 16);
-    }
+    if (value == 6)
+      return SIX;
 
-    return new ONodeId(chunks);
-  }
+    if (value == 7)
+      return SEVEN;
 
-  public static ONodeId generateUniqueId() {
-    final long clusterPosition = random.nextLong(Long.MAX_VALUE);
-    final int[] chunks = new int[CHUNKS_SIZE];
-    final long millis = System.currentTimeMillis();
-    final long localVersion = version.getAndDecrement();
+    if (value == 8)
+      return EIGHT;
 
-    chunks[0] = (int) (clusterPosition >>> 32);
-    chunks[1] = (int) clusterPosition;
+    if (value == 9)
+      return NINE;
 
-    chunks[2] = (int) (localVersion >>> 32);
-    chunks[3] = (int) localVersion;
+    if (value == 10)
+      return TEN;
 
-    chunks[4] = OIntegerSerializer.INSTANCE.deserialize(CURRENT_MAC, 0);
-    chunks[5] = ((CURRENT_MAC[4] & 0xFF) << 24) + ((CURRENT_MAC[5] & 0xFF) << 16) + (int) ((millis >>> 3) & 0xFFFF);
+    if (value == 11)
+      return ELEVEN;
 
-    return new ONodeId(chunks);
+    if (value == 12)
+      return TWELVE;
+
+    return null;
   }
 
   private static byte[] getMac() {
