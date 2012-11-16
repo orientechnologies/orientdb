@@ -35,7 +35,7 @@ public abstract class OClusterPositionFactory {
   public static final OClusterPositionFactory INSTANCE;
 
   static {
-    if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
+    if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean())
       INSTANCE = new OClusterPositionFactoryNodeId();
     else
       INSTANCE = new OClusterPositionFactoryLong();
@@ -132,17 +132,17 @@ public abstract class OClusterPositionFactory {
 
     @Override
     public OClusterPosition valueOf(String value) {
-      throw new UnsupportedOperationException();
+      return new OClusterPositionNodeId(ONodeId.parseString(value));
     }
 
     @Override
     public OClusterPosition fromStream(byte[] content, int start) {
-      throw new UnsupportedOperationException();
+      return new OClusterPositionNodeId(ONodeId.fromStream(content, start));
     }
 
     @Override
     public int getSerializedSize() {
-      throw new UnsupportedOperationException();
+      return ONodeId.SERIALIZED_SIZE;
     }
   }
 

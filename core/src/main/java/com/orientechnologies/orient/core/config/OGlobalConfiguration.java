@@ -51,6 +51,9 @@ public enum OGlobalConfiguration {
       Float.class, 0.70),
 
   // STORAGE
+  USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
+      + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
+
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",

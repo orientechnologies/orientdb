@@ -17,12 +17,11 @@
 package com.orientechnologies.orient.core.id;
 
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -57,16 +56,6 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   public static final ONodeId          ZERO                   = new ONodeId(new int[CHUNKS_SIZE], 0);
   public static final ONodeId          ONE                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 1 }, 1);
   public static final ONodeId          TWO                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 2 }, 1);
-  public static final ONodeId          THREE                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 3 }, 1);
-  public static final ONodeId          FOUR                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 4 }, 1);
-  public static final ONodeId          FIVE                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 5 }, 1);
-  public static final ONodeId          SIX                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 6 }, 1);
-  public static final ONodeId          SEVEN                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 7 }, 1);
-  public static final ONodeId          EIGHT                  = new ONodeId(new int[] { 0, 0, 0, 0, 0, 8 }, 1);
-  public static final ONodeId          NINE                   = new ONodeId(new int[] { 0, 0, 0, 0, 0, 9 }, 1);
-  public static final ONodeId          TEN                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 10 }, 1);
-  public static final ONodeId          ELEVEN                 = new ONodeId(new int[] { 0, 0, 0, 0, 0, 11 }, 1);
-  public static final ONodeId          TWELVE                 = new ONodeId(new int[] { 0, 0, 0, 0, 0, 12 }, 1);
 
   private static final MersenneTwister random                 = new MersenneTwister();
   private static byte[]                CURRENT_MAC            = getMac();
@@ -89,7 +78,6 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
       return 1;
     else if (signum < o.signum)
       return -1;
-
     if (signum == 0 && o.signum == 0)
       return 0;
 
@@ -119,10 +107,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     else
       result = substructArrays(idToAdd.chunks, chunks);
 
-    if (Arrays.equals(ZERO.chunks, result))
-      return ZERO;
-
-    return new ONodeId(result, cmp == signum ? 1 : 0);
+    return new ONodeId(result, cmp == signum ? 1 : -1);
   }
 
   public ONodeId subtract(final ONodeId idToSubtract) {
@@ -145,10 +130,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     else
       result = substructArrays(idToSubtract.chunks, chunks);
 
-    if (Arrays.equals(ZERO.chunks, result))
-      return ZERO;
-
-    return new ONodeId(result, cmp == signum ? 1 : 0);
+    return new ONodeId(result, cmp == signum ? 1 : -1);
   }
 
   public ONodeId multiply(final int value) {
@@ -157,12 +139,10 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
     final int[] result = new int[CHUNKS_SIZE];
 
-    boolean allchunkszero = true;
     long carry = 0;
     for (int j = CHUNKS_SIZE - 1; j >= 0; j--) {
       final long product = (chunks[j] & LONG_INT_MASK) * (value & LONG_INT_MASK) + carry;
       result[j] = (int) product;
-      allchunkszero = allchunkszero && result[j] == 0;
       carry = product >>> 32;
     }
 
@@ -306,6 +286,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     while (j >= 0 && sum > 0) {
       sum = (chunks[j] & LONG_INT_MASK) + (sum >>> 32);
       chunks[j] = (int) sum;
+      j--;
     }
   }
 
@@ -342,7 +323,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     return bytes;
   }
 
-  public byte[] toByteArray() {
+  public byte[] chunksToByteArray() {
     final byte[] bytes = new byte[NODE_SIZE_BYTES];
 
     int pos = 0;
@@ -377,7 +358,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   }
 
   public String toString() {
-    return new BigInteger(signum, toByteArray()).toString();
+    return new BigInteger(signum, chunksToByteArray()).toString();
   }
 
   public static ONodeId valueOf(long value) {
@@ -424,6 +405,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
     int chunkToRead = Math.min(pos + longChunkLength, value.length());
     long initialValue = Long.parseLong(value.substring(pos, chunkToRead));
+    pos = chunkToRead;
 
     int[] result = new int[CHUNKS_SIZE];
     result[CHUNKS_SIZE - 1] = (int) initialValue;
@@ -432,11 +414,26 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     while (pos < value.length()) {
       chunkToRead = Math.min(pos + intChunkLength, value.length());
       int parsedValue = Integer.parseInt(value.substring(pos, chunkToRead));
-      multiplyAndAdd(result, 1000000000, parsedValue);
+      final int multiplier = (chunkToRead == intChunkLength) ? 1000000000 : (int) Math.pow(10, chunkToRead - pos);
+      multiplyAndAdd(result, multiplier, parsedValue);
       pos = chunkToRead;
     }
 
     return new ONodeId(result, signum);
+  }
+
+  public static ONodeId fromStream(byte[] content, int start) {
+    final int[] chunks = new int[CHUNKS_SIZE];
+
+    int pos = start;
+    for (int i = 0; i < CHUNKS_SIZE; i++) {
+      chunks[i] = OIntegerSerializer.INSTANCE.deserialize(content, pos);
+      pos += OIntegerSerializer.INT_SIZE;
+    }
+
+    final int signum = content[pos];
+
+    return new ONodeId(chunks, signum);
   }
 
   public static ONodeId parseHexSting(String value) {
@@ -481,48 +478,22 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     if (value == 2)
       return TWO;
 
-    if (value == 3)
-      return THREE;
-
-    if (value == 4)
-      return FOUR;
-
-    if (value == 5)
-      return FIVE;
-
-    if (value == 6)
-      return SIX;
-
-    if (value == 7)
-      return SEVEN;
-
-    if (value == 8)
-      return EIGHT;
-
-    if (value == 9)
-      return NINE;
-
-    if (value == 10)
-      return TEN;
-
-    if (value == 11)
-      return ELEVEN;
-
-    if (value == 12)
-      return TWELVE;
-
     return null;
   }
 
   private static byte[] getMac() {
     try {
-      InetAddress ip = InetAddress.getLocalHost();
-      NetworkInterface networkInterface = NetworkInterface.getByInetAddress(ip);
-      return networkInterface.getHardwareAddress();
-    } catch (UnknownHostException e) {
-      throw new IllegalStateException("Error during MAC address retrieval.", e);
+      final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+      while (networkInterfaces.hasMoreElements()) {
+        NetworkInterface networkInterface = networkInterfaces.nextElement();
+        final byte[] mac = networkInterface.getHardwareAddress();
+        if (mac != null && mac.length > 0)
+          return mac;
+      }
     } catch (SocketException e) {
       throw new IllegalStateException("Error during MAC address retrieval.", e);
     }
+
+    throw new IllegalStateException("Node id is possible " + "to generate on machine which have at least one network interface");
   }
 }
