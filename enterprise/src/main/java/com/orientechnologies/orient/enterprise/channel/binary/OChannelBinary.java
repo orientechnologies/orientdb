@@ -18,6 +18,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
@@ -224,8 +225,39 @@ public abstract class OChannelBinary extends OChannel {
   public ORecordId readRID() throws IOException {
     final int clusterId = readShort();
 
-    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(readBytes());
+    final OClusterPosition clusterPosition = readClusterPosition();
     return new ORecordId(clusterId, clusterPosition);
+  }
+
+  public OClusterPosition readClusterPosition() throws IOException {
+    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
+
+    if (debug)
+      OLogManager.instance().debug(this, "%s - Reading cluster position (%d bytes)....", socket.getRemoteSocketAddress(),
+          serializedSize);
+
+    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream((InputStream) in);
+
+    updateMetricReceivedBytes(serializedSize);
+
+    if (debug)
+      OLogManager.instance().debug(this, "%s - Read cluster position: %s", socket.getRemoteSocketAddress(), clusterPosition);
+
+    return clusterPosition;
+  }
+
+  public OChannelBinary writeClusterPosition(final OClusterPosition clusterPosition) throws IOException {
+    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
+
+    if (debug)
+      OLogManager.instance().debug(this, "%s - Writing cluster position (%d bytes) : %s....", socket.getRemoteSocketAddress(),
+          serializedSize, clusterPosition);
+
+    out.write(clusterPosition.toStream());
+
+    updateMetricTransmittedBytes(serializedSize);
+
+    return this;
   }
 
   public OChannelBinary writeByte(final byte iContent) throws IOException {
@@ -322,7 +354,7 @@ public abstract class OChannelBinary extends OChannel {
 
   public void writeRID(final ORID iRID) throws IOException {
     writeShort((short) iRID.getClusterId());
-    writeBytes(iRID.getClusterPosition().toStream());
+    writeClusterPosition(iRID.getClusterPosition());
   }
 
   public void clearInput() throws IOException {

@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -475,7 +474,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeInt(pos.length);
       for (OClusterPosition position : pos)
-        channel.writeBytes(position.toStream());
+        channel.writeClusterPosition(position);
 
     } finally {
       endResponse();
@@ -488,10 +487,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkDatabase();
 
     final int originalClusterId = channel.readShort();
-    final OClusterPosition originalClusterPosition = OClusterPositionFactory.INSTANCE.fromStream(channel.readBytes());
+    final OClusterPosition originalClusterPosition = channel.readClusterPosition();
 
     final int destinationClusterId = channel.readShort();
-    final OClusterPosition destinationClusterPosition = OClusterPositionFactory.INSTANCE.fromStream(channel.readBytes());
+    final OClusterPosition destinationClusterPosition = channel.readClusterPosition();
 
     connection.database.getStorage().changeRecordIdentity(new ORecordId(originalClusterId, originalClusterPosition),
         new ORecordId(destinationClusterId, destinationClusterPosition));
@@ -1111,7 +1110,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       beginResponse();
       try {
         sendOk(clientTxId);
-        channel.writeBytes(record.getIdentity().getClusterPosition().toStream());
+        channel.writeClusterPosition(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
           channel.writeInt(record.getVersion());
       } finally {
