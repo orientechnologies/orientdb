@@ -487,13 +487,14 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
       while (networkInterfaces.hasMoreElements()) {
         NetworkInterface networkInterface = networkInterfaces.nextElement();
         final byte[] mac = networkInterface.getHardwareAddress();
-        if (mac != null && mac.length > 0)
+        if (mac != null && mac.length == 6)
           return mac;
       }
     } catch (SocketException e) {
       throw new IllegalStateException("Error during MAC address retrieval.", e);
     }
 
-    throw new IllegalStateException("Node id is possible " + "to generate on machine which have at least one network interface");
+    throw new IllegalStateException("Node id is possible to generate only on machine which have at least"
+        + " one network interface with mac address.");
   }
 }
