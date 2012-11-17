@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
@@ -66,9 +67,11 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     try {
       final String databaseName = urlParts[1];
       final String storageMode = urlParts[2];
-      final String url = getStoragePath(databaseName, storageMode);
+      String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
+        url = url.replace(OServerCommandAuthenticatedDbAbstract.DBNAME_DIR_SEPARATOR, '/');
+
         final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, url);
         if (database.exists())
           throw new ODatabaseException("Database '" + database.getURL() + "' already exists");
