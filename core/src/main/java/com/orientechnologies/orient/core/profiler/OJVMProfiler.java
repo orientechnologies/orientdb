@@ -147,7 +147,7 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");
 
-    final String url = OIOUtils.getRelativePathIfAny(iDatabaseURL, basePath);
+    final String url = iDatabaseURL;
 
     buffer.append(url);
     buffer.append('.');

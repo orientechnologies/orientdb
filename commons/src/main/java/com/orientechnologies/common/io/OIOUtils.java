@@ -152,7 +152,11 @@ public class OIOUtils {
   }
 
   public static String getRelativePathIfAny(final String iDatabaseURL, final String iBasePath) {
-    if (iBasePath != null) {
+    if (iBasePath == null) {
+      final int pos = iDatabaseURL.lastIndexOf('/');
+      if (pos > -1)
+        return iDatabaseURL.substring(pos + 1);
+    } else {
       final int pos = iDatabaseURL.indexOf(iBasePath);
       if (pos > -1)
         return iDatabaseURL.substring(pos + iBasePath.length() + 1);

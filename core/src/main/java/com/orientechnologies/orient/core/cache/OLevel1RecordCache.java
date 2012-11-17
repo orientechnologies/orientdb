@@ -44,7 +44,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     secondary = db.getLevel2Cache();
 
-    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(db.getURL(), Orient.getHomePath()) + ".cache.level1.";
+    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(db.getName(), Orient.getHomePath()) + ".cache.level1.";
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 

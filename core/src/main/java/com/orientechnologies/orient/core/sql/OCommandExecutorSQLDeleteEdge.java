@@ -103,9 +103,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         break;
     }
 
-    if (from == null && to == null && rid == null && clazz == null && compiledFilter == null)
-      // DELETE ALL THE EDGES
-      query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
+    if (from == null && to == null && rid == null)
+      if (clazz == null)
+        // DELETE ALL THE EDGES
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
+      else
+        // DELETE EDGES OF CLASS X
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
 
     return this;
   }
@@ -114,7 +118,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (from == null && to == null && rid == null && query == null)
+    if (from == null && to == null && rid == null && query == null && compiledFilter == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     database = getDatabase();

@@ -563,23 +563,25 @@ public class GraphDatabaseTest {
     OIdentifiable v2 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
     OIdentifiable v3 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
     List<OIdentifiable> e1 = database.command(
-        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity() + " set name = 'wow' ")).execute();
     List<OIdentifiable> e2 = database.command(
-        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
+        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity() + " set name = 'wow' ")).execute();
 
     result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v2);
     Assert.assertEquals(result, 1);
     result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v3);
     Assert.assertEquals(result, 1);
-    result = database.command(new OCommandSQL("delete from E1 where @rid = ?")).execute(e1.get(0));
+    result = database.command(
+        new OCommandSQL("delete edge from " + v1.getIdentity() + " to " + v2.getIdentity() + " where  name = 'wow'")).execute();
     Assert.assertEquals(result, 1);
-    result = database.command(new OCommandSQL("delete from E1 where @rid = ?")).execute(e2.get(0));
+    result = database.command(new OCommandSQL("delete edge where name = 'wow'")).execute();
     Assert.assertEquals(result, 1);
-    
+
     result = database.command(new OCommandSQL("create property V1.ctime DATETIME")).execute();
-    //result = database.command(new OCommandSQL("update V1 set ctime=sysdate() where name = 'madeInSqlLand'")).execute();
+    // result = database.command(new OCommandSQL("update V1 set ctime=sysdate() where name = 'madeInSqlLand'")).execute();
 
     result = database.command(new OCommandSQL("drop class V1")).execute();
     result = database.command(new OCommandSQL("drop class E1")).execute();
   }
+
 }

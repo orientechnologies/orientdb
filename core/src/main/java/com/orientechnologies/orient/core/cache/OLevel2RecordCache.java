@@ -42,7 +42,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
   public OLevel2RecordCache(final OStorage iStorage) {
     super(new OCacheLocator().secondaryCache(iStorage.getName()));
-    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(iStorage.getURL(), Orient.getHomePath()) + ".cache.level2.";
+    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(iStorage.getName(), Orient.getHomePath()) + ".cache.level2.";
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 

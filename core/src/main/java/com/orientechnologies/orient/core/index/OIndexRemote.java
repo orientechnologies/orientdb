@@ -112,7 +112,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
-  public String getDatabaseURL() {
+  public String getDatabaseName() {
     return databaseName;
   }
 
