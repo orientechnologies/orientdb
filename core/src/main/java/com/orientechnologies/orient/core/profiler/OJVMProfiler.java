@@ -18,7 +18,9 @@ package com.orientechnologies.orient.core.profiler;
 
 import java.io.File;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
@@ -31,7 +33,8 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  * @copyrights Orient Technologies.com
  */
 public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener {
-  private final int metricProcessors = Runtime.getRuntime().availableProcessors();
+  private final int           metricProcessors = Runtime.getRuntime().availableProcessors();
+  private final static String basePath         = Orient.getHomePath() + "/databases";
 
   public OJVMProfiler() {
     registerHookValue(getSystemMetric("config.cpus"), "Number of CPUs", METRIC_TYPE.SIZE, new OProfilerHookValue() {
@@ -140,10 +143,13 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
     return buffer.toString();
   }
 
-  public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
+  public String getDatabaseMetric(final String iDatabaseURL, final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");
-    buffer.append(iDatabaseName);
+
+    final String url = OIOUtils.getRelativePathIfAny(iDatabaseURL, basePath);
+
+    buffer.append(url);
     buffer.append('.');
     buffer.append(iMetricName);
     return buffer.toString();

@@ -78,7 +78,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   protected OMVRBTreeDatabaseLazySave<Object, T> map;
   protected Set<String>                          clustersToIndex  = new LinkedHashSet<String>();
   protected OIndexDefinition                     indexDefinition;
-  protected final String                         databaseName;
+  protected final String                         databaseURL;
   protected int                                  maxUpdatesBeforeSave;
 
   @ODocumentInstance
@@ -89,7 +89,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
-    databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+    databaseURL = ODatabaseRecordThreadLocal.INSTANCE.get().getURL();
 
     type = iType;
     watchDog = new Listener() {
@@ -720,7 +720,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   protected void installHooks(final ODatabaseRecord iDatabase) {
     final OJVMProfiler profiler = Orient.instance().getProfiler();
-    final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getName(), "index." + name + '.');
+    final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getURL(), "index." + name + '.');
 
     profiler.registerHookValue(profilerPrefix + "items", "Index size", METRIC_TYPE.SIZE, new OProfilerHookValue() {
       public Object getValue() {
@@ -921,8 +921,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     return name.hashCode();
   }
 
-  public String getDatabaseName() {
-    return databaseName;
+  public String getDatabaseURL() {
+    return databaseURL;
   }
 
   private int lazyUpdates() {

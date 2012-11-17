@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.cache;
 
 import static com.orientechnologies.orient.core.metadata.OMetadata.CLUSTER_INDEX_NAME;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -43,7 +44,7 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     secondary = db.getLevel2Cache();
 
-    profilerPrefix = "db." + db.getName() + ".cache.level1.";
+    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(db.getURL(), Orient.getHomePath()) + ".cache.level1.";
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 

@@ -56,7 +56,7 @@ public interface OIndex<T> {
    */
   public void unload();
 
-  public String getDatabaseName();
+  public String getDatabaseURL();
 
   /**
    * Types of the keys that index can accept, if index contains composite key, list of types of elements from which this index

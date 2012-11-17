@@ -263,7 +263,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getKeySize();
   }
 
-  public String getDatabaseName() {
-    return delegate.getDatabaseName();
+  public String getDatabaseURL() {
+    return delegate.getDatabaseURL();
   }
 }

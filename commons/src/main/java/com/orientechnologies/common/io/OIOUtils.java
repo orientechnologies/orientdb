@@ -150,4 +150,13 @@ public class OIOUtils {
   public static String getUnixFileName(final String iFileName) {
     return iFileName != null ? iFileName.replace('\\', '/') : null;
   }
+
+  public static String getRelativePathIfAny(final String iDatabaseURL, final String iBasePath) {
+    final int pos = iDatabaseURL.indexOf(iBasePath);
+    if (pos > -1)
+      return iDatabaseURL.substring(pos + iBasePath.length() + 1);
+
+    return iDatabaseURL;
+  }
+
 }

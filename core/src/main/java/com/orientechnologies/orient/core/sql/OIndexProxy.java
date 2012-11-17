@@ -83,8 +83,8 @@ public class OIndexProxy<T> implements OIndex<T> {
     lastIndex = indexChain.get(indexChain.size() - 1);
   }
 
-  public String getDatabaseName() {
-    return index.getDatabaseName();
+  public String getDatabaseURL() {
+    return index.getDatabaseURL();
   }
 
   /**
@@ -362,11 +362,11 @@ public class OIndexProxy<T> implements OIndex<T> {
     final OJVMProfiler profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       Orient.instance().getProfiler()
-          .updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
+          .updateCounter(profiler.getDatabaseMetric(index.getDatabaseURL(), "query.indexUsed"), "Used index in query", +1);
 
       final int paramCount = index.getDefinition().getParamCount();
       if (paramCount > 1) {
-        final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
+        final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseURL(), "query.compositeIndexUsed");
         profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
         profiler.updateCounter(profiler_prefix + "." + paramCount, "Used composite index in query with " + paramCount + " params",
             +1);
