@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -245,6 +246,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     switch (iType) {
 
     case LINK: {
+      if (!(iValue instanceof OIdentifiable))
+        throw new OSerializationException(
+            "Found an unexpected type during marshalling of a LINK where a OIdentifiable (ORID or any Record) was expected. The string representation of the object is: "
+                + iValue);
+
       if (!((OIdentifiable) iValue).getIdentity().isValid() && iValue instanceof ODocument && ((ODocument) iValue).isEmbedded()) {
         // WRONG: IT'S EMBEDDED!
         fieldToStream(iRecord, iOutput, iObjHandler, OType.EMBEDDED, iLinkedClass, iLinkedType, iName, iValue, iMarshalledRecords,
