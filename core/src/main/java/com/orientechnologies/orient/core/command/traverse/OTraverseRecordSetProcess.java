@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,19 +30,39 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
     super(iCommand, iTarget);
   }
 
+  @SuppressWarnings("unchecked")
   public OIdentifiable process() {
     while (target.hasNext()) {
       record = target.next();
       index++;
 
       final ORecord<?> rec = record.getRecord();
-
       if (rec instanceof ODocument) {
-        final OTraverseRecordProcess subProcess = new OTraverseRecordProcess(command, (ODocument) rec);
+        ODocument doc = (ODocument) rec;
+        if (!doc.getIdentity().isPersistent() && doc.fields() == 1) {
+          // EXTRACT THE FIELD CONTEXT
+          Object fieldvalue = doc.field(doc.fieldNames()[0]);
+          if (fieldvalue instanceof Collection<?>) {
+            final OTraverseRecordSetProcess subProcess = new OTraverseRecordSetProcess(command,
+                ((Collection<OIdentifiable>) fieldvalue).iterator());
+            final OIdentifiable subValue = subProcess.process();
+            if (subValue != null)
+              return subValue;
 
-        final OIdentifiable subValue = subProcess.process();
-        if (subValue != null)
-          return subValue;
+          } else if (fieldvalue instanceof ODocument) {
+            final OTraverseRecordProcess subProcess = new OTraverseRecordProcess(command, (ODocument) rec);
+            final OIdentifiable subValue = subProcess.process();
+            if (subValue != null)
+              return subValue;
+          }
+
+        } else {
+          final OTraverseRecordProcess subProcess = new OTraverseRecordProcess(command, (ODocument) rec);
+
+          final OIdentifiable subValue = subProcess.process();
+          if (subValue != null)
+            return subValue;
+        }
       }
     }
 
