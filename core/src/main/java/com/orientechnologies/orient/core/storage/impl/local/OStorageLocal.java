@@ -1796,8 +1796,8 @@ public class OStorageLocal extends OStorageEmbedded {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getDatabaseMetric(name, "data.holes"),
-            "Number of the holes in local database", METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+        .registerHookValue("db." + name + ".data.holes", "Number of the holes in local database", METRIC_TYPE.COUNTER,
+            new OProfilerHookValue() {
               public Object getValue() {
                 return getHoles();
               }
@@ -1805,8 +1805,8 @@ public class OStorageLocal extends OStorageEmbedded {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue(Orient.instance().getProfiler().getDatabaseMetric(name, "data.holeSize"),
-            "Size of the holes in local database", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+        .registerHookValue("db." + name + ".data.holeSize", "Size of the holes in local database", METRIC_TYPE.SIZE,
+            new OProfilerHookValue() {
               public Object getValue() {
                 return getHoleSize();
               }

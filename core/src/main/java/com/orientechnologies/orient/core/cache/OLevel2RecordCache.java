@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.cache;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACHE_LEVEL2_STRATEGY;
 
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -42,7 +41,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
   public OLevel2RecordCache(final OStorage iStorage) {
     super(new OCacheLocator().secondaryCache(iStorage.getName()));
-    profilerPrefix = "db." + OIOUtils.getRelativePathIfAny(iStorage.getName(), Orient.getHomePath()) + ".cache.level2.";
+    profilerPrefix = "db." + iStorage.getName() + ".cache.level2.";
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 

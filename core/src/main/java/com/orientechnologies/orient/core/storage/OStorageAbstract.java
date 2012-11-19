@@ -57,11 +57,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     if (OStringSerializerHelper.contains(iName, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + name);
 
-    url = iURL;
-    mode = iMode;
-
     level2Cache = new OLevel2RecordCache(this);
     level2Cache.startup();
+
+    url = iURL;
+    mode = iMode;
   }
 
   public OStorageConfiguration getConfiguration() {

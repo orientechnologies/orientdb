@@ -531,7 +531,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (searchForIndexes(cls)) {
       // final OJVMProfiler profiler = Orient.instance().getProfiler();
-      // profiler.updateCounter(profiler.getDatabaseMetrics(getURL().getName(), "query.indexUsed"), 1);
+      // profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
     } else
       super.searchInClasses();
   }
