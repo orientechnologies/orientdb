@@ -9,7 +9,7 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng.jar"/>
 
-    <target name="test" depends="test-memory, test-local, test-remote">
+    <target name="test" depends="test-memory, test-memory-node-id, test-local, test-local-node-id, test-remote">
     </target>
 
     <target name="test-init">
@@ -41,6 +41,21 @@
         </testng>
     </target>
 
+    <target name="test-memory-node-id" depends="test-init">
+        <echo>EXECUTING TESTS USING MEMORY DATABASE AND NODE ID CLUSTER: memory:demo</echo>
+        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Dstorage.cluster.useNodeIdAsClusterPosition=true"/>
+            <classpath>
+                <pathelement location="${project.build}"/>
+                <fileset dir="${global.lib}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
+                        includes="memory-test-db-from-scratch.xml"/>
+        </testng>
+    </target>
+
     <target name="test-local" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
@@ -54,6 +69,22 @@
                         includes="local-test-db-from-scratch.xml"/>
         </testng>
     </target>
+
+    <target name="test-local-node-id" depends="test-init" if="${fullTest}">
+        <echo>EXECUTING TESTS USING LOCAL DATABASE AND NODE ID CLUSTER: local:${orient.path}/databases/demo</echo>
+        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Dstorage.cluster.useNodeIdAsClusterPosition=true"/>
+            <classpath>
+                <pathelement location="${project.build}"/>
+                <fileset dir="${global.lib}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
+                        includes="local-test-db-from-scratch.xml"/>
+        </testng>
+    </target>
+
 
     <target name="test-local-lh" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
@@ -116,53 +147,6 @@
 
         <sleep seconds="10"/>
     </target>
-
-    <target name="test-remote-lh" depends="test-init" if="${fullTest}">
-        <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE WITH LH DATA CLUSTERS...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-            <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
-            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
-            <arg value="/c start server.bat"/>
-        </exec>
-
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-            <env key="JAVA_OPTS"
-                 value="-Dcom.sun.management.jmxremote.port=4321 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dfile.cluster.useLHPEPS=true"/>
-            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
-            <arg value="./server.sh"/>
-        </exec>
-
-        <echo>WAITING FOR SERVER STARTUP...</echo>
-        <sleep seconds="5"/>
-
-        <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg value="-Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="remote-test-db-from-scratch.xml"/>
-        </testng>
-
-        <echo>SHUTDOWNING THE SERVER...</echo>
-
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
-            <arg value="/c shutdown.bat"/>
-        </exec>
-
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
-            <arg value="./shutdown.sh"/>
-        </exec>
-        <sleep seconds="10"/>
-    </target>
-
 
     <target name="stress-test">
         <echo>MASSIVE INSERT 1,000,000 FLAT RECORDS</echo>

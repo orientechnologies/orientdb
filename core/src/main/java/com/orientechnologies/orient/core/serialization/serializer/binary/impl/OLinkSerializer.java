@@ -20,7 +20,6 @@ import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.by
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -42,7 +41,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public static final int       RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
 
   public int getObjectSize(final OIdentifiable rid) {
-    return OShortSerializer.SHORT_SIZE + OLongSerializer.LONG_SIZE;
+    return RID_SIZE;
   }
 
   public void serialize(final OIdentifiable rid, final byte[] stream, final int startPosition) {

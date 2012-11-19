@@ -167,6 +167,12 @@ public class OServer {
 
     loadConfiguration(iConfiguration);
 
+    if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean())
+      OLogManager.instance().info(
+          this,
+          "ONodeId will be used as presentation of cluster position, " + " please do not forget to set "
+              + OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getKey() + " property to \"true\" value on client side ...");
+
     if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);

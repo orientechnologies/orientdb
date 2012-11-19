@@ -17,12 +17,8 @@
 package com.orientechnologies.orient.core.id;
 
 import java.math.BigInteger;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -58,10 +54,10 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   public static final ONodeId          TWO                    = new ONodeId(new int[] { 0, 0, 0, 0, 0, 2 }, 1);
 
   private static final MersenneTwister random                 = new MersenneTwister();
-  private static byte[]                CURRENT_MAC            = getMac();
-  private static final AtomicLong      version                = new AtomicLong();
+  private static final SecureRandom    secureRandom           = new SecureRandom();
+
   static {
-    random.setSeed(OLongSerializer.INSTANCE.deserialize(new SecureRandom().generateSeed(OLongSerializer.LONG_SIZE), 0));
+    random.setSeed(OLongSerializer.INSTANCE.deserialize(secureRandom.generateSeed(OLongSerializer.LONG_SIZE), 0));
   }
 
   private final int[]                  chunks;
@@ -91,6 +87,9 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   public ONodeId add(final ONodeId idToAdd) {
     if (idToAdd.signum == 0)
       return new ONodeId(chunks, signum);
+
+    if (signum == 0)
+      return new ONodeId(idToAdd.chunks, idToAdd.signum);
 
     final int[] result;
     if (signum == idToAdd.signum) {
@@ -209,17 +208,17 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     final long clusterPosition = random.nextLong(Long.MAX_VALUE);
 
     final int[] chunks = new int[CHUNKS_SIZE];
-    final long millis = System.currentTimeMillis();
-    final long localVersion = version.getAndDecrement();
+    final byte[] uuid = new byte[16];
+    secureRandom.nextBytes(uuid);
 
     chunks[0] = (int) (clusterPosition >>> 32);
     chunks[1] = (int) clusterPosition;
 
-    chunks[2] = (int) (localVersion >>> 32);
-    chunks[3] = (int) localVersion;
+    chunks[2] = OIntegerSerializer.INSTANCE.deserialize(uuid, 0);
+    chunks[3] = OIntegerSerializer.INSTANCE.deserialize(uuid, 4);
 
-    chunks[4] = OIntegerSerializer.INSTANCE.deserialize(CURRENT_MAC, 0);
-    chunks[5] = ((CURRENT_MAC[4] & 0xFF) << 24) + ((CURRENT_MAC[5] & 0xFF) << 16) + (int) ((millis >>> 3) & 0xFFFF);
+    chunks[4] = OIntegerSerializer.INSTANCE.deserialize(uuid, 8);
+    chunks[5] = OIntegerSerializer.INSTANCE.deserialize(uuid, 12);
 
     return new ONodeId(chunks, 1);
   }
@@ -296,7 +295,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
   @Override
   public long longValue() {
-    return (chunks[CHUNKS_SIZE - 2] & LONG_INT_MASK) << 32 + chunks[CHUNKS_SIZE - 1] & LONG_INT_MASK;
+    return ((chunks[CHUNKS_SIZE - 2] & LONG_INT_MASK) << 32) + (chunks[CHUNKS_SIZE - 1] & LONG_INT_MASK);
   }
 
   @Override
@@ -479,22 +478,5 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
       return TWO;
 
     return null;
-  }
-
-  private static byte[] getMac() {
-    try {
-      final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-      while (networkInterfaces.hasMoreElements()) {
-        NetworkInterface networkInterface = networkInterfaces.nextElement();
-        final byte[] mac = networkInterface.getHardwareAddress();
-        if (mac != null && mac.length == 6)
-          return mac;
-      }
-    } catch (SocketException e) {
-      throw new IllegalStateException("Error during MAC address retrieval.", e);
-    }
-
-    throw new IllegalStateException("Node id is possible to generate only on machine which have at least"
-        + " one network interface with mac address.");
   }
 }
