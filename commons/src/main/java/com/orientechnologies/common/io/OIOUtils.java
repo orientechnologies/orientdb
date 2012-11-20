@@ -165,4 +165,11 @@ public class OIOUtils {
     return iDatabaseURL;
   }
 
+  public static String getDatabaseNameFromPath(final String iPath) {
+    return iPath.replace('/', '$');
+  }
+
+  public static String getPathFromDatabaseName(final String iPath) {
+    return iPath.replace('$', '/');
+  }
 }

@@ -72,10 +72,8 @@
 <script language="javascript">
 	$('#createForm').submit(
 			function() {
-				if (orientServer == null) {
-					orientServer = new ODatabase($('#server').val() + '/'
-							+ $('#database').val());
-				}
+				orientServer = new ODatabase($('#server').val() + '/'
+						+ $('#database').val());
 				databaseInfo = orientServer.create(null, null,
 						$('#storageType').val(), $('#databaseType').val());
 				if (databaseInfo == null) {

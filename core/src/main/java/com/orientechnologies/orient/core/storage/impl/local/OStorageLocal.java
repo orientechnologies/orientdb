@@ -30,6 +30,7 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
@@ -100,6 +101,8 @@ public class OStorageLocal extends OStorageEmbedded {
       // LEGACY DB
       storagePath = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
     }
+
+    storagePath = OIOUtils.getPathFromDatabaseName(storagePath);
 
     variableParser = new OStorageVariableParser(storagePath);
     configuration = new OStorageConfigurationSegment(this);
@@ -375,7 +378,7 @@ public class OStorageLocal extends OStorageEmbedded {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     // GET REAL DIRECTORY
-    File dbDir = new File(OSystemVariableResolver.resolveSystemVariables(url));
+    File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
     if (!dbDir.exists() || !dbDir.isDirectory())
       dbDir = dbDir.getParentFile();
 

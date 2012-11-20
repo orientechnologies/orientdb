@@ -35,6 +35,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
@@ -285,7 +286,7 @@ public class OServer {
     if (dbPath == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
       dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name);
-      File f = new File(dbPath + "/default.odh");
+      File f = new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.odh");
       if (!f.exists())
         throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
@@ -300,7 +301,7 @@ public class OServer {
     final Map<String, String> storages = new HashMap<String, String>();
     if (configuration.storages != null && configuration.storages.length > 0)
       for (OServerStorageConfiguration s : configuration.storages)
-        storages.put(s.name, s.path);
+        storages.put(OIOUtils.getDatabaseNameFromPath(s.name), s.path);
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
@@ -309,7 +310,7 @@ public class OServer {
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
       if (storage.exists() && !storages.containsValue(storageUrl))
-        storages.put(storage.getName(), storageUrl);
+        storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
     return storages;
@@ -611,7 +612,7 @@ public class OServer {
           if (f.exists()) {
             final String dbPath = db.getPath().replace('\\', '/');
             // FOUND DB FOLDER
-            iStorages.put(dbPath.substring(iRootDirectory.length()), "local:" + dbPath);
+            iStorages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(iRootDirectory.length())), "local:" + dbPath);
           } else
             // TRY TO GO IN DEEP RECURSIVELY
             scanDatabaseDirectory(iRootDirectory, db, iStorages);

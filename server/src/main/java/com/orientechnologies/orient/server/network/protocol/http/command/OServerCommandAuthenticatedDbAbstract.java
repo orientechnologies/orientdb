@@ -55,7 +55,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
-    iRequest.databaseName = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
+    iRequest.databaseName = urlParts[1];
     final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization,
         ':') : null;
 

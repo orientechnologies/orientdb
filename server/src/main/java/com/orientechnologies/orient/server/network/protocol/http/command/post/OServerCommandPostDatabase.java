@@ -65,7 +65,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     iRequest.data.commandInfo = "Create database";
 
     try {
-      final String databaseName = urlParts[1].replace(OServerCommandAuthenticatedDbAbstract.DBNAME_DIR_SEPARATOR, '/');
+      final String databaseName = urlParts[1];
       final String storageMode = urlParts[2];
       String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
