@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -208,6 +209,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
             ioResult = ioResult != null ? new Float(ioResult.toString()) : null;
+          else if (operator == OSQLFilterFieldOperator.ASDECIMAL.id)
+            ioResult = ioResult != null ? new BigDecimal(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
             if (ioResult != null) {
               if (ioResult instanceof String)
