@@ -21,14 +21,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Returns the passed <code>field/value</code> (or optional parameter <code>return_value_if_not_null</code>) if
- * <code>field/value</code> is <b>not</b> null; otherwise it returns <code>return_value_if_null</code>.
+ * Returns different values based on the condition. If it's true the first value is returned, otherwise the second one.
  * 
  * <p>
  * Syntax: <blockquote>
  * 
  * <pre>
- * ifnull(&lt;field|value&gt;, &lt;return_value_if_null&gt; [,&lt;return_value_if_not_null&gt;])
+ * if(&lt;field|value|expression&gt;, &lt;return_value_if_true&gt; [,&lt;return_value_if_false&gt;])
  * </pre>
  * 
  * </blockquote>
@@ -37,49 +36,50 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * Examples: <blockquote>
  * 
  * <pre>
- * SELECT <b>ifnull('a', 'b')</b> FROM ...
- *  -> 'a'
- * 
- * SELECT <b>ifnull('a', 'b', 'c')</b> FROM ...
- *  -> 'c'
- * 
- * SELECT <b>ifnull(null, 'b')</b> FROM ...
- *  -> 'b'
- * 
- * SELECT <b>ifnull(null, 'b', 'c')</b> FROM ...
- *  -> 'b'
+ * SELECT <b>if(rich, 'rich', 'poor')</b> FROM ...
+ * <br/>
+ * SELECT <b>if( eval( 'salary > 1000000' ), 'rich', 'poor')</b> FROM ...
  * </pre>
  * 
  * </blockquote>
  * 
- * @author Mark Bigler
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 
-public class OSQLFunctionIfNull extends OSQLFunctionAbstract {
+public class OSQLFunctionIf extends OSQLFunctionAbstract {
 
-  public static final String NAME = "ifnull";
+  public static final String NAME = "if";
 
-  public OSQLFunctionIfNull() {
+  public OSQLFunctionIf() {
     super(NAME, 2, 3);
   }
 
   @Override
   public Object execute(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final Object[] iFuncParams,
       final OCommandContext iContext) {
-    /*
-     * iFuncParams [0] field/value to check for null [1] return value if [0] is null [2] optional return value if [0] is not null
-     */
-    if (iFuncParams[0] != null) {
-      if (iFuncParams.length == 3) {
-        return iFuncParams[2];
-      }
-      return iFuncParams[0];
+
+    boolean result;
+
+    try {
+      Object condition = iFuncParams[0];
+      if (condition instanceof Boolean)
+        result = (Boolean) condition;
+      else if (condition instanceof String)
+        result = Boolean.parseBoolean(condition.toString());
+      else if (condition instanceof Number)
+        result = ((Number) condition).intValue() > 0;
+      else
+        return null;
+
+      return result ? iFuncParams[1] : iFuncParams[2];
+
+    } catch (Exception e) {
+      return null;
     }
-    return iFuncParams[1];
   }
 
   @Override
   public String getSyntax() {
-    return "Syntax error: ifnull(<field|value>, <return_value_if_null> [,<return_value_if_not_null>])";
+    return "Syntax error: if(<field|value|expression>, <return_value_if_true> [,<return_value_if_false>])";
   }
 }

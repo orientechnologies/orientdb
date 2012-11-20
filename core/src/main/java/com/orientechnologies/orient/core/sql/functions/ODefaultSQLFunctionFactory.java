@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCoalesce
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 
@@ -56,6 +57,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   static {
     // MISC FUNCTIONS
     FUNCTIONS.put(OSQLFunctionCoalesce.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionCoalesce());
+    FUNCTIONS.put(OSQLFunctionIf.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIf());
     FUNCTIONS.put(OSQLFunctionIfNull.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIfNull());
     FUNCTIONS.put(OSQLFunctionFormat.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionFormat());
     FUNCTIONS.put(OSQLFunctionDate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDate.class);
