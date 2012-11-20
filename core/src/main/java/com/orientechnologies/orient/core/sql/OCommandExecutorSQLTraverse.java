@@ -128,7 +128,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   @Override
   protected boolean assignTarget(Map<Object, Object> iArgs) {
     if (super.assignTarget(iArgs)) {
-      traverse.target(target.iterator());
+      traverse.target(target);
       return true;
     }
     return false;

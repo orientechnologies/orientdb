@@ -15,8 +15,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,31 +37,52 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
-	protected final static String	QUERY_GET	= "select rid from index:%s where key = ?";
+  protected final static String QUERY_GET = "select rid from index:%s where key = ?";
 
-	public OIndexRemoteOneValue(final String iName, final String iWrappedType, final ORID iRid,
-			final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
-		super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
-	}
+  public OIndexRemoteOneValue(final String iName, final String iWrappedType, final ORID iRid,
+      final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
+    super(iName, iWrappedType, iRid, iIndexDefinition, iConfiguration, clustersToIndex);
+  }
 
-	public OIdentifiable get(final Object iKey) {
-		final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-		final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
-		if (result != null && !result.isEmpty())
-			return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid", OType.LINK)).getIdentity();
-		return null;
-	}
+  public OIdentifiable get(final Object iKey) {
+    final OCommandRequest cmd = formatCommand(QUERY_GET, name);
+    final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
+    if (result != null && !result.isEmpty())
+      return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid", OType.LINK)).getIdentity();
+    return null;
+  }
 
-	public Iterator<Entry<Object, OIdentifiable>> iterator() {
-		final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
-		final Collection<ODocument> result = getDatabase().command(cmd).execute();
+  public Iterator<Entry<Object, OIdentifiable>> iterator() {
+    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
+    final Collection<ODocument> result = getDatabase().command(cmd).execute();
 
-		final Map<Object, OIdentifiable> map = new HashMap<Object, OIdentifiable>();
-		for (final ODocument d : result) {
-			map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
-		}
-			
+    final Map<Object, OIdentifiable> map = new LinkedHashMap<Object, OIdentifiable>();
+    for (final ODocument d : result) {
+      map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
+    }
 
-		return map.entrySet().iterator();
-	}
+    return map.entrySet().iterator();
+  }
+
+  public Iterator<Entry<Object, OIdentifiable>> inverseIterator() {
+    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
+    final List<ODocument> result = getDatabase().command(cmd).execute();
+
+    final Map<Object, OIdentifiable> map = new LinkedHashMap<Object, OIdentifiable>();
+
+    for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious();) {
+      ODocument d = it.previous();
+      map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
+    }
+
+    return map.entrySet().iterator();
+  }
+
+  public Iterator<OIdentifiable> valuesIterator() {
+    throw new UnsupportedOperationException();
+  }
+
+  public Iterator<OIdentifiable> valuesInverseIterator() {
+    throw new UnsupportedOperationException();
+  }
 }

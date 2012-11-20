@@ -28,6 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -523,6 +524,19 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       return map.entrySet().iterator();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public Iterator<Entry<Object, T>> inverseIterator() {
+
+    acquireExclusiveLock();
+    try {
+
+      return ((OMVRBTree.EntrySet) map.entrySet()).inverseIterator();
 
     } finally {
       releaseExclusiveLock();

@@ -51,7 +51,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   protected void setParameters(final Object... iArgs) {
-    if (iArgs.length > 0)
+    if (iArgs != null && iArgs.length > 0)
       parameters = convertToParameters(iArgs);
   }
 

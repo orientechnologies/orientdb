@@ -439,6 +439,18 @@ public class OIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  public Iterator<Map.Entry<Object, T>> inverseIterator() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  public Iterator<OIdentifiable> valuesIterator() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  public Iterator<OIdentifiable> valuesInverseIterator() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
   public OIndex<T> put(Object iKey, OIdentifiable iValue) {
     throw new UnsupportedOperationException("Not allowed operation");
   }

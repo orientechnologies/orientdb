@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
-  protected OIndex<T>    delegate;
+  protected OIndex<T> delegate;
 
   public OIndexAbstractDelegate(final OIndex<T> iDelegate) {
     this.delegate = iDelegate;
@@ -57,6 +56,21 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public Iterator<Entry<Object, T>> iterator() {
     return delegate.iterator();
+  }
+
+  @Override
+  public Iterator<Entry<Object, T>> inverseIterator() {
+    return delegate.inverseIterator();
+  }
+
+  @Override
+  public Iterator<OIdentifiable> valuesIterator() {
+    return delegate.valuesIterator();
+  }
+
+  @Override
+  public Iterator<OIdentifiable> valuesInverseIterator() {
+    return delegate.valuesInverseIterator();
   }
 
   public T get(final Object iKey) {

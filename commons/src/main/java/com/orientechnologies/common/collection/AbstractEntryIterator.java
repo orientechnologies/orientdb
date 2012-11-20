@@ -21,106 +21,120 @@ import java.util.NoSuchElementException;
 /**
  * Base class for OMVRBTree Iterators
  */
-abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T> {
-	OMVRBTree<K, V>				tree;
-	OMVRBTreeEntry<K, V>	next;
-	OMVRBTreeEntry<K, V>	lastReturned;
-	int										expectedModCount;
-	int										pageIndex;
+public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T> {
+  OMVRBTree<K, V>      tree;
+  OMVRBTreeEntry<K, V> next;
+  OMVRBTreeEntry<K, V> lastReturned;
+  int                  expectedModCount;
+  int                  pageIndex;
 
-	AbstractEntryIterator(final OMVRBTreeEntry<K, V> first) {
-		if (first == null)
-			// IN CASE OF ABSTRACTMAP.HASHCODE()
-			return;
+  AbstractEntryIterator(final OMVRBTreeEntry<K, V> start) {
+    if (start == null)
+      // IN CASE OF ABSTRACTMAP.HASHCODE()
+      return;
 
-		tree = first.getTree();
-		next = first;
-		expectedModCount = tree.modCount;
-		lastReturned = null;
-		pageIndex = -1;
-	}
+    tree = start.getTree();
+    next = start;
+    expectedModCount = tree.modCount;
+    lastReturned = null;
+    pageIndex = start.getTree().getPageIndex() - 1;
+  }
 
-	public final boolean hasNext() {
-		if (tree != null && expectedModCount != tree.modCount) {
-			// CONCURRENT CHANGE: TRY TO REUSE LAST POSITION
-			pageIndex--;
-			expectedModCount = tree.modCount;
-		}
+  public boolean hasNext() {
+    if (tree != null && expectedModCount != tree.modCount) {
+      // CONCURRENT CHANGE: TRY TO REUSE LAST POSITION
+      pageIndex--;
+      expectedModCount = tree.modCount;
+    }
 
-		return next != null && (pageIndex < next.getSize() - 1 || OMVRBTree.successor(next) != null);
-	}
+    return next != null && (pageIndex < next.getSize() - 1 || OMVRBTree.successor(next) != null);
+  }
 
-	final K nextKey() {
-		return nextEntry().getKey(pageIndex);
-	}
+  public final boolean hasPrevuious() {
+    if (tree != null && expectedModCount != tree.modCount) {
+      // CONCURRENT CHANGE: TRY TO REUSE LAST POSITION
+      pageIndex = -1;
+      expectedModCount = tree.modCount;
+    }
 
-	final V nextValue() {
-		return nextEntry().getValue(pageIndex);
-	}
+    return next != null && (pageIndex > -1 || OMVRBTree.predecessor(next) != null);
+  }
 
-	final OMVRBTreeEntry<K, V> nextEntry() {
-		if (next == null)
-			throw new NoSuchElementException();
+  final K nextKey() {
+    return nextEntry().getKey(pageIndex);
+  }
 
-		if (pageIndex < next.getSize() - 1) {
-			// ITERATE INSIDE THE NODE
-			pageIndex++;
-		} else {
-			// GET THE NEXT NODE
-			if (tree.modCount != expectedModCount)
-				throw new ConcurrentModificationException();
+  final V nextValue() {
+    return nextEntry().getValue(pageIndex);
+  }
 
-			next = OMVRBTree.successor(next);
-			pageIndex = 0;
-		}
-		lastReturned = next;
-		tree.pageIndex = pageIndex;
+  final V prevValue() {
+    return prevEntry().getValue(pageIndex);
+  }
 
-		return next;
-	}
+  final OMVRBTreeEntry<K, V> nextEntry() {
+    if (next == null)
+      throw new NoSuchElementException();
 
-	final OMVRBTreeEntry<K, V> prevEntry() {
-		OMVRBTreeEntry<K, V> e = next;
-		if (e == null)
-			throw new NoSuchElementException();
+    if (pageIndex < next.getSize() - 1) {
+      // ITERATE INSIDE THE NODE
+      pageIndex++;
+    } else {
+      // GET THE NEXT NODE
+      if (tree.modCount != expectedModCount)
+        throw new ConcurrentModificationException();
 
-		if (pageIndex > 0) {
-			// ITERATE INSIDE THE NODE
-			pageIndex--;
-		} else {
-			if (tree.modCount != expectedModCount)
-				throw new ConcurrentModificationException();
+      next = OMVRBTree.successor(next);
+      pageIndex = 0;
+    }
+    lastReturned = next;
+    tree.pageIndex = pageIndex;
 
-			next = OMVRBTree.predecessor(e);
-			pageIndex = next.getSize() - 1;
-		}
+    return next;
+  }
 
-		lastReturned = e;
-		return e;
-	}
+  final OMVRBTreeEntry<K, V> prevEntry() {
+    OMVRBTreeEntry<K, V> e = next;
+    if (e == null)
+      throw new NoSuchElementException();
 
-	@SuppressWarnings("unchecked")
-	public T update(final T iValue) {
-		if (lastReturned == null)
-			throw new IllegalStateException();
-		if (tree.modCount != expectedModCount)
-			throw new ConcurrentModificationException();
-		tree.pageIndex = pageIndex;
-		return (T) next.setValue((V) iValue);
-	}
+    if (pageIndex > 0) {
+      // ITERATE INSIDE THE NODE
+      pageIndex--;
+    } else {
+      if (tree.modCount != expectedModCount)
+        throw new ConcurrentModificationException();
 
-	public void remove() {
-		if (lastReturned == null)
-			throw new IllegalStateException();
-		if (tree.modCount != expectedModCount)
-			throw new ConcurrentModificationException();
-		// deleted entries are replaced by their successors
-		if (lastReturned.getLeft() != null && lastReturned.getRight() != null)
-			next = lastReturned;
-		tree.pageIndex = pageIndex;
-		next = tree.deleteEntry(lastReturned);
-		pageIndex--;
-		expectedModCount = tree.modCount;
-		lastReturned = null;
-	}
+      next = OMVRBTree.predecessor(e);
+      pageIndex = next != null ? next.getSize() - 1 : -1;
+    }
+
+    lastReturned = e;
+    return e;
+  }
+
+  @SuppressWarnings("unchecked")
+  public T update(final T iValue) {
+    if (lastReturned == null)
+      throw new IllegalStateException();
+    if (tree.modCount != expectedModCount)
+      throw new ConcurrentModificationException();
+    tree.pageIndex = pageIndex;
+    return (T) next.setValue((V) iValue);
+  }
+
+  public void remove() {
+    if (lastReturned == null)
+      throw new IllegalStateException();
+    if (tree.modCount != expectedModCount)
+      throw new ConcurrentModificationException();
+    // deleted entries are replaced by their successors
+    if (lastReturned.getLeft() != null && lastReturned.getRight() != null)
+      next = lastReturned;
+    tree.pageIndex = pageIndex;
+    next = tree.deleteEntry(lastReturned);
+    pageIndex--;
+    expectedModCount = tree.modCount;
+    lastReturned = null;
+  }
 }

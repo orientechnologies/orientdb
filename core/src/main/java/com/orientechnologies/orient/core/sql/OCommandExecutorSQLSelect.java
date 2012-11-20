@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -108,12 +109,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     super.parse(iRequest);
 
+    if (context == null)
+      context = new OBasicCommandContext();
+
     final int pos = parseProjections();
     if (pos == -1)
       return this;
-
-    if (context == null)
-      context = new OBasicCommandContext();
 
     final int endPosition = parserText.length();
 
@@ -278,7 +279,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         tempResult = null;
         groupedResult = null;
       } else
-        subIterator = (Iterator<OIdentifiable>) target.iterator();
+        subIterator = (Iterator<OIdentifiable>) target;
     }
 
     // RESUME THE LAST POSITION
@@ -331,8 +332,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     // BROWSE ALL THE RECORDS
-    for (OIdentifiable id : target)
-      if (!executeSearchRecord(id))
+    while (target.hasNext())
+      if (!executeSearchRecord(target.next()))
         break;
   }
 
@@ -1067,11 +1068,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
           final Entry<Object, Object> current = it.next();
 
-          if (current.getValue() instanceof Collection<?>)
+          if (current.getValue() instanceof Collection<?>) {
             for (OIdentifiable identifiable : ((OMVRBTreeRIDSet) current.getValue()))
-              handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity()));
-          else
-            handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()));
+              if (!handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity())))
+                break;
+          } else if (!handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue())))
+            break;
         }
       } finally {
         if (indexInternal instanceof OSharedResource)
@@ -1243,6 +1245,31 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             tempResult = new ArrayList<OIdentifiable>();
           tempResult.add(new ODocument().field(entry.getKey(), count));
           return true;
+        }
+      }
+    }
+
+    if (orderedFields != null && !orderedFields.isEmpty()) {
+      if (parsedTarget.getTargetClasses() != null) {
+        final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+        final OPair<String, String> orderByFirstField = orderedFields.iterator().next();
+        final OProperty p = cls.getProperty(orderByFirstField.getKey());
+        if (p != null) {
+          final Set<OIndex<?>> involvedIndexes = cls.getInvolvedIndexes(orderByFirstField.getKey());
+          if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
+            for (OIndex<?> idx : involvedIndexes) {
+              if (idx.getKeyTypes().length == 1) {
+                if (orderByFirstField.getValue().equalsIgnoreCase("asc")){
+                  target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
+//                else
+//                  target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
+                orderedFields = null;
+
+                fetchLimit = getQueryFetchLimit();}
+                break;
+              }
+            }
+          }
         }
       }
     }

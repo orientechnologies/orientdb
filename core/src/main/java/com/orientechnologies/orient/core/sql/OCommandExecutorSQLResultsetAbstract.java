@@ -82,7 +82,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected OSQLTarget                             parsedTarget;
   protected OSQLFilter                             compiledFilter;
   protected Map<String, Object>                    let                = null;
-  protected Iterable<? extends OIdentifiable>      target;
+  protected Iterator<? extends OIdentifiable>      target;
   protected List<OIdentifiable>                    tempResult;
   protected int                                    resultCount;
   protected int                                    skip               = 0;
@@ -137,17 +137,18 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
       else if (parsedTarget.getTargetRecords() != null)
-        target = parsedTarget.getTargetRecords();
+        target = parsedTarget.getTargetRecords().iterator();
       else if (parsedTarget.getTargetVariable() != null) {
         final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
         if (var == null) {
-          target = Collections.EMPTY_LIST;
+          target = Collections.EMPTY_LIST.iterator();
           return true;
         } else if (var instanceof OIdentifiable) {
-          target = new ArrayList<OIdentifiable>();
+          final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>();
           ((List<OIdentifiable>) target).add((OIdentifiable) var);
+          target = list.iterator();
         } else if (var instanceof Iterable<?>)
-          target = (Iterable<? extends OIdentifiable>) var;
+          target = ((Iterable<? extends OIdentifiable>) var).iterator();
       } else
         return false;
 

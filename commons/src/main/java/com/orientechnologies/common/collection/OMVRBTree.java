@@ -1058,7 +1058,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   @Override
   public Collection<V> values() {
-    final Collection<V> vs = super.values();
+    final Collection<V> vs = new Values();
     return (vs != null) ? vs : null;
   }
 
@@ -1164,10 +1164,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   // View class support
 
-  class Values extends AbstractCollection<V> {
+  public class Values extends AbstractCollection<V> {
     @Override
     public Iterator<V> iterator() {
       return new ValueIterator(getFirstEntry());
+    }
+
+    public Iterator<V> inverseIterator() {
+      return new ValueInverseIterator(getLastEntry());
     }
 
     @Override
@@ -1197,10 +1201,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
   }
 
-  class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+  public class EntrySet extends AbstractSet<Map.Entry<K, V>> {
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
       return new EntryIterator(getFirstEntry());
+    }
+
+    public Iterator<Map.Entry<K, V>> inverseIterator() {
+      return new InverseEntryIterator(getLastEntry());
     }
 
     @Override
@@ -1379,13 +1387,40 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
   }
 
+  final class InverseEntryIterator extends AbstractEntryIterator<K, V, Map.Entry<K, V>> {
+    InverseEntryIterator(final OMVRBTreeEntry<K, V> last) {
+      super(last);
+    }
+
+    public Map.Entry<K, V> next() {
+      return prevEntry();
+    }
+  }
+
   final class ValueIterator extends AbstractEntryIterator<K, V, V> {
     ValueIterator(final OMVRBTreeEntry<K, V> first) {
       super(first);
     }
 
+    @Override
     public V next() {
       return nextValue();
+    }
+  }
+
+  final class ValueInverseIterator extends AbstractEntryIterator<K, V, V> {
+    ValueInverseIterator(final OMVRBTreeEntry<K, V> last) {
+      super(last);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return hasPrevuious();
+    }
+
+    @Override
+    public V next() {
+      return prevValue();
     }
   }
 
@@ -1394,6 +1429,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       super(first);
     }
 
+    @Override
     public K next() {
       return nextKey();
     }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -592,4 +593,30 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
       releaseSharedLock();
     }
   }
+
+  public Iterator<OIdentifiable> valuesIterator() {
+
+    acquireExclusiveLock();
+    try {
+
+      return new OFlattenIterator<OIdentifiable>(map.values().iterator());
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public Iterator<OIdentifiable> valuesInverseIterator() {
+
+    acquireExclusiveLock();
+    try {
+
+      return new OFlattenIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
 }

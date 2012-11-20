@@ -65,11 +65,32 @@ public interface OIndex<T> {
   public OType[] getKeyTypes();
 
   /**
-   * Returns an iterator to walk across all the index items.
+   * Returns an iterator to walk across all the index items from the first to the latest one.
    * 
    * @return
    */
   public Iterator<Entry<Object, T>> iterator();
+
+  /**
+   * Returns an iterator to walk across all the index items from the last to the first one.
+   * 
+   * @return
+   */
+  public Iterator<Entry<Object, T>> inverseIterator();
+
+  /**
+   * Returns an iterator to walk across all the index values from the first to the latest one.
+   * 
+   * @return
+   */
+  public Iterator<OIdentifiable> valuesIterator();
+
+  /**
+   * Returns an iterator to walk across all the index values from the last to the first one.
+   * 
+   * @return
+   */
+  public Iterator<OIdentifiable> valuesInverseIterator();
 
   /**
    * Gets the set of records associated with the passed key.
