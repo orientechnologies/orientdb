@@ -1415,7 +1415,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     @Override
     public boolean hasNext() {
-      return hasPrevuious();
+      return hasPrevious();
     }
 
     @Override

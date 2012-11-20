@@ -50,14 +50,14 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
     return next != null && (pageIndex < next.getSize() - 1 || OMVRBTree.successor(next) != null);
   }
 
-  public final boolean hasPrevuious() {
+  public final boolean hasPrevious() {
     if (tree != null && expectedModCount != tree.modCount) {
       // CONCURRENT CHANGE: TRY TO REUSE LAST POSITION
       pageIndex = -1;
       expectedModCount = tree.modCount;
     }
 
-    return next != null && (pageIndex > -1 || OMVRBTree.predecessor(next) != null);
+    return next != null && (pageIndex > 0 || OMVRBTree.predecessor(next) != null);
   }
 
   final K nextKey() {

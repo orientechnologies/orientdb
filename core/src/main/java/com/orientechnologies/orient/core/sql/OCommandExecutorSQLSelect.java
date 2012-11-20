@@ -1259,13 +1259,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
               if (idx.getKeyTypes().length == 1) {
-                if (orderByFirstField.getValue().equalsIgnoreCase("asc")){
+                if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
                   target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
-//                else
-//                  target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
+                else
+                  target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
                 orderedFields = null;
 
-                fetchLimit = getQueryFetchLimit();}
+                fetchLimit = getQueryFetchLimit();
                 break;
               }
             }
