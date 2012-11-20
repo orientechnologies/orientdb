@@ -24,45 +24,48 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|command/*" };
+  private static final String[] NAMES = { "POST|command/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] urlParts = checkSyntax(iRequest.url, 3,
+        "Syntax error: command/<database>/<language>/<command-text>[/limit][/<fetchPlan>]");
 
-		// TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
-		final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
-		final String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
-		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
-	  final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
-	  
-		iRequest.data.commandInfo = "Command";
-		iRequest.data.commandDetail = text;
+    // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
+    final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
+    final String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
+    final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
+    final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
-		ODatabaseDocumentTx db = null;
+    iRequest.data.commandInfo = "Command";
+    iRequest.data.commandDetail = text;
 
-		Object response;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    Object response;
 
-			final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
-			cmd.setText(text);
-			cmd.setLimit(limit);
-			cmd.setFetchPlan(fetchPlan);
-			response = db.command(cmd).execute();
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
+      final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
+      cmd.setText(text);
+      cmd.setLimit(limit);
+      cmd.setFetchPlan(fetchPlan);
+      response = db.command(cmd).execute();
 
-		iResponse.writeResult(response);
-		return false;
-	}
+    } finally {
+      if (db != null)
+        OSharedDocumentDatabase.release(db);
+    }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+    final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
+
+    iResponse.writeResult(response, format);
+    return false;
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }
