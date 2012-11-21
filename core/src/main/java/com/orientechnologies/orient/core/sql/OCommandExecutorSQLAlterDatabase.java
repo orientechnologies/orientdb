@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -37,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest{
+public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String   KEYWORD_ALTER    = "ALTER";
   public static final String   KEYWORD_DATABASE = "DATABASE";
 
@@ -73,7 +72,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
       attribute = ODatabase.ATTRIBUTES.valueOf(attributeAsString.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException e) {
       throw new OCommandSQLParsingException("Unknown database's attribute '" + attributeAsString + "'. Supported attributes are: "
-          + Arrays.toString(OClass.ATTRIBUTES.values()), parserText, oldPos);
+          + Arrays.toString(ODatabase.ATTRIBUTES.values()), parserText, oldPos);
     }
 
     value = parserText.substring(pos + 1).trim();

@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +36,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -676,7 +674,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       if (!iRecord.isDirty())
-       return (RET) iRecord;
+        return (RET) iRecord;
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final int realVersion = !mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
@@ -824,40 +822,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public void setInternal(final ATTRIBUTES iAttribute, final Object iValue) {
-    if (iAttribute == null)
-      throw new IllegalArgumentException("attribute is null");
-
-    final String stringValue = iValue != null ? iValue.toString() : null;
-
-    switch (iAttribute) {
-    case STATUS:
-      setStatusInternal(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
-      break;
-    case DEFAULTCLUSTERID:
-      if (iValue != null) {
-        if (iValue instanceof Number)
-          getStorage().setDefaultClusterId(((Number) iValue).intValue());
-        else
-          getStorage().setDefaultClusterId(getStorage().getClusterIdByName(iValue.toString()));
-      }
-      break;
-    case TYPE:
-      if (stringValue.equalsIgnoreCase("graph")) {
-        if (getDatabaseOwner() instanceof OGraphDatabase)
-          ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
-        else if (this instanceof ODatabaseRecordTx)
-          new OGraphDatabase((ODatabaseRecordTx) this).checkForGraphSchema();
-        else if (getDatabaseOwner() instanceof ODatabaseRecordTx)
-          new OGraphDatabase((ODatabaseRecordTx) getDatabaseOwner()).checkForGraphSchema();
-        else
-          new OGraphDatabase(getURL()).checkForGraphSchema();
-      } else
-        throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
-
-      break;
-    default:
-      throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
-    }
+    underlying.set(iAttribute, iValue);
   }
 
   public OUser getUser() {
