@@ -18,61 +18,60 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "DELETE|document/*" };
+  private static final String[] NAMES = { "DELETE|document/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		ODatabaseDocumentTx db = null;
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    ODatabaseDocumentTx db = null;
 
-		try {
-			final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
+    try {
+      final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");
 
-			iRequest.data.commandInfo = "Delete document";
+      iRequest.data.commandInfo = "Delete document";
 
-			db = getProfiledDatabaseInstance(iRequest);
+      db = getProfiledDatabaseInstance(iRequest);
 
-			// PARSE PARAMETERS
-			final int parametersPos = urlParts[2].indexOf('?');
-			final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
-			final ORecordId recordId = new ORecordId(rid);
+      // PARSE PARAMETERS
+      final int parametersPos = urlParts[2].indexOf('?');
+      final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
+      final ORecordId recordId = new ORecordId(rid);
 
-			if (!recordId.isValid())
-				throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
+      if (!recordId.isValid())
+        throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
 
-			final ODocument doc = new ODocument(recordId);
+      final ODocument doc = new ODocument(recordId);
 
-			// UNMARSHALL DOCUMENT WITH REQUEST CONTENT
-			if (iRequest.content != null)
-				// GET THE VERSION FROM THE DOCUMENT
-				doc.fromJSON(iRequest.content);
-			else {
-				if (iRequest.ifMatch != null)
-					// USE THE IF-MATCH HTTP HEADER AS VERSION
-					doc.setVersion(Integer.parseInt(iRequest.ifMatch));
-				else
-					// IGNORE THE VERSION
-					doc.setVersion(-1);
-			}
-			doc.delete();
+      // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
+      if (iRequest.content != null)
+        // GET THE VERSION FROM THE DOCUMENT
+        doc.fromJSON(iRequest.content);
+      else {
+        if (iRequest.ifMatch != null)
+          // USE THE IF-MATCH HTTP HEADER AS VERSION
+          doc.setVersion(Integer.parseInt(iRequest.ifMatch));
+        else
+          // IGNORE THE VERSION
+          doc.setVersion(-1);
+      }
+      doc.delete();
 
-			iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+    } finally {
+      if (db != null)
+        db.close();
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

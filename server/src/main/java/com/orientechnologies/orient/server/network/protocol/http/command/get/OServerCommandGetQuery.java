@@ -21,52 +21,51 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|query/*" };
+  private static final String[] NAMES = { "GET|query/*" };
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		String[] urlParts = checkSyntax(
-				iRequest.url,
-				4,
-				"Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+  @Override
+  @SuppressWarnings("unchecked")
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    String[] urlParts = checkSyntax(
+        iRequest.url,
+        4,
+        "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
-		final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
+    final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 
-		final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+    final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
-		final String text = urlParts[3];
+    final String text = urlParts[3];
 
-		iRequest.data.commandInfo = "Query";
-		iRequest.data.commandDetail = text;
+    iRequest.data.commandInfo = "Query";
+    iRequest.data.commandDetail = text;
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		final List<OIdentifiable> response;
+    final List<OIdentifiable> response;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			response = (List<OIdentifiable>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
-					.execute();
+      response = (List<OIdentifiable>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
+          .execute();
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
+    } finally {
+      if (db != null)
+        db.close();
+    }
 
-		iResponse.writeRecords(response, fetchPlan);
-		return false;
-	}
+    iResponse.writeRecords(response, fetchPlan);
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

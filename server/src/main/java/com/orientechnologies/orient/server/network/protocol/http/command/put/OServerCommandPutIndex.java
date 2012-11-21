@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -70,11 +69,11 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
 
       index.put(key, record);
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Key '"
-          + urlParts[3] + "' correctly inserted into the index " + urlParts[2] + ".", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Key '" + urlParts[3]
+          + "' correctly inserted into the index " + urlParts[2] + ".", null);
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
     return false;
   }

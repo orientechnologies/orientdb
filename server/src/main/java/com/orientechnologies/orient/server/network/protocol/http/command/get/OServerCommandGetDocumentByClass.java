@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -50,7 +49,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
     if (rec == null)

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -72,7 +71,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
     sendRecordsContent(iRequest, iResponse, response, fetchPlan);

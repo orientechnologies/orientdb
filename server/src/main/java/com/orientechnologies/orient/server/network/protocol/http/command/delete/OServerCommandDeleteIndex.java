@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.delete
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -55,7 +54,7 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 						null);
 		} finally {
 			if (db != null)
-				OSharedDocumentDatabase.release(db);
+			  db.close();
 		}
 		return false;
 	}

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -48,7 +47,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
       }
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
   }
 
@@ -116,8 +115,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
       break;
     }
 
-    iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, cls.properties().size(),
-        null);
+    iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, cls
+        .properties().size(), null);
 
     return false;
   }
@@ -174,8 +173,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
       }
     }
 
-    iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, cls.properties().size(),
-        null);
+    iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, cls
+        .properties().size(), null);
 
     return false;
   }

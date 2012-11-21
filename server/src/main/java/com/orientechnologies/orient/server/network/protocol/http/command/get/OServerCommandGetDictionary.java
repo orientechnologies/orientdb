@@ -18,40 +18,39 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|dictionary/*" };
+  private static final String[] NAMES = { "GET|dictionary/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		iRequest.data.commandInfo = "Dictionary lookup";
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    iRequest.data.commandInfo = "Dictionary lookup";
 
-		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: dictionary/<database>/<key>");
+    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: dictionary/<database>/<key>");
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			final ORecord<?> record = db.getDictionary().get(urlParts[2]);
-			if (record == null)
-				throw new ORecordNotFoundException("Key '" + urlParts[2] + "' was not found in the database dictionary");
+      final ORecord<?> record = db.getDictionary().get(urlParts[2]);
+      if (record == null)
+        throw new ORecordNotFoundException("Key '" + urlParts[2] + "' was not found in the database dictionary");
 
-			iResponse.writeRecord(record);
+      iResponse.writeRecord(record);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+    } finally {
+      if (db != null)
+        db.close();
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

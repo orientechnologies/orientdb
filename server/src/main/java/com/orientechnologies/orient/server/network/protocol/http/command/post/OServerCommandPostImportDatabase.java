@@ -45,22 +45,24 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     if (!iRequest.isMultipart) {
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", OHttpUtils.CONTENT_TEXT_PLAIN, "Request is not multipart/form-data",
-          null);
+      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Request is not multipart/form-data", OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Request is not multipart/form-data", null);
     } else if (iRequest.multipartStream == null || iRequest.multipartStream.available() <= 0) {
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", OHttpUtils.CONTENT_TEXT_PLAIN, "Content stream is null or empty",
-          null);
+      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Content stream is null or empty", OHttpUtils.CONTENT_TEXT_PLAIN,
+          "Content stream is null or empty", null);
     } else {
       database = getProfiledDatabaseInstance(iRequest);
       try {
         parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
-        
+
         ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
         importer.importDatabase();
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON,
+            "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e
-            .getCause().getMessage() : "", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": " + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}", null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, e.getMessage() + ": " + e.getCause() != null ? e.getCause()
+            .getMessage() : "", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
+            + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}", null);
       } finally {
         if (database != null)
           database.close();

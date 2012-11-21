@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -74,15 +73,15 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
               OHttpUtils.CONTENT_TEXT_PLAIN, "Record requested is not a file nor has a readable schema", null);
         }
       } else {
-        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN, "Record requestes not exists",
-            null);
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested not exists", OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Record requestes not exists", null);
       }
     } catch (Exception e) {
-      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(),
-          null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, OHttpUtils.STATUS_INTERNALERROR_DESCRIPTION,
+          OHttpUtils.CONTENT_TEXT_PLAIN, e.getMessage(), null);
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
     return false;

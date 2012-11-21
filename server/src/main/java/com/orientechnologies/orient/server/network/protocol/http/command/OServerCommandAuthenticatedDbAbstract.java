@@ -24,7 +24,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -48,6 +49,11 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final char   DBNAME_DIR_SEPARATOR   = '$';
   public static final String SESSIONID_UNAUTHORIZED = "-";
   public static final String SESSIONID_LOGOUT       = "!";
+  private final OServer      server;
+
+  public OServerCommandAuthenticatedDbAbstract() {
+    server = OServerMain.server();
+  }
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -102,7 +108,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       final List<String> iAuthenticationParts, final String iDatabaseName) throws IOException {
     ODatabaseDocumentTx db = null;
     try {
-      db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
+      db = (ODatabaseDocumentTx) server.openDatabase("graph", iDatabaseName, iAuthenticationParts.get(0),
+          iAuthenticationParts.get(1));
+      // db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
 
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
@@ -113,12 +121,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       // WRONG USER/PASSWD
     } catch (OLockException e) {
       OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
       else
         // WRONG USER/PASSWD
         sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
@@ -144,7 +149,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-    final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    // final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase("graph", iRequest.databaseName, parts.get(0),
+        parts.get(1));
+
     if (db != null) {
       iRequest.data.lastDatabase = db.getName();
       iRequest.data.lastUser = db.getUser() != null ? db.getUser().getName() : null;

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
@@ -55,7 +54,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
     final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;

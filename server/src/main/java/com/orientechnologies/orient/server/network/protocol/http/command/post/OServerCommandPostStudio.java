@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -95,7 +94,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
     return false;
   }
@@ -105,7 +104,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     // GET THE TARGET CLASS
     final OClass cls = db.getMetadata().getSchema().getClass(rid);
     if (cls == null) {
-      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid
+          + "' not found.", null);
       return;
     }
 
@@ -135,20 +135,20 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         if (fields.get("max") != null)
           prop.setMax(fields.get("max"));
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
-            + fields.get("name") + " created successfully", null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
+            + " created successfully", null);
 
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class "
-            + rid + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e, null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new property in class " + rid + ": " + e,
+            OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new property in class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete property";
 
       cls.dropProperty(className);
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property "
-          + fields.get("name") + " deleted successfully.", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
+          + " deleted successfully.", null);
     }
   }
 
@@ -178,16 +178,16 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             + "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size(), null);
 
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': "
-            + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e, null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating the new class '" + rid + "': " + e,
+            OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating the new class '" + rid + "': " + e, null);
       }
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete class";
 
       db.getMetadata().getSchema().dropClass(rid);
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
-          + "' deleted successfully.", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid + "' deleted successfully.",
+          null);
     }
   }
 
@@ -198,14 +198,16 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
       int clusterId = db.addCluster(fields.get("name"), CLUSTER_TYPE.valueOf(fields.get("type")));
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' created successfully with id=" + clusterId, null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
+          + "' created successfully with id=" + clusterId, null);
 
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete cluster";
 
       db.dropCluster(fields.get("name"));
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name") + "' deleted successfully", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
+          + "' deleted successfully", null);
     }
   }
 
@@ -250,8 +252,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       }
 
       doc.save();
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
-          + " updated successfully.", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " updated successfully.",
+          null);
     } else if ("add".equals(operation)) {
       iRequest.data.commandInfo = "Studio create document";
 
@@ -262,8 +264,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
         doc.field(f.getKey(), f.getValue());
 
       doc.save();
-      iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity()
-          + " updated successfully.", null);
+      iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity() + " updated successfully.", null);
 
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete document";
@@ -274,8 +275,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       final ODocument doc = new ODocument(new ORecordId(rid));
       doc.load();
       doc.delete();
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid
-          + " deleted successfully.", null);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " deleted successfully.",
+          null);
 
     } else
       iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
@@ -286,7 +287,8 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     // GET THE TARGET CLASS
     final OClass cls = db.getMetadata().getSchema().getClass(rid);
     if (cls == null) {
-      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid + "' not found.", null);
+      iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Class '" + rid
+          + "' not found.", null);
       return;
     }
 
@@ -299,11 +301,12 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
 
         cls.createIndex(fields.get("name"), indexType, fieldNames);
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name") + " created successfully", null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + fields.get("name")
+            + " created successfully", null);
 
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid
-            + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e, null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on creating a new index for class " + rid + ": " + e,
+            OHttpUtils.CONTENT_TEXT_PLAIN, "Error on creating a new index for class " + rid + ": " + e, null);
       }
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete index";
@@ -311,18 +314,18 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       try {
         final OIndex<?> index = cls.getClassIndex(className);
         if (index == null) {
-          iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '" + className + "' not found in class '" + rid + "'.", null);
+          iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Error: Index '" + className
+              + "' not found in class '" + rid + "'.", null);
           return;
         }
 
         db.getMetadata().getIndexManager().dropIndex(index.getName());
 
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index "
-            + className + " deleted successfully.", null);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Index " + className
+            + " deleted successfully.", null);
       } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className
-            + "' for class " + rid + ": " + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className
-            + "' for class " + rid + ": " + e, null);
+        iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class " + rid + ": "
+            + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid + ": " + e, null);
       }
     } else
       iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);

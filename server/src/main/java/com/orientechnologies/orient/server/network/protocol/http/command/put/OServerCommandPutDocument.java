@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.put;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -66,8 +65,8 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       final ODocument currentDocument = db.load(recordId);
 
       if (currentDocument == null) {
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " was not found.",
-            null);
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            "Record " + recordId + " was not found.", null);
         return false;
       }
 
@@ -78,11 +77,11 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId
-        + " updated successfully.", null);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " updated successfully.",
+        null);
     return false;
   }
 

@@ -29,43 +29,48 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetExportDatabase extends OServerCommandAuthenticatedDbAbstract implements OCommandOutputListener {
-	private static final String[]	NAMES	= { "GET|export/*" };
+  private static final String[] NAMES = { "GET|export/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: export/<database>/[<name>][?params*]");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
+    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: export/<database>/[<name>][?params*]");
 
-		if (urlParts.length > 2) {
-		} else {
-			exportStandard(iRequest, iResponse);
-		}
-		return false;
-	}
+    if (urlParts.length > 2) {
+    } else {
+      exportStandard(iRequest, iResponse);
+    }
+    return false;
+  }
 
-	protected void exportStandard(final OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException,
-			IOException {
-		iRequest.data.commandInfo = "Database export";
-		ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
-		iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
-		iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
-		iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
-		iResponse.writeLine("Date: " + new Date());
-		iResponse.writeLine(null);
-		ODatabaseExport export = new ODatabaseExport(database, new GZIPOutputStream(iResponse.getOutputStream()), this);
-		export.exportDatabase();
-		
-		try {
-			iResponse.flush();
-		} catch (SocketException e) {
-		}
-	}
+  protected void exportStandard(final OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException,
+      IOException {
+    iRequest.data.commandInfo = "Database export";
+    final ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
+    try {
+      iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
+      iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
+      iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
+      iResponse.writeLine("Date: " + new Date());
+      iResponse.writeLine(null);
+      final ODatabaseExport export = new ODatabaseExport(database, new GZIPOutputStream(iResponse.getOutputStream()), this);
+      export.exportDatabase();
 
-	@Override
-	public void onMessage(String iText) {
-	}
+      try {
+        iResponse.flush();
+      } catch (SocketException e) {
+      }
+    } finally {
+      if (database != null)
+        database.close();
+    }
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public void onMessage(String iText) {
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

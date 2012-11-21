@@ -16,44 +16,43 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|class/*" };
+  private static final String[] NAMES = { "POST|class/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: class/<database>/<class-name>");
 
-		iRequest.data.commandInfo = "Create class";
-		iRequest.data.commandDetail = urlParts[2];
+    iRequest.data.commandInfo = "Create class";
+    iRequest.data.commandDetail = urlParts[2];
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			if (db.getMetadata().getSchema().getClass(urlParts[2]) != null)
-				throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
+      if (db.getMetadata().getSchema().getClass(urlParts[2]) != null)
+        throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
 
-			db.getMetadata().getSchema().createClass(urlParts[2]);
+      db.getMetadata().getSchema().createClass(urlParts[2]);
 
-			iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, db.getMetadata().getSchema().getClasses().size(),
-					null);
+      iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, db
+          .getMetadata().getSchema().getClasses().size(), null);
 
-		} finally {
-			if (db != null)
-				OSharedDocumentDatabase.release(db);
-		}
-		return false;
-	}
+    } finally {
+      if (db != null)
+        db.close();
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

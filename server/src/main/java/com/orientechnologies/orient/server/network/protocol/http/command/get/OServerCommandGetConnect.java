@@ -180,42 +180,43 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
         json.endCollection(1, true);
       }
 
-      json.writeAttribute(1, false, "currentUser", db.getUser().getName());
+      if (db.getUser() != null) {
+        json.writeAttribute(1, false, "currentUser", db.getUser().getName());
 
-      json.beginCollection(1, false, "users");
-      OUser user;
-      for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
-        user = new OUser(doc);
-        json.beginObject(2, true, null);
-        json.writeAttribute(3, false, "name", user.getName());
-        json.writeAttribute(3, false, "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
-        json.endObject(2, false);
-      }
-      json.endCollection(1, true);
-
-      json.beginCollection(1, true, "roles");
-      ORole role;
-      for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
-        role = new ORole(doc);
-        json.beginObject(2, true, null);
-        json.writeAttribute(3, false, "name", role.getName());
-        json.writeAttribute(3, false, "mode", role.getMode().toString());
-
-        json.beginCollection(3, true, "rules");
-        for (Entry<String, Byte> rule : role.getRules().entrySet()) {
-          json.beginObject(4);
-          json.writeAttribute(4, true, "name", rule.getKey());
-          json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
-          json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
-          json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
-          json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
-          json.endObject(4, true);
+        json.beginCollection(1, false, "users");
+        for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
+          OUser user = new OUser(doc);
+          json.beginObject(2, true, null);
+          json.writeAttribute(3, false, "name", user.getName());
+          json.writeAttribute(3, false, "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+          json.endObject(2, false);
         }
-        json.endCollection(3, false);
+        json.endCollection(1, true);
 
-        json.endObject(2, true);
+        json.beginCollection(1, true, "roles");
+        ORole role;
+        for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
+          role = new ORole(doc);
+          json.beginObject(2, true, null);
+          json.writeAttribute(3, false, "name", role.getName());
+          json.writeAttribute(3, false, "mode", role.getMode().toString());
+
+          json.beginCollection(3, true, "rules");
+          for (Entry<String, Byte> rule : role.getRules().entrySet()) {
+            json.beginObject(4);
+            json.writeAttribute(4, true, "name", rule.getKey());
+            json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+            json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+            json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+            json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+            json.endObject(4, true);
+          }
+          json.endCollection(3, false);
+
+          json.endObject(2, true);
+        }
+        json.endCollection(1, true);
       }
-      json.endCollection(1, true);
 
       json.beginObject(1, true, "config");
 
@@ -225,9 +226,9 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
               "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] { "name",
               "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
-              "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name",
-              "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name",
-              "definitionVersion", "value", db.getStorage().getConfiguration().version });
+              "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
+              db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
+              db.getStorage().getConfiguration().version });
       json.endCollection(2, true);
 
       json.beginCollection(2, true, "properties");
@@ -249,7 +250,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
   }
 

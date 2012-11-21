@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -111,7 +110,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
     return false;
   }

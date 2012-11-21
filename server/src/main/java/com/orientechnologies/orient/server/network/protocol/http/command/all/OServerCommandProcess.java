@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.processor.OProcessorManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -99,7 +98,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
 
     } finally {
       if (db != null)
-        OSharedDocumentDatabase.release(db);
+        db.close();
     }
 
     return false;
