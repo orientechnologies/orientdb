@@ -225,6 +225,8 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
               "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] { "name",
               "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
+              "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name",
+              "timezone", "value", db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name",
               "definitionVersion", "value", db.getStorage().getConfiguration().version });
       json.endCollection(2, true);
 
