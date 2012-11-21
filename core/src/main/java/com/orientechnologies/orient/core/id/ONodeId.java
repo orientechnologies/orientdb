@@ -94,6 +94,10 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     final int[] result;
     if (signum == idToAdd.signum) {
       result = addArrays(chunks, idToAdd.chunks);
+
+			if (Arrays.equals(ZERO.chunks, result))
+				return ZERO;
+
       return new ONodeId(result, signum);
     }
 
@@ -116,14 +120,21 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     if (signum == 0)
       return new ONodeId(idToSubtract.chunks, -idToSubtract.signum);
 
-    if (signum != idToSubtract.signum)
-      return new ONodeId(addArrays(chunks, idToSubtract.chunks), signum);
+		final int[] result;
+    if (signum != idToSubtract.signum) {
+			result = addArrays(chunks, idToSubtract.chunks);
+
+			if (Arrays.equals(ZERO.chunks, result))
+				return ZERO;
+
+			return new ONodeId(result, signum);
+		}
 
     int cmp = compareChunks(chunks, idToSubtract.chunks);
     if (cmp == 0)
       return ZERO;
 
-    final int[] result;
+
     if (cmp > 0)
       result = substructArrays(chunks, idToSubtract.chunks);
     else
@@ -437,10 +448,16 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
   public static ONodeId parseHexSting(String value) {
     int pos;
-    if (value.charAt(0) == '-')
-      pos = 1;
-    else
-      pos = 0;
+		int signum;
+
+    if (value.charAt(0) == '-') {
+			pos = 1;
+			signum = -1;
+		} else {
+			pos = 0;
+			signum = 1;
+		}
+
 
     final int[] chunks = new int[6];
     for (int i = 0; i < CHUNKS_SIZE; i++) {
@@ -453,7 +470,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     if (Arrays.equals(ZERO.chunks, chunks))
       return ZERO;
 
-    return new ONodeId(chunks, 1);
+    return new ONodeId(chunks, signum);
   }
 
   public String toHexString() {
