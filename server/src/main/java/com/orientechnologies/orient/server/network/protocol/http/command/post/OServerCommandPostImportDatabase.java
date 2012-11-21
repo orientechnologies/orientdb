@@ -54,13 +54,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
       database = getProfiledDatabaseInstance(iRequest);
       try {
         parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartDatabaseImportContentParser(), database);
-        //
-        // FileOutputStream f = new FileOutputStream("C:/temp/backup.gz");
-        // while (importData.available() > 0) {
-        // f.write(importData.read());
-        // }
-        // f.close()
-
+        
         ODatabaseImport importer = new ODatabaseImport(getProfiledDatabaseInstance(iRequest), importData, this);
         importer.importDatabase();
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"Database imported Correctly, see server log for more informations.\"}", null);

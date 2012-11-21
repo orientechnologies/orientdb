@@ -342,6 +342,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   protected void checkClusterBoundedToClass(int iClusterId) {
+    if( iClusterId == -1 )
+      return;
+    
     for (OClass clazz : getMetadata().getSchema().getClasses()) {
       if (clazz.getDefaultClusterId() == iClusterId)
         throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"

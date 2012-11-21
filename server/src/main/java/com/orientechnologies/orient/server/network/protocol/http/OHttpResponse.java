@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -150,7 +151,9 @@ public class OHttpResponse {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
-      if (OMultiValue.isMultiValue(iResult)
+      if (iResult instanceof Map<?, ?>) {
+        iResult = ((Map<?, ?>) iResult).values().iterator();
+      } else if (OMultiValue.isMultiValue(iResult)
           && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
         final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
         resultSet.add(new ODocument().field("value", iResult));
@@ -219,24 +222,30 @@ public class OHttpResponse {
     send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
-  public void formatMultiValue(final Iterator<OIdentifiable> iIterator, final StringWriter buffer, final String format) {
+  public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) {
     if (iIterator != null) {
       int counter = 0;
       String objectJson;
 
       while (iIterator.hasNext()) {
-        final OIdentifiable rec = iIterator.next();
-        if (rec != null)
-          try {
-            objectJson = rec.getRecord().toJSON(format);
+        final Object entry = iIterator.next();
+        if (entry != null) {
+          if (counter++ > 0)
+            buffer.append(", ");
 
-            if (counter++ > 0)
-              buffer.append(", ");
+          if (entry instanceof OIdentifiable) {
+            ORecord<?> rec = ((OIdentifiable) entry).getRecord();
+            try {
+              objectJson = rec.getRecord().toJSON(format);
 
-            buffer.append(objectJson);
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+              buffer.append(objectJson);
+            } catch (Exception e) {
+              OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+            }
+          } else if (OMultiValue.isMultiValue(entry)) {
+            formatMultiValue(OMultiValue.getMultiValueIterator(entry), buffer, format);
           }
+        }
       }
     }
   }

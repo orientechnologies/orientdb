@@ -31,7 +31,6 @@ import java.util.TimeZone;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -191,7 +190,7 @@ public class OJSONWriter {
     return writeValue(iValue, DEF_FORMAT);
   }
 
-  public static String writeValue(final Object iValue, final String iFormat) throws IOException {
+  public static String writeValue(Object iValue, final String iFormat) throws IOException {
     final StringBuilder buffer = new StringBuilder();
 
     final boolean oldAutoConvertSettings;
@@ -231,23 +230,15 @@ public class OJSONWriter {
           buffer.append(writeValue(Array.get(iValue, i), iFormat));
         }
         buffer.append(']');
-      }
 
-    } else if (iValue instanceof Collection<?>) {
-      final Collection<Object> coll = (Collection<Object>) iValue;
-      buffer.append('[');
-      int i = 0;
-      for (Iterator<Object> it = coll.iterator(); it.hasNext(); ++i) {
-        if (i > 0)
-          buffer.append(", ");
-        buffer.append(writeValue(it.next(), iFormat));
       }
-      buffer.append(']');
+    } else if (iValue instanceof Iterator<?>)
+      iteratorToJSON((Iterator<?>) iValue, iFormat, buffer);
 
-    } else if (iValue instanceof Map<?, ?>) {
+    else if (iValue instanceof Map<?, ?>)
       mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
 
-    } else if (iValue instanceof Date) {
+    else if (iValue instanceof Date) {
       buffer.append('"');
       final String d;
       synchronized (dateFormat) {
@@ -262,6 +253,10 @@ public class OJSONWriter {
       buffer.append('"');
     } else if (iValue instanceof BigDecimal)
       buffer.append(((BigDecimal) iValue).toPlainString());
+
+    else if (iValue instanceof Iterable<?>)
+      iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
+
     else
       buffer.append(iValue.toString());
 
@@ -269,6 +264,16 @@ public class OJSONWriter {
       ((ORecordLazyMultiValue) iValue).setAutoConvertToRecord(oldAutoConvertSettings);
 
     return buffer.toString();
+  }
+
+  protected static void iteratorToJSON(Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
+    buffer.append('[');
+    for (int i = 0; it.hasNext(); ++i) {
+      if (i > 0)
+        buffer.append(", ");
+      buffer.append(writeValue(it.next(), iFormat));
+    }
+    buffer.append(']');
   }
 
   public OJSONWriter flush() throws IOException {
