@@ -579,7 +579,7 @@ public class ODatabaseRaw implements ODatabase {
       break;
 
     case TIMEZONE:
-      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue));
+      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
       storage.getConfiguration().update();
       break;
 
