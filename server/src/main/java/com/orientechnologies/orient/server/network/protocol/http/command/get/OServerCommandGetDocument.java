@@ -45,17 +45,17 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
       db = getProfiledDatabaseInstance(iRequest);
 
       rec = db.load(new ORecordId(rid), fetchPlan);
+      if (rec == null)
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
+            + "' was not found.", null);
+      else
+        iResponse.writeRecord(rec, fetchPlan, null);
 
     } finally {
       if (db != null)
         db.close();
     }
-
-    if (rec == null)
-      iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
-          + "' was not found.", null);
-    else
-      iResponse.writeRecord(rec, fetchPlan, null);
+    
     return false;
   }
 
