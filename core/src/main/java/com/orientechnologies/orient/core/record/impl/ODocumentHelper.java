@@ -275,7 +275,7 @@ public class ODocumentHelper {
           index = ctxValue;
         } else if (!Character.isDigit(indexPart.charAt(0)))
           // GET FROM CURRENT VALUE
-          index = indexPart; //getFieldValue(value, indexPart);
+          index = indexPart; // getFieldValue(value, indexPart);
 
         nextSeparatorPos = end;
 
@@ -333,8 +333,11 @@ public class ODocumentHelper {
             // SINGLE VALUE
             if (value instanceof Map<?, ?>)
               value = getMapEntry((Map<String, ?>) value, index);
-            else
+            else if (Character.isDigit(indexAsString.charAt(0)))
               value = OMultiValue.getValue(value, Integer.parseInt(indexAsString));
+            else
+              // FILTER BY FIELD
+              value = getFieldValue(value, indexAsString, iContext);
 
           } else if (indexParts.size() > 1) {
 
@@ -412,14 +415,24 @@ public class ODocumentHelper {
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (value instanceof Collection<?>) {
             final List<Object> values = new ArrayList<Object>();
-            for (Object v : OMultiValue.getMultiValueIterable(value))
+            for (Object v : OMultiValue.getMultiValueIterable(value)) {
+              final Object item;
+
               if (v instanceof OIdentifiable)
-                values.add(getIdentifiableValue((OIdentifiable) v, fieldName));
+                item = getIdentifiableValue((OIdentifiable) v, fieldName);
               else if (v instanceof Map)
-                values.add(((Map<?, ?>) v).get(fieldName));
+                item = ((Map<?, ?>) v).get(fieldName);
               else
-                return null;
-            value = values;
+                item = null;
+
+              if (item != null)
+                values.add(item);
+            }
+
+            if (values.isEmpty())
+              value = null;
+            else
+              value = values;
           } else
             return null;
         }
