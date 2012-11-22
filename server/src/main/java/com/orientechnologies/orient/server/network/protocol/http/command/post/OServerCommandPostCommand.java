@@ -32,9 +32,13 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     // TRY TO GET THE COMMAND FROM THE URL, THEN FROM THE CONTENT
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
-    final String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
+    String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
     final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+
+    if (iRequest.content != null)
+      // CONTENT REPLACES TEXT
+      text = iRequest.content;
 
     iRequest.data.commandInfo = "Command";
     iRequest.data.commandDetail = text;
@@ -52,14 +56,15 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       cmd.setFetchPlan(fetchPlan);
       response = db.command(cmd).execute();
 
+      final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
+
+      iResponse.writeResult(response, format);
+      
     } finally {
       if (db != null)
         db.close();
     }
 
-    final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
-
-    iResponse.writeResult(response, format);
     return false;
   }
 
