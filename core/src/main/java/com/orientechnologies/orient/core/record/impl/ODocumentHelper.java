@@ -414,7 +414,7 @@ public class ODocumentHelper {
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (value instanceof Collection<?>) {
-            final List<Object> values = new ArrayList<Object>();
+            final Set<Object> values = new HashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               final Object item;
 

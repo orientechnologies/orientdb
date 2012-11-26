@@ -95,7 +95,7 @@ public class OMultiValue {
     if (iObject == null)
       return null;
 
-    if (!isMultiValue(iObject))
+    if (!isMultiValue(iObject) || getSize(iObject) == 0)
       return null;
 
     try {

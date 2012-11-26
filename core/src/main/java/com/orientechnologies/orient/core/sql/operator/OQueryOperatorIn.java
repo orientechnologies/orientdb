@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -64,6 +65,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         }
       } else {
         // AGAINST SINGLE ITEM
+        if (sourceCollection instanceof Set<?>)
+          return sourceCollection.contains(iRight);
+
         for (final Object o : sourceCollection) {
           if (OQueryOperatorEquals.equals(iRight, o))
             return true;
@@ -72,6 +76,10 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     } else if (iRight instanceof Collection<?>) {
 
       final Collection<Object> sourceCollection = (Collection<Object>) iRight;
+
+      if (sourceCollection instanceof Set<?>)
+        return sourceCollection.contains(iLeft);
+
       for (final Object o : sourceCollection) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
