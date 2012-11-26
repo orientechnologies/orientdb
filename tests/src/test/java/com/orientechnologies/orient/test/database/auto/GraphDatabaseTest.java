@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -491,7 +492,7 @@ public class GraphDatabaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((List<ODocument>) result.get(0).field("out")).size(), 2);
+    Assert.assertEquals(((Collection<ODocument>) result.get(0).field("out")).size(), 2);
 
     subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
