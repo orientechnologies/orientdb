@@ -612,6 +612,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       return p;
 
     final OMVRBTreeEntry<K, V> adjacentEntry = previous(p);
+
+    if (adjacentEntry == null)
+      return null;
+
     if (key instanceof OCompositeKey) {
       return adjustSearchResult((OCompositeKey) key, partialSearchMode, adjacentEntry);
     }
