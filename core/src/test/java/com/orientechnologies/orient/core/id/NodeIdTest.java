@@ -400,13 +400,14 @@ public class NodeIdTest {
 	public void testLongValuePositive() {
 		final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.longValue(), 0xecffaabb12342aabL);
+		Assert.assertEquals(nodeId.longValue(), 0x6cffaabb12342aabL);
+
 	}
 
 	public void testLongValueNegative() {
 		final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.longValue(), 0xecffaabb12342aabL);
+		Assert.assertEquals(nodeId.longValue(), -0x6cffaabb12342aabL);
 	}
 
 	public void testIntValuePositive() {
@@ -418,7 +419,7 @@ public class NodeIdTest {
 	public void testIntValueNegative() {
 		final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.intValue(), 0x12342aab);
+		Assert.assertEquals(nodeId.intValue(), -0x12342aab);
 	}
 
 

@@ -301,12 +301,23 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   }
 
   public int intValue() {
-    return chunks[CHUNKS_SIZE - 1];
+		final int reslut = chunks[CHUNKS_SIZE - 1];
+
+		if(signum < 0)
+			return -reslut;
+
+    return reslut;
   }
 
   @Override
   public long longValue() {
-    return ((chunks[CHUNKS_SIZE - 2] & LONG_INT_MASK) << 32) + (chunks[CHUNKS_SIZE - 1] & LONG_INT_MASK);
+		final long reslut = (((chunks[CHUNKS_SIZE - 2] & LONG_INT_MASK) << 32) + (chunks[CHUNKS_SIZE - 1] & LONG_INT_MASK))
+						& Long.MAX_VALUE;
+
+		if (signum < 0)
+			return -reslut;
+
+    return reslut;
   }
 
   @Override
