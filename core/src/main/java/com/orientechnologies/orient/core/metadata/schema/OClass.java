@@ -334,4 +334,6 @@ public interface OClass extends Comparable<OClass> {
   public void removeCustom(final String iName);
 
   public void clearCustom();
+
+  public Set<String> getCustomKeys();
 }

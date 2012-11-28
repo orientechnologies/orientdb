@@ -191,6 +191,9 @@ public interface OProperty extends Comparable<OProperty> {
   public String getCustom(final String iName);
 
   public OPropertyImpl setCustom(final String iName, final String iValue);
+  public void removeCustom(final String iName);
+  public void clearCustom();
+  public Set<String> getCustomKeys();
 
   public Object get(ATTRIBUTES iAttribute);
 }

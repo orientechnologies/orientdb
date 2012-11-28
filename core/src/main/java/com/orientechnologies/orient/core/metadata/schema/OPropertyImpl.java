@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
@@ -395,8 +396,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public void setCustomInternal(final String iName, final String iValue) {
     if (customFields == null)
       customFields = new HashMap<String, String>();
-
-    customFields.put(iName, iValue);
+    if(iValue==null || "null".equalsIgnoreCase(iValue))
+          customFields.remove(iName);
+    else
+        customFields.put(iName, iValue);
   }
 
   public OPropertyImpl setCustom(final String iName, final String iValue) {
@@ -412,6 +415,27 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return Collections.unmodifiableMap(customFields);
     return null;
   }
+
+    public void removeCustom(final String iName) {
+        setCustom(iName,null);
+     }
+
+
+    public void clearCustom() {
+        getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+        final String cmd = String.format("alter property %s custom clear", getFullName());
+        getDatabase().command(new OCommandSQL(cmd)).execute();
+        clearCustomInternal();
+    }
+
+    public void clearCustomInternal() {
+        customFields = null;
+    }
+     public Set<String> getCustomKeys() {
+        if (customFields != null)
+           return customFields.keySet();
+        return new HashSet<String>();
+     }
 
   /**
    * Change the type. It checks for compatibility between the change of type.
@@ -510,11 +534,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setTypeInternal(isNull ? null : OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1)
-        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
-
-      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-      setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      if (iValue.toString().indexOf("=") == -1){
+          if(iValue.toString().equalsIgnoreCase("clear")){
+                        clearCustomInternal();
+                    }else
+            throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      }else{
+        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+        setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      }
       break;
     }
 
@@ -563,11 +591,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1)
-        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
-
-      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-      setCustom(words.get(0).trim(), words.get(1).trim());
+      if (iValue.toString().indexOf("=") == -1){
+          if(iValue.toString().equalsIgnoreCase("clear")){
+            clearCustom();
+          }else
+            throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      }else{
+        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+        setCustom(words.get(0).trim(), words.get(1).trim());
+      }
       break;
     }
   }
@@ -655,8 +687,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         document.field("linkedType", linkedType.id);
       if (linkedClass != null || linkedClassName != null)
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
-      if (customFields != null && customFields.size() > 0)
-        document.field("customFields", customFields, OType.EMBEDDEDMAP);
+
+      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);

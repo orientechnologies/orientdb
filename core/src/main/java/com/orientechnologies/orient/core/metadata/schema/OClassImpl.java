@@ -129,8 +129,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void setCustomInternal(final String iName, final String iValue) {
     if (customFields == null)
       customFields = new HashMap<String, String>();
-
-    customFields.put(iName, iValue);
+    if(iValue==null || "null".equalsIgnoreCase(iValue))
+        customFields.remove(iName);
+    else
+        customFields.put(iName, iValue);
   }
 
   public OClassImpl setCustom(final String iName, final String iValue) {
@@ -148,12 +150,25 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void removeCustom(final String iName) {
-    if (customFields != null)
-      customFields.remove(iName);
+    setCustom(iName,null);
   }
 
   public void clearCustom() {
-    customFields = null;
+      getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+      final String cmd = String.format("alter class %s custom clear", getName());
+      getDatabase().command(new OCommandSQL(cmd)).execute();
+      clearCustomInternal();
+  }
+
+  public void clearCustomInternal() {
+      customFields = null;
+  }
+
+
+  public Set<String> getCustomKeys() {
+     if (customFields != null)
+        return customFields.keySet();
+     return new HashSet<String>();
   }
 
   public void validateInstances() {
@@ -933,12 +948,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     }
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1)
-        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
-
-      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-      setCustomInternal(words.get(0).trim(), words.get(1).trim());
-      break;
+      if (iValue.toString().indexOf("=") == -1){
+          if(iValue.toString().equalsIgnoreCase("clear")){
+              clearCustomInternal();
+          }else
+            throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      }else{
+          final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+          setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      }
+        break;
     }
 
     saveInternal();
@@ -993,11 +1012,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       removeClusterId(clId);
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1)
-        throw new IllegalArgumentException("Syntax error: expected <name> = <value>, instead found: " + iValue);
-
-      final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-      setCustom(words.get(0).trim(), words.get(1).trim());
+      if (iValue.toString().indexOf("=") == -1){
+          if(iValue.toString().equalsIgnoreCase("clear")){
+                clearCustom();
+          }else
+                throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      }else{
+          final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+          setCustom(words.get(0).trim(), words.get(1).trim());
+        }
       break;
     }
     return this;
