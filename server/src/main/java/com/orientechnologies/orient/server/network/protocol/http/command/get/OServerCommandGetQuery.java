@@ -55,12 +55,13 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
       response = (List<OIdentifiable>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
           .execute();
 
+      iResponse.writeRecords(response, fetchPlan);
+
     } finally {
       if (db != null)
         db.close();
     }
 
-    iResponse.writeRecords(response, fetchPlan);
     return false;
   }
 
