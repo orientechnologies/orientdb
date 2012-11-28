@@ -117,7 +117,8 @@ public class OServer {
 
     startup(new File(config));
 
-    databaseDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/");
+    databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
+    databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
     databaseDirectory = databaseDirectory.replace("//", "/");
 
     Orient
