@@ -67,6 +67,8 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OStorageLocal extends OStorageEmbedded {
   private final int                     DELETE_MAX_RETRIES;
@@ -481,7 +483,7 @@ public class OStorageLocal extends OStorageEmbedded {
                 warnings++;
               }
 
-              if (physicalPosition.recordVersion < 0 && (c instanceof OClusterLocal)) {
+              if (physicalPosition.recordVersion.getCounter() < 0 && (c instanceof OClusterLocal)) {
                 // CHECK IF THE HOLE EXISTS
                 boolean found = false;
                 int tot = ((OClusterLocal) c).holeSegment.getHoles();
@@ -519,7 +521,7 @@ public class OStorageLocal extends OStorageEmbedded {
                     / OClusterLocal.RECORD_SIZE);
                 OPhysicalPosition physicalPosition = c.getPhysicalPosition(ppos);
 
-                if (physicalPosition.recordVersion > -1) {
+                if (physicalPosition.recordVersion.getCounter() > -1) {
                   formatMessage(iVerbose, iListener,
                       "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record seems good ", i, totalHoles - 1,
                       c.getId(), recycledPosition);
@@ -945,7 +947,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final int iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<OClusterPosition> iCallback) {
+      final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<OClusterPosition> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -983,8 +985,8 @@ public class OStorageLocal extends OStorageEmbedded {
     return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true));
   }
 
-  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     checkOpeness();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -992,8 +994,8 @@ public class OStorageLocal extends OStorageEmbedded {
     modificationLock.requestModificationLock();
     try {
       if (txManager.isCommitting()) {
-        return new OStorageOperationResult<Integer>(txManager.updateRecord(txManager.getCurrentTransaction().getId(), cluster,
-            iRid, iContent, iVersion, iRecordType));
+        return new OStorageOperationResult<ORecordVersion>(txManager.updateRecord(txManager.getCurrentTransaction().getId(),
+            cluster, iRid, iContent, iVersion, iRecordType));
       } else {
         final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
@@ -1002,19 +1004,19 @@ public class OStorageLocal extends OStorageEmbedded {
                 .getName())))
           synchRecordUpdate(cluster, ppos);
 
-        final int returnValue = (int) (ppos != null ? ppos.recordVersion : -1);
+        final ORecordVersion returnValue = (ppos != null ? ppos.recordVersion : OVersionFactory.instance().createUntrackedVersion());
 
         if (iCallback != null)
           iCallback.call(iRid, returnValue);
 
-        return new OStorageOperationResult<Integer>(returnValue);
+        return new OStorageOperationResult<ORecordVersion>(returnValue);
       }
     } finally {
       modificationLock.releaseModificationLock();
     }
   }
 
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, final int iMode,
       ORecordCallback<Boolean> iCallback) {
     checkOpeness();
 
@@ -1507,7 +1509,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
-      final byte iRecordType, final ORecordId iRid, final int iRecordVersion) {
+      final byte iRecordType, final ORecordId iRid, final ORecordVersion iRecordVersion) {
     checkOpeness();
 
     if (iContent == null)
@@ -1537,7 +1539,7 @@ public class OStorageLocal extends OStorageEmbedded {
         ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
 
         if (iClusterSegment.generatePositionBeforeCreation()) {
-          if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion)
+          if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) > 0)
             ppos.recordVersion = iRecordVersion;
 
           ppos.clusterPosition = iRid.clusterPosition;
@@ -1546,7 +1548,7 @@ public class OStorageLocal extends OStorageEmbedded {
           // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
           iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-          if (iRecordVersion > -1 && iRecordVersion > ppos.recordVersion) {
+          if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) > 0) {
             // OVERWRITE THE VERSION
             iClusterSegment.updateVersion(iRid.clusterPosition, iRecordVersion);
             ppos.recordVersion = iRecordVersion;
@@ -1665,7 +1667,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
-      final int iVersion, final byte iRecordType) {
+      final ORecordVersion iVersion, final byte iRecordType) {
     if (iClusterSegment == null)
       throw new OStorageException("Cluster not defined for record: " + iRid);
 
@@ -1684,10 +1686,10 @@ public class OStorageLocal extends OStorageEmbedded {
           return null;
 
         // VERSION CONTROL CHECK
-        switch (iVersion) {
+        switch (iVersion.getCounter()) {
         // DOCUMENT UPDATE, NO VERSION CONTROL
         case -1:
-          ++ppos.recordVersion;
+          ppos.recordVersion.increment();
           iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
           break;
 
@@ -1697,21 +1699,21 @@ public class OStorageLocal extends OStorageEmbedded {
 
         default:
           // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-          if (iVersion > -1) {
+          if (iVersion.getCounter() > -1) {
             // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (iVersion != ppos.recordVersion)
+            if (!iVersion.equals(ppos.recordVersion))
               if (OFastConcurrentModificationException.enabled())
                 throw OFastConcurrentModificationException.instance();
               else
                 throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
-            ++ppos.recordVersion;
+            ppos.recordVersion.increment();
             iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
           } else {
             // DOCUMENT ROLLBACKED
-            ppos.recordVersion = iVersion - Integer.MIN_VALUE;
+            iVersion.clearRollbackMode();
+            ppos.recordVersion.copyFrom(iVersion);
             iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
           }
-
         }
 
         if (ppos.recordType != iRecordType)
@@ -1750,7 +1752,7 @@ public class OStorageLocal extends OStorageEmbedded {
     return null;
   }
 
-  protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final int iVersion) {
+  protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final ORecordVersion iVersion) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
@@ -1766,7 +1768,7 @@ public class OStorageLocal extends OStorageEmbedded {
           return null;
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-        if (iVersion > -1 && ppos.recordVersion != iVersion)
+        if (iVersion.getCounter() > -1 && !ppos.recordVersion.equals(iVersion))
           if (OFastConcurrentModificationException.enabled())
             throw OFastConcurrentModificationException.instance();
           else

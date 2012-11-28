@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
 import com.orientechnologies.orient.server.task.OAbstractRecordDistributedTask;
@@ -335,8 +337,11 @@ public class ODatabaseJournal {
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
-        if (record != null)
-          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version - 1, record.recordType);
+        if (record != null) {
+          final ORecordVersion version = record.version.copy();
+          version.decrement();
+          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, version, record.recordType);
+        }
         break;
       }
 
@@ -344,7 +349,8 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
-        task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : -1);
+        task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : OVersionFactory
+            .instance().createUntrackedVersion());
         break;
       }
 

@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -243,9 +244,9 @@ public class ODatabaseRaw implements ODatabase {
     }
   }
 
-  public OStorageOperationResult<Integer> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final int iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallBack) {
+  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
@@ -253,12 +254,12 @@ public class ODatabaseRaw implements ODatabase {
       if (iForceCreate || iRid.clusterPosition.isNew()) {
         // CREATE
         final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iCallBack);
-        return new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
+            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
+        return new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
         // UPDATE
-        return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, (ORecordCallback<Integer>) iCallBack);
+        return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -268,7 +269,8 @@ public class ODatabaseRaw implements ODatabase {
     }
   }
 
-  public OStorageOperationResult<Boolean> delete(final ORecordId iRid, final int iVersion, final boolean iRequired, final int iMode) {
+  public OStorageOperationResult<Boolean> delete(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired,
+      final int iMode) {
     try {
       final OStorageOperationResult<Boolean> result = storage.deleteRecord(iRid, iVersion, iMode, null);
       if (!result.getResult() && iRequired)

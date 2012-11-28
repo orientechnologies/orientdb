@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * @author Andrey Lomakin
@@ -27,13 +28,14 @@ public interface ODHTNode {
 
   public void requestMigration(long requesterId);
 
-  OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iRecordVersion, byte iRecordType);
+  OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
+      byte iRecordType);
 
   ORawBuffer readRecord(String storageName, ORID iRid);
 
-  int updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType);
+  ORecordVersion updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion, byte iRecordType);
 
-  boolean deleteRecord(String storageName, ORecordId iRecordId, int iVersion);
+  boolean deleteRecord(String storageName, ORecordId iRecordId, ORecordVersion iVersion);
 
   Object command(String storageName, OCommandRequestText request, boolean serializeResult);
 

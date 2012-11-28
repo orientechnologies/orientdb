@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Remote cluster implementation
@@ -114,7 +115,7 @@ public class OClusterRemote implements OCluster {
   public void updateRecordType(OClusterPosition iPosition, byte iRecordType) throws IOException {
   }
 
-  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException {
   }
 
   public long getEntries() {

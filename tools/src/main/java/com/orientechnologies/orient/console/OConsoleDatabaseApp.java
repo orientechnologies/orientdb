@@ -962,7 +962,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (final OProperty p : cls.properties()) {
         try {
           out.printf(" %-30s| %-12s| %-30s| %-10s| %-10s| %-9s| %-10s| %-10s|\n", p.getName(), p.getType(),
-              p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(),p.isReadonly(), p.isNotNull(),
+              p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "");
         } catch (Exception e) {
         }
@@ -1770,7 +1770,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentRecord instanceof ODocument) {
       ODocument rec = (ODocument) currentRecord;
       out.println("--------------------------------------------------");
-      out.printf("ODocument - Class: %s   id: %s   v.%d\n", rec.getClassName(), rec.getIdentity().toString(), rec.getVersion());
+      out.printf("ODocument - Class: %s   id: %s   v.%s\n", rec.getClassName(), rec.getIdentity().toString(), rec
+          .getRecordVersion().toString());
       out.println("--------------------------------------------------");
       Object value;
       for (String fieldName : rec.fieldNames()) {
@@ -1783,14 +1784,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     } else if (currentRecord instanceof ORecordFlat) {
       ORecordFlat rec = (ORecordFlat) currentRecord;
       out.println("--------------------------------------------------");
-      out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
+      out.printf("Flat - record id: %s   v.%s\n", rec.getIdentity().toString(), rec.getRecordVersion().toString());
       out.println("--------------------------------------------------");
       out.print(rec.value());
 
     } else if (currentRecord instanceof ORecordBytes) {
       ORecordBytes rec = (ORecordBytes) currentRecord;
       out.println("--------------------------------------------------");
-      out.printf("Flat - record id: %s   v.%d\n", rec.getIdentity().toString(), rec.getVersion());
+      out.printf("Flat - record id: %s   v.%s\n", rec.getIdentity().toString(), rec.getRecordVersion().toString());
       out.println("--------------------------------------------------");
 
       final byte[] value = rec.toStream();
@@ -1801,8 +1802,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     } else {
       out.println("--------------------------------------------------");
-      out.printf("%s - record id: %s   v.%d\n", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
-          currentRecord.getVersion());
+      out.printf("%s - record id: %s   v.%s\n", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
+          currentRecord.getRecordVersion().toString());
     }
     out.println();
   }

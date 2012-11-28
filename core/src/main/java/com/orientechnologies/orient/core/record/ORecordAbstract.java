@@ -31,19 +31,22 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
   protected ORecordId                      _recordId;
-  protected int                            _version;
+  protected ORecordVersion                 _recordVersion = OVersionFactory.instance().createVersion();
+
   protected byte[]                         _source;
   protected int                            _size;
   protected String                         _dataSegmentName;
   protected transient ORecordSerializer    _recordFormat;
-  protected Boolean                        _pinned    = null;
-  protected boolean                        _dirty     = true;
-  protected ORecordElement.STATUS          _status    = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener> _listeners = null;
+  protected Boolean                        _pinned        = null;
+  protected boolean                        _dirty         = true;
+  protected ORecordElement.STATUS          _status        = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener> _listeners     = null;
 
   public ORecordAbstract() {
   }
@@ -54,10 +57,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     unsetDirty();
   }
 
-  public ORecordAbstract<?> fill(final ORecordId iRid, final int iVersion, final byte[] iBuffer, boolean iDirty) {
-    _recordId.clusterId = iRid.clusterId;
-    _recordId.clusterPosition = iRid.clusterPosition;
-    _version = iVersion;
+  public ORecordAbstract<?> fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
+    _recordId.clusterId = iRid.getClusterId();
+    _recordId.clusterPosition = iRid.getClusterPosition();
+    _recordVersion.copyFrom(iVersion);
     _status = ORecordElement.STATUS.LOADED;
     _source = iBuffer;
     _size = iBuffer != null ? iBuffer.length : 0;
@@ -102,7 +105,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public ORecordAbstract<T> reset() {
     _status = ORecordElement.STATUS.LOADED;
-    _version = 0;
+    _recordVersion.reset();
     _size = 0;
 
     setDirty();
@@ -192,7 +195,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   @Override
   public String toString() {
-    return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v" + _version;
+    return (_recordId.isValid() ? _recordId : "") + (_source != null ? Arrays.toString(_source) : "[]") + " v"
+        + _recordVersion.toString();
   }
 
   public String getDataSegmentName() {
@@ -209,11 +213,16 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public int getVersion() {
     checkForLoading();
-    return _version;
+    return _recordVersion.getCounter();
   }
 
   public void setVersion(final int iVersion) {
-    _version = iVersion;
+    _recordVersion.setCounter(iVersion);
+  }
+
+  public ORecordVersion getRecordVersion() {
+    checkForLoading();
+    return _recordVersion;
   }
 
   public ORecordAbstract<T> unload() {
@@ -277,12 +286,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public ORecordAbstract<T> save(boolean forceCreate) {
-    getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null);
+    getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
   public ORecordAbstract<T> save(String iClusterName, boolean forceCreate) {
-    getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null);
+    getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
@@ -347,7 +356,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     cloned._source = _source;
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
-    cloned._version = _version;
+    cloned._recordVersion = _recordVersion.copy();
     cloned._pinned = _pinned;
     cloned._status = _status;
     cloned._recordFormat = _recordFormat;

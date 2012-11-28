@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
@@ -213,7 +214,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
-    return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -229,11 +230,13 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@link ODocument#validate()} is called.
    * 
    * 
+   *
    * @param iRecord
    *          Record to save.
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @param iRecordCreatedCallback
+   *@param iRecordUpdatedCallback @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
@@ -242,9 +245,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (!(iRecord instanceof ODocument))
-      return (RET) super.save(iRecord, iMode, iForceCreate, iCallback);
+      return (RET) super.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
     doc.validate();
@@ -260,7 +263,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
           // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
           String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
 
-          return (RET) super.save(doc, clusterName, iMode, iForceCreate, iCallback);
+          return (RET) super.save(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
         }
       } else {
         // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
@@ -268,7 +271,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
           checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
       }
 
-      doc = super.save(doc, iMode, iForceCreate, iCallback);
+      doc = super.save(doc, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     } catch (OException e) {
       // PASS THROUGH
@@ -305,7 +308,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
-    return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -320,6 +323,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    * 
+   *
    * @param iRecord
    *          Record to save
    * @param iClusterName
@@ -328,7 +332,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *          Mode of save: synchronous (default) or asynchronous
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @param iRecordCreatedCallback
+   *@param iRecordUpdatedCallback @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
@@ -337,9 +342,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+                                                   final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (!(iRecord instanceof ODocument))
-      return (RET) super.save(iRecord, iClusterName, iMode, iForceCreate, iCallback);
+      return (RET) super.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
 
@@ -379,7 +384,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     doc.validate();
     doc.convertAllMultiValuesToTrackedVersions();
 
-    doc = super.save(doc, iClusterName, iMode, iForceCreate, iCallback);
+    doc = super.save(doc, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     return (RET) doc;
   }
 

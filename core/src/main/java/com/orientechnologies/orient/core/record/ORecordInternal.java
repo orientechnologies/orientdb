@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Interface for internal use only. Don't use this methods unless you're writing an internal component.
@@ -26,7 +28,7 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
   /**
    * Internal only. Fills in one shot the record.
    */
-  public ORecordAbstract<?> fill(ORecordId iRid, int iVersion, byte[] iBuffer, boolean iDirty);
+  public ORecordAbstract<?> fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty);
 
   /**
    * Internal only. Changes the identity of the record.

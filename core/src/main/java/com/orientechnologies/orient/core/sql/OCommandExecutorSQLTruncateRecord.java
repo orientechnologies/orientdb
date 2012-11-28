@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * SQL TRUNCATE RECORD command: Truncates a record without loading it. Useful when the record is dirty in any way and cannot be
@@ -87,7 +88,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
     for (String rec : records) {
       try {
         final ORecordId rid = new ORecordId(rec);
-        database.getStorage().deleteRecord(rid, -1, 0, null);
+        database.getStorage().deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
         database.getLevel1Cache().deleteRecord(rid);
       } catch (Throwable e) {
         throw new OCommandExecutionException("Error on executing command", e);

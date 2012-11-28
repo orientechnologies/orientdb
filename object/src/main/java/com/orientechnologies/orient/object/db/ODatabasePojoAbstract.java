@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -51,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -250,7 +250,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return this;
   }
 
-  public ODatabaseComplex<T> delete(final ORID iRID, final int iVersion) {
+  public ODatabaseComplex<T> delete(final ORID iRID, final ORecordVersion iVersion) {
     underlying.delete(iRID, iVersion);
     return this;
   }
@@ -260,10 +260,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (DBTYPE) this;
   }
 
-
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl,ORecordHook.HOOK_POSITION iPosition){
-     underlying.registerHook(iHookImpl,iPosition);
-     return (DBTYPE) this;
+  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+    underlying.registerHook(iHookImpl, iPosition);
+    return (DBTYPE) this;
   }
 
   public RESULT callbackHooks(final TYPE iType, final OIdentifiable iObject) {

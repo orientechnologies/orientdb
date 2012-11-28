@@ -125,13 +125,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClass getOrCreateClass(final String iClassName) {
     return getDatabase().getStorage().callInLock(new Callable<OClass>() {
-        @Override
-        public OClass call() throws Exception {
-            OClass cls = classes.get(iClassName.toLowerCase());
-            if (cls == null)
-                cls = createClass(iClassName);
-            return cls;
-        }
+      @Override
+      public OClass call() throws Exception {
+        OClass cls = classes.get(iClassName.toLowerCase());
+        if (cls == null)
+          cls = createClass(iClassName);
+        return cls;
+      }
     }, true);
   }
 
@@ -158,7 +158,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   private int createCluster(String iType, String iClassName) {
-    return getDatabase().command(new OCommandSQL("create cluster " + iClassName + " "+iType)).<Integer>execute();
+    return getDatabase().command(new OCommandSQL("create cluster " + iClassName + " " + iType)).<Integer> execute();
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
@@ -269,8 +269,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new IllegalArgumentException("Name is null");
 
     iName = iName.trim();
-    
-    final int nameSize = iName.length(); 
+
+    final int nameSize = iName.length();
 
     if (nameSize == 0)
       throw new IllegalArgumentException("Name is empty");
@@ -338,31 +338,31 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final String key = iClassName.toLowerCase();
 
     getDatabase().getStorage().callInLock(new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
+      @Override
+      public Object call() throws Exception {
 
-            final OClass cls = classes.get(key);
-            if (cls == null)
-                throw new OSchemaException("Class " + iClassName + " was not found in current database");
+        final OClass cls = classes.get(key);
+        if (cls == null)
+          throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-            if (cls.getBaseClasses().hasNext())
-                throw new OSchemaException("Class " + iClassName
-                        + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+        if (cls.getBaseClasses().hasNext())
+          throw new OSchemaException("Class " + iClassName
+              + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
-            if (cls.getSuperClass() != null) {
-                // REMOVE DEPENDENCY FROM SUPERCLASS
-                ((OClassImpl) cls.getSuperClass()).removeBaseClassInternal(cls);
-            }
-
-            dropClassIndexes(cls);
-
-            classes.remove(key);
-
-            if (cls.getShortName() != null)
-                // REMOVE THE ALIAS TOO
-                classes.remove(cls.getShortName().toLowerCase());
-            return null;
+        if (cls.getSuperClass() != null) {
+          // REMOVE DEPENDENCY FROM SUPERCLASS
+          ((OClassImpl) cls.getSuperClass()).removeBaseClassInternal(cls);
         }
+
+        dropClassIndexes(cls);
+
+        classes.remove(key);
+
+        if (cls.getShortName() != null)
+          // REMOVE THE ALIAS TOO
+          classes.remove(cls.getShortName().toLowerCase());
+        return null;
+      }
     }, true);
   }
 
@@ -574,11 +574,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
 
     db.getStorage().callInLock(new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-            saveInternal(OMetadata.CLUSTER_INTERNAL_NAME);
-            return null;
-        }
+      @Override
+      public Object call() throws Exception {
+        saveInternal(OMetadata.CLUSTER_INTERNAL_NAME);
+        return null;
+      }
     }, true);
   }
 
@@ -586,7 +586,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return getDatabase().getStorage().callInLock(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return document.getVersion();
+        return document.getRecordVersion().getCounter();
       }
     }, false);
   }

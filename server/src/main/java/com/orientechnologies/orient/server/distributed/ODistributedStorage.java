@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
@@ -128,7 +129,7 @@ public class ODistributedStorage implements OStorage {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRecordId,
-      final byte[] iContent, final int iRecordVersion, final byte iRecordType, final int iMode,
+      final byte[] iContent, final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
       final ORecordCallback<OClusterPosition> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
@@ -168,8 +169,8 @@ public class ODistributedStorage implements OStorage {
     return new OStorageOperationResult<ORawBuffer>(null);
   }
 
-  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRecordId, final byte[] iContent, final int iVersion,
-      final byte iRecordType, final int iMode, final ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRecordId, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, final int iMode, final ORecordCallback<ORecordVersion> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -185,10 +186,10 @@ public class ODistributedStorage implements OStorage {
     }
 
     // UPDATE LOCALLY
-    return new OStorageOperationResult<Integer>((Integer) result);
+    return new OStorageOperationResult<ORecordVersion>((ORecordVersion) result);
   }
 
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final ORecordVersion iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED

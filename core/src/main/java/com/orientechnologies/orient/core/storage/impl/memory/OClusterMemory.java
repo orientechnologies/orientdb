@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OClusterMemory extends OSharedResourceAdaptive implements OCluster {
   public static final String      TYPE    = "MEMORY";
@@ -211,13 +212,13 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
 
         // OVERWRITE DATA
         iPPosition.clusterPosition = recycledPosition.clusterPosition;
-        iPPosition.recordVersion = recycledPosition.recordVersion + 1;
+        iPPosition.recordVersion.increment();
 
         entries.set(recycledPosition.clusterPosition.intValue(), iPPosition);
 
       } else {
         iPPosition.clusterPosition = allocateRecord(iPPosition);
-        iPPosition.recordVersion = 0;
+        iPPosition.recordVersion.reset();
         entries.add(iPPosition);
       }
 
@@ -243,7 +244,7 @@ public class OClusterMemory extends OSharedResourceAdaptive implements OCluster 
     }
   }
 
-  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException {
     acquireExclusiveLock();
     try {
 

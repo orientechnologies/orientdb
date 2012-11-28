@@ -21,21 +21,24 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class ORawBuffer implements Externalizable {
-  public byte[] buffer;
-  public int    version;
-  public byte   recordType;
+  public byte[]         buffer;
+  public ORecordVersion version;
+  public byte           recordType;
 
   /**
    * Constructor used by serialization.
    */
   public ORawBuffer() {
+    version = OVersionFactory.instance().createVersion();
   }
 
-  public ORawBuffer(final byte[] buffer, final int version, final byte recordType) {
+  public ORawBuffer(final byte[] buffer, final ORecordVersion version, final byte recordType) {
     this.buffer = buffer;
-    this.version = version;
+    this.version = version.copy();
     this.recordType = recordType;
   }
 
@@ -46,7 +49,7 @@ public class ORawBuffer implements Externalizable {
    */
   public ORawBuffer(final ORecordInternal<?> iRecord) {
     this.buffer = iRecord.toStream();
-    this.version = iRecord.getVersion();
+    this.version = iRecord.getRecordVersion().copy();
     this.recordType = iRecord.getRecordType();
   }
 
@@ -59,7 +62,7 @@ public class ORawBuffer implements Externalizable {
       }
     } else
       buffer = null;
-    version = iInput.readInt();
+    version.getSerializer().readFrom(iInput);
     recordType = iInput.readByte();
   }
 
@@ -68,7 +71,7 @@ public class ORawBuffer implements Externalizable {
     iOutput.writeInt(bufferLenght);
     if (bufferLenght > 0)
       iOutput.write(buffer);
-    iOutput.writeInt(version);
+    version.getSerializer().writeTo(iOutput);
     iOutput.write(recordType);
   }
 

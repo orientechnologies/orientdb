@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  * operation.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OHazelcastPhysicalPosition extends OPhysicalPosition implements DataSerializable {
   private static final long serialVersionUID = 1L;
@@ -44,12 +43,12 @@ public class OHazelcastPhysicalPosition extends OPhysicalPosition implements Dat
   @Override
   public void readData(final DataInput in) throws IOException {
     clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(in);
-    recordVersion = in.readInt();
+    recordVersion.getSerializer().readFrom(in);
   }
 
   @Override
   public void writeData(final DataOutput out) throws IOException {
     out.write(clusterPosition.toStream());
-    out.writeInt(recordVersion);
+    recordVersion.getSerializer().writeTo(out);
   }
 }

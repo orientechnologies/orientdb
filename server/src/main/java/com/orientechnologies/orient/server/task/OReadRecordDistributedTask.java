@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -40,11 +41,11 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
   }
 
   public OReadRecordDistributedTask(final String nodeSource, final String iDbName, final ORecordId iRid) {
-    super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, -1);
+    super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, OVersionFactory.instance().createUntrackedVersion());
   }
 
   public OReadRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid) {
-    super(iRunId, iOperationId, iRid, -1);
+    super(iRunId, iOperationId, iRid, OVersionFactory.instance().createUntrackedVersion());
   }
 
   @Override

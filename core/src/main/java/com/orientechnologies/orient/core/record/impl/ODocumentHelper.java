@@ -34,6 +34,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -57,6 +58,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 /**
  * Helper class to manage documents.
@@ -64,16 +66,18 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * @author Luca Garulli
  */
 public class ODocumentHelper {
-  public static final String ATTRIBUTE_THIS    = "@this";
-  public static final String ATTRIBUTE_RID     = "@rid";
-  public static final String ATTRIBUTE_RID_ID  = "@rid_id";
-  public static final String ATTRIBUTE_RID_POS = "@rid_pos";
-  public static final String ATTRIBUTE_VERSION = "@version";
-  public static final String ATTRIBUTE_CLASS   = "@class";
-  public static final String ATTRIBUTE_TYPE    = "@type";
-  public static final String ATTRIBUTE_SIZE    = "@size";
-  public static final String ATTRIBUTE_FIELDS  = "@fields";
-  public static final String ATTRIBUTE_RAW     = "@raw";
+  public static final String ATTRIBUTE_THIS               = "@this";
+  public static final String ATTRIBUTE_RID                = "@rid";
+  public static final String ATTRIBUTE_RID_ID             = "@rid_id";
+  public static final String ATTRIBUTE_RID_POS            = "@rid_pos";
+  public static final String ATTRIBUTE_VERSION            = "@version";
+  public static final String ATTRIBUTE_VERSION_TIMESTAMP  = "@version_time";
+  public static final String ATTRIBUTE_VERSION_MACADDRESS = "@version_mac";
+  public static final String ATTRIBUTE_CLASS              = "@class";
+  public static final String ATTRIBUTE_TYPE               = "@type";
+  public static final String ATTRIBUTE_SIZE               = "@size";
+  public static final String ATTRIBUTE_FIELDS             = "@fields";
+  public static final String ATTRIBUTE_RAW                = "@raw";
 
   public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
     if (ioResultSet != null)
@@ -472,7 +476,7 @@ public class ODocumentHelper {
   /**
    * Retrieves the value crossing the map with the dotted notation
    * 
-   * @param iName
+   * @param iKey
    *          Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
    * @return
    */
@@ -520,7 +524,13 @@ public class ODocumentHelper {
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return ((ODocument) iCurrent.getRecord()).getVersion();
+        return iCurrent.getRecord().getRecordVersion().getCounter();
+      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_TIMESTAMP)
+          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
+        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getTimestamp();
+      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_MACADDRESS)
+          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
+        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getMacAddress();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))

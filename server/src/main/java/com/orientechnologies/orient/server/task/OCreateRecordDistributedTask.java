@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -47,14 +48,14 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
   }
 
   public OCreateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
-      final int iVersion, final byte iRecordType) {
+      final ORecordVersion iVersion, final byte iRecordType) {
     super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
 
   public OCreateRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final byte[] iContent, final int iVersion, final byte iRecordType) {
+      final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     super(nodeSource, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
@@ -80,7 +81,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
       rid = (ORecordId) record.getIdentity();
 
-      return new OPhysicalPosition(rid.getClusterPosition(), record.getVersion());
+      return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {
       closeDatabase(database);
     }
@@ -107,7 +108,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
-    out.writeInt(version);
+    version.getSerializer().writeTo(out);
     out.write(recordType);
   }
 
@@ -118,7 +119,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
-    version = in.readInt();
+    version.getSerializer().readFrom(in);
     recordType = in.readByte();
   }
 

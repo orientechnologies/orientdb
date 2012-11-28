@@ -63,6 +63,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -914,7 +916,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeRID(entry.getValue().getIdentity());
 
             // IF THE NEW OBJECT HAS VERSION > 0 MEANS THAT HAS BEEN UPDATED IN THE SAME TX. THIS HAPPENS FOR GRAPHS
-            if (entry.getValue().getVersion() > 0)
+            if (entry.getValue().getRecordVersion().getCounter() > 0)
               tx.getUpdatedRecords().put((ORecordId) entry.getValue().getIdentity(), entry.getValue());
           }
 
@@ -922,7 +924,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeInt(tx.getUpdatedRecords().size());
           for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
-            channel.writeInt(entry.getValue().getVersion());
+            channel.writeVersion(entry.getValue().getRecordVersion());
           }
         } finally {
           endResponse();
@@ -1043,7 +1045,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkDatabase();
 
     final ORID rid = channel.readRID();
-    final int version = channel.readInt();
+    final ORecordVersion version = channel.readVersion();
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
@@ -1076,17 +1078,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final ORecordId rid = channel.readRID();
     final byte[] buffer = channel.readBytes();
-    final int version = channel.readInt();
+    final ORecordVersion version = channel.readVersion();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final int newVersion = updateRecord(connection.database, rid, buffer, version, recordType);
+    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType);
 
     if (mode < 2) {
       beginResponse();
       try {
         sendOk(clientTxId);
-        channel.writeInt(newVersion);
+        channel.writeVersion(newVersion);
       } finally {
         endResponse();
       }
@@ -1112,7 +1114,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         sendOk(clientTxId);
         channel.writeClusterPosition(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
-          channel.writeInt(record.getVersion());
+          channel.writeVersion(record.getRecordVersion());
       } finally {
         endResponse();
       }
@@ -1138,7 +1140,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         sendOk(clientTxId);
         channel.writeByte((byte) 1);
         channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
-        channel.writeInt(0);
+        channel.writeVersion(OVersionFactory.instance().createVersion());
         channel.writeByte(ORecordBytes.RECORD_TYPE);
         channel.writeByte((byte) 0); // NO MORE RECORDS
       } finally {
@@ -1155,7 +1157,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (record != null) {
           channel.writeByte((byte) 1); // HAS RECORD
           channel.writeBytes(record.toStream());
-          channel.writeInt(record.getVersion());
+          channel.writeVersion(record.getRecordVersion());
           channel.writeByte(record.getRecordType());
 
           if (fetchPlanString.length() > 0) {

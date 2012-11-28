@@ -972,6 +972,7 @@ public class OObjectEntitySerializer {
         // FOUND
         if (ver instanceof Number) {
           // TREATS AS CLUSTER POSITION
+          // TODO add support of extended version to object database
           iRecord.setVersion(((Number) ver).intValue());
         } else if (ver instanceof String)
           iRecord.setVersion(Integer.parseInt((String) ver));

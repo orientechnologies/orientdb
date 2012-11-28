@@ -36,6 +36,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -73,15 +75,15 @@ public class OStorageLocalTxExecuter {
   }
 
   protected OPhysicalPosition createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment,
-      final ORecordId iRid, final byte[] iContent, final int iRecordVersion, final byte iRecordType, int dataSegmentId) {
+      final ORecordId iRid, final byte[] iContent, final ORecordVersion iRecordVersion, final byte iRecordType, int dataSegmentId) {
 
     try {
       final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid,
           iRecordVersion);
 
       // SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
-      txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, 0, null,
-          dataSegmentId);
+      txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, OVersionFactory
+          .instance().createVersion(), null, dataSegmentId);
 
       return ppos;
     } catch (IOException e) {
@@ -104,8 +106,8 @@ public class OStorageLocalTxExecuter {
    * @return
    */
 
-  protected int updateRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
-      final int iVersion, final byte iRecordType) {
+  protected ORecordVersion updateRecord(final int iTxId, final OCluster iClusterSegment, final ORecordId iRid,
+      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     try {
       // READ CURRENT RECORD CONTENT
       final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
@@ -121,18 +123,18 @@ public class OStorageLocalTxExecuter {
       if (ppos != null)
         return ppos.recordVersion;
 
-      return -1;
+      return OVersionFactory.instance().createUntrackedVersion();
 
     } catch (IOException e) {
 
       OLogManager.instance().error(this, "Error on updating entry #" + iRid + " in log segment: " + iClusterSegment, e,
           OTransactionException.class);
     }
-    return -1;
+    return OVersionFactory.instance().createUntrackedVersion();
   }
 
   protected boolean deleteRecord(final int iTxId, final OCluster iClusterSegment, final OClusterPosition iPosition,
-      final int iVersion) {
+      final ORecordVersion iVersion) {
     try {
       final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
@@ -237,28 +239,37 @@ public class OStorageLocalTxExecuter {
       if (rid.isNew()) {
         final OPhysicalPosition ppos;
         if (iUseLog)
-          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
-              .getRecordType(), txEntry.dataSegmentId);
+          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry
+              .getRecord().getRecordType(), txEntry.dataSegmentId);
         else
-          ppos = iTx.getDatabase().getStorage()
-              .createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(), (byte) 0, null).getResult();
+          ppos = iTx
+              .getDatabase()
+              .getStorage()
+              .createRecord(txEntry.dataSegmentId, rid, stream, OVersionFactory.instance().createVersion(),
+                  txEntry.getRecord().getRecordType(), (byte) 0, null).getResult();
 
         rid.clusterPosition = ppos.clusterPosition;
-        txEntry.getRecord().setVersion(ppos.recordVersion);
+        txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
         txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         iTx.updateIndexIdentityAfterCommit(oldRid, rid);
       } else {
         if (iUseLog)
-          txEntry.getRecord()
-              .setVersion(
-                  updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord()
-                      .getRecordType()));
+          txEntry
+              .getRecord()
+              .getRecordVersion()
+              .copyFrom(
+                      updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
+                              .getRecordType()));
         else
-          txEntry.getRecord().setVersion(
-              iTx.getDatabase().getStorage()
-                  .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
-                  .getResult());
+          txEntry
+              .getRecord()
+              .getRecordVersion()
+              .copyFrom(
+                  iTx.getDatabase()
+                      .getStorage()
+                      .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
+                          (byte) 0, null).getResult());
       }
       break;
     }
@@ -267,21 +278,29 @@ public class OStorageLocalTxExecuter {
       byte[] stream = txEntry.getRecord().toStream();
 
       if (iUseLog)
-        txEntry.getRecord().setVersion(
-            updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType()));
+        txEntry
+            .getRecord()
+            .getRecordVersion()
+            .copyFrom(
+                    updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
+                            .getRecordType()));
       else
-        txEntry.getRecord().setVersion(
-            iTx.getDatabase().getStorage()
-                .updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), (byte) 0, null)
-                .getResult());
+        txEntry
+            .getRecord()
+            .getRecordVersion()
+            .copyFrom(
+                    iTx.getDatabase()
+                            .getStorage()
+                            .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
+                                    (byte) 0, null).getResult());
       break;
     }
 
     case ORecordOperation.DELETED: {
       if (iUseLog)
-        deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getVersion());
+        deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getRecordVersion());
       else
-        iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getVersion(), (byte) 0, null);
+        iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getRecordVersion(), (byte) 0, null);
     }
       break;
     }

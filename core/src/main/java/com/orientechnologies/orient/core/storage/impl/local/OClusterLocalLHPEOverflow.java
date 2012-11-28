@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * @author Andrey Lomakin
@@ -66,7 +67,7 @@ public class OClusterLocalLHPEOverflow extends OMultiFileSegment {
     files[pos].writeByte(offset, iRecordType);
   }
 
-  public void updateVersion(OClusterLocalLHPEBucket bucket, int index, int iVersion) throws IOException {
+  public void updateVersion(OClusterLocalLHPEBucket bucket, int index, ORecordVersion iVersion) throws IOException {
     final int versionOffset = OClusterLocalLHPEBucket.getVersionOffset(index);
     final byte[] serializedVersion = OClusterLocalLHPEBucket.serializeVersion(iVersion);
 

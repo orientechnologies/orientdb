@@ -68,6 +68,8 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -279,54 +281,57 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true,
+        OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
    * Updates the record without checking the version.
-   * 
+   *
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @param iCallback
+   * @param iRecordCreatedCallback
+   * @param iRecordUpdatedCallback
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getVersion(), iContent.getRecordType(), true, iMode, iForceCreate,
-        iCallback);
+                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
+        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true,
+        OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
-   * 
+   *
    * @param iForceCreate
+   * @param iRecordCreatedCallback
+   * @param iRecordUpdatedCallback
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getVersion(), iContent.getRecordType(), true, iMode,
-        iForceCreate, iCallback);
+                                                   final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
+        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord) {
-    executeDeleteRecord(iRecord, -1, true, true, OPERATION_MODE.SYNCHRONOUS);
+    executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
 
   /**
    * Deletes the record checking the version.
    */
-  public ODatabaseRecord delete(final ORID iRecord, final int iVersion) {
+  public ODatabaseRecord delete(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
@@ -335,7 +340,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
-    executeDeleteRecord(iRecord, -1, true, true, iMode);
+    executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, iMode);
     return this;
   }
 
@@ -343,7 +348,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
-    executeDeleteRecord(iRecord, -1, true, true, OPERATION_MODE.SYNCHRONOUS);
+    executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
 
@@ -351,7 +356,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
-    executeDeleteRecord(iRecord, -1, true, true, iMode);
+    executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, iMode);
     return this;
   }
 
@@ -571,6 +576,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (record != null) {
         if (iRecord != null) {
           iRecord.fromStream(record.toStream());
+          iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
           record = iRecord;
         }
 
@@ -618,8 +624,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName,
-      final int iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallback) {
+      final ORecordVersion iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode,
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
 
     if (!iRecord.isDirty())
@@ -677,16 +684,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) iRecord;
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
-      final int realVersion = !mvcc || iVersion == -1 ? -1 : iRecord.getVersion();
+      final ORecordVersion realVersion = !mvcc || iVersion.isUntracked() ? OVersionFactory.instance().createUntrackedVersion()
+          : iRecord.getRecordVersion();
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
 
       try {
         // SAVE IT
-        final OStorageOperationResult<Integer> operationResult = underlying.save(dataSegmentId, rid, stream == null ? new byte[0]
-            : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(), iForceCreate, iCallback);
+        final OStorageOperationResult<ORecordVersion> operationResult = underlying.save(dataSegmentId, rid,
+            stream == null ? new byte[0] : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(), iForceCreate,
+            iRecordCreatedCallback, iRecordUpdatedCallback);
 
-        final int version = operationResult.getResult();
+        final ORecordVersion version = operationResult.getResult();
 
         if (isNew) {
           // UPDATE INFORMATION: CLUSTER ID+POSITION
@@ -727,8 +736,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (RET) iRecord;
   }
 
-  public void executeDeleteRecord(final OIdentifiable iRecord, final int iVersion, final boolean iRequired, boolean iCallTriggers,
-      final OPERATION_MODE iMode) {
+  public void executeDeleteRecord(final OIdentifiable iRecord, final ORecordVersion iVersion, final boolean iRequired,
+      boolean iCallTriggers, final OPERATION_MODE iMode) {
     checkOpeness();
     final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -750,7 +759,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         callbackHooks(TYPE.BEFORE_DELETE, rec);
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
-      final int realVersion = mvcc ? iVersion : -1;
+      final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
 
       try {
         final OStorageOperationResult<Boolean> operationResult = underlying.delete(rid, realVersion, iRequired,

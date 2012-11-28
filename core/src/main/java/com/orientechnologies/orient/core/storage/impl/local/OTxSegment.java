@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Handles the records that wait to be committed. This class is not synchronized because the caller is responsible of it.<br/>
@@ -63,8 +65,10 @@ public class OTxSegment extends OSingleFileSegment {
 
   private static final int                OFFSET_TX_ID          = 2;
   private static final int                CLUSTER_OFFSET_SIZE   = OClusterPositionFactory.INSTANCE.getSerializedSize();
-  private static final int                OFFSET_RECORD_SIZE    = 17 + CLUSTER_OFFSET_SIZE;
-  private static final int                OFFSET_RECORD_CONTENT = 21 + CLUSTER_OFFSET_SIZE;
+  private static final int                OFFSET_RECORD_SIZE    = 13 + CLUSTER_OFFSET_SIZE
+                                                                    + OVersionFactory.instance().getVersionSize();
+  private static final int                OFFSET_RECORD_CONTENT = 17 + CLUSTER_OFFSET_SIZE
+                                                                    + OVersionFactory.instance().getVersionSize();
 
   private final boolean                   synchEnabled;
   private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
@@ -113,7 +117,8 @@ public class OTxSegment extends OSingleFileSegment {
    * Appends a log entry
    */
   public void addLog(final byte iOperation, final int iTxId, final int iClusterId, final OClusterPosition iClusterOffset,
-      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
+      final byte iRecordType, final ORecordVersion iRecordVersion, final byte[] iRecordContent, int dataSegmentId)
+      throws IOException {
 
     final int contentSize = iRecordContent != null ? iRecordContent.length : 0;
     final int size = OFFSET_RECORD_CONTENT + contentSize;
@@ -142,8 +147,7 @@ public class OTxSegment extends OSingleFileSegment {
       file.writeByte(offset, iRecordType);
       offset += OBinaryProtocol.SIZE_BYTE;
 
-      file.writeInt(offset, iRecordVersion);
-      offset += OBinaryProtocol.SIZE_INT;
+      offset += iRecordVersion.getSerializer().writeTo(file, offset);
 
       file.writeInt(offset, dataSegmentId);
       offset += OBinaryProtocol.SIZE_INT;
@@ -319,8 +323,8 @@ public class OTxSegment extends OSingleFileSegment {
       final byte recordType = file.readByte(offset);
       offset += OBinaryProtocol.SIZE_BYTE;
 
-      final int recordVersion = file.readInt(offset);
-      offset += OBinaryProtocol.SIZE_INT;
+      final ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      offset += recordVersion.getSerializer().readFrom(file, offset);
 
       final int dataSegmentId = file.readInt(offset);
       offset += OBinaryProtocol.SIZE_INT;
@@ -347,7 +351,8 @@ public class OTxSegment extends OSingleFileSegment {
   }
 
   private void recoverTransactionEntry(final byte iStatus, final byte iOperation, final int iTxId, final ORecordId iRid,
-      final byte iRecordType, final int iRecordVersion, final byte[] iRecordContent, int dataSegmentId) throws IOException {
+      final byte iRecordType, final ORecordVersion iRecordVersion, final byte[] iRecordContent, int dataSegmentId)
+      throws IOException {
 
     final OCluster cluster = storage.getClusterById(iRid.clusterId);
 
@@ -360,12 +365,13 @@ public class OTxSegment extends OSingleFileSegment {
     switch (iOperation) {
     case OPERATION_CREATE:
       // JUST DELETE THE RECORD
-      storage.deleteRecord(iRid, -1, 0, null);
+      storage.deleteRecord(iRid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
       break;
 
     case OPERATION_UPDATE:
       // REPLACE WITH THE OLD ONE
-      storage.updateRecord(cluster, iRid, iRecordContent, Integer.MIN_VALUE + iRecordVersion, iRecordType);
+      iRecordVersion.setRollbackMode();
+      storage.updateRecord(cluster, iRid, iRecordContent, iRecordVersion, iRecordType);
       break;
 
     case OPERATION_DELETE:

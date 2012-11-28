@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Contains the information about a database operation.
@@ -39,8 +40,6 @@ public class ORecordOperation implements OSerializableStream {
 
   public byte               type;
   public OIdentifiable      record;
-  public int                version;
-  public long               date;
 
   public int                dataSegmentId    = 0; // DEFAULT ONE
 
@@ -107,7 +106,7 @@ public class ORecordOperation implements OSerializableStream {
       case CREATED:
       case UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-        ((ORecordInternal<?>) record).fill(rid, 0, stream.getAsByteArray(), true);
+        ((ORecordInternal<?>) record).fill(rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
         break;
       }
 

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -50,6 +49,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -106,7 +106,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * Create a new POJO by its class name. Assure to have called the registerEntityClasses() declaring the packages that are part of
    * entity classes.
    * 
-   * @see OEntityManager.registerEntityClasses(String)
+   * @see OEntityManager#registerEntityClasses(String)
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, Object... iArgs) {
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
@@ -125,7 +125,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * Create a new POJO by its class name. Assure to have called the registerEntityClasses() declaring the packages that are part of
    * entity classes.
    * 
-   * @see OEntityManager.registerEntityClasses(String)
+   * @see OEntityManager#registerEntityClasses(String)
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, ODocument iDocument,
       Object... iArgs) {
@@ -228,11 +228,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Method that detaches all fields contained in the document to the given object.
    * 
-   * @param <T>
-   * @param o
+   * @param <RET>
+   * @param iPojo
    *          :- the object to detach
-   * @param db
-   *          :- the database instance
    * @param returnNonProxiedInstance
    *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
    *          and @Version fields it could procude data replication
@@ -246,8 +244,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * Method that detaches all fields contained in the document to the given object and recursively all object tree. This may throw a
    * {@link StackOverflowError} with big objects tree. To avoid it set the stack size with -Xss java option
    * 
-   * @param <T>
-   * @param o
+   * @param <RET>
+   * @param iPojo
    *          :- the object to detach
    * @param returnNonProxiedInstance
    *          :- defines if the return object will be a proxied instance or not. If set to TRUE and the object does not contains @Id
@@ -304,7 +302,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent) {
-    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -314,8 +312,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallback) {
-    return (RET) save(iContent, null, iMode, false, iCallback);
+                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) save(iContent, null, iMode, false, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
@@ -330,7 +328,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see ORecordSchemaAware#validate()
    */
   public <RET> RET save(final Object iPojo, final String iClusterName) {
-    return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -345,7 +343,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see ORecordSchemaAware#validate()
    */
   public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallback) {
+                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (iPojo == null)
       return (RET) iPojo;
@@ -369,7 +367,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           // registerUserObject(iPojo, record);
           deleteOrphans((((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler())));
 
-          ODocument savedRecord = underlying.save(record, iClusterName, iMode, iForceCreate, iCallback);
+          ODocument savedRecord = underlying.save(record, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).setDoc(savedRecord);
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject);
@@ -384,9 +382,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   protected void deleteOrphans(OObjectProxyMethodHandler handler) {
-    for (ORID orphan : handler.getOrphans()){
+    for (ORID orphan : handler.getOrphans()) {
       deleteCascade((ODocument) underlying.load(orphan));
-    	underlying.delete(orphan);
+      underlying.delete(orphan);
     }
     handler.getOrphans().clear();
   }
@@ -438,7 +436,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseObject delete(final ORID iRID, final int iVersion) {
+  public ODatabaseObject delete(final ORID iRID, final ORecordVersion iVersion) {
     checkOpeness();
 
     if (iRID == null)

@@ -71,7 +71,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       }
 
       currentDocument.merge(doc, false, false);
-      currentDocument.setVersion(doc.getVersion());
+      currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
 
       currentDocument.save();
 

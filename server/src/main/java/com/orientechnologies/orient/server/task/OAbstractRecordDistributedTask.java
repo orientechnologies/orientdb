@@ -22,12 +22,9 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
-import com.orientechnologies.orient.server.distributed.OServerOfflineException;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -37,20 +34,21 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * 
  */
 public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistributedTask<T> {
-  protected ORecordId rid;
-  protected int       version;
+  protected ORecordId      rid;
+  protected ORecordVersion version;
 
   public OAbstractRecordDistributedTask() {
   }
 
   public OAbstractRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final int iVersion) {
+      final ORecordId iRid, final ORecordVersion iVersion) {
     super(nodeSource, iDbName, iMode);
     this.rid = iRid;
     this.version = iVersion;
   }
 
-  public OAbstractRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final int iVersion) {
+  public OAbstractRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
+      final ORecordVersion iVersion) {
     super(iRunId, iOperationId);
     this.rid = iRid;
     this.version = iVersion;
@@ -145,11 +143,11 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
     this.rid = rid;
   }
 
-  public int getVersion() {
+  public ORecordVersion getVersion() {
     return version;
   }
 
-  public void setVersion(int version) {
+  public void setVersion(ORecordVersion version) {
     this.version = version;
   }
 }

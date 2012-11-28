@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
@@ -109,7 +110,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   @Override
-  public void handleUpdateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final int iCurrentVersion,
+  public void handleUpdateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordVersion iCurrentVersion,
       final int iOtherVersion) {
     OLogManager.instance().warn(this, "CONFLICT against node %s UDPATE record %s (current=v%d, other=v%d)...", iRemoteNode,
         iCurrentRID, iCurrentVersion, iOtherVersion);

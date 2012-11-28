@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
@@ -74,7 +75,7 @@ public class OStorageSynchronizer {
 
         if (record == null)
           // DELETE IT
-          storage.deleteRecord(rid, -1, 0, null);
+          storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
         else
           // UPDATE IT
           storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);

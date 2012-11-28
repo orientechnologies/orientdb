@@ -19,32 +19,17 @@ package com.orientechnologies.orient.core.index;
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Handles indexing when records change.
@@ -145,15 +130,15 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    final int version = iDocument.getVersion(); // Cache the transaction-provided value
+    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
-      if (version > -1 && iDocument.getVersion() != version) // check for record version errors
+      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
               ORecordOperation.DELETED);
     }
 

@@ -5,6 +5,8 @@ import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionNodeId;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * @author Andrey Lomakin
@@ -16,7 +18,7 @@ public final class OClusterLocalLHPEBucket {
 
   public static final int               BUCKET_CAPACITY      = 64;
 
-  private static final int              VALUE_SIZE           = 17;
+  private static final int              VALUE_SIZE           = 13 + OVersionFactory.instance().getVersionSize();
 
   private static final int              KEY_SIZE             = 192;
 
@@ -167,7 +169,7 @@ public final class OClusterLocalLHPEBucket {
     physicalPosition.recordType = buffer[position];
     position += 1;
 
-    physicalPosition.recordVersion = CONVERTER.getInt(buffer, position);
+    physicalPosition.recordVersion.getSerializer().fastReadFrom(buffer, position);
 
     return physicalPosition;
   }
@@ -198,11 +200,8 @@ public final class OClusterLocalLHPEBucket {
     return FIRST_VALUE_POS + index * VALUE_SIZE + 13;
   }
 
-  public static byte[] serializeVersion(int version) {
-    final byte[] serializedVersion = new byte[4];
-    CONVERTER.putInt(serializedVersion, 0, version);
-
-    return serializedVersion;
+  public static byte[] serializeVersion(ORecordVersion version) {
+    return version.getSerializer().toByteArray();
   }
 
   public byte[] getBuffer() {
@@ -237,8 +236,7 @@ public final class OClusterLocalLHPEBucket {
         buffer[position] = physicalPosition.recordType;
         position += 1;
 
-        CONVERTER.putInt(buffer, position, physicalPosition.recordVersion);
-        position += 4;
+        position += physicalPosition.recordVersion.getSerializer().fastWriteTo(buffer, position);
 
         positionsToUpdate[i] = false;
       } else

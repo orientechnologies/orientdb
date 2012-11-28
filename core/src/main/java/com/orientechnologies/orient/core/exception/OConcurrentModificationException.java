@@ -19,6 +19,8 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Exception thrown when MVCC is enabled and a record cannot be updated or deleted because versions don't match.
@@ -34,8 +36,8 @@ public class OConcurrentModificationException extends ONeedRetryException {
   private static final long   serialVersionUID       = 1L;
 
   private ORID                rid;
-  private int                 databaseVersion;
-  private int                 recordVersion;
+  private ORecordVersion      databaseVersion        = OVersionFactory.instance().createVersion();
+  private ORecordVersion      recordVersion          = OVersionFactory.instance().createVersion();
   private int                 recordOperation;
 
   /**
@@ -43,8 +45,6 @@ public class OConcurrentModificationException extends ONeedRetryException {
    */
   protected OConcurrentModificationException() {
     rid = new ORecordId();
-    databaseVersion = 0;
-    recordVersion = 0;
   }
 
   public OConcurrentModificationException(final String message) {
@@ -54,29 +54,37 @@ public class OConcurrentModificationException extends ONeedRetryException {
 
     beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
     endPos = message.indexOf(' ', beginPos);
-    databaseVersion = Integer.parseInt(message.substring(beginPos, endPos));
+    databaseVersion.getSerializer().fromString(message.substring(beginPos, endPos));
 
     beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
     endPos = message.indexOf(')', beginPos);
-    recordVersion = Integer.parseInt(message.substring(beginPos, endPos));
+    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos));
   }
 
-  public OConcurrentModificationException(final ORID iRID, final int iDatabaseVersion, final int iRecordVersion,
-      final int iRecordOperation) {
+  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
+      final ORecordVersion iRecordVersion, final int iRecordOperation) {
     if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
     rid = iRID;
-    databaseVersion = iDatabaseVersion;
-    recordVersion = iRecordVersion;
+    databaseVersion.copyFrom(iDatabaseVersion);
+    recordVersion.copyFrom(iRecordVersion);
     recordOperation = iRecordOperation;
   }
 
   public int getDatabaseVersion() {
-    return databaseVersion;
+    return databaseVersion.getCounter();
   }
 
   public int getRecordVersion() {
+    return recordVersion.getCounter();
+  }
+
+  public ORecordVersion getEnhancedDatabaseVersion() {
+    return databaseVersion;
+  }
+
+  public ORecordVersion getEnhancedRecordVersion() {
     return recordVersion;
   }
 

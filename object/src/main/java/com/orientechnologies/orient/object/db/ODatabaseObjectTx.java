@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
@@ -209,7 +210,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
 	public Object save(final Object iContent) {
-		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null);
+		return save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
 	}
 
 	/**
@@ -218,8 +219,8 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * Reflection to extract the field values. <br/>
 	 * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
 	 */
-	public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-		return (RET) save(iContent, null, iMode, iForceCreate, iCallback);
+	public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+		return (RET) save(iContent, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 	}
 
 	/**
@@ -234,7 +235,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * @see ORecordSchemaAware#validate()
 	 */
 	public Object save(final Object iPojo, final String iClusterName) {
-		return save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null);
+		return save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
 	}
 
 	/**
@@ -249,7 +250,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 	 * @see ORecordSchemaAware#validate()
 	 */
 	public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-			final ORecordCallback<? extends Number> iCallback) {
+                          final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 		checkOpeness();
 
 		if (iPojo == null)
@@ -273,7 +274,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 
 					pojo2Stream(iPojo, record);
 
-					underlying.save(record, iClusterName, iMode, iForceCreate, iCallback);
+					underlying.save(record, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
 					// RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
 					registerUserObject(iPojo, record);

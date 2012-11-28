@@ -22,12 +22,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
@@ -43,6 +38,9 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.version.ODistributedVersion;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
 public abstract class OChannelBinary extends OChannel {
@@ -260,6 +258,19 @@ public abstract class OChannelBinary extends OChannel {
     return this;
   }
 
+  public ORecordVersion readVersion() throws IOException {
+    if (OVersionFactory.instance().isDistributed()) {
+      final int recordVersion = readInt();
+      final long timestamp = readLong();
+      final long macAddress = readLong();
+      return OVersionFactory.instance().createDistributedVersion(recordVersion, timestamp, macAddress);
+    } else {
+      final ORecordVersion version = OVersionFactory.instance().createVersion();
+      version.setCounter(readInt());
+      return version;
+    }
+  }
+
   public OChannelBinary writeByte(final byte iContent) throws IOException {
     if (debug)
       OLogManager.instance().debug(this, "%s - Writing byte (1 byte): %d", socket.getRemoteSocketAddress(), iContent);
@@ -355,6 +366,18 @@ public abstract class OChannelBinary extends OChannel {
   public void writeRID(final ORID iRID) throws IOException {
     writeShort((short) iRID.getClusterId());
     writeClusterPosition(iRID.getClusterPosition());
+  }
+
+  public void writeVersion(final ORecordVersion version) throws IOException {
+    if (version instanceof ODistributedVersion) {
+      final ODistributedVersion v = (ODistributedVersion) version;
+      writeInt(v.getCounter());
+      writeLong(v.getTimestamp());
+      writeLong(v.getMacAddress());
+    } else {
+      // Usual serialization
+      writeInt(version.getCounter());
+    }
   }
 
   public void clearInput() throws IOException {

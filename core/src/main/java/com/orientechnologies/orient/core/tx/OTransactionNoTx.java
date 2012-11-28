@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * No operation transaction.
@@ -65,13 +66,15 @@ public class OTransactionNoTx extends OTransactionAbstract {
    * Update the record.
    * 
    * @param iForceCreate
-   * @param iCallback
+   * @param iRecordCreatedCallback
+   * @param iRecordUpdatedCallback
    */
   public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), true, iMode, iForceCreate,
-          iCallback);
+      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), true, iMode,
+          iForceCreate, iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -92,7 +95,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return;
 
     try {
-      database.executeDeleteRecord(iRecord, iRecord.getVersion(), true, true, iMode);
+      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, true, iMode);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();

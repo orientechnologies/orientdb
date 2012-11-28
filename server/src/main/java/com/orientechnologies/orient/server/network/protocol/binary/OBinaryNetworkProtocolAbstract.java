@@ -44,6 +44,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
@@ -224,7 +226,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     channel.writeShort((short) 0);
     channel.writeByte(iRecord.getRecordType());
     channel.writeRID(iRecord.getIdentity());
-    channel.writeInt(iRecord.getVersion());
+    channel.writeVersion(iRecord.getRecordVersion());
     try {
       final byte[] stream = iRecord.toStream();
 
@@ -294,7 +296,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
   }
 
-  protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final int version) {
+  protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
     iDatabase.delete(rid, version);
     return 1;
   }
@@ -302,15 +304,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType, final int dataSegmentId) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-    record.fill(rid, 0, buffer, true);
+    record.fill(rid, OVersionFactory.instance().createVersion(), buffer, true);
     if (dataSegmentId > 0)
       record.setDataSegmentName(iDatabase.getDataSegmentNameById(dataSegmentId));
     iDatabase.save(record);
     return record;
   }
 
-  protected int updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer, final int version,
-      final byte recordType) {
+  protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+      final ORecordVersion version, final byte recordType) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     newRecord.fill(rid, version, buffer, true);
 
@@ -330,7 +332,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } else
       currentRecord = newRecord;
 
-    currentRecord.setVersion(version);
+    currentRecord.getRecordVersion().copyFrom(version);
 
     iDatabase.save(currentRecord);
 
@@ -339,7 +341,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       iDatabase.getMetadata().getIndexManager().reload();
     }
-    return currentRecord.getVersion();
+    return currentRecord.getRecordVersion();
   }
 
   protected void handleConnectionError(final OChannelBinaryServer channel, final Throwable e) {

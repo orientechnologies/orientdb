@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Stack;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 /**
  * @author luca.molino
@@ -217,10 +219,17 @@ public class OJSONFetchContext implements OFetchContext {
         firstAttribute = false;
     }
     if (includeVer) {
-      json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION,
-          record.getVersion());
+      json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
+          .getRecordVersion().getCounter());
       if (attribSameRow)
         firstAttribute = false;
+      if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
+        final ODistributedVersion ver = (ODistributedVersion) record.getRecordVersion();
+        json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP,
+            ver.getTimestamp());
+        json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS,
+            ver.getMacAddress());
+      }
     }
     if (includeClazz && record instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) record).getClassName() != null) {
       json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,

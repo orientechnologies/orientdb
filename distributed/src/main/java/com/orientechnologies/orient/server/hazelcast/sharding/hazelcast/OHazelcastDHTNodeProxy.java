@@ -18,6 +18,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
 
 /**
@@ -68,7 +70,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   @Override
-  public OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
+  public OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
       byte iRecordType) {
     return callOnRemoteMember(new CreateRecordNodeCall(nodeId, member.getUuid(), storageName, iRecordId, iContent, iRecordVersion,
         iRecordType), false);
@@ -80,13 +82,14 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
   }
 
   @Override
-  public int updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
+  public ORecordVersion updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
+      byte iRecordType) {
     return callOnRemoteMember(new UpdateRecordNodeCall(nodeId, member.getUuid(), storageName, iRecordId, iContent, iVersion,
         iRecordType), false);
   }
 
   @Override
-  public boolean deleteRecord(String storageName, ORecordId iRecordId, int iVersion) {
+  public boolean deleteRecord(String storageName, ORecordId iRecordId, ORecordVersion iVersion) {
     return callOnRemoteMember(new DeleteRecordNodeCall(nodeId, member.getUuid(), storageName, iRecordId, iVersion), false);
   }
 
@@ -333,17 +336,18 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
 
   private static final class CreateRecordNodeCall extends NodeCall<OPhysicalPosition> {
 
-    private String    storageName;
-    private ORecordId recordId;
-    private byte[]    content;
-    private int       recordVersion;
-    private byte      recordType;
+    private String         storageName;
+    private ORecordId      recordId;
+    private byte[]         content;
+    private ORecordVersion recordVersion;
+    private byte           recordType;
 
     public CreateRecordNodeCall() {
+      recordVersion = OVersionFactory.instance().createVersion();
     }
 
     private CreateRecordNodeCall(long nodeId, String memberUUID, String storageName, ORecordId iRecordId, byte[] iContent,
-        int iRecordVersion, byte iRecordType) {
+        ORecordVersion iRecordVersion, byte iRecordType) {
       super(nodeId, memberUUID);
       this.storageName = storageName;
       this.recordId = iRecordId;
@@ -363,7 +367,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       out.writeObject(storageName);
       out.writeObject(recordId);
       writeBytes(out, content);
-      out.writeInt(recordVersion);
+      recordVersion.getSerializer().writeTo(out);
       out.writeByte(recordType);
     }
 
@@ -373,7 +377,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       storageName = (String) in.readObject();
       recordId = (ORecordId) in.readObject();
       content = readBytes(in);
-      recordVersion = in.readInt();
+      recordVersion.getSerializer().readFrom(in);
       recordType = in.readByte();
     }
   }
@@ -412,19 +416,19 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     }
   }
 
-  private static final class UpdateRecordNodeCall extends NodeCall<Integer> {
+  private static final class UpdateRecordNodeCall extends NodeCall<ORecordVersion> {
 
-    private String    storageName;
-    private ORecordId iRecordId;
-    private byte[]    iContent;
-    private int       iVersion;
-    private byte      iRecordType;
+    private String         storageName;
+    private ORecordId      iRecordId;
+    private byte[]         iContent;
+    private ORecordVersion iVersion;
+    private byte           iRecordType;
 
     public UpdateRecordNodeCall() {
     }
 
-    public UpdateRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, byte[] iContent, int iVersion,
-        byte iRecordType) {
+    public UpdateRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, byte[] iContent,
+        ORecordVersion iVersion, byte iRecordType) {
       super(nodeId, uuid);
       this.storageName = storageName;
       this.iRecordId = iRecordId;
@@ -434,7 +438,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
     }
 
     @Override
-    protected Integer call(ODHTNode node) {
+    protected ORecordVersion call(ODHTNode node) {
       return node.updateRecord(storageName, iRecordId, iContent, iVersion, iRecordType);
     }
 
@@ -444,7 +448,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       out.writeObject(storageName);
       out.writeObject(iRecordId);
       writeBytes(out, iContent);
-      out.writeInt(iVersion);
+      iVersion.getSerializer().writeTo(out);
       out.writeByte(iRecordType);
     }
 
@@ -454,46 +458,46 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       storageName = (String) in.readObject();
       iRecordId = (ORecordId) in.readObject();
       iContent = readBytes(in);
-      iVersion = in.readInt();
+      iVersion.getSerializer().readFrom(in);
       iRecordType = in.readByte();
     }
   }
 
   private static final class DeleteRecordNodeCall extends NodeCall<Boolean> {
 
-    private String    storageName;
-    private ORecordId iRecordId;
-    private int       iVersion;
+    private String         storageName;
+    private ORecordId      recordId;
+    private ORecordVersion version;
 
     public DeleteRecordNodeCall() {
     }
 
-    private DeleteRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, int iVersion) {
+    private DeleteRecordNodeCall(long nodeId, String uuid, String storageName, ORecordId iRecordId, ORecordVersion iVersion) {
       super(nodeId, uuid);
       this.storageName = storageName;
-      this.iRecordId = iRecordId;
-      this.iVersion = iVersion;
+      this.recordId = iRecordId;
+      this.version = iVersion;
     }
 
     @Override
     protected Boolean call(ODHTNode node) {
-      return node.deleteRecord(storageName, iRecordId, iVersion);
+      return node.deleteRecord(storageName, recordId, version);
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
       super.writeExternal(out);
       out.writeObject(storageName);
-      out.writeObject(iRecordId);
-      out.writeInt(iVersion);
+      out.writeObject(recordId);
+      version.getSerializer().writeTo(out);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
       super.readExternal(in);
       storageName = (String) in.readObject();
-      iRecordId = (ORecordId) in.readObject();
-      iVersion = in.readInt();
+      recordId = (ORecordId) in.readObject();
+      version.getSerializer().readFrom(in);
     }
   }
 

@@ -4,25 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterLocalLHPEOverflowConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterLocalLHPEStatisticConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -33,6 +22,7 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * @author Andrey Lomakin
@@ -489,7 +479,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   @Override
-  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException {
     // To change body of implemented methods use File | Settings | File Templates.
   }
 
@@ -622,7 +612,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
   }
 
-  public void updateVersion(long iPosition, int iVersion) throws IOException {
+  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException {
     acquireExclusiveLock();
     try {
       final BucketInfo bucketInfo = findBucket(iPosition);
@@ -739,7 +729,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
         while (true) {
           for (int n = 0; n < bucket.getSize(); n++) {
             OPhysicalPosition ppos = bucket.getPhysicalPosition(n);
-            if (ppos.dataSegmentPos > -1 && ppos.recordVersion > -1)
+            if (ppos.dataSegmentPos > -1 && ppos.recordVersion.getCounter() > -1)
               calculatedSize += storage.getDataSegmentById(ppos.dataSegmentId).getRecordSize(ppos.dataSegmentPos);
             localSize--;
           }

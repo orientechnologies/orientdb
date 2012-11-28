@@ -21,12 +21,7 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -36,6 +31,8 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Handles the table to resolve logical address to physical address. Deleted records have negative versions. <br/>
@@ -50,7 +47,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * </code><br/>
  */
 public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
-  public static final int                           RECORD_SIZE     = 15;
+  public static final int                           RECORD_SIZE     = 11 + OVersionFactory.instance().getVersionSize();
   public static final String                        TYPE            = "PHYSICAL";
   private static final String                       DEF_EXTENSION   = ".ocl";
   private static final int                          DEF_SIZE        = 1000000;
@@ -220,7 +217,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       iPPosition.dataSegmentId = f.readShort(p);
       iPPosition.dataSegmentPos = f.readLong(p += OBinaryProtocol.SIZE_SHORT);
       iPPosition.recordType = f.readByte(p += OBinaryProtocol.SIZE_LONG);
-      iPPosition.recordVersion = f.readInt(p += OBinaryProtocol.SIZE_BYTE);
+      p += OBinaryProtocol.SIZE_BYTE;
+      iPPosition.recordVersion.getSerializer().readFrom(f, p);
       return iPPosition;
 
     } finally {
@@ -263,7 +261,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
-  public void updateVersion(OClusterPosition iPosition, final int iVersion) throws IOException {
+  public void updateVersion(OClusterPosition iPosition, final ORecordVersion iVersion) throws IOException {
     long position = iPosition.longValue();
     position = position * RECORD_SIZE;
 
@@ -272,8 +270,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
       final long[] pos = fileSegment.getRelativePosition(position);
 
-      fileSegment.files[(int) pos[0]].writeInt(pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG
-          + OBinaryProtocol.SIZE_BYTE, iVersion);
+      iVersion.getSerializer().writeTo(fileSegment.files[(int) pos[0]],
+          pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE);
 
     } finally {
       releaseExclusiveLock();
@@ -378,13 +376,14 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       file.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPPosition.dataSegmentPos);
       file.writeByte(p += OBinaryProtocol.SIZE_LONG, iPPosition.recordType);
 
-      if (recycled)
+      if (recycled) {
         // GET LAST VERSION
-        iPPosition.recordVersion = file.readInt(p + OBinaryProtocol.SIZE_BYTE) * -1;
-      else
-        iPPosition.recordVersion = 0;
+        iPPosition.recordVersion.getSerializer().readFrom(file, p + OBinaryProtocol.SIZE_BYTE);
+        iPPosition.recordVersion.revive();
+      } else
+        iPPosition.recordVersion.reset();
 
-      file.writeInt(p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
+      iPPosition.recordVersion.getSerializer().writeTo(file, p + OBinaryProtocol.SIZE_BYTE);
 
       iPPosition.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(offset / RECORD_SIZE);
 
@@ -501,7 +500,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       while (it.hasNext()) {
         pos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(it.next());
         getPhysicalPosition(pos);
-        if (pos.dataSegmentPos > -1 && pos.recordVersion > -1)
+        if (pos.dataSegmentPos > -1 && pos.recordVersion.getCounter() > -1)
           size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataSegmentPos);
       }
 

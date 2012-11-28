@@ -19,6 +19,7 @@ package com.orientechnologies.orient.server.distributed.conflict;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
@@ -32,7 +33,7 @@ public interface OReplicationConflictResolver {
 
   public ODocument getAllConflicts();
 
-  public void handleUpdateConflict(String iRemoteNodeId, ORecordId iCurrentRID, int iCurrentVersion, int iOtherVersion);
+  public void handleUpdateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordVersion iCurrentVersion, int iOtherVersion);
 
   public void handleCreateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordId iOtherRID);
 

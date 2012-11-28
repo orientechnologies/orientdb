@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.server.tx;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -36,19 +44,12 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-  private final Map<ORecordId, ORecord<?>> createdRecords     = new HashMap<ORecordId, ORecord<?>>();
-  private final Map<ORecordId, ORecord<?>> updatedRecords     = new HashMap<ORecordId, ORecord<?>>();
+  private final Map<ORecordId, ORecord<?>> createdRecords = new HashMap<ORecordId, ORecord<?>>();
+  private final Map<ORecordId, ORecord<?>> updatedRecords = new HashMap<ORecordId, ORecord<?>>();
   private final int                        clientTxId;
   private final OChannelBinary             channel;
 
@@ -78,7 +79,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           entry = new OTransactionEntryProxy(recordType);
           entry.type = recordStatus;
 
-          entry.getRecord().fill(rid, 0, channel.readBytes(), true);
+          entry.getRecord().fill(rid, OVersionFactory.instance().createVersion(), channel.readBytes(), true);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
@@ -86,7 +87,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         case ORecordOperation.UPDATED:
           final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-          newRecord.fill(rid, channel.readInt(), channel.readBytes(), true);
+          newRecord.fill(rid, channel.readVersion(), channel.readBytes(), true);
 
           final ORecordInternal<?> currentRecord;
           if (newRecord.getRecordType() == ODocument.RECORD_TYPE) {
@@ -101,7 +102,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           } else
             currentRecord = newRecord;
 
-          currentRecord.setVersion(newRecord.getVersion());
+          currentRecord.getRecordVersion().copyFrom(newRecord.getRecordVersion());
 
           entry = new ORecordOperation(currentRecord, recordStatus);
 
@@ -113,7 +114,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           entry = new OTransactionEntryProxy(recordType);
           entry.type = recordStatus;
 
-          entry.getRecord().fill(rid, channel.readInt(), null, false);
+          entry.getRecord().fill(rid, channel.readVersion(), null, false);
           break;
 
         default:
@@ -129,14 +130,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         throw new OTransactionAbortedException("Transaction aborted by the client");
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
-			fillIndexOperations(remoteIndexEntries);
+      fillIndexOperations(remoteIndexEntries);
 
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
       for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null);
       }
-
-
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
       for (ORecord<?> record : createdRecords.values())
@@ -162,83 +161,82 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     return record;
   }
 
-	private void fillIndexOperations(final ODocument remoteIndexEntries) {
-		for (Entry<String, Object> indexEntry : remoteIndexEntries) {
-			final String indexName = indexEntry.getKey();
-			final ODocument indexDoc = (ODocument)indexEntry.getValue();
-			if(indexDoc == null)
-				continue;
+  private void fillIndexOperations(final ODocument remoteIndexEntries) {
+    for (Entry<String, Object> indexEntry : remoteIndexEntries) {
+      final String indexName = indexEntry.getKey();
+      final ODocument indexDoc = (ODocument) indexEntry.getValue();
+      if (indexDoc == null)
+        continue;
 
-			OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
+      OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
 
-			if(transactionIndexChanges == null) {
-				transactionIndexChanges = new OTransactionIndexChanges();
-				indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
-			}
+      if (transactionIndexChanges == null) {
+        transactionIndexChanges = new OTransactionIndexChanges();
+        indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
+      }
 
-			final Boolean clearAll = (Boolean) indexDoc.field("clear");
-			if (clearAll != null && clearAll)
-				transactionIndexChanges.setCleared();
+      final Boolean clearAll = (Boolean) indexDoc.field("clear");
+      if (clearAll != null && clearAll)
+        transactionIndexChanges.setCleared();
 
-			final Collection<ODocument> entries = indexDoc.field("entries");
-			if(entries == null)
-				continue;
+      final Collection<ODocument> entries = indexDoc.field("entries");
+      if (entries == null)
+        continue;
 
-			for (final ODocument entry : entries) {
-				final List<ODocument> operations = (List<ODocument>) entry.field("ops");
-				if (operations == null)
-					continue;
+      for (final ODocument entry : entries) {
+        final List<ODocument> operations = (List<ODocument>) entry.field("ops");
+        if (operations == null)
+          continue;
 
-				final Object key;
+        final Object key;
 
-				final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-				try {
-					if(serializedKey.equals("*"))
-						key = null;
-					else  {
-						final ODocument keyContainer = new ODocument();
-						keyContainer.setLazyLoad(false);
+        final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+        try {
+          if (serializedKey.equals("*"))
+            key = null;
+          else {
+            final ODocument keyContainer = new ODocument();
+            keyContainer.setLazyLoad(false);
 
-						keyContainer.fromString(serializedKey);
+            keyContainer.fromString(serializedKey);
 
-						final Object storedKey = keyContainer.field("key");
-						if(storedKey instanceof List)
-							key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-						else if(Boolean.TRUE.equals(keyContainer.field("binary"))) {
-							key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[])storedKey);
-						} else
-							key = storedKey;
-					}
-				} catch (IOException ioe) {
-					throw new OTransactionException("Error during index changes deserialization. ", ioe);
-				}
+            final Object storedKey = keyContainer.field("key");
+            if (storedKey instanceof List)
+              key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+            else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
+              key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
+            } else
+              key = storedKey;
+          }
+        } catch (IOException ioe) {
+          throw new OTransactionException("Error during index changes deserialization. ", ioe);
+        }
 
-				for (final ODocument op : operations) {
-					final int operation = (Integer) op.rawField("o");
-					final OTransactionIndexChanges.OPERATION indexOperation =
-									OTransactionIndexChanges.OPERATION.values()[operation];
-					final OIdentifiable value = op.field("v", OType.LINK);
+        for (final ODocument op : operations) {
+          final int operation = (Integer) op.rawField("o");
+          final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
+          final OIdentifiable value = op.field("v", OType.LINK);
 
-					if(key != null)
-						transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
-					else
-					  transactionIndexChanges.getChangesCrossKey().add(value, indexOperation);
+          if (key != null)
+            transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
+          else
+            transactionIndexChanges.getChangesCrossKey().add(value, indexOperation);
 
-					if (value == null)
-						continue;
+          if (value == null)
+            continue;
 
-					final ORID rid = value.getIdentity();
-					List<OTransactionRecordIndexOperation> txIndexOperations = recordIndexOperations.get(rid);
-					if (txIndexOperations == null) {
-						txIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
-						recordIndexOperations.put(rid, txIndexOperations);
-					}
+          final ORID rid = value.getIdentity();
+          List<OTransactionRecordIndexOperation> txIndexOperations = recordIndexOperations.get(rid);
+          if (txIndexOperations == null) {
+            txIndexOperations = new ArrayList<OTransactionRecordIndexOperation>();
+            recordIndexOperations.put(rid, txIndexOperations);
+          }
 
-					txIndexOperations.add(new OTransactionRecordIndexOperation(indexName, key,indexOperation ));
-				}
-			}
-		}
-	}
+          txIndexOperations.add(new OTransactionRecordIndexOperation(indexName, key, indexOperation));
+        }
+      }
+    }
+  }
 
   public Map<ORecordId, ORecord<?>> getCreatedRecords() {
     return createdRecords;

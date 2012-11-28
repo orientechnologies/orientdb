@@ -52,6 +52,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -285,7 +288,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, int iRecordVersion, final byte iRecordType, final int iMode,
+      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
       ORecordCallback<OClusterPosition> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -357,8 +360,8 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
+      final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -371,32 +374,34 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
         if (ppos == null) {
-          if (iCallback != null)
-            iCallback.call(iRid, -1);
-          return new OStorageOperationResult<Integer>(-1);
+					final ORecordVersion v = OVersionFactory.instance().createUntrackedVersion();
+					if (iCallback != null) {
+						iCallback.call(iRid, v);
+					}
+          return new OStorageOperationResult<ORecordVersion>(v);
         }
 
-        if (iVersion != -1) {
-          if (iVersion > -1) {
+        if (!iVersion.isUntracked()) {
+          if (iVersion.getCounter() > -1) {
             // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (iVersion != ppos.recordVersion)
+            if (!iVersion.equals(ppos.recordVersion))
               if (OFastConcurrentModificationException.enabled())
                 throw OFastConcurrentModificationException.instance();
               else
                 throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
 
-            ++ppos.recordVersion;
+            ppos.recordVersion.increment();
           } else
-            --ppos.recordVersion;
+            ppos.recordVersion.decrement();
         }
 
-        final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
+        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
         dataSegment.updateRecord(ppos.dataSegmentPos, iContent);
 
         if (iCallback != null)
           iCallback.call(null, ppos.recordVersion);
 
-        return new OStorageOperationResult<Integer>(ppos.recordVersion);
+        return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
 
       } finally {
         lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
@@ -410,7 +415,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, final int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, final int iMode,
       ORecordCallback<Boolean> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -431,7 +436,7 @@ public class OStorageMemory extends OStorageEmbedded {
         }
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-        if (iVersion > -1 && ppos.recordVersion != iVersion)
+        if (iVersion.getCounter() > -1 && !ppos.recordVersion.equals(iVersion))
           if (OFastConcurrentModificationException.enabled())
             throw OFastConcurrentModificationException.instance();
           else
@@ -755,15 +760,15 @@ public class OStorageMemory extends OStorageEmbedded {
 
         if (rid.isNew()) {
           txEntry.getRecord().onBeforeIdentityChanged(rid);
-          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, 0, txEntry.getRecord().getRecordType(),
+          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(),
               0, null).getResult();
-          txEntry.getRecord().setVersion(ppos.recordVersion);
+          txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         } else {
           txEntry.getRecord()
-              .setVersion(
-                  updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null)
-                      .getResult());
+              .getRecordVersion().copyFrom(
+              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                  .getResult());
         }
       }
       break;
@@ -771,12 +776,12 @@ public class OStorageMemory extends OStorageEmbedded {
     case ORecordOperation.UPDATED:
       byte[] stream = txEntry.getRecord().toStream();
 
-      txEntry.getRecord().setVersion(
-          updateRecord(rid, stream, txEntry.getRecord().getVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult());
+      txEntry.getRecord().getRecordVersion().copyFrom(
+          updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult());
       break;
 
     case ORecordOperation.DELETED:
-      deleteRecord(rid, txEntry.getRecord().getVersion(), 0, null);
+      deleteRecord(rid, txEntry.getRecord().getRecordVersion(), 0, null);
       break;
     }
 

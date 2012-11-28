@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -187,7 +188,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final int iVersion) {
+  public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final ORecordVersion iVersion) {
     underlying.delete(iRid, iVersion);
     return this;
   }
@@ -244,13 +245,13 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) underlying.save(iRecord, iMode, iForceCreate, iCallback);
+                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) underlying.save(iRecord, iClusterName, iMode, iForceCreate, iCallback);
+                                                   final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) underlying.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
@@ -315,10 +316,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (DBTYPE) this;
   }
 
-    public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl,ORecordHook.HOOK_POSITION iPosition){
-        underlying.registerHook(iHookImpl,iPosition);
-        return (DBTYPE) this;
-    }
+  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+    underlying.registerHook(iHookImpl, iPosition);
+    return (DBTYPE) this;
+  }
 
   public RESULT callbackHooks(final TYPE iType, final OIdentifiable iObject) {
     return underlying.callbackHooks(iType, iObject);
@@ -342,9 +343,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   protected void checkClusterBoundedToClass(int iClusterId) {
-    if( iClusterId == -1 )
+    if (iClusterId == -1)
       return;
-    
+
     for (OClass clazz : getMetadata().getSchema().getClasses()) {
       if (clazz.getDefaultClusterId() == iClusterId)
         throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"

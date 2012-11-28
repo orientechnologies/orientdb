@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Database interface that represents a complex database. It extends the base ODatabase interface adding all the higher-level APIs
@@ -176,10 +177,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          Mode of save: synchronous (default) or asynchronous
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @param iCallback
-   *          Callback to call once the save is made @return The saved entity.
+   * @param iRecordCreatedCallback
+   * @param iRecordUpdatedCallback
    */
-  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iCallback);
+  public <RET extends T> RET save(T iObject, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
   /**
    * Saves an entity in the specified cluster in synchronous mode. If the entity is not dirty, then the operation will be ignored.
@@ -206,11 +208,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          Mode of save: synchronous (default) or asynchronous
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @param iCallback
-   *          Callback to call once the save is made @return The saved entity.
+   * @param iRecordCreatedCallback
+   * @param iRecordUpdatedCallback
    */
   public <RET extends T> RET save(T iObject, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
   /**
    * Deletes an entity from the database in synchronous mode.
@@ -239,7 +241,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *          for MVCC
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public ODatabaseComplex<T> delete(ORID iRID, int iVersion);
+  public ODatabaseComplex<T> delete(ORID iRID, ORecordVersion iVersion);
 
   /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.

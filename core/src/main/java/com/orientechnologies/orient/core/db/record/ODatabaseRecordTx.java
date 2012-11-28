@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Delegates all the CRUD operations to the current transaction.
@@ -201,27 +202,27 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-    return (RET) save(iContent, (String) null, iMode, iForceCreate, iCallback);
+                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return (RET) save(iContent, (String) null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null);
+    return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iCallback) {
-    currentTx.saveRecord(iContent, iClusterName, iMode, iForceCreate, iCallback);
+                                                   final OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    currentTx.saveRecord(iContent, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     return (RET) iContent;
   }
 

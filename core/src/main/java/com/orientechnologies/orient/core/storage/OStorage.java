@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -82,15 +83,15 @@ public interface OStorage extends OSharedContainer {
 
   // CRUD OPERATIONS
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
-      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
+      ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback);
 
-  public OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType,
-      int iMode, ORecordCallback<Integer> iCallback);
+  public OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
+      byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback);
 
-  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
 
   // TX OPERATIONS

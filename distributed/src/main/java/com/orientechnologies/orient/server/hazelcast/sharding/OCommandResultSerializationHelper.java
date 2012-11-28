@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelcastResultListener;
 
@@ -183,7 +185,7 @@ public class OCommandResultSerializationHelper {
   public static void writeRecordInternal(ORecordInternal<?> record, OutputStream stream) throws IOException {
     stream.write(record.getRecordType());
     writeRecordId(record.getIdentity(), stream);
-    stream.write(OBinaryProtocol.int2bytes(record.getVersion()));
+    record.getRecordVersion().getSerializer().writeTo(stream);
     try {
       final byte[] bytes = record.toStream();
       stream.write(OBinaryProtocol.int2bytes(bytes.length));
@@ -198,7 +200,8 @@ public class OCommandResultSerializationHelper {
     final byte recordType = (byte) stream.read();
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     final ORecordId recordId = readRecordId(stream);
-    final int version = OBinaryProtocol.bytes2int(stream);
+    final ORecordVersion version = OVersionFactory.instance().createVersion();
+    version.getSerializer().readFrom(stream);
     final int length = OBinaryProtocol.bytes2int(stream);
     final byte[] bytes = readFully(stream, 0, length);
     record.fill(recordId, version, bytes, false);

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public interface OTransaction {
   public enum TXTYPE {
@@ -49,7 +50,7 @@ public interface OTransaction {
   public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
 
   public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iCallback);
+                         ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
   public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
 

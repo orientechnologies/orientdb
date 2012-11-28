@@ -1,3 +1,19 @@
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.orient.server.hazelcast.sharding;
 
 import java.util.Collection;
@@ -16,16 +32,9 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
@@ -68,7 +77,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   @Override
   public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
-      int iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback) {
+      ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback) {
     if (undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
@@ -116,8 +125,8 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType,
-      int iMode, ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
+      byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback) {
     if (undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     }
@@ -126,12 +135,12 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     if (node.isLocal())
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
     else
-      return new OStorageOperationResult<Integer>(node.updateRecord(wrapped.getName(), iRecordId, iContent, iVersion, iRecordType),
-          true);
+      return new OStorageOperationResult<ORecordVersion>(node.updateRecord(wrapped.getName(), iRecordId, iContent, iVersion,
+          iRecordType), true);
   }
 
   @Override
-  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution || undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);

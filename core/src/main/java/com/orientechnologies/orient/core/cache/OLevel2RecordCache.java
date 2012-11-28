@@ -69,7 +69,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       underlying.lock(fresh.getIdentity());
       try {
         final ORecordInternal<?> current = underlying.get(fresh.getIdentity());
-        if (current != null && current.getVersion() >= fresh.getVersion())
+        if (current != null && current.getRecordVersion().compareTo(fresh.getRecordVersion()) >= 0)
           return;
 
         if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())

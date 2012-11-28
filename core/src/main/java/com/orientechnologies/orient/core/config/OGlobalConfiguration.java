@@ -99,6 +99,9 @@ public enum OGlobalConfiguration {
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
+  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
+      Boolean.class, Boolean.FALSE),
+
   // SETTINGS OF NON-TRANSACTIONAL MODE
   NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
       "Executes a synch against the file-system at every record operation. This slows down records updates "

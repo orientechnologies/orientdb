@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
@@ -170,7 +171,7 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
+  public OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
       byte iRecordType) {
     while (state == NodeState.JOIN) {
       log("Wait till node will be joined.");
@@ -184,8 +185,8 @@ public class OLocalDHTNode implements ODHTNode {
     return executeCreateRecord(storageName, iRecordId, iContent, iRecordVersion, iRecordType);
   }
 
-  private OPhysicalPosition executeCreateRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iRecordVersion,
-      byte iRecordType) {
+  private OPhysicalPosition executeCreateRecord(String storageName, ORecordId iRecordId, byte[] iContent,
+      ORecordVersion iRecordVersion, byte iRecordType) {
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
       final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
@@ -199,7 +200,7 @@ public class OLocalDHTNode implements ODHTNode {
         else
           record.save(database.getClusterNameById(iRecordId.getClusterId()), true);
 
-        return new OPhysicalPosition(record.getIdentity().getClusterPosition(), record.getVersion());
+        return new OPhysicalPosition(record.getIdentity().getClusterPosition(), record.getRecordVersion());
       } finally {
         closeDatabase(database);
       }
@@ -256,7 +257,8 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public int updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
+  public ORecordVersion updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
+      byte iRecordType) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
 
     lockManager.acquireLock(Thread.currentThread(), iRecordId, OLockManager.LOCK.EXCLUSIVE);
@@ -274,7 +276,7 @@ public class OLocalDHTNode implements ODHTNode {
         } else {
           currentRecord = newRecord;
         }
-        currentRecord.setVersion(iVersion);
+        currentRecord.getRecordVersion().copyFrom(iVersion);
 
         if (iRecordId.getClusterId() == -1)
           currentRecord.save();
@@ -287,7 +289,7 @@ public class OLocalDHTNode implements ODHTNode {
           database.getMetadata().getIndexManager().reload();
         }
 
-        return currentRecord.getVersion();
+        return currentRecord.getRecordVersion();
       } finally {
         closeDatabase(database);
       }
@@ -297,7 +299,7 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public boolean deleteRecord(String storageName, ORecordId iRecordId, int iVersion) {
+  public boolean deleteRecord(String storageName, ORecordId iRecordId, ORecordVersion iVersion) {
     boolean result = false;
 
     while (state == NodeState.JOIN) {
@@ -392,14 +394,14 @@ public class OLocalDHTNode implements ODHTNode {
     return true;
   }
 
-  private boolean executeDeleteRecord(String storageName, final ORecordId iRecordId, int iVersion) {
+  private boolean executeDeleteRecord(String storageName, final ORecordId iRecordId, ORecordVersion iVersion) {
     lockManager.acquireLock(Thread.currentThread(), iRecordId, OLockManager.LOCK.EXCLUSIVE);
     try {
       final ODatabaseDocumentTx database = openDatabase(storageName);
       try {
         final ORecordInternal record = database.load(iRecordId);
         if (record != null) {
-          record.setVersion(iVersion);
+          record.getRecordVersion().copyFrom(iVersion);
           record.delete();
           return true;
         }
@@ -646,7 +648,8 @@ public class OLocalDHTNode implements ODHTNode {
               if (successorId != id) {
                 final ODHTNode node = nodeLookup.findById(successorId);
 
-                node.createRecord(storageName, (ORecordId) rec.getIdentity(), rec.toStream(), rec.getVersion(), rec.getRecordType());
+                node.createRecord(storageName, (ORecordId) rec.getIdentity(), rec.toStream(), rec.getRecordVersion(),
+                    rec.getRecordType());
 
                 ODistributedThreadLocal.INSTANCE.distributedExecution = true;
                 try {

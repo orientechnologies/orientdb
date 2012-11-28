@@ -54,10 +54,10 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       else {
         if (iRequest.ifMatch != null)
           // USE THE IF-MATCH HTTP HEADER AS VERSION
-          doc.setVersion(Integer.parseInt(iRequest.ifMatch));
+          doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch);
         else
           // IGNORE THE VERSION
-          doc.setVersion(-1);
+          doc.getRecordVersion().disable();
       }
       doc.delete();
 

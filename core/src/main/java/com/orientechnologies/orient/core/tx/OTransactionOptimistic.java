@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog;
@@ -187,7 +188,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
+                         boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return;
     addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
@@ -220,11 +221,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         switch (iStatus) {
         case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
-          database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iRecord.getRecordType(), false,
-              OPERATION_MODE.SYNCHRONOUS, false, null);
+          database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), false,
+              OPERATION_MODE.SYNCHRONOUS, false, null, null);
           break;
         case ORecordOperation.DELETED:
-          database.executeDeleteRecord(iRecord, iRecord.getVersion(), false, false, OPERATION_MODE.SYNCHRONOUS);
+          database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS);
           break;
         }
       } else {

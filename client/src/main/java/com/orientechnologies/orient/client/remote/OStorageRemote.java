@@ -78,6 +78,8 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -302,7 +304,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, int iRecordVersion, final byte iRecordType, int iMode,
+      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, int iMode,
       final ORecordCallback<OClusterPosition> iCallback) {
     checkConnection();
 
@@ -335,10 +337,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             beginResponse(network);
             iRid.clusterPosition = network.readClusterPosition();
             ppos.clusterPosition = iRid.clusterPosition;
-            if (network.getSrvProtocolVersion() >= 11)
-              ppos.recordVersion = network.readInt();
-            else
-              ppos.recordVersion = 0;
+            if (network.getSrvProtocolVersion() >= 11) {
+              ppos.recordVersion = network.readVersion();
+            } else
+              ppos.recordVersion = OVersionFactory.instance().createVersion();
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
             endResponse(network);
@@ -358,7 +360,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   beginResponse(network);
                   result = network.readClusterPosition();
                   if (network.getSrvProtocolVersion() >= 11)
-                    network.readInt();
+                    network.readVersion();
                 } finally {
                   endResponse(network);
                   System.out.println("END   ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
@@ -412,7 +414,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.readByte() == 0)
             return new OStorageOperationResult<ORawBuffer>(null);
 
-          final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readInt(), network.readByte());
+          final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
 
           final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
           ORecordInternal<?> record;
@@ -436,8 +438,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final byte[] iContent, final int iVersion,
-      final byte iRecordType, int iMode, final ORecordCallback<Integer> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, int iMode, final ORecordCallback<ORecordVersion> iCallback) {
     checkConnection();
 
     if (iMode == 1 && iCallback == null)
@@ -450,7 +452,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network.writeRID(iRid);
           network.writeBytes(iContent);
-          network.writeInt(iVersion);
+          network.writeVersion(iVersion);
           network.writeByte(iRecordType);
           network.writeByte((byte) iMode);
 
@@ -463,7 +465,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            return new OStorageOperationResult<Integer>(network.readInt());
+            return new OStorageOperationResult<ORecordVersion>(network.readVersion());
           } finally {
             endResponse(network);
           }
@@ -474,12 +476,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final int sessionId = getSessionId();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
-                int result;
+                ORecordVersion result;
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   beginResponse(network);
-                  result = network.readInt();
+                  result = network.readVersion();
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -493,7 +495,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             asynchExecutor.submit(new FutureTask<Object>(response));
           }
         }
-        return new OStorageOperationResult<Integer>(iVersion);
+        return new OStorageOperationResult<ORecordVersion>(iVersion);
 
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
@@ -504,7 +506,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final int iVersion, int iMode,
+  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, int iMode,
       final ORecordCallback<Boolean> iCallback) {
     checkConnection();
 
@@ -518,7 +520,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
 
           network.writeRID(iRid);
-          network.writeInt(iVersion);
+          network.writeVersion(iVersion);
           network.writeByte((byte) iMode);
 
         } finally {
@@ -978,7 +980,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             // SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
             for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
               if (txEntry.getRecord().getIdentity().equals(rid)) {
-                txEntry.getRecord().setVersion(network.readInt());
+                txEntry.getRecord().getRecordVersion().copyFrom(network.readVersion());
                 break;
               }
             }
@@ -1754,12 +1756,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       break;
 
     case ORecordOperation.UPDATED:
-      iNetwork.writeInt(txEntry.getRecord().getVersion());
+      iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
       break;
 
     case ORecordOperation.DELETED:
-      iNetwork.writeInt(txEntry.getRecord().getVersion());
+      iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       break;
     }
   }

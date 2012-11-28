@@ -32,8 +32,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.object.iterator.graph.OGraphVertexIterator;
+
+import javax.imageio.event.IIOReadUpdateListener;
 
 /**
  * GraphDB implementation on top of underlying Document. Graph Elements are Objects themeselve. This API will be not more supported
@@ -175,8 +178,8 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	public <RET extends OGraphElement> RET save(final OGraphElement iObject, final OPERATION_MODE iMode, boolean iForceCreate,
-			final ORecordCallback<? extends Number> iCallback) {
-		underlying.save(iObject.getDocument(), iMode, iForceCreate, iCallback);
+                                                final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+		underlying.save(iObject.getDocument(), iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 		return (RET) iObject;
 	}
 
@@ -186,8 +189,8 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
 	}
 
 	public <RET extends OGraphElement> RET save(final OGraphElement iObject, final String iClusterName, final OPERATION_MODE iMode,
-			boolean iForceCreate, final ORecordCallback<? extends Number> iCallback) {
-		underlying.save(iObject.getDocument(), iClusterName, iMode, iForceCreate, iCallback);
+                                                boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+		underlying.save(iObject.getDocument(), iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 		return (RET) iObject;
 	}
 

@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -41,11 +42,12 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   }
 
   public ODeleteRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final int iVersion) {
+      final ORecordId iRid, final ORecordVersion iVersion) {
     super(nodeSource, iDbName, iMode, iRid, iVersion);
   }
 
-  public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final int iVersion) {
+  public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
+      final ORecordVersion iVersion) {
     super(iRunId, iOperationId, iRid, iVersion);
   }
 
@@ -57,7 +59,7 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
     try {
       final ORecordInternal<?> record = database.load(rid);
       if (record != null) {
-        record.setVersion(version);
+        record.getRecordVersion().copyFrom(version);
         record.delete();
         return Boolean.TRUE;
       }
@@ -85,14 +87,14 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
-    out.writeInt(version);
+    version.getSerializer().writeTo(out);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
-    version = in.readInt();
+    version.getSerializer().readFrom(in);
   }
 
   @Override

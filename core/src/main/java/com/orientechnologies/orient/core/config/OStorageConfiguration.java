@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Versions:<li>
@@ -105,7 +106,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, record, -1, ORecordBytes.RECORD_TYPE, 0, null);
+    storage
+        .updateRecord(CONFIG_RID, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -407,7 +409,8 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(0, CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(0, CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
+        ORecordBytes.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {

@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -88,7 +89,7 @@ public interface OCluster {
 
   public void updateRecordType(OClusterPosition iPosition, final byte iRecordType) throws IOException;
 
-  public void updateVersion(OClusterPosition iPosition, int iVersion) throws IOException;
+  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException;
 
   public long getEntries();
 

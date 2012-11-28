@@ -278,7 +278,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
     final ODocument cloned = new ODocument();
-    cloned.fill(_recordId, _version, _source, false);
+    cloned.fill(_recordId, _recordVersion, _source, false);
     return cloned;
   }
 
@@ -430,7 +430,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       if (_recordId != null && _recordId.isValid()) {
         buffer.append(" v");
-        buffer.append(_version);
+        buffer.append(_recordVersion);
       }
 
     } finally {

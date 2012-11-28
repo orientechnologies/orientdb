@@ -796,7 +796,7 @@ public class CRUDDocumentPhysicalTest {
           public void call(ORecordId iRID, OClusterPosition iParameter) {
             System.out.println("asynchInsertion callback for record " + iRID + ": " + callBackCalled.incrementAndGet());
           }
-        });
+        }, null);
       }
 
       while (callBackCalled.intValue() < total) {

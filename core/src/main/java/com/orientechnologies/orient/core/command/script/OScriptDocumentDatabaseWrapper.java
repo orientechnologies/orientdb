@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -289,8 +290,8 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iMode, iForceCreate, iCallback);
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return database.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   public OMetadata getMetadata() {
@@ -406,8 +407,8 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iCallback) {
-    return database.save(iRecord, iClusterName, iMode, iForceCreate, iCallback);
+                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   public ODataSegmentStrategy getDataSegmentStrategy() {

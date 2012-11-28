@@ -773,7 +773,7 @@ public class TransactionConsistencyTest {
       }
 
       ((ODocument) inserted.elementAt(cnt - 1)).delete();
-      ((ODocument) inserted.elementAt(cnt - 2)).setVersion(0);
+      ((ODocument) inserted.elementAt(cnt - 2)).getRecordVersion().reset();
       ((ODocument) inserted.elementAt(cnt - 2)).save();
       db.commit();
       Assert.assertTrue(false);

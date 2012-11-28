@@ -20,18 +20,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Static helper class to transform any kind of basic data in bytes and viceversa.
+ * Static helper class to transform any kind of basic data in bytes and vice versa.
  * 
  * @author Luca Garulli
  * 
  */
 public class OBinaryProtocol {
 
-	public static final int	SIZE_BYTE		= 1;
-	public static final int	SIZE_CHAR		= 2;
-	public static final int	SIZE_SHORT	= 2;
-	public static final int	SIZE_INT		= 4;
-	public static final int	SIZE_LONG		= 8;
+  public static final int SIZE_BYTE  = 1;
+  public static final int SIZE_CHAR  = 2;
+  public static final int SIZE_SHORT = 2;
+  public static final int SIZE_INT   = 4;
+  public static final int SIZE_LONG  = 8;
 
 	public static int string2bytes(final String iInputText, final OutputStream iStream) throws IOException {
 		if (iInputText == null)
@@ -308,7 +308,7 @@ public class OBinaryProtocol {
 
 	/**
 	 * Convert the byte array to an int.
-	 * 
+	 *
 	 * @param b
 	 *          The byte array
 	 * @return The integer
@@ -323,7 +323,7 @@ public class OBinaryProtocol {
 
 	/**
 	 * Convert the byte array to an int starting from the given offset.
-	 * 
+	 *
 	 * @param b
 	 *          The byte array
 	 * @param offset

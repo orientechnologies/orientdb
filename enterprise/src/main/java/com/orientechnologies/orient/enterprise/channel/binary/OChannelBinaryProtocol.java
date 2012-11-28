@@ -19,8 +19,9 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * The range of the requests is 1-79.
@@ -103,11 +104,10 @@ public class OChannelBinaryProtocol {
     } else {
       final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
-      if (record instanceof ORecordSchemaAware<?>)
-        ((ORecordSchemaAware<?>) record).fill(network.readRID(), network.readInt(), network.readBytes(), false);
-      else
-        // DISCARD CLASS ID
-        record.fill(network.readRID(), network.readInt(), network.readBytes(), false);
+      final ORecordId rid = network.readRID();
+      final ORecordVersion version = network.readVersion();
+      final byte[] content = network.readBytes();
+      record.fill(rid, version, content, false);
 
       return record;
     }
