@@ -370,11 +370,14 @@ public class ODocumentHelper {
             if (conditionFieldValue instanceof String)
               conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
 
-            final List<Object> values = new ArrayList<Object>();
+            final HashSet<Object> values = new HashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               Object filtered = filterItem(conditionFieldName, conditionFieldValue, v);
               if (filtered != null)
-                values.add(filtered);
+                if (filtered instanceof Collection<?>)
+                  values.addAll((Collection<? extends Object>) filtered);
+                else
+                  values.add(filtered);
             }
 
             if (values.isEmpty())
@@ -382,7 +385,7 @@ public class ODocumentHelper {
               value = null;
             else if (values.size() == 1)
               // RETURNS THE SINGLE ODOCUMENT
-              value = values.get(0);
+              value = values.iterator().next();
             else
               // RETURNS THE FILTERED COLLECTION
               value = values;
@@ -430,7 +433,10 @@ public class ODocumentHelper {
                 item = null;
 
               if (item != null)
-                values.add(item);
+                if (item instanceof Collection<?>)
+                  values.addAll((Collection<? extends Object>) item);
+                else
+                  values.add(item);
             }
 
             if (values.isEmpty())
