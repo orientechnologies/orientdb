@@ -1,15 +1,30 @@
 /**
- * 
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -29,7 +44,6 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 /**
  * @author Michael Hiess
- * 
  */
 public class MultipleDBTest {
 
@@ -46,27 +60,22 @@ public class MultipleDBTest {
     final int operations_read = 1;
     final int dbs = 10;
 
-    final Semaphore sem = new Semaphore(4, true);
-    final AtomicInteger activeDBs = new AtomicInteger(dbs);
     final Set<String> times = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
+    Set<Future> threads = new HashSet<Future>();
+    ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     for (int i = 0; i < dbs; i++) {
 
-      sem.acquire();
       final String dbUrl = baseUrl + i;
 
-      Thread t = new Thread(new Runnable() {
+      Callable<Void> t = new Callable<Void>() {
 
-        public void run() {
-
+        public Void call() throws InterruptedException, IOException {
           OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
-          try {
-            ODatabaseHelper.deleteDatabase(tx);
-            ODatabaseHelper.createDatabase(tx, dbUrl);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          ODatabaseHelper.deleteDatabase(tx);
+          ODatabaseHelper.createDatabase(tx, dbUrl);
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");
@@ -116,33 +125,22 @@ public class MultipleDBTest {
 
             tx.close();
 
-            sem.release();
-            activeDBs.decrementAndGet();
           } finally {
-            try {
-              System.out.println("(" + getDbId(tx) + ") " + "Dropping");
-              System.out.flush();
-              ODatabaseHelper.deleteDatabase(tx);
-              System.out.println("(" + getDbId(tx) + ") " + "Dropped");
-              System.out.flush();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
+            System.out.println("(" + getDbId(tx) + ") " + "Dropping");
+            System.out.flush();
+            ODatabaseHelper.deleteDatabase(tx);
+            System.out.println("(" + getDbId(tx) + ") " + "Dropped");
+            System.out.flush();
           }
+          return null;
         }
-      });
+      };
 
-      t.start();
+      threads.add(executorService.submit(t));
     }
 
-    while (activeDBs.get() != 0) {
-      Thread.sleep(300);
-    }
-
-    // System.out.println("Times:");
-    // for (String s : times) {
-    // System.out.println(s);
-    // }
+    for (Future future : threads)
+      future.get();
 
     System.out.println("Test testObjectMultipleDBsThreaded ended");
   }
@@ -154,29 +152,24 @@ public class MultipleDBTest {
     final int operations_read = 1;
     final int dbs = 10;
 
-    final Semaphore sem = new Semaphore(4, true);
-    final AtomicInteger activeDBs = new AtomicInteger(dbs);
     final Set<String> times = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
+    Set<Future> results = new HashSet<Future>();
+    ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     for (int i = 0; i < dbs; i++) {
 
       final String dbUrl = baseUrl + i;
 
-      sem.acquire();
-      Thread t = new Thread(new Runnable() {
+      Callable<Void> t = new Callable<Void>() {
 
-        public void run() {
-
+        public Void call() throws InterruptedException, IOException {
           ODatabaseDocumentTx tx = new ODatabaseDocumentTx(dbUrl);
 
-          try {
-            ODatabaseHelper.deleteDatabase(tx);
-            System.out.println("Thread " + this + " is creating database " + dbUrl);
-            System.out.flush();
-            ODatabaseHelper.createDatabase(tx, dbUrl);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          ODatabaseHelper.deleteDatabase(tx);
+          System.out.println("Thread " + this + " is creating database " + dbUrl);
+          System.out.flush();
+          ODatabaseHelper.createDatabase(tx, dbUrl);
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");
@@ -185,14 +178,9 @@ public class MultipleDBTest {
             if (tx.isClosed()) {
               tx.open("admin", "admin");
             }
-            // tx.getEntityManager().registerEntityClass(DummyObject.class);
 
-            // System.out.println("(" +getDbId( tx ) + ") " + "Registered: " + DummyObject.class);
-            // System.out.println("(" +getDbId( tx ) + ") " + "Calling: " + operations + " operations");
             long start = System.currentTimeMillis();
             for (int j = 0; j < operations_write; j++) {
-              // DummyObject dummy = new DummyObject("name" + j);
-              // tx.save(dummy);
 
               ODocument dummy = new ODocument("DummyObject");
               dummy.field("name", "name" + j);
@@ -203,10 +191,8 @@ public class MultipleDBTest {
 
               if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
                 // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-                Assert.assertEquals(((ORID) dummy.getIdentity()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
+                Assert.assertEquals(dummy.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
                     "RID was " + dummy.getIdentity());
-
-              // Assert.assertEquals(dummy.getId().toString(), "#5:" + j);
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -240,32 +226,21 @@ public class MultipleDBTest {
             times.add(time);
 
           } finally {
-            try {
-              tx.close();
+            tx.close();
 
-              System.out.println("Thread " + this + "  is dropping database " + dbUrl);
-              System.out.flush();
-              ODatabaseHelper.deleteDatabase(tx);
-
-              sem.release();
-              activeDBs.decrementAndGet();
-            } catch (Exception e) {
-            }
+            System.out.println("Thread " + this + "  is dropping database " + dbUrl);
+            System.out.flush();
+            ODatabaseHelper.deleteDatabase(tx);
           }
+          return null;
         }
-      });
+      };
 
-      t.start();
+      results.add(executorService.submit(t));
     }
 
-    while (activeDBs.get() != 0) {
-      Thread.sleep(300);
-    }
-
-    // System.out.println("Times:");
-    // for (String s : times) {
-    // System.out.println(s);
-    // }
+    for (Future future : results)
+      future.get();
 
     System.out.println("Test testDocumentMultipleDBsThreaded ended");
     System.out.flush();
