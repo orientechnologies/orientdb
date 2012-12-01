@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,7 +42,7 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
  * @author Luca Garulli
  * 
  */
-public interface ODatabase {
+public interface ODatabase extends Closeable {
   public static enum OPTIONS {
     SECURITY
   }
