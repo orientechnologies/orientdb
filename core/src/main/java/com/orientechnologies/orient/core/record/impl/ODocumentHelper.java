@@ -254,6 +254,20 @@ public class ODocumentHelper {
             value = getIdentifiableValue(currentRecord, fieldName);
           else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
+          else if (value instanceof Collection<?>) {
+            final HashSet<Object> temp = new HashSet<Object>();
+            for (Object o : (Collection<?>) value) {
+              if (o instanceof OIdentifiable) {
+                Object r = getIdentifiableValue((OIdentifiable) o, fieldName);
+                if (r != null)
+                  if (r instanceof Collection<?>)
+                    temp.addAll((Collection<? extends Object>) r);
+                  else
+                    temp.add(r);
+              }
+            }
+            value = temp;
+          }
         }
 
         if (value == null)
@@ -461,13 +475,17 @@ public class ODocumentHelper {
 
   @SuppressWarnings("unchecked")
   protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
-    if (iValue instanceof ODocument) {
-      final ODocument doc = (ODocument) iValue;
-      Object fieldValue = doc.field(iConditionFieldName);
+    if (iValue instanceof OIdentifiable) {
+      final ORecord<?> rec = ((OIdentifiable) iValue).getRecord();
+      if (rec instanceof ODocument) {
+        final ODocument doc = (ODocument) rec;
 
-      fieldValue = OType.convert(fieldValue, iConditionFieldValue.getClass());
-      if (fieldValue != null && fieldValue.equals(iConditionFieldValue))
-        return doc;
+        Object fieldValue = doc.field(iConditionFieldName);
+
+        fieldValue = OType.convert(fieldValue, iConditionFieldValue.getClass());
+        if (fieldValue != null && fieldValue.equals(iConditionFieldValue))
+          return doc;
+      }
     } else if (iValue instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iValue;
       Object fieldValue = getMapEntry(map, iConditionFieldName);
