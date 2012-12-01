@@ -342,6 +342,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHENTICATION))
             iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
+          else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Expect: 100-continue"))
+            // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY 
+            sendTextContent(100, null, null, null, null);
 
         }
 
