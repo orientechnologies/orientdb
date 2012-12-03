@@ -81,10 +81,15 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     rid2Records.clear();
 
     checkOpeness();
-    rollback();
+    try {
+      rollback();
+    } catch (Throwable t) {
+    }
 
-    // getMetadata().close();
-    ((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+    try {
+      ((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+    } catch (Throwable t) {
+    }
     getLevel1Cache().clear();
 
     ownerPool.release(this);

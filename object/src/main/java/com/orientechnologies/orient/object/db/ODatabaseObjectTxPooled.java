@@ -51,7 +51,7 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
     init();
     getLevel1Cache().invalidate();
-    //getMetadata().reload();
+    // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
   }
 
@@ -85,10 +85,17 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
     rid2Records.clear();
 
     checkOpeness();
-    rollback();
 
-    //getMetadata().close();
-    ((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+    try {
+      rollback();
+    } catch (Throwable t) {
+    }
+
+    try {
+      ((ODatabaseRaw) ((ODatabaseRecord) underlying.getUnderlying()).getUnderlying()).callOnCloseListeners();
+    } catch (Throwable t) {
+    }
+
     getLevel1Cache().clear();
 
     ownerPool.release(this);

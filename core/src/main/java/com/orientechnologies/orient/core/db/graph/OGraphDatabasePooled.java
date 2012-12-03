@@ -46,7 +46,7 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     if (isClosed())
       open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
     getLevel1Cache().invalidate();
-    //getMetadata().reload();
+    // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
     checkForGraphSchema();
   }
@@ -84,10 +84,16 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     edgeBaseClass = null;
 
     checkOpeness();
-    rollback();
+    try {
+      rollback();
+    } catch (Throwable t) {
+    }
 
-    //getMetadata().close();
-    ((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
+    try {
+      ((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
+    } catch (Throwable t) {
+    }
+
     getLevel1Cache().clear();
 
     final OGraphDatabasePool pool = ownerPool;
