@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -82,12 +83,14 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
     try {
       rollback();
-    } catch (Throwable t) {
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
     try {
       ((ODatabaseRaw) ((ODatabaseRecord) underlying).getUnderlying()).callOnCloseListeners();
-    } catch (Throwable t) {
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
     getLevel1Cache().clear();

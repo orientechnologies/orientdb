@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -86,12 +87,14 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     checkOpeness();
     try {
       rollback();
-    } catch (Throwable t) {
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
     try {
       ((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
-    } catch (Throwable t) {
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
     getLevel1Cache().clear();
