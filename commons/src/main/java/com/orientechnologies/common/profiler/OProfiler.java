@@ -607,7 +607,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
    * Updates the metric metadata.
    */
   protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
-    if (dictionary.putIfAbsent(iName, iDescription) == null)
+    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
 }
