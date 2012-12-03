@@ -167,5 +167,9 @@ public abstract class OAbstractRecordCache {
    */
   public void shutdown() {
     underlying.shutdown();
+
+    Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "enabled");
+    Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "current");
+    Orient.instance().getProfiler().unregisterHookValue(profilerPrefix + "max");
   }
 }

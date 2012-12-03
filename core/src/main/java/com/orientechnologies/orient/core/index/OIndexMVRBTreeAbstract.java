@@ -773,10 +773,14 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   protected void uninstallHooks(final ODatabaseRecord iDatabase) {
-    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".items");
-    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".entryPointSize");
-    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".maxUpdateBeforeSave");
-    Orient.instance().getProfiler().unregisterHookValue("index." + name + ".optimizationThreshold");
+    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getName(), "index." + name + '.');
+
+    profiler.unregisterHookValue(profilerPrefix + ".items");
+    profiler.unregisterHookValue(profilerPrefix + ".entryPointSize");
+    profiler.unregisterHookValue(profilerPrefix + ".maxUpdateBeforeSave");
+    profiler.unregisterHookValue(profilerPrefix + ".optimizationThreshold");
+
     Orient.instance().getMemoryWatchDog().removeListener(watchDog);
     iDatabase.unregisterListener(this);
   }
