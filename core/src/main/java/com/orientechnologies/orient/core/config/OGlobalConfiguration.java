@@ -469,14 +469,20 @@ public enum OGlobalConfiguration {
   }
 
   /**
-   * Change configuration values in one shot by passing a Map of values.
+   * Changes the configuration values in one shot by passing a Map of values. Keys can be the Java ENUM names or the string
+   * representation of configuration values
    */
   public static void setConfiguration(final Map<String, Object> iConfig) {
-    OGlobalConfiguration cfg;
     for (Entry<String, Object> config : iConfig.entrySet()) {
-      cfg = valueOf(config.getKey());
-      if (cfg != null)
-        cfg.setValue(config.getValue());
+      for (OGlobalConfiguration v : values()) {
+        if (v.getKey().equals(config.getKey())) {
+          v.setValue(config.getValue());
+          break;
+        } else if (v.name().equals(config.getKey())) {
+          v.setValue(config.getValue());
+          break;
+        }
+      }
     }
   }
 
