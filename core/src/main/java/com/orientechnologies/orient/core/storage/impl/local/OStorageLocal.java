@@ -344,6 +344,7 @@ public class OStorageLocal extends OStorageEmbedded {
       OMMapManagerLocator.getInstance().flush();
 
       super.close(iForce);
+      uninstallProfilerHooks();
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
@@ -1816,6 +1817,11 @@ public class OStorageLocal extends OStorageEmbedded {
                 return getHoleSize();
               }
             });
+  }
+
+  private void uninstallProfilerHooks() {
+    Orient.instance().getProfiler().unregisterHookValue("db." + name + ".data.holes");
+    Orient.instance().getProfiler().unregisterHookValue("db." + name + ".data.holeSize");
   }
 
   private void formatMessage(final boolean iVerbose, final OCommandOutputListener iListener, final String iMessage,
