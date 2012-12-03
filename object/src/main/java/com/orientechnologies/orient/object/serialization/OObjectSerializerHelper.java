@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
@@ -973,7 +974,7 @@ public class OObjectSerializerHelper {
         if (autoBinding)
           // TRY TO GET THE VALUE BY THE GETTER (IF ANY)
           try {
-            String getterName = "get" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+            String getterName = "get" + OUtils.camelCase(fieldName);
             Method m = currentClass.getMethod(getterName, NO_ARGS);
             getters.put(iClass.getName() + "." + fieldName, m);
           } catch (Exception e) {
@@ -985,7 +986,7 @@ public class OObjectSerializerHelper {
         if (autoBinding)
           // TRY TO GET THE VALUE BY THE SETTER (IF ANY)
           try {
-            String getterName = "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+            String getterName = "set" + OUtils.camelCase(fieldName);
             Method m = currentClass.getMethod(getterName, f.getType());
             setters.put(iClass.getName() + "." + fieldName, m);
           } catch (Exception e) {

@@ -24,4 +24,8 @@ public class OUtils {
       return a.equals(b);
     return b.equals(a);
   }
+
+  public static String camelCase(final String iText) {
+    return Character.toUpperCase(iText.charAt(0)) + iText.substring(1);
+  }
 }
