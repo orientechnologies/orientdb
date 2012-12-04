@@ -139,7 +139,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           OLogManager.instance().warn(
               this,
               "->" + channel.socket.getInetAddress().getHostAddress() + ": Command not found: " + request.httpMethod + "."
-                  + command);
+                  + URLDecoder.decode(command, "UTF-8"));
 
           sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
               OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
@@ -343,7 +343,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHENTICATION))
             iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Expect: 100-continue"))
-            // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY 
+            // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY
             sendTextContent(100, null, null, null, null);
 
         }
