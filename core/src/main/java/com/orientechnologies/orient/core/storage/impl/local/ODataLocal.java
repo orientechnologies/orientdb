@@ -440,7 +440,10 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
       final ODataHoleInfo closestHole = getCloserHole(iRecordOffset, iRecordSize, file, pos);
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_FIND_CLOSER, "Time to find the closer hole in data segment", timer);
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono(PROFILER_HOLE_FIND_CLOSER, "Time to find the closer hole in data segment", timer, "db.*.data.findClosestHole");
 
       if (closestHole == null)
         // CREATE A NEW ONE
@@ -471,7 +474,8 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
       files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
 
     } finally {
-      Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_CREATE, "Time to create the hole in data segment", timer);
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_HOLE_CREATE, "Time to create the hole in data segment", timer, "db.*.data.createHole");
     }
   }
 
@@ -574,7 +578,8 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
     final long[] pos = getRelativePosition(holePositionOffset);
     files[(int) pos[0]].writeInt(pos[1], holeSize * -1);
 
-    Orient.instance().getProfiler().stopChrono(PROFILER_HOLE_CREATE, "Time to create the hole in data segment", timer);
+    Orient.instance().getProfiler()
+        .stopChrono(PROFILER_HOLE_CREATE, "Time to create the hole in data segment", timer, "db.*.data.createHole");
   }
 
   private ODataHoleInfo getCloserHole(final long iRecordOffset, final int iRecordSize, final OFile file, final long[] pos) {
@@ -643,7 +648,8 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
     writeRecord(getRelativePosition(iDestinationPosition), clusterId, clusterPosition, content);
 
-    Orient.instance().getProfiler().stopChrono(PROFILER_MOVE_RECORD, "Time to move a chunk in data segment", timer);
+    Orient.instance().getProfiler()
+        .stopChrono(PROFILER_MOVE_RECORD, "Time to move a chunk in data segment", timer, "db.*.data.move");
 
     return recordSize + RECORD_FIX_SIZE;
   }

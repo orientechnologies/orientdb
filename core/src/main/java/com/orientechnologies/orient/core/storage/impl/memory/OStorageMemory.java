@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
@@ -313,7 +312,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in memory database", timer);
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in memory database", timer, "db.*.data.updateHole");
     }
   }
 
@@ -356,12 +356,13 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer,
+          "db.*.readRecord");
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
-      final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -374,10 +375,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
         if (ppos == null) {
-					final ORecordVersion v = OVersionFactory.instance().createUntrackedVersion();
-					if (iCallback != null) {
-						iCallback.call(iRid, v);
-					}
+          final ORecordVersion v = OVersionFactory.instance().createUntrackedVersion();
+          if (iCallback != null) {
+            iCallback.call(iRid, v);
+          }
           return new OStorageOperationResult<ORecordVersion>(v);
         }
 
@@ -411,7 +412,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer,
+          "db.*.updateRecord");
     }
   }
 
@@ -461,7 +463,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer);
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer,
+          "db.*.deleteRecord");
     }
   }
 
@@ -717,8 +720,11 @@ public class OStorageMemory extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer);
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer,
+              "db.*.changeRecordIdentity");
     }
   }
 
@@ -760,15 +766,17 @@ public class OStorageMemory extends OStorageEmbedded {
 
         if (rid.isNew()) {
           txEntry.getRecord().onBeforeIdentityChanged(rid);
-          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream, OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(),
-              0, null).getResult();
+          final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream,
+              OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult();
           txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         } else {
-          txEntry.getRecord()
-              .getRecordVersion().copyFrom(
-              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
-                  .getResult());
+          txEntry
+              .getRecord()
+              .getRecordVersion()
+              .copyFrom(
+                  updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                      .getResult());
         }
       }
       break;
@@ -776,8 +784,12 @@ public class OStorageMemory extends OStorageEmbedded {
     case ORecordOperation.UPDATED:
       byte[] stream = txEntry.getRecord().toStream();
 
-      txEntry.getRecord().getRecordVersion().copyFrom(
-          updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult());
+      txEntry
+          .getRecord()
+          .getRecordVersion()
+          .copyFrom(
+              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                  .getResult());
       break;
 
     case ORecordOperation.DELETED:

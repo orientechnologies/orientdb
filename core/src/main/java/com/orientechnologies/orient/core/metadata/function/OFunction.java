@@ -159,7 +159,7 @@ public class OFunction {
           .instance()
           .getProfiler()
           .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
-              "Time to execute a function", start);
+              "Time to execute a function", start, "db.*.function.execute");
 
     return result;
   }

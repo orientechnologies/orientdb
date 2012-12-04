@@ -115,7 +115,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze(throwException);
 
-    Orient.instance().getProfiler().stopChrono("document.database.freeze", "Time to freeze the database", startTime);
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
   @Override
@@ -137,7 +138,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     super.freeze();
 
-    Orient.instance().getProfiler().stopChrono("document.database.freeze", "Time to freeze the database", startTime);
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
   @Override
@@ -155,7 +157,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
     releaseIndexes(indexes);
 
-    Orient.instance().getProfiler().stopChrono("document.database.release", "Time to release the database", startTime);
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".release", "Time to release the database", startTime, "db.*.release");
   }
 
   /**
@@ -230,13 +233,14 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@link ODocument#validate()} is called.
    * 
    * 
-   *
+   * 
    * @param iRecord
    *          Record to save.
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
-   *@param iRecordUpdatedCallback @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @param iRecordUpdatedCallback
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
@@ -245,7 +249,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
-                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
@@ -323,7 +328,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    * 
-   *
+   * 
    * @param iRecord
    *          Record to save
    * @param iClusterName
@@ -333,7 +338,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
-   *@param iRecordUpdatedCallback @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @param iRecordUpdatedCallback
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
@@ -342,7 +348,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    */
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
-                                                   final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 

@@ -388,15 +388,20 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public long stopChrono(final String iName, final String iDescription, final long iStartTime) {
-    return stopChrono(iName, iDescription, iStartTime, null);
+    return stopChrono(iName, iDescription, iStartTime, iName, null);
   }
 
-  public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iPayload) {
+  public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iDictionaryName) {
+    return stopChrono(iName, iDescription, iStartTime, iDictionaryName, null);
+  }
+
+  public long stopChrono(final String iName, final String iDescription, final long iStartTime, final String iDictionaryName,
+      final String iPayload) {
     // CHECK IF CHRONOS ARE ACTIVED
     if (recordingFrom < 0)
       return -1;
 
-    updateMetadata(iName, iDescription, METRIC_TYPE.CHRONO);
+    updateMetadata(iDictionaryName, iDescription, METRIC_TYPE.CHRONO);
 
     acquireSharedLock();
     try {
