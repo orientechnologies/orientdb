@@ -147,7 +147,7 @@ public class OTxSegment extends OSingleFileSegment {
       file.writeByte(offset, iRecordType);
       offset += OBinaryProtocol.SIZE_BYTE;
 
-      offset += iRecordVersion.getSerializer().writeTo(file, offset);
+      offset += iRecordVersion.getSerializer().writeTo(file, offset, iRecordVersion);
 
       file.writeInt(offset, dataSegmentId);
       offset += OBinaryProtocol.SIZE_INT;
@@ -324,7 +324,7 @@ public class OTxSegment extends OSingleFileSegment {
       offset += OBinaryProtocol.SIZE_BYTE;
 
       final ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
-      offset += recordVersion.getSerializer().readFrom(file, offset);
+      offset += recordVersion.getSerializer().readFrom(file, offset, recordVersion);
 
       final int dataSegmentId = file.readInt(offset);
       offset += OBinaryProtocol.SIZE_INT;

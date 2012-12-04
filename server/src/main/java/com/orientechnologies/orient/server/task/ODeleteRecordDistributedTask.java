@@ -87,14 +87,14 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
-    version.getSerializer().writeTo(out);
+    version.getSerializer().writeTo(out, version);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
-    version.getSerializer().readFrom(in);
+    version.getSerializer().readFrom(in, version);
   }
 
   @Override

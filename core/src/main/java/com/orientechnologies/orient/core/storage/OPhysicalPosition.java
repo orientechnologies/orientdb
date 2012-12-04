@@ -101,7 +101,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     recordSize = OBinaryProtocol.bytes2int(iStream, pos);
     pos += OBinaryProtocol.SIZE_INT;
 
-    recordVersion.getSerializer().readFrom(iStream, pos);
+    recordVersion.getSerializer().readFrom(iStream, pos, recordVersion);
 
     return this;
   }
@@ -126,7 +126,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     OBinaryProtocol.int2bytes(recordSize, buffer, pos);
     pos += OBinaryProtocol.SIZE_INT;
 
-    recordVersion.getSerializer().writeTo(buffer, pos);
+    recordVersion.getSerializer().writeTo(buffer, pos, recordVersion);
     return buffer;
   }
 
@@ -153,7 +153,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     out.writeLong(dataSegmentPos);
     out.writeByte(recordType);
     out.writeInt(recordSize);
-    recordVersion.getSerializer().writeTo(out);
+    recordVersion.getSerializer().writeTo(out, recordVersion);
   }
 
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
@@ -163,6 +163,6 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     dataSegmentPos = in.readLong();
     recordType = in.readByte();
     recordSize = in.readInt();
-    recordVersion.getSerializer().readFrom(in);
+    recordVersion.getSerializer().readFrom(in, recordVersion);
   }
 }

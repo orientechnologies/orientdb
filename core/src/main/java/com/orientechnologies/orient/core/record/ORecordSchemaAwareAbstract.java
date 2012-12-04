@@ -347,7 +347,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
         throw new OValidationException("The field '" + p.getFullName() + "' contains more items than " + max + " requested");
     }
 
-    if (p.isReadonly() && iRecord instanceof ODocument && iRecord.getRecordVersion().getCounter() > 0) {
+    if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
       for (String f : ((ODocument) iRecord).getDirtyFields())
         if (f.equals(p.getName())) {
           // check if the field is actually changed by equal.

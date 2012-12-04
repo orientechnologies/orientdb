@@ -484,7 +484,7 @@ public class OStorageLocal extends OStorageEmbedded {
                 warnings++;
               }
 
-              if (physicalPosition.recordVersion.getCounter() < 0 && (c instanceof OClusterLocal)) {
+              if (physicalPosition.recordVersion.isTombstone() && (c instanceof OClusterLocal)) {
                 // CHECK IF THE HOLE EXISTS
                 boolean found = false;
                 int tot = ((OClusterLocal) c).holeSegment.getHoles();
@@ -522,7 +522,7 @@ public class OStorageLocal extends OStorageEmbedded {
                     / OClusterLocal.RECORD_SIZE);
                 OPhysicalPosition physicalPosition = c.getPhysicalPosition(ppos);
 
-                if (physicalPosition.recordVersion.getCounter() > -1) {
+                if (!physicalPosition.recordVersion.isTombstone()) {
                   formatMessage(iVerbose, iListener,
                       "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record seems good ", i, totalHoles - 1,
                       c.getId(), recycledPosition);

@@ -169,7 +169,7 @@ public final class OClusterLocalLHPEBucket {
     physicalPosition.recordType = buffer[position];
     position += 1;
 
-    physicalPosition.recordVersion.getSerializer().fastReadFrom(buffer, position);
+    physicalPosition.recordVersion.getSerializer().fastReadFrom(buffer, position, physicalPosition.recordVersion);
 
     return physicalPosition;
   }
@@ -201,7 +201,7 @@ public final class OClusterLocalLHPEBucket {
   }
 
   public static byte[] serializeVersion(ORecordVersion version) {
-    return version.getSerializer().toByteArray();
+    return version.getSerializer().toByteArray(version);
   }
 
   public byte[] getBuffer() {
@@ -236,7 +236,8 @@ public final class OClusterLocalLHPEBucket {
         buffer[position] = physicalPosition.recordType;
         position += 1;
 
-        position += physicalPosition.recordVersion.getSerializer().fastWriteTo(buffer, position);
+        position += physicalPosition.recordVersion.getSerializer().fastWriteTo(
+								buffer, position, physicalPosition.recordVersion);
 
         positionsToUpdate[i] = false;
       } else

@@ -43,12 +43,12 @@ public class OHazelcastPhysicalPosition extends OPhysicalPosition implements Dat
   @Override
   public void readData(final DataInput in) throws IOException {
     clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(in);
-    recordVersion.getSerializer().readFrom(in);
+    recordVersion.getSerializer().readFrom(in, recordVersion);
   }
 
   @Override
   public void writeData(final DataOutput out) throws IOException {
     out.write(clusterPosition.toStream());
-    recordVersion.getSerializer().writeTo(out);
+    recordVersion.getSerializer().writeTo(out, recordVersion);
   }
 }

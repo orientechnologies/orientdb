@@ -96,7 +96,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
-    version.getSerializer().writeTo(out);
+    version.getSerializer().writeTo(out, version);
     out.write(recordType);
   }
 
@@ -107,7 +107,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
-    version.getSerializer().readFrom(in);
+    version.getSerializer().readFrom(in, version);
     recordType = in.readByte();
   }
 

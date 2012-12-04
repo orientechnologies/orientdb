@@ -582,6 +582,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }, true);
   }
 
+	@Deprecated
   public int getVersion() {
     return getDatabase().getStorage().callInLock(new Callable<Integer>() {
       @Override

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.version;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,7 +35,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * @see OSimpleVersion
  * @see ODistributedVersion
  */
-public interface ORecordVersion extends Comparable<ORecordVersion> {
+public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizable {
   void increment();
 
   void decrement();
@@ -67,71 +68,86 @@ public interface ORecordVersion extends Comparable<ORecordVersion> {
 
   String toString();
 
+  boolean isTombstone();
+
+  void convertToTombstone();
+
   /**
    * Provides serialization to different sources.
    */
   public interface ORecordVersionSerializer {
-    void writeTo(DataOutput out) throws IOException;
+    void writeTo(DataOutput out, ORecordVersion version) throws IOException;
 
-    void readFrom(DataInput in) throws IOException;
+    void readFrom(DataInput in, ORecordVersion version) throws IOException;
 
-    void readFrom(InputStream stream) throws IOException;
+    void readFrom(InputStream stream, ORecordVersion version) throws IOException;
 
-    void writeTo(OutputStream stream) throws IOException;
+    void writeTo(OutputStream stream, ORecordVersion version) throws IOException;
 
     /**
      * Writes version to stream.
      * 
-     * @param iStream
-     *          stream to write data.
-     * @param pos
-     *          the beginning index, inclusive.
-     * @return size of serialized object
+     *
+		 * @param iStream
+		 *          stream to write data.
+		 * @param pos
+		 *          the beginning index, inclusive.
+		 * @param version
+		 * @return size of serialized object
      */
-    int writeTo(byte[] iStream, int pos);
+    int writeTo(byte[] iStream, int pos, ORecordVersion version);
 
     /**
      * Reads version from stream.
      * 
-     * @param iStream
-     *          stream that contains serialized data.
-     * @param pos
-     *          the beginning index, inclusive.
-     * @return size of deserialized object
+     *
+		 * @param iStream
+		 *          stream that contains serialized data.
+		 * @param pos
+		 *          the beginning index, inclusive.
+		 * @param version
+		 * @return size of deserialized object
      */
-    int readFrom(byte[] iStream, int pos);
+    int readFrom(byte[] iStream, int pos, ORecordVersion version);
 
-    int writeTo(OFile file, long offset) throws IOException;
+    int writeTo(OFile file, long offset, ORecordVersion version) throws IOException;
 
-    long readFrom(OFile file, long offset) throws IOException;
+    long readFrom(OFile file, long offset, ORecordVersion version) throws IOException;
 
     /**
-     * The same as {@link #writeTo(byte[], int)}, but uses platform dependent optimization to speed up writing.
+     * The same as {@link #writeTo(byte[], int, ORecordVersion)}, but uses platform dependent optimization to speed up writing.
      * 
-     * @param iStream
-     * @param pos
-     * @return size of serialized object
+     *
+		 * @param iStream
+		 * @param pos
+		 * @param version
+		 * @return size of serialized object
      */
-    int fastWriteTo(byte[] iStream, int pos);
+    int fastWriteTo(byte[] iStream, int pos, ORecordVersion version);
 
     /**
-     * The same as {@link #readFrom(byte[], int)}, but uses platform dependent optimization to speed up reading.
+     * The same as {@link #readFrom(byte[], int, ORecordVersion)}, but uses platform dependent optimization to speed up reading.
      * 
-     * @param iStream
-     * @param pos
-     * @return size of deserialized object
+     *
+		 * @param iStream
+		 * @param pos
+		 * @param version
+		 * @return size of deserialized object
      */
-    int fastReadFrom(byte[] iStream, int pos);
+    int fastReadFrom(byte[] iStream, int pos, ORecordVersion version);
 
     /**
      * Can use platform dependant optimization.
      * 
      * @return serialized version
+		 * @param version
      */
-    byte[] toByteArray();
+    byte[] toByteArray(ORecordVersion version);
 
     String toString();
 
-    void fromString(String string);
+		String toString(ORecordVersion version);
+
+    void fromString(String string, ORecordVersion version);
   }
 }

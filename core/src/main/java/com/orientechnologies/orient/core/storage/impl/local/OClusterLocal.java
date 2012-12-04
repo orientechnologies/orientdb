@@ -218,7 +218,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       iPPosition.dataSegmentPos = f.readLong(p += OBinaryProtocol.SIZE_SHORT);
       iPPosition.recordType = f.readByte(p += OBinaryProtocol.SIZE_LONG);
       p += OBinaryProtocol.SIZE_BYTE;
-      iPPosition.recordVersion.getSerializer().readFrom(f, p);
+      iPPosition.recordVersion.getSerializer().readFrom(f, p, iPPosition.recordVersion);
       return iPPosition;
 
     } finally {
@@ -271,7 +271,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       final long[] pos = fileSegment.getRelativePosition(position);
 
       iVersion.getSerializer().writeTo(fileSegment.files[(int) pos[0]],
-          pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE);
+          pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE, iVersion);
 
     } finally {
       releaseExclusiveLock();
@@ -312,8 +312,10 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       holeSegment.pushPosition(position);
 
       // MARK DELETED SETTING VERSION TO NEGATIVE NUMBER
-      final int version = file.readInt(p);
-      file.writeInt(p, (version + 1) * -1);
+			final ORecordVersion version = OVersionFactory.instance().createVersion();
+			version.getSerializer().readFrom(file, p, version);
+			version.convertToTombstone();
+			version.getSerializer().writeTo(file, p, version);
 
       updateBoundsAfterDeletion(position);
 
@@ -378,12 +380,12 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
       if (recycled) {
         // GET LAST VERSION
-        iPPosition.recordVersion.getSerializer().readFrom(file, p + OBinaryProtocol.SIZE_BYTE);
+        iPPosition.recordVersion.getSerializer().readFrom(file, p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
         iPPosition.recordVersion.revive();
       } else
         iPPosition.recordVersion.reset();
 
-      iPPosition.recordVersion.getSerializer().writeTo(file, p + OBinaryProtocol.SIZE_BYTE);
+      iPPosition.recordVersion.getSerializer().writeTo(file, p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
 
       iPPosition.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(offset / RECORD_SIZE);
 
@@ -500,7 +502,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       while (it.hasNext()) {
         pos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(it.next());
         getPhysicalPosition(pos);
-        if (pos.dataSegmentPos > -1 && pos.recordVersion.getCounter() > -1)
+        if (pos.dataSegmentPos > -1 && !pos.recordVersion.isTombstone())
           size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataSegmentPos);
       }
 

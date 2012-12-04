@@ -72,6 +72,7 @@ public interface OSchema {
 
   public void create();
 
+	@Deprecated
   public int getVersion();
 
   public ORID getIdentity();

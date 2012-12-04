@@ -185,7 +185,7 @@ public class OCommandResultSerializationHelper {
   public static void writeRecordInternal(ORecordInternal<?> record, OutputStream stream) throws IOException {
     stream.write(record.getRecordType());
     writeRecordId(record.getIdentity(), stream);
-    record.getRecordVersion().getSerializer().writeTo(stream);
+    record.getRecordVersion().getSerializer().writeTo(stream, record.getRecordVersion());
     try {
       final byte[] bytes = record.toStream();
       stream.write(OBinaryProtocol.int2bytes(bytes.length));
@@ -201,7 +201,7 @@ public class OCommandResultSerializationHelper {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     final ORecordId recordId = readRecordId(stream);
     final ORecordVersion version = OVersionFactory.instance().createVersion();
-    version.getSerializer().readFrom(stream);
+    version.getSerializer().readFrom(stream, version);
     final int length = OBinaryProtocol.bytes2int(stream);
     final byte[] bytes = readFully(stream, 0, length);
     record.fill(recordId, version, bytes, false);

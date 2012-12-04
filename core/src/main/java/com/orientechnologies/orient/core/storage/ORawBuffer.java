@@ -62,7 +62,7 @@ public class ORawBuffer implements Externalizable {
       }
     } else
       buffer = null;
-    version.getSerializer().readFrom(iInput);
+    version.getSerializer().readFrom(iInput, version);
     recordType = iInput.readByte();
   }
 
@@ -71,7 +71,7 @@ public class ORawBuffer implements Externalizable {
     iOutput.writeInt(bufferLenght);
     if (bufferLenght > 0)
       iOutput.write(buffer);
-    version.getSerializer().writeTo(iOutput);
+    version.getSerializer().writeTo(iOutput, version);
     iOutput.write(recordType);
   }
 

@@ -54,11 +54,11 @@ public class OConcurrentModificationException extends ONeedRetryException {
 
     beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
     endPos = message.indexOf(' ', beginPos);
-    databaseVersion.getSerializer().fromString(message.substring(beginPos, endPos));
+    databaseVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
 
     beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
     endPos = message.indexOf(')', beginPos);
-    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos));
+    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
   }
 
   public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
@@ -72,10 +72,12 @@ public class OConcurrentModificationException extends ONeedRetryException {
     recordOperation = iRecordOperation;
   }
 
+	@Deprecated
   public int getDatabaseVersion() {
     return databaseVersion.getCounter();
   }
 
+	@Deprecated
   public int getRecordVersion() {
     return recordVersion.getCounter();
   }

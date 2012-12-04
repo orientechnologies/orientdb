@@ -367,7 +367,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       out.writeObject(storageName);
       out.writeObject(recordId);
       writeBytes(out, content);
-      recordVersion.getSerializer().writeTo(out);
+      recordVersion.getSerializer().writeTo(out, recordVersion);
       out.writeByte(recordType);
     }
 
@@ -377,7 +377,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       storageName = (String) in.readObject();
       recordId = (ORecordId) in.readObject();
       content = readBytes(in);
-      recordVersion.getSerializer().readFrom(in);
+      recordVersion.getSerializer().readFrom(in, recordVersion);
       recordType = in.readByte();
     }
   }
@@ -448,7 +448,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       out.writeObject(storageName);
       out.writeObject(iRecordId);
       writeBytes(out, iContent);
-      iVersion.getSerializer().writeTo(out);
+      iVersion.getSerializer().writeTo(out, iVersion);
       out.writeByte(iRecordType);
     }
 
@@ -458,7 +458,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       storageName = (String) in.readObject();
       iRecordId = (ORecordId) in.readObject();
       iContent = readBytes(in);
-      iVersion.getSerializer().readFrom(in);
+      iVersion.getSerializer().readFrom(in, iVersion);
       iRecordType = in.readByte();
     }
   }
@@ -489,7 +489,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.writeExternal(out);
       out.writeObject(storageName);
       out.writeObject(recordId);
-      version.getSerializer().writeTo(out);
+      version.getSerializer().writeTo(out, version);
     }
 
     @Override
@@ -497,7 +497,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
       super.readExternal(in);
       storageName = (String) in.readObject();
       recordId = (ORecordId) in.readObject();
-      version.getSerializer().readFrom(in);
+      version.getSerializer().readFrom(in, version);
     }
   }
 
