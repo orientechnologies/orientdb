@@ -58,7 +58,9 @@ public class OExecuteBlock extends OAbstractBlock {
 
         debug(iContext, "Executing...");
         final Object doClause = getRequiredField(iContext, iConfig, "do");
+
         returnValue = executeDo(iManager, iContext, doClause, returnType, returnValue, iOutput, iReadOnly);
+
         debug(iContext, "Done");
 
         iterated++;
@@ -96,6 +98,12 @@ public class OExecuteBlock extends OAbstractBlock {
   @SuppressWarnings("unchecked")
   private Object executeBlock(OComposableProcessor iManager, final OCommandContext iContext, final String iName,
       final Object iValue, ODocument iOutput, final boolean iReadOnly, final String returnType, Object returnValue) {
+
+    Boolean merge = iValue instanceof ODocument ? getFieldOfClass(iContext, (ODocument) iValue, "merge", Boolean.class)
+        : Boolean.FALSE;
+    if (merge == null)
+      merge = Boolean.FALSE;
+
     Object result;
     if (isBlock(iValue))
       // EXECUTE SINGLE BLOCK
@@ -111,8 +119,14 @@ public class OExecuteBlock extends OAbstractBlock {
 
     if ("last".equalsIgnoreCase(returnType))
       returnValue = result;
-    else if ("list".equalsIgnoreCase(returnType) || "set".equalsIgnoreCase(returnType))
-      ((Collection<Object>) returnValue).add(result);
+    else if (result != null && ("list".equalsIgnoreCase(returnType) || "set".equalsIgnoreCase(returnType))) {
+      if (result instanceof Collection<?> && merge) {
+        debug(iContext, "Merging content of collection with size %d with the master with size %d",
+            ((Collection<? extends Object>) result).size(), ((Collection<? extends Object>) returnValue).size());
+        ((Collection<Object>) returnValue).addAll((Collection<? extends Object>) result);
+      } else
+        ((Collection<Object>) returnValue).add(result);
+    }
 
     return returnValue;
   }

@@ -45,6 +45,10 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (!checkForCondition(iContext, iConfig))
       return null;
 
+    Boolean enabled = getFieldOfClass(iContext, iConfig, "enabled", Boolean.class);
+    if (enabled != null && !enabled)
+      return null;
+
     returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
 
     debug(iContext, "Executing {%s} block...", iConfig.field("type"));
