@@ -63,7 +63,7 @@ public class OBasicCommandContext implements OCommandContext {
         if (lastPart.startsWith("$"))
           return p.getVariable(lastPart.substring(1));
         else
-          return ODocumentHelper.getFieldValue(p, lastPart);
+          return ODocumentHelper.getFieldValue(p, lastPart, this);
       }
     } else {
       firstPart = iName;
