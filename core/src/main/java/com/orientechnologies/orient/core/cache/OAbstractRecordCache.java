@@ -32,8 +32,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public abstract class OAbstractRecordCache {
   protected OCache underlying;
-  protected String profilerPrefix  = "noname";
-  protected int    excludedCluster = -1;
+  protected String profilerPrefix         = "noname";
+  protected String profilerMetadataPrefix = "noname";
+  protected int    excludedCluster        = -1;
 
   /**
    * Create cache backed by given implementation
@@ -142,14 +143,14 @@ public abstract class OAbstractRecordCache {
           public Object getValue() {
             return isEnabled();
           }
-        });
+        }, profilerMetadataPrefix + "enabled");
 
     Orient.instance().getProfiler()
         .registerHookValue(profilerPrefix + "current", "Number of entries in cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
           public Object getValue() {
             return getSize();
           }
-        });
+        }, profilerMetadataPrefix + "current");
 
     Orient
         .instance()
@@ -159,7 +160,7 @@ public abstract class OAbstractRecordCache {
               public Object getValue() {
                 return getMaxSize();
               }
-            });
+            }, profilerMetadataPrefix + "max");
   }
 
   /**

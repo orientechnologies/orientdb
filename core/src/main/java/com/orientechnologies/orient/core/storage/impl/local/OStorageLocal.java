@@ -1209,7 +1209,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + "record.synch", "Synch a record to local database", timer, "db.*.record.synch");
+      Orient.instance().getProfiler()
+          .stopChrono("db." + name + "record.synch", "Synch a record to local database", timer, "db.*.record.synch");
     }
   }
 
@@ -1568,7 +1569,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer, "db.*.createRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer, "db.*.createRecord");
     }
   }
 
@@ -1613,8 +1615,11 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer, "db.*.changeRecordIdentity");
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer,
+              "db.*.changeRecordIdentity");
     }
   }
 
@@ -1663,7 +1668,8 @@ public class OStorageLocal extends OStorageEmbedded {
       if (iAtomicLock)
         lock.releaseSharedLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from local database", timer, "db.*.readRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_READ_RECORD, "Read a record from local database", timer, "db.*.readRecord");
     }
   }
 
@@ -1747,7 +1753,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to local database", timer, "db.*.updateRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to local database", timer, "db.*.updateRecord");
     }
 
     return null;
@@ -1792,7 +1799,8 @@ public class OStorageLocal extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer, "db.*.deleteRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer, "db.*.deleteRecord");
     }
 
     return null;
@@ -1807,7 +1815,7 @@ public class OStorageLocal extends OStorageEmbedded {
               public Object getValue() {
                 return getHoles();
               }
-            });
+            }, "db.*.data.holes");
     Orient
         .instance()
         .getProfiler()
@@ -1816,7 +1824,7 @@ public class OStorageLocal extends OStorageEmbedded {
               public Object getValue() {
                 return getHoleSize();
               }
-            });
+            }, "db.*.data.holeSize");
   }
 
   private void uninstallProfilerHooks() {

@@ -735,6 +735,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   protected void installHooks(final ODatabaseRecord iDatabase) {
     final OJVMProfiler profiler = Orient.instance().getProfiler();
     final String profilerPrefix = profiler.getDatabaseMetric(iDatabase.getName(), "index." + name + '.');
+    final String profilerMetadataPrefix = "db.*.index.*.";
 
     profiler.registerHookValue(profilerPrefix + "items", "Index size", METRIC_TYPE.SIZE, new OProfilerHookValue() {
       public Object getValue() {
@@ -745,28 +746,28 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
           releaseSharedLock();
         }
       }
-    });
+    }, profilerMetadataPrefix + "items");
 
     profiler.registerHookValue(profilerPrefix + "entryPointSize", "Number of entrypoints in an index", METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
           public Object getValue() {
             return map != null ? map.getEntryPointSize() : "-";
           }
-        });
+        }, profilerMetadataPrefix + "items");
 
     profiler.registerHookValue(profilerPrefix + "maxUpdateBeforeSave", "Maximum number of updates in a index before force saving",
         METRIC_TYPE.SIZE, new OProfilerHookValue() {
           public Object getValue() {
             return map != null ? map.getMaxUpdatesBeforeSave() : "-";
           }
-        });
+        }, profilerMetadataPrefix + "maxUpdateBeforeSave");
 
     profiler.registerHookValue(profilerPrefix + "optimizationThreshold",
         "Number of times as threshold to execute a background index optimization", METRIC_TYPE.SIZE, new OProfilerHookValue() {
           public Object getValue() {
             return map != null ? map.getOptimizeThreshold() : "-";
           }
-        });
+        }, profilerMetadataPrefix + "optimizationThreshold");
 
     Orient.instance().getMemoryWatchDog().addListener(watchDog);
     iDatabase.registerListener(this);

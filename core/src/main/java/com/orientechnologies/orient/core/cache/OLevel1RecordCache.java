@@ -44,6 +44,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     secondary = db.getLevel2Cache();
 
     profilerPrefix = "db." + db.getName() + ".cache.level1.";
+    profilerMetadataPrefix = "db.*.cache.level1.";
+
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 
@@ -108,9 +110,10 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
     }
 
     if (record != null)
-      Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L);
+      Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
     else
-      Orient.instance().getProfiler().updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L);
+      Orient.instance().getProfiler()
+          .updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L, "db.*.cache.level1.cache.notFound");
 
     return record;
   }

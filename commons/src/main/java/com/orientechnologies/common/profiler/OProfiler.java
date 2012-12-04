@@ -216,10 +216,14 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void updateCounter(final String iName, final String iDescription, final long iPlus) {
+    updateCounter(iName, iDescription, iPlus, iName);
+  }
+
+  public void updateCounter(final String iName, final String iDescription, final long iPlus, final String iMetadata) {
     if (iName == null || recordingFrom < 0)
       return;
 
-    updateMetadata(iName, iDescription, METRIC_TYPE.COUNTER);
+    updateMetadata(iMetadata, iDescription, METRIC_TYPE.COUNTER);
 
     acquireSharedLock();
     try {
@@ -567,8 +571,13 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
       final OProfilerHookValue iHookValue) {
+    registerHookValue(iName, iDescription, iType, iHookValue, iName);
+  }
+
+  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
+      final OProfilerHookValue iHookValue, final String iMetadataName) {
     unregisterHookValue(iName);
-    updateMetadata(iName, iDescription, iType);
+    updateMetadata(iMetadataName, iDescription, iType);
     hooks.put(iName, iHookValue);
   }
 

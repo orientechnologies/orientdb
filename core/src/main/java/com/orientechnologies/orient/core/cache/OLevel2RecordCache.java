@@ -41,7 +41,10 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
   public OLevel2RecordCache(final OStorage iStorage) {
     super(new OCacheLocator().secondaryCache(iStorage.getName()));
+    
     profilerPrefix = "db." + iStorage.getName() + ".cache.level2.";
+    profilerMetadataPrefix = "db.*.cache.level2.";
+
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 
@@ -107,7 +110,8 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       record = underlying.remove(iRID);
 
       if (record == null || record.isDirty()) {
-        Orient.instance().getProfiler().updateCounter(CACHE_MISS, "Record not found in Level2 Cache", +1);
+        Orient.instance().getProfiler()
+            .updateCounter(CACHE_MISS, "Record not found in Level2 Cache", +1, "db.*.cache.level2.cache.notFound");
         return null;
       }
 
@@ -122,7 +126,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
       underlying.unlock(iRID);
     }
 
-    Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level2 Cache", +1);
+    Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level2 Cache", +1, "db.*.cache.level2.cache.found");
     return record;
   }
 
