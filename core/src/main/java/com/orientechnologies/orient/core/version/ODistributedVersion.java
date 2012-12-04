@@ -201,7 +201,7 @@ public final class ODistributedVersion implements ORecordVersion {
 		else
 			otherCounter = o.getCounter();
 
-    if (myCounter != other.counter)
+    if (myCounter != otherCounter)
       return myCounter > otherCounter ? 1 : -1;
 
     if (timestamp != other.timestamp)
