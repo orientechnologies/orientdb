@@ -67,12 +67,12 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
             null);
 
       } else {
-        final String from = parts.length > 2 ? parts[2] : null;
-        final String to = parts.length > 3 ? parts[3] : null;
+        final String par1 = parts.length > 2 ? parts[2] : null;
+        final String par2 = parts.length > 3 ? parts[3] : null;
 
         StringWriter jsonBuffer = new StringWriter();
         OJSONWriter json = new OJSONWriter(jsonBuffer);
-        json.append(Orient.instance().getProfiler().toJSON(command, from, to));
+        json.append(Orient.instance().getProfiler().toJSON(command, par1, par2));
 
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
       }

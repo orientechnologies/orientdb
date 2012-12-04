@@ -247,7 +247,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     }
   }
 
-  public String toJSON(final String iQuery, final String iFrom, final String iTo) {
+  public String toJSON(final String iQuery, final String iPar1, final String iPar2) {
     final StringBuilder buffer = new StringBuilder();
 
     Map<String, Object> hookValuesSnapshots = null;
@@ -261,19 +261,19 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     try {
       if (iQuery.equals("realtime")) {
         realTime.setHookValues(hookValuesSnapshots);
-        realTime.toJSON(buffer);
+        realTime.toJSON(buffer, iPar1);
 
       } else if (iQuery.equals("last")) {
         if (lastSnapshot != null)
-          lastSnapshot.toJSON(buffer);
+          lastSnapshot.toJSON(buffer, iPar1);
 
       } else {
         // GET THE RANGES
-        if (iFrom == null || iTo == null)
+        if (iPar1 == null || iPar2 == null)
           throw new IllegalArgumentException("Invalid range format. Use: <from> <to>, where * means any");
 
-        final long from = iFrom.equals("*") ? 0 : Long.parseLong(iFrom);
-        final long to = iTo.equals("*") ? Long.MAX_VALUE : Long.parseLong(iTo);
+        final long from = iPar1.equals("*") ? 0 : Long.parseLong(iPar1);
+        final long to = iPar2.equals("*") ? Long.MAX_VALUE : Long.parseLong(iPar2);
 
         boolean firstItem = true;
         buffer.append("[");
@@ -287,7 +287,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
               else
                 buffer.append(',');
 
-              a.toJSON(buffer);
+              a.toJSON(buffer, iPar1);
             }
           }
         } else if (iQuery.equals("summary")) {
@@ -300,7 +300,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
               else
                 buffer.append(',');
 
-              a.toJSON(buffer);
+              a.toJSON(buffer, iPar1);
             }
           }
         } else

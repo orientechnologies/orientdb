@@ -146,7 +146,7 @@ public class OProfilerData {
     mergeEntries(stats, iToMerge.stats);
   }
 
-  public void toJSON(final StringBuilder buffer) {
+  public void toJSON(final StringBuilder buffer, final String iFilter) {
     buffer.append("{");
     buffer.append(String.format("\"from\": %d,", recordingFrom));
     buffer.append(String.format("\"to\": %d,", recordingTo));
@@ -158,6 +158,10 @@ public class OProfilerData {
     Collections.sort(names);
     boolean firstItem = true;
     for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
       final Object value = hooks.get(k);
       if (firstItem)
         firstItem = false;
@@ -181,6 +185,10 @@ public class OProfilerData {
     Collections.sort(names);
     firstItem = true;
     for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
       if (firstItem)
         firstItem = false;
       else
@@ -195,6 +203,10 @@ public class OProfilerData {
     Collections.sort(names);
     firstItem = true;
     for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
       if (firstItem)
         firstItem = false;
       else
@@ -209,6 +221,10 @@ public class OProfilerData {
     Collections.sort(names);
     firstItem = true;
     for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
       if (firstItem)
         firstItem = false;
       else
