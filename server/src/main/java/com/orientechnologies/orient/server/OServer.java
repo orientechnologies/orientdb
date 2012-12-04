@@ -212,6 +212,8 @@ public class OServer {
 
     shutdownHook.cancel();
 
+    Orient.instance().getProfiler().unregisterHookValue("system.databases");
+
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeDeactivate();
 

@@ -222,7 +222,7 @@ public class OHttpResponse {
     send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
   }
 
-  public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) {
+  public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) throws IOException {
     if (iIterator != null) {
       int counter = 0;
       String objectJson;
@@ -242,9 +242,10 @@ public class OHttpResponse {
             } catch (Exception e) {
               OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
             }
-          } else if (OMultiValue.isMultiValue(entry)) {
+          } else if (OMultiValue.isMultiValue(entry))
             formatMultiValue(OMultiValue.getMultiValueIterator(entry), buffer, format);
-          }
+          else
+            buffer.append(OJSONWriter.writeValue(entry));
         }
       }
     }
