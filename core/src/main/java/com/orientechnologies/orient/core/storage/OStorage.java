@@ -34,11 +34,10 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
- * 
+ *
+ * @author Luca Garulli
  * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
  * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
- * @author Luca Garulli
- * 
  */
 public interface OStorage extends OSharedContainer {
   public static final String DATA_DEFAULT_NAME    = "default";
@@ -124,7 +123,6 @@ public interface OStorage extends OSharedContainer {
    *          Name of the data-segment to use. null means 'default'
    * @param iParameters
    *          Additional parameters to configure the cluster
-   * 
    * @throws IOException
    */
   public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters);
@@ -198,7 +196,7 @@ public interface OStorage extends OSharedContainer {
    * @param currentClusterId
    *          Cluster id
    */
-  public long[] getClusterDataRange(int currentClusterId);
+  public OClusterPosition[] getClusterDataRange(int currentClusterId);
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
@@ -208,7 +206,9 @@ public interface OStorage extends OSharedContainer {
 
   public boolean dropDataSegment(String iName);
 
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry);
+  OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition);
+
+  OClusterPosition getPrevClusterPosition(int clusterId, OClusterPosition clusterPosition);
 
   /**
    * Returns the current storage's status
@@ -219,9 +219,9 @@ public interface OStorage extends OSharedContainer {
 
   /**
    * Changes record identity from one to another.
-   * 
+   * <p/>
    * Second level cache is changed accordingly, but not first level one.
-   * 
+   * <p/>
    * Important ! This method for internal use only. Do not call it if you not sure, otherwise your data consistency will be broken.
    * 
    * @param originalId

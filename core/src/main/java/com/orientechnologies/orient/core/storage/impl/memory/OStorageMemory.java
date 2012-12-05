@@ -28,6 +28,7 @@ import java.util.Set;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -66,10 +67,11 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * 
  */
 public class OStorageMemory extends OStorageEmbedded {
-  private final List<ODataSegmentMemory>    dataSegments     = new ArrayList<ODataSegmentMemory>();
-  private final List<OClusterMemory>        clusters         = new ArrayList<OClusterMemory>();
-  private final Map<String, OClusterMemory> clusterMap       = new HashMap<String, OClusterMemory>();
-  private int                               defaultClusterId = 0;
+  private final List<ODataSegmentMemory>    dataSegments      = new ArrayList<ODataSegmentMemory>();
+  private final List<OClusterMemory>        clusters          = new ArrayList<OClusterMemory>();
+  private final Map<String, OClusterMemory> clusterMap        = new HashMap<String, OClusterMemory>();
+  private int                               defaultClusterId  = 0;
+  private long                              positionGenerator = 0;
 
   public OStorageMemory(final String iURL) {
     super(iURL, iURL, "rw");
@@ -300,6 +302,18 @@ public class OStorageMemory extends OStorageEmbedded {
 
       // ASSIGN THE POSITION IN THE CLUSTER
       final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, offset, iRecordType);
+      if (cluster.generatePositionBeforeCreation()) {
+        if (iRid.isNew()) {
+          if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
+            ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
+          } else {
+            ppos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
+          }
+        } else {
+          ppos.clusterPosition = iRid.clusterPosition;
+        }
+      }
+
       cluster.addPhysicalPosition(ppos);
       iRid.clusterPosition = ppos.clusterPosition;
 
@@ -333,11 +347,13 @@ public class OStorageMemory extends OStorageEmbedded {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
 
       try {
-        final OClusterPosition lastPos = OClusterPositionFactory.INSTANCE.valueOf(iClusterSegment.getLastEntryPosition());
+        final OClusterPosition lastPos = iClusterSegment.getLastIdentity();
 
-        if (iRid.clusterPosition.compareTo(lastPos) > 0)
-          throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
-              + iClusterSegment.getName() + "' is 0-" + lastPos);
+        if (!iClusterSegment.generatePositionBeforeCreation()) {
+          if (iRid.clusterPosition.compareTo(lastPos) > 0)
+            throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
+                + iClusterSegment.getName() + "' is 0-" + lastPos);
+        }
 
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
@@ -356,8 +372,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer,
-          "db.*.readRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer, "db.*.readRecord");
     }
   }
 
@@ -412,8 +428,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer,
-          "db.*.updateRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer, "db.*.updateRecord");
     }
   }
 
@@ -463,8 +479,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseSharedLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer,
-          "db.*.deleteRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer, "db.*.deleteRecord");
     }
   }
 
@@ -481,12 +497,12 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public long[] getClusterDataRange(final int iClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
     final OCluster cluster = getClusterById(iClusterId);
     lock.acquireSharedLock();
     try {
 
-      return new long[] { cluster.getFirstEntryPosition(), cluster.getLastEntryPosition() };
+      return new OClusterPosition[] { cluster.getFirstIdentity(), cluster.getLastIdentity() };
 
     } finally {
       lock.releaseSharedLock();
@@ -775,8 +791,8 @@ public class OStorageMemory extends OStorageEmbedded {
               .getRecord()
               .getRecordVersion()
               .copyFrom(
-                  updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
-                      .getResult());
+											updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+															.getResult());
         }
       }
       break;
@@ -788,8 +804,8 @@ public class OStorageMemory extends OStorageEmbedded {
           .getRecord()
           .getRecordVersion()
           .copyFrom(
-              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
-                  .getResult());
+									updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+													.getResult());
       break;
 
     case ORecordOperation.DELETED:
@@ -827,7 +843,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
   @Override
   public boolean isLHClustersAreUsed() {
-    return false;
+    return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean();
   }
 
   @Override

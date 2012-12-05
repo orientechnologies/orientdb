@@ -41,6 +41,8 @@ public abstract class OClusterPositionFactory {
       INSTANCE = new OClusterPositionFactoryLong();
   }
 
+  public abstract OClusterPosition generateUniqueClusterPosition();
+
   public abstract OClusterPosition valueOf(long value);
 
   public abstract OClusterPosition valueOf(String value);
@@ -102,7 +104,14 @@ public abstract class OClusterPositionFactory {
     return fromStream(clusterContent);
   }
 
+  public abstract OClusterPosition getMaxValue();
+
   private static final class OClusterPositionFactoryLong extends OClusterPositionFactory {
+    @Override
+    public OClusterPosition generateUniqueClusterPosition() {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     public OClusterPosition valueOf(long value) {
       return new OClusterPositionLong(value);
@@ -122,9 +131,19 @@ public abstract class OClusterPositionFactory {
     public int getSerializedSize() {
       return OLongSerializer.LONG_SIZE;
     }
+
+    @Override
+    public OClusterPosition getMaxValue() {
+      return new OClusterPositionLong(Long.MAX_VALUE);
+    }
   }
 
   private static final class OClusterPositionFactoryNodeId extends OClusterPositionFactory {
+    @Override
+    public OClusterPosition generateUniqueClusterPosition() {
+      return new OClusterPositionNodeId(ONodeId.generateUniqueId());
+    }
+
     @Override
     public OClusterPosition valueOf(long value) {
       return new OClusterPositionNodeId(ONodeId.valueOf(value));
@@ -143,6 +162,11 @@ public abstract class OClusterPositionFactory {
     @Override
     public int getSerializedSize() {
       return ONodeId.SERIALIZED_SIZE;
+    }
+
+    @Override
+    public OClusterPosition getMaxValue() {
+      return new OClusterPositionNodeId(ONodeId.MAX_VALUE);
     }
   }
 

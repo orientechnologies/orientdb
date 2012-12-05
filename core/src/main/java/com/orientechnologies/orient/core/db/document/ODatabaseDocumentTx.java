@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -117,6 +118,16 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     Orient.instance().getProfiler()
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
+  }
+
+  @Override
+  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return getStorage().getNextClusterPosition(clusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return getStorage().getPrevClusterPosition(clusterId, clusterPosition);
   }
 
   @Override

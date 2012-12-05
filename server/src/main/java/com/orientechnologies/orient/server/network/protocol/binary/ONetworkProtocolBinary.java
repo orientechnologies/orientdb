@@ -238,10 +238,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       rangeCluster();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_POSITIONS:
-      clusterPositionsByEntry();
-      break;
-
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED:
       isLHClustersAreUsed();
       break;
@@ -272,6 +268,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
       deleteRecord();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_NEXT:
+      nextRecord();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_PREVIOUS:
+      previousRecord();
       break;
 
     case OChannelBinaryProtocol.REQUEST_COUNT:
@@ -312,6 +316,56 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     return true;
+  }
+
+  private void previousRecord() throws IOException {
+    setDataCommandInfo("Retrieve previous record");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      OClusterPosition previousClusterPosition = connection.database.getPreviousClusterPosition(clusterId, clusterPosition);
+
+      if (previousClusterPosition != null) {
+        channel.writeByte((byte) 1); // HAS RECORD
+        channel.writeClusterPosition(previousClusterPosition);
+
+      } else {
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void nextRecord() throws IOException {
+    setDataCommandInfo("Retrieve next record");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      OClusterPosition nextClusterPosition = connection.database.getNextClusterPosition(clusterId, clusterPosition);
+
+      if (nextClusterPosition != null) {
+        channel.writeByte((byte) 1); // HAS RECORD
+        channel.writeClusterPosition(nextClusterPosition);
+
+      } else {
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
   }
 
   protected void checkServerAccess(final String iResource) {
@@ -448,36 +502,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkDatabase();
 
-    long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
+    OClusterPosition[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeLong(pos[0]);
-      channel.writeLong(pos[1]);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void clusterPositionsByEntry() throws IOException {
-    setDataCommandInfo("Get list of cluster positions which are contained in given cluster entry");
-
-    checkDatabase();
-
-    final int clusterId = channel.readShort();
-    final long entry = channel.readLong();
-
-    OClusterPosition[] pos = connection.database.getStorage().getClusterPositionsForEntry(clusterId, entry);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-
-      channel.writeInt(pos.length);
-      for (OClusterPosition position : pos)
-        channel.writeClusterPosition(position);
-
+      channel.writeClusterPosition(pos[0]);
+      channel.writeClusterPosition(pos[1]);
     } finally {
       endResponse();
     }

@@ -42,6 +42,10 @@ public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizab
 
   boolean isUntracked();
 
+  boolean isTemporary();
+
+  boolean isValid();
+
   void setCounter(int iVersion);
 
   int getCounter();
@@ -87,26 +91,26 @@ public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizab
     /**
      * Writes version to stream.
      * 
-     *
-		 * @param iStream
-		 *          stream to write data.
-		 * @param pos
-		 *          the beginning index, inclusive.
-		 * @param version
-		 * @return size of serialized object
+     * 
+     * @param iStream
+     *          stream to write data.
+     * @param pos
+     *          the beginning index, inclusive.
+     * @param version
+     * @return size of serialized object
      */
     int writeTo(byte[] iStream, int pos, ORecordVersion version);
 
     /**
      * Reads version from stream.
      * 
-     *
-		 * @param iStream
-		 *          stream that contains serialized data.
-		 * @param pos
-		 *          the beginning index, inclusive.
-		 * @param version
-		 * @return size of deserialized object
+     * 
+     * @param iStream
+     *          stream that contains serialized data.
+     * @param pos
+     *          the beginning index, inclusive.
+     * @param version
+     * @return size of deserialized object
      */
     int readFrom(byte[] iStream, int pos, ORecordVersion version);
 
@@ -117,22 +121,22 @@ public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizab
     /**
      * The same as {@link #writeTo(byte[], int, ORecordVersion)}, but uses platform dependent optimization to speed up writing.
      * 
-     *
-		 * @param iStream
-		 * @param pos
-		 * @param version
-		 * @return size of serialized object
+     * 
+     * @param iStream
+     * @param pos
+     * @param version
+     * @return size of serialized object
      */
     int fastWriteTo(byte[] iStream, int pos, ORecordVersion version);
 
     /**
      * The same as {@link #readFrom(byte[], int, ORecordVersion)}, but uses platform dependent optimization to speed up reading.
      * 
-     *
-		 * @param iStream
-		 * @param pos
-		 * @param version
-		 * @return size of deserialized object
+     * 
+     * @param iStream
+     * @param pos
+     * @param version
+     * @return size of deserialized object
      */
     int fastReadFrom(byte[] iStream, int pos, ORecordVersion version);
 
@@ -140,13 +144,13 @@ public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizab
      * Can use platform dependant optimization.
      * 
      * @return serialized version
-		 * @param version
+     * @param version
      */
     byte[] toByteArray(ORecordVersion version);
 
     String toString();
 
-		String toString(ORecordVersion version);
+    String toString(ORecordVersion version);
 
     void fromString(String string, ORecordVersion version);
   }

@@ -65,7 +65,17 @@ public final class OSimpleVersion implements ORecordVersion {
   @Override
   public boolean isUntracked() {
     return version == -1;
-  }
+	}
+
+	@Override
+	public boolean isTemporary() {
+		return version < -1;
+	}
+
+	@Override
+	public boolean isValid() {
+		return version > -1;
+	}
 
   @Override
   public boolean isTombstone() {

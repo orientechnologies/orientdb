@@ -244,6 +244,9 @@ public enum OGlobalConfiguration {
   USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
       + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
 
+  USE_LHPEPS_MEMORY_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
+      + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
+
   // NETWORK
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 

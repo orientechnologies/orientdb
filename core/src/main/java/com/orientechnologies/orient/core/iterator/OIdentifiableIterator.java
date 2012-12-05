@@ -44,7 +44,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected long                        browsedRecords         = 0;
 
   private String                        fetchPlan;
-  private ORecordInternal<?>            reusedRecord           = null;           // DEFAULT = NOT REUSE IT
+  private ORecordInternal<?>            reusedRecord           = null;                             // DEFAULT = NOT REUSE IT
   private Boolean                       directionForward;
   protected final ORecordId             current                = new ORecordId();
 
@@ -53,13 +53,10 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   protected int                         currentTxEntryPosition = -1;
 
-  protected long                        firstClusterEntry      = -1;
-  protected long                        lastClusterEntry       = -1;
+  protected OClusterPosition            firstClusterEntry      = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition            lastClusterEntry       = OClusterPosition.INVALID_POSITION;
 
-  protected OClusterPosition[]          currentPositions;
-  protected int                         currentPositionIndex;
-
-  protected long                        currentEntry           = -1;
+  protected OClusterPosition            currentEntry           = OClusterPosition.INVALID_POSITION;
 
   public long                           totalLength            = 0;
 
@@ -90,11 +87,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     if (current.clusterPosition.isTemporary())
       noPhysicalRecordToBrowse = true;
     else if (directionForward)
-      noPhysicalRecordToBrowse = (lastClusterEntry == currentEntry && (currentPositionIndex >= currentPositions.length || currentPositions.length == 0))
-          || lastClusterEntry < currentEntry;
+      noPhysicalRecordToBrowse = lastClusterEntry.compareTo(currentEntry) <= 0;
     else
-      noPhysicalRecordToBrowse = (firstClusterEntry == currentEntry && (currentPositionIndex < 0 || currentPositions.length == 0))
-          || currentEntry < firstClusterEntry;
+      noPhysicalRecordToBrowse = currentEntry.compareTo(firstClusterEntry) <= 0;
 
     if (noPhysicalRecordToBrowse && txEntries != null) {
       // IN TX
@@ -250,53 +245,43 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   protected boolean nextPosition(int iMovement) {
-    currentPositionIndex += iMovement;
     if (iMovement > 0) {
-      while (currentPositionIndex >= currentPositions.length) {
-        if (currentEntry >= lastClusterEntry)
-          return false;
+      if (currentEntry.compareTo(lastClusterEntry) >= 0)
+        return false;
 
-        currentPositionIndex -= currentPositions.length;
-
-        do {
-          currentEntry++;
-          currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
-        } while (currentPositions.length == 0 && currentEntry <= lastClusterEntry);
-
-        totalLength += currentPositions.length;
-
-        if (currentEntry > lastClusterEntry)
-          return false;
-
+      for (int i = 0; i < iMovement; ++i) {
+        // get next record from cluster
+        currentEntry = dbStorage.getNextClusterPosition(current.clusterId, currentEntry);
       }
+
+      totalLength += iMovement;
+
+      if (currentEntry.compareTo(lastClusterEntry) > 0 || currentEntry.equals(OClusterPosition.INVALID_POSITION))
+        return false;
     } else if (iMovement < 0) {
-      while (currentPositionIndex < 0) {
-        if (currentEntry < firstClusterEntry)
-          return false;
 
-        do {
-          currentEntry--;
-          currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
-        } while (currentPositions.length == 0 && currentEntry >= firstClusterEntry);
+      if (currentEntry.compareTo(firstClusterEntry) < 0)
+        return false;
 
-        currentPositionIndex += currentPositions.length;
-
-        if (currentEntry < firstClusterEntry)
-          return false;
+      for (int i = 0; i > iMovement; --i) {
+        // get next record from cluster
+        currentEntry = dbStorage.getPrevClusterPosition(current.clusterId, currentEntry);
       }
+
+      if (currentEntry.compareTo(firstClusterEntry) < 0)
+        return false;
+
     } else {
-      if (currentPositionIndex < 0 || currentPositionIndex >= currentPositions.length)
+      if (currentEntry == null || currentEntry.equals(OClusterPosition.INVALID_POSITION)
+          || firstClusterEntry.compareTo(currentEntry) > 0 || lastClusterEntry.compareTo(currentEntry) < 0)
         return false;
     }
 
-    current.clusterPosition = currentPositions[currentPositionIndex];
+    current.clusterPosition = currentEntry;
     return true;
   }
 
   protected OClusterPosition currentPosition() {
-    if (currentPositionIndex < 0 || currentPositionIndex >= currentPositions.length)
-      return OClusterPosition.INVALID_POSITION;
-
-    return currentPositions[currentPositionIndex];
+    return currentEntry;
   }
 }

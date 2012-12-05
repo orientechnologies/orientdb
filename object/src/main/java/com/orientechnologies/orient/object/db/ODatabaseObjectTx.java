@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.entity.OEntityManagerClassHandler;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -520,4 +521,14 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 			entityManager.registerEntityClass(ORole.class);
 		}
 	}
+
+  @Override
+  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return underlying.getNextClusterPosition(clusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return underlying.getPreviousClusterPosition(clusterId, clusterPosition);
+  }
 }

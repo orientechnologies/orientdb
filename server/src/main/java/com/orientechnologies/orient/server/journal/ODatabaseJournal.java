@@ -57,10 +57,10 @@ import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
  * <br/>
  * Where:
  * <ul>
- *   <li> <b>STATUS</b> = [ 0 = doing, 1 = done ] </li>
- *   <li> <b>OPERAT</b> = [ 1 = update, 2 = delete, 3 = create, 4 = sql command ] </li>
- *   <li> <b>RUN ID</b> = is the running id. It's the timestamp the server is started, or inside a cluster is the timestamp when the cluster is started</li>
- *   <li> <b>OPERAT ID</b> = is the unique id of the operation. First operation is 0</li>
+ * <li> <b>STATUS</b> = [ 0 = doing, 1 = done ] </li>
+ * <li> <b>OPERAT</b> = [ 1 = update, 2 = delete, 3 = create, 4 = sql command ] </li>
+ * <li> <b>RUN ID</b> = is the running id. It's the timestamp the server is started, or inside a cluster is the timestamp when the cluster is started</li>
+ * <li> <b>OPERAT ID</b> = is the unique id of the operation. First operation is 0</li>
  * </ul>
  * </code><br/>
  */
@@ -324,7 +324,7 @@ public class ODatabaseJournal {
 
         if (rid.isNew())
           // GET LAST RID
-          rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(storage.getClusterDataRange(rid.clusterId)[1]);
+          rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
         if (record != null)

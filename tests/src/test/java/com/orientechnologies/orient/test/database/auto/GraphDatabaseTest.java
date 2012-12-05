@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -393,14 +394,17 @@ public class GraphDatabaseTest {
     long insertBegin = System.currentTimeMillis();
 
     long begin = insertBegin;
+    Set<Integer> identities = new HashSet<Integer>(1000);
     for (int i = 1; i <= 1000; ++i) {
       database.createEdge(v, database.createVertex().field("id", i)).save();
+      Assert.assertTrue(identities.add(i));
       if (i % 100 == 0) {
         final long now = System.currentTimeMillis();
         System.out.printf("\nInserted %d edges, elapsed %d ms. v.out=%d", i, now - begin, ((Set<?>) v.field("out")).size());
         begin = System.currentTimeMillis();
       }
     }
+    Assert.assertEquals(identities.size(), 1000);
 
     int originalEdges = ((Set<?>) v.field("out")).size();
     System.out.println("Edge count (Original instance): " + originalEdges);
@@ -417,7 +421,9 @@ public class GraphDatabaseTest {
 
     int i = 1;
     for (OIdentifiable e : database.getOutEdges(v)) {
-      Assert.assertEquals(database.getInVertex(e).field("id"), i);
+      Integer currentIdentity = database.getInVertex(e).field("id");
+      Assert.assertTrue(identities.contains(currentIdentity));
+      Assert.assertTrue(identities.remove(currentIdentity));
       if (i % 100 == 0) {
         now = System.currentTimeMillis();
         System.out.printf("\nRead %d edges and %d vertices, elapsed %d ms", i, i, now - begin);
@@ -425,6 +431,7 @@ public class GraphDatabaseTest {
       }
       i++;
     }
+    Assert.assertTrue(identities.isEmpty());
     database.declareIntent(null);
   }
 

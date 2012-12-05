@@ -89,6 +89,16 @@ public final class ODistributedVersion implements ORecordVersion {
   }
 
   @Override
+  public boolean isTemporary() {
+    return counter < -1;
+  }
+
+  @Override
+  public boolean isValid() {
+    return counter > -1;
+  }
+
+  @Override
   public void setCounter(int iVersion) {
     counter = iVersion;
   }

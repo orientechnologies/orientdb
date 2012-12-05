@@ -658,6 +658,16 @@ public class ODatabaseRaw implements ODatabase {
     storage.freeze(throwException);
   }
 
+  @Override
+  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return getStorage().getNextClusterPosition(clusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return getStorage().getPrevClusterPosition(clusterId, clusterPosition);
+  }
+
   public void release() {
     final OStorageLocal storage;
     if (getStorage() instanceof OStorageLocal)

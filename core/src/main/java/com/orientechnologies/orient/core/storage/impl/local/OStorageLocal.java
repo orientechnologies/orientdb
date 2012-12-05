@@ -457,54 +457,51 @@ public class OStorageLocal extends OStorageEmbedded {
 
         // BROWSE ALL THE RECORDS
         for (final OClusterEntryIterator it = c.absoluteIterator(); it.hasNext();) {
-          final long clusterEntryPosition = it.next();
+          final OPhysicalPosition physicalPosition = it.next();
           totalRecors++;
           try {
-            OPhysicalPosition[] physicalPositions = c.getPositionsByEntryPos(clusterEntryPosition);
-            for (OPhysicalPosition physicalPosition : physicalPositions) {
-              if (physicalPosition.dataSegmentId >= dataSegments.length) {
-                formatMessage(iVerbose, iListener, "WARN: Found wrong data segment %d ", physicalPosition.dataSegmentId);
-                warnings++;
-              }
 
-              if (physicalPosition.recordSize < 0) {
-                formatMessage(iVerbose, iListener, "WARN: Found wrong record size %d ", physicalPosition.recordSize);
-                warnings++;
-              }
-
-              if (physicalPosition.recordSize >= 1000000) {
-                formatMessage(iVerbose, iListener, "WARN: Found suspected big record size %d. Is it corrupted? ",
-                    physicalPosition.recordSize);
-                warnings++;
-              }
-
-              if (physicalPosition.dataSegmentPos > dataSegments[physicalPosition.dataSegmentId].getFilledUpTo()) {
-                formatMessage(iVerbose, iListener, "WARN: Found wrong pointer to data chunk %d out of data segment size (%d) ",
-                    physicalPosition.dataSegmentPos, dataSegments[physicalPosition.dataSegmentId].getFilledUpTo());
-                warnings++;
-              }
-
-              if (physicalPosition.recordVersion.isTombstone() && (c instanceof OClusterLocal)) {
-                // CHECK IF THE HOLE EXISTS
-                boolean found = false;
-                int tot = ((OClusterLocal) c).holeSegment.getHoles();
-                for (int i = 0; i < tot; ++i) {
-                  final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
-                  if (recycledPosition == physicalPosition.clusterPosition.longValue()) {
-                    // FOUND
-                    found = true;
-                    break;
-                  }
-                }
-
-                if (!found) {
-                  formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(),
-                      physicalPosition.clusterPosition);
-                  warnings++;
-                }
-              }
+            if (physicalPosition.dataSegmentId >= dataSegments.length) {
+              formatMessage(iVerbose, iListener, "WARN: Found wrong data segment %d ", physicalPosition.dataSegmentId);
+              warnings++;
             }
-          } catch (IOException e) {
+
+            if (physicalPosition.recordSize < 0) {
+              formatMessage(iVerbose, iListener, "WARN: Found wrong record size %d ", physicalPosition.recordSize);
+              warnings++;
+            }
+
+            if (physicalPosition.recordSize >= 1000000) {
+              formatMessage(iVerbose, iListener, "WARN: Found suspected big record size %d. Is it corrupted? ",
+                  physicalPosition.recordSize);
+              warnings++;
+            }
+
+            if (physicalPosition.dataSegmentPos > dataSegments[physicalPosition.dataSegmentId].getFilledUpTo()) {
+              formatMessage(iVerbose, iListener, "WARN: Found wrong pointer to data chunk %d out of data segment size (%d) ",
+                  physicalPosition.dataSegmentPos, dataSegments[physicalPosition.dataSegmentId].getFilledUpTo());
+              warnings++;
+            }
+
+								if (physicalPosition.recordVersion.isTombstone() && (c instanceof OClusterLocal)) {
+									// CHECK IF THE HOLE EXISTS
+									boolean found = false;
+									int tot = ((OClusterLocal) c).holeSegment.getHoles();
+									for (int i = 0; i < tot; ++i) {
+										final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
+										if (recycledPosition == physicalPosition.clusterPosition.longValue()) {
+											// FOUND
+											found = true;
+											break;
+										}
+									}
+
+									if (!found) {
+										formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(),
+														physicalPosition.clusterPosition);
+										warnings++;
+									}
+								}    } catch (IOException e) {
             formatMessage(iVerbose, iListener, "WARN: Error while reading record #%d:%d ", e, c.getId(), ppos.clusterPosition);
             warnings++;
           }
@@ -913,17 +910,17 @@ public class OStorageLocal extends OStorageEmbedded {
     }
   }
 
-  public long[] getClusterDataRange(final int iClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
     if (iClusterId == -1)
-      return new long[] { -1, -1 };
+      return new OClusterPosition[] { OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION };
 
     checkOpeness();
 
     lock.acquireSharedLock();
     try {
 
-      return clusters[iClusterId] != null ? new long[] { clusters[iClusterId].getFirstEntryPosition(),
-          clusters[iClusterId].getLastEntryPosition() } : new long[0];
+      return clusters[iClusterId] != null ? new OClusterPosition[] { clusters[iClusterId].getFirstIdentity(),
+          clusters[iClusterId].getLastIdentity() } : new OClusterPosition[0];
 
     } finally {
       lock.releaseSharedLock();

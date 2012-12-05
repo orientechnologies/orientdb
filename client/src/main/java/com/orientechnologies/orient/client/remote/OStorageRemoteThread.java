@@ -174,15 +174,21 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.toString();
   }
 
-  public long[] getClusterDataRange(final int iClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
     delegate.setSessionId(sessionId);
     return delegate.getClusterDataRange(iClusterId);
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
     delegate.setSessionId(sessionId);
-    return delegate.getClusterPositionsForEntry(currentClusterId, entry);
+    return delegate.getNextClusterPosition(currentClusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+    delegate.setSessionId(sessionId);
+    return delegate.getPrevClusterPosition(currentClusterId, clusterPosition);
   }
 
   public long getSize() {

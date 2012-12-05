@@ -394,9 +394,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (parts.size() == 2)
             try {
               Short.parseShort(parts.get(0));
-              Long.parseLong(parts.get(1));
               // YES, IT'S A LINK
-              iType = OType.LINK;
+              if (parts.get(1).matches("\\d+")) {
+                iType = OType.LINK;
+              }
             } catch (Exception e) {
             }
         }

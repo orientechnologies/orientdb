@@ -323,7 +323,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.removeUser();
   }
 
-  public long[] getClusterDataRange(final int currentClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
   }
 
@@ -358,8 +358,13 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
-    return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
+  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+    return wrapped.getNextClusterPosition(currentClusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+    return wrapped.getPrevClusterPosition(currentClusterId, clusterPosition);
   }
 
   @Override

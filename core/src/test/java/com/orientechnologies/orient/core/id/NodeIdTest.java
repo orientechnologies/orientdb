@@ -96,19 +96,19 @@ public class NodeIdTest {
     Assert.assertEquals(result, ONodeId.parseString("-1234567895623"));
   }
 
-	public void testAddZeroToPositive() {
-		ONodeId two = ONodeId.ZERO.add(ONodeId.parseString("1234567895623"));
+  public void testAddZeroToPositive() {
+    ONodeId two = ONodeId.ZERO.add(ONodeId.parseString("1234567895623"));
 
-		Assert.assertEquals(two, ONodeId.parseString("1234567895623"));
-	}
+    Assert.assertEquals(two, ONodeId.parseString("1234567895623"));
+  }
 
-	public void testAddZeroToNegative() {
-		ONodeId two = ONodeId.ZERO.add(ONodeId.parseString("-1234567895623"));
+  public void testAddZeroToNegative() {
+    ONodeId two = ONodeId.ZERO.add(ONodeId.parseString("-1234567895623"));
 
-		Assert.assertEquals(two, ONodeId.parseString("-1234567895623"));
-	}
+    Assert.assertEquals(two, ONodeId.parseString("-1234567895623"));
+  }
 
-	public void testSubtractTwoMinusOne() {
+  public void testSubtractTwoMinusOne() {
     ONodeId one = ONodeId.valueOf(2);
     ONodeId two = one.subtract(ONodeId.ONE);
 
@@ -203,19 +203,19 @@ public class NodeIdTest {
     Assert.assertEquals(result, ONodeId.ZERO);
   }
 
-	public void testSubtractFromMaxNegativeOnePositive() {
-		ONodeId result = ONodeId.MIN_VALUE.subtract(ONodeId.ONE);
+  public void testSubtractFromMaxNegativeOnePositive() {
+    ONodeId result = ONodeId.MIN_VALUE.subtract(ONodeId.ONE);
 
-		Assert.assertEquals(result, ONodeId.ZERO);
-	}
+    Assert.assertEquals(result, ONodeId.ZERO);
+  }
 
-	public void testSubtractFromMaxPositiveOneNegative() {
-		ONodeId result = ONodeId.MAX_VALUE.subtract(ONodeId.parseString("-1"));
+  public void testSubtractFromMaxPositiveOneNegative() {
+    ONodeId result = ONodeId.MAX_VALUE.subtract(ONodeId.parseString("-1"));
 
-		Assert.assertEquals(result, ONodeId.ZERO);
-	}
+    Assert.assertEquals(result, ONodeId.ZERO);
+  }
 
-	public void testMultiplyTwoAndFive() {
+  public void testMultiplyTwoAndFive() {
     ONodeId one = ONodeId.valueOf(2);
     ONodeId two = one.multiply(5);
 
@@ -365,65 +365,64 @@ public class NodeIdTest {
     Assert.assertEquals(nodeId.toStream(), expectedResult);
   }
 
-	public void testChunksToByteArray() {
-		final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef0000000000123000000000000002aab");
+  public void testChunksToByteArray() {
+    final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef0000000000123000000000000002aab");
 
-		byte[] expectedResult = new byte[24];
-		expectedResult[0] = 0;
-		expectedResult[1] = 0x12;
-		expectedResult[2] = 0x34;
-		expectedResult[3] = 0x56;
-		expectedResult[4] = 0x78;
-		expectedResult[5] = (byte) 0x9A;
-		expectedResult[6] = (byte) 0xBC;
-		expectedResult[7] = (byte) 0xDE;
-		expectedResult[8] = (byte) 0xF0;
-		expectedResult[9] = (byte) 0x00;
-		expectedResult[10] = (byte) 0x00;
-		expectedResult[11] = (byte) 0x00;
-		expectedResult[12] = (byte) 0x00;
-		expectedResult[13] = (byte) 0x01;
-		expectedResult[14] = (byte) 0x23;
-		expectedResult[15] = (byte) 0x00;
-		expectedResult[16] = (byte) 0x00;
-		expectedResult[17] = (byte) 0x00;
-		expectedResult[18] = (byte) 0x00;
-		expectedResult[19] = (byte) 0x00;
-		expectedResult[20] = (byte) 0x00;
-		expectedResult[21] = (byte) 0x00;
-		expectedResult[22] = (byte) 0x2a;
-		expectedResult[23] = (byte) 0xab;
+    byte[] expectedResult = new byte[24];
+    expectedResult[0] = 0;
+    expectedResult[1] = 0x12;
+    expectedResult[2] = 0x34;
+    expectedResult[3] = 0x56;
+    expectedResult[4] = 0x78;
+    expectedResult[5] = (byte) 0x9A;
+    expectedResult[6] = (byte) 0xBC;
+    expectedResult[7] = (byte) 0xDE;
+    expectedResult[8] = (byte) 0xF0;
+    expectedResult[9] = (byte) 0x00;
+    expectedResult[10] = (byte) 0x00;
+    expectedResult[11] = (byte) 0x00;
+    expectedResult[12] = (byte) 0x00;
+    expectedResult[13] = (byte) 0x01;
+    expectedResult[14] = (byte) 0x23;
+    expectedResult[15] = (byte) 0x00;
+    expectedResult[16] = (byte) 0x00;
+    expectedResult[17] = (byte) 0x00;
+    expectedResult[18] = (byte) 0x00;
+    expectedResult[19] = (byte) 0x00;
+    expectedResult[20] = (byte) 0x00;
+    expectedResult[21] = (byte) 0x00;
+    expectedResult[22] = (byte) 0x2a;
+    expectedResult[23] = (byte) 0xab;
 
-		Assert.assertEquals(nodeId.chunksToByteArray(), expectedResult);
-	}
+    Assert.assertEquals(nodeId.chunksToByteArray(), expectedResult);
+  }
 
-	public void testLongValuePositive() {
-		final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef000000000012300ecffaabb12342aab");
+  public void testLongValuePositive() {
+    final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.longValue(), 0x6cffaabb12342aabL);
+    Assert.assertEquals(nodeId.longValue(), 0x6cffaabb12342aabL);
 
-	}
+  }
 
-	public void testLongValueNegative() {
-		final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
+  public void testLongValueNegative() {
+    final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.longValue(), -0x6cffaabb12342aabL);
-	}
+    Assert.assertEquals(nodeId.longValue(), -0x6cffaabb12342aabL);
+  }
 
-	public void testIntValuePositive() {
-		final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef000000000012300ecffaabb12342aab");
+  public void testIntValuePositive() {
+    final ONodeId nodeId = ONodeId.parseHexSting("00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.intValue(), 0x12342aab);
-	}
+    Assert.assertEquals(nodeId.intValue(), 0x12342aab);
+  }
 
-	public void testIntValueNegative() {
-		final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
+  public void testIntValueNegative() {
+    final ONodeId nodeId = ONodeId.parseHexSting("-00123456789abcdef000000000012300ecffaabb12342aab");
 
-		Assert.assertEquals(nodeId.intValue(), -0x12342aab);
-	}
+    Assert.assertEquals(nodeId.intValue(), -0x12342aab);
+  }
 
-
-	public void testFromStreamPositive() {
+  public void testFromStreamPositive() {
     final ONodeId nodeId = ONodeId.parseString("1343412555467812");
     final byte[] content = nodeId.toStream();
 

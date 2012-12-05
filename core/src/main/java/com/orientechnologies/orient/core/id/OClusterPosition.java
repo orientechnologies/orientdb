@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.id;
 /**
  * Abstraction of records position in cluster. You can think about it as about of n-bit number. Real instances of cluster position
  * should be created using {@link OClusterPositionFactory} factory. Cluster positions are immutable objects.
- * 
+ *
  * @author Andrey Lomakin
  * @since 12.11.12
  */
@@ -28,14 +28,14 @@ public abstract class OClusterPosition extends Number implements Comparable<OClu
 
   /**
    * Creates custer position with value which is higher than current value by one.
-   * 
+   *
    * @return custer position with value which is higher than current value by one.
    */
   public abstract OClusterPosition inc();
 
   /**
    * Creates custer position with value which is less than current value by one.
-   * 
+   *
    * @return custer position with value which is less than current value by one.
    */
   public abstract OClusterPosition dec();

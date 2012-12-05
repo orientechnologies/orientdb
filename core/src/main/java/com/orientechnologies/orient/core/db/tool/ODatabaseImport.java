@@ -701,7 +701,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void storeLocalClusterRecord() {
-    long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1] + 1;
+    long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1].longValue() + 1;
 
     // SAVE THE RECORD
     if (record.getIdentity().getClusterPosition().longValue() < nextAvailablePos) {

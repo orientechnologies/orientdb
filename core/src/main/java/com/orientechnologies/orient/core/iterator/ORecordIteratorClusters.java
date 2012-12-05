@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * database the iterator could be invalid and throw exception of cluster not found.
  * 
  * @author Luca Garulli
- * 
  */
 public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
   protected int[]      clusterIds;
@@ -57,6 +56,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
     beginRange = iBegin;
     endRange = iEnd;
+    if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity().getClusterPosition())) {
+      currentRecord = null;
+    }
     return this;
   }
 
@@ -81,7 +83,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     // ITERATE UNTIL THE PREVIOUS GOOD RECORD
     while (currentClusterIdx > -1) {
-      while (currentEntry >= firstClusterEntry) {
+      while (currentEntry.compareTo(firstClusterEntry) >= 0) {
         if (!nextPosition(+1)) {
           currentRecord = null;
           break;
@@ -100,9 +102,14 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
       updateClusterRange();
 
-      currentEntry = lastClusterEntry;
-      currentPositionIndex = currentPositions.length;
-      currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
+      if (endRange != null && endRange.getClusterPosition() != null) {
+        OClusterPosition beginClusterPosition = endRange.getClusterPosition();
+        currentEntry = beginClusterPosition.compareTo(lastClusterEntry) < 0 ? beginClusterPosition : lastClusterEntry;
+      } else {
+        currentEntry = lastClusterEntry;
+      }
+      record = getRecord();
+      currentRecord = readCurrentRecord(record, 0);
     }
 
     if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
@@ -136,8 +143,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
       boolean thereAreRecordsToBrowse;
       if (current.clusterPosition.isTemporary())
         thereAreRecordsToBrowse = false;
-      else if (currentEntry == lastClusterEntry
-          && (currentPositions.length == 0 || currentPositionIndex >= currentPositions.length))
+      else if (currentEntry.compareTo(lastClusterEntry) > 0)
         thereAreRecordsToBrowse = false;
       else
         thereAreRecordsToBrowse = true;
@@ -167,9 +173,17 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
       updateClusterRange();
 
-      currentEntry = firstClusterEntry;
-      currentPositionIndex = -1;
-      currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
+      if (beginRange != null && beginRange.getClusterPosition() != null) {
+        OClusterPosition beginClusterPosition = beginRange.getClusterPosition();
+        currentEntry = beginClusterPosition.compareTo(firstClusterEntry) > 0 ? beginClusterPosition : firstClusterEntry;
+      } else {
+        currentEntry = firstClusterEntry;
+      }
+      record = getRecord();
+      currentRecord = readCurrentRecord(record, 0);
+
+      if (currentRecord != null)
+        return true;
     }
 
     // CHECK IN TX IF ANY
@@ -299,11 +313,16 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     if (liveUpdated)
       updateClusterRange();
+    if (beginRange != null && beginRange.getClusterPosition() != null) {
+      OClusterPosition beginClusterPosition = beginRange.getClusterPosition();
+      currentEntry = beginClusterPosition.compareTo(firstClusterEntry) > 0 ? beginClusterPosition : firstClusterEntry;
+    } else {
+      currentEntry = firstClusterEntry;
+    }
 
-    currentEntry = firstClusterEntry;
-    currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
+    ORecordInternal<?> record = getRecord();
+    currentRecord = readCurrentRecord(record, 0);
 
-    currentPositionIndex = -1;
     return this;
   }
 
@@ -320,10 +339,15 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     current.clusterId = currentClusterIdx;
 
-    currentEntry = lastClusterEntry;
-    currentPositions = dbStorage.getClusterPositionsForEntry(current.clusterId, currentEntry);
+    if (endRange != null && endRange.getClusterPosition() != null) {
+      OClusterPosition beginClusterPosition = endRange.getClusterPosition();
+      currentEntry = beginClusterPosition.compareTo(lastClusterEntry) < 0 ? beginClusterPosition : lastClusterEntry;
+    } else {
+      currentEntry = lastClusterEntry;
+    }
 
-    currentPositionIndex = currentPositions.length;
+    ORecordInternal<?> record = getRecord();
+    currentRecord = readCurrentRecord(record, 0);
 
     return this;
   }
@@ -341,8 +365,8 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     super.setLiveUpdated(iLiveUpdated);
 
     if (iLiveUpdated) {
-      firstClusterEntry = -1;
-      lastClusterEntry = -1;
+      firstClusterEntry = OClusterPosition.INVALID_POSITION;
+      lastClusterEntry = OClusterPosition.INVALID_POSITION;
     } else {
       updateClusterRange();
     }
@@ -352,10 +376,11 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
   protected void updateClusterRange() {
     current.clusterId = clusterIds[currentClusterIdx];
-    final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
+    final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
     firstClusterEntry = range[0];
     lastClusterEntry = range[1];
+    currentEntry = firstClusterEntry;
   }
 
   protected void config() {

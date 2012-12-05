@@ -59,7 +59,6 @@ import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
  * Distributed storage implementation that routes to the owner node the request.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class ODistributedStorage implements OStorage {
   protected final ODistributedServerManager dManager;
@@ -374,7 +373,7 @@ public class ODistributedStorage implements OStorage {
     return wrapped.removeUser();
   }
 
-  public long[] getClusterDataRange(final int currentClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
   }
 
@@ -414,8 +413,13 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
-    return wrapped.getClusterPositionsForEntry(currentClusterId, entry);
+  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition entry) {
+    return wrapped.getNextClusterPosition(currentClusterId, entry);
+  }
+
+  @Override
+  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition entry) {
+    return wrapped.getPrevClusterPosition(currentClusterId, entry);
   }
 
   @Override

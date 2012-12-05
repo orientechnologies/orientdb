@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -100,6 +101,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
     return (THISDB) this;
+  }
+
+  @Override
+  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return underlying.getNextClusterPosition(clusterId, clusterPosition);
+  }
+
+  @Override
+  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
+    return underlying.getPreviousClusterPosition(clusterId, clusterPosition);
   }
 
   /**
@@ -312,7 +323,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
-                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) save(iContent, null, iMode, false, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
@@ -343,7 +354,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see ORecordSchemaAware#validate()
    */
   public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (iPojo == null)
       return (RET) iPojo;
@@ -367,7 +378,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           // registerUserObject(iPojo, record);
           deleteOrphans((((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler())));
 
-          ODocument savedRecord = underlying.save(record, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+          ODocument savedRecord = underlying.save(record, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
+              iRecordUpdatedCallback);
 
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).setDoc(savedRecord);
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject);

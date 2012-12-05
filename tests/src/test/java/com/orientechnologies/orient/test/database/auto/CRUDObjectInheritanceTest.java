@@ -37,8 +37,8 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Company;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
-import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
+import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 
 @Test(groups = { "crud", "object" }, sequential = true)
 public class CRUDObjectInheritanceTest {
@@ -131,6 +131,7 @@ public class CRUDObjectInheritanceTest {
 
     // DELETE ALL THE RECORD IN THE CLUSTER
     for (Object obj : database.browseCluster("Company")) {
+      // TODO this test removes document which is used in next test!
       database.delete(obj);
       break;
     }

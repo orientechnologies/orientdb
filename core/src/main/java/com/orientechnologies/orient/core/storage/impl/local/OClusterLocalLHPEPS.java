@@ -483,49 +483,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     // To change body of implemented methods use File | Settings | File Templates.
   }
 
-  @Override
-  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
-    acquireSharedLock();
-    try {
-      if (entryPosition < 0 || entryPosition > mainBucketsSize - 1)
-        return new OPhysicalPosition[0];
-
-      OClusterLocalLHPEBucket bucket = loadMainBucket(entryPosition);
-
-      int sum = 0;
-      while (true) {
-        sum += bucket.getSize();
-
-        if (bucket.getOverflowBucket() > -1)
-          bucket = loadOverflowBucket(bucket.getOverflowBucket());
-        else
-          break;
-      }
-
-      OPhysicalPosition[] result = new OPhysicalPosition[sum];
-      int pos = 0;
-      bucket = loadMainBucket(entryPosition);
-
-      while (true) {
-        for (int i = 0; i < bucket.getSize(); i++) {
-          result[pos] = bucket.getPhysicalPosition(i);
-          pos++;
-        }
-
-        if (bucket.getOverflowBucket() > -1)
-          bucket = loadOverflowBucket(bucket.getOverflowBucket());
-        else
-          break;
-      }
-
-      return result;
-
-    } finally {
-      clearCache();
-      releaseSharedLock();
-    }
-  }
-
   public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
     acquireExclusiveLock();
     try {
@@ -641,23 +598,27 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
   }
 
-  public long getFirstEntryPosition() {
+  @Override
+  public OClusterPosition getFirstIdentity() {
     acquireSharedLock();
     try {
-      if (size == 0)
-        return -1;
-      return 0;
+      // if (size == 0)
+      // return -1;
+      // return 0;
+      return null;
     } finally {
       releaseSharedLock();
     }
   }
 
-  public long getLastEntryPosition() {
+  @Override
+  public OClusterPosition getLastIdentity() {
     acquireSharedLock();
     try {
-      if (size == 0)
-        return -1;
-      return mainBucketsSize - 1;
+      // if (size == 0)
+      // return -1;
+      // return mainBucketsSize - 1;
+      return null;
     } finally {
       releaseSharedLock();
     }
@@ -1513,6 +1474,26 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
 
     fileSegment.writeContinuously(upToPosition - remainingSize, new byte[remainingSize]);
+  }
+
+  @Override
+  public OClusterPosition nextRecord(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition prevRecord(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition nextTombstone(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition prevTombstone(OClusterPosition position) {
+    return null; // TODO realization missed!
   }
 
   private static final class BucketInfo {

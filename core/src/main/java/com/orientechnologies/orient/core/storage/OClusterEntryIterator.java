@@ -18,30 +18,42 @@ package com.orientechnologies.orient.core.storage;
 import java.io.IOException;
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 
-public class OClusterEntryIterator implements Iterator<Long> {
-  private final OCluster cluster;
-  private long           current;
-  private final long     max;
+public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
+  private final OCluster         cluster;
+  private OClusterPosition       current;
+  private final OClusterPosition max;
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
-    current = cluster.getFirstEntryPosition();
-    max = cluster.getLastEntryPosition();
+    current = cluster.getFirstIdentity();
+    max = cluster.getLastIdentity();
   }
 
-  public OClusterEntryIterator(final OCluster iCluster, final long iBeginRange, final long iEndRange) throws IOException {
+  public OClusterEntryIterator(final OCluster iCluster, final OClusterPosition iBeginRange, final OClusterPosition iEndRange) throws IOException {
     cluster = iCluster;
     current = iBeginRange;
-    max = iEndRange > -1 ? iEndRange : cluster.getLastEntryPosition();
+    max = OClusterPosition.INVALID_POSITION.compareTo(iEndRange) < 0 ? iEndRange : cluster.getLastIdentity();
   }
 
   public boolean hasNext() {
-    return max > -1 && current > -1 && current <= max;
+    return current!=null&&OClusterPosition.INVALID_POSITION.compareTo(max) < 0  && OClusterPosition.INVALID_POSITION.compareTo(current) < 0 && current.compareTo(max) <= 0;
   }
 
-  public Long next() {
-    return current++;
+  public OPhysicalPosition next() {
+    try {
+      OPhysicalPosition physicalPosition = cluster.getPhysicalPosition(new OPhysicalPosition(current));
+      if (current.compareTo(max) < 0){
+        current = cluster.nextRecord(current);
+      }else{
+        current = null;
+      }
+      return physicalPosition;
+    } catch (IOException e) {
+      throw new ODatabaseException("Cannot read next record of cluster.", e);
+    }
   }
 
   public void remove() {

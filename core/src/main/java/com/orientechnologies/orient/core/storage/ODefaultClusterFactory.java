@@ -21,12 +21,15 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageMemoryLinearHashingClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocalLHPEPS;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
+import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
+import com.orientechnologies.orient.core.storage.impl.memory.lh.OClusterMemoryLinearHashing;
 
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
@@ -35,7 +38,8 @@ public class ODefaultClusterFactory implements OClusterFactory {
     if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
       return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean() ? new OClusterLocalLHPEPS() : new OClusterLocal();
     else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
-      return new OClusterMemory();
+      return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() ? new OClusterMemoryLinearHashing()
+          : new OClusterMemoryArrayList();
     else
       OLogManager.instance().exception(
           "Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
@@ -49,7 +53,9 @@ public class ODefaultClusterFactory implements OClusterFactory {
     else if (iConfig instanceof OStoragePhysicalClusterLHPEPSConfiguration)
       return new OClusterLocalLHPEPS();
     else if (iConfig instanceof OStorageMemoryClusterConfiguration)
-      return new OClusterMemory();
+      return new OClusterMemoryArrayList();
+    else if (iConfig instanceof OStorageMemoryLinearHashingClusterConfiguration)
+      return new OClusterMemoryLinearHashing();
     else
       OLogManager.instance().exception(
           "Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,

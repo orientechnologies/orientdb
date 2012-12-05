@@ -111,6 +111,7 @@ public class ODatabaseHelper {
     f.close();
 
     String fileContent = new String(buffer);
+    // TODO search is wrong because if first user is not root tests will fail
     int pos = fileContent.indexOf("password=\"");
     pos += "password=\"".length();
     return fileContent.substring(pos, fileContent.indexOf('"', pos));

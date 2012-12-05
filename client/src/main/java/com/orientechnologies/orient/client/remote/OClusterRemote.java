@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -122,12 +123,12 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
-  public long getFirstEntryPosition() {
-    return 0;
+  public OClusterPosition getFirstIdentity() {
+    return OClusterPositionFactory.INSTANCE.valueOf(0);
   }
 
-  public long getLastEntryPosition() {
-    return 0;
+  public OClusterPosition getLastIdentity() {
+    return OClusterPositionFactory.INSTANCE.valueOf(0);
   }
 
   public void lock() {
@@ -158,16 +159,31 @@ public class OClusterRemote implements OCluster {
     return false;
   }
 
-  @Override
-  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
-    return new OPhysicalPosition[0];
-  }
-
   public OClusterEntryIterator absoluteIterator() {
     throw new UnsupportedOperationException("getRecordsSize()");
   }
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  @Override
+  public OClusterPosition nextRecord(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition prevRecord(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition nextTombstone(OClusterPosition position) {
+    return null; // TODO realization missed!
+  }
+
+  @Override
+  public OClusterPosition prevTombstone(OClusterPosition position) {
+    return null; // TODO realization missed!
   }
 }

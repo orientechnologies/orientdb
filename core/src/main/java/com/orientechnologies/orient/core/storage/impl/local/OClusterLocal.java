@@ -21,7 +21,12 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
+import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -55,7 +60,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
   private int                                       id;
   private long                                      beginOffsetData = -1;
-  private long                                      endOffsetData   = -1;        // end of data offset. -1 = latest
+  private long                                      endOffsetData   = -1;                                              // end of
+                                                                                                                        // data
+                                                                                                                        // offset.
+                                                                                                                        // -1 =
+                                                                                                                        // latest
 
   protected OClusterLocalHole                       holeSegment;
   private OStoragePhysicalClusterConfigurationLocal config;
@@ -151,11 +160,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     try {
 
       // REMOVE ALL DATA BLOCKS
-      final long begin = getFirstEntryPosition();
-      if (begin > -1) {
-        final long end = getLastEntryPosition();
+      final OClusterPosition begin = getFirstIdentity();
+      if (begin.isPersistent()) {
+        final OClusterPosition end = getLastIdentity();
         final OPhysicalPosition ppos = new OPhysicalPosition();
-        for (ppos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(begin); ppos.clusterPosition.longValue() <= end; ppos.clusterPosition = ppos.clusterPosition
+        for (ppos.clusterPosition = begin; ppos.clusterPosition.compareTo(end) <= 0; ppos.clusterPosition = ppos.clusterPosition
             .inc()) {
           getPhysicalPosition(ppos);
 
@@ -201,12 +210,12 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
    * @throws IOException
    */
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) throws IOException {
-    final long position = iPPosition.clusterPosition.longValue();
-    final long filePosition = position * RECORD_SIZE;
+    final OClusterPosition position = iPPosition.clusterPosition;
+    final long filePosition = position.longValue() * RECORD_SIZE;
 
     acquireSharedLock();
     try {
-      if (position < 0 || position > getLastEntryPosition())
+      if (position.isNew() || position.compareTo(getLastIdentity()) > 0)
         return null;
 
       final long[] pos = fileSegment.getRelativePosition(filePosition);
@@ -224,15 +233,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  @Override
-  public OPhysicalPosition[] getPositionsByEntryPos(long entryPosition) throws IOException {
-    OPhysicalPosition ppos = getPhysicalPosition(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(entryPosition)));
-    if (ppos == null)
-      return new OPhysicalPosition[0];
-
-    return new OPhysicalPosition[] { ppos };
   }
 
   /**
@@ -312,10 +312,10 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       holeSegment.pushPosition(position);
 
       // MARK DELETED SETTING VERSION TO NEGATIVE NUMBER
-			final ORecordVersion version = OVersionFactory.instance().createVersion();
-			version.getSerializer().readFrom(file, p, version);
-			version.convertToTombstone();
-			version.getSerializer().writeTo(file, p, version);
+      final ORecordVersion version = OVersionFactory.instance().createVersion();
+      version.getSerializer().readFrom(file, p, version);
+      version.convertToTombstone();
+      version.getSerializer().writeTo(file, p, version);
 
       updateBoundsAfterDeletion(position);
 
@@ -405,11 +405,12 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return fileSegment.allocateSpace(RECORD_SIZE);
   }
 
-  public long getFirstEntryPosition() {
+  @Override
+  public OClusterPosition getFirstIdentity() {
     acquireSharedLock();
     try {
 
-      return beginOffsetData;
+      return OClusterPositionFactory.INSTANCE.valueOf(beginOffsetData);
 
     } finally {
       releaseSharedLock();
@@ -419,11 +420,13 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   /**
    * Returns the endOffsetData value if it's not equals to the last one, otherwise the total entries.
    */
-  public long getLastEntryPosition() {
+  @Override
+  public OClusterPosition getLastIdentity() {
     acquireSharedLock();
     try {
 
-      return endOffsetData > -1 ? endOffsetData : fileSegment.getFilledUpTo() / RECORD_SIZE - 1;
+      return OClusterPositionFactory.INSTANCE.valueOf(endOffsetData > -1 ? endOffsetData : fileSegment.getFilledUpTo()
+          / RECORD_SIZE - 1);
 
     } finally {
       releaseSharedLock();
@@ -498,10 +501,10 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
       long size = fileSegment.getFilledUpTo();
       final OClusterEntryIterator it = absoluteIterator();
-      final OPhysicalPosition pos = new OPhysicalPosition();
+
       while (it.hasNext()) {
-        pos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(it.next());
-        getPhysicalPosition(pos);
+        final OPhysicalPosition pos = it.next();
+        // getPhysicalPosition(pos);
         if (pos.dataSegmentPos > -1 && !pos.recordVersion.isTombstone())
           size += storage.getDataSegmentById(pos.dataSegmentId).getRecordSize(pos.dataSegmentPos);
       }
@@ -691,5 +694,78 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       return false;
 
     return true;
+  }
+
+  @Override
+  public OClusterPosition nextRecord(OClusterPosition position) throws IOException {
+    long filePosition = position.longValue() * RECORD_SIZE;
+    ORecordVersion recordVersionContainer = OVersionFactory.instance().createVersion();
+
+    acquireSharedLock();
+    try {
+      if (position.compareTo(getLastIdentity()) >= 0)
+        return OClusterPosition.INVALID_POSITION;
+
+      long lastFilePosition = getLastIdentity().longValue() * RECORD_SIZE;
+
+      do {
+        filePosition += RECORD_SIZE;
+        final long[] pos = fileSegment.getRelativePosition(filePosition);
+
+        final OFile f = fileSegment.files[(int) pos[0]];
+        long p = pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE;
+
+        recordVersionContainer.getSerializer().readFrom(f, p, recordVersionContainer);
+      } while (recordVersionContainer.isTemporary() && filePosition < lastFilePosition);
+
+      if (recordVersionContainer.isTemporary()) {
+        return OClusterPosition.INVALID_POSITION;
+      } else {
+        return OClusterPositionFactory.INSTANCE.valueOf(filePosition / RECORD_SIZE);
+      }
+    } finally {
+      recordVersionContainer.clearRollbackMode();
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OClusterPosition prevRecord(OClusterPosition position) throws IOException {
+    long filePosition = position.longValue() * RECORD_SIZE;
+    ORecordVersion recordVersionContainer = OVersionFactory.instance().createVersion();
+
+    acquireSharedLock();
+    try {
+      if (position.compareTo(getLastIdentity()) > 0)
+        return OClusterPosition.INVALID_POSITION;
+
+      do {
+        filePosition -= RECORD_SIZE;
+        final long[] pos = fileSegment.getRelativePosition(filePosition);
+
+        final OFile f = fileSegment.files[(int) pos[0]];
+        long p = pos[1] + OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE;
+
+        recordVersionContainer.getSerializer().readFrom(f, p, recordVersionContainer);
+      } while (recordVersionContainer.isTemporary() && position.compareTo(getFirstIdentity()) >= 0);
+
+      if (recordVersionContainer.isTemporary()) {
+        return OClusterPosition.INVALID_POSITION;
+      } else {
+        return OClusterPositionFactory.INSTANCE.valueOf(filePosition / RECORD_SIZE);
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OClusterPosition nextTombstone(OClusterPosition position) {
+    throw new UnsupportedOperationException("local cluster does not support tombstones");
+  }
+
+  @Override
+  public OClusterPosition prevTombstone(OClusterPosition position) {
+    throw new UnsupportedOperationException("local cluster does not support tombstones");
   }
 }

@@ -575,7 +575,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return count(new int[] { iClusterId });
   }
 
-  public long[] getClusterDataRange(final int iClusterId) {
+  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
     checkConnection();
 
     do {
@@ -592,7 +592,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         try {
           beginResponse(network);
-          return new long[] { network.readLong(), network.readLong() };
+          return new OClusterPosition[] { network.readClusterPosition(), network.readClusterPosition() };
         } finally {
           endResponse(network);
         }
@@ -605,17 +605,53 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition[] getClusterPositionsForEntry(int currentClusterId, long entry) {
+  public OClusterPosition getNextClusterPosition(int iClusterId, OClusterPosition iClusterPosition) {
     checkConnection();
 
     do {
       try {
+
         OChannelBinaryClient network = null;
         try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_POSITIONS);
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_NEXT);
+          network.writeInt(iClusterId);
+          network.writeClusterPosition(iClusterPosition);
 
-          network.writeShort((short) currentClusterId);
-          network.writeLong(entry);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+          if (network.readByte() == 0) {
+            return OClusterPosition.INVALID_POSITION;
+          } else {
+            return network.readClusterPosition();
+          }
+
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error on retrieving next record after " + iClusterPosition, e);
+
+      }
+    } while (true);
+  }
+
+  @Override
+  public OClusterPosition getPrevClusterPosition(int iClusterId, OClusterPosition iClusterPosition) {
+    checkConnection();
+
+    do {
+      try {
+
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_PREVIOUS);
+          network.writeInt(iClusterId);
+          network.writeClusterPosition(iClusterPosition);
 
         } finally {
           endRequest(network);
@@ -624,22 +660,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           beginResponse(network);
 
-          final int length = network.readInt();
-          final OClusterPosition[] result = new OClusterPosition[length];
+          if (network.readByte() == 0) {
+            return OClusterPosition.INVALID_POSITION;
+          } else {
+            return network.readClusterPosition();
+          }
 
-          for (int i = 0; i < length; i++)
-            result[i] = network.readClusterPosition();
-
-          return result;
         } finally {
           endResponse(network);
         }
 
       } catch (Exception e) {
-        handleException("Error on getting positions list from cluster : " + currentClusterId + " and entry : " + entry, e);
+        handleException("Error on retrieving next record after " + iClusterPosition, e);
+
       }
     } while (true);
-
   }
 
   public long getSize() {

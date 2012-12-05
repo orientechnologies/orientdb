@@ -49,8 +49,8 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
   protected int                              filledUpTo;                                                         // PART OF HEADER
-                                                                                                                  // (4
-                                                                                                                  // bytes)
+  // (4
+  // bytes)
   protected MappedByteBuffer                 headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
@@ -470,7 +470,6 @@ public class OFileMMap extends OAbstractFile {
 
   /**
    * Synchronizes buffered changes to the file.
-   * 
    */
   @Override
   public void synch() {
