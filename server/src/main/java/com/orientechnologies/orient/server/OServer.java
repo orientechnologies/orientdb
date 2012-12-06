@@ -117,10 +117,6 @@ public class OServer {
 
     startup(new File(config));
 
-    databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
-    databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
-    databaseDirectory = databaseDirectory.replace("//", "/");
-
     Orient
         .instance()
         .getProfiler()
@@ -179,6 +175,10 @@ public class OServer {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
+    
+    databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
+    databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
+    databaseDirectory = databaseDirectory.replace("//", "/");
   }
 
   @SuppressWarnings("unchecked")
