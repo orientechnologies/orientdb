@@ -1220,8 +1220,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean optimizeExecution() {
-    if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && projections != null
-        && projections.size() == 1) {
+    if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && groupByFields == null
+        && projections != null && projections.size() == 1) {
       final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
 
       if (entry.getValue() instanceof OSQLFunctionRuntime) {
