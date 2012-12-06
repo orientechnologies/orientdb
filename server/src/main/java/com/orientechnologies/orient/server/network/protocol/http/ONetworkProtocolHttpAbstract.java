@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -245,13 +246,14 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     if (iHeaders != null)
       writeLine(iHeaders);
 
-    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : iContent.length()));
+    final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(iContent);
+
+    writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
     writeLine(null);
 
-    if (!empty)
-      writeLine(iContent);
-
+    if (binaryContent != null)
+      channel.writeBytes(binaryContent);
     channel.flush();
   }
 
@@ -438,7 +440,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           // CONSUME THE NEXT \n
           channel.read();
 
-          request.httpMethod = words[0];
+          request.httpMethod = words[0].toUpperCase();
           request.url = words[1].trim();
 
           final int parametersPos = request.url.indexOf('?');
