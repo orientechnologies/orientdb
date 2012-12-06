@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -231,6 +232,33 @@ public class SQLInsertTest {
   }
 
   @Test
+  public void insertAvoidingSubQuery() {
+    database.open("admin", "admin");
+
+    ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')")).execute();
+
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.field("text"), "(Hello World)");
+
+    database.close();
+  }
+
+  @Test
+  public void insertSubQuery() {
+    database.open("admin", "admin");
+
+    ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
+        .execute();
+
+    Assert.assertTrue(doc != null);
+    Assert.assertNotNull(doc.field("names"));
+    Assert.assertTrue(doc.field("names") instanceof Collection);
+    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), 3);
+
+    database.close();
+  }
+
+  @Test
   public void insertCluster() {
     database.open("admin", "admin");
 
@@ -274,7 +302,7 @@ public class SQLInsertTest {
     for (int i = 0; i < 100; i++) {
       if (!iteratorCluster.hasNext())
         break;
-      ORecord doc = iteratorCluster.next();
+      ORecord<?> doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

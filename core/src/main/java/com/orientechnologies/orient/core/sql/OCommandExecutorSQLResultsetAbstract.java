@@ -145,7 +145,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           return true;
         } else if (var instanceof OIdentifiable) {
           final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>();
-          ((List<OIdentifiable>) target).add((OIdentifiable) var);
+          list.add((OIdentifiable) var);
           target = list.iterator();
         } else if (var instanceof Iterable<?>)
           target = ((Iterable<? extends OIdentifiable>) var).iterator();
