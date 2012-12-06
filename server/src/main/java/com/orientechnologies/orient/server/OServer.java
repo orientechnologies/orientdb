@@ -175,7 +175,7 @@ public class OServer {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
-    
+
     databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
     databaseDirectory = databaseDirectory.replace("//", "/");
@@ -390,7 +390,8 @@ public class OServer {
   }
 
   public void saveConfiguration() throws IOException {
-    configurationLoader.save(configuration);
+    if (configurationLoader != null)
+      configurationLoader.save(configuration);
   }
 
   public Map<String, Class<? extends ONetworkProtocol>> getNetworkProtocols() {
