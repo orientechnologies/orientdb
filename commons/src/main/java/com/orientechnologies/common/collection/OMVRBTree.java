@@ -1394,6 +1394,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   final class InverseEntryIterator extends AbstractEntryIterator<K, V, Map.Entry<K, V>> {
     InverseEntryIterator(final OMVRBTreeEntry<K, V> last) {
       super(last);
+      //we have to set ourselves after current index to make iterator work
+      if (last != null) {
+        pageIndex = last.getTree().getPageIndex()+1;
+      }
     }
 
     public Map.Entry<K, V> next() {
@@ -1415,6 +1419,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   final class ValueInverseIterator extends AbstractEntryIterator<K, V, V> {
     ValueInverseIterator(final OMVRBTreeEntry<K, V> last) {
       super(last);
+      //we have to set ourselves after current index to make iterator work
+      if (last != null) {
+        pageIndex = last.getTree().getPageIndex()+1;
+      }
     }
 
     @Override
