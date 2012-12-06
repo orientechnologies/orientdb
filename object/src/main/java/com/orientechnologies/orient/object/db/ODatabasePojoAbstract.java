@@ -17,6 +17,7 @@ package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -505,7 +506,13 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
           map.put(e.getKey(), convertParameter(e.getValue()));
         }
 
-      } else if (iParameter != null && iParameter.getClass().isEnum()) {
+      } else if (iParameter instanceof Collection<?>) {
+		List<Object> result = new ArrayList<Object>();
+		for (Object object : (Collection<Object>) iParameter) {
+			result.add(convertParameter(object));
+		}
+	    return result;
+	  } else if (iParameter != null && iParameter.getClass().isEnum()) {
         return ((Enum<?>) iParameter).name();
       } else if (iParameter != null && !OType.isSimpleType(iParameter)) {
         final ORID rid = getIdentity(iParameter);
