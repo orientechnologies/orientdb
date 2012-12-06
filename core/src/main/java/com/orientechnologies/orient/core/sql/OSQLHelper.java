@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -108,6 +109,11 @@ public class OSQLHelper {
         fieldValue = new ODocument(map);
       else
         fieldValue = map;
+    } else if (iValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN
+        && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.EMBEDDED_END) {
+      // SUB-COMMAND
+      fieldValue = new OCommandSQL(iValue.substring(1, iValue.length() - 1));
+
     } else if (iValue.charAt(0) == ORID.PREFIX)
       // RID
       fieldValue = new ORecordId(iValue.trim());
@@ -268,10 +274,8 @@ public class OSQLHelper {
       Object fieldValue = field.getValue();
 
       if (fieldValue != null) {
-        final String fieldValueString = fieldValue.toString();
-        if (fieldValueString.startsWith("(") && fieldValueString.endsWith(")")) {
-          // SUB-COMMAND
-          final OCommandSQL cmd = new OCommandSQL(fieldValueString.substring(1, fieldValueString.length() - 1));
+        if (fieldValue instanceof OCommandSQL) {
+          final OCommandRequest cmd = (OCommandRequest) fieldValue;
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
