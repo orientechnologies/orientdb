@@ -26,7 +26,7 @@
 	<test name="Security">
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.SecurityTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.RestrictedTest"/>
+			<class name="com.orientechnologies.orient.test.database.auto.RestrictedTest" />
 		</classes>
 	</test>
 	<test name="Hook">
@@ -38,7 +38,7 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.ComplexTypesTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.CRUDFlatPhysicalTest" />
@@ -53,8 +53,8 @@
 		<classes>
 			<class name="com.orientechnologies.orient.test.database.auto.IndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.IndexCustomKeyTest" />
-            <class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ByteArrayKeyTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.ByteArrayKeyTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.FullTextIndexTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.ClassIndexManagerTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectIndexReuseTest" />
@@ -125,6 +125,7 @@
 			<class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest" />
+			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectGroupByTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest" />
 			<class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest" />

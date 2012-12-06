@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -71,7 +70,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -273,6 +271,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         executeSearch(null);
         applyFlatten();
         handleNoTarget();
+        handleGroupBy();
 
         subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
         lastRecord = null;
@@ -313,6 +312,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       executeSearch(iArgs);
       applyFlatten();
       handleNoTarget();
+      handleGroupBy();
       applyOrderBy();
       applyLimitAndSkip();
     }
@@ -1175,6 +1175,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       handleResult(ORuntimeResult.createProjectionDocument(resultCount));
   }
 
+  private void handleGroupBy() {
+    if (groupedResult != null && tempResult == null) {
+      tempResult = new ArrayList<OIdentifiable>();
+
+      for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
+        if (g.getKey() != null || groupedResult.size() == 1) {
+          final ODocument doc = g.getValue().getResult();
+          if (doc != null && !doc.isEmpty())
+            tempResult.add(doc);
+        }
+      }
+    }
+  }
+
   private static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
     if (!iSchemaClass.areIndexed(result.fields()))
       return false;
@@ -1197,26 +1211,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   @Override
   public String getSyntax() {
     return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>]";
-  }
-
-  @Override
-  public Object getResult() {
-    if (tempResult != null && !tempResult.isEmpty()) {
-      return super.getResult();
-    } else if (groupedResult != null) {
-      for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
-        if (g.getKey() != null || groupedResult.size() == 1) {
-          final ODocument doc = g.getValue().getResult();
-          if (doc != null && !doc.isEmpty())
-            request.getResultListener().result(doc);
-        }
-      }
-
-      if (request instanceof OSQLSynchQuery)
-        return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
-    }
-
-    return super.getResult();
   }
 
   protected boolean optimizeExecution() {
