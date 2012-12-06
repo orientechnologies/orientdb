@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -401,7 +402,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } else {
         // AGGREGATION/GROUP BY
         final ODocument doc = (ODocument) iRecord.getRecord();
-        final Object fieldValue = groupByFields == null || groupByFields.isEmpty() ? null : doc.field(groupByFields.get(0));
+        Object fieldValue = null;
+        if (groupByFields != null && !groupByFields.isEmpty()) {
+          if (groupByFields.size() > 1) {
+            // MULTI-FIELD FROUP BY
+            final Object[] fields = new Object[groupByFields.size()];
+            for (int i = 0; i < groupByFields.size(); ++i)
+              fields[i] = doc.field(groupByFields.get(i));
+
+            fieldValue = fields;
+          } else
+            fieldValue = doc.field(groupByFields.get(0));
+        }
 
         getProjectionGroup(fieldValue).applyRecord(iRecord);
         return;
@@ -427,8 +439,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (groupedResult == null)
       groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
-    else
-      group = groupedResult.get(fieldValue);
+    else {
+      if (fieldValue != null && fieldValue.getClass().isArray()) {
+        // SEQUENTIAL SCAN
+        final int arraySize = Array.getLength(fieldValue);
+        for (Entry<Object, ORuntimeResult> entry : groupedResult.entrySet()) {
+          final Object k = entry.getKey();
+
+          boolean same = false;
+
+          if (k != null && k.getClass().isArray() && Array.getLength(k) == arraySize) {
+            same = true;
+            for (int i = 0; i < arraySize; ++i) {
+              final Object o1 = Array.get(k, i);
+              final Object o2 = Array.get(fieldValue, i);
+
+              if (o1 == null && o2 != null || o1 != null && o2 == null || o1 != null && !o1.equals(o2)) {
+                same = false;
+                break;
+              }
+            }
+          }
+
+          if (same)
+            group = entry.getValue();
+        }
+      } else
+        // LOKUP FOR THE FIELD
+        group = groupedResult.get(fieldValue);
+    }
 
     if (group == null) {
       group = new ORuntimeResult(createProjectionFromDefinition(), resultCount, context);
