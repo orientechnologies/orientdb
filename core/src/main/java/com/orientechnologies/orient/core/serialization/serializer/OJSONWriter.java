@@ -31,6 +31,7 @@ import java.util.TimeZone;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -322,53 +323,61 @@ public class OJSONWriter {
       return iValue;
   }
 
-  public static String listToJSON(final Collection<? extends OIdentifiable> iRecords, final String iFormat) throws IOException {
-    final StringWriter buffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(buffer);
-    // WRITE RECORDS
-    json.beginCollection(0, false, null);
-    if (iRecords != null) {
-      int counter = 0;
-      String objectJson;
-      for (OIdentifiable rec : iRecords) {
-        if (rec != null)
-          try {
-            objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
+  public static String listToJSON(final Collection<? extends OIdentifiable> iRecords, final String iFormat) {
+    try {
+      final StringWriter buffer = new StringWriter();
+      final OJSONWriter json = new OJSONWriter(buffer);
+      // WRITE RECORDS
+      json.beginCollection(0, false, null);
+      if (iRecords != null) {
+        int counter = 0;
+        String objectJson;
+        for (OIdentifiable rec : iRecords) {
+          if (rec != null)
+            try {
+              objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
-            if (counter++ > 0)
-              buffer.append(", ");
+              if (counter++ > 0)
+                buffer.append(", ");
 
-            buffer.append(objectJson);
-          } catch (Exception e) {
-            OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-          }
+              buffer.append(objectJson);
+            } catch (Exception e) {
+              OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+            }
+        }
       }
-    }
-    json.endCollection(0, false);
+      json.endCollection(0, false);
 
-    return buffer.toString();
+      return buffer.toString();
+    } catch (IOException e) {
+      throw new OSerializationException("Error on serializing collection", e);
+    }
   }
 
-  public static String mapToJSON(Map<?, ?> iMap) throws IOException {
+  public static String mapToJSON(Map<?, ?> iMap) {
     return mapToJSON(iMap, null, new StringBuilder());
   }
 
-  public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) throws IOException {
-    buffer.append('{');
-    if (iMap != null) {
-      int i = 0;
-      Entry<?, ?> entry;
-      for (Iterator<?> it = iMap.entrySet().iterator(); it.hasNext(); ++i) {
-        entry = (Entry<?, ?>) it.next();
-        if (i > 0)
-          buffer.append(", ");
-        buffer.append(writeValue(entry.getKey(), iFormat));
-        buffer.append(": ");
-        buffer.append(writeValue(entry.getValue(), iFormat));
+  public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {
+    try {
+      buffer.append('{');
+      if (iMap != null) {
+        int i = 0;
+        Entry<?, ?> entry;
+        for (Iterator<?> it = iMap.entrySet().iterator(); it.hasNext(); ++i) {
+          entry = (Entry<?, ?>) it.next();
+          if (i > 0)
+            buffer.append(", ");
+          buffer.append(writeValue(entry.getKey(), iFormat));
+          buffer.append(": ");
+          buffer.append(writeValue(entry.getValue(), iFormat));
+        }
       }
+      buffer.append('}');
+      return buffer.toString();
+    } catch (IOException e) {
+      throw new OSerializationException("Error on serializing map", e);
     }
-    buffer.append('}');
-    return buffer.toString();
   }
 
   public void newline() throws IOException {
