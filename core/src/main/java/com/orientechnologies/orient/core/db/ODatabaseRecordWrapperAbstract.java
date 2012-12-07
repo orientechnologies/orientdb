@@ -193,6 +193,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> cleanOutRecord(ORID rid, ORecordVersion version) {
+    underlying.cleanOutRecord(rid, version);
+    return this;
+  }
+
   public ODatabaseComplex<ORecordInternal<?>> delete(final ORecordInternal<?> iRecord) {
     underlying.delete(iRecord);
     return this;
@@ -245,12 +251,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
-                                                   boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName,
-                                                   final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 

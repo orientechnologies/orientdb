@@ -256,6 +256,11 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return this;
   }
 
+  public ODatabaseComplex<T> cleanOutRecord(final ORID iRID, final ORecordVersion iVersion) {
+    underlying.cleanOutRecord(iRID, iVersion);
+    return this;
+  }
+
   public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
     underlying.registerHook(iHookImpl);
     return (DBTYPE) this;
@@ -507,12 +512,12 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
         }
 
       } else if (iParameter instanceof Collection<?>) {
-		List<Object> result = new ArrayList<Object>();
-		for (Object object : (Collection<Object>) iParameter) {
-			result.add(convertParameter(object));
-		}
-	    return result;
-	  } else if (iParameter != null && iParameter.getClass().isEnum()) {
+        List<Object> result = new ArrayList<Object>();
+        for (Object object : (Collection<Object>) iParameter) {
+          result.add(convertParameter(object));
+        }
+        return result;
+      } else if (iParameter != null && iParameter.getClass().isEnum()) {
         return ((Enum<?>) iParameter).name();
       } else if (iParameter != null && !OType.isSimpleType(iParameter)) {
         final ORID rid = getIdentity(iParameter);

@@ -301,6 +301,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return 1;
   }
 
+  protected int cleanOutRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+    iDatabase.delete(rid, version);
+    return 1;
+  }
+
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType, final int dataSegmentId) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);

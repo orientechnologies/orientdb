@@ -47,6 +47,14 @@ public class OVersionFactory {
     }
   }
 
+  public ORecordVersion createTombstone() {
+    if (useDistributed) {
+      return new ODistributedVersion(-1);
+    } else {
+      return new OSimpleVersion(-1);
+    }
+  }
+
   public ORecordVersion createUntrackedVersion() {
     if (useDistributed) {
       return new ODistributedVersion(-1);

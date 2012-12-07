@@ -207,6 +207,11 @@ public class ODistributedStorage implements OStorage {
     return new OStorageOperationResult<Boolean>((Boolean) result);
   }
 
+  @Override
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    return wrapped.cleanOutRecord(recordId, recordVersion, iMode, callback);
+  }
+
   public boolean existsResource(final String iName) {
     return wrapped.existsResource(iName);
   }

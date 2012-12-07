@@ -243,6 +243,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> delete(ORID iRID, ORecordVersion iVersion);
 
+  public ODatabaseComplex<T> cleanOutRecord(ORID rid, ORecordVersion version);
+
   /**
    * Return active transaction. Cannot be null. If no transaction is active, then a OTransactionNoTx instance is returned.
    * 

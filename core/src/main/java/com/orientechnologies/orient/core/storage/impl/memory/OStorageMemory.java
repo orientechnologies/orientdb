@@ -357,10 +357,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
-        if (ppos == null)
+        if (ppos == null || ppos.recordVersion.isTombstone())
           return null;
 
-        final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
+        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
 
         return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
@@ -390,7 +390,7 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (ppos == null) {
+        if (ppos == null || ppos.recordVersion.isTombstone()) {
           final ORecordVersion v = OVersionFactory.instance().createUntrackedVersion();
           if (iCallback != null) {
             iCallback.call(iRid, v);
@@ -433,8 +433,19 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, final int iMode,
       ORecordCallback<Boolean> iCallback) {
+    return new OStorageOperationResult<Boolean>(deleteRecord(iRid, iVersion,
+        OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean(), iCallback));
+  }
+
+  @Override
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    return deleteRecord(recordId, recordVersion, OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean(), callback);
+  }
+
+  private boolean deleteRecord(ORecordId iRid, ORecordVersion iVersion, boolean useTombstones, ORecordCallback<Boolean> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(iRid.clusterId);
@@ -447,10 +458,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
-        if (ppos == null) {
+        if (ppos == null || ppos.recordVersion.isTombstone()) {
           if (iCallback != null)
             iCallback.call(iRid, false);
-          return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+          return false;
         }
 
         // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
@@ -460,15 +471,19 @@ public class OStorageMemory extends OStorageEmbedded {
           else
             throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
-        cluster.removePhysicalPosition(iRid.clusterPosition);
+        if (useTombstones)
+          cluster.updateVersion(iRid.clusterPosition, ORecordVersion.TOMBSTONE);
+        else
+          cluster.removePhysicalPosition(iRid.clusterPosition);
 
-        final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
+        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+
         dataSegment.deleteRecord(ppos.dataSegmentPos);
 
         if (iCallback != null)
           iCallback.call(null, true);
 
-        return new OStorageOperationResult<Boolean>(Boolean.TRUE);
+        return true;
 
       } finally {
         lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);

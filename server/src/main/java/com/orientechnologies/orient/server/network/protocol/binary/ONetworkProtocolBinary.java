@@ -1092,6 +1092,28 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  protected void cleanOutRecord() throws IOException {
+    setDataCommandInfo("Clean out record");
+
+    checkDatabase();
+
+    final ORID rid = channel.readRID();
+    final ORecordVersion version = channel.readVersion();
+    final byte mode = channel.readByte();
+
+    final int result = cleanOutRecord(connection.database, rid, version);
+
+    if (mode < 2) {
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeByte((byte) result);
+      } finally {
+        endResponse();
+      }
+    }
+  }
+
   /**
    * VERSION MANAGEMENT:<br/>
    * -1 : DOCUMENT UPDATE, NO VERSION CONTROL<br/>

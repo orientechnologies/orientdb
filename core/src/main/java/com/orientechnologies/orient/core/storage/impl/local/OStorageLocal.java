@@ -1027,7 +1027,8 @@ public class OStorageLocal extends OStorageEmbedded {
         return new OStorageOperationResult<Boolean>(txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster,
             iRid.clusterPosition, iVersion));
       } else {
-        final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion);
+        final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion,
+            OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean());
 
         if (ppos != null
             && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
@@ -1758,7 +1759,8 @@ public class OStorageLocal extends OStorageEmbedded {
     return null;
   }
 
-  protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final ORecordVersion iVersion) {
+  protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final ORecordVersion iVersion,
+      boolean useTombstones) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
@@ -1783,7 +1785,10 @@ public class OStorageLocal extends OStorageEmbedded {
         if (ppos.dataSegmentPos > -1)
           getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
 
-        iClusterSegment.removePhysicalPosition(iRid.clusterPosition);
+        if (useTombstones)
+          iClusterSegment.updateVersion(iRid.clusterPosition, ORecordVersion.TOMBSTONE);
+        else
+          iClusterSegment.removePhysicalPosition(iRid.clusterPosition);
 
         return ppos;
 
@@ -1802,6 +1807,30 @@ public class OStorageLocal extends OStorageEmbedded {
     }
 
     return null;
+  }
+
+  @Override
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    final OCluster cluster = getClusterById(recordId.clusterId);
+
+    modificationLock.requestModificationLock();
+    try {
+      final OPhysicalPosition ppos = deleteRecord(cluster, recordId, recordVersion, false);
+
+      if (ppos != null
+          && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
+              .getName())))
+        synchRecordUpdate(cluster, ppos);
+
+      final boolean returnValue = ppos != null;
+
+      if (callback != null)
+        callback.call(recordId, returnValue);
+
+      return returnValue;
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
   }
 
   private void installProfilerHooks() {

@@ -164,6 +164,12 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.deleteRecord(iRid, iVersion, iMode, iCallback);
   }
 
+  @Override
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    delegate.setSessionId(sessionId);
+    return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);
+  }
+
   public long count(final int iClusterId) {
     delegate.setSessionId(sessionId);
     return delegate.count(iClusterId);

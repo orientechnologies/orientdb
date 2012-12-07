@@ -285,6 +285,21 @@ public class ODatabaseRaw implements ODatabase {
     }
   }
 
+  public boolean cleanOutRecord(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
+    try {
+      final boolean result = storage.cleanOutRecord(iRid, iVersion, iMode, null);
+      if (!result && iRequired)
+        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+      return result;
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
+      return false;
+    }
+  }
+
   public OStorage getStorage() {
     return storage;
   }

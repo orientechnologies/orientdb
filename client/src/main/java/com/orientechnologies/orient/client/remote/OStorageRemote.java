@@ -517,51 +517,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       try {
         final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
-        try {
-
-          network.writeRID(iRid);
-          network.writeVersion(iVersion);
-          network.writeByte((byte) iMode);
-
-        } finally {
-          endRequest(network);
-        }
-
-        switch (iMode) {
-        case 0:
-          // SYNCHRONOUS
-          try {
-            beginResponse(network);
-            return new OStorageOperationResult<Boolean>(network.readByte() == 1);
-          } finally {
-            endResponse(network);
-          }
-
-        case 1:
-          // ASYNCHRONOUS
-          if (iCallback != null) {
-            final int sessionId = getSessionId();
-            Callable<Object> response = new Callable<Object>() {
-              public Object call() throws Exception {
-                Boolean result;
-
-                try {
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-                  beginResponse(network);
-                  result = network.readByte() == 1;
-                } finally {
-                  endResponse(network);
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
-                }
-
-                iCallback.call(iRid, result);
-                return null;
-              }
-            };
-            asynchExecutor.submit(new FutureTask<Object>(response));
-          }
-        }
-        return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+        return new OStorageOperationResult<Boolean>(deleteRecord(iRid, iVersion, iMode, iCallback, network));
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
       } catch (Exception e) {
@@ -569,6 +525,76 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       }
     } while (true);
+  }
+
+  @Override
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
+    checkConnection();
+
+    if (iMode == 1 && callback == null)
+      // ASYNCHRONOUS MODE NO ANSWER
+      iMode = 2;
+
+    do {
+      try {
+        final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
+        return deleteRecord(recordId, recordVersion, iMode, callback, network);
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
+      } catch (Exception e) {
+        handleException("Error on clean out record " + recordId, e);
+
+      }
+    } while (true);
+  }
+
+  private boolean deleteRecord(final ORecordId iRid, ORecordVersion iVersion, int iMode, final ORecordCallback<Boolean> iCallback,
+      final OChannelBinaryClient network) throws IOException {
+    try {
+
+      network.writeRID(iRid);
+      network.writeVersion(iVersion);
+      network.writeByte((byte) iMode);
+
+    } finally {
+      endRequest(network);
+    }
+
+    switch (iMode) {
+    case 0:
+      // SYNCHRONOUS
+      try {
+        beginResponse(network);
+        return network.readByte() == 1;
+      } finally {
+        endResponse(network);
+      }
+
+    case 1:
+      // ASYNCHRONOUS
+      if (iCallback != null) {
+        final int sessionId = getSessionId();
+        Callable<Object> response = new Callable<Object>() {
+          public Object call() throws Exception {
+            Boolean result;
+
+            try {
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+              beginResponse(network);
+              result = network.readByte() == 1;
+            } finally {
+              endResponse(network);
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+            }
+
+            iCallback.call(iRid, result);
+            return null;
+          }
+        };
+        asynchExecutor.submit(new FutureTask<Object>(response));
+      }
+    }
+    return false;
   }
 
   public long count(final int iClusterId) {

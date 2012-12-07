@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -147,7 +148,8 @@ public class OStorageLocalTxExecuter {
         txSegment.addLog(OTxSegment.OPERATION_DELETE, iTxId, iClusterSegment.getId(), iPosition, buffer.recordType, buffer.version,
             buffer.buffer, ppos.dataSegmentId);
 
-        return storage.deleteRecord(iClusterSegment, rid, iVersion) != null;
+        return storage
+            .deleteRecord(iClusterSegment, rid, iVersion, OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean()) != null;
       }
 
     } catch (IOException e) {
@@ -259,8 +261,8 @@ public class OStorageLocalTxExecuter {
               .getRecord()
               .getRecordVersion()
               .copyFrom(
-                      updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
-                              .getRecordType()));
+                  updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
+                      .getRecordType()));
         else
           txEntry
               .getRecord()
@@ -282,17 +284,17 @@ public class OStorageLocalTxExecuter {
             .getRecord()
             .getRecordVersion()
             .copyFrom(
-                    updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
-                            .getRecordType()));
+                updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
+                    .getRecordType()));
       else
         txEntry
             .getRecord()
             .getRecordVersion()
             .copyFrom(
-                    iTx.getDatabase()
-                            .getStorage()
-                            .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
-                                    (byte) 0, null).getResult());
+                iTx.getDatabase()
+                    .getStorage()
+                    .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
+														(byte) 0, null).getResult());
       break;
     }
 

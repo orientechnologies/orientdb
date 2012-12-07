@@ -95,7 +95,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       return;
 
     try {
-      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, true, iMode);
+      database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, true, iMode, false);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();

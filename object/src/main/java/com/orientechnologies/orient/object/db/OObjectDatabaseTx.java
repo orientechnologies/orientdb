@@ -26,6 +26,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -449,10 +450,21 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabaseObject delete(final ORID iRID, final ORecordVersion iVersion) {
+    deleteRecord(iRID, iVersion, false);
+    return this;
+  }
+
+  @Override
+  public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
+    deleteRecord(iRID, iVersion, true);
+    return this;
+  }
+
+  private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
     if (iRID == null)
-      return this;
+      return true;
 
     ODocument record = iRID.getRecord();
     if (record != null) {
@@ -460,13 +472,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
       deleteCascade(record);
 
-      underlying.delete(iRID, iVersion);
+      if (prohibitTombstones)
+        underlying.cleanOutRecord(iRID, iVersion);
+      else
+        underlying.delete(iRID, iVersion);
 
       if (getTransaction() instanceof OTransactionNoTx)
         unregisterPojo(iPojo, record);
 
     }
-    return this;
+    return false;
   }
 
   protected void deleteCascade(ODocument record) {
