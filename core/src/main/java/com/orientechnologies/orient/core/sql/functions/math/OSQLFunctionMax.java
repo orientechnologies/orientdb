@@ -58,7 +58,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
     } else {
       Object max = null;
       for (int i = 0; i < iParameters.length; ++i) {
-        if (max == null || ((Comparable) iParameters[i]).compareTo(max) > 0)
+        if (max == null || iParameters[i] != null && ((Comparable) iParameters[i]).compareTo(max) > 0)
           max = iParameters[i];
       }
       return max;

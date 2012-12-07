@@ -58,7 +58,7 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
     } else {
       Object min = null;
       for (int i = 0; i < iParameters.length; ++i) {
-        if (min == null || ((Comparable) iParameters[i]).compareTo(min) < 0)
+        if (min == null || iParameters[i] != null && ((Comparable) iParameters[i]).compareTo(min) < 0)
           min = iParameters[i];
       }
       return min;
