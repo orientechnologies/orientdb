@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
@@ -130,10 +131,12 @@ public class CRUDObjectInheritanceTest {
     startRecordNumber = database.countClusterElements("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
-    for (Object obj : database.browseCluster("Company")) {
-      // TODO this test removes document which is used in next test!
-      database.delete(obj);
-      break;
+    OObjectIteratorCluster<Company> companyClusterIterator = database.browseCluster("Company");
+    for (Company obj : companyClusterIterator) {
+      if (obj.getId() == 1) {
+        database.delete(obj);
+        break;
+      }
     }
 
     Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);

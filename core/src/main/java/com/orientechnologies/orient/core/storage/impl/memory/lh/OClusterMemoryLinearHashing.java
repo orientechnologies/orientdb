@@ -46,7 +46,6 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition physicalPosition) {
     acquireSharedLock();
     try {
-      // TODO in memory cluster we have range check. Should we do this in similar way?
       if (physicalPosition.clusterPosition.isNew())
         return null;
 

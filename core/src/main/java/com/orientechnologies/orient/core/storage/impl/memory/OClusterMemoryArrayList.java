@@ -97,6 +97,9 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
         // OVERWRITE DATA
         iPPosition.clusterPosition = recycledPosition.clusterPosition;
         iPPosition.recordVersion = recycledPosition.recordVersion.copy();
+        if (iPPosition.recordVersion.isTombstone())
+          iPPosition.recordVersion.revive();
+
         iPPosition.recordVersion.increment();
 
         int positionToStore = recycledPosition.clusterPosition.intValue();

@@ -9,7 +9,8 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng.jar"/>
 
-    <target name="test" depends="test-memory, test-memory-node-id, test-local, test-local-node-id, test-remote">
+    <target name="test"
+            depends="test-memory, test-memory-node-id, test-memory-lh, test-local, test-local-node-id, test-remote">
     </target>
 
     <target name="test-init">
@@ -45,6 +46,21 @@
         <echo>EXECUTING TESTS USING MEMORY DATABASE AND NODE ID CLUSTER: memory:demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
             <jvmarg value="-Dstorage.cluster.useNodeIdAsClusterPosition=true"/>
+            <classpath>
+                <pathelement location="${project.build}"/>
+                <fileset dir="${global.lib}">
+                    <include name="*.jar"/>
+                </fileset>
+            </classpath>
+            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
+                        includes="memory-test-db-from-scratch.xml"/>
+        </testng>
+    </target>
+
+    <target name="test-memory-lh" depends="test-init">
+        <echo>EXECUTING TESTS USING MEMORY DATABASE AND LINEAR HASHING CLUSTER: memory:demo</echo>
+        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Dfile.cluster.useMemoryLHCluster=true -Dstorage.cluster.useNodeIdAsClusterPosition=true"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">

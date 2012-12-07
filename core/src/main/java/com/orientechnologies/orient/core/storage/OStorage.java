@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
- *
+ * 
  * @author Luca Garulli
  * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
  * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
@@ -92,6 +92,8 @@ public interface OStorage extends OSharedContainer {
 
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
+
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
   public void commit(OTransaction iTx);
