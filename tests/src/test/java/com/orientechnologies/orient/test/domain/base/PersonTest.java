@@ -1,0 +1,58 @@
+/*
+ *
+ * Copyright 2012 Luca Molino (molino.luca--AT--gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.orientechnologies.orient.test.domain.base;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * @author luca.molino
+ * 
+ */
+public class PersonTest {
+  private String      firstname;
+
+  private Set<PersonTest> friends = new HashSet<PersonTest>();
+
+  public PersonTest() {
+  }
+
+  public String getFirstname() {
+    return firstname;
+  }
+
+  public void setFirstname(String firstname) {
+    this.firstname = firstname;
+  }
+
+  @Override
+  public String toString() {
+    return getFirstname();
+  }
+
+  public void addFriend(PersonTest person) {
+    getFriends().add(person);
+  }
+
+  public Set<PersonTest> getFriends() {
+    return friends;
+  }
+
+  public void setFriends(Set<PersonTest> friends) {
+    this.friends = friends;
+  }
+}

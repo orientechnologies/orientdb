@@ -56,6 +56,7 @@ import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
 import com.orientechnologies.orient.test.domain.base.Musician;
 import com.orientechnologies.orient.test.domain.base.Parent;
+import com.orientechnologies.orient.test.domain.base.PersonTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
@@ -377,6 +378,41 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapObjectsLinkTest")
+  public void listObjectsLinkTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    PersonTest hanSolo = database.newInstance(PersonTest.class);
+    hanSolo.setFirstname("Han");
+    hanSolo = database.save(hanSolo);
+
+    PersonTest obiWan = database.newInstance(PersonTest.class);
+    obiWan.setFirstname("Obi-Wan");
+    obiWan = database.save(obiWan);
+
+    PersonTest luke = database.newInstance(PersonTest.class);
+    luke.setFirstname("Luke");
+    luke = database.save(luke);
+
+    // ============================== step 1
+    // add new information to luke
+    luke.addFriend(hanSolo);
+    database.save(luke);
+    Assert.assertTrue(luke.getFriends().size() == 1);
+    // ============================== end 1
+
+    // ============================== step 2
+    // add new information to luke
+    HashSet<PersonTest> friends = new HashSet<PersonTest>();
+    friends.add(obiWan);
+    luke.setFriends(friends);
+    database.save(luke);
+    Assert.assertTrue(luke.getFriends().size() == 1);
+    // ============================== end 2
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "listObjectsLinkTest")
   public void mapObjectsListEmbeddedTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));

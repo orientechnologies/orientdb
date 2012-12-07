@@ -343,7 +343,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       customSerialization = true;
     }
     if (value instanceof Collection<?>) {
-      value = manageCollectionSave(self, f, (Collection<?>) value, customSerialization);
+      value = manageCollectionSave(self, f, (Collection<?>) value, customSerialization, false);
     } else if (value instanceof Map<?, ?>) {
       value = manageMapSave(self, f, (Map<?, ?>) value, customSerialization);
     } else if (value.getClass().isArray()) {
@@ -461,7 +461,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  protected Object manageCollectionSave(final Object self, final Field f, Collection<?> value, final boolean customSerialization) {
+  protected Object manageCollectionSave(final Object self, final Field f, Collection<?> value, final boolean customSerialization,
+      final boolean isFieldUpdate) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
     if (customSerialization) {
       if (value instanceof List<?>) {
@@ -492,6 +493,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         if (docList == null) {
           docList = new ORecordLazyList(doc);
           doc.field(f.getName(), docList, type);
+        } else if (isFieldUpdate) {
+          docList.clear();
         }
         value = new OObjectLazyList(self, docList, value,
             OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
@@ -501,6 +504,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         if (docSet == null) {
           docSet = new ORecordLazySet(doc);
           doc.field(f.getName(), docSet, type);
+        } else if (isFieldUpdate) {
+          docSet.clear();
         }
         value = new OObjectLazySet(self, docSet, (Set<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
             f.getName()));
@@ -671,7 +676,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
               if (OObjectEntitySerializer.isSerializedType(f)) {
                 customSerialization = true;
               }
-              valueToSet = manageCollectionSave(self, f, (Collection<?>) valueToSet, customSerialization);
+              valueToSet = manageCollectionSave(self, f, (Collection<?>) valueToSet, customSerialization, true);
             } else if (valueToSet instanceof Map<?, ?>) {
               boolean customSerialization = false;
               final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
