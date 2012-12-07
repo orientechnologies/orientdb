@@ -388,13 +388,16 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     try {
 
       offset = holeSegment.popLastEntryPosition();
+      boolean recycled;
       if (offset > -1) {
         // REUSE THE HOLE
         pos = fileSegment.getRelativePosition(offset);
+        recycled = true;
       } else {
         // NO HOLES FOUND: ALLOCATE MORE SPACE
         pos = allocateRecord();
         offset = fileSegment.getAbsolutePosition(pos);
+        recycled = false;
       }
 
       final OFile file = fileSegment.files[(int) pos[0]];
@@ -404,9 +407,17 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       file.writeLong(p += OBinaryProtocol.SIZE_SHORT, iPPosition.dataSegmentPos);
       file.writeByte(p += OBinaryProtocol.SIZE_LONG, iPPosition.recordType);
 
-      iPPosition.recordVersion.reset();
+      if (recycled) {
+        // GET LAST VERSION
+        iPPosition.recordVersion.getSerializer().readFrom(file, p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
+        if (iPPosition.recordVersion.isTombstone())
+          iPPosition.recordVersion.revive();
+
+        iPPosition.recordVersion.increment();
+      } else
+        iPPosition.recordVersion.reset();
+
       iPPosition.recordVersion.getSerializer().writeTo(file, p + OBinaryProtocol.SIZE_BYTE, iPPosition.recordVersion);
-      iPPosition.recordVersion.increment();
 
       iPPosition.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(offset / RECORD_SIZE);
 
