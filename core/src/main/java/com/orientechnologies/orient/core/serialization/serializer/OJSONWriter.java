@@ -239,6 +239,15 @@ public class OJSONWriter {
     else if (iValue instanceof Map<?, ?>)
       mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
 
+    else if (iValue instanceof Map.Entry<?, ?>) {
+      final Map.Entry<?, ?> entry = (Entry<?, ?>) iValue;
+      buffer.append('{');
+      buffer.append(writeValue(entry.getKey(), iFormat));
+      buffer.append(": ");
+      buffer.append(writeValue(entry.getValue(), iFormat));
+      buffer.append('}');
+    }
+
     else if (iValue instanceof Date) {
       buffer.append('"');
       final String d;

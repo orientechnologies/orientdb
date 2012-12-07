@@ -152,7 +152,7 @@ public class OHttpResponse {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
       if (iResult instanceof Map<?, ?>) {
-        iResult = ((Map<?, ?>) iResult).values().iterator();
+        iResult = ((Map<?, ?>) iResult).entrySet().iterator();
       } else if (OMultiValue.isMultiValue(iResult)
           && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
         final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
