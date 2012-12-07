@@ -123,31 +123,32 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     }
 
     parserSetCurrentPosition(oldPosition);
-    final OSQLFilterCondition currentCondition = extractCondition();
+    OSQLFilterCondition currentCondition = extractCondition();
 
     // CHECK IF THERE IS ANOTHER CONDITION ON RIGHT
-    if (!parserSkipWhiteSpaces())
-      // END OF TEXT
-      return currentCondition;
+    while (parserSkipWhiteSpaces()) {
 
-    if (!parserIsEnded() && parserGetCurrentChar() == ')')
-      return currentCondition;
+      if (!parserIsEnded() && parserGetCurrentChar() == ')')
+        return currentCondition;
 
-    final OQueryOperator nextOperator = extractConditionOperator();
-    if (nextOperator == null)
-      return currentCondition;
+      final OQueryOperator nextOperator = extractConditionOperator();
+      if (nextOperator == null)
+        return currentCondition;
 
-    if (nextOperator.precedence > currentCondition.getOperator().precedence) {
-      // SWAP ITEMS
-      final OSQLFilterCondition subCondition = new OSQLFilterCondition(currentCondition.right, nextOperator);
-      currentCondition.right = subCondition;
-      subCondition.right = extractConditionItem(false, 1);
-      return currentCondition;
-    } else {
-      final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
-      parentCondition.right = extractConditions(parentCondition);
-      return parentCondition;
+      if (nextOperator.precedence > currentCondition.getOperator().precedence) {
+        // SWAP ITEMS
+        final OSQLFilterCondition subCondition = new OSQLFilterCondition(currentCondition.right, nextOperator);
+        currentCondition.right = subCondition;
+        subCondition.right = extractConditionItem(false, 1);
+      } else {
+        final OSQLFilterCondition parentCondition = new OSQLFilterCondition(currentCondition, nextOperator);
+        parentCondition.right = extractConditions(parentCondition);
+        currentCondition = parentCondition;
+      }
     }
+
+    // END OF TEXT
+    return currentCondition;
   }
 
   protected OSQLFilterCondition extractCondition() {
