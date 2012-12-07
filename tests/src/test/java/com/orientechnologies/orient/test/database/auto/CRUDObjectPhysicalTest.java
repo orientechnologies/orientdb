@@ -377,6 +377,179 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test(dependsOnMethods = "mapObjectsLinkTest")
+  public void mapObjectsListEmbeddedTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    int childSize = cresult.size();
+
+    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Silvester");
+
+    Child c = database.newInstance(Child.class);
+    c.setName("John");
+
+    Child c1 = database.newInstance(Child.class);
+    c1.setName("Jack");
+
+    Child c2 = database.newInstance(Child.class);
+    c2.setName("Bob");
+
+    Child c3 = database.newInstance(Child.class);
+    c3.setName("Sam");
+
+    Child c4 = database.newInstance(Child.class);
+    c4.setName("Dean");
+
+    p.getEmbeddedList().add(c1);
+    p.getEmbeddedList().add(c2);
+    p.getEmbeddedList().add(c3);
+    p.getEmbeddedList().add(c4);
+
+    database.save(p);
+
+    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    Assert.assertTrue(cresult.size() == childSize);
+
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    Assert.assertEquals(loaded.getEmbeddedList().size(), 4);
+    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(0), false).isEmbedded());
+    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(1), false).isEmbedded());
+    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(2), false).isEmbedded());
+    Assert.assertTrue(database.getRecordByUserObject(loaded.getEmbeddedList().get(3), false).isEmbedded());
+    Assert.assertTrue(loaded.getEmbeddedList().get(0) instanceof Child);
+    Assert.assertTrue(loaded.getEmbeddedList().get(1) instanceof Child);
+    Assert.assertTrue(loaded.getEmbeddedList().get(2) instanceof Child);
+    Assert.assertTrue(loaded.getEmbeddedList().get(3) instanceof Child);
+    Assert.assertEquals(loaded.getEmbeddedList().get(0).getName(), "Jack");
+    Assert.assertEquals(loaded.getEmbeddedList().get(1).getName(), "Bob");
+    Assert.assertEquals(loaded.getEmbeddedList().get(2).getName(), "Sam");
+    Assert.assertEquals(loaded.getEmbeddedList().get(3).getName(), "Dean");
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsListEmbeddedTest")
+  public void mapObjectsSetEmbeddedTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    int childSize = cresult.size();
+
+    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Silvester");
+
+    Child c = database.newInstance(Child.class);
+    c.setName("John");
+
+    Child c1 = database.newInstance(Child.class);
+    c1.setName("Jack");
+
+    Child c2 = database.newInstance(Child.class);
+    c2.setName("Bob");
+
+    Child c3 = database.newInstance(Child.class);
+    c3.setName("Sam");
+
+    Child c4 = database.newInstance(Child.class);
+    c4.setName("Dean");
+
+    p.getEmbeddedSet().add(c);
+    p.getEmbeddedSet().add(c1);
+    p.getEmbeddedSet().add(c2);
+    p.getEmbeddedSet().add(c3);
+    p.getEmbeddedSet().add(c4);
+
+    database.save(p);
+
+    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    Assert.assertTrue(cresult.size() == childSize);
+
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    Assert.assertEquals(loaded.getEmbeddedSet().size(), 5);
+    Iterator<Child> it = loaded.getEmbeddedSet().iterator();
+    while (it.hasNext()) {
+      Child loadedC = it.next();
+      Assert.assertTrue(database.getRecordByUserObject(loadedC, false).isEmbedded());
+      Assert.assertTrue(loadedC instanceof Child);
+      Assert.assertTrue(loadedC.getName().equals("John") || loadedC.getName().equals("Jack") || loadedC.getName().equals("Bob")
+          || loadedC.getName().equals("Sam") || loadedC.getName().equals("Dean"));
+    }
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsSetEmbeddedTest")
+  public void mapObjectsMapEmbeddedTest() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    List<Child> cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    int childSize = cresult.size();
+
+    JavaComplexTestClass p = database.newInstance(JavaComplexTestClass.class);
+    p.setName("Silvester");
+
+    Child c = database.newInstance(Child.class);
+    c.setName("John");
+
+    Child c1 = database.newInstance(Child.class);
+    c1.setName("Jack");
+
+    Child c2 = database.newInstance(Child.class);
+    c2.setName("Bob");
+
+    Child c3 = database.newInstance(Child.class);
+    c3.setName("Sam");
+
+    Child c4 = database.newInstance(Child.class);
+    c4.setName("Dean");
+
+    p.getEmbeddedChildren().put(c.getName(), c);
+    p.getEmbeddedChildren().put(c1.getName(), c1);
+    p.getEmbeddedChildren().put(c2.getName(), c2);
+    p.getEmbeddedChildren().put(c3.getName(), c3);
+    p.getEmbeddedChildren().put(c4.getName(), c4);
+
+    database.save(p);
+
+    cresult = database.query(new OSQLSynchQuery<Child>("select * from Child"));
+
+    Assert.assertTrue(cresult.size() == childSize);
+
+    ORID rid = new ORecordId(p.getId());
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    JavaComplexTestClass loaded = database.load(rid);
+
+    Assert.assertEquals(loaded.getEmbeddedChildren().size(), 5);
+    for (String key : loaded.getEmbeddedChildren().keySet()) {
+      Child loadedC = loaded.getEmbeddedChildren().get(key);
+      Assert.assertTrue(database.getRecordByUserObject(loadedC, false).isEmbedded());
+      Assert.assertTrue(loadedC instanceof Child);
+      Assert.assertTrue(loadedC.getName().equals("John") || loadedC.getName().equals("Jack") || loadedC.getName().equals("Bob")
+          || loadedC.getName().equals("Sam") || loadedC.getName().equals("Dean"));
+    }
+
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "mapObjectsLinkTest")
   public void mapObjectsNonExistingKeyTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 

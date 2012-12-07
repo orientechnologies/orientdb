@@ -48,16 +48,23 @@ public class JavaComplexTestClass {
   private String                    name;
   private EnumTest                  enumField;
   private Child                     child;
-  private Map<String, String>       stringMap     = new HashMap<String, String>();
-  private Map<String, List<String>> stringListMap = new HashMap<String, List<String>>();
-  private List<Child>               list          = new ArrayList<Child>();
-  private Set<Child>                set           = new HashSet<Child>();
-  private Map<String, Child>        children      = new HashMap<String, Child>();
-  private Map<String, Object>       mapObject     = new HashMap<String, Object>();
-  private List<EnumTest>            enumList      = new ArrayList<EnumTest>();
-  private Set<EnumTest>             enumSet       = new HashSet<EnumTest>();
-  private Set<String>               stringSet     = new HashSet<String>();
-  private Map<String, EnumTest>     enumMap       = new HashMap<String, EnumTest>();
+  private Map<String, String>       stringMap        = new HashMap<String, String>();
+  private Map<String, List<String>> stringListMap    = new HashMap<String, List<String>>();
+  private List<Child>               list             = new ArrayList<Child>();
+  private Set<Child>                set              = new HashSet<Child>();
+  private Map<String, Child>        children         = new HashMap<String, Child>();
+  private Map<String, Object>       mapObject        = new HashMap<String, Object>();
+  private List<EnumTest>            enumList         = new ArrayList<EnumTest>();
+  private Set<EnumTest>             enumSet          = new HashSet<EnumTest>();
+  private Set<String>               stringSet        = new HashSet<String>();
+  private Map<String, EnumTest>     enumMap          = new HashMap<String, EnumTest>();
+
+  @Embedded
+  private List<Child>               embeddedList     = new ArrayList<Child>();
+  @Embedded
+  private Set<Child>                embeddedSet      = new HashSet<Child>();
+  @Embedded
+  private Map<String, Child>        embeddedChildren = new HashMap<String, Child>();
 
   public String getName() {
     return name;
@@ -201,5 +208,29 @@ public class JavaComplexTestClass {
 
   public void setChild(Child child) {
     this.child = child;
+  }
+
+  public Map<String, Child> getEmbeddedChildren() {
+    return embeddedChildren;
+  }
+
+  public void setEmbeddedChildren(Map<String, Child> embeddedChildren) {
+    this.embeddedChildren = embeddedChildren;
+  }
+
+  public List<Child> getEmbeddedList() {
+    return embeddedList;
+  }
+
+  public void setEmbeddedList(List<Child> embeddedList) {
+    this.embeddedList = embeddedList;
+  }
+
+  public Set<Child> getEmbeddedSet() {
+    return embeddedSet;
+  }
+
+  public void setEmbeddedSet(Set<Child> embeddedSet) {
+    this.embeddedSet = embeddedSet;
   }
 }

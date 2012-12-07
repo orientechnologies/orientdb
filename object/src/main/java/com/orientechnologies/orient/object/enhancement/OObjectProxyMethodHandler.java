@@ -449,10 +449,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       doc.field(f.getName(), map, OType.EMBEDDEDMAP);
       value = new OObjectEnumLazyMap(genericType, doc, map, (Map<Object, Object>) value);
     } else if (!(value instanceof OLazyObjectMultivalueElement)) {
-      Map<Object, OIdentifiable> docMap = doc.field(f.getName(), OType.LINKMAP);
+      OType type = OObjectEntitySerializer.isEmbeddedField(self.getClass(), f.getName()) ? OType.EMBEDDEDMAP : OType.LINKMAP;
+      Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
         docMap = new ORecordLazyMap(doc);
-        doc.field(f.getName(), docMap, OType.LINKMAP);
+        doc.field(f.getName(), docMap, type);
       }
       value = new OObjectLazyMap(self, docMap, value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
     }
@@ -484,19 +485,22 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         value = new OObjectEnumLazySet(genericType, doc, set, (Set<Object>) value);
       }
     } else if (!(value instanceof OLazyObjectMultivalueElement)) {
+      boolean embedded = OObjectEntitySerializer.isEmbeddedField(self.getClass(), f.getName());
       if (value instanceof List) {
-        List<OIdentifiable> docList = doc.field(f.getName(), OType.LINKLIST);
+        OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
+        List<OIdentifiable> docList = doc.field(f.getName(), type);
         if (docList == null) {
           docList = new ORecordLazyList(doc);
-          doc.field(f.getName(), docList, OType.LINKLIST);
+          doc.field(f.getName(), docList, type);
         }
         value = new OObjectLazyList(self, docList, value,
             OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
       } else if (value instanceof Set) {
-        Set<OIdentifiable> docSet = doc.field(f.getName(), OType.LINKSET);
+        OType type = embedded ? OType.EMBEDDEDSET : OType.LINKSET;
+        Set<OIdentifiable> docSet = doc.field(f.getName(), type);
         if (docSet == null) {
           docSet = new ORecordLazySet(doc);
-          doc.field(f.getName(), docSet, OType.LINKSET);
+          doc.field(f.getName(), docSet, type);
         }
         value = new OObjectLazySet(self, docSet, (Set<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
             f.getName()));
