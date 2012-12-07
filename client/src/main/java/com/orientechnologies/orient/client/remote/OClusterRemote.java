@@ -123,11 +123,11 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
-  public OClusterPosition getFirstIdentity() {
+  public OClusterPosition getFirstPosition() {
     return OClusterPositionFactory.INSTANCE.valueOf(0);
   }
 
-  public OClusterPosition getLastIdentity() {
+  public OClusterPosition getLastPosition() {
     return OClusterPositionFactory.INSTANCE.valueOf(0);
   }
 
@@ -155,7 +155,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("getRecordsSize()");
   }
 
-  public boolean generatePositionBeforeCreation() {
+  public boolean isRequiresValidPositionBeforeCreation() {
     return false;
   }
 
@@ -177,13 +177,4 @@ public class OClusterRemote implements OCluster {
     return null; // TODO realization missed!
   }
 
-  @Override
-  public OClusterPosition nextTombstone(OClusterPosition position) {
-    return null; // TODO realization missed!
-  }
-
-  @Override
-  public OClusterPosition prevTombstone(OClusterPosition position) {
-    return null; // TODO realization missed!
-  }
 }

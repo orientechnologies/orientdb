@@ -28,9 +28,9 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class OClusterMemoryLinearHashing extends OClusterMemory implements OCluster {
 
-  public static final String  TYPE    = "MEMORY";
+  public static final String                                       TYPE    = "MEMORY";
 
-  private OLinearHashingTable content = new OLinearHashingTable<OClusterPosition, OPhysicalPosition>();
+  private OLinearHashingTable<OClusterPosition, OPhysicalPosition> content = new OLinearHashingTable<OClusterPosition, OPhysicalPosition>();
 
   @Override
   public boolean addPhysicalPosition(OPhysicalPosition physicalPosition) {
@@ -120,7 +120,7 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public OClusterPosition getFirstIdentity() {
+  public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
       OClusterPosition clusterPosition = content.nextRecord(OClusterPositionFactory.INSTANCE.valueOf(-1));
@@ -131,7 +131,7 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public OClusterPosition getLastIdentity() {
+  public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
       // TODO remake this with relation to point that max value can be stored to DB
@@ -150,7 +150,7 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public boolean generatePositionBeforeCreation() {
+  public boolean isRequiresValidPositionBeforeCreation() {
     return true;
   }
 
@@ -194,34 +194,4 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
     }
   }
 
-  @Override
-  public OClusterPosition nextTombstone(OClusterPosition position) {
-    acquireSharedLock();
-    try {
-      OClusterPosition clusterPosition = content.nextRecord(position);
-      if (clusterPosition.isTemporary()) {
-        return clusterPosition;
-      } else {
-        return null;
-      }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public OClusterPosition prevTombstone(OClusterPosition position) {
-    acquireSharedLock();
-    try {
-      OClusterPosition clusterPosition = content.prevRecord(position);
-
-      if (clusterPosition.isTemporary()) {
-        return clusterPosition;
-      } else {
-        return null;
-      }
-    } finally {
-      releaseSharedLock();
-    }
-  }
 }

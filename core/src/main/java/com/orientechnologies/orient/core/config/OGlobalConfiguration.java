@@ -64,6 +64,9 @@ public enum OGlobalConfiguration {
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),
 
+  STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
+      + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
+
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 

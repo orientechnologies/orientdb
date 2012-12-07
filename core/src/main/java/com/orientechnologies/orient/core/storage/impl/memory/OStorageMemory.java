@@ -302,7 +302,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
       // ASSIGN THE POSITION IN THE CLUSTER
       final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, offset, iRecordType);
-      if (cluster.generatePositionBeforeCreation()) {
+      if (cluster.isRequiresValidPositionBeforeCreation()) {
         if (iRid.isNew()) {
           if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
             ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
@@ -347,9 +347,9 @@ public class OStorageMemory extends OStorageEmbedded {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
 
       try {
-        final OClusterPosition lastPos = iClusterSegment.getLastIdentity();
+        final OClusterPosition lastPos = iClusterSegment.getLastPosition();
 
-        if (!iClusterSegment.generatePositionBeforeCreation()) {
+        if (!iClusterSegment.isRequiresValidPositionBeforeCreation()) {
           if (iRid.clusterPosition.compareTo(lastPos) > 0)
             throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
                 + iClusterSegment.getName() + "' is 0-" + lastPos);
@@ -502,7 +502,7 @@ public class OStorageMemory extends OStorageEmbedded {
     lock.acquireSharedLock();
     try {
 
-      return new OClusterPosition[] { cluster.getFirstIdentity(), cluster.getLastIdentity() };
+      return new OClusterPosition[] { cluster.getFirstPosition(), cluster.getLastPosition() };
 
     } finally {
       lock.releaseSharedLock();
@@ -791,8 +791,8 @@ public class OStorageMemory extends OStorageEmbedded {
               .getRecord()
               .getRecordVersion()
               .copyFrom(
-											updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
-															.getResult());
+                  updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                      .getResult());
         }
       }
       break;
@@ -804,8 +804,8 @@ public class OStorageMemory extends OStorageEmbedded {
           .getRecord()
           .getRecordVersion()
           .copyFrom(
-									updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
-													.getResult());
+              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), 0, null)
+                  .getResult());
       break;
 
     case ORecordOperation.DELETED:

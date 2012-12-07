@@ -4,14 +4,25 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterLocalLHPEOverflowConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterLocalLHPEStatisticConfiguration;
+import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -599,7 +610,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   @Override
-  public OClusterPosition getFirstIdentity() {
+  public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
       // if (size == 0)
@@ -612,7 +623,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   @Override
-  public OClusterPosition getLastIdentity() {
+  public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
       // if (size == 0)
@@ -672,7 +683,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     return name;
   }
 
-  public boolean generatePositionBeforeCreation() {
+  public boolean isRequiresValidPositionBeforeCreation() {
     return true;
   }
 
@@ -1483,16 +1494,6 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
 
   @Override
   public OClusterPosition prevRecord(OClusterPosition position) {
-    return null; // TODO realization missed!
-  }
-
-  @Override
-  public OClusterPosition nextTombstone(OClusterPosition position) {
-    return null; // TODO realization missed!
-  }
-
-  @Override
-  public OClusterPosition prevTombstone(OClusterPosition position) {
     return null; // TODO realization missed!
   }
 

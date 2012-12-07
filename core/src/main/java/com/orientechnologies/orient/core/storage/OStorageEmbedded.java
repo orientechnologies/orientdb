@@ -173,18 +173,18 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Original and destination clusters use different data segment ids "
           + originalCluster.getDataSegmentId() + "<->" + destinationCluster.getDataSegmentId());
 
-    if (!destinationCluster.generatePositionBeforeCreation()) {
+    if (!destinationCluster.isRequiresValidPositionBeforeCreation()) {
       if (originalId.getClusterId() == newId.getClusterId())
         throw new OStorageException("Record identity can not be moved inside of the same non LH based cluster.");
 
-      if (newId.getClusterPosition().compareTo(destinationCluster.getLastIdentity()) <= 0)
+      if (newId.getClusterPosition().compareTo(destinationCluster.getLastPosition()) <= 0)
         throw new OStorageException("New position " + newId.getClusterPosition() + " of " + originalId + " record inside of "
             + destinationCluster.getName() + " cluster and can not be used as destination");
 
       if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean()
           || OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean()) {
-        if (destinationCluster.getFirstIdentity().longValue() != 0
-            || destinationCluster.getEntries() != destinationCluster.getLastIdentity().longValue() + 1)
+        if (destinationCluster.getFirstPosition().longValue() != 0
+            || destinationCluster.getEntries() != destinationCluster.getLastPosition().longValue() + 1)
           throw new OStorageException("Cluster " + destinationCluster.getName()
               + " contains holes and can not be used as destination for " + originalId + " record.");
       }
@@ -196,14 +196,14 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Record with id " + originalId + " does not exist");
 
     ppos.clusterPosition = newId.getClusterPosition();
-    if (destinationCluster.generatePositionBeforeCreation()) {
+    if (destinationCluster.isRequiresValidPositionBeforeCreation()) {
       if (!destinationCluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with id " + newId + " has already exists in cluster " + destinationCluster.getName());
     } else {
-      final int diff = (int) (newId.getClusterPosition().longValue() - destinationCluster.getLastIdentity().longValue() - 1);
+      final int diff = (int) (newId.getClusterPosition().longValue() - destinationCluster.getLastPosition().longValue() - 1);
 
       final OClusterPosition startPos = OClusterPositionFactory.INSTANCE
-          .valueOf(destinationCluster.getLastIdentity().longValue() + 1);
+          .valueOf(destinationCluster.getLastPosition().longValue() + 1);
       OClusterPosition pos = startPos;
 
       final OPhysicalPosition physicalPosition = new OPhysicalPosition(pos);

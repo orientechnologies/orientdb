@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OClusterMemoryArrayList extends OClusterMemory implements OCluster {
 
-  private List<OPhysicalPosition> entries           = new ArrayList<OPhysicalPosition>();
-  private List<OPhysicalPosition> removed           = new ArrayList<OPhysicalPosition>();
+  private List<OPhysicalPosition> entries = new ArrayList<OPhysicalPosition>();
+  private List<OPhysicalPosition> removed = new ArrayList<OPhysicalPosition>();
 
   protected void clear() {
     entries.clear();
@@ -46,7 +46,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     }
   }
 
-  public boolean generatePositionBeforeCreation() {
+  public boolean isRequiresValidPositionBeforeCreation() {
     return false;
   }
 
@@ -66,7 +66,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   }
 
   @Override
-  public OClusterPosition getFirstIdentity() {
+  public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
 
@@ -78,7 +78,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   }
 
   @Override
-  public OClusterPosition getLastIdentity() {
+  public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
       return OClusterPositionFactory.INSTANCE.valueOf(entries.size() - 1);
@@ -145,7 +145,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
     acquireSharedLock();
     try {
-      if (iPPosition.clusterPosition.intValue() < 0 || iPPosition.clusterPosition.compareTo(getLastIdentity()) > 0)
+      if (iPPosition.clusterPosition.intValue() < 0 || iPPosition.clusterPosition.compareTo(getLastPosition()) > 0)
         return null;
 
       return entries.get((int) iPPosition.clusterPosition.intValue());
@@ -210,16 +210,6 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     } else {
       return OClusterPosition.INVALID_POSITION;
     }
-  }
-
-  @Override
-  public OClusterPosition nextTombstone(OClusterPosition position) {
-    throw new UnsupportedOperationException("memory cluster does not support tombstones");
-  }
-
-  @Override
-  public OClusterPosition prevTombstone(OClusterPosition position) {
-    throw new UnsupportedOperationException("memory cluster does not support tombstones");
   }
 
   @Override

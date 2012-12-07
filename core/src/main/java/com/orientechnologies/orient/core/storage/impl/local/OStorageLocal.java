@@ -483,25 +483,26 @@ public class OStorageLocal extends OStorageEmbedded {
               warnings++;
             }
 
-								if (physicalPosition.recordVersion.isTombstone() && (c instanceof OClusterLocal)) {
-									// CHECK IF THE HOLE EXISTS
-									boolean found = false;
-									int tot = ((OClusterLocal) c).holeSegment.getHoles();
-									for (int i = 0; i < tot; ++i) {
-										final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
-										if (recycledPosition == physicalPosition.clusterPosition.longValue()) {
-											// FOUND
-											found = true;
-											break;
-										}
-									}
+            if (physicalPosition.recordVersion.isTombstone() && (c instanceof OClusterLocal)) {
+              // CHECK IF THE HOLE EXISTS
+              boolean found = false;
+              int tot = ((OClusterLocal) c).holeSegment.getHoles();
+              for (int i = 0; i < tot; ++i) {
+                final long recycledPosition = ((OClusterLocal) c).holeSegment.getEntryPosition(i) / OClusterLocal.RECORD_SIZE;
+                if (recycledPosition == physicalPosition.clusterPosition.longValue()) {
+                  // FOUND
+                  found = true;
+                  break;
+                }
+              }
 
-									if (!found) {
-										formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(),
-														physicalPosition.clusterPosition);
-										warnings++;
-									}
-								}    } catch (IOException e) {
+              if (!found) {
+                formatMessage(iVerbose, iListener, "WARN: Cannot find hole for deleted record %d:%d ", c.getId(),
+                    physicalPosition.clusterPosition);
+                warnings++;
+              }
+            }
+          } catch (IOException e) {
             formatMessage(iVerbose, iListener, "WARN: Error while reading record #%d:%d ", e, c.getId(), ppos.clusterPosition);
             warnings++;
           }
@@ -519,7 +520,7 @@ public class OStorageLocal extends OStorageEmbedded {
                     / OClusterLocal.RECORD_SIZE);
                 OPhysicalPosition physicalPosition = c.getPhysicalPosition(ppos);
 
-                if (!physicalPosition.recordVersion.isTombstone()) {
+                if (physicalPosition != null && !physicalPosition.recordVersion.isTombstone()) {
                   formatMessage(iVerbose, iListener,
                       "WARN: Found wrong hole %d/%d for deleted record %d:%d. The record seems good ", i, totalHoles - 1,
                       c.getId(), recycledPosition);
@@ -919,8 +920,8 @@ public class OStorageLocal extends OStorageEmbedded {
     lock.acquireSharedLock();
     try {
 
-      return clusters[iClusterId] != null ? new OClusterPosition[] { clusters[iClusterId].getFirstIdentity(),
-          clusters[iClusterId].getLastIdentity() } : new OClusterPosition[0];
+      return clusters[iClusterId] != null ? new OClusterPosition[] { clusters[iClusterId].getFirstPosition(),
+          clusters[iClusterId].getLastPosition() } : new OClusterPosition[0];
 
     } finally {
       lock.releaseSharedLock();
@@ -1521,7 +1522,7 @@ public class OStorageLocal extends OStorageEmbedded {
       final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
 
       boolean sequentialPositionGeneration = false;
-      if (iClusterSegment.generatePositionBeforeCreation()) {
+      if (iClusterSegment.isRequiresValidPositionBeforeCreation()) {
         if (iRid.isNew()) {
           iRid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
           sequentialPositionGeneration = true;
@@ -1537,7 +1538,7 @@ public class OStorageLocal extends OStorageEmbedded {
         ppos.dataSegmentId = iDataSegment.getId();
         ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
 
-        if (iClusterSegment.generatePositionBeforeCreation()) {
+        if (iClusterSegment.isRequiresValidPositionBeforeCreation()) {
           if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) > 0)
             ppos.recordVersion = iRecordVersion;
 

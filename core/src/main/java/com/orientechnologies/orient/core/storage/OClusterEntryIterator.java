@@ -28,26 +28,21 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
-    current = cluster.getFirstIdentity();
-    max = cluster.getLastIdentity();
-  }
-
-  public OClusterEntryIterator(final OCluster iCluster, final OClusterPosition iBeginRange, final OClusterPosition iEndRange) throws IOException {
-    cluster = iCluster;
-    current = iBeginRange;
-    max = OClusterPosition.INVALID_POSITION.compareTo(iEndRange) < 0 ? iEndRange : cluster.getLastIdentity();
+    current = cluster.getFirstPosition();
+    max = cluster.getLastPosition();
   }
 
   public boolean hasNext() {
-    return current!=null&&OClusterPosition.INVALID_POSITION.compareTo(max) < 0  && OClusterPosition.INVALID_POSITION.compareTo(current) < 0 && current.compareTo(max) <= 0;
+    return current != null && OClusterPosition.INVALID_POSITION.compareTo(max) != 0
+        && OClusterPosition.INVALID_POSITION.compareTo(current) != 0 && current.compareTo(max) <= 0;
   }
 
   public OPhysicalPosition next() {
     try {
       OPhysicalPosition physicalPosition = cluster.getPhysicalPosition(new OPhysicalPosition(current));
-      if (current.compareTo(max) < 0){
+      if (current.compareTo(max) < 0) {
         current = cluster.nextRecord(current);
-      }else{
+      } else {
         current = null;
       }
       return physicalPosition;
