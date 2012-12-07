@@ -32,7 +32,7 @@ public class OExecuteBlock extends OAbstractBlock {
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
 
-    final ODocument foreach = getFieldOfClass(iContext, iConfig, "foreach", ODocument.class);
+    final Object foreach = getField(iContext, iConfig, "foreach");
     String returnType = (String) getFieldOfClass(iContext, iConfig, "returnType", String.class);
 
     Object returnValue = null;
@@ -46,7 +46,14 @@ public class OExecuteBlock extends OAbstractBlock {
     int iterated = 0;
 
     if (foreach != null) {
-      final Object result = delegate("foreach", iManager, (ODocument) foreach, iContext, iOutput, iReadOnly);
+      Object result;
+      if (foreach instanceof ODocument)
+        result = delegate("foreach", iManager, (ODocument) foreach, iContext, iOutput, iReadOnly);
+      else if (foreach instanceof Map)
+        result = ((Map<?, ?>) foreach).values();
+      else
+        result = foreach;
+
       if (!OMultiValue.isIterable(result))
         throw new OProcessException("Result of 'foreach' block (" + foreach + ") must be iterable but found " + result.getClass());
 

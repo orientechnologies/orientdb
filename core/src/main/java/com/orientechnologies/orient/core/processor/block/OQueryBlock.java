@@ -36,7 +36,7 @@ public class OQueryBlock extends OAbstractBlock {
 
     command = (String) resolveValue(iContext, command);
 
-    debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command + "...");
+    debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command.replace("%", "%%") + "...");
 
     final OCommandRequestText cmd = new OSQLSynchQuery<OIdentifiable>(command.toString());
 
