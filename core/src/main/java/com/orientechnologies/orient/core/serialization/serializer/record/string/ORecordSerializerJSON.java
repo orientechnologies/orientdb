@@ -385,7 +385,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             }
           }
         }
-      } else if (iFieldValueAsString.startsWith("{") && iFieldValueAsString.endsWith("}"))
+      } else if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}"))
         iType = OType.EMBEDDED;
       else {
         if (iFieldValueAsString.length() >= 4 && iFieldValueAsString.charAt(0) == ORID.PREFIX && iFieldValueAsString.contains(":")) {
