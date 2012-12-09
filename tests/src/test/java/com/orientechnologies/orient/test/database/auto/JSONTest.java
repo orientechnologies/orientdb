@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -592,5 +593,18 @@ public class JSONTest {
 
     ODocument unmarshalled = new ODocument().fromJSON(json);
     Assert.assertEquals(unmarshalled.field("date"), now);
+  }
+
+  @Test
+  public void shouldDeserializeFieldWithCurlyBraces() {
+    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:tst").create();
+
+    String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
+    ODocument in = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(json, tx.newInstance(), new String[] {});
+
+    Assert.assertEquals(in.field("a"), "{dd}");
+    Assert.assertTrue(in.field("bl") instanceof Map);
+
+    tx.close();
   }
 }
