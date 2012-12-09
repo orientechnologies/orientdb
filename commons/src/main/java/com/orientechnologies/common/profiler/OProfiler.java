@@ -136,7 +136,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
             createSnapshot();
           }
         };
-        timer.schedule(archiverTask, elapsedToCreateSnapshot, elapsedToCreateSnapshot);
+        timer.schedule(archiverTask, elapsedToCreateSnapshot * 1000, elapsedToCreateSnapshot * 1000);
       }
 
       recordingFrom = System.currentTimeMillis();
@@ -287,7 +287,7 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
               else
                 buffer.append(',');
 
-              a.toJSON(buffer, iPar1);
+              a.toJSON(buffer, null);
             }
           }
         } else if (iQuery.equals("summary")) {
