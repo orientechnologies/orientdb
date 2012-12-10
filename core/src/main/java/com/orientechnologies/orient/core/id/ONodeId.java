@@ -320,6 +320,16 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     return reslut;
   }
 
+  public long longValueHigh() {
+    final long reslut = (((chunks[0] & LONG_INT_MASK) << 32) + (chunks[1] & LONG_INT_MASK))
+        & Long.MAX_VALUE;
+
+    if (signum < 0)
+      return -reslut;
+
+    return reslut;
+  }
+
   @Override
   public float floatValue() {
     return Float.parseFloat(toString());

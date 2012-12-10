@@ -5,8 +5,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OGroupOverflowTable;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingHashCalculatorFactory;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingIndex;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OPageIndicator;
 
 /**
  * @author Andrey Lomakin
@@ -14,29 +19,27 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  */
 public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysicalPosition> {
 
-  private static final int           FILE_SIZE      = 4096;
+  private static final int FILE_SIZE = 4096;
 
-  private OLinearHashingIndex        primaryIndex;
-  private OLinearHashingIndex        secondaryIndex;
-  private final int                  CHAIN_NUMBER;
-  private int                        level;
-  private int                        next;
-  private double                     maxCapacity;
-  private double                     minCapacity;
-  private OGroupOverflowTable        groupOverflowTable;
+  private OLinearHashingIndex primaryIndex;
+  private OLinearHashingIndex secondaryIndex;
+  private int level;
+  private int next;
+  private double maxCapacity;
+  private double minCapacity;
+  private OGroupOverflowTable groupOverflowTable;
   private List<OLinearHashingBucket> file;
-  private OPageIndicator             pageIndicator;
-  private List<V>                    recordPool     = new ArrayList<V>(100);
-  private int                        size;
-  private static final int           MAX_GROUP_SIZE = 128;
+  private OPageIndicator pageIndicator;
+  private List<V> recordPool = new ArrayList<V>(100);
+  private int size;
+  private static final int MAX_GROUP_SIZE = 128;
 
   public OLinearHashingTable() {
-    CHAIN_NUMBER = 1;
     size = 0;
     level = 0;
     next = 0;
     maxCapacity = 0.8;
-    minCapacity = 0.7;
+    minCapacity = 0.4;
     primaryIndex = new OLinearHashingIndex();
     secondaryIndex = new OLinearHashingIndex();
     groupOverflowTable = new OGroupOverflowTable();
@@ -63,7 +66,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   }
 
   private int[] calculateHash(K key) {
-    int internalHash = OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level);
+    int internalHash = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level);
 
     final int bucketNumber;
     final int currentLevel;
@@ -71,16 +74,16 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       bucketNumber = calculateNextHash(key);
       currentLevel = level + 1;
     } else {
-      bucketNumber = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(internalHash, level);
+      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(internalHash, level);
       currentLevel = level;
     }
 
-    return new int[] { bucketNumber, currentLevel };
+    return new int[]{bucketNumber, currentLevel};
   }
 
   private int calculateNextHash(K key) {
-    int keyHash = OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level + 1);
-    return OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(keyHash, level + 1);
+    int keyHash = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level + 1);
+    return (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(keyHash, level + 1);
   }
 
   private boolean tryInsertIntoChain(final int[] hash, V value) {
@@ -103,7 +106,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
         return result;
       } else if (keySignature == chainSignature) {
         recordPool.add(value);
-        size--;
+        // size--;
         moveLargestRecordToRecordPool(hash[0], chainSignature);
         OLinearHashingBucket bucket = file.get(hash[0]);
 
@@ -139,7 +142,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
           return result;
         } else if (keySignature == chainSignature) {
           recordPool.add(value);
-          size--;
+          // size--;
           moveLargestRecordToRecordPool(pageToStore, (byte) chainSignature);
           OLinearHashingBucket bucket = file.get(pageToStore);
 
@@ -163,22 +166,17 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     // calculate load factor
     double capacity = ((double) size) / (primaryIndex.bucketCount() * OLinearHashingBucket.BUCKET_MAX_SIZE);
     if (capacity > maxCapacity) {
-      int bucketNumberToSplit = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(next, level);
+      int bucketNumberToSplit = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(next, level);
       // TODO make this durable by inventing cool record pool
       loadChainInPool(bucketNumberToSplit, level);
-      int pageToStore = next + (int) Math.pow(2, level);
+
+      groupOverflowTable.removeUnusedGroups(pageIndicator);
+
+      int pageToStore = next + 1 << level;
       byte groupWithStartingPageLessThan = groupOverflowTable.getGroupWithStartingPageLessThenOrEqual(pageToStore);
       if (groupWithStartingPageLessThan != -2) {
         int groupSize = groupOverflowTable.getSizeForGroup(groupWithStartingPageLessThan);
-        boolean needMove = false;
-        // TODO use group size from group overflow to prevent collisions
-        for (int i = pageToStore; i < pageToStore + groupSize; ++i) {
-          if (pageIndicator.get(i)) {
-            needMove = true;
-            break;
-          }
-        }
-
+        final boolean needMove = pageIndicator.isUsedPageExistInRange(pageToStore, pageToStore + groupSize);
         if (needMove) {
           moveOverflowGroupToNewPosition(pageToStore);
         }
@@ -193,7 +191,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
       next++;
 
-      if (next == (CHAIN_NUMBER * Math.pow(2, level))) {
+      if (next == 1 << level) {
         next = 0;
         level++;
       }
@@ -212,14 +210,15 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       final int currentLevel;
       if (next == 0) {
         currentLevel = level;
-        naturalOrderKey1 = (int) (CHAIN_NUMBER * Math.pow(2, level)) - 2;
-        bucketNumberToMerge1 = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderKey1, level);
-        bucketNumberToMerge2 = (int) Math.pow(2, level) - 1;
+        naturalOrderKey1 = (1 << level) - 2;
+        bucketNumberToMerge1 = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderKey1, level);
+        bucketNumberToMerge2 = (1 << level) - 1;
       } else {
         currentLevel = level + 1;
         naturalOrderKey1 = 2 * (next - 1);
-        bucketNumberToMerge1 = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderKey1, level + 1);
-        bucketNumberToMerge2 = next - 1 + (int) Math.pow(2, level);
+        bucketNumberToMerge1 = (int) OLinearHashingHashCalculatorFactory.INSTANCE
+            .calculateBucketNumber(naturalOrderKey1, level + 1);
+        bucketNumberToMerge2 = next - 1 + (1 << level);
       }
       loadChainInPool(bucketNumberToMerge1, currentLevel);
       loadChainInPool(bucketNumberToMerge2, currentLevel);
@@ -231,7 +230,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
       if (next < 0) {
         level--;
-        next = (int) (CHAIN_NUMBER * Math.pow(2, level) - 1);
+        next = (1 << level) - 1;
       }
 
       storeRecordFromRecordPool();
@@ -241,10 +240,10 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   private void moveOverflowGroupToNewPosition(int page) {
     List<OGroupOverflowTable.GroupOverflowInfo> groupsToMove = groupOverflowTable.getOverflowGroupsInfoToMove(page);
 
-    for (OGroupOverflowTable.GroupOverflowInfo groupOverflowInfo : groupsToMove) {
-      int oldPage = groupOverflowInfo.startingPage;
-      int groupSize = groupOverflowTable.getSizeForGroup(groupOverflowInfo.group);
-      int newPage = groupOverflowTable.move(groupOverflowInfo.group, groupSize);
+    for (OGroupOverflowTable.GroupOverflowInfo groupOverflowInfo : groupsToMove){
+      int oldPage = groupOverflowInfo.getStartingPage();
+      int groupSize = groupOverflowTable.getSizeForGroup(groupOverflowInfo.getGroup());
+      int newPage = groupOverflowTable.move(groupOverflowInfo.getGroup(), groupSize);
 
       moveGroupToNewPosition(oldPage, newPage, groupSize);
 
@@ -255,7 +254,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     while (file.size() < newPage + groupSize + 1) {
       file.add(null);
     }
-    for (int i = oldPage; i < oldPage + groupSize; ++i) {
+    for (int i = oldPage; i < oldPage + groupSize; ++i){
       if (pageIndicator.get(i)) {
         OLinearHashingBucket bucket = file.get(i);
         file.set(i - oldPage + newPage, bucket);
@@ -296,7 +295,6 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       secondaryIndex.remove(realPosInSecondaryIndex);
     }
 
-    groupOverflowTable.removeUnusedGroups(pageIndicator);
     primaryIndex.clearChainInfo(bucketNumber);
   }
 
@@ -304,9 +302,8 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     while (!recordPool.isEmpty()) {
       V key = recordPool.remove(0);
 
-      // TODO be sure that key successfully stored
       if (!put(key)) {
-        throw new RuntimeException("error while saving records from pool");
+        throw new ODatabaseException("Error while saving record " + key + " from record pool");
       }
     }
   }
@@ -328,7 +325,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   }
 
   private boolean allocateNewPageAndStore(int bucketNumber, int pageToStore, V value, int currentLevel, boolean mainChain) {
-    int groupSize = calculateGroupSize(level);
+    int groupSize = calculateGroupSize(currentLevel);
     byte groupNumber = calculateGroupNumber(bucketNumber, currentLevel);
 
     int[] pos = groupOverflowTable.searchForGroupOrCreate(groupNumber, groupSize);
@@ -374,7 +371,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
     final OLinearHashingBucket bucket = file.get(bucketNumber);
 
-    for (int i = 0; i < bucket.size; i++) {
+    for (int i = 0; i < bucket.size; i++){
       if (value.clusterPosition.equals(bucket.keys[i])) {
         return false;
       }
@@ -393,17 +390,11 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       positionInIndex = pageIndicator.getRealPosInSecondaryIndex(bucketNumber);
       indexToUse = secondaryIndex;
     }
-    int displacement = indexToUse.incrementChainDisplacement(positionInIndex, bucket.size);
+    int displacement = indexToUse.changeDisplacementAfterInsertion(positionInIndex, bucket.size);
 
     if (bucket.size == OLinearHashingBucket.BUCKET_MAX_SIZE && displacement > 253) {
-      throw new RuntimeException("this can't be true");
+      throw new IllegalStateException("if bucket size is max displacement can't be greater than 253");
     }
-
-      byte [] signatures = new byte[bucket.size];
-      for (int i = 0, keysLength = bucket.size; i < keysLength; i++){
-        signatures[i] = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(bucket.keys[i]);
-      }
-
 
     if (displacement <= 253) {
       indexToUse.updateSignature(positionInIndex, bucket.keys, bucket.size);
@@ -417,12 +408,12 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
     groupSize = calculateGroupSize(currentLevel);
 
-    int x = (int) (CHAIN_NUMBER * Math.pow(2, currentLevel) + bucketNumber - 1);
+    int x = (1 << currentLevel) + bucketNumber - 1;
     int y = x / groupSize;
     return (byte) (y % 31);
   }
 
-  private int calculateGroupSize(final int iLevel) {
+  private int calculateGroupSize(final int currentLevel) {
     int divisor = 0;
     byte no = -1;
     double nogps;
@@ -430,8 +421,8 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       if (divisor < 128) {
         no++;
       }
-      divisor = (int) Math.pow(2, 2 + no);
-      nogps = (CHAIN_NUMBER * Math.pow(2, iLevel)) / divisor;
+      divisor = 1 << (2 + no);
+      nogps = (1 << currentLevel) / divisor;
 
     } while (!((nogps <= 31) || (divisor == 128)));
 
@@ -508,7 +499,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
               // move this records to predecessor
               bucket.add(smallestRecords);
 
-              for (V smallestRecord : smallestRecords) {
+              for (V smallestRecord : smallestRecords){
                 if (secondBucket.deleteKey(smallestRecord.clusterPosition) < 0) {
                   throw new IllegalStateException("error while deleting record to move it to predecessor bucket");
                 }
@@ -551,13 +542,13 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
               pageIndicator.unset(pageNumberToUse);
               // set prev bucket in chain correct displacement
               if (prevPage == hash[0]) {
-                int displacement = primaryIndex.decrementDisplacement(hash[0], file.get(hash[0]).size, true);
+                int displacement = primaryIndex.changeDisplacementAfterDeletion(hash[0], file.get(hash[0]).size, true);
                 if (displacement > 253) {
                   primaryIndex.updateSignature(hash[0], Byte.MAX_VALUE);
                 }
               } else {
                 int prevIndexPosition = pageIndicator.getRealPosInSecondaryIndex(prevPage);
-                int displacement = secondaryIndex.decrementDisplacement(prevIndexPosition, file.get(prevPage).size, true);
+                int displacement = secondaryIndex.changeDisplacementAfterDeletion(prevIndexPosition, file.get(prevPage).size, true);
                 if (displacement > 253) {
                   secondaryIndex.updateSignature(prevIndexPosition, Byte.MAX_VALUE);
                 }
@@ -686,9 +677,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   private K[] getKeySet(K currentRecord, boolean nextNaturalOrderedKeyShouldBeUsed, int step) {
     List<OLinearHashingBucket> chain = new ArrayList<OLinearHashingBucket>();
     boolean nextLevel = false;
-    int naturalOrderedKey = OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level);
+    int naturalOrderedKey = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level);
     if (naturalOrderedKey < next) {
-      naturalOrderedKey = OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level + 1);
+      naturalOrderedKey = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level + 1);
       nextLevel = true;
     }
 
@@ -707,9 +698,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
     int bucketNumber;
     if (nextLevel) {
-      bucketNumber = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level + 1);
+      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level + 1);
     } else {
-      bucketNumber = OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level);
+      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level);
     }
 
     int displacement = primaryIndex.getChainDisplacement(bucketNumber);
@@ -732,13 +723,13 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       chain.add(bucket);
 
       int amountOfRecords = 0;
-      for (OLinearHashingBucket chainElement : chain) {
+      for (OLinearHashingBucket chainElement : chain){
         amountOfRecords += chainElement.size;
       }
 
       result = (K[]) new OClusterPosition[amountOfRecords];
       int freePositionInArrayPointer = 0;
-      for (OLinearHashingBucket chainElement : chain) {
+      for (OLinearHashingBucket chainElement : chain){
         System.arraycopy(chainElement.keys, 0, result, freePositionInArrayPointer, chainElement.size);
         freePositionInArrayPointer += chainElement.size;
       }
