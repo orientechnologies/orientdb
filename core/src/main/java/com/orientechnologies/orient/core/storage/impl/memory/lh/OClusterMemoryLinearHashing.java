@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
 public class OClusterMemoryLinearHashing extends OClusterMemory implements OCluster {
 
