@@ -31,34 +31,34 @@ import com.orientechnologies.orient.core.storage.OStorage;
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
- * 
+ *
  * @author Luca Garulli
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
-  protected final ODatabaseRecord       database;
+  protected final ODatabaseRecord database;
   private final ODatabaseRecordAbstract lowLevelDatabase;
-  protected final OStorage              dbStorage;
+  protected final OStorage dbStorage;
 
-  protected boolean                     liveUpdated            = false;
-  protected long                        limit                  = -1;
-  protected long                        browsedRecords         = 0;
+  protected boolean liveUpdated = false;
+  protected long limit = -1;
+  protected long browsedRecords = 0;
 
-  private String                        fetchPlan;
-  private ORecordInternal<?>            reusedRecord           = null;                             // DEFAULT = NOT REUSE IT
-  private Boolean                       directionForward;
-  protected final ORecordId             current                = new ORecordId();
+  private String fetchPlan;
+  private ORecordInternal<?> reusedRecord = null;                             // DEFAULT = NOT REUSE IT
+  private Boolean directionForward;
+  protected final ORecordId current = new ORecordId();
 
-  protected long                        totalAvailableRecords;
-  protected List<ORecordOperation>      txEntries;
+  protected long totalAvailableRecords;
+  protected List<ORecordOperation> txEntries;
 
-  protected int                         currentTxEntryPosition = -1;
+  protected int currentTxEntryPosition = -1;
 
-  protected OClusterPosition            firstClusterEntry      = OClusterPosition.INVALID_POSITION;
-  protected OClusterPosition            lastClusterEntry       = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition firstClusterEntry = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition lastClusterEntry = OClusterPosition.INVALID_POSITION;
 
-  protected OClusterPosition            currentEntry           = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition currentEntry = OClusterPosition.INVALID_POSITION;
 
-  public long                           totalLength            = 0;
+  public long totalLength = 0;
 
   public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
     database = iDatabase;
@@ -116,7 +116,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Tells if the iterator is using the same record for browsing.
-   * 
+   *
    * @see #setReuseSameRecord(boolean)
    */
   public boolean isReuseSameRecord() {
@@ -127,8 +127,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Tell to the iterator to use the same record for browsing. The record will be reset before every use. This improve the
    * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
    * data of the record once read otherwise they will be reset to the next operation.
-   * 
-   * @param reuseSameRecord
+   *
+   * @param reuseSameRecord if true the same record will be used for iteration. If false new record will be created
+   *                        each time iterator retrieves record from db.
    * @return @see #isReuseSameRecord()
    */
   public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
@@ -138,8 +139,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return the record to use for the operation.
-   * 
-   * @return
+   *
+   * @return the record to use for the operation.
    */
   protected ORecordInternal<?> getRecord() {
     final ORecordInternal<?> record;
@@ -167,7 +168,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return the current limit on browsing record. -1 means no limits (default).
-   * 
+   *
    * @return The limit if setted, otherwise -1
    * @see #setLimit(long)
    */
@@ -177,9 +178,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Set the limit on browsing record. -1 means no limits. You can set the limit even while you're browsing.
-   * 
-   * @param limit
-   *          The current limit on browsing record. -1 means no limits (default).
+   *
+   * @param limit The current limit on browsing record. -1 means no limits (default).
    * @see #getLimit()
    */
   public OIdentifiableIterator<REC> setLimit(long limit) {
@@ -189,7 +189,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Return current configuration of live updates.
-   * 
+   *
    * @return True to activate it, otherwise false (default)
    * @see #setLiveUpdated(boolean)
    */
@@ -200,9 +200,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   /**
    * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
    * the size of the cluster while you're browsing it. Default is false.
-   * 
-   * @param liveUpdated
-   *          True to activate it, otherwise false (default)
+   *
+   * @param liveUpdated True to activate it, otherwise false (default)
    * @see #isLiveUpdated()
    */
   public OIdentifiableIterator<REC> setLiveUpdated(boolean liveUpdated) {
@@ -220,9 +219,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   /**
    * Read the current record and increment the counter if the record was found.
-   * 
-   * @param iRecord
-   * @return
+   *
+   * @param iRecord to read value from database inside it. If record is null link will be created and stored in it.
+   * @return record which was read from db.
    */
   protected ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
     if (limit > -1 && browsedRecords >= limit)
@@ -233,7 +232,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       return null;
 
     if (iRecord != null) {
-      iRecord.setIdentity(current);
+      iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
       iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
     } else
       iRecord = lowLevelDatabase.load(current, fetchPlan);
@@ -249,7 +248,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       if (currentEntry.compareTo(lastClusterEntry) >= 0)
         return false;
 
-      for (int i = 0; i < iMovement; ++i) {
+      for (int i = 0; i < iMovement; ++i){
         // get next record from cluster
         currentEntry = dbStorage.getNextClusterPosition(current.clusterId, currentEntry);
       }
@@ -263,7 +262,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       if (currentEntry.compareTo(firstClusterEntry) < 0)
         return false;
 
-      for (int i = 0; i > iMovement; --i) {
+      for (int i = 0; i > iMovement; --i){
         // get next record from cluster
         currentEntry = dbStorage.getPrevClusterPosition(current.clusterId, currentEntry);
       }
