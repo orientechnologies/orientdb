@@ -1,16 +1,16 @@
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.utils.linearhashing;
 
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
-abstract class OLinearHashingHashCalculatorFactory {
+public abstract class OLinearHashingHashCalculatorFactory {
 
   public static final OLinearHashingHashCalculatorFactory INSTANCE;
-  private static final ThreadLocal<MersenneTwisterFast> threadLocalRandom = new ThreadLocal();
+  private static final ThreadLocal<MersenneTwisterFast> threadLocalRandom = new ThreadLocal<MersenneTwisterFast>();
 
   static {
     if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean())
@@ -19,25 +19,25 @@ abstract class OLinearHashingHashCalculatorFactory {
       INSTANCE = new OLinearHashingHashCalculatorLong();
   }
 
-  public int calculateNaturalOrderedHash(OClusterPosition key, int level) {
-    return (int) Math.floor(Math.pow(2, level) * calculateHashIn01Range(key, level));
+  public long calculateNaturalOrderedHash(OClusterPosition key, long level) {
+    return (long) Math.floor((1<<level) * calculateHashIn01Range(key, level));
   }
 
-  public int calculateBucketNumber(int hash, int level) {
-    final int result;
+  public long calculateBucketNumber(long hash, long level) {
+    final long result;
     if (level == 0 && hash == 0)
       return 0;
     if ((hash % 2 == 0) && (level > 0))
       return calculateBucketNumber(hash / 2, level - 1);
     else
-      result = (hash - 1) / 2 + (int) Math.pow(2, level - 1);
+      result = (hash - 1) / 2 + (1 << (level - 1));
     assert result >= 0;
     return result;
   }
 
-  public double calculateHashIn01Range(OClusterPosition key, int level) {
+  public double calculateHashIn01Range(OClusterPosition key, long level) {
     assert key != null;
-    double result = ((key.doubleValue() + (getNegativeElementCount())) / getElementCount());
+    double result = ((key.longValueHigh() + (getNegativeElementCount())) / getElementCount());
 
     // TODO remove this hack and use same valid workaround
     if (result >= 1) {
@@ -54,7 +54,7 @@ abstract class OLinearHashingHashCalculatorFactory {
 
   public byte calculateSignature(OClusterPosition key) {
 
-    if(threadLocalRandom.get() == null){
+    if (threadLocalRandom.get() == null) {
       threadLocalRandom.set(new MersenneTwisterFast());
     }
 
@@ -80,7 +80,7 @@ abstract class OLinearHashingHashCalculatorFactory {
   }
 
   private static final class OLinearHashingHashCalculatorNodeId extends OLinearHashingHashCalculatorFactory {
-    private static final double ELEMENTS_COUNT         = Math.pow(2, 192);
+    private static final double ELEMENTS_COUNT = Math.pow(2, 192);
     private static final double HALF_OF_ELEMENTS_COUNT = ELEMENTS_COUNT / 2;
 
     @Override

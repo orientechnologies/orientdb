@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
 public class OSerializationLongIdThreadLocal extends ThreadLocal<Set<Long>> {
   public static OSerializationLongIdThreadLocal	INSTANCE	= new OSerializationLongIdThreadLocal();

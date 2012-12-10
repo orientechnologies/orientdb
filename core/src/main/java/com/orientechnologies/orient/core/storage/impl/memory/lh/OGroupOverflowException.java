@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.memory.lh;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
 public class OGroupOverflowException extends ODatabaseException {
   public OGroupOverflowException(String s) {

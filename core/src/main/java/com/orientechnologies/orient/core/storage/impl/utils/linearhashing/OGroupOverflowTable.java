@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.utils.linearhashing;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
 // TODO optimize it to use Array instead of list!
-class OGroupOverflowTable {
+public class OGroupOverflowTable {
 
   public static class GroupOverflowInfo {
     byte group;
@@ -31,6 +31,22 @@ class OGroupOverflowTable {
 
     public GroupOverflowInfo(byte group, int startingPage) {
       this.group = group;
+      this.startingPage = startingPage;
+    }
+
+    public byte getGroup() {
+      return group;
+    }
+
+    public void setGroup(byte group) {
+      this.group = group;
+    }
+
+    public int getStartingPage() {
+      return startingPage;
+    }
+
+    public void setStartingPage(int startingPage) {
       this.startingPage = startingPage;
     }
   }

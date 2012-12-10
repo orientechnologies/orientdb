@@ -22,11 +22,12 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingHashCalculatorFactory;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
-class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPosition> {
+public class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPosition> {
   public static final int BUCKET_MAX_SIZE = 64;
   K[]                     keys            = (K[]) new OClusterPosition[BUCKET_MAX_SIZE];
   V[]                     values          = (V[]) new OPhysicalPosition[BUCKET_MAX_SIZE];

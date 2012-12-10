@@ -1,13 +1,12 @@
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.utils.linearhashing;
 
 import java.util.BitSet;
 
-
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
-class OPageIndicator {
-  BitSet indicator = new BitSet();
+public class OPageIndicator {
+  private BitSet indicator = new BitSet();
 
   public boolean get(int i) {
     return indicator.get(i);
@@ -20,13 +19,8 @@ class OPageIndicator {
     if (!indicator.get(page)) {
       throw new RuntimeException("page which accessed should be used before");
     }
-    int index = 0;
-    for (int i = 0; i < page; ++i) {
-      if (indicator.get(i)) {
-        index++;
-      }
-    }
-    return index;
+
+    return indicator.get(0, page).cardinality();
   }
 
   public void set(int pageToUse) {
@@ -34,16 +28,12 @@ class OPageIndicator {
     indicator.set(pageToUse);
   }
 
-  public int getFirstEmptyPage(int group, int size) {
-    for (int i = group; i < group + size; i++) {
-      if (!indicator.get(i))
-        return i;
-    }
-    return -1;
+  public int getFirstEmptyPage(int startingPage, int size) {
+    int emptyPage = indicator.nextClearBit(startingPage);
+    return emptyPage < startingPage + size ? emptyPage : -1;
   }
 
   public void unset(int pageToUse) {
-    // System.out.println("page " + pageToUse +" now unset");
     assert indicator.get(pageToUse);
     indicator.set(pageToUse, false);
   }
@@ -55,5 +45,9 @@ class OPageIndicator {
 
   public void clear() {
     indicator.clear();
+  }
+
+  public boolean isUsedPageExistInRange(int startPosition, int endPosition) {
+    return indicator.get(startPosition, endPosition).cardinality()>0;
   }
 }
