@@ -1647,7 +1647,7 @@ public class OStorageLocal extends OStorageEmbedded {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (ppos == null || !checkForRecordValidity(ppos))
+        if (ppos == null || !checkForRecordValidity(ppos) )
           // DELETED
           return null;
 
