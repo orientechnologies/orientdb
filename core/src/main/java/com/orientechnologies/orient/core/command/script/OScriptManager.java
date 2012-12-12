@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
 
@@ -146,10 +147,8 @@ public class OScriptManager {
     return scriptEngine;
   }
 
-  public Bindings bind(final ScriptEngine iEngine, final ODatabaseRecordTx db, final OCommandContext iContext,
+  public Bindings bind(final Bindings binding, final ODatabaseRecordTx db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
-    final Bindings binding = iEngine.createBindings();
-
     for (OScriptInjection i : injections)
       i.bind(binding);
 
@@ -158,6 +157,7 @@ public class OScriptManager {
       binding.put("db", new OScriptDocumentDatabaseWrapper(db));
       binding.put("gdb", new OScriptGraphDatabaseWrapper(db));
     }
+    binding.put("util", new OFunctionUtilWrapper(null));
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {

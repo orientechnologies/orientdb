@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.command.script;
 import java.util.Map;
 
 import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -61,10 +63,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
       db = db.getUnderlying();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
-    final ScriptEngine scriptEngine = scriptManager.getEngine(language);
-    final Bindings binding = scriptManager.bind(scriptEngine, (ODatabaseRecordTx) db, iContext, iArgs);
+    CompiledScript compiledScript = request.getCompiledScript();
 
-    try {
+    if (compiledScript == null) {
+      ScriptEngine scriptEngine = scriptManager.getEngine(language);
       // COMPILE FUNCTION LIBRARY
       String lib = scriptManager.getLibrary(db, language);
       if (lib == null)
@@ -72,7 +74,21 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
       parserText = lib + parserText;
 
-      return scriptEngine.eval(parserText, binding);
+      Compilable c = (Compilable) scriptEngine;
+      try {
+        compiledScript = c.compile(parserText);
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on compiling script", request.getText(), e.getColumnNumber(), e);
+      }
+
+      request.setCompiledScript(compiledScript);
+    }
+
+    final Bindings binding = scriptManager.bind(compiledScript.getEngine().createBindings(), (ODatabaseRecordTx) db, iContext,
+        iArgs);
+
+    try {
+      return compiledScript.eval(binding);
 
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);

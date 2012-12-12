@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import javax.script.CompiledScript;
+
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -30,7 +32,8 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 @SuppressWarnings("serial")
 public class OCommandScript extends OCommandRequestTextAbstract {
-  private String language;
+  private String         language;
+  private CompiledScript compiledScript;
 
   public OCommandScript() {
   }
@@ -68,5 +71,13 @@ public class OCommandScript extends OCommandRequestTextAbstract {
     final OMemoryStream buffer = new OMemoryStream();
     buffer.set(language);
     return toStream(buffer);
+  }
+
+  public void setCompiledScript(CompiledScript script) {
+    compiledScript = script;
+  }
+
+  public CompiledScript getCompiledScript() {
+    return compiledScript;
   }
 }
