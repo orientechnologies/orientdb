@@ -165,8 +165,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             ioResult = ioResult != null ? ioResult.toString().indexOf(toFind, startIndex) : null;
 
           } else if (operator == OSQLFilterFieldOperator.SUBSTRING.id) {
-            int endIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : op.value.get(0).length();
-            ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
+            if (op.value.size() > 1)
+              ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)),
+                  Integer.parseInt(op.value.get(1))) : null;
+            else
+              ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0))) : null;
 
           } else if (operator == OSQLFilterFieldOperator.REPLACE.id) {
             ioResult = ioResult != null ? ioResult.toString().replace(op.value.get(0), op.value.get(1)) : null;
