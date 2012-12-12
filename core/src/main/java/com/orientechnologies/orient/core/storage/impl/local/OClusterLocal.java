@@ -126,8 +126,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       endOffsetData = fileSegment.files[0].readHeaderLong(OBinaryProtocol.SIZE_LONG);
 
       final long version = fileSegment.files[0].readHeaderLong(2 * OBinaryProtocol.SIZE_LONG);
-      if (version < 1)
-        convertDeletedRecords();
+      if (version < 1)   {
+				convertDeletedRecords();
+				fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 1);
+			}
+
 
     } finally {
       releaseExclusiveLock();
