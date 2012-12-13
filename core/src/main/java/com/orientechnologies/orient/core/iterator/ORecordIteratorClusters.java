@@ -44,14 +44,15 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   protected ORID       endRange;
 
   public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int[] iClusterIds) {
-    super(iDatabase, iLowLevelDatabase);
+      final int[] iClusterIds, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
     clusterIds = iClusterIds;
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
-    super(iDatabase, iLowLevelDatabase);
+  protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
@@ -84,7 +85,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     // ITERATE UNTIL THE PREVIOUS GOOD RECORD
     while (currentClusterIdx > -1) {
-      while (nextPosition(-1)) {
+      while (prevPosition()) {
         currentRecord = readCurrentRecord(record, 0);
 
         if (currentRecord != null)
@@ -127,7 +128,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
-      while (nextPosition(+1)) {
+      while (nextPosition()) {
         final OClusterPosition currentPosition = currentPosition();
         if (outsideOfTheRange(currentPosition))
           continue;
@@ -277,7 +278,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
       updateClusterRange();
 
     resetCurrentPosition();
-    nextPosition(+1);
+    nextPosition();
 
     ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
@@ -299,7 +300,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     current.clusterId = currentClusterIdx;
 
     resetCurrentPosition();
-    nextPosition(-1);
+    prevPosition();
 
     ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);

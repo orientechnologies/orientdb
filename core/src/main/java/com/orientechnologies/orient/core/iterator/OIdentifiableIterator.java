@@ -62,14 +62,16 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   private OClusterPosition              currentEntry           = OClusterPosition.INVALID_POSITION;
 
-  public long                           totalLength            = 0;
-
   private int                           currentEntryPosition   = -1;
   private OPhysicalPosition[]           positionsToProcess     = null;
 
-  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
+  private final boolean                 iterateThroughTombstones;
+
+  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      boolean iterateThroughTombstones) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
+    this.iterateThroughTombstones = iterateThroughTombstones;
 
     dbStorage = lowLevelDatabase.getStorage();
 
@@ -243,7 +245,22 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       // LIMIT REACHED
       return null;
 
-    if (!nextPosition(iMovement))
+    final boolean moveResult;
+    switch (iMovement) {
+    case 1:
+      moveResult = nextPosition();
+      break;
+    case -1:
+      moveResult = prevPosition();
+      break;
+    case 0:
+      moveResult = checkCurrentPosition();
+      break;
+    default:
+      throw new IllegalStateException("Invalid movement value : " + iMovement);
+    }
+
+    if (!moveResult)
       return null;
 
     if (iRecord != null) {
@@ -258,67 +275,91 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     return iRecord;
   }
 
-  protected boolean nextPosition(int iMovement) {
-    if (iMovement > 0) {
-      if (positionsToProcess == null)
-        positionsToProcess = dbStorage.ceilingPhysicalPositions(current.clusterId, new OPhysicalPosition(firstClusterEntry));
-      else {
-        if (currentEntry.compareTo(lastClusterEntry) >= 0)
-          return false;
-      }
-
-      currentEntryPosition += iMovement;
-      while (positionsToProcess.length > 0 && currentEntryPosition >= positionsToProcess.length) {
-        currentEntryPosition -= positionsToProcess.length;
-
-        positionsToProcess = dbStorage
-            .higherPhysicalPositions(current.clusterId, positionsToProcess[positionsToProcess.length - 1]);
-      }
-
-      if (positionsToProcess.length == 0)
-        return false;
-
-      currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
-
-      totalLength += iMovement;
-
-      if (currentEntry.compareTo(lastClusterEntry) > 0 || currentEntry.equals(OClusterPosition.INVALID_POSITION))
-        return false;
-    } else if (iMovement < 0) {
-      if (positionsToProcess == null) {
-        positionsToProcess = dbStorage.floorPhysicalPositions(current.clusterId, new OPhysicalPosition(lastClusterEntry));
-
-        if (positionsToProcess.length == 0)
-          return false;
-
-        currentEntryPosition = positionsToProcess.length;
-      } else {
-        if (currentEntry.compareTo(firstClusterEntry) < 0)
-          return false;
-      }
-
-      currentEntryPosition += iMovement;
-      while (positionsToProcess.length > 0 && currentEntryPosition < 0) {
-        positionsToProcess = dbStorage.lowerPhysicalPositions(current.clusterId, positionsToProcess[0]);
-        currentEntryPosition += positionsToProcess.length;
-      }
-
-      if (positionsToProcess.length == 0)
-        return false;
-
-      currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
-
-      if (currentEntry.compareTo(firstClusterEntry) < 0)
-        return false;
-
-    } else {
-      if (currentEntry == null || currentEntry.equals(OClusterPosition.INVALID_POSITION)
-          || firstClusterEntry.compareTo(currentEntry) > 0 || lastClusterEntry.compareTo(currentEntry) < 0)
+  protected boolean nextPosition() {
+    if (positionsToProcess == null)
+      positionsToProcess = dbStorage.ceilingPhysicalPositions(current.clusterId, new OPhysicalPosition(firstClusterEntry));
+    else {
+      if (currentEntry.compareTo(lastClusterEntry) >= 0)
         return false;
     }
 
+    incrementEntreePosition();
+    while (positionsToProcess.length > 0 && currentEntryPosition >= positionsToProcess.length) {
+      positionsToProcess = dbStorage.higherPhysicalPositions(current.clusterId, positionsToProcess[positionsToProcess.length - 1]);
+
+      currentEntryPosition = -1;
+      incrementEntreePosition();
+    }
+
+    if (positionsToProcess.length == 0)
+      return false;
+
+    currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
+
+    if (currentEntry.compareTo(lastClusterEntry) > 0 || currentEntry.equals(OClusterPosition.INVALID_POSITION))
+      return false;
+
     current.clusterPosition = currentEntry;
     return true;
+  }
+
+  protected boolean checkCurrentPosition() {
+    if (currentEntry == null || currentEntry.equals(OClusterPosition.INVALID_POSITION)
+        || firstClusterEntry.compareTo(currentEntry) > 0 || lastClusterEntry.compareTo(currentEntry) < 0)
+      return false;
+
+    current.clusterPosition = currentEntry;
+    return true;
+  }
+
+  protected boolean prevPosition() {
+    if (positionsToProcess == null) {
+      positionsToProcess = dbStorage.floorPhysicalPositions(current.clusterId, new OPhysicalPosition(lastClusterEntry));
+
+      if (positionsToProcess.length == 0)
+        return false;
+
+      currentEntryPosition = positionsToProcess.length;
+    } else {
+      if (currentEntry.compareTo(firstClusterEntry) < 0)
+        return false;
+    }
+
+    decrementEntreePosition();
+
+    while (positionsToProcess.length > 0 && currentEntryPosition < 0) {
+      positionsToProcess = dbStorage.lowerPhysicalPositions(current.clusterId, positionsToProcess[0]);
+      currentEntryPosition = positionsToProcess.length;
+
+      decrementEntreePosition();
+    }
+
+    if (positionsToProcess.length == 0)
+      return false;
+
+    currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
+
+    if (currentEntry.compareTo(firstClusterEntry) < 0)
+      return false;
+
+    current.clusterPosition = currentEntry;
+    return true;
+  }
+
+  private void decrementEntreePosition() {
+    if (positionsToProcess.length > 0)
+      do {
+        currentEntryPosition--;
+      } while (currentEntryPosition > 0
+          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
+  }
+
+  private void incrementEntreePosition() {
+    if (positionsToProcess.length > 0)
+      do {
+        currentEntryPosition++;
+      } while (currentEntryPosition < positionsToProcess.length
+          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
   }
 
   protected void resetCurrentPosition() {

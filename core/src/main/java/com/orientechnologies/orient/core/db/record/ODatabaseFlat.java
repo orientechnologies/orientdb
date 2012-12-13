@@ -34,6 +34,11 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
     return super.browseCluster(iClusterName, ORecordFlat.class);
   }
 
+  @Override
+  public ORecordIteratorCluster<ORecordFlat> browseCluster(String iClusterName, boolean loadTombstones) {
+    return super.browseCluster(iClusterName, ORecordFlat.class, loadTombstones);
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public ORecordFlat newInstance() {

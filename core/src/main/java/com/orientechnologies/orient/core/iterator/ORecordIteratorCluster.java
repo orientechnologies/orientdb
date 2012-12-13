@@ -34,8 +34,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   private ORecord<?> currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int iClusterId) {
-    super(iDatabase, iLowLevelDatabase);
+      final int iClusterId, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");

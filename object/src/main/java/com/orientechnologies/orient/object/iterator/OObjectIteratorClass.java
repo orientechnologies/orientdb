@@ -26,44 +26,44 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T> {
-	private ODatabaseObject									database;
-	private ORecordIteratorClass<ODocument>	underlying;
-	private String													fetchPlan;
+  private ODatabaseObject                 database;
+  private ORecordIteratorClass<ODocument> underlying;
+  private String                          fetchPlan;
 
-	public OObjectIteratorClass(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
-			final String iClusterName, final boolean iPolymorphic) {
-		database = iDatabase;
-		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase,
-				iClusterName, iPolymorphic);
-	}
+  public OObjectIteratorClass(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
+      final String iClusterName, final boolean iPolymorphic) {
+    database = iDatabase;
+    underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase,
+        iClusterName, iPolymorphic, false);
+  }
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public T next() {
-		return next(fetchPlan);
-	}
+  public T next() {
+    return next(fetchPlan);
+  }
 
-	public T next(final String iFetchPlan) {
-		return (T) database.getUserObjectByRecord(underlying.next(), iFetchPlan);
-	}
+  public T next(final String iFetchPlan) {
+    return (T) database.getUserObjectByRecord(underlying.next(), iFetchPlan);
+  }
 
-	public void remove() {
-		underlying.remove();
-	}
+  public void remove() {
+    underlying.remove();
+  }
 
-	public Iterator<T> iterator() {
-		return this;
-	}
+  public Iterator<T> iterator() {
+    return this;
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public OObjectIteratorClass<T> setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-		return this;
-	}
+  public OObjectIteratorClass<T> setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+    return this;
+  }
 
 }

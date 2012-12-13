@@ -151,7 +151,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         final long p = pos[1] + RECORD_TYPE_OFFSET;
         f.writeByte(p, RECORD_WAS_DELETED);
       }
-
       if (i % 1000 == 0)
         OLogManager.instance().info(this, "%d holes were converted in cluster %s ...", i, name);
     }

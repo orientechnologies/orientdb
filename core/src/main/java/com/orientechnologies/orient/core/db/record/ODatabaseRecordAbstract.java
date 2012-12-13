@@ -375,7 +375,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, false);
+  }
+
+  @Override
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+      boolean loadTombstones) {
+    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+
+    setCurrentDatabaseinThreadLocal();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, false);
+  }
+
+  @Override
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, boolean loadTombstones) {
+    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+
+    setCurrentDatabaseinThreadLocal();
+
+    final int clusterId = getClusterIdByName(iClusterName);
+
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, loadTombstones);
   }
 
   public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
@@ -385,7 +408,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId);
+    return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId, false);
   }
 
   public OCommandRequest command(final OCommandRequest iCommand) {
