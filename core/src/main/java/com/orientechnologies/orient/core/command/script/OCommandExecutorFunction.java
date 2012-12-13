@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 
 /**
  * Executes Script Commands.
@@ -67,15 +66,12 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
 
-    iContext.setVariable("util", new OFunctionUtilWrapper(f));
-
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
-    final Bindings binding = scriptManager.bind(scriptEngine, (ODatabaseRecordTx) db, iContext, iArgs);
+    final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseRecordTx) db,
+        iContext, iArgs);
 
     try {
-      scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
-
       // COMPILE FUNCTION LIBRARY
       final String lib = scriptManager.getLibrary(db, f.getLanguage());
       if (lib != null)

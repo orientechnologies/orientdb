@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory.lh;
 
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -24,13 +26,15 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
 public class OClusterMemoryLinearHashing extends OClusterMemory implements OCluster {
 
-  public static final String                                       TYPE    = "MEMORY";
+  public static final String                                       TYPE            = "MEMORY";
 
-  private OLinearHashingTable<OClusterPosition, OPhysicalPosition> content = new OLinearHashingTable<OClusterPosition, OPhysicalPosition>();
+  private OLinearHashingTable<OClusterPosition, OPhysicalPosition> content         = new OLinearHashingTable<OClusterPosition, OPhysicalPosition>();
+
+  private long                                                     tombstonesCount = 0;
 
   @Override
   public boolean addPhysicalPosition(OPhysicalPosition physicalPosition) {
@@ -75,7 +79,9 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
     acquireExclusiveLock();
     try {
 
-      content.delete(clusterPosition);
+      final OPhysicalPosition physicalPosition = content.delete(clusterPosition);
+      if (physicalPosition != null && physicalPosition.recordVersion.isTombstone())
+        tombstonesCount--;
 
     } finally {
       releaseExclusiveLock();
@@ -107,6 +113,28 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
+  public void convertToTombstone(OClusterPosition clusterPosition) throws IOException {
+    acquireExclusiveLock();
+    try {
+
+      content.get(clusterPosition).recordVersion.convertToTombstone();
+      tombstonesCount++;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public long getTombstonesCount() {
+    return tombstonesCount;
+  }
+
+  @Override
+  public boolean hasTombstonesSupport() {
+    return true;
+  }
+
+  @Override
   public long getEntries() {
     acquireSharedLock();
     try {
@@ -122,8 +150,13 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
-      OClusterPosition clusterPosition = content.nextRecord(OClusterPositionFactory.INSTANCE.valueOf(-1));
-      return clusterPosition == null ? OClusterPosition.INVALID_POSITION : clusterPosition;
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content
+          .higherEntries(OClusterPositionFactory.INSTANCE.valueOf(-1));
+
+      if (entries.length == 0)
+        return OClusterPosition.INVALID_POSITION;
+      else
+        return entries[0].key;
     } finally {
       releaseSharedLock();
     }
@@ -133,10 +166,12 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
-      // TODO remake this with relation to point that max value can be stored to DB
-      assert !content.contains(OClusterPositionFactory.INSTANCE.getMaxValue());
-      OClusterPosition clusterPosition = content.prevRecord(OClusterPositionFactory.INSTANCE.getMaxValue());
-      return clusterPosition == null ? OClusterPosition.INVALID_POSITION : clusterPosition;
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content
+          .floorEntries(OClusterPositionFactory.INSTANCE.getMaxValue());
+      if (entries.length == 0)
+        return OClusterPosition.INVALID_POSITION;
+      else
+        return entries[entries.length - 1].key;
     } finally {
       releaseSharedLock();
     }
@@ -164,14 +199,18 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public OClusterPosition nextRecord(OClusterPosition position) {
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) {
     acquireSharedLock();
     try {
-      OClusterPosition clusterPosition = content.nextRecord(position);
-      if (clusterPosition.isPersistent()) {
-        return clusterPosition;
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content.higherEntries(position.clusterPosition);
+      if (entries.length > 0) {
+        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
+        for (int i = 0; i < result.length; i++)
+          result[i] = entries[i].value;
+
+        return result;
       } else {
-        return null;
+        return new OPhysicalPosition[0];
       }
     } finally {
       releaseSharedLock();
@@ -179,18 +218,61 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public OClusterPosition prevRecord(OClusterPosition position) {
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      OClusterPosition clusterPosition = content.prevRecord(position);
-      if (clusterPosition.isPersistent()) {
-        return clusterPosition;
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content.ceilingEntries(position.clusterPosition);
+      if (entries.length > 0) {
+        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
+        for (int i = 0; i < result.length; i++)
+          result[i] = entries[i].value;
+
+        return result;
       } else {
-        return null;
+        return new OPhysicalPosition[0];
       }
     } finally {
       releaseSharedLock();
     }
   }
 
+  @Override
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) {
+    acquireSharedLock();
+    try {
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content.lowerEntries(position.clusterPosition);
+
+      if (entries.length > 0) {
+        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
+        for (int i = 0; i < result.length; i++)
+          result[i] = entries[i].value;
+
+        return result;
+      } else {
+        return new OPhysicalPosition[0];
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+    acquireSharedLock();
+    try {
+      OLinearHashingTable.Entry<OClusterPosition, OPhysicalPosition>[] entries = content.floorEntries(position.clusterPosition);
+
+      if (entries.length > 0) {
+        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
+        for (int i = 0; i < result.length; i++)
+          result[i] = entries[i].value;
+
+        return result;
+      } else {
+        return new OPhysicalPosition[0];
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
 }

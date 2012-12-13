@@ -186,15 +186,27 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     delegate.setSessionId(sessionId);
-    return delegate.getNextClusterPosition(currentClusterId, clusterPosition);
+    return delegate.higherPhysicalPositions(currentClusterId, physicalPosition);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     delegate.setSessionId(sessionId);
-    return delegate.getPrevClusterPosition(currentClusterId, clusterPosition);
+    return delegate.lowerPhysicalPositions(currentClusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    delegate.setSessionId(sessionId);
+    return delegate.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    delegate.setSessionId(sessionId);
+    return delegate.floorPhysicalPositions(clusterId, physicalPosition);
   }
 
   public long getSize() {

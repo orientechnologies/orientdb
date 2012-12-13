@@ -66,4 +66,9 @@ public abstract class OClusterPosition extends Number implements Comparable<OClu
    *         result of the function {@link com.orientechnologies.orient.core.id.OClusterPositionFactory#getSerializedSize()}
    */
   public abstract byte[] toStream();
+
+  /**
+   * @return Hi long value of cluster position content.
+   */
+  public abstract long longValueHigh();
 }

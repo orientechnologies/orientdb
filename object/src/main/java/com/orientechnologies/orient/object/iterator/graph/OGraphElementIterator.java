@@ -33,90 +33,91 @@ import com.orientechnologies.orient.object.db.graph.OGraphElement;
  */
 @SuppressWarnings("unchecked")
 public abstract class OGraphElementIterator<T extends OGraphElement> implements Iterator<T>, Iterable<T> {
-	protected ODatabaseGraphTx								database;
-	protected ORecordIteratorClass<ODocument>	underlying;
-	private String														fetchPlan;
-	private T																	reusedObject;
-	private String														className;
+  protected ODatabaseGraphTx                database;
+  protected ORecordIteratorClass<ODocument> underlying;
+  private String                            fetchPlan;
+  private T                                 reusedObject;
+  private String                            className;
 
-	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName, final boolean iPolymorphic) {
-		database = iDatabase;
-		className = iClassName;
-		underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(),
-				(ODatabaseRecordAbstract) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName, iPolymorphic);
+  public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final String iClassName, final boolean iPolymorphic) {
+    database = iDatabase;
+    className = iClassName;
+    underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(),
+        (ODatabaseRecordAbstract) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName, iPolymorphic,
+        false);
 
-		setReuseSameObject(false);
-		underlying.setReuseSameRecord(false);
-	}
+    setReuseSameObject(false);
+    underlying.setReuseSameRecord(false);
+  }
 
-	public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final ORecordIteratorClass<ODocument> iUnderlying) {
-		database = iDatabase;
-		underlying = iUnderlying;
-	}
+  public OGraphElementIterator(final ODatabaseGraphTx iDatabase, final ORecordIteratorClass<ODocument> iUnderlying) {
+    database = iDatabase;
+    underlying = iUnderlying;
+  }
 
-	public abstract T next(final String iFetchPlan);
+  public abstract T next(final String iFetchPlan);
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public T next() {
-		return next(fetchPlan);
-	}
+  public T next() {
+    return next(fetchPlan);
+  }
 
-	public void remove() {
-		underlying.remove();
-	}
+  public void remove() {
+    underlying.remove();
+  }
 
-	public Iterator<T> iterator() {
-		return this;
-	}
+  public Iterator<T> iterator() {
+    return this;
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public OGraphElementIterator<T> setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-		return this;
-	}
+  public OGraphElementIterator<T> setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+    return this;
+  }
 
-	/**
-	 * Tells if the iterator is using the same object for browsing.
-	 * 
-	 * @see #setReuseSameObject(boolean)
-	 */
-	public boolean isReuseSameObject() {
-		return reusedObject != null;
-	}
+  /**
+   * Tells if the iterator is using the same object for browsing.
+   * 
+   * @see #setReuseSameObject(boolean)
+   */
+  public boolean isReuseSameObject() {
+    return reusedObject != null;
+  }
 
-	/**
-	 * Tells to the iterator to use the same object for browsing. The object will be reset before every use. This improve the
-	 * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
-	 * data of the object once read otherwise they will be reset to the next operation.
-	 * 
-	 * @param iReuse
-	 * @return @see #isReuseSameObject()
-	 */
-	public OGraphElementIterator<T> setReuseSameObject(boolean iReuse) {
-		reusedObject = (T) database.newInstance(className);
-		return this;
-	}
+  /**
+   * Tells to the iterator to use the same object for browsing. The object will be reset before every use. This improve the
+   * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
+   * data of the object once read otherwise they will be reset to the next operation.
+   * 
+   * @param iReuse
+   * @return @see #isReuseSameObject()
+   */
+  public OGraphElementIterator<T> setReuseSameObject(boolean iReuse) {
+    reusedObject = (T) database.newInstance(className);
+    return this;
+  }
 
-	/**
-	 * Returns the object to use for the operation.
-	 * 
-	 * @return
-	 */
-	protected T getObject() {
-		final T object;
-		if (reusedObject != null) {
-			// REUSE THE SAME RECORD AFTER HAVING RESETTED IT
-			object = reusedObject;
-			object.reset();
-		} else
-			// CREATE A NEW ONE
-			object = (T) database.newInstance(className);
-		return object;
-	}
+  /**
+   * Returns the object to use for the operation.
+   * 
+   * @return
+   */
+  protected T getObject() {
+    final T object;
+    if (reusedObject != null) {
+      // REUSE THE SAME RECORD AFTER HAVING RESETTED IT
+      object = reusedObject;
+      object.reset();
+    } else
+      // CREATE A NEW ONE
+      object = (T) database.newInstance(className);
+    return object;
+  }
 }

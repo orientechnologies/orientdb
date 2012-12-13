@@ -19,16 +19,19 @@ import java.util.List;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 /**
  * Wraps functions managing the binding of parameters.
@@ -73,6 +76,20 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
         runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentResult, iContext);
       else if (configuredParameters[i] instanceof OSQLFilterItemVariable)
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iContext);
+      else if (configuredParameters[i] instanceof OCommandSQL) {
+        try {
+          runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
+        } catch (OCommandExecutorNotFoundException e) {
+          // TRY WITH SIMPLE CONDITION
+          final String text = ((OCommandSQL) configuredParameters[i]).getText();
+          final OSQLPredicate pred = new OSQLPredicate(text);
+          runtimeParameters[i] = pred.evaluate(iContext);
+          // REPLACE ORIGINAL PARAM
+          configuredParameters[i] = pred;
+
+        }
+      } else if (configuredParameters[i] instanceof OSQLPredicate)
+        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iContext);
     }
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);

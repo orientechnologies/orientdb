@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -33,8 +34,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   private ORecord<?> currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int iClusterId) {
-    super(iDatabase, iLowLevelDatabase);
+      final int iClusterId, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
@@ -81,7 +82,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       // LIMIT REACHED
       return false;
 
-    boolean thereAreRecordsToBrowse = currentEntry.compareTo(firstClusterEntry) > 0;
+    boolean thereAreRecordsToBrowse = getCurrentEntry().compareTo(firstClusterEntry) > 0;
 
     if (thereAreRecordsToBrowse) {
       ORecordInternal<?> record = getRecord();
@@ -93,7 +94,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
 
   private void updateRangesOnLiveUpdate() {
     if (liveUpdated) {
-      OClusterPosition[] range = dbStorage.getClusterDataRange(current.clusterId);
+      OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
       firstClusterEntry = range[0];
       lastClusterEntry = range[1];
@@ -120,7 +121,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
 
     if (current.clusterPosition.isTemporary())
       thereAreRecordsToBrowse = false;
-    else if (currentEntry.compareTo(lastClusterEntry) < 0)
+    else if (getCurrentEntry().compareTo(lastClusterEntry) < 0)
       thereAreRecordsToBrowse = true;
     else
       thereAreRecordsToBrowse = false;
@@ -207,9 +208,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   @Override
   public ORecordIteratorCluster<REC> begin() {
     updateRangesOnLiveUpdate();
+    resetCurrentPosition();
 
-    currentEntry = firstClusterEntry;
-    currentRecord = readCurrentRecord(getRecord(), 0);
+    currentRecord = readCurrentRecord(getRecord(), +1);
 
     return this;
   }
@@ -222,9 +223,9 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   @Override
   public ORecordIteratorCluster<REC> last() {
     updateRangesOnLiveUpdate();
+    resetCurrentPosition();
 
-    currentEntry = lastClusterEntry;
-    currentRecord = readCurrentRecord(getRecord(), 0);
+    currentRecord = readCurrentRecord(getRecord(), -1);
 
     return this;
   }
@@ -243,8 +244,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
 
     // SET THE RANGE LIMITS
     if (iLiveUpdated) {
-      firstClusterEntry = OClusterPosition.INVALID_POSITION;
-      lastClusterEntry = OClusterPosition.INVALID_POSITION;
+      firstClusterEntry = OClusterPositionFactory.INSTANCE.valueOf(0);
+      lastClusterEntry = OClusterPositionFactory.INSTANCE.getMaxValue();
     } else {
       OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
       firstClusterEntry = range[0];

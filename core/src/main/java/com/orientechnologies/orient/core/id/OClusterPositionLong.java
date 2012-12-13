@@ -121,6 +121,15 @@ public final class OClusterPositionLong extends OClusterPosition {
     return value;
   }
 
+  /**
+   * This method return same value as longValue because high long and low long are the same.
+   * @return same value as longValue().
+   */
+  @Override
+  public long longValueHigh() {
+    return value;
+  }
+
   @Override
   public float floatValue() {
     return value;

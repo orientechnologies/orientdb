@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabaseMigration;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OGraphException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -289,16 +288,6 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
   @Override
   public void drop() {
     underlying.drop();
-  }
-
-  @Override
-  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return underlying.getNextClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return underlying.getPreviousClusterPosition(clusterId, clusterPosition);
   }
 
   public String getType() {

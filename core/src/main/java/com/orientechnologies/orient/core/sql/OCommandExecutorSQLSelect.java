@@ -779,10 +779,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         for (OIdentifiable identifiable : indexResultSet) {
           ORecord<?> record = identifiable.getRecord();
-          if (record == null)
-            throw new OException("Error during loading record with id : " + identifiable.getIdentity());
-
-          if (filter((ORecordInternal<?>) record)) {
+          // Don't throw exceptions is record is null, as indexed queries may fail when using record level security
+          if ((record != null) && filter((ORecordInternal<?>) record)) {
             final boolean continueResultParsing = handleResult(record);
             if (!continueResultParsing)
               break;

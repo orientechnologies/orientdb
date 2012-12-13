@@ -171,6 +171,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.browseCluster(iClusterName, iRecordClass);
   }
 
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final Class<REC> iRecordClass, final boolean loadTombstones) {
+    return underlying.browseCluster(iClusterName, iRecordClass, loadTombstones);
+  }
+
   public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
     return (RET) underlying.command(iCommand);
   }

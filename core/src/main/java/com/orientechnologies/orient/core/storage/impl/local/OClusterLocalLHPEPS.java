@@ -264,6 +264,20 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     }
   }
 
+  @Override
+  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+  }
+
+  @Override
+  public boolean hasTombstonesSupport() {
+    return false;
+  }
+
+  @Override
+  public long getTombstonesCount() {
+    return 0; // To change body of implemented methods use File | Settings | File Templates.
+  }
+
   private void setNameInternal(final String iNewName) {
     if (storage.getClusterIdByName(iNewName) > -1)
       throw new IllegalArgumentException("Cluster with name '" + iNewName + "' already exists");
@@ -1488,13 +1502,23 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
   }
 
   @Override
-  public OClusterPosition nextRecord(OClusterPosition position) {
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) {
     return null; // TODO realization missed!
   }
 
   @Override
-  public OClusterPosition prevRecord(OClusterPosition position) {
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) {
     return null; // TODO realization missed!
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+    return new OPhysicalPosition[0];
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+    return new OPhysicalPosition[0];
   }
 
   private static final class BucketInfo {

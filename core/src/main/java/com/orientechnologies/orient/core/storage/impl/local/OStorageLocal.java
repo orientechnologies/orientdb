@@ -900,7 +900,7 @@ public class OStorageLocal extends OStorageEmbedded {
         if (iClusterIds[i] > -1) {
           final OCluster c = clusters[iClusterIds[i]];
           if (c != null)
-            tot += c.getEntries();
+            tot += c.getEntries() - c.getTombstonesCount();
         }
       }
 
@@ -938,7 +938,8 @@ public class OStorageLocal extends OStorageEmbedded {
     lock.acquireSharedLock();
     try {
 
-      return clusters[iClusterId] != null ? clusters[iClusterId].getEntries() : 0l;
+      final OCluster cluster = clusters[iClusterId];
+      return cluster != null ? cluster.getEntries() - cluster.getTombstonesCount() : 0l;
 
     } finally {
       lock.releaseSharedLock();
@@ -1785,8 +1786,8 @@ public class OStorageLocal extends OStorageEmbedded {
         if (ppos.dataSegmentPos > -1)
           getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
 
-        if (useTombstones)
-          iClusterSegment.updateVersion(iRid.clusterPosition, ORecordVersion.TOMBSTONE);
+        if (useTombstones && iClusterSegment.hasTombstonesSupport())
+          iClusterSegment.convertToTombstone(iRid.clusterPosition);
         else
           iClusterSegment.removePhysicalPosition(iRid.clusterPosition);
 

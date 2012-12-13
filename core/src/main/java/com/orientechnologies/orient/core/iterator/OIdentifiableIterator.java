@@ -24,8 +24,10 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -37,15 +39,17 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
   protected final ODatabaseRecord       database;
   private final ODatabaseRecordAbstract lowLevelDatabase;
-  protected final OStorage              dbStorage;
+  private final OStorage                dbStorage;
 
   protected boolean                     liveUpdated            = false;
   protected long                        limit                  = -1;
   protected long                        browsedRecords         = 0;
 
   private String                        fetchPlan;
-  private ORecordInternal<?>            reusedRecord           = null;                             // DEFAULT = NOT REUSE IT
+  private ORecordInternal<?>            reusedRecord           = null;                                          // DEFAULT = NOT
+                                                                                                                 // REUSE IT
   private Boolean                       directionForward;
+
   protected final ORecordId             current                = new ORecordId();
 
   protected long                        totalAvailableRecords;
@@ -53,18 +57,23 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   protected int                         currentTxEntryPosition = -1;
 
-  protected OClusterPosition            firstClusterEntry      = OClusterPosition.INVALID_POSITION;
-  protected OClusterPosition            lastClusterEntry       = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition            firstClusterEntry      = OClusterPositionFactory.INSTANCE.valueOf(0);
+  protected OClusterPosition            lastClusterEntry       = OClusterPositionFactory.INSTANCE.getMaxValue();
 
-  protected OClusterPosition            currentEntry           = OClusterPosition.INVALID_POSITION;
+  private OClusterPosition              currentEntry           = OClusterPosition.INVALID_POSITION;
 
-  public long                           totalLength            = 0;
+  private int                           currentEntryPosition   = -1;
+  private OPhysicalPosition[]           positionsToProcess     = null;
 
-  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase) {
+  private final boolean                 iterateThroughTombstones;
+
+  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      boolean iterateThroughTombstones) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
+    this.iterateThroughTombstones = iterateThroughTombstones;
 
-    dbStorage = iLowLevelDatabase.getStorage();
+    dbStorage = lowLevelDatabase.getStorage();
 
     current.clusterPosition = OClusterPosition.INVALID_POSITION; // DEFAULT = START FROM THE BEGIN
   }
@@ -123,12 +132,18 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     return reusedRecord != null;
   }
 
+  public OClusterPosition getCurrentEntry() {
+    return currentEntry;
+  }
+
   /**
    * Tell to the iterator to use the same record for browsing. The record will be reset before every use. This improve the
    * performance and reduce memory utilization since it does not create a new one for each operation, but pay attention to copy the
    * data of the record once read otherwise they will be reset to the next operation.
    * 
    * @param reuseSameRecord
+   *          if true the same record will be used for iteration. If false new record will be created each time iterator retrieves
+   *          record from db.
    * @return @see #isReuseSameRecord()
    */
   public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
@@ -139,7 +154,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   /**
    * Return the record to use for the operation.
    * 
-   * @return
+   * @return the record to use for the operation.
    */
   protected ORecordInternal<?> getRecord() {
     final ORecordInternal<?> record;
@@ -222,18 +237,34 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * Read the current record and increment the counter if the record was found.
    * 
    * @param iRecord
-   * @return
+   *          to read value from database inside it. If record is null link will be created and stored in it.
+   * @return record which was read from db.
    */
   protected ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
     if (limit > -1 && browsedRecords >= limit)
       // LIMIT REACHED
       return null;
 
-    if (!nextPosition(iMovement))
+    final boolean moveResult;
+    switch (iMovement) {
+    case 1:
+      moveResult = nextPosition();
+      break;
+    case -1:
+      moveResult = prevPosition();
+      break;
+    case 0:
+      moveResult = checkCurrentPosition();
+      break;
+    default:
+      throw new IllegalStateException("Invalid movement value : " + iMovement);
+    }
+
+    if (!moveResult)
       return null;
 
     if (iRecord != null) {
-      iRecord.setIdentity(current);
+      iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
       iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
     } else
       iRecord = lowLevelDatabase.load(current, fetchPlan);
@@ -244,41 +275,97 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     return iRecord;
   }
 
-  protected boolean nextPosition(int iMovement) {
-    if (iMovement > 0) {
+  protected boolean nextPosition() {
+    if (positionsToProcess == null)
+      positionsToProcess = dbStorage.ceilingPhysicalPositions(current.clusterId, new OPhysicalPosition(firstClusterEntry));
+    else {
       if (currentEntry.compareTo(lastClusterEntry) >= 0)
-        return false;
-
-      for (int i = 0; i < iMovement; ++i) {
-        // get next record from cluster
-        currentEntry = dbStorage.getNextClusterPosition(current.clusterId, currentEntry);
-      }
-
-      totalLength += iMovement;
-
-      if (currentEntry.compareTo(lastClusterEntry) > 0 || currentEntry.equals(OClusterPosition.INVALID_POSITION))
-        return false;
-    } else if (iMovement < 0) {
-
-      if (currentEntry.compareTo(firstClusterEntry) < 0)
-        return false;
-
-      for (int i = 0; i > iMovement; --i) {
-        // get next record from cluster
-        currentEntry = dbStorage.getPrevClusterPosition(current.clusterId, currentEntry);
-      }
-
-      if (currentEntry.compareTo(firstClusterEntry) < 0)
-        return false;
-
-    } else {
-      if (currentEntry == null || currentEntry.equals(OClusterPosition.INVALID_POSITION)
-          || firstClusterEntry.compareTo(currentEntry) > 0 || lastClusterEntry.compareTo(currentEntry) < 0)
         return false;
     }
 
+    incrementEntreePosition();
+    while (positionsToProcess.length > 0 && currentEntryPosition >= positionsToProcess.length) {
+      positionsToProcess = dbStorage.higherPhysicalPositions(current.clusterId, positionsToProcess[positionsToProcess.length - 1]);
+
+      currentEntryPosition = -1;
+      incrementEntreePosition();
+    }
+
+    if (positionsToProcess.length == 0)
+      return false;
+
+    currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
+
+    if (currentEntry.compareTo(lastClusterEntry) > 0 || currentEntry.equals(OClusterPosition.INVALID_POSITION))
+      return false;
+
     current.clusterPosition = currentEntry;
     return true;
+  }
+
+  protected boolean checkCurrentPosition() {
+    if (currentEntry == null || currentEntry.equals(OClusterPosition.INVALID_POSITION)
+        || firstClusterEntry.compareTo(currentEntry) > 0 || lastClusterEntry.compareTo(currentEntry) < 0)
+      return false;
+
+    current.clusterPosition = currentEntry;
+    return true;
+  }
+
+  protected boolean prevPosition() {
+    if (positionsToProcess == null) {
+      positionsToProcess = dbStorage.floorPhysicalPositions(current.clusterId, new OPhysicalPosition(lastClusterEntry));
+
+      if (positionsToProcess.length == 0)
+        return false;
+
+      currentEntryPosition = positionsToProcess.length;
+    } else {
+      if (currentEntry.compareTo(firstClusterEntry) < 0)
+        return false;
+    }
+
+    decrementEntreePosition();
+
+    while (positionsToProcess.length > 0 && currentEntryPosition < 0) {
+      positionsToProcess = dbStorage.lowerPhysicalPositions(current.clusterId, positionsToProcess[0]);
+      currentEntryPosition = positionsToProcess.length;
+
+      decrementEntreePosition();
+    }
+
+    if (positionsToProcess.length == 0)
+      return false;
+
+    currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
+
+    if (currentEntry.compareTo(firstClusterEntry) < 0)
+      return false;
+
+    current.clusterPosition = currentEntry;
+    return true;
+  }
+
+  private void decrementEntreePosition() {
+    if (positionsToProcess.length > 0)
+      do {
+        currentEntryPosition--;
+      } while (currentEntryPosition > 0
+          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
+  }
+
+  private void incrementEntreePosition() {
+    if (positionsToProcess.length > 0)
+      do {
+        currentEntryPosition++;
+      } while (currentEntryPosition < positionsToProcess.length
+          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
+  }
+
+  protected void resetCurrentPosition() {
+    currentEntry = OClusterPosition.INVALID_POSITION;
+    positionsToProcess = null;
+    currentEntryPosition = -1;
   }
 
   protected OClusterPosition currentPosition() {

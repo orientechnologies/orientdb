@@ -21,7 +21,7 @@
     <test name="Schema">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.SchemaTest"/>
-			<class name="com.orientechnologies.orient.test.database.auto.AbstractClassTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.AbstractClassTest"/>
         </classes>
     </test>
     <test name="Security">
@@ -47,7 +47,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CRUDDocumentValidationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
         </classes>
     </test>
@@ -134,7 +134,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest"/>
-			<class name="com.orientechnologies.orient.test.database.auto.SQLSelectGroupByTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectGroupByTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
@@ -155,7 +155,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.MultipleDBTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest" />
+            <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
         </classes>
     </test>
     <test name="DbTools">

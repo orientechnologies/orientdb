@@ -36,8 +36,6 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * @see ODistributedVersion
  */
 public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizable {
-  static final ORecordVersion TOMBSTONE = OVersionFactory.instance().createTombstone();
-
   void increment();
 
   void decrement();

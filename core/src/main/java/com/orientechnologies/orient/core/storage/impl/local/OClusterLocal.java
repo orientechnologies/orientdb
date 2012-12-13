@@ -126,8 +126,10 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       endOffsetData = fileSegment.files[0].readHeaderLong(OBinaryProtocol.SIZE_LONG);
 
       final long version = fileSegment.files[0].readHeaderLong(2 * OBinaryProtocol.SIZE_LONG);
-      if (version < 1)
+      if (version < 1) {
         convertDeletedRecords();
+        fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 1);
+      }
 
     } finally {
       releaseExclusiveLock();
@@ -149,7 +151,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         final long p = pos[1] + RECORD_TYPE_OFFSET;
         f.writeByte(p, RECORD_WAS_DELETED);
       }
-
       if (i % 1000 == 0)
         OLogManager.instance().info(this, "%d holes were converted in cluster %s ...", i, name);
     }
@@ -342,10 +343,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
       final long[] pos = fileSegment.getRelativePosition(position);
       final OFile file = fileSegment.files[(int) pos[0]];
-      final long p = pos[1] + RECORD_TYPE_OFFSET;
 
+      final long p = pos[1] + RECORD_TYPE_OFFSET;
       holeSegment.pushPosition(position);
       file.writeByte(p, RECORD_WAS_DELETED);
+
       updateBoundsAfterDeletion(iPosition.longValue());
 
     } finally {
@@ -474,6 +476,21 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public long getTombstonesCount() {
+    return 0;
+  }
+
+  @Override
+  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+    throw new UnsupportedOperationException("convertToTombstone");
+  }
+
+  @Override
+  public boolean hasTombstonesSupport() {
+    return false;
   }
 
   public int getId() {
@@ -728,28 +745,95 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   }
 
   @Override
-  public OClusterPosition nextRecord(OClusterPosition position) throws IOException {
-    long filePosition = position.longValue() * RECORD_SIZE;
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException {
+    long filePosition = position.clusterPosition.longValue() * RECORD_SIZE;
+    if (filePosition < 0)
+      filePosition = 0;
+
     acquireSharedLock();
     try {
-      if (position.compareTo(getLastPosition()) >= 0)
-        return OClusterPosition.INVALID_POSITION;
+      if (getFirstPosition().longValue() < 0)
+        return new OPhysicalPosition[0];
 
-      long lastFilePosition = getLastPosition().longValue() * RECORD_SIZE;
+      final long lastFilePosition = getLastPosition().longValue() * RECORD_SIZE;
+      if (filePosition >= lastFilePosition)
+        return new OPhysicalPosition[0];
+
       byte recordType;
+      OFile f;
+      long[] pos;
+
       do {
         filePosition += RECORD_SIZE;
-        final long[] pos = fileSegment.getRelativePosition(filePosition);
+        pos = fileSegment.getRelativePosition(filePosition);
 
-        final OFile f = fileSegment.files[(int) pos[0]];
+        f = fileSegment.files[(int) pos[0]];
         long p = pos[1] + RECORD_TYPE_OFFSET;
+
         recordType = f.readByte(p);
       } while (recordType == RECORD_WAS_DELETED && filePosition < lastFilePosition);
 
       if (recordType == RECORD_WAS_DELETED) {
-        return OClusterPosition.INVALID_POSITION;
+        return new OPhysicalPosition[0];
       } else {
-        return OClusterPositionFactory.INSTANCE.valueOf(filePosition / RECORD_SIZE);
+        long p = pos[1];
+
+        final OPhysicalPosition physicalPosition = readPhysicalPosition(f, p);
+
+        return new OPhysicalPosition[] { physicalPosition };
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  private OPhysicalPosition readPhysicalPosition(OFile f, long p) throws IOException {
+    final OPhysicalPosition physicalPosition = new OPhysicalPosition();
+    physicalPosition.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(p / RECORD_SIZE);
+    physicalPosition.dataSegmentId = f.readShort(p);
+    physicalPosition.dataSegmentPos = f.readLong(p += OBinaryProtocol.SIZE_SHORT);
+    physicalPosition.recordType = f.readByte(p += OBinaryProtocol.SIZE_LONG);
+    physicalPosition.recordVersion.getSerializer().readFrom(f, p += OBinaryProtocol.SIZE_BYTE, physicalPosition.recordVersion);
+    return physicalPosition;
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+    long filePosition = position.clusterPosition.longValue() * RECORD_SIZE;
+    if (filePosition < 0)
+      filePosition = 0;
+
+    acquireSharedLock();
+    try {
+      if (getFirstPosition().longValue() < 0)
+        return new OPhysicalPosition[0];
+
+      final long lastFilePosition = getLastPosition().longValue() * RECORD_SIZE;
+      if (filePosition > lastFilePosition)
+        return new OPhysicalPosition[0];
+
+      byte recordType;
+      OFile f;
+      long[] pos;
+
+      do {
+        pos = fileSegment.getRelativePosition(filePosition);
+
+        f = fileSegment.files[(int) pos[0]];
+        long p = pos[1] + RECORD_TYPE_OFFSET;
+
+        recordType = f.readByte(p);
+        filePosition += RECORD_SIZE;
+      } while (recordType == RECORD_WAS_DELETED && filePosition <= lastFilePosition);
+
+      if (recordType == RECORD_WAS_DELETED) {
+        return new OPhysicalPosition[0];
+      } else {
+        long p = pos[1];
+
+        final OPhysicalPosition physicalPosition = readPhysicalPosition(f, p);
+
+        return new OPhysicalPosition[] { physicalPosition };
       }
     } finally {
       releaseSharedLock();
@@ -757,31 +841,75 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   }
 
   @Override
-  public OClusterPosition prevRecord(OClusterPosition position) throws IOException {
-    long filePosition = position.longValue() * RECORD_SIZE;
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException {
+    long filePosition = position.clusterPosition.longValue() * RECORD_SIZE;
     acquireSharedLock();
     try {
-      if (position.compareTo(getLastPosition()) > 0)
-        return OClusterPosition.INVALID_POSITION;
+      long firstFilePosition = getFirstPosition().longValue() * RECORD_SIZE;
+      if (filePosition <= firstFilePosition)
+        return new OPhysicalPosition[0];
 
       byte recordType;
+      long[] pos;
+      OFile f;
       do {
         filePosition -= RECORD_SIZE;
-        final long[] pos = fileSegment.getRelativePosition(filePosition);
+        pos = fileSegment.getRelativePosition(filePosition);
 
-        final OFile f = fileSegment.files[(int) pos[0]];
+        f = fileSegment.files[(int) pos[0]];
+
         long p = pos[1] + RECORD_TYPE_OFFSET;
         recordType = f.readByte(p);
-      } while (recordType == RECORD_WAS_DELETED && position.compareTo(getFirstPosition()) >= 0);
+      } while (recordType == RECORD_WAS_DELETED && filePosition > firstFilePosition);
 
       if (recordType == RECORD_WAS_DELETED) {
-        return OClusterPosition.INVALID_POSITION;
+        return new OPhysicalPosition[0];
       } else {
-        return OClusterPositionFactory.INSTANCE.valueOf(filePosition / RECORD_SIZE);
+        long p = pos[1];
+
+        final OPhysicalPosition physicalPosition = readPhysicalPosition(f, p);
+
+        return new OPhysicalPosition[] { physicalPosition };
       }
     } finally {
       releaseSharedLock();
     }
   }
 
+  @Override
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+    long filePosition = position.clusterPosition.longValue() * RECORD_SIZE;
+    acquireSharedLock();
+    try {
+      long firstFilePosition = getFirstPosition().longValue() * RECORD_SIZE;
+      if (filePosition <= firstFilePosition)
+        return new OPhysicalPosition[0];
+
+      byte recordType;
+      long[] pos;
+      OFile f;
+      do {
+        pos = fileSegment.getRelativePosition(filePosition);
+
+        f = fileSegment.files[(int) pos[0]];
+
+        long p = pos[1] + RECORD_TYPE_OFFSET;
+        recordType = f.readByte(p);
+
+        filePosition -= RECORD_SIZE;
+      } while (recordType == RECORD_WAS_DELETED && filePosition >= firstFilePosition);
+
+      if (recordType == RECORD_WAS_DELETED) {
+        return new OPhysicalPosition[0];
+      } else {
+        long p = pos[1];
+
+        final OPhysicalPosition physicalPosition = readPhysicalPosition(f, p);
+
+        return new OPhysicalPosition[] { physicalPosition };
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
 }

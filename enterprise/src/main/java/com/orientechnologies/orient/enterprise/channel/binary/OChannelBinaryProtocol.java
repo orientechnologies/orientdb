@@ -58,12 +58,14 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_RECORD_DELETE                  = 33;
   public static final byte  REQUEST_RECORD_COPY                    = 34;
   public static final byte  REQUEST_RECORD_CHANGE_IDENTITY         = 35; // since 1.2.0
-  public static final byte  REQUEST_RECORD_NEXT                    = 36; // since 1.3.0
-  public static final byte  REQUEST_RECORD_PREVIOUS                = 37; // since 1.3.0
+  public static final byte  REQUEST_POSITIONS_HIGHER               = 36; // since 1.3.0
+  public static final byte  REQUEST_POSITIONS_LOWER                = 37; // since 1.3.0
   public static final byte  REQUEST_RECORD_CLEAN_OUT               = 38; // since 1.3.0
+  public static final byte  REQUEST_POSITIONS_FLOOR                = 39; // since 1.3.0
 
   public static final byte  REQUEST_COUNT                          = 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
   public static final byte  REQUEST_COMMAND                        = 41;
+  public static final byte  REQUEST_POSITIONS_CEILING              = 42; // since 1.3.0
 
   public static final byte  REQUEST_TX_COMMIT                      = 60;
 

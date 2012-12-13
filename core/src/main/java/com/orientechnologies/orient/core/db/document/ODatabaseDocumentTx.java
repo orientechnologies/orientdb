@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -121,16 +120,6 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getNextClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getPrevClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
   public void freeze() {
     if (!(getStorage() instanceof OStorageLocal)) {
       OLogManager.instance().error(this,
@@ -195,14 +184,21 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic);
+    return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic, false);
   }
 
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName));
+    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), false);
+  }
+
+  @Override
+  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, boolean loadTombstones) {
+    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+
+    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), loadTombstones);
   }
 
   /**

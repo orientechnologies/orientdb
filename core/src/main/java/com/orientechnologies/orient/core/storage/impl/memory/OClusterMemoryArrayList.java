@@ -145,13 +145,28 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     }
   }
 
+  @Override
+  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+    throw new UnsupportedOperationException("convertToTombstone");
+  }
+
+  @Override
+  public long getTombstonesCount() {
+    return 0;
+  }
+
+  @Override
+  public boolean hasTombstonesSupport() {
+    return false;
+  }
+
   public OPhysicalPosition getPhysicalPosition(final OPhysicalPosition iPPosition) {
     acquireSharedLock();
     try {
       if (iPPosition.clusterPosition.intValue() < 0 || iPPosition.clusterPosition.compareTo(getLastPosition()) > 0)
         return null;
 
-      return entries.get((int) iPPosition.clusterPosition.intValue());
+      return entries.get(iPPosition.clusterPosition.intValue());
 
     } finally {
       releaseSharedLock();
@@ -169,7 +184,6 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
       removed.add(ppos);
 
       entries.set(positionToRemove, null);
-
     } finally {
       releaseExclusiveLock();
     }
@@ -189,30 +203,55 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   }
 
   @Override
-  public OClusterPosition nextRecord(OClusterPosition position) {
-    int positionInEntries = position.intValue() + 1;
-    while (positionInEntries < entries.size() && entries.get(positionInEntries) == null) {
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) {
+    int positionInEntries = position.clusterPosition.intValue() + 1;
+    while (positionInEntries < entries.size() && (positionInEntries < 0 || entries.get(positionInEntries) == null)) {
       positionInEntries++;
     }
 
     if (positionInEntries >= 0 && positionInEntries < entries.size()) {
-      return entries.get(positionInEntries).clusterPosition;
+      return new OPhysicalPosition[] { entries.get(positionInEntries) };
     } else {
-      return OClusterPosition.INVALID_POSITION;
+      return new OPhysicalPosition[0];
     }
   }
 
   @Override
-  public OClusterPosition prevRecord(OClusterPosition position) {
-    int positionInEntries = position.intValue() - 1;
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+    int positionInEntries = position.clusterPosition.intValue();
+    while (positionInEntries < entries.size() && (positionInEntries < 0 || entries.get(positionInEntries) == null)) {
+      positionInEntries++;
+    }
+
+    if (positionInEntries >= 0 && positionInEntries < entries.size()) {
+      return new OPhysicalPosition[] { entries.get(positionInEntries) };
+    } else {
+      return new OPhysicalPosition[0];
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) {
+    int positionInEntries = position.clusterPosition.intValue() - 1;
     while (positionInEntries >= 0 && entries.get(positionInEntries) == null) {
       positionInEntries--;
     }
-    if (positionInEntries >= 0 && positionInEntries < entries.size()) {
-      return entries.get(positionInEntries).clusterPosition;
-    } else {
-      return OClusterPosition.INVALID_POSITION;
+    if (positionInEntries >= 0 && positionInEntries < entries.size())
+      return new OPhysicalPosition[] { entries.get(positionInEntries) };
+    else
+      return new OPhysicalPosition[0];
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+    int positionInEntries = position.clusterPosition.intValue();
+    while (positionInEntries >= 0 && entries.get(positionInEntries) == null) {
+      positionInEntries--;
     }
+    if (positionInEntries >= 0 && positionInEntries < entries.size())
+      return new OPhysicalPosition[] { entries.get(positionInEntries) };
+    else
+      return new OPhysicalPosition[0];
   }
 
   @Override

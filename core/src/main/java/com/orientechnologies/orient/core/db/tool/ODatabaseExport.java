@@ -156,12 +156,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Cluster " + (clusterName != null ? "'" + clusterName + "'" : "NULL") + " (id=" + i + ")...");
 
       long recordNum = 0;
-      if (clusterName != null)
-        for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
+      if (clusterName != null) {
+        ORecordInternal<?> rec = null;
+        try {
+          for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
 
-          ORecordInternal<?> rec = null;
-
-          try {
             rec = it.next();
             if (rec instanceof ODocument) {
               // CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
@@ -176,27 +175,28 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             }
 
             exportRecord(recordTot, recordNum++, rec);
-          } catch (IOException e) {
-            OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
-            // RE-THROW THE EXCEPTION UP
-            throw e;
-          } catch (OIOException e) {
-            OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
-            // RE-THROW THE EXCEPTION UP
-            throw e;
-          } catch (Throwable t) {
-            if (rec != null) {
-              final byte[] buffer = rec.toStream();
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
+          // RE-THROW THE EXCEPTION UP
+          throw e;
+        } catch (OIOException e) {
+          OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
+          // RE-THROW THE EXCEPTION UP
+          throw e;
+        } catch (Throwable t) {
+          if (rec != null) {
+            final byte[] buffer = rec.toStream();
 
-              OLogManager
-                  .instance()
-                  .error(
-                      this,
-                      "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                      t, rec.getIdentity(), buffer.length, new String(buffer));
-            }
+            OLogManager
+                .instance()
+                .error(
+                    this,
+                    "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                    t, rec.getIdentity(), buffer.length, new String(buffer));
           }
         }
+      }
 
       listener.onMessage("OK (records=" + recordTot + ")");
 
