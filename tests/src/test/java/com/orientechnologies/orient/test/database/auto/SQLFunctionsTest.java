@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -51,20 +53,16 @@ public class SQLFunctionsTest {
 
   @Test
   public void queryMax() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(id) as max from Account")).execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("max"));
     }
-
-    database.close();
   }
 
   @Test
   public void queryMin() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(id) as min from Account")).execute();
 
     Assert.assertTrue(result.size() == 1);
@@ -73,26 +71,20 @@ public class SQLFunctionsTest {
 
       Assert.assertEquals(((Number) d.field("min")).longValue(), 0l);
     }
-
-    database.close();
   }
 
   @Test
   public void querySum() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sum(id) as sum from Account")).execute();
 
     Assert.assertTrue(result.size() == 1);
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("sum"));
     }
-
-    database.close();
   }
 
   @Test
   public void queryCount() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as total from Account")).execute();
 
     Assert.assertTrue(result.size() == 1);
@@ -100,14 +92,10 @@ public class SQLFunctionsTest {
       Assert.assertNotNull(d.field("total"));
       Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
     }
-
-    database.close();
   }
 
   @Test
   public void queryCountWithConditions() {
-    database.open("admin", "admin");
-
     OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
     indexed.createProperty("key", OType.STRING);
     indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
@@ -122,13 +110,10 @@ public class SQLFunctionsTest {
       Assert.assertNotNull(d.field("total"));
       Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
     }
-
-    database.close();
   }
 
   @Test
   public void queryDistinct() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select distinct(name) as name from City")).execute();
 
     Assert.assertTrue(result.size() > 1);
@@ -139,27 +124,21 @@ public class SQLFunctionsTest {
       Assert.assertFalse(cities.contains(cityName));
       cities.add(cityName);
     }
-
-    database.close();
   }
 
   @Test
   public void queryFunctionRenamed() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select distinct(name) from City")).execute();
 
     Assert.assertTrue(result.size() > 1);
 
     for (ODocument city : result)
       Assert.assertTrue(city.containsField("distinct"));
-
-    database.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void queryUnionAsAggregation() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
 
     Assert.assertTrue(result.size() == 1);
@@ -172,13 +151,10 @@ public class SQLFunctionsTest {
       Assert.assertFalse(cities.contains(city.toString()));
       cities.add(city.toString());
     }
-
-    database.close();
   }
 
   @Test
   public void queryList() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select list(name) as names from City")).execute();
 
     Assert.assertFalse(result.isEmpty());
@@ -187,13 +163,10 @@ public class SQLFunctionsTest {
       List<Object> citiesFound = d.field("names");
       Assert.assertTrue(citiesFound.size() > 1);
     }
-
-    database.close();
   }
 
   @Test
   public void querySet() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as names from City")).execute();
 
     Assert.assertFalse(result.isEmpty());
@@ -202,13 +175,10 @@ public class SQLFunctionsTest {
       Set<Object> citiesFound = d.field("names");
       Assert.assertTrue(citiesFound.size() > 1);
     }
-
-    database.close();
   }
 
   @Test
   public void queryMap() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select map(name, country.name) as names from City"))
         .execute();
 
@@ -218,13 +188,10 @@ public class SQLFunctionsTest {
       Map<Object, Object> citiesFound = d.field("names");
       Assert.assertTrue(citiesFound.size() > 1);
     }
-
-    database.close();
   }
 
   @Test
   public void queryUnionAsInline() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from OGraphVertex"))
         .execute();
 
@@ -233,13 +200,10 @@ public class SQLFunctionsTest {
       Assert.assertEquals(d.fieldNames().length, 1);
       Assert.assertTrue(d.containsField("edges"));
     }
-
-    database.close();
   }
 
   @Test
   public void queryComposedAggregates() {
-    database.open("admin", "admin");
     List<ODocument> result = database
         .command(
             new OSQLSynchQuery<ODocument>(
@@ -258,13 +222,10 @@ public class SQLFunctionsTest {
         Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
             "Total " + d.field("total") + " max " + d.field("max"));
     }
-
-    database.close();
   }
 
   @Test
   public void queryFormat() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select format('%d - %s (%s)', nr, street, type, dummy ) as output from Account")).execute();
 
@@ -272,13 +233,10 @@ public class SQLFunctionsTest {
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("output"));
     }
-
-    database.close();
   }
 
   @Test
   public void querySysdateNoFormat() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sysdate() as date from Account")).execute();
 
     Assert.assertTrue(result.size() > 1);
@@ -291,13 +249,10 @@ public class SQLFunctionsTest {
 
       lastDate = d.field("date");
     }
-
-    database.close();
   }
 
   @Test
   public void querySysdateWithFormat() {
-    database.open("admin", "admin");
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select sysdate('dd-MM-yyyy') as date from Account"))
         .execute();
 
@@ -311,14 +266,10 @@ public class SQLFunctionsTest {
 
       lastDate = d.field("date");
     }
-
-    database.close();
   }
 
   @Test
   public void queryDate() {
-    database.open("admin", "admin");
-
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select count(*) as tot from Account")).execute();
     Assert.assertEquals(result.size(), 1);
     int tot = ((Number) result.get(0).field("tot")).intValue();
@@ -337,24 +288,15 @@ public class SQLFunctionsTest {
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("created"));
     }
-
-    database.close();
   }
 
   @Test(expectedExceptions = OCommandSQLParsingException.class)
   public void queryUndefinedFunction() {
-    database.open("admin", "admin");
-    try {
-      database.command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account")).execute();
-    } finally {
-      database.close();
-    }
+    database.command(new OSQLSynchQuery<ODocument>("select blaaaa(salary) as max from Account")).execute();
   }
 
   @Test
   public void queryCustomFunction() {
-    database.open("admin", "admin");
-
     OSQLEngine.getInstance().registerFunction("bigger", new OSQLFunctionAbstract("bigger", 2, 2) {
       public String getSyntax() {
         return "bigger(<first>, <second>)";
@@ -387,6 +329,29 @@ public class SQLFunctionsTest {
     }
 
     OSQLEngine.getInstance().unregisterFunction("bigger");
+  }
+
+  @Test
+  public void queryAsLong() {
+    long moreThanInteger = 1 + (long)Integer.MAX_VALUE;
+    String sql = "select numberString.asLong() as value from (select '" + moreThanInteger + "' as numberString from #0:1)";
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(sql)).execute();
+
+    Assert.assertTrue(result.size() == 1);
+    for (ODocument d : result) {
+      Assert.assertNotNull(d.field("value"));
+      Assert.assertTrue(d.field("value") instanceof Long);
+      Assert.assertEquals(moreThanInteger, d.field("value"));
+    }
+  }
+
+  @BeforeTest
+  public void openDatabase() {
+    database.open("admin", "admin");
+  }
+
+  @AfterTest
+  public void closeDatabase() {
     database.close();
   }
 }
