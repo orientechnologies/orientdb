@@ -168,18 +168,18 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   /**
-   * Returns the version number of the object. Version starts from 0 assigned on creation.
+   * Returns the version number of the object.
    * 
    * @param iPojo
    *          User object
    */
-  public int getVersion(final Object iPojo) {
+  public ORecordVersion getVersion(final Object iPojo) {
     final ODocument record = getRecordByUserObject(iPojo, false);
 
     if (record == null)
       throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
 
-    return record.getVersion();
+    return record.getRecordVersion();
   }
 
   /**
@@ -309,11 +309,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Returns true if current configuration retains objects, otherwise false
    * 
-   * @param iValue
-   *          True to enable, false to disable it.
    * @see #setRetainObjects(boolean)
    */
-
   public boolean isRetainObjects() {
     return retainObjects;
   }
@@ -433,7 +430,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
         records2Objects.put(doc, (T) iObject);
 
         OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
-        OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
+        OObjectSerializerHelper.setObjectVersion(iRecord.getRecordVersion().copy(), iObject);
       }
 
       final ORID rid = iRecord.getIdentity();
@@ -511,15 +508,16 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
           map.put(e.getKey(), convertParameter(e.getValue()));
         }
 
+        return map;
       } else if (iParameter instanceof Collection<?>) {
         List<Object> result = new ArrayList<Object>();
         for (Object object : (Collection<Object>) iParameter) {
           result.add(convertParameter(object));
         }
         return result;
-      } else if (iParameter != null && iParameter.getClass().isEnum()) {
+      } else if (iParameter.getClass().isEnum()) {
         return ((Enum<?>) iParameter).name();
-      } else if (iParameter != null && !OType.isSimpleType(iParameter)) {
+      } else if (!OType.isSimpleType(iParameter)) {
         final ORID rid = getIdentity(iParameter);
         if (rid != null && rid.isValid())
           // REPLACE OBJECT INSTANCE WITH ITS RECORD ID

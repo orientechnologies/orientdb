@@ -346,9 +346,9 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 							rid2Records.put(entry.getRecord().getIdentity(), (ODocument) entry.getRecord());
 							OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
-						case ORecordOperation.UPDATED:
-							OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
-							break;
+            case ORecordOperation.UPDATED:
+              OObjectSerializerHelper.setObjectVersion(entry.getRecord().getRecordVersion().copy(), pojo);
+              break;
 
 						case ORecordOperation.DELETED:
 							OObjectSerializerHelper.setObjectID(null, pojo);
@@ -424,21 +424,21 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
 		return underlying;
 	}
 
-	/**
-	 * Returns the version number of the object. Version starts from 0 assigned on creation.
-	 * 
-	 * @param iPojo
-	 *          User object
-	 */
-	@Override
-	public int getVersion(final Object iPojo) {
-		checkOpeness();
-		final ODocument record = getRecordByUserObject(iPojo, false);
-		if (record != null)
-			return record.getVersion();
+  /**
+   * Returns the version number of the object. Version starts from 0 assigned on creation.
+   * 
+   * @param iPojo
+   *          User object
+   */
+  @Override
+  public ORecordVersion getVersion(final Object iPojo) {
+    checkOpeness();
+    final ODocument record = getRecordByUserObject(iPojo, false);
+    if (record != null)
+      return record.getRecordVersion();
 
-		return OObjectSerializerHelper.getObjectVersion(iPojo);
-	}
+    return OObjectSerializerHelper.getObjectVersion(iPojo);
+  }
 
 	/**
 	 * Returns the object unique identity.

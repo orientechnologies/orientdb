@@ -71,6 +71,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
@@ -151,8 +153,8 @@ public class OObjectEntitySerializer {
 
   /**
    * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
-   * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T o, ODatabaseObject db, boolean
-   * returnNonProxiedInstance)}
+   * a detached non proxied instance @see
+   * {@link OObjectEntitySerializer#detach(T o, ODatabaseObject db, boolean returnNonProxiedInstance)}
    * 
    * @param <T>
    * @param o
@@ -267,8 +269,8 @@ public class OObjectEntitySerializer {
    *          - the proxied entity object
    * @return The version of associated ODocument
    */
-  public static int getVersion(Proxy proxiedObject) {
-    return getDocument(proxiedObject).getVersion();
+  public static ORecordVersion getVersion(Proxy proxiedObject) {
+    return getDocument(proxiedObject).getRecordVersion();
   }
 
   public static boolean isClassField(Class<?> iClass, String iField) {
@@ -812,25 +814,22 @@ public class OObjectEntitySerializer {
     return versionField;
   }
 
-  public static void setVersionField(final Class<?> iClass, Object iObject, int iValue) throws IllegalArgumentException,
+  public static void setVersionField(final Class<?> iClass, Object iObject, ORecordVersion iValue) throws IllegalArgumentException,
       IllegalAccessException {
-    if (!classes.contains(iClass)) {
-      registerClass(iClass);
-    }
-    Field f = null;
-    for (Class<?> currentClass = iClass; currentClass != null && currentClass != Object.class
-        && !currentClass.equals(ODocument.class);) {
-      f = fieldVersions.get(currentClass);
-      if (f != null)
-        break;
-      currentClass = currentClass.getSuperclass();
-    }
+    Field f = getVersionField(iClass);
+
     if (f != null) {
       if (f.getType().equals(String.class))
         setFieldValue(f, iObject, String.valueOf(iValue));
-      else if (f.getType().equals(Long.class))
-        setFieldValue(f, iObject, Long.valueOf(iValue));
-      else if (f.getType().equals(Object.class))
+      else if (f.getType().equals(Long.class)) {
+        if (iValue instanceof OSimpleVersion)
+          setFieldValue(f, iObject, (long) iValue.getCounter());
+        else
+          OLogManager
+              .instance()
+              .warn(OObjectEntitySerializer.class,
+                  "@Version field can't be declared as Long in distributed mode. Should be one of following: String, Object, ORecordVersion");
+      } else if (f.getType().equals(Object.class) || ORecordVersion.class.isAssignableFrom(f.getType()))
         setFieldValue(f, iObject, iValue);
     }
   }
@@ -970,14 +969,22 @@ public class OObjectEntitySerializer {
       Object ver = getFieldValue(vField, iPojo);
       if (ver != null) {
         // FOUND
-        if (ver instanceof Number) {
-          // TREATS AS CLUSTER POSITION
-          // TODO add support of extended version to object database
-          iRecord.setVersion(((Number) ver).intValue());
-        } else if (ver instanceof String)
-          iRecord.setVersion(Integer.parseInt((String) ver));
-        else if (ver.getClass().equals(Object.class))
-          iRecord.setVersion((Integer) ver);
+        final ORecordVersion version = iRecord.getRecordVersion();
+        if (ver instanceof ORecordVersion) {
+          version.copyFrom((ORecordVersion) ver);
+        } else if (ver instanceof Number) {
+          if (version instanceof OSimpleVersion)
+            // TREATS AS CLUSTER POSITION
+            version.setCounter(((Number) ver).intValue());
+          else
+            OLogManager
+                .instance()
+                .warn(OObjectEntitySerializer.class,
+                    "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
+        } else if (ver instanceof String) {
+          version.getSerializer().fromString((String) ver, version);
+        } else if (ver.getClass().equals(Object.class))
+          version.copyFrom((ORecordVersion) ver);
         else
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
