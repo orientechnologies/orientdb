@@ -471,8 +471,8 @@ public class OStorageMemory extends OStorageEmbedded {
           else
             throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
-        if (useTombstones)
-          cluster.updateVersion(iRid.clusterPosition, ORecordVersion.TOMBSTONE);
+        if (useTombstones && cluster.hasTombstonesSupport())
+          cluster.convertToTombstone(iRid.clusterPosition);
         else
           cluster.removePhysicalPosition(iRid.clusterPosition);
 
@@ -504,9 +504,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     lock.acquireSharedLock();
     try {
-
-      return cluster.getEntries();
-
+      return cluster.getEntries() - cluster.getTombstonesCount();
     } finally {
       lock.releaseSharedLock();
     }
@@ -529,12 +527,12 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
 
       long tot = 0;
-      for (int i = 0; i < iClusterIds.length; ++i) {
-        if (iClusterIds[i] > -1) {
-          final OCluster cluster = clusters.get(iClusterIds[i]);
+      for (int iClusterId : iClusterIds) {
+        if (iClusterId > -1) {
+          final OCluster cluster = clusters.get(iClusterId);
 
           if (cluster != null)
-            tot += cluster.getEntries();
+            tot += cluster.getEntries() - cluster.getTombstonesCount();
         }
       }
       return tot;
@@ -579,9 +577,7 @@ public class OStorageMemory extends OStorageEmbedded {
     lock.acquireSharedLock();
     try {
 
-      for (int i = 0; i < clusters.size(); ++i) {
-        final OCluster cluster = clusters.get(i);
-
+      for (OClusterMemory cluster : clusters) {
         if (cluster != null && cluster.getId() == iClusterId)
           return cluster.getName();
       }
@@ -766,7 +762,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
     lock.acquireSharedLock();
     try {
-      final ODataSegmentMemory dataSegment = (ODataSegmentMemory) getDataSegmentById(ppos.dataSegmentId);
+      final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
       if (ppos.dataSegmentPos >= dataSegment.count())
         return false;
 

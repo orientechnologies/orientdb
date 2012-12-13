@@ -11,3 +11,7 @@
 *.project
 *.settings
 *.prefs
+
+#IntelliJ IDEA files
+*.iml
+*/.idea

@@ -154,7 +154,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
     for (OCluster c : getClusterInstances())
       if (c != null)
-        tot += c.getEntries();
+        tot += c.getEntries() - c.getTombstonesCount();
 
     return tot;
   }

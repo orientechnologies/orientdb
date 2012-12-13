@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OGroupOverflowTable;
-import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingHashCalculatorFactory;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingHashCalculator;
 import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingIndex;
 import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OPageIndicator;
 
@@ -19,20 +19,20 @@ import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OPageI
  */
 public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysicalPosition> {
 
-  private static final int FILE_SIZE = 4096;
+  private static final int                 FILE_SIZE      = 4096;
 
-  private OLinearHashingIndex primaryIndex;
-  private OLinearHashingIndex secondaryIndex;
-  private int level;
-  private int next;
-  private double maxCapacity;
-  private double minCapacity;
-  private OGroupOverflowTable groupOverflowTable;
-  private List<OLinearHashingBucket> file;
-  private OPageIndicator pageIndicator;
-  private List<V> recordPool = new ArrayList<V>(100);
-  private int size;
-  private static final int MAX_GROUP_SIZE = 128;
+  private OLinearHashingIndex              primaryIndex;
+  private OLinearHashingIndex              secondaryIndex;
+  private int                              level;
+  private int                              next;
+  private double                           maxCapacity;
+  private double                           minCapacity;
+  private OGroupOverflowTable              groupOverflowTable;
+  private List<OLinearHashingBucket<K, V>> file;
+  private OPageIndicator                   pageIndicator;
+  private List<V>                          recordPool     = new ArrayList<V>(100);
+  private int                              size;
+  private static final int                 MAX_GROUP_SIZE = 128;
 
   public OLinearHashingTable() {
     size = 0;
@@ -45,45 +45,43 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     groupOverflowTable = new OGroupOverflowTable();
     pageIndicator = new OPageIndicator();
 
-    file = new ArrayList<OLinearHashingBucket>(FILE_SIZE);
+    file = new ArrayList<OLinearHashingBucket<K, V>>(FILE_SIZE);
 
-    file.add(new OLinearHashingBucket());
+    file.add(new OLinearHashingBucket<K, V>());
 
     primaryIndex.addNewPosition();
 
   }
 
   public boolean put(V value) {
-    int[] hash = calculateHash((K) value.clusterPosition);
+    int[] hash = calculateBucketNumberAndLevel((K) value.clusterPosition);
 
     final boolean result = tryInsertIntoChain(hash, value);
-    if (result) {
-      size++;
-    }
     splitBucketsIfNeeded();
 
     return result;
   }
 
-  private int[] calculateHash(K key) {
-    int internalHash = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level);
+  private int[] calculateBucketNumberAndLevel(K key) {
+    long internalHash = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(key, level);
 
     final int bucketNumber;
     final int currentLevel;
     if (internalHash < next) {
-      bucketNumber = calculateNextHash(key);
+      long keyHash = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(key, level + 1);
+      bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(keyHash, level + 1);
       currentLevel = level + 1;
     } else {
-      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(internalHash, level);
+      bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(internalHash, level);
       currentLevel = level;
     }
 
-    return new int[]{bucketNumber, currentLevel};
+    return new int[] { bucketNumber, currentLevel };
   }
 
   private int calculateNextHash(K key) {
-    int keyHash = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(key, level + 1);
-    return (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(keyHash, level + 1);
+    int keyHash = (int) OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(key, level + 1);
+    return (int) OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(keyHash, level + 1);
   }
 
   private boolean tryInsertIntoChain(final int[] hash, V value) {
@@ -94,19 +92,25 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     final byte keySignature;
 
     if (chainDisplacement > 253) {
-      return storeRecordInBucket(hash[0], value, true);
+      final boolean result = storeRecordInBucket(hash[0], value, true);
+      if (result)
+        size++;
+
+      return result;
     } else {
       byte chainSignature = primaryIndex.getChainSignature(hash[0]);
 
-      keySignature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(value.clusterPosition);
+      keySignature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(value.clusterPosition);
       if (keySignature < chainSignature) {
         moveLargestRecordToRecordPool(hash[0], chainSignature);
         final boolean result = storeRecordInBucket(hash[0], value, true);
         storeRecordFromRecordPool();
+
+        if (result)
+          size++;
         return result;
       } else if (keySignature == chainSignature) {
         recordPool.add(value);
-        // size--;
         moveLargestRecordToRecordPool(hash[0], chainSignature);
         OLinearHashingBucket bucket = file.get(hash[0]);
 
@@ -117,9 +121,11 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       } else {
         if (chainDisplacement == 253) {
           // allocate new page
+          final boolean result = allocateNewPageAndStore(hash[0], hash[0], value, hash[1], true);
+          if (result)
+            size++;
 
-          return allocateNewPageAndStore(hash[0], hash[0], value, hash[1], true);
-
+          return result;
         } else {
           pageToStore = findNextPageInChain(hash[0], hash[1], chainDisplacement);
         }
@@ -132,17 +138,23 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       chainDisplacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
 
       if (chainDisplacement > 253) {
-        return storeRecordInBucket(pageToStore, value, false);
+        final boolean result = storeRecordInBucket(pageToStore, value, false);
+        if (result)
+          size++;
+
+        return result;
       } else {
         int chainSignature = secondaryIndex.getChainSignature(realPosInSecondaryIndex);
         if (keySignature < chainSignature) {
           moveLargestRecordToRecordPool(pageToStore, (byte) chainSignature);
           final boolean result = storeRecordInBucket(pageToStore, value, false);
           storeRecordFromRecordPool();
+          if (result)
+            size++;
+
           return result;
         } else if (keySignature == chainSignature) {
           recordPool.add(value);
-          // size--;
           moveLargestRecordToRecordPool(pageToStore, (byte) chainSignature);
           OLinearHashingBucket bucket = file.get(pageToStore);
 
@@ -153,7 +165,11 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
         } else {
           if (chainDisplacement == 253) {
             // allocate new page
-            return allocateNewPageAndStore(hash[0], pageToStore, value, hash[1], false);
+            final boolean result = allocateNewPageAndStore(hash[0], pageToStore, value, hash[1], false);
+            if (result)
+              size++;
+
+            return result;
           } else {
             pageToStore = findNextPageInChain(hash[0], hash[1], chainDisplacement);
           }
@@ -166,27 +182,30 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     // calculate load factor
     double capacity = ((double) size) / (primaryIndex.bucketCount() * OLinearHashingBucket.BUCKET_MAX_SIZE);
     if (capacity > maxCapacity) {
-      int bucketNumberToSplit = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(next, level);
+      int bucketNumberToSplit = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(next, level);
       // TODO make this durable by inventing cool record pool
       loadChainInPool(bucketNumberToSplit, level);
 
       groupOverflowTable.removeUnusedGroups(pageIndicator);
 
-      int pageToStore = next + 1 << level;
+      int pageToStore = next + (1 << level);
       byte groupWithStartingPageLessThan = groupOverflowTable.getGroupWithStartingPageLessThenOrEqual(pageToStore);
-      if (groupWithStartingPageLessThan != -2) {
+      if (groupWithStartingPageLessThan >= 0) {
         int groupSize = groupOverflowTable.getSizeForGroup(groupWithStartingPageLessThan);
         final boolean needMove = pageIndicator.isUsedPageExistInRange(pageToStore, pageToStore + groupSize);
         if (needMove) {
           moveOverflowGroupToNewPosition(pageToStore);
         }
-      }
+      } else if (groupWithStartingPageLessThan == -1) {
+        groupOverflowTable.moveDummyGroup(calculateGroupSize(level + 1));
+      } else if (groupWithStartingPageLessThan != -2)
+        throw new IllegalStateException("Invalid group  number : " + groupWithStartingPageLessThan);
 
       primaryIndex.addNewPosition(pageToStore);
       while (file.size() < pageToStore + 1) {
         file.add(null);
       }
-      file.set(pageToStore, new OLinearHashingBucket());
+      file.set(pageToStore, new OLinearHashingBucket<K, V>());
       groupOverflowTable.moveDummyGroupIfNeeded(pageToStore, calculateGroupSize(level + 1));
 
       next++;
@@ -211,13 +230,12 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       if (next == 0) {
         currentLevel = level;
         naturalOrderKey1 = (1 << level) - 2;
-        bucketNumberToMerge1 = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderKey1, level);
+        bucketNumberToMerge1 = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderKey1, level);
         bucketNumberToMerge2 = (1 << level) - 1;
       } else {
         currentLevel = level + 1;
         naturalOrderKey1 = 2 * (next - 1);
-        bucketNumberToMerge1 = (int) OLinearHashingHashCalculatorFactory.INSTANCE
-            .calculateBucketNumber(naturalOrderKey1, level + 1);
+        bucketNumberToMerge1 = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderKey1, level + 1);
         bucketNumberToMerge2 = next - 1 + (1 << level);
       }
       loadChainInPool(bucketNumberToMerge1, currentLevel);
@@ -240,7 +258,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   private void moveOverflowGroupToNewPosition(int page) {
     List<OGroupOverflowTable.GroupOverflowInfo> groupsToMove = groupOverflowTable.getOverflowGroupsInfoToMove(page);
 
-    for (OGroupOverflowTable.GroupOverflowInfo groupOverflowInfo : groupsToMove){
+    for (OGroupOverflowTable.GroupOverflowInfo groupOverflowInfo : groupsToMove) {
       int oldPage = groupOverflowInfo.getStartingPage();
       int groupSize = groupOverflowTable.getSizeForGroup(groupOverflowInfo.getGroup());
       int newPage = groupOverflowTable.move(groupOverflowInfo.getGroup(), groupSize);
@@ -254,9 +272,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     while (file.size() < newPage + groupSize + 1) {
       file.add(null);
     }
-    for (int i = oldPage; i < oldPage + groupSize; ++i){
+    for (int i = oldPage; i < oldPage + groupSize; ++i) {
       if (pageIndicator.get(i)) {
-        OLinearHashingBucket bucket = file.get(i);
+        final OLinearHashingBucket<K, V> bucket = file.get(i);
         file.set(i - oldPage + newPage, bucket);
         file.set(i, null);
         // move resords in secondary index
@@ -309,7 +327,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   }
 
   private void moveLargestRecordToRecordPool(int chainNumber, byte signature) {
-    OLinearHashingBucket bucket = file.get(chainNumber);
+    final OLinearHashingBucket<K, V> bucket = file.get(chainNumber);
     List<V> largestRecords = bucket.getLargestRecords(signature);
     recordPool.addAll(largestRecords);
     size -= largestRecords.size();
@@ -358,7 +376,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     pageIndicator.set(pageToUse);
     int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageToUse);
     secondaryIndex.addNewPosition(realPosInSecondaryIndex);
-    OLinearHashingBucket bucket = new OLinearHashingBucket();
+    final OLinearHashingBucket<K, V> bucket = new OLinearHashingBucket<K, V>();
     while (file.size() < pageToUse + 1) {
       file.add(null);
     }
@@ -371,7 +389,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
     final OLinearHashingBucket bucket = file.get(bucketNumber);
 
-    for (int i = 0; i < bucket.size; i++){
+    for (int i = 0; i < bucket.size; i++) {
       if (value.clusterPosition.equals(bucket.keys[i])) {
         return false;
       }
@@ -399,7 +417,6 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     if (displacement <= 253) {
       indexToUse.updateSignature(positionInIndex, bucket.keys, bucket.size);
     }
-
     return true;
   }
 
@@ -430,9 +447,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   }
 
   public boolean contains(K clusterPosition) {
-    final int[] hash = calculateHash(clusterPosition);
+    final int[] hash = calculateBucketNumberAndLevel(clusterPosition);
 
-    byte keySignature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(clusterPosition);
+    byte keySignature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(clusterPosition);
     byte signature = primaryIndex.getChainSignature(hash[0]);
     int pageNumberToUse = hash[0];
 
@@ -451,17 +468,17 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
           chainDisplacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
         }
       } else {
-        OLinearHashingBucket bucket = file.get(pageNumberToUse);
+        final OLinearHashingBucket<K, V> bucket = file.get(pageNumberToUse);
         return bucket != null && bucket.get(clusterPosition) != null;
       }
 
     }
   }
 
-  public boolean delete(K key) {
-    final int[] hash = calculateHash(key);
+  public V delete(K key) {
+    final int[] hash = calculateBucketNumberAndLevel(key);
 
-    byte keySignature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(key);
+    byte keySignature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(key);
     byte signature = primaryIndex.getChainSignature(hash[0]);
     int pageNumberToUse = hash[0];
 
@@ -473,7 +490,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     while (true) {
       if (keySignature > signature) {
         if (chainDisplacement >= 253) {
-          return false;
+          return null;
         } else {
           prevPage = pageNumberToUse;
           pageNumberToUse = pageNumber + chainDisplacement;
@@ -482,16 +499,20 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
           chainDisplacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
         }
       } else {
-        OLinearHashingBucket bucket = file.get(pageNumberToUse);
-        int position = bucket.deleteKey(key);
+        OLinearHashingBucket<K, V> bucket = file.get(pageNumberToUse);
+        int position = bucket.getPosition(key);
+        final V deletedValue;
         if (position >= 0) {
+          deletedValue = bucket.values[position];
+          bucket.deleteEntry(position);
+
           // move record from successor to current bucket
           while (chainDisplacement < 253) {
             prevPage = pageNumberToUse;
             pageNumberToUse = pageNumber + chainDisplacement;
             int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageNumberToUse);
             chainDisplacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
-            OLinearHashingBucket secondBucket = file.get(pageNumberToUse);
+            OLinearHashingBucket<K, V> secondBucket = file.get(pageNumberToUse);
             List<V> smallestRecords = secondBucket.getSmallestRecords(OLinearHashingBucket.BUCKET_MAX_SIZE - bucket.size);
             if (smallestRecords.isEmpty()) {
               // do nothing!
@@ -499,7 +520,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
               // move this records to predecessor
               bucket.add(smallestRecords);
 
-              for (V smallestRecord : smallestRecords){
+              for (V smallestRecord : smallestRecords) {
                 if (secondBucket.deleteKey(smallestRecord.clusterPosition) < 0) {
                   throw new IllegalStateException("error while deleting record to move it to predecessor bucket");
                 }
@@ -563,11 +584,11 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
             }
           }
         } else {
-          return false;
+          return null;
         }
         size--;
         mergeBucketIfNeeded();
-        return true;
+        return deletedValue;
       }
     }
   }
@@ -579,7 +600,7 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     pageIndicator.clear();
     groupOverflowTable.clear();
 
-    file.add(new OLinearHashingBucket());
+    file.add(new OLinearHashingBucket<K, V>());
 
     primaryIndex.addNewPosition();
   }
@@ -590,9 +611,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
   public V get(K clusterPosition) {
 
-    final int[] hash = calculateHash(clusterPosition);
+    final int[] hash = calculateBucketNumberAndLevel(clusterPosition);
 
-    byte keySignature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(clusterPosition);
+    byte keySignature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(clusterPosition);
     byte signature = primaryIndex.getChainSignature(hash[0]);
     int pageNumberToUse = hash[0];
 
@@ -612,9 +633,9 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
           chainDisplacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
         }
       } else {
-        OLinearHashingBucket bucket = file.get(pageNumberToUse);
+        OLinearHashingBucket<K, V> bucket = file.get(pageNumberToUse);
         if (bucket != null) {
-          return (V) bucket.get(clusterPosition);
+          return bucket.get(clusterPosition);
         }
         return null;
       }
@@ -622,118 +643,272 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
     }
   }
 
-  public K nextRecord(K currentRecord) {
-    return nextRecord(currentRecord, false, +1);
+  public Entry<K, V>[] higherEntries(K currentRecord) {
+    int[] bucketLevelAndOrder = calculateBucketNumberAndLevel(currentRecord);
+
+    Entry<K, V>[] result = fetchHigherEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    if (result.length > 0)
+      return result;
+
+    int step = 1;
+    bucketLevelAndOrder = calculateNextBucketNumberAndLevel(currentRecord, step);
+
+    while (bucketLevelAndOrder != null) {
+      result = fetchHigherEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+      if (result.length > 0)
+        return result;
+
+      step++;
+      bucketLevelAndOrder = calculateNextBucketNumberAndLevel(currentRecord, step);
+    }
+
+    return new Entry[0];
   }
 
-  private K nextRecord(K currentRecord, boolean nextNaturalOrderedKeyShouldBeUsed, int step) {
-    final K[] result = getKeySet(currentRecord, nextNaturalOrderedKeyShouldBeUsed, step);
+  public Entry<K, V>[] ceilingEntries(K currentRecord) {
+    int[] bucketLevelAndOrder = calculateBucketNumberAndLevel(currentRecord);
 
-    if (result.length == 0) {
-      return null;
+    Entry<K, V>[] result = fetchCeilingEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    if (result.length > 0)
+      return result;
+
+    int step = 1;
+    bucketLevelAndOrder = calculateNextBucketNumberAndLevel(currentRecord, step);
+
+    while (bucketLevelAndOrder != null) {
+      result = fetchCeilingEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+      if (result.length > 0)
+        return result;
+
+      step++;
+      bucketLevelAndOrder = calculateNextBucketNumberAndLevel(currentRecord, step);
     }
 
-    Arrays.sort(result);
-    final int recordPosition;
-
-    recordPosition = Arrays.binarySearch(result, currentRecord);
-
-    if (recordPosition >= 0 || recordPosition < -result.length) {
-      if (recordPosition == result.length - 1 || recordPosition < -result.length) {
-        return nextRecord(currentRecord, true, +1);
-      } else {
-        return result[recordPosition + 1];
-      }
-    } else {
-      return result[-(recordPosition + 1)];
-    }
+    return new Entry[0];
   }
 
-  public K prevRecord(K currentRecord) {
-    return prevRecord(currentRecord, false, -1);
+  public Entry<K, V>[] lowerEntries(K currentRecord) {
+    int[] bucketLevelAndOrder = calculateBucketNumberAndLevel(currentRecord);
+
+    Entry<K, V>[] result = fetchLessThanEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    if (result.length > 0)
+      return result;
+
+    int step = 1;
+    bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
+
+    while (bucketLevelAndOrder != null) {
+      result = fetchLessThanEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+      if (result.length > 0)
+        return result;
+
+      step++;
+      bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
+    }
+
+    return new Entry[0];
   }
 
-  private K prevRecord(K currentRecord, boolean nextNaturalOrderedKeyShouldBeUsed, int step) {
-    final K[] result = getKeySet(currentRecord, nextNaturalOrderedKeyShouldBeUsed, step);
+  public Entry<K, V>[] floorEntries(K currentRecord) {
+    int[] bucketLevelAndOrder = calculateBucketNumberAndLevel(currentRecord);
 
-    if (result.length == 0) {
-      return null;
+    Entry<K, V>[] result = fetchFloorEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    if (result.length > 0)
+      return result;
+
+    int step = 1;
+    bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
+
+    while (bucketLevelAndOrder != null) {
+      result = fetchFloorEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+      if (result.length > 0)
+        return result;
+
+      step++;
+      bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
     }
 
-    Arrays.sort(result);
-    final int recordPosition = Arrays.binarySearch(result, currentRecord);
-
-    if (recordPosition >= 0 || recordPosition == -1) {
-      if (recordPosition == 0 || recordPosition == -1) {
-        return prevRecord(currentRecord, true, -1);
-      } else {
-        return result[recordPosition - 1];
-      }
-    } else {
-      return result[-(recordPosition + 2)];
-    }
+    return new Entry[0];
   }
 
-  private K[] getKeySet(K currentRecord, boolean nextNaturalOrderedKeyShouldBeUsed, int step) {
-    List<OLinearHashingBucket> chain = new ArrayList<OLinearHashingBucket>();
-    boolean nextLevel = false;
-    int naturalOrderedKey = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level);
-    if (naturalOrderedKey < next) {
-      naturalOrderedKey = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateNaturalOrderedHash(currentRecord, level + 1);
-      nextLevel = true;
-    }
-
-    if (nextNaturalOrderedKeyShouldBeUsed) {
-      naturalOrderedKey += step;
-      if (nextLevel && naturalOrderedKey >= 2 * next && step > 0) {
-        naturalOrderedKey = naturalOrderedKey / 2;
-        nextLevel = false;
-      }
-
-      if (!nextLevel && naturalOrderedKey < next && step < 0) {
-        naturalOrderedKey = naturalOrderedKey * 2 + 1;
-        nextLevel = true;
-      }
-    }
-
-    int bucketNumber;
-    if (nextLevel) {
-      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level + 1);
-    } else {
-      bucketNumber = (int) OLinearHashingHashCalculatorFactory.INSTANCE.calculateBucketNumber(naturalOrderedKey, level);
-    }
-
+  private Entry<K, V>[] fetchHigherEntries(K keyToCompare, int bucketNumber, int level) {
     int displacement = primaryIndex.getChainDisplacement(bucketNumber);
 
+    OLinearHashingBucket<K, V> bucket = file.get(bucketNumber);
+    final ArrayList<Entry<K, V>> result = new ArrayList<Entry<K, V>>();
+    addHigherEntriesFromBucket(keyToCompare, bucket, result);
     // load buckets from overflow positions
     while (displacement < 253) {
-      int pageToUse = findNextPageInChain(bucketNumber, nextLevel ? level + 1 : level, displacement);
+      int pageToUse = findNextPageInChain(bucketNumber, level, displacement);
       int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageToUse);
       displacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
-      OLinearHashingBucket bucket = file.get(pageToUse);
-      chain.add(bucket);
+      bucket = file.get(pageToUse);
+
+      addHigherEntriesFromBucket(keyToCompare, bucket, result);
     }
 
-    OLinearHashingBucket bucket = file.get(bucketNumber);
-    final K[] result;
-    if (chain.size() == 0) {
-      result = (K[]) new OClusterPosition[bucket.size];
-      System.arraycopy(bucket.keys, 0, result, 0, bucket.size);
-    } else {
-      chain.add(bucket);
+    Entry<K, V>[] entries = new Entry[result.size()];
+    entries = result.toArray(entries);
+    Arrays.sort(entries);
 
-      int amountOfRecords = 0;
-      for (OLinearHashingBucket chainElement : chain){
-        amountOfRecords += chainElement.size;
-      }
+    return entries;
+  }
 
-      result = (K[]) new OClusterPosition[amountOfRecords];
-      int freePositionInArrayPointer = 0;
-      for (OLinearHashingBucket chainElement : chain){
-        System.arraycopy(chainElement.keys, 0, result, freePositionInArrayPointer, chainElement.size);
-        freePositionInArrayPointer += chainElement.size;
-      }
+  private Entry<K, V>[] fetchCeilingEntries(K keyToCompare, int bucketNumber, int level) {
+    int displacement = primaryIndex.getChainDisplacement(bucketNumber);
+
+    OLinearHashingBucket<K, V> bucket = file.get(bucketNumber);
+    final ArrayList<Entry<K, V>> result = new ArrayList<Entry<K, V>>();
+    addCeilingEntriesFromBucket(keyToCompare, bucket, result);
+    // load buckets from overflow positions
+    while (displacement < 253) {
+      int pageToUse = findNextPageInChain(bucketNumber, level, displacement);
+      int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageToUse);
+      displacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
+      bucket = file.get(pageToUse);
+
+      addCeilingEntriesFromBucket(keyToCompare, bucket, result);
     }
-    return result;
+
+    Entry<K, V>[] entries = new Entry[result.size()];
+    entries = result.toArray(entries);
+    Arrays.sort(entries);
+
+    return entries;
+  }
+
+  private void addCeilingEntriesFromBucket(K keyToCompare, OLinearHashingBucket<K, V> bucket, ArrayList<Entry<K, V>> result) {
+    for (int i = 0; i < bucket.size; i++) {
+      if (bucket.keys[i].compareTo(keyToCompare) >= 0)
+        result.add(new Entry<K, V>(bucket.keys[i], bucket.values[i]));
+    }
+  }
+
+  private void addHigherEntriesFromBucket(K keyToCompare, OLinearHashingBucket<K, V> bucket, ArrayList<Entry<K, V>> result) {
+    for (int i = 0; i < bucket.size; i++) {
+      if (bucket.keys[i].compareTo(keyToCompare) > 0)
+        result.add(new Entry<K, V>(bucket.keys[i], bucket.values[i]));
+    }
+  }
+
+  private Entry<K, V>[] fetchLessThanEntries(K keyToCompare, int bucketNumber, int level) {
+    int displacement = primaryIndex.getChainDisplacement(bucketNumber);
+
+    OLinearHashingBucket<K, V> bucket = file.get(bucketNumber);
+    final ArrayList<Entry<K, V>> result = new ArrayList<Entry<K, V>>();
+    addLowerEntriesFromBucket(keyToCompare, bucket, result);
+    // load buckets from overflow positions
+    while (displacement < 253) {
+      int pageToUse = findNextPageInChain(bucketNumber, level, displacement);
+      int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageToUse);
+      displacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
+      bucket = file.get(pageToUse);
+
+      addLowerEntriesFromBucket(keyToCompare, bucket, result);
+    }
+
+    Entry<K, V>[] entries = new Entry[result.size()];
+    entries = result.toArray(entries);
+    Arrays.sort(entries);
+
+    return entries;
+  }
+
+  private Entry<K, V>[] fetchFloorEntries(K keyToCompare, int bucketNumber, int level) {
+    int displacement = primaryIndex.getChainDisplacement(bucketNumber);
+
+    OLinearHashingBucket<K, V> bucket = file.get(bucketNumber);
+    final ArrayList<Entry<K, V>> result = new ArrayList<Entry<K, V>>();
+    addFloorEntriesFromBucket(keyToCompare, bucket, result);
+    // load buckets from overflow positions
+    while (displacement < 253) {
+      int pageToUse = findNextPageInChain(bucketNumber, level, displacement);
+      int realPosInSecondaryIndex = pageIndicator.getRealPosInSecondaryIndex(pageToUse);
+      displacement = secondaryIndex.getChainDisplacement(realPosInSecondaryIndex);
+      bucket = file.get(pageToUse);
+
+      addFloorEntriesFromBucket(keyToCompare, bucket, result);
+    }
+
+    Entry<K, V>[] entries = new Entry[result.size()];
+    entries = result.toArray(entries);
+    Arrays.sort(entries);
+
+    return entries;
+  }
+
+  private void addFloorEntriesFromBucket(K keyToCompare, OLinearHashingBucket<K, V> bucket, ArrayList<Entry<K, V>> result) {
+    for (int i = 0; i < bucket.size; i++) {
+      if (bucket.keys[i].compareTo(keyToCompare) <= 0)
+        result.add(new Entry<K, V>(bucket.keys[i], bucket.values[i]));
+    }
+  }
+
+  private void addLowerEntriesFromBucket(K keyToCompare, OLinearHashingBucket<K, V> bucket, ArrayList<Entry<K, V>> result) {
+    for (int i = 0; i < bucket.size; i++) {
+      if (bucket.keys[i].compareTo(keyToCompare) < 0)
+        result.add(new Entry<K, V>(bucket.keys[i], bucket.values[i]));
+    }
+  }
+
+  private int[] calculateNextBucketNumberAndLevel(K currentRecord, int step) {
+    int currentLevel = level;
+
+    long naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
+    if (naturalOrderedKey < next)
+      currentLevel++;
+
+    naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
+
+    naturalOrderedKey += step;
+    if (currentLevel > level && naturalOrderedKey >= 2 * next) {
+      currentLevel--;
+      naturalOrderedKey = naturalOrderedKey / 2;
+    }
+
+    if (naturalOrderedKey >= 1 << currentLevel)
+      return null;
+
+    final int bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderedKey, currentLevel);
+
+    return new int[] { bucketNumber, currentLevel };
+  }
+
+  private int[] calculatePrevBucketNumberAndLevel(K currentRecord, int step) {
+    int currentLevel;
+    currentLevel = level;
+    long naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
+    if (naturalOrderedKey < next)
+      currentLevel++;
+
+    naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
+    naturalOrderedKey -= step;
+
+    if (naturalOrderedKey < 0)
+      return null;
+
+    if (currentLevel == level && naturalOrderedKey < next) {
+      naturalOrderedKey = naturalOrderedKey * 2 + 1;
+      currentLevel++;
+    }
+
+    final int bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderedKey, currentLevel);
+
+    return new int[] { bucketNumber, currentLevel };
+  }
+
+  public static final class Entry<K extends OClusterPosition, V extends OPhysicalPosition> implements Comparable<Entry<K, V>> {
+    public final K key;
+    public final V value;
+
+    public Entry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public int compareTo(Entry<K, V> otherEntry) {
+      return key.compareTo(otherEntry.key);
+    }
   }
 }

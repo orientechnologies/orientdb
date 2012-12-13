@@ -57,8 +57,8 @@ public class OLinearHashingIndex {
   public void updateSignature(int chainNumber, OClusterPosition[] keys, int size) {
     byte signature = Byte.MIN_VALUE;
     for (int i = 0; i < size; i++) {
-      if (signature < OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i])) {
-        signature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i]);
+      if (signature < OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i])) {
+        signature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i]);
       }
     }
     indexContent.get(chainNumber).signature = signature;

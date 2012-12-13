@@ -208,9 +208,13 @@ public interface OStorage extends OSharedContainer {
 
   public boolean dropDataSegment(String iName);
 
-  OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition);
+  OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
-  OClusterPosition getPrevClusterPosition(int clusterId, OClusterPosition clusterPosition);
+  OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+
+  OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+
+  OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
   /**
    * Returns the current storage's status

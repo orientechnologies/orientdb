@@ -17,35 +17,58 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 
 public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
   private final OCluster         cluster;
-  private OClusterPosition       current;
+
   private final OClusterPosition max;
+  private final OClusterPosition min;
+
+  private OPhysicalPosition[]    positionsToProcess;
+  private int                    positionsIndex;
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
-    current = cluster.getFirstPosition();
+    min = cluster.getFirstPosition();
     max = cluster.getLastPosition();
+
+    positionsToProcess = null;
+    positionsIndex = -1;
   }
 
   public boolean hasNext() {
-    return current != null && OClusterPosition.INVALID_POSITION.compareTo(max) != 0
-        && OClusterPosition.INVALID_POSITION.compareTo(current) != 0 && current.compareTo(max) <= 0;
+    if (OClusterPosition.INVALID_POSITION.compareTo(min) == 0)
+      return false;
+
+    if (positionsToProcess == null)
+      return true;
+
+    return positionsToProcess.length != 0;
   }
 
   public OPhysicalPosition next() {
     try {
-      OPhysicalPosition physicalPosition = cluster.getPhysicalPosition(new OPhysicalPosition(current));
-      if (current.compareTo(max) < 0) {
-        current = cluster.nextRecord(current);
-      } else {
-        current = null;
+      if (positionsIndex == -1) {
+        positionsToProcess = cluster.ceilingPositions(new OPhysicalPosition(min));
+        positionsIndex = 0;
       }
-      return physicalPosition;
+
+      if (positionsToProcess.length == 0)
+        throw new NoSuchElementException();
+
+      final OPhysicalPosition result = positionsToProcess[positionsIndex];
+      positionsIndex++;
+
+      if (positionsIndex >= positionsToProcess.length) {
+        positionsToProcess = cluster.higherPositions(positionsToProcess[positionsToProcess.length - 1]);
+        positionsIndex = 0;
+      }
+
+      return result;
     } catch (IOException e) {
       throw new ODatabaseException("Cannot read next record of cluster.", e);
     }
