@@ -522,9 +522,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId != id) {
         if (database.countClusterElements(clusterId - 1) == 0) {
           listener.onMessage("Found previous version: migrating old clusters...");
-          removeDefaultClusters();
-          // clusterId = database.addCluster(type, name, null, null);
-          recreateManualIndex = true;
+          //removeDefaultClusters();
+          database.dropCluster(name);
+          clusterId = database.addCluster(type, "temp_" + clusterId, null, null);
+          clusterId = database.addCluster(type, name, null, null);
+          //recreateManualIndex = true;
         } else
           throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
               + " different from the original: " + id + ". To continue the import drop the cluster '"
