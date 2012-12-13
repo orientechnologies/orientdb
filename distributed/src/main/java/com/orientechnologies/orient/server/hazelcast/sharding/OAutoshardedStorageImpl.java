@@ -371,13 +371,23 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
-    return wrapped.getNextClusterPosition(currentClusterId, clusterPosition);
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.higherPhysicalPositions(currentClusterId, physicalPosition);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
-    return wrapped.getPrevClusterPosition(currentClusterId, clusterPosition);
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.lowerPhysicalPositions(currentClusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.floorPhysicalPositions(clusterId, physicalPosition);
   }
 
   @Override

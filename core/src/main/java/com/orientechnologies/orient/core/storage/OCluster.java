@@ -53,6 +53,12 @@ public interface OCluster {
 
   public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
+  public void convertToTombstone(OClusterPosition iPosition) throws IOException;
+
+  public long getTombstonesCount();
+
+  public boolean hasTombstonesSupport();
+
   /**
    * Truncates the cluster content. All the entries will be removed.
    * 
@@ -130,8 +136,11 @@ public interface OCluster {
 
   public OClusterEntryIterator absoluteIterator();
 
-  public OClusterPosition nextRecord(OClusterPosition position) throws IOException;
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;
 
-  public OClusterPosition prevRecord(OClusterPosition position) throws IOException;
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException;
 
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
+
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
 }

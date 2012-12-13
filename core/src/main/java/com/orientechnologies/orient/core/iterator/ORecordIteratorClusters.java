@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -83,12 +84,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     // ITERATE UNTIL THE PREVIOUS GOOD RECORD
     while (currentClusterIdx > -1) {
-      while (currentEntry.compareTo(firstClusterEntry) >= 0) {
-        if (!nextPosition(+1)) {
-          currentRecord = null;
-          break;
-        }
-
+      while (nextPosition(-1)) {
         currentRecord = readCurrentRecord(record, 0);
 
         if (currentRecord != null)
@@ -101,15 +97,6 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
       currentClusterIdx--;
 
       updateClusterRange();
-
-      if (endRange != null && endRange.getClusterPosition() != null) {
-        OClusterPosition beginClusterPosition = endRange.getClusterPosition();
-        currentEntry = beginClusterPosition.compareTo(lastClusterEntry) < 0 ? beginClusterPosition : lastClusterEntry;
-      } else {
-        currentEntry = lastClusterEntry;
-      }
-      record = getRecord();
-      currentRecord = readCurrentRecord(record, 0);
     }
 
     if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
@@ -140,20 +127,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
-      boolean thereAreRecordsToBrowse;
-      if (current.clusterPosition.isTemporary())
-        thereAreRecordsToBrowse = false;
-      else if (currentEntry.compareTo(lastClusterEntry) > 0)
-        thereAreRecordsToBrowse = false;
-      else
-        thereAreRecordsToBrowse = true;
-
-      while (thereAreRecordsToBrowse) {
-        if (!nextPosition(+1)) {
-          currentRecord = null;
-          break;
-        }
-
+      while (nextPosition(+1)) {
         final OClusterPosition currentPosition = currentPosition();
         if (outsideOfTheRange(currentPosition))
           continue;
@@ -172,18 +146,6 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
         break;
 
       updateClusterRange();
-
-      if (beginRange != null && beginRange.getClusterPosition() != null) {
-        OClusterPosition beginClusterPosition = beginRange.getClusterPosition();
-        currentEntry = beginClusterPosition.compareTo(firstClusterEntry) > 0 ? beginClusterPosition : firstClusterEntry;
-      } else {
-        currentEntry = firstClusterEntry;
-      }
-      record = getRecord();
-      currentRecord = readCurrentRecord(record, 0);
-
-      if (currentRecord != null)
-        return true;
     }
 
     // CHECK IN TX IF ANY
@@ -313,12 +275,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     if (liveUpdated)
       updateClusterRange();
-    if (beginRange != null && beginRange.getClusterPosition() != null) {
-      OClusterPosition beginClusterPosition = beginRange.getClusterPosition();
-      currentEntry = beginClusterPosition.compareTo(firstClusterEntry) > 0 ? beginClusterPosition : firstClusterEntry;
-    } else {
-      currentEntry = firstClusterEntry;
-    }
+
+    resetCurrentPosition();
+    nextPosition(+1);
 
     ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
@@ -339,12 +298,8 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     current.clusterId = currentClusterIdx;
 
-    if (endRange != null && endRange.getClusterPosition() != null) {
-      OClusterPosition beginClusterPosition = endRange.getClusterPosition();
-      currentEntry = beginClusterPosition.compareTo(lastClusterEntry) < 0 ? beginClusterPosition : lastClusterEntry;
-    } else {
-      currentEntry = lastClusterEntry;
-    }
+    resetCurrentPosition();
+    nextPosition(-1);
 
     ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
@@ -365,8 +320,8 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     super.setLiveUpdated(iLiveUpdated);
 
     if (iLiveUpdated) {
-      firstClusterEntry = OClusterPosition.INVALID_POSITION;
-      lastClusterEntry = OClusterPosition.INVALID_POSITION;
+      firstClusterEntry = OClusterPositionFactory.INSTANCE.valueOf(0);
+      lastClusterEntry = OClusterPositionFactory.INSTANCE.getMaxValue();
     } else {
       updateClusterRange();
     }
@@ -380,7 +335,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     firstClusterEntry = range[0];
     lastClusterEntry = range[1];
-    currentEntry = firstClusterEntry;
+    resetCurrentPosition();
   }
 
   protected void config() {

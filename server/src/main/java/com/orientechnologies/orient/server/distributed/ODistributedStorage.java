@@ -418,13 +418,23 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition entry) {
-    return wrapped.getNextClusterPosition(currentClusterId, entry);
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
+    return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition entry) {
-    return wrapped.getPrevClusterPosition(currentClusterId, entry);
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.floorPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
+    return wrapped.lowerPhysicalPositions(currentClusterId, entry);
   }
 
   @Override

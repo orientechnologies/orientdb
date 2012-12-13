@@ -61,6 +61,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -270,12 +271,20 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       deleteRecord();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_NEXT:
-      nextRecord();
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+      higherPositions();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_PREVIOUS:
-      previousRecord();
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+      ceilingPositions();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+      lowerPositions();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+      floorPositions();
       break;
 
     case OChannelBinaryProtocol.REQUEST_COUNT:
@@ -310,6 +319,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       releaseDatabase();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+      cleanOutRecord();
+      break;
+
     default:
       setDataCommandInfo("Command not supported");
       return false;
@@ -318,8 +331,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     return true;
   }
 
-  private void previousRecord() throws IOException {
-    setDataCommandInfo("Retrieve previous record");
+  private void lowerPositions() throws IOException {
+    setDataCommandInfo("Retrieve lower positions");
 
     final int clusterId = channel.readInt();
     final OClusterPosition clusterPosition = channel.readClusterPosition();
@@ -328,14 +341,22 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      OClusterPosition previousClusterPosition = connection.database.getPreviousClusterPosition(clusterId, clusterPosition);
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().lowerPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
 
-      if (previousClusterPosition != null) {
-        channel.writeByte((byte) 1); // HAS RECORD
-        channel.writeClusterPosition(previousClusterPosition);
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.dataSegmentId);
+          channel.writeLong(physicalPosition.dataSegmentPos);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
 
       } else {
-        channel.writeByte((byte) 0); // NO MORE RECORDS
+        channel.writeInt(0); // NO MORE RECORDS
       }
 
     } finally {
@@ -343,8 +364,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  private void nextRecord() throws IOException {
-    setDataCommandInfo("Retrieve next record");
+  private void floorPositions() throws IOException {
+    setDataCommandInfo("Retrieve floor positions");
 
     final int clusterId = channel.readInt();
     final OClusterPosition clusterPosition = channel.readClusterPosition();
@@ -353,14 +374,86 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     try {
       sendOk(clientTxId);
 
-      OClusterPosition nextClusterPosition = connection.database.getNextClusterPosition(clusterId, clusterPosition);
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
 
-      if (nextClusterPosition != null) {
-        channel.writeByte((byte) 1); // HAS RECORD
-        channel.writeClusterPosition(nextClusterPosition);
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.dataSegmentId);
+          channel.writeLong(physicalPosition.dataSegmentPos);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
 
       } else {
-        channel.writeByte((byte) 0); // NO MORE RECORDS
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void higherPositions() throws IOException {
+    setDataCommandInfo("Retrieve higher positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (nextPositions != null) {
+
+        channel.writeInt(nextPositions.length);
+        for (final OPhysicalPosition physicalPosition : nextPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.dataSegmentId);
+          channel.writeLong(physicalPosition.dataSegmentPos);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void ceilingPositions() throws IOException {
+    setDataCommandInfo("Retrieve ceiling positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.dataSegmentId);
+          channel.writeLong(physicalPosition.dataSegmentPos);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
       }
 
     } finally {

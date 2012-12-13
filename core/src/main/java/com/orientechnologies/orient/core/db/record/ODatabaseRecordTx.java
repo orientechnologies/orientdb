@@ -19,7 +19,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -140,9 +139,9 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         OLogManager
             .instance()
             .debug(
-										this,
-										"Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-										t, OTransactionBlockedException.class, listener.getClass());
+                this,
+                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+                t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;
@@ -280,13 +279,4 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       currentTx = new OTransactionNoTx(this);
   }
 
-  @Override
-  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getNextClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getPrevClusterPosition(clusterId, clusterPosition);
-  }
 }
