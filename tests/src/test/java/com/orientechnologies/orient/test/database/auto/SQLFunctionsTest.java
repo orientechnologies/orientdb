@@ -334,10 +334,10 @@ public class SQLFunctionsTest {
   @Test
   public void queryAsLong() {
     long moreThanInteger = 1 + (long)Integer.MAX_VALUE;
-    String sql = "select numberString.asLong() as value from (select '" + moreThanInteger + "' as numberString from #0:1)";
+    String sql = "select numberString.asLong() as value from ( select '" + moreThanInteger + "' as numberString from Account ) limit 1";
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(sql)).execute();
 
-    Assert.assertTrue(result.size() == 1);
+    Assert.assertEquals(result.size(), 1);
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("value"));
       Assert.assertTrue(d.field("value") instanceof Long);
