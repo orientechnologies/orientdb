@@ -26,8 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -91,7 +90,7 @@ public class StorageModificationLockTest {
         if (n % 10 == 0)
           System.out
               .println("After prohibit  modifications " + beforeModification + " before allow modifications " + counter.get());
-        Assert.assertEquals(beforeModification, counter.get());
+        Assert.assertEquals(counter.get(), beforeModification);
         modificationLock.allowModifications();
         Thread.sleep(50);
       }
