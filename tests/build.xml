@@ -60,7 +60,7 @@
     <target name="test-memory-lh" depends="test-init">
         <echo>EXECUTING TESTS USING MEMORY DATABASE AND LINEAR HASHING CLUSTER: memory:demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg line="-Dfile.cluster.useMemoryLHCluster=true -Dstorage.cluster.useNodeIdAsClusterPosition=true -Dstorage.useTombstones=true"/>
+            <jvmarg line="-ea -Dfile.cluster.useMemoryLHCluster=true -Dstorage.cluster.useNodeIdAsClusterPosition=true -Dstorage.useTombstones=true -Ddb.use.distributedVersion=true"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">

@@ -52,12 +52,12 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
- * DEPRECATED -- USE {@link OObjectDatabase} instead
+ * DEPRECATED -- USE {@link OObjectDatabaseTx} instead
  * 
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
  * and POJOs.
  * 
- * @see OObjectDatabase
+ * @see OObjectDatabaseTx
  * @author Luca Garulli
  */
 @Deprecated
@@ -84,7 +84,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
    * Create a new POJO by its class name. Assure to have called the registerEntityClasses() declaring the packages that are part of
    * entity classes.
    * 
-   * @see OEntityManager.registerEntityClasses(String)
+   * @see OEntityManager#registerEntityClasses(String)
    */
   public <RET extends Object> RET newInstance(final String iClassName) {
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
@@ -153,6 +153,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public Object load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
+    return load(iPojo, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public Object load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     checkOpeness();
     if (iPojo == null)
       return this;
@@ -162,7 +167,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
     try {
       record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.UNMARSHALLING);
 
-      record = underlying.load(record, iFetchPlan, iIgnoreCache);
+      record = underlying.load(record, iFetchPlan, iIgnoreCache, loadTombstone);
 
       stream2pojo(record, iPojo, iFetchPlan);
     } finally {
@@ -181,6 +186,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public Object load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+    return load(iRecordId, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public Object load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     checkOpeness();
     if (iRecordId == null)
       return null;
@@ -188,7 +198,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
     ODocument record = rid2Records.get(iRecordId);
     if (record == null) {
       // GET THE ASSOCIATED DOCUMENT
-      record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+      record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
       if (record == null)
         return null;
     }

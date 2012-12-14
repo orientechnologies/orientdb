@@ -147,9 +147,9 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     delegate.setSessionId(sessionId);
-    return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
+    return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
@@ -173,6 +173,18 @@ public class OStorageRemoteThread implements OStorageProxy {
   public long count(final int iClusterId) {
     delegate.setSessionId(sessionId);
     return delegate.count(iClusterId);
+  }
+
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    delegate.setSessionId(sessionId);
+    return delegate.count(iClusterId, countTombstones);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
+    delegate.setSessionId(sessionId);
+    return delegate.count(iClusterIds, countTombstones);
   }
 
   public String toString() {

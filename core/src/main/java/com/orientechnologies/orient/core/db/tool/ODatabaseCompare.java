@@ -442,8 +442,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null).getResult();
-          final ORawBuffer buffer2 = storage2.readRecord(rid, null, true, null).getResult();
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false).getResult();
+          final ORawBuffer buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
 
           if (buffer1 == null && buffer2 == null)
             // BOTH RECORD NULL, OK

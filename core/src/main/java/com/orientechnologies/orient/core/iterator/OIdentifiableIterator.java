@@ -78,6 +78,10 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     current.clusterPosition = OClusterPosition.INVALID_POSITION; // DEFAULT = START FROM THE BEGIN
   }
 
+  public boolean isIterateThroughTombstones() {
+    return iterateThroughTombstones;
+  }
+
   public abstract boolean hasPrevious();
 
   public abstract OIdentifiable previous();
@@ -265,9 +269,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
     if (iRecord != null) {
       iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
-      iRecord = lowLevelDatabase.load(iRecord, fetchPlan);
+      iRecord = lowLevelDatabase.load(iRecord, fetchPlan, false, iterateThroughTombstones);
     } else
-      iRecord = lowLevelDatabase.load(current, fetchPlan);
+      iRecord = lowLevelDatabase.load(current, fetchPlan, false, iterateThroughTombstones);
 
     if (iRecord != null)
       browsedRecords++;
@@ -350,16 +354,16 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
     if (positionsToProcess.length > 0)
       do {
         currentEntryPosition--;
-      } while (currentEntryPosition > 0
-          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
+      } while (currentEntryPosition > 0 && !iterateThroughTombstones
+          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   private void incrementEntreePosition() {
     if (positionsToProcess.length > 0)
       do {
         currentEntryPosition++;
-      } while (currentEntryPosition < positionsToProcess.length
-          && (iterateThroughTombstones || positionsToProcess[currentEntryPosition].recordVersion.isTombstone()));
+      } while (currentEntryPosition < positionsToProcess.length && !iterateThroughTombstones
+          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   protected void resetCurrentPosition() {

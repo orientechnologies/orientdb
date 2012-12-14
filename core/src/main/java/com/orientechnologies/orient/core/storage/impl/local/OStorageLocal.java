@@ -886,6 +886,11 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public long count(final int[] iClusterIds) {
+    return count(iClusterIds, false);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
     checkOpeness();
 
     lock.acquireSharedLock();
@@ -893,19 +898,18 @@ public class OStorageLocal extends OStorageEmbedded {
 
       long tot = 0;
 
-      for (int i = 0; i < iClusterIds.length; ++i) {
-        if (iClusterIds[i] >= clusters.length)
-          throw new OConfigurationException("Cluster id " + iClusterIds[i] + " was not found in database '" + name + "'");
+      for (int iClusterId : iClusterIds) {
+        if (iClusterId >= clusters.length)
+          throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
 
-        if (iClusterIds[i] > -1) {
-          final OCluster c = clusters[iClusterIds[i]];
+        if (iClusterId > -1) {
+          final OCluster c = clusters[iClusterId];
           if (c != null)
-            tot += c.getEntries() - c.getTombstonesCount();
+            tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
         }
       }
 
       return tot;
-
     } finally {
       lock.releaseSharedLock();
     }
@@ -929,6 +933,11 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public long count(final int iClusterId) {
+    return count(iClusterId, false);
+  }
+
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
     if (iClusterId == -1)
       throw new OStorageException("Cluster Id " + iClusterId + " is invalid in database '" + name + "'");
 
@@ -939,8 +948,13 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       final OCluster cluster = clusters[iClusterId];
-      return cluster != null ? cluster.getEntries() - cluster.getTombstonesCount() : 0l;
+      if (cluster == null)
+        return 0;
 
+      if (countTombstones)
+        return cluster.getEntries();
+
+      return cluster.getEntries() - cluster.getTombstonesCount();
     } finally {
       lock.releaseSharedLock();
     }
@@ -980,9 +994,9 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true));
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
@@ -1629,7 +1643,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   @Override
-  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock) {
+  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock, boolean loadTombstones) {
     if (!iRid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in database '" + name
           + '\'');
@@ -1648,6 +1662,10 @@ public class OStorageLocal extends OStorageEmbedded {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+
+        if (ppos != null && loadTombstones && ppos.recordVersion.isTombstone())
+          return new ORawBuffer(null, ppos.recordVersion, ppos.recordType);
+
         if (ppos == null || !checkForRecordValidity(ppos))
           // DELETED
           return null;

@@ -58,7 +58,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
   public abstract OCluster getClusterByName(final String iClusterName);
 
-  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
+  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
+      boolean loadTombstones);
 
   /**
    * Closes the storage freeing the lock manager first.

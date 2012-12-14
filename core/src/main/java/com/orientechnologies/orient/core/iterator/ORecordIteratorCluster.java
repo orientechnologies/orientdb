@@ -46,7 +46,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
     firstClusterEntry = range[0];
     lastClusterEntry = range[1];
 
-    totalAvailableRecords = database.countClusterElements(current.clusterId);
+    totalAvailableRecords = database.countClusterElements(current.clusterId, iterateThroughTombstones);
 
     txEntries = iDatabase.getTransaction().getNewRecordEntriesByClusterIds(new int[] { iClusterId });
 
@@ -252,7 +252,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       lastClusterEntry = range[1];
     }
 
-    totalAvailableRecords = database.countClusterElements(current.clusterId);
+    totalAvailableRecords = database.countClusterElements(current.clusterId, isIterateThroughTombstones());
 
     return this;
   }

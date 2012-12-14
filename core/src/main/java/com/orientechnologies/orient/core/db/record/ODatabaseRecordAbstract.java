@@ -242,39 +242,50 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true, false);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
   }
 
   /**
    * Loads a record using a fetch plan.
    */
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
       final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
+      boolean loadTombstone) {
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone);
   }
 
   /**
@@ -444,23 +455,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
   @Override
   public long countClusterElements(final int[] iClusterIds) {
-    String name;
-    for (int i = 0; i < iClusterIds.length; ++i) {
-      name = getClusterNameById(iClusterIds[i]);
-      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
-    }
-
-    return super.countClusterElements(iClusterIds);
+    return countClusterElements(iClusterIds, false);
   }
 
   @Override
   public long countClusterElements(final int iClusterId) {
+    return countClusterElements(iClusterId, false);
+  }
+
+  @Override
+  public long countClusterElements(int iClusterId, boolean countTombstones) {
     final String name = getClusterNameById(iClusterId);
     if (name == null)
       return 0;
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
     setCurrentDatabaseinThreadLocal();
-    return super.countClusterElements(name);
+
+    return super.countClusterElements(iClusterId, countTombstones);
+  }
+
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+    String name;
+    for (int iClusterId : iClusterIds) {
+      name = getClusterNameById(iClusterId);
+      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
+    }
+
+    return super.countClusterElements(iClusterIds, countTombstones);
   }
 
   @Override
@@ -585,7 +607,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
-      final String iFetchPlan, final boolean iIgnoreCache) {
+      final String iFetchPlan, final boolean iIgnoreCache, boolean loadTombstones) {
     checkOpeness();
 
     // setCurrentDatabaseinThreadLocal();
@@ -621,7 +643,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache).getResult();
+      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -630,6 +652,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
       iRecord.fill(iRid, recordBuffer.version, recordBuffer.buffer, false);
+
+      if (iRecord.getRecordVersion().isTombstone())
+        return (RET) iRecord;
 
       if (callbackHooks(TYPE.BEFORE_READ, iRecord) == RESULT.SKIP)
         return null;

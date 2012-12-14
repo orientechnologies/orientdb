@@ -654,7 +654,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     for (int i = 0; i < clusterIds.length; ++i)
       clusterIds[i] = channel.readShort();
 
-    final long count = connection.database.countClusterElements(clusterIds);
+    boolean countTombstones = false;
+    if (connection.data.protocolVersion >= 12)
+      countTombstones = channel.readByte() > 0;
+
+    final long count = connection.database.countClusterElements(clusterIds, countTombstones);
 
     beginResponse();
     try {
@@ -1276,6 +1280,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 9)
       ignoreCache = channel.readByte() == 1;
 
+    boolean loadTombstones = false;
+    if (connection.data.protocolVersion >= 12)
+      loadTombstones = channel.readByte() > 0;
+
     if (rid.clusterId == 0 && rid.clusterPosition.longValue() == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
@@ -1294,7 +1302,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache);
+      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones);
 
       beginResponse();
       try {

@@ -332,12 +332,13 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true));
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
   }
 
   @Override
-  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock) {
+  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
+      boolean loadTombstones) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
@@ -356,6 +357,8 @@ public class OStorageMemory extends OStorageEmbedded {
         }
 
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+        if (ppos != null && loadTombstones && ppos.recordVersion.isTombstone())
+          return new ORawBuffer(null, ppos.recordVersion, ppos.recordType);
 
         if (ppos == null || ppos.recordVersion.isTombstone())
           return null;
@@ -500,11 +503,16 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public long count(final int iClusterId) {
+    return count(iClusterId, false);
+  }
+
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
     final OCluster cluster = getClusterById(iClusterId);
 
     lock.acquireSharedLock();
     try {
-      return cluster.getEntries() - cluster.getTombstonesCount();
+      return cluster.getEntries() - (countTombstones ? 0L : cluster.getTombstonesCount());
     } finally {
       lock.releaseSharedLock();
     }
@@ -523,6 +531,11 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public long count(final int[] iClusterIds) {
+    return count(iClusterIds, false);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
     lock.acquireSharedLock();
     try {
 
@@ -532,7 +545,7 @@ public class OStorageMemory extends OStorageEmbedded {
           final OCluster cluster = clusters.get(iClusterId);
 
           if (cluster != null)
-            tot += cluster.getEntries() - cluster.getTombstonesCount();
+            tot += cluster.getEntries() - (countTombstones ? 0L : cluster.getTombstonesCount());
         }
       }
       return tot;

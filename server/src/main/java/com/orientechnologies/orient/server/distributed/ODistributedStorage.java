@@ -151,13 +151,13 @@ public class ODistributedStorage implements OStorage {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback) {
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     if (eventuallyConsistent || dManager.isLocalNodeMaster(iRecordId))
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     try {
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId),
@@ -314,8 +314,18 @@ public class ODistributedStorage implements OStorage {
     return wrapped.count(iClusterId);
   }
 
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    return wrapped.count(iClusterId, countTombstones);
+  }
+
   public long count(final int[] iClusterIds) {
     return wrapped.count(iClusterIds);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
+    return wrapped.count(iClusterIds, countTombstones);
   }
 
   public long getSize() {

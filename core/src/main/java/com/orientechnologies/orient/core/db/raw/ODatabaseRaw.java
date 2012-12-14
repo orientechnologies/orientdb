@@ -226,14 +226,25 @@ public class ODatabaseRaw implements ODatabase {
     return storage.count(iClusterIds);
   }
 
-  public OStorageOperationResult<ORawBuffer> read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache) {
+  @Override
+  public long countClusterElements(int iCurrentClusterId, boolean countTombstones) {
+    return storage.count(iCurrentClusterId, countTombstones);
+  }
+
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+    return storage.count(iClusterIds, countTombstones);
+  }
+
+  public OStorageOperationResult<ORawBuffer> read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+      boolean loadTombstones) {
     if (!iRid.isValid())
       return new OStorageOperationResult<ORawBuffer>(null);
 
     OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
     try {
-      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
+      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
 
     } catch (Throwable t) {
       if (iRid.isTemporary())

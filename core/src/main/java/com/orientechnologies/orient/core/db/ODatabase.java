@@ -273,6 +273,8 @@ public interface ODatabase extends Closeable {
    */
   public long countClusterElements(int iCurrentClusterId);
 
+  public long countClusterElements(int iCurrentClusterId, boolean countTombstones);
+
   /**
    * Counts all the entities in the specified cluster ids.
    * 
@@ -281,6 +283,8 @@ public interface ODatabase extends Closeable {
    * @return Total number of entities contained in the specified clusters
    */
   public long countClusterElements(int[] iClusterIds);
+
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones);
 
   /**
    * Counts all the entities in the specified cluster name.

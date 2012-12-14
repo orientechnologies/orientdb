@@ -426,18 +426,20 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
       return;
 
     final ODocument doc = (ODocument) iRecord;
-
+    final boolean isTombstone = doc.getRecordVersion().isTombstone();
     if (retainObjects) {
       if (iObject != null) {
-        objects2Records.put(iObject, doc);
-        records2Objects.put(doc, (T) iObject);
+        if (!isTombstone) {
+          objects2Records.put(iObject, doc);
+          records2Objects.put(doc, (T) iObject);
+        }
 
         OObjectSerializerHelper.setObjectID(iRecord.getIdentity(), iObject);
         OObjectSerializerHelper.setObjectVersion(iRecord.getVersion(), iObject);
       }
 
       final ORID rid = iRecord.getIdentity();
-      if (rid.isValid())
+      if (rid.isValid() && !isTombstone)
         rid2Records.put(rid, doc);
     }
   }

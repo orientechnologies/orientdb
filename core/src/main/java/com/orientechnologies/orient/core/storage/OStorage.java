@@ -85,7 +85,7 @@ public interface OStorage extends OSharedContainer {
       ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback);
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones);
 
   public OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
       byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback);
@@ -148,7 +148,11 @@ public interface OStorage extends OSharedContainer {
 
   public long count(int iClusterId);
 
+  public long count(int iClusterId, boolean countTombstones);
+
   public long count(int[] iClusterIds);
+
+  public long count(int[] iClusterIds, boolean countTombstones);
 
   /**
    * Returns the size of the database.

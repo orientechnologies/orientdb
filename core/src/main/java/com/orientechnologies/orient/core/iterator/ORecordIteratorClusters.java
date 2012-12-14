@@ -347,7 +347,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
 
     updateClusterRange();
 
-    totalAvailableRecords = database.countClusterElements(clusterIds);
+    totalAvailableRecords = database.countClusterElements(clusterIds, isIterateThroughTombstones());
 
     txEntries = database.getTransaction().getNewRecordEntriesByClusterIds(clusterIds);
 

@@ -55,11 +55,12 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void close() {
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
+  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
+      boolean ignonreCache, boolean loadTombstone) {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone);
   }
 
   /**

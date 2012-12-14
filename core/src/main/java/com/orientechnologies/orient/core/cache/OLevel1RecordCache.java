@@ -62,7 +62,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
    *          record that should be cached
    */
   public void updateRecord(final ORecordInternal<?> record) {
-    if (isEnabled() && record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()) {
+    if (isEnabled() && record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
+        && !record.getRecordVersion().isTombstone()) {
       underlying.lock(record.getIdentity());
       try {
         if (underlying.get(record.getIdentity()) != record)

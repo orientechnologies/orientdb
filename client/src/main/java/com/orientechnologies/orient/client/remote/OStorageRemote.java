@@ -386,7 +386,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback) {
+      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     checkConnection();
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -404,6 +404,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.getSrvProtocolVersion() >= 9)
             network.writeByte((byte) (iIgnoreCache ? 1 : 0));
 
+          if (network.getSrvProtocolVersion() >= 13)
+            network.writeByte(loadTombstones ? (byte) 1 : (byte) 0);
         } finally {
           endRequest(network);
         }
@@ -599,6 +601,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public long count(final int iClusterId) {
     return count(new int[] { iClusterId });
+  }
+
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    return count(new int[] { iClusterId }, countTombstones);
   }
 
   public OClusterPosition[] getClusterDataRange(final int iClusterId) {
@@ -856,6 +863,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public long count(final int[] iClusterIds) {
+    return count(iClusterIds, false);
+  }
+
+  public long count(final int[] iClusterIds, boolean countTombstones) {
     checkConnection();
 
     do {
@@ -865,9 +876,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT);
 
           network.writeShort((short) iClusterIds.length);
-          for (int i = 0; i < iClusterIds.length; ++i)
-            network.writeShort((short) iClusterIds[i]);
+          for (int iClusterId : iClusterIds)
+            network.writeShort((short) iClusterId);
 
+          if (network.getSrvProtocolVersion() >= 12)
+            network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
         } finally {
           endRequest(network);
         }

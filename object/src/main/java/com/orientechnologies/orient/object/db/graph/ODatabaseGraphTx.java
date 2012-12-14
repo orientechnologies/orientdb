@@ -115,6 +115,13 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
     return iObject;
   }
 
+  @Override
+  public OGraphElement load(OGraphElement iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    if (iObject != null)
+      iObject.load(iFetchPlan, iIgnoreCache, loadTombstone);
+    return iObject;
+  }
+
   public OGraphElement load(final OGraphElement iObject, final String iFetchPlan, final boolean iIgnoreCache) {
     if (iObject != null)
       iObject.load(iFetchPlan, iIgnoreCache);
@@ -141,7 +148,12 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
   }
 
   public OGraphElement load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    ODocument doc = loadAsDocument(iRecordId, iFetchPlan, iIgnoreCache);
+    return load(iRecordId, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public OGraphElement load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    ODocument doc = loadAsDocument(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
 
     if (doc == null)
       return null;
@@ -149,7 +161,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
     return newInstance(doc.getClassName()).setDocument(doc);
   }
 
-  public ODocument loadAsDocument(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+  public ODocument loadAsDocument(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache, boolean loadTombstones) {
     if (iRecordId == null)
       return null;
 
@@ -157,7 +169,7 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
     ODocument doc = getRecordById(iRecordId);
     if (doc == null) {
       // TRY TO LOAD IT
-      doc = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+      doc = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstones);
       if (doc == null)
         // NOT FOUND
         return null;
