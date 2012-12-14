@@ -69,6 +69,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.object.db.ODatabasePojoAbstract;
 import com.orientechnologies.orient.object.db.OLazyObjectList;
 import com.orientechnologies.orient.object.db.OLazyObjectMap;
@@ -91,14 +94,14 @@ public class OObjectSerializerHelper {
 
   public static HashMap<Class<?>, OObjectSerializerContext> serializerContexts        = new LinkedHashMap<Class<?>, OObjectSerializerContext>();
 
-  private static HashMap<String, List<Field>>               classes                   = new HashMap<String, List<Field>>();
-  private static HashMap<String, Method>                    callbacks                 = new HashMap<String, Method>();
-  private static HashMap<String, Object>                    getters                   = new HashMap<String, Object>();
-  private static HashMap<String, Object>                    setters                   = new HashMap<String, Object>();
-  private static HashMap<Class<?>, Field>                   boundDocumentFields       = new HashMap<Class<?>, Field>();
-  private static HashMap<Class<?>, Field>                   fieldIds                  = new HashMap<Class<?>, Field>();
-  private static HashMap<Class<?>, Field>                   fieldVersions             = new HashMap<Class<?>, Field>();
-  private static HashMap<Class<?>, List<String>>            embeddedFields            = new HashMap<Class<?>, List<String>>();
+  private static final HashMap<String, List<Field>>         classes                   = new HashMap<String, List<Field>>();
+  private static final HashMap<String, Method>              callbacks                 = new HashMap<String, Method>();
+  private static final HashMap<String, Object>              getters                   = new HashMap<String, Object>();
+  private static final HashMap<String, Object>              setters                   = new HashMap<String, Object>();
+  private static final HashMap<Class<?>, Field>             boundDocumentFields       = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, Field>             fieldIds                  = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, Field>             fieldVersions             = new HashMap<Class<?>, Field>();
+  private static final HashMap<Class<?>, List<String>>      embeddedFields            = new HashMap<Class<?>, List<String>>();
   @SuppressWarnings("rawtypes")
   public static Class                                       jpaIdClass;
   @SuppressWarnings("rawtypes")
@@ -240,7 +243,7 @@ public class OObjectSerializerHelper {
     Object fieldValue;
 
     final String idFieldName = setObjectID(iRecord.getIdentity(), iPojo);
-    final String vFieldName = setObjectVersion(iRecord.getVersion(), iPojo);
+    final String vFieldName = setObjectVersion(iRecord.getRecordVersion(), iPojo);
 
     // CALL BEFORE UNMARSHALLING
     invokeCallback(iPojo, iRecord, OBeforeDeserialization.class);
@@ -448,7 +451,7 @@ public class OObjectSerializerHelper {
     return fieldIds.get(iPojo.getClass()) != null;
   }
 
-  public static String setObjectVersion(final Integer iVersion, final Object iPojo) {
+  public static String setObjectVersion(final ORecordVersion iVersion, final Object iPojo) {
     if (iPojo == null)
       return null;
 
@@ -461,11 +464,17 @@ public class OObjectSerializerHelper {
 
       final String vFieldName = vField.getName();
 
-      if (Number.class.isAssignableFrom(fieldType))
-        setFieldValue(iPojo, vFieldName, iVersion);
-      else if (fieldType.equals(String.class))
+      if (Number.class.isAssignableFrom(fieldType)) {
+        if (iVersion instanceof OSimpleVersion)
+          setFieldValue(iPojo, vFieldName, iVersion.getCounter());
+        else
+          OLogManager
+              .instance()
+              .warn(OObjectSerializerHelper.class,
+                  "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
+      } else if (fieldType.equals(String.class))
         setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
-      else if (fieldType.equals(Object.class))
+      else if (fieldType.equals(Object.class) || ORecordVersion.class.isAssignableFrom(fieldType))
         setFieldValue(iPojo, vFieldName, iVersion);
       else
         OLogManager.instance().warn(OObjectSerializerHelper.class,
@@ -475,22 +484,39 @@ public class OObjectSerializerHelper {
     return null;
   }
 
-  public static int getObjectVersion(final Object iPojo) {
+  public static ORecordVersion getObjectVersion(final Object iPojo) {
     getClassFields(iPojo.getClass());
     final Field idField = fieldVersions.get(iPojo.getClass());
     if (idField != null) {
       final Object ver = getFieldValue(iPojo, idField.getName());
 
-      if (ver != null) {
-        // FOUND
-        if (ver instanceof Number) {
-          // TREATS AS CLUSTER POSITION
-          return ((Number) ver).intValue();
-        } else if (ver instanceof String)
-          return Integer.parseInt((String) ver);
-      }
+      final ORecordVersion version = convertVersion(ver);
+      if (version != null)
+        return version;
     }
     throw new OObjectNotDetachedException("Cannot retrieve the object's VERSION for '" + iPojo + "' because has not been detached");
+  }
+
+  private static ORecordVersion convertVersion(final Object ver) {
+    if (ver != null) {
+      if (ver instanceof ORecordVersion) {
+        return (ORecordVersion) ver;
+      } else if (ver instanceof Number) {
+        final ORecordVersion version = OVersionFactory.instance().createVersion();
+        if (version instanceof OSimpleVersion) {
+          // TREATS AS CLUSTER POSITION
+          version.setCounter(((Number) ver).intValue());
+          return version;
+        }
+      } else if (ver instanceof String) {
+        final ORecordVersion version = OVersionFactory.instance().createVersion();
+        version.getSerializer().fromString((String) ver, version);
+        return version;
+      } else
+        OLogManager.instance().warn(OObjectSerializerHelper.class,
+            "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
+    }
+    return null;
   }
 
   public static String getObjectVersionFieldName(final Object iPojo) {
@@ -566,20 +592,10 @@ public class OObjectSerializerHelper {
     if (vField != null) {
       versionConfigured = true;
       Object ver = getFieldValue(iPojo, vField.getName());
-      if (ver != null) {
-        // FOUND
-        if (ver instanceof Number) {
-          // TREATS AS CLUSTER POSITION
-          // TODO add support of extended version to object database
-          iRecord.setVersion(((Number) ver).intValue());
-        } else if (ver instanceof String)
-          iRecord.setVersion(Integer.parseInt((String) ver));
-        else if (ver.getClass().equals(Object.class))
-          iRecord.setVersion((Integer) ver);
-        else
-          OLogManager.instance().warn(OObjectSerializerHelper.class,
-              "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
-      }
+
+      final ORecordVersion version = convertVersion(ver);
+      if (version != null)
+        iRecord.getRecordVersion().copyFrom(version);
     }
 
     if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
@@ -834,7 +850,7 @@ public class OObjectSerializerHelper {
   /**
    * Returns the declared generic types of a class.
    * 
-   * @param iClass
+   * @param iObject
    *          Class to examine
    * @return The array of Type if any, otherwise null
    */
@@ -959,7 +975,8 @@ public class OObjectSerializerHelper {
           if (fieldType.isPrimitive())
             OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
                 f.toString());
-          else if (fieldType != String.class && fieldType != Object.class && !Number.class.isAssignableFrom(fieldType))
+          else if (fieldType != String.class && fieldType != Object.class && !ORecordVersion.class.isAssignableFrom(fieldType)
+              && !Number.class.isAssignableFrom(fieldType))
             OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
                 fieldType);
         }
@@ -1057,7 +1074,7 @@ public class OObjectSerializerHelper {
 
   private static void setFieldFromDocument(final ODocument iDocument, final Object iPojo, final Field iField) throws Exception {
     final String idFieldName = OObjectSerializerHelper.setObjectID(iDocument.getIdentity(), iPojo);
-    final String vFieldName = OObjectSerializerHelper.setObjectVersion(iDocument.getVersion(), iPojo);
+    final String vFieldName = OObjectSerializerHelper.setObjectVersion(iDocument.getRecordVersion(), iPojo);
     final String fieldName = iField.getName();
     // Don't assign id and version fields, used by Orient
     if (!fieldName.equals(idFieldName) && !fieldName.equals(vFieldName)) {
@@ -1093,12 +1110,11 @@ public class OObjectSerializerHelper {
       final OLazyObjectList<?> aList = (OLazyObjectList<?>) iValue;
       // Instantiation of the list
       if (listClass.isInterface()) {
-        aSubList = (List<Object>) new ArrayList<Object>();
+        aSubList = new ArrayList<Object>();
       } else {
         aSubList = (List<Object>) listClass.newInstance();
       }
-      for (int i = 0; i < aList.size(); i++) {
-        final Object value = aList.get(i);
+      for (final Object value : aList) {
         if (value instanceof ODocument) {
           final ODocument aDocument = (ODocument) value;
           aSubList.add(OObjectSerializerHelper.convertDocumentInType(aDocument, objectClass));

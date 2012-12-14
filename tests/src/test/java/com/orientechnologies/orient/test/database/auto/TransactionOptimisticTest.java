@@ -126,12 +126,12 @@ public class TransactionOptimisticTest {
 
       // RE-READ THE RECORD
       record.load();
-      int v1 = record.getVersion();
+      int v1 = record.getRecordVersion().getCounter();
       record.value("This is the second version").save();
       db.commit();
 
       record.reload();
-      Assert.assertEquals(record.getVersion(), v1 + 1);
+      Assert.assertEquals(record.getRecordVersion().getCounter(), v1 + 1);
       Assert.assertTrue(record.value().contains("second"));
     } finally {
 
@@ -155,13 +155,13 @@ public class TransactionOptimisticTest {
 
       // RE-READ THE RECORD
       record1.load();
-      int v1 = record1.getVersion();
+      int v1 = record1.getRecordVersion().getCounter();
       record1.value("This is the second version").save();
 
       db1.commit();
 
       ORecordFlat record2 = db2.load(record1.getIdentity());
-      Assert.assertEquals(record2.getVersion(), v1 + 1);
+      Assert.assertEquals(record2.getRecordVersion().getCounter(), v1 + 1);
       Assert.assertTrue(record2.value().contains("second"));
 
     } finally {
