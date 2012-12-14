@@ -782,7 +782,7 @@ public class OObjectEntitySerializer {
         setFieldValue(f, iObject, iValue.toString());
       else if (f.getType().equals(Long.class))
         setFieldValue(f, iObject, iValue.getClusterPosition().longValue());
-      else if (f.getType().equals(Object.class))
+      else if (f.getType().isAssignableFrom(ORID.class))
         setFieldValue(f, iObject, iValue);
     }
   }
