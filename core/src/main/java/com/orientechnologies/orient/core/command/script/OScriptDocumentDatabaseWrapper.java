@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -131,6 +132,10 @@ public class OScriptDocumentDatabaseWrapper {
     }
 
     return res;
+  }
+
+  public OIndex<?> getIndex(final String iName) {
+    return database.getMetadata().getIndexManager().getIndex(iName);
   }
 
   public boolean exists() {
@@ -407,7 +412,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-                        final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 

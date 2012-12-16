@@ -151,13 +151,13 @@ public class ODistributedStorage implements OStorage {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback) {
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     if (ODistributedThreadLocal.INSTANCE.distributedExecution)
       // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     if (eventuallyConsistent || dManager.isLocalNodeMaster(iRecordId))
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     try {
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId),
@@ -314,8 +314,18 @@ public class ODistributedStorage implements OStorage {
     return wrapped.count(iClusterId);
   }
 
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    return wrapped.count(iClusterId, countTombstones);
+  }
+
   public long count(final int[] iClusterIds) {
     return wrapped.count(iClusterIds);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
+    return wrapped.count(iClusterIds, countTombstones);
   }
 
   public long getSize() {
@@ -418,13 +428,23 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition entry) {
-    return wrapped.getNextClusterPosition(currentClusterId, entry);
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
+    return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition entry) {
-    return wrapped.getPrevClusterPosition(currentClusterId, entry);
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.floorPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
+    return wrapped.lowerPhysicalPositions(currentClusterId, entry);
   }
 
   @Override

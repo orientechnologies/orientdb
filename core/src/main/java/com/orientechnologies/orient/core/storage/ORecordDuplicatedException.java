@@ -1,12 +1,13 @@
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  * @since 9/5/12
  */
-public class ORecordDuplicatedException extends RuntimeException {
+public class ORecordDuplicatedException extends OException {
   private final ORID iRid;
 
   public ORecordDuplicatedException(String message, ORID iRid) {

@@ -1,14 +1,15 @@
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.utils.linearhashing;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.storage.impl.memory.lh.OLinearHashingBucket;
 
 /**
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 8/28/12 Time: 10:34 AM
  */
-class OLinearHashingIndex {
+public class OLinearHashingIndex {
   private List<OLinearHashingIndexElement> indexContent = new ArrayList<OLinearHashingIndexElement>(2);
 
   public void addNewPosition() {
@@ -27,7 +28,7 @@ class OLinearHashingIndex {
     return indexContent.get(numberOfChain).signature;
   }
 
-  public int incrementChainDisplacement(int chainNumber, int bucketSize) {
+  public int changeDisplacementAfterInsertion(int chainNumber, int bucketSize) {
     if ((indexContent.get(chainNumber).displacement & 0xFF) == 254 && bucketSize == OLinearHashingBucket.BUCKET_MAX_SIZE) {
       indexContent.get(chainNumber).displacement = (byte) 253;
     } else if ((indexContent.get(chainNumber).displacement & 0xFF) == 255) {
@@ -37,7 +38,7 @@ class OLinearHashingIndex {
     return indexContent.get(chainNumber).displacement & 0xFF;
   }
 
-  public int decrementDisplacement(int chainNumber, int bucketSize, boolean nextIndexWasRemoved) {
+  public int changeDisplacementAfterDeletion(int chainNumber, int bucketSize, boolean nextIndexWasRemoved) {
     if ((indexContent.get(chainNumber).displacement & 0xFF) < 253 && nextIndexWasRemoved) {
       indexContent.get(chainNumber).displacement = (byte) 253;
     } else if ((indexContent.get(chainNumber).displacement & 0xFF) == 253 && bucketSize < OLinearHashingBucket.BUCKET_MAX_SIZE) {
@@ -50,14 +51,14 @@ class OLinearHashingIndex {
   }
 
   public int decrementDisplacement(int chainNumber, int bucketSize) {
-    return decrementDisplacement(chainNumber, bucketSize, false);
+    return changeDisplacementAfterDeletion(chainNumber, bucketSize, false);
   }
 
   public void updateSignature(int chainNumber, OClusterPosition[] keys, int size) {
     byte signature = Byte.MIN_VALUE;
     for (int i = 0; i < size; i++) {
-      if (signature < OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i])) {
-        signature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i]);
+      if (signature < OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i])) {
+        signature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i]);
       }
     }
     indexContent.get(chainNumber).signature = signature;

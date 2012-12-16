@@ -111,7 +111,7 @@ public class OStorageLocalTxExecuter {
       final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     try {
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false);
 
       if (buffer == null)
         throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
@@ -140,7 +140,7 @@ public class OStorageLocalTxExecuter {
       final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true, false);
 
       if (buffer != null) {
         // SAVE INTO THE LOG THE OLD RECORD
@@ -294,7 +294,7 @@ public class OStorageLocalTxExecuter {
                 iTx.getDatabase()
                     .getStorage()
                     .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
-														(byte) 0, null).getResult());
+                        (byte) 0, null).getResult());
       break;
     }
 

@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -102,16 +101,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
     return (THISDB) this;
-  }
-
-  @Override
-  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return underlying.getNextClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return underlying.getPreviousClusterPosition(clusterId, clusterPosition);
   }
 
   /**
@@ -269,6 +258,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
+    return load(iPojo, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     checkOpeness();
     if (iPojo == null)
       return null;
@@ -278,7 +272,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     try {
       record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.UNMARSHALLING);
 
-      record = underlying.load(record, iFetchPlan, iIgnoreCache);
+      record = underlying.load(record, iFetchPlan, iIgnoreCache, loadTombstone);
 
       return (RET) stream2pojo(record, iPojo, iFetchPlan);
     } finally {
@@ -295,12 +289,17 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
+    return load(iRecordId, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @Override
+  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     checkOpeness();
     if (iRecordId == null)
       return null;
 
     // GET THE ASSOCIATED DOCUMENT
-    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
     if (record == null)
       return null;
 

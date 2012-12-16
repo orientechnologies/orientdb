@@ -47,10 +47,11 @@ public interface OTransaction {
 
   public void clearRecordEntries();
 
-  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan);
+  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
+      boolean loadTombstone);
 
   public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-                         ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
   public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
 

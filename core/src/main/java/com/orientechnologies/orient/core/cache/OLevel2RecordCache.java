@@ -41,7 +41,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
 
   public OLevel2RecordCache(final OStorage iStorage) {
     super(new OCacheLocator().secondaryCache(iStorage.getName()));
-    
+
     profilerPrefix = "db." + iStorage.getName() + ".cache.level2.";
     profilerMetadataPrefix = "db.*.cache.level2.";
 
@@ -65,7 +65,7 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
    */
   public void updateRecord(final ORecordInternal<?> fresh) {
     if (!isEnabled() || fresh == null || fresh.isDirty() || fresh.getIdentity().isNew() || !fresh.getIdentity().isValid()
-        || fresh.getIdentity().getClusterId() == excludedCluster)
+        || fresh.getIdentity().getClusterId() == excludedCluster || fresh.getRecordVersion().isTombstone())
       return;
 
     if (fresh.isPinned() == null || fresh.isPinned()) {

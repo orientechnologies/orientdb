@@ -386,7 +386,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback) {
+      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     checkConnection();
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -404,6 +404,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.getSrvProtocolVersion() >= 9)
             network.writeByte((byte) (iIgnoreCache ? 1 : 0));
 
+          if (network.getSrvProtocolVersion() >= 13)
+            network.writeByte(loadTombstones ? (byte) 1 : (byte) 0);
         } finally {
           endRequest(network);
         }
@@ -537,7 +539,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     do {
       try {
-        final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_DELETE);
+        final OChannelBinaryClient network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT);
         return deleteRecord(recordId, recordVersion, iMode, callback, network);
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
@@ -601,6 +603,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return count(new int[] { iClusterId });
   }
 
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    return count(new int[] { iClusterId }, countTombstones);
+  }
+
   public OClusterPosition[] getClusterDataRange(final int iClusterId) {
     checkConnection();
 
@@ -631,7 +638,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int iClusterId, OClusterPosition iClusterPosition) {
+  public OPhysicalPosition[] higherPhysicalPositions(int iClusterId, OPhysicalPosition iClusterPosition) {
     checkConnection();
 
     do {
@@ -639,9 +646,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         OChannelBinaryClient network = null;
         try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_NEXT);
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER);
           network.writeInt(iClusterId);
-          network.writeClusterPosition(iClusterPosition);
+          network.writeClusterPosition(iClusterPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -649,10 +656,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         try {
           beginResponse(network);
-          if (network.readByte() == 0) {
-            return OClusterPosition.INVALID_POSITION;
+          final int positionsCount = network.readInt();
+
+          if (positionsCount == 0) {
+            return new OPhysicalPosition[0];
           } else {
-            return network.readClusterPosition();
+            return readPhysicalPositions(network, positionsCount);
           }
 
         } finally {
@@ -660,14 +669,106 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
 
       } catch (Exception e) {
-        handleException("Error on retrieving next record after " + iClusterPosition, e);
+        handleException("Error on retrieving higher positions after " + iClusterPosition.clusterPosition, e);
+      }
+    } while (true);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    checkConnection();
+
+    do {
+      try {
+
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING);
+          network.writeInt(clusterId);
+          network.writeClusterPosition(physicalPosition.clusterPosition);
+
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+          final int positionsCount = network.readInt();
+
+          if (positionsCount == 0) {
+            return new OPhysicalPosition[0];
+          } else {
+            return readPhysicalPositions(network, positionsCount);
+          }
+
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error on retrieving ceiling positions after " + physicalPosition.clusterPosition, e);
+      }
+    } while (true);
+  }
+
+  private OPhysicalPosition[] readPhysicalPositions(OChannelBinaryClient network, int positionsCount) throws IOException {
+    final OPhysicalPosition[] physicalPositions = new OPhysicalPosition[positionsCount];
+
+    for (int i = 0; i < physicalPositions.length; i++) {
+      final OPhysicalPosition position = new OPhysicalPosition();
+
+      position.clusterPosition = network.readClusterPosition();
+      position.dataSegmentId = network.readInt();
+      position.dataSegmentPos = network.readLong();
+      position.recordSize = network.readInt();
+      position.recordVersion = network.readVersion();
+
+      physicalPositions[i] = position;
+    }
+    return physicalPositions;
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(int iClusterId, OPhysicalPosition physicalPosition) {
+    checkConnection();
+
+    do {
+      try {
+
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER);
+          network.writeInt(iClusterId);
+          network.writeClusterPosition(physicalPosition.clusterPosition);
+
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+
+          final int positionsCount = network.readInt();
+
+          if (positionsCount == 0) {
+            return new OPhysicalPosition[0];
+          } else {
+            return readPhysicalPositions(network, positionsCount);
+          }
+
+        } finally {
+          endResponse(network);
+        }
+
+      } catch (Exception e) {
+        handleException("Error on retrieving lower positions after " + physicalPosition.clusterPosition, e);
 
       }
     } while (true);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int iClusterId, OClusterPosition iClusterPosition) {
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     checkConnection();
 
     do {
@@ -675,9 +776,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         OChannelBinaryClient network = null;
         try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_PREVIOUS);
-          network.writeInt(iClusterId);
-          network.writeClusterPosition(iClusterPosition);
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR);
+          network.writeInt(clusterId);
+          network.writeClusterPosition(physicalPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -686,10 +787,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           beginResponse(network);
 
-          if (network.readByte() == 0) {
-            return OClusterPosition.INVALID_POSITION;
+          final int positionsCount = network.readInt();
+
+          if (positionsCount == 0) {
+            return new OPhysicalPosition[0];
           } else {
-            return network.readClusterPosition();
+            return readPhysicalPositions(network, positionsCount);
           }
 
         } finally {
@@ -697,8 +800,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
 
       } catch (Exception e) {
-        handleException("Error on retrieving next record after " + iClusterPosition, e);
-
+        handleException("Error on retrieving floor positions after " + physicalPosition.clusterPosition, e);
       }
     } while (true);
   }
@@ -761,6 +863,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public long count(final int[] iClusterIds) {
+    return count(iClusterIds, false);
+  }
+
+  public long count(final int[] iClusterIds, boolean countTombstones) {
     checkConnection();
 
     do {
@@ -770,9 +876,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT);
 
           network.writeShort((short) iClusterIds.length);
-          for (int i = 0; i < iClusterIds.length; ++i)
-            network.writeShort((short) iClusterIds[i]);
+          for (int iClusterId : iClusterIds)
+            network.writeShort((short) iClusterId);
 
+          if (network.getSrvProtocolVersion() >= 12)
+            network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
         } finally {
           endRequest(network);
         }

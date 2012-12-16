@@ -90,7 +90,7 @@ public class OSQLScriptEngine implements ScriptEngine {
 
   @Override
   public Bindings getBindings(int scope) {
-    return null;
+    return new SimpleBindings();
   }
 
   @Override

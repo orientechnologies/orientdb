@@ -133,6 +133,18 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.countClusterElements(iClusterName);
   }
 
+  @Override
+  public long countClusterElements(int iClusterId, boolean countTombstones) {
+    checkOpeness();
+    return underlying.countClusterElements(iClusterId, countTombstones);
+  }
+
+  @Override
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
+    checkOpeness();
+    return underlying.countClusterElements(iClusterIds, countTombstones);
+  }
+
   public int getClusters() {
     checkOpeness();
     return underlying.getClusters();

@@ -36,8 +36,22 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   protected boolean      polymorphic;
 
   public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
+
+    targetClass = database.getMetadata().getSchema().getClass(iClassName);
+    if (targetClass == null)
+      throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
+
+    polymorphic = iPolymorphic;
+    clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
+
+    config();
+  }
+
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic) {
-    super(iDatabase, iLowLevelDatabase);
+    super(iDatabase, iLowLevelDatabase, false);
 
     targetClass = database.getMetadata().getSchema().getClass(iClassName);
     if (targetClass == null)

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.utils.linearhashing;
 
 /**
  * @author Artem Loginov (logart) logart2007@gmail.com Date: 8/28/12 Time: 10:18 AM

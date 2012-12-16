@@ -326,7 +326,7 @@ public class ODatabaseJournal {
           // GET LAST RID
           rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
 
-        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
+        final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         if (record != null)
           task = new OCreateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
         break;
@@ -336,7 +336,7 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
 
-        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
+        final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         if (record != null) {
           final ORecordVersion version = record.version.copy();
           version.decrement();
@@ -348,7 +348,7 @@ public class ODatabaseJournal {
       case RECORD_DELETE: {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
-        final ORawBuffer record = storage.readRecord(rid, null, false, null).getResult();
+        final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : OVersionFactory
             .instance().createUntrackedVersion());
         break;

@@ -165,8 +165,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             ioResult = ioResult != null ? ioResult.toString().indexOf(toFind, startIndex) : null;
 
           } else if (operator == OSQLFilterFieldOperator.SUBSTRING.id) {
-            int endIndex = op.value.size() > 1 ? Integer.parseInt(op.value.get(1)) : op.value.get(0).length();
-            ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)), endIndex) : null;
+            if (op.value.size() > 1)
+              ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0)),
+                  Integer.parseInt(op.value.get(1))) : null;
+            else
+              ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(op.value.get(0))) : null;
 
           } else if (operator == OSQLFilterFieldOperator.REPLACE.id) {
             ioResult = ioResult != null ? ioResult.toString().replace(op.value.get(0), op.value.get(1)) : null;
@@ -206,7 +209,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             if (ioResult instanceof Date)
               ioResult = ((Date) ioResult).getTime();
             else
-              ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
+              ioResult = ioResult != null ? new Long(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
             ioResult = ioResult != null ? new Float(ioResult.toString()) : null;
           else if (operator == OSQLFilterFieldOperator.ASDECIMAL.id)
@@ -214,7 +217,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
             if (ioResult != null) {
               if (ioResult instanceof String)
-                ioResult = new Boolean((String) ioResult);
+                ioResult = Boolean.valueOf((String) ioResult);
               else if (ioResult instanceof Number) {
                 final int bValue = ((Number) ioResult).intValue();
                 if (bValue == 0)
@@ -228,16 +231,16 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
             }
           } else if (operator == OSQLFilterFieldOperator.ASDATE.id) {
             if (ioResult != null) {
-              if (ioResult instanceof Long)
-                ioResult = new Date((Long) ioResult);
+              if (ioResult instanceof Number)
+                ioResult = new Date(((Number) ioResult).longValue());
               else if (!(ioResult instanceof Date))
                 ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
                     .parse(ioResult.toString());
             }
           } else if (operator == OSQLFilterFieldOperator.ASDATETIME.id) {
             if (ioResult != null) {
-              if (ioResult instanceof Long)
-                ioResult = new Date((Long) ioResult);
+              if (ioResult instanceof Number)
+                ioResult = new Date(((Number) ioResult).longValue());
               else if (!(ioResult instanceof Date))
                 ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
                     .parse(ioResult.toString());

@@ -27,125 +27,128 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 
-	/**
-	 * Browses all the records of the specified cluster.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name to iterate
-	 * @return Iterator of ODocument instances
-	 */
-	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
+  /**
+   * Browses all the records of the specified cluster.
+   * 
+   * @param iClusterName
+   *          Cluster name to iterate
+   * @return Iterator of ODocument instances
+   */
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-	/**
-	 * Browses all the records of the specified cluster of the passed record type.
-	 * 
-	 * @param iClusterName
-	 *          Cluster name to iterate
-	 * @param iRecordClass
-	 *          The record class expected
-	 * @return Iterator of ODocument instances
-	 */
-	public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, boolean loadTombstones);
 
-	/**
-	 * Returns the record for a OIdentifiable instance. If the argument received already is a ORecord instance, then it's returned as
-	 * is, otherwise a new ORecord is created with the identity received and returned.
-	 * 
-	 * @param iIdentifiable
-	 * @return A ORecord instance
-	 */
-	public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
+  /**
+   * Browses all the records of the specified cluster of the passed record type.
+   * 
+   * @param iClusterName
+   *          Cluster name to iterate
+   * @param iRecordClass
+   *          The record class expected
+   * @return Iterator of ODocument instances
+   */
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
-	/**
-	 * Returns the default record type for this kind of database.
-	 */
-	public byte getRecordType();
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+      boolean loadTombstones);
 
-	/**
-	 * Returns true if current configuration retains objects, otherwise false
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #setRetainRecords(boolean)
-	 */
-	public boolean isRetainRecords();
+  /**
+   * Returns the record for a OIdentifiable instance. If the argument received already is a ORecord instance, then it's returned as
+   * is, otherwise a new ORecord is created with the identity received and returned.
+   * 
+   * @param iIdentifiable
+   * @return A ORecord instance
+   */
+  public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
 
-	/**
-	 * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
-	 * enabled.
-	 * 
-	 * @param iValue
-	 *          True to enable, false to disable it.
-	 * @see #isRetainRecords()
-	 */
-	public ODatabaseRecord setRetainRecords(boolean iValue);
+  /**
+   * Returns the default record type for this kind of database.
+   */
+  public byte getRecordType();
 
-	/**
-	 * Checks if the operation on a resource is allowed for the current user.
-	 * 
-	 * @param iResource
-	 *          Resource where to execute the operation
-	 * @param iOperation
-	 *          Operation to execute against the resource
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord> DB checkSecurity(String iResource, int iOperation);
+  /**
+   * Returns true if current configuration retains objects, otherwise false
+   * 
+   * @see #setRetainRecords(boolean)
+   */
+  public boolean isRetainRecords();
 
-	/**
-	 * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
-	 * <ol>
-	 * <li>
-	 * Access to all the resource as *</li>
-	 * <li>
-	 * Access to the specific target resource</li>
-	 * </ol>
-	 * 
-	 * @param iResourceGeneric
-	 *          Resource where to execute the operation, i.e.: database.clusters
-	 * @param iOperation
-	 *          Operation to execute against the resource
-	 * @param iResourceTarget
-	 *          Target resource, i.e.: "employee" to specify the cluster name.
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
+  /**
+   * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
+   * enabled.
+   * 
+   * @param iValue
+   *          True to enable, false to disable it.
+   * @see #isRetainRecords()
+   */
+  public ODatabaseRecord setRetainRecords(boolean iValue);
 
-	/**
-	 * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
-	 * <ol>
-	 * <li>
-	 * Access to all the resource as *</li>
-	 * <li>
-	 * Access to the specific target resources</li>
-	 * </ol>
-	 * 
-	 * @param iResourceGeneric
-	 *          Resource where to execute the operation, i.e.: database.clusters
-	 * @param iOperation
-	 *          Operation to execute against the resource
-	 * @param iResourcesTarget
-	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+  /**
+   * Checks if the operation on a resource is allowed for the current user.
+   * 
+   * @param iResource
+   *          Resource where to execute the operation
+   * @param iOperation
+   *          Operation to execute against the resource
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseRecord> DB checkSecurity(String iResource, int iOperation);
 
-	/**
-	 * Tells if validation of record is active. Default is true.
-	 * 
-	 * @return true if it's active, otherwise false.
-	 */
-	public boolean isValidationEnabled();
+  /**
+   * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
+   * <ol>
+   * <li>
+   * Access to all the resource as *</li>
+   * <li>
+   * Access to the specific target resource</li>
+   * </ol>
+   * 
+   * @param iResourceGeneric
+   *          Resource where to execute the operation, i.e.: database.clusters
+   * @param iOperation
+   *          Operation to execute against the resource
+   * @param iResourceSpecific
+   *          Target resource, i.e.: "employee" to specify the cluster name.
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
 
-	/**
-	 * Enables or disables the record validation.
-	 * 
-	 * @param iEnabled
-	 *          True to enable, false to disable
-	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-	 */
-	public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
+  /**
+   * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
+   * <ol>
+   * <li>
+   * Access to all the resource as *</li>
+   * <li>
+   * Access to the specific target resources</li>
+   * </ol>
+   * 
+   * @param iResourceGeneric
+   *          Resource where to execute the operation, i.e.: database.clusters
+   * @param iOperation
+   *          Operation to execute against the resource
+   * @param iResourcesSpecific
+   *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseRecord> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
 
-	public ODataSegmentStrategy getDataSegmentStrategy();
+  /**
+   * Tells if validation of record is active. Default is true.
+   * 
+   * @return true if it's active, otherwise false.
+   */
+  public boolean isValidationEnabled();
 
-	public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
+  /**
+   * Enables or disables the record validation.
+   * 
+   * @param iEnabled
+   *          True to enable, false to disable
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
+
+  public ODataSegmentStrategy getDataSegmentStrategy();
+
+  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
 }

@@ -89,7 +89,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Loads a record using a fetch plan.
    * 
-   * @param iDocument
+   * @param iObject
    *          Record to load
    * @param iFetchPlan
    *          Fetch plan used
@@ -100,7 +100,18 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Loads a record using a fetch plan.
    * 
-   * @param iDocument
+   * @param iObject
+   *          Record to load
+   * @param iFetchPlan
+   *          Fetch plan used
+   * @return The record received
+   */
+  public <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone);
+
+  /**
+   * Loads a record using a fetch plan.
+   * 
+   * @param iObject
    *          Record to load
    * @param iFetchPlan
    *          Fetch plan used
@@ -155,6 +166,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @return The loaded entity
    */
   public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
+
+  public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone);
 
   /**
    * Saves an entity in synchronous mode. If the entity is not dirty, then the operation will be ignored. For custom entity

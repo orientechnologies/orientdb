@@ -119,15 +119,15 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     if (undistributedClusters.contains(iRid.getClusterId())) {
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
     }
 
     final ODHTNode node = serverInstance.findSuccessor(iRid.clusterPosition.longValue());
 
     if (node.isLocal())
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
     else
       return new OStorageOperationResult<ORawBuffer>(node.readRecord(wrapped.getName(), iRid), true);
   }
@@ -272,8 +272,17 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.count(iClusterId);
   }
 
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    return wrapped.count(iClusterId, countTombstones);
+  }
+
   public long count(final int[] iClusterIds) {
     return wrapped.count(iClusterIds);
+  }
+
+  public long count(final int[] iClusterIds, final boolean countTombstones) {
+    return wrapped.count(iClusterIds, countTombstones);
   }
 
   public long getSize() {
@@ -371,13 +380,23 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
-    return wrapped.getNextClusterPosition(currentClusterId, clusterPosition);
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.higherPhysicalPositions(currentClusterId, physicalPosition);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
-    return wrapped.getPrevClusterPosition(currentClusterId, clusterPosition);
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.lowerPhysicalPositions(currentClusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    return wrapped.floorPhysicalPositions(clusterId, physicalPosition);
   }
 
   @Override

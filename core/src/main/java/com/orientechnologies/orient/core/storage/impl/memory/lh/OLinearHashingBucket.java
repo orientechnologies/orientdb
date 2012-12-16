@@ -22,11 +22,12 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.impl.utils.linearhashing.OLinearHashingHashCalculator;
 
 /**
- * @author Artem Loginov (artem.loginov@exigenservices.com)
+ * @author Artem Loginov (logart2007@gmail.com)
  */
-class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPosition> {
+public class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPosition> {
   public static final int BUCKET_MAX_SIZE = 64;
   K[]                     keys            = (K[]) new OClusterPosition[BUCKET_MAX_SIZE];
   V[]                     values          = (V[]) new OPhysicalPosition[BUCKET_MAX_SIZE];
@@ -44,7 +45,7 @@ class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPositi
   public List<V> getLargestRecords(final byte signature) {
     List<V> result = new ArrayList<V>(size / 10);
     for (int i = 0; i < size;) {
-      if (OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i]) == signature) {
+      if (OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i]) == signature) {
         result.add(values[i]);
         --size;
         keys[i] = keys[size];
@@ -78,14 +79,31 @@ class OLinearHashingBucket<K extends OClusterPosition, V extends OPhysicalPositi
         return i;
       }
     }
+
     return -1;
+  }
+
+  public int getPosition(final K key) {
+    for (int i = 0; i < size; i++) {
+      if (key.equals(keys[i])) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  public void deleteEntry(int position) {
+    keys[position] = keys[size - 1];
+    values[position] = values[size - 1];
+    size--;
   }
 
   public List<V> getSmallestRecords(int maxSizeOfRecordsArray) {
     byte signature = 127;
     List<V> result = new ArrayList<V>(size / 10);
     for (int i = 0; i < size; ++i) {
-      byte keySignature = OLinearHashingHashCalculatorFactory.INSTANCE.calculateSignature(keys[i]);
+      byte keySignature = OLinearHashingHashCalculator.INSTANCE.calculateSignature(keys[i]);
       if (keySignature < signature) {
         signature = keySignature;
         result.clear();

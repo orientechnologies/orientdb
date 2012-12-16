@@ -19,7 +19,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -140,9 +139,9 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         OLogManager
             .instance()
             .debug(
-										this,
-										"Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-										t, OTransactionBlockedException.class, listener.getClass());
+                this,
+                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+                t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;
@@ -179,25 +178,38 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
+      boolean loadTombstone) {
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) currentTx.loadRecord(iRecordId, null, null);
+    return (RET) currentTx.loadRecord(iRecordId, null, null, false, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan);
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone);
   }
 
   @SuppressWarnings("unchecked")
@@ -280,13 +292,4 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       currentTx = new OTransactionNoTx(this);
   }
 
-  @Override
-  public OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getNextClusterPosition(clusterId, clusterPosition);
-  }
-
-  @Override
-  public OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition) {
-    return getStorage().getPrevClusterPosition(clusterId, clusterPosition);
-  }
 }

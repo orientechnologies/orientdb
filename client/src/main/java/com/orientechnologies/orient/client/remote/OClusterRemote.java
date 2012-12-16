@@ -123,6 +123,21 @@ public class OClusterRemote implements OCluster {
     return 0;
   }
 
+  @Override
+  public long getTombstonesCount() {
+    throw new UnsupportedOperationException("getTombstonesCount()");
+  }
+
+  @Override
+  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+    throw new UnsupportedOperationException("convertToTombstone()");
+  }
+
+  @Override
+  public boolean hasTombstonesSupport() {
+    throw new UnsupportedOperationException("hasTombstonesSupport()");
+  }
+
   public OClusterPosition getFirstPosition() {
     return OClusterPositionFactory.INSTANCE.valueOf(0);
   }
@@ -168,13 +183,22 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OClusterPosition nextRecord(OClusterPosition position) {
-    return null; // TODO realization missed!
+  public OPhysicalPosition[] higherPositions(OPhysicalPosition position) {
+    throw new UnsupportedOperationException("higherPositions()");
   }
 
   @Override
-  public OClusterPosition prevRecord(OClusterPosition position) {
-    return null; // TODO realization missed!
+  public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) {
+    throw new UnsupportedOperationException("lowerPositions()");
   }
 
+  @Override
+  public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
+    throw new UnsupportedOperationException("ceilingPositions()");
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
+    throw new UnsupportedOperationException("floorPositions()");
+  }
 }

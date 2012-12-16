@@ -165,7 +165,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     indexEntries.clear();
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan) {
+  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
+      boolean ignoreCache, boolean loadTombstone) {
     checkTransaction();
 
     final ORecordInternal<?> txRecord = getRecord(iRid);
@@ -176,8 +177,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (txRecord != null)
       return txRecord;
 
-    // DELEGATE TO THE STORAGE
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, false);
+    // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false);
   }
 
   public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {

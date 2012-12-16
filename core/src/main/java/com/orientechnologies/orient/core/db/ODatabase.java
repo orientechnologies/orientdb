@@ -23,7 +23,6 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
@@ -274,6 +273,8 @@ public interface ODatabase extends Closeable {
    */
   public long countClusterElements(int iCurrentClusterId);
 
+  public long countClusterElements(int iCurrentClusterId, boolean countTombstones);
+
   /**
    * Counts all the entities in the specified cluster ids.
    * 
@@ -282,6 +283,8 @@ public interface ODatabase extends Closeable {
    * @return Total number of entities contained in the specified clusters
    */
   public long countClusterElements(int[] iClusterIds);
+
+  public long countClusterElements(int[] iClusterIds, boolean countTombstones);
 
   /**
    * Counts all the entities in the specified cluster name.
@@ -462,9 +465,4 @@ public interface ODatabase extends Closeable {
    *          exception will be thrown in case of write command will be performed.
    */
   public void freeze(boolean throwException);
-
-  OClusterPosition getNextClusterPosition(int clusterId, OClusterPosition clusterPosition);
-
-  OClusterPosition getPreviousClusterPosition(int clusterId, OClusterPosition clusterPosition);
-
 }

@@ -58,7 +58,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
   public abstract OCluster getClusterByName(final String iClusterName);
 
-  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock);
+  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
+      boolean loadTombstones);
 
   /**
    * Closes the storage freeing the lock manager first.
@@ -110,7 +111,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
       return null;
 
@@ -119,9 +120,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     lock.acquireSharedLock();
     try {
       final OCluster cluster = getClusterById(currentClusterId);
-      final OClusterPosition nextClusterPosition = cluster.nextRecord(clusterPosition);
-
-      return nextClusterPosition;
+      return cluster.higherPositions(physicalPosition);
     } catch (IOException ioe) {
       throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
     } finally {
@@ -130,7 +129,25 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    if (clusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(clusterId);
+      return cluster.ceilingPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
       return null;
 
@@ -139,11 +156,29 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     lock.acquireSharedLock();
     try {
       final OCluster cluster = getClusterById(currentClusterId);
-      final OClusterPosition prevClusterPosition = cluster.prevRecord(clusterPosition);
 
-      return prevClusterPosition;
+      return cluster.lowerPositions(physicalPosition);
     } catch (IOException ioe) {
       throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    if (clusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(clusterId);
+
+      return cluster.floorPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
     } finally {
       lock.releaseSharedLock();
     }

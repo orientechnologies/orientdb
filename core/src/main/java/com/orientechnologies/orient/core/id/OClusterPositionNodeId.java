@@ -109,6 +109,15 @@ public final class OClusterPositionNodeId extends OClusterPosition {
     return nodeId.longValue();
   }
 
+  /**
+   * This method return first part of NodeId content.
+   * @return high long value from NodeId.
+   */
+  @Override
+  public long longValueHigh() {
+    return nodeId.longValueHigh();
+  }
+
   @Override
   public float floatValue() {
     return nodeId.floatValue();

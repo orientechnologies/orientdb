@@ -362,6 +362,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return (ODocument) result;
   }
 
+  public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    Object result = null;
+    try {
+      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone);
+    } catch (Exception e) {
+      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
+    }
+
+    if (result == null)
+      throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found");
+
+    return (ODocument) result;
+  }
+
   @Override
   public ODocument reload(String iFetchPlan, boolean iIgnoreCache) {
     super.reload(iFetchPlan, iIgnoreCache);

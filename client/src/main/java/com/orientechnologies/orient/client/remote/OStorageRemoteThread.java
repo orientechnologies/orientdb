@@ -147,9 +147,9 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     delegate.setSessionId(sessionId);
-    return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null);
+    return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
@@ -175,6 +175,18 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.count(iClusterId);
   }
 
+  @Override
+  public long count(int iClusterId, boolean countTombstones) {
+    delegate.setSessionId(sessionId);
+    return delegate.count(iClusterId, countTombstones);
+  }
+
+  @Override
+  public long count(int[] iClusterIds, boolean countTombstones) {
+    delegate.setSessionId(sessionId);
+    return delegate.count(iClusterIds, countTombstones);
+  }
+
   public String toString() {
     delegate.setSessionId(sessionId);
     return delegate.toString();
@@ -186,15 +198,27 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OClusterPosition getNextClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     delegate.setSessionId(sessionId);
-    return delegate.getNextClusterPosition(currentClusterId, clusterPosition);
+    return delegate.higherPhysicalPositions(currentClusterId, physicalPosition);
   }
 
   @Override
-  public OClusterPosition getPrevClusterPosition(int currentClusterId, OClusterPosition clusterPosition) {
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     delegate.setSessionId(sessionId);
-    return delegate.getPrevClusterPosition(currentClusterId, clusterPosition);
+    return delegate.lowerPhysicalPositions(currentClusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    delegate.setSessionId(sessionId);
+    return delegate.ceilingPhysicalPositions(clusterId, physicalPosition);
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    delegate.setSessionId(sessionId);
+    return delegate.floorPhysicalPositions(clusterId, physicalPosition);
   }
 
   public long getSize() {

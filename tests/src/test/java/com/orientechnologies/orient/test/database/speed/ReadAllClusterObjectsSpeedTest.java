@@ -50,7 +50,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
     for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
       rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(i);
 
-      buffer = db.read(rid, null, false).getResult();
+      buffer = db.read(rid, null, false, false).getResult();
       if (buffer != null)
         ++objectsRead;
     }

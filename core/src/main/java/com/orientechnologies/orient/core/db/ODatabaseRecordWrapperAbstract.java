@@ -171,6 +171,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.browseCluster(iClusterName, iRecordClass);
   }
 
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final Class<REC> iRecordClass, final boolean loadTombstones) {
+    return underlying.browseCluster(iClusterName, iRecordClass, loadTombstones);
+  }
+
   public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {
     return (RET) underlying.command(iCommand);
   }
@@ -214,6 +219,17 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
+  }
+
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+    return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
+  }
+
+  @Override
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iObject, String iFetchPlan, boolean iIgnoreCache,
+      boolean loadTombstone) {
+    return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone);
   }
 
   public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {

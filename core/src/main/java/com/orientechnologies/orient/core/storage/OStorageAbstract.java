@@ -73,7 +73,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    return ppos != null && !ppos.recordVersion.isTombstone();
+    return ppos != null && !ppos.recordVersion.isTombstone() && ppos.dataSegmentId > -1;
   }
 
   public String getName() {
@@ -154,7 +154,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
     for (OCluster c : getClusterInstances())
       if (c != null)
-        tot += c.getEntries();
+        tot += c.getEntries() - c.getTombstonesCount();
 
     return tot;
   }
