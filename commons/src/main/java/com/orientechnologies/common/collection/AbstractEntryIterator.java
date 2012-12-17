@@ -94,8 +94,7 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
   }
 
   final OMVRBTreeEntry<K, V> prevEntry() {
-    OMVRBTreeEntry<K, V> e = next;
-    if (e == null)
+    if (next == null)
       throw new NoSuchElementException();
 
     if (pageIndex > 0) {
@@ -105,12 +104,12 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
       if (tree.modCount != expectedModCount)
         throw new ConcurrentModificationException();
 
-      next = OMVRBTree.predecessor(e);
+      next = OMVRBTree.predecessor(next);
       pageIndex = next != null ? next.getSize() - 1 : -1;
     }
 
-    lastReturned = e;
-    return e;
+    lastReturned = next;
+    return next;
   }
 
   @SuppressWarnings("unchecked")
