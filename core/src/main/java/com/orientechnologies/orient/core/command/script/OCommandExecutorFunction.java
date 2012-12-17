@@ -78,8 +78,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         try {
           scriptEngine.eval(lib);
         } catch (ScriptException e) {
-          throw new OCommandScriptException("Error on evaluation of the script library. Error: " + e.getMessage()
-              + "\nScript library was:\n" + lib);
+          scriptManager.getErrorMessage(e, lib);
         }
 
       if (scriptEngine instanceof Invocable) {

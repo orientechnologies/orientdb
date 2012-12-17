@@ -20,13 +20,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
+import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
@@ -48,13 +51,14 @@ import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
  * 
  */
 public class OScriptManager {
-  protected final String                  DEF_LANGUAGE    = "javascript";
+  protected final String                  DEF_LANGUAGE       = "javascript";
   protected ScriptEngineManager           scriptEngineManager;
   protected Map<String, ScriptEngine>     engines;
-  protected String                        defaultLanguage = DEF_LANGUAGE;
-  protected Map<String, OScriptFormatter> formatters      = new HashMap<String, OScriptFormatter>();
-  protected List<OScriptInjection>        injections      = new ArrayList<OScriptInjection>();
-  protected static final Object[]         EMPTY_PARAMS    = new Object[] {};
+  protected String                        defaultLanguage    = DEF_LANGUAGE;
+  protected Map<String, OScriptFormatter> formatters         = new HashMap<String, OScriptFormatter>();
+  protected List<OScriptInjection>        injections         = new ArrayList<OScriptInjection>();
+  protected static final Object[]         EMPTY_PARAMS       = new Object[] {};
+  protected static final int              LINES_AROUND_ERROR = 5;
 
   public OScriptManager() {
     if (engines == null) {
@@ -175,6 +179,47 @@ public class OScriptManager {
       binding.put("params", EMPTY_PARAMS);
 
     return binding;
+  }
+
+  public String getErrorMessage(final ScriptException e, final String lib) {
+    final int errorLineNumber = e.getLineNumber();
+
+    if (errorLineNumber <= 0) {
+      throw new OCommandScriptException("Error on evaluation of the script library. Error: " + e.getMessage()
+          + "\nScript library was:\n" + lib);
+    } else {
+      final StringBuilder code = new StringBuilder();
+      final Scanner scanner = new Scanner(lib);
+      try {
+        scanner.useDelimiter("\n");
+        String currentLine = null;
+        String lastFunctionName = "unknown";
+
+        for (int currentLineNumber = 1; scanner.hasNext(); currentLineNumber++) {
+          currentLine = scanner.next();
+          int pos = currentLine.indexOf("function");
+          if (pos > -1) {
+            final String[] words = OStringParser.getWords(currentLine.substring(pos + "function".length() + 1), " \r\n\t");
+            if (words.length > 0 && words[0] != "(")
+              lastFunctionName = words[0];
+          }
+
+          if (currentLineNumber == errorLineNumber)
+            // APPEND X LINES BEFORE
+            code.append(String.format("%4d: >>> %s\n", currentLineNumber, currentLine));
+          else if (Math.abs(currentLineNumber - errorLineNumber) <= LINES_AROUND_ERROR)
+            // AROUND: APPEND IT
+            code.append(String.format("%4d: %s\n", currentLineNumber, currentLine));
+        }
+
+        code.insert(0, String.format("ScriptManager: error %s.\nFunction %s:\n\n", e.getMessage(), lastFunctionName));
+
+      } finally {
+        scanner.close();
+      }
+
+      throw new OCommandScriptException(code.toString());
+    }
   }
 
   /**
