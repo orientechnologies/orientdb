@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
@@ -35,8 +36,9 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
   }
 
   @Override
-  public ORecordIteratorCluster<ORecordFlat> browseCluster(String iClusterName, boolean loadTombstones) {
-    return super.browseCluster(iClusterName, ORecordFlat.class, loadTombstones);
+  public ORecordIteratorCluster<ORecordFlat> browseCluster(String iClusterName, OClusterPosition startClusterPosition,
+      OClusterPosition endClusterPosition, boolean loadTombstones) {
+    return super.browseCluster(iClusterName, ORecordFlat.class, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   @SuppressWarnings("unchecked")

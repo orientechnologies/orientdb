@@ -34,7 +34,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   private ORecord<?> currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int iClusterId, final boolean iterateThroughTombstones) {
+      final int iClusterId) {
+    this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, false);
+  }
+
+  public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
+      final boolean iterateThroughTombstones) {
     super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
@@ -43,8 +49,15 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
     current.clusterId = iClusterId;
     final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    firstClusterEntry = range[0];
-    lastClusterEntry = range[1];
+    if (firstClusterEntry.equals(OClusterPosition.INVALID_POSITION))
+      this.firstClusterEntry = range[0];
+    else
+      this.firstClusterEntry = firstClusterEntry.compareTo(range[0]) > 0 ? firstClusterEntry : range[0];
+
+    if (lastClusterEntry.equals(OClusterPosition.INVALID_POSITION))
+      this.lastClusterEntry = range[1];
+    else
+      this.lastClusterEntry = lastClusterEntry.compareTo(range[1]) < 0 ? lastClusterEntry : range[1];
 
     totalAvailableRecords = database.countClusterElements(current.clusterId, iterateThroughTombstones);
 
@@ -117,26 +130,18 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
     if (browsedRecords >= totalAvailableRecords)
       return false;
 
-    boolean thereAreRecordsToBrowse;
-
-    if (current.clusterPosition.isTemporary())
-      thereAreRecordsToBrowse = false;
-    else if (getCurrentEntry().compareTo(lastClusterEntry) < 0)
-      thereAreRecordsToBrowse = true;
-    else
-      thereAreRecordsToBrowse = false;
-
-    if (thereAreRecordsToBrowse) {
+    if (!current.clusterPosition.isTemporary() && getCurrentEntry().compareTo(lastClusterEntry) < 0) {
       ORecordInternal<?> record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
-      return true;
+      if (currentRecord != null)
+        return true;
     }
 
     // CHECK IN TX IF ANY
     if (txEntries != null)
-      thereAreRecordsToBrowse = txEntries.size() - (currentTxEntryPosition + 1) > 0;
+      return txEntries.size() - (currentTxEntryPosition + 1) > 0;
 
-    return thereAreRecordsToBrowse;
+    return false;
   }
 
   /**
@@ -148,8 +153,6 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   @Override
   public REC previous() {
     checkDirection(false);
-
-    ORecordInternal<?> record = getRecord();
 
     if (currentRecord != null) {
       try {

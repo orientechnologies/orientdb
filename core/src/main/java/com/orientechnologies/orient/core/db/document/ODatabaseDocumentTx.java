@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -191,14 +192,16 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), false);
+    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName));
   }
 
   @Override
-  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, boolean loadTombstones) {
+  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, OClusterPosition startClusterPosition,
+      OClusterPosition endClusterPosition, boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), loadTombstones);
+    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), startClusterPosition,
+        endClusterPosition, loadTombstones);
   }
 
   /**
