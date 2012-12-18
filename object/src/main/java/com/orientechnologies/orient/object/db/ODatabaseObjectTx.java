@@ -357,7 +357,7 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
               OObjectSerializerHelper.setObjectID(entry.getRecord().getIdentity(), pojo);
 
             case ORecordOperation.UPDATED:
-              OObjectSerializerHelper.setObjectVersion(entry.getRecord().getVersion(), pojo);
+              OObjectSerializerHelper.setObjectVersion(entry.getRecord().getRecordVersion().copy(), pojo);
               break;
 
             case ORecordOperation.DELETED:
@@ -441,11 +441,11 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
    *          User object
    */
   @Override
-  public int getVersion(final Object iPojo) {
+  public ORecordVersion getVersion(final Object iPojo) {
     checkOpeness();
     final ODocument record = getRecordByUserObject(iPojo, false);
     if (record != null)
-      return record.getVersion();
+      return record.getRecordVersion();
 
     return OObjectSerializerHelper.getObjectVersion(iPojo);
   }

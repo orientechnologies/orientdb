@@ -372,7 +372,7 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public byte[] toByteArray(ORecordVersion version) {
-      int size = OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_LONG;
+      int size = STREAMED_SIZE;
       byte[] buffer = new byte[size];
       fastWriteTo(buffer, 0, version);
       return buffer;

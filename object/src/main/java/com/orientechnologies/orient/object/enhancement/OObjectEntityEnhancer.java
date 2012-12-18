@@ -19,6 +19,7 @@ package com.orientechnologies.orient.object.enhancement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -257,7 +258,7 @@ public class OObjectEntityEnhancer {
     T instanceToReturn = null;
     final Class<?> enclosingClass = iOriginalClass.getEnclosingClass();
 
-    if (enclosingClass != null) {
+    if (enclosingClass != null && !Modifier.isStatic(iOriginalClass.getModifiers())) {
       Object instanceOfEnclosingClass = createInstanceNoParameters(enclosingClass, enclosingClass);
 
       Constructor<T> ctor = iProxiedClass.getConstructor(enclosingClass);
