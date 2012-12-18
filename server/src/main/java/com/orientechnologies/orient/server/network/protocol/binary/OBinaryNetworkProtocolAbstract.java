@@ -281,16 +281,20 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iDbType, final String iStorageType) {
-    final String path;
+    String path;
 
     final OStorage stg = Orient.instance().getStorage(iDbName);
     if (stg != null)
       path = stg.getURL();
-    else if (iStorageType.equals(OEngineLocal.NAME))				    // for local, use the configured path
-      path = server.getConfiguration().getStoragePath(iDbName);
-    else if (iStorageType.equals(OEngineMemory.NAME))					// for memory, use the configured path
-      path = server.getConfiguration().getStoragePath(iDbName);
-    else
+    else if (iStorageType.equals(OEngineLocal.NAME)) {
+    	// if this storage was configured return always path from config file, otherwise return default path
+    	path = server.getConfiguration().getStoragePath(iDbName);
+    	if (path == null)
+    		path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
+    }
+    else if (iStorageType.equals(OEngineMemory.NAME)) {
+        path = iStorageType + ":" + iDbName;
+    } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageType + "' is not supported.");
 
     return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
