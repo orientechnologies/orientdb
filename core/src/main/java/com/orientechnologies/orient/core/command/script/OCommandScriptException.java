@@ -19,43 +19,46 @@ import com.orientechnologies.common.exception.OException;
 
 public class OCommandScriptException extends OException {
 
-	private String						text;
-	private int								position;
-	private static final long	serialVersionUID	= -7430575036316163711L;
+  private String            text;
+  private int               position;
+  private static final long serialVersionUID = -7430575036316163711L;
 
-	public OCommandScriptException(String iMessage) {
-		super(iMessage, null);
-	}
+  public OCommandScriptException(String iMessage) {
+    super(iMessage, null);
+  }
 
-	public OCommandScriptException(String iMessage, Throwable cause) {
-		super(iMessage, cause);
-	}
+  public OCommandScriptException(String iMessage, Throwable cause) {
+    super(iMessage, cause);
+  }
 
-	public OCommandScriptException(String iMessage, String iText, int iPosition, Throwable cause) {
-		super(iMessage, cause);
-		text = iText;
-		position = iPosition < 0 ? 0 : iPosition;
-	}
+  public OCommandScriptException(String iMessage, String iText, int iPosition, Throwable cause) {
+    super(iMessage, cause);
+    text = iText;
+    position = iPosition < 0 ? 0 : iPosition;
+  }
 
-	public OCommandScriptException(String iMessage, String iText, int iPosition) {
-		super(iMessage);
-		text = iText;
-		position = iPosition < 0 ? 0 : iPosition;
-	}
+  public OCommandScriptException(String iMessage, String iText, int iPosition) {
+    super(iMessage);
+    text = iText;
+    position = iPosition < 0 ? 0 : iPosition;
+  }
 
-	@Override
-	public String getMessage() {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("Error on parsing script at position #");
-		buffer.append(position);
-		buffer.append(": " + super.getMessage());
-		buffer.append("\nScript: ");
-		buffer.append(text);
-		buffer.append("\n------");
-		for (int i = 0; i < position - 1; ++i)
-			buffer.append("-");
+  @Override
+  public String getMessage() {
+    if (text == null)
+      return super.getMessage();
 
-		buffer.append("^");
-		return buffer.toString();
-	}
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("Error on parsing script at position #");
+    buffer.append(position);
+    buffer.append(": " + super.getMessage());
+    buffer.append("\nScript: ");
+    buffer.append(text);
+    buffer.append("\n------");
+    for (int i = 0; i < position - 1; ++i)
+      buffer.append("-");
+
+    buffer.append("^");
+    return buffer.toString();
+  }
 }

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -172,8 +173,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
-      final Class<REC> iRecordClass, final boolean loadTombstones) {
-    return underlying.browseCluster(iClusterName, iRecordClass, loadTombstones);
+      final Class<REC> iRecordClass, OClusterPosition startClusterPosition, OClusterPosition endClusterPosition,
+      final boolean loadTombstones) {
+
+    return underlying.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition, loadTombstones);
   }
 
   public <RET extends OCommandRequest> RET command(final OCommandRequest iCommand) {

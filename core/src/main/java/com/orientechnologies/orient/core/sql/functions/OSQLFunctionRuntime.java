@@ -21,6 +21,7 @@ import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -83,13 +84,14 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           // TRY WITH SIMPLE CONDITION
           final String text = ((OCommandSQL) configuredParameters[i]).getText();
           final OSQLPredicate pred = new OSQLPredicate(text);
-          runtimeParameters[i] = pred.evaluate(iContext);
+          runtimeParameters[i] = pred.evaluate((ORecord<?>) iCurrentRecord, iCurrentResult, iContext);
           // REPLACE ORIGINAL PARAM
           configuredParameters[i] = pred;
 
         }
       } else if (configuredParameters[i] instanceof OSQLPredicate)
-        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iContext);
+        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate((ORecord<?>) iCurrentRecord, iCurrentResult,
+            iContext);
     }
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);

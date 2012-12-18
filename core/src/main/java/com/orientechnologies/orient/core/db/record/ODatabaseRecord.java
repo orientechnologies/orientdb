@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -36,7 +37,8 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    */
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, boolean loadTombstones);
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName,
+      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones);
 
   /**
    * Browses all the records of the specified cluster of the passed record type.
@@ -50,7 +52,7 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      boolean loadTombstones);
+      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones);
 
   /**
    * Returns the record for a OIdentifiable instance. If the argument received already is a ORecord instance, then it's returned as
