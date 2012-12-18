@@ -79,7 +79,7 @@ public class TransactionAtomicTest {
 
 		doc.setDirty();
     doc.field("testmvcc", true);
-		doc.setVersion(1);
+    doc.getRecordVersion().setCounter(1);
 		try {
 			doc.save();
 			Assert.assertTrue(false);

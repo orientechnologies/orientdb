@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @Test
 public class TransactionConsistencyTest {
@@ -91,8 +93,8 @@ public class TransactionConsistencyTest {
     ORID vDocA_Rid = vDocA_db1.getIdentity().copy();
     ORID vDocB_Rid = vDocB_db1.getIdentity().copy();
 
-    int vDocA_version = -1;
-    int vDocB_version = -1;
+    ORecordVersion vDocA_version = OVersionFactory.instance().createUntrackedVersion();
+    ORecordVersion vDocB_version = OVersionFactory.instance().createUntrackedVersion();
 
     database2.begin(TXTYPE.OPTIMISTIC);
     try {
@@ -113,8 +115,8 @@ public class TransactionConsistencyTest {
       Assert.assertEquals(vDocA_db1.field(NAME), "docA_v3");
       // Keep the last versions.
       // Following updates should failed and reverted.
-      vDocA_version = vDocA_db1.getVersion();
-      vDocB_version = vDocB_db1.getVersion();
+      vDocA_version = vDocA_db1.getRecordVersion();
+      vDocB_version = vDocB_db1.getRecordVersion();
 
       // Update docB in db2 transaction context -> should be rollbacked.
       ODocument vDocB_db2 = database2.load(vDocB_Rid);
@@ -135,12 +137,12 @@ public class TransactionConsistencyTest {
 
     ODocument vDocA_db2 = database2.load(vDocA_Rid);
     Assert.assertEquals(vDocA_db2.field(NAME), "docA_v3");
-    Assert.assertEquals(vDocA_db2.getVersion(), vDocA_version);
+    Assert.assertEquals(vDocA_db2.getRecordVersion(), vDocA_version);
 
     // docB should be in the first state : "docB"
     ODocument vDocB_db2 = database2.load(vDocB_Rid);
     Assert.assertEquals(vDocB_db2.field(NAME), "docB");
-    Assert.assertEquals(vDocB_db2.getVersion(), vDocB_version);
+    Assert.assertEquals(vDocB_db2.getRecordVersion(), vDocB_version);
 
     database1.close();
     database2.close();
@@ -379,27 +381,27 @@ public class TransactionConsistencyTest {
 
     ODocument loadedJack = db.load(jack.getIdentity());
 
-    int jackLastVersion = loadedJack.getVersion();
+    ORecordVersion jackLastVersion = loadedJack.getRecordVersion().copy();
     db.begin();
     loadedJack.field("occupation", "agent");
     loadedJack.save();
     db.commit();
-    Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+    Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
     loadedJack = db.load(jack.getIdentity());
-    Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+    Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
     db.close();
 
     db.open("admin", "admin");
     loadedJack = db.load(jack.getIdentity());
-    Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
+    Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
     db.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
-  public void createLinkinTx() {
+  public void createLinkInTx() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     db.open("admin", "admin");
 

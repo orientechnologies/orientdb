@@ -270,13 +270,13 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     // GET THE ASSOCIATED DOCUMENT
     ODocument record = getRecordByUserObject(iPojo, true);
     try {
-      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.UNMARSHALLING);
+      record.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
       record = underlying.load(record, iFetchPlan, iIgnoreCache, loadTombstone);
 
       return (RET) stream2pojo(record, iPojo, iFetchPlan);
     } finally {
-      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+      record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
   }
 
@@ -371,7 +371,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       final Object proxiedObject = OObjectEntitySerializer.serializeObject(iPojo, this);
       final ODocument record = getRecordByUserObject(proxiedObject, true);
       try {
-        record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
+        record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
 
         if (!saveOnlyDirty || record.isDirty()) {
           // REGISTER BEFORE TO SERIALIZE TO AVOID PROBLEMS WITH CIRCULAR DEPENDENCY
@@ -387,7 +387,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           registerUserObject(proxiedObject, record);
         }
       } finally {
-        record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+        record.setInternalStatus(ORecordElement.STATUS.LOADED);
       }
       return (RET) proxiedObject;
     }
@@ -593,11 +593,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    *          User object
    */
   @Override
-  public int getVersion(final Object iPojo) {
+  public ORecordVersion getVersion(final Object iPojo) {
     checkOpeness();
     final ODocument record = getRecordByUserObject(iPojo, false);
     if (record != null)
-      return record.getVersion();
+      return record.getRecordVersion();
 
     return OObjectSerializerHelper.getObjectVersion(iPojo);
   }

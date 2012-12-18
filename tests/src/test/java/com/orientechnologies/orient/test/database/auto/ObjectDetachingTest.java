@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
@@ -34,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
@@ -125,14 +125,14 @@ public class ObjectDetachingTest {
       database.save(c);
 
       // CHECK VERSION
-      Assert.assertTrue((Integer) c.getVersion() > 0);
+      Assert.assertTrue(((ORecordVersion) c.getVersion()).getCounter() > 0);
     }
 
     // BROWSE ALL THE OBJECTS
     for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria v1'"))) {
       Assert.assertNotNull(c.getId());
       Assert.assertNotNull(c.getVersion());
-      Assert.assertTrue((Integer) c.getVersion() > 0);
+      Assert.assertTrue(((ORecordVersion) c.getVersion()).getCounter() > 0);
     }
   }
 
@@ -206,7 +206,7 @@ public class ObjectDetachingTest {
     Assert.assertNotNull(country.getId());
     Assert.assertNotNull(country.getVersion());
 
-    Integer initVersion = (Integer) country.getVersion();
+    ORecordVersion initVersion = ((ORecordVersion) country.getVersion()).copy();
 
     database.begin();
     Country loaded = (Country) database.load((ORecordId) country.getId());
@@ -221,7 +221,7 @@ public class ObjectDetachingTest {
     loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getId(), country.getId());
-    Assert.assertEquals(loaded.getVersion(), new Integer(initVersion + 1));
+    Assert.assertEquals(((ORecordVersion) loaded.getVersion()).getCounter(), initVersion.getCounter() + 1);
     Assert.assertEquals(loaded.getName(), newName);
   }
 
@@ -234,7 +234,7 @@ public class ObjectDetachingTest {
     Assert.assertNotNull(country.getId());
     Assert.assertNotNull(country.getVersion());
 
-    Integer initVersion = (Integer) country.getVersion();
+    ORecordVersion initVersion = (ORecordVersion) country.getVersion();
 
     database.begin();
     Country loaded = (Country) database.load((ORecordId) country.getId());
