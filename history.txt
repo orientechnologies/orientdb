@@ -26,6 +26,23 @@
 This document enlist the last changes to the OrientDB project.
 
 -------------------------------------------------------------------------------
+VERSION 1.3.0 - (December, 19th 2012)
+-------------------------------------------------------------------------------
+- SQL: new eval() function to execute expressions
+- SQL: new if() and ifnull() functions
+- SQL: supported server-side configuration for functions
+- SQL: new DELETE VERTEX and DELETE EDGE commands
+- SQL: execution of database functions from SQL commands
+- SQL: new create cluster command
+- Graph: bundled 2 algorithms: Dijkstra and ShortestPath between vertices
+- Performance: improved opening time when a connections is reused from pool
+- Performance: better management of indexes in ORDER BY
+- Schema: new API to handle custom fields
+- HTTP/REST: new support for fetch-plan and limit in "command"
+- Moved from Google Code to GitHub: https://github.com/nuvolabase/orientdb
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=1&page=1&state=closed
+-------------------------------------------------------------------------------
 VERSION 1.2.0 - (October, 10th 2012)
 -------------------------------------------------------------------------------
 - Functions: these are like Stored Procedures for RDBMS but in Javascript
