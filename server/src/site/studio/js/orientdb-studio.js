@@ -112,7 +112,7 @@ function getRID(value) {
 
 function initTooltips() {
 	$("[rel=tooltip]").tooltip({
-		delay : 500
+		delay : 1500
 	});
 	$("[rel=tooltip]").tooltip('hide');
 	$(".tooltip").remove();
