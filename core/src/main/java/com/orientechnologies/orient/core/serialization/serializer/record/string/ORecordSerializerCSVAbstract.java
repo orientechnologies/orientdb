@@ -401,9 +401,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case EMBEDDED:
-      if (iValue instanceof ODocument) {
+      if (iValue instanceof ORecordInternal<?>) {
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString((ODocument) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        toString((ORecordInternal<?>) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue != null)
         iOutput.append(iValue.toString());
