@@ -35,7 +35,9 @@ public class OLetBlock extends OAbstractBlock {
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
     final Boolean copy = getFieldOfClass(iContext, iConfig, "copy", Boolean.class);
-    final ODocument target = getFieldOfClass(iContext, iConfig, "target", ODocument.class);
+    Object target = getField(iContext, iConfig, "target");
+    if (target != null && target.equals("null"))
+      target = new ODocument();
 
     final Object value = getRawField(iConfig, "value");
     if (value != null) {
@@ -45,7 +47,7 @@ public class OLetBlock extends OAbstractBlock {
           final Object v = resolveValue(iContext, doc.field(fieldName));
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, fieldName);
-            target.field(fieldName, v);
+            ((ODocument) target).field(fieldName, v);
           } else
             assignVariable(iContext, fieldName, v);
         }
@@ -54,7 +56,7 @@ public class OLetBlock extends OAbstractBlock {
           final Object v = resolveValue(iContext, getValue(entry.getValue(), copy));
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, entry.getKey());
-            target.field(entry.getKey().toString(), v);
+            ((ODocument) target).field(entry.getKey().toString(), v);
           } else
             assignVariable(iContext, entry.getKey().toString(), v);
         }
