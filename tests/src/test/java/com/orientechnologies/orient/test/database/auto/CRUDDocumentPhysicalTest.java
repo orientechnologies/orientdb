@@ -867,8 +867,6 @@ public class CRUDDocumentPhysicalTest {
 
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
     try {
-      database.begin();
-
       bank.reload();
       Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
       Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
