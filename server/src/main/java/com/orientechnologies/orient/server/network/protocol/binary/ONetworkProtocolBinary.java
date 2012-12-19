@@ -655,7 +655,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       clusterIds[i] = channel.readShort();
 
     boolean countTombstones = false;
-    if (connection.data.protocolVersion >= 12)
+    if (connection.data.protocolVersion >= 13)
       countTombstones = channel.readByte() > 0;
 
     final long count = connection.database.countClusterElements(clusterIds, countTombstones);
