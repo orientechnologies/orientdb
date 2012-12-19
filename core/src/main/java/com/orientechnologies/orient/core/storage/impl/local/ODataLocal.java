@@ -638,10 +638,14 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(clusterPosition));
 
-      if (ppos.dataSegmentPos != iSourcePosition)
+      if (ppos == null)
         OLogManager.instance().warn(this,
-            "Found corrupted record hole for rid %d:%d: data position is wrong: %d <-> %d. Auto fixed by writing position %d",
-            clusterId, clusterPosition, ppos.dataSegmentPos, iSourcePosition, iDestinationPosition);
+            "Found corrupted record hole for rid %d:%s: data position was not found: %d. Auto fixed by writing position %d",
+            clusterId, clusterPosition.toString(), iSourcePosition, iDestinationPosition);
+      else if (ppos.dataSegmentPos != iSourcePosition)
+        OLogManager.instance().warn(this,
+            "Found corrupted record hole for rid %d:%s: data position is wrong: %d <-> %d. Auto fixed by writing position %d",
+            clusterId, clusterPosition.toString(), ppos.dataSegmentPos, iSourcePosition, iDestinationPosition);
 
       cluster.updateDataSegmentPosition(clusterPosition, id, iDestinationPosition);
     }

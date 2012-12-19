@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 
 public class OMultiFileSegment extends OSegment {
   protected OStorageSegmentConfiguration config;
-  protected OFile[]                      files = new OFile[0];
+  protected OFile[]                      files                         = new OFile[0];
   private final String                   fileExtension;
   private final String                   type;
   private final long                     maxSize;
@@ -255,6 +255,10 @@ public class OMultiFileSegment extends OSegment {
 
     final int fileRec = (int) (iPosition % fileMaxSize);
 
+    if (fileNum >= files.length)
+      throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum
+          + " but configured files are only " + files.length);
+
     if (fileRec >= files[fileNum].getFilledUpTo() && fileRec < 0)
       throw new ODatabaseException("Record position #" + iPosition + " was bound to file #" + fileNum + " but the position #"
           + fileRec + " is out of file size " + files[fileNum].getFilledUpTo());
@@ -415,7 +419,7 @@ public class OMultiFileSegment extends OSegment {
       offset = 0;
     }
   }
-    
+
   public boolean wasSoftlyClosedAtPreviousTime() {
     return wasSoftlyClosedAtPreviousTime;
   }
