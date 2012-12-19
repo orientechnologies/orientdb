@@ -524,7 +524,8 @@ public class CRUDDocumentPhysicalTest {
   //
   // ODocument doc = new ODocument( "Profile");
   // doc.field("nick", "LucaPhotoTest");
-  // doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+  // doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA
+  // (see SchemaTest.java)
   // doc.save();
   //
   // // RELOAD FROM THE CACHE
@@ -535,7 +536,8 @@ public class CRUDDocumentPhysicalTest {
   // // RELOAD FROM DISK
   // doc.reload();
   // Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-  // Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED TRANSIENT IN SCHEMA (see SchemaTest.java)
+  // Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED
+  // TRANSIENT IN SCHEMA (see SchemaTest.java)
   //
   // database.close();
   // }
@@ -702,7 +704,8 @@ public class CRUDDocumentPhysicalTest {
     Assert.assertTrue(subClassResult.size() != 0);
     Assert.assertTrue(superClassResult.size() >= subClassResult.size());
 
-    // VERIFY ALL THE SUBCLASS RESULT ARE ALSO CONTAINED IN SUPERCLASS RESULT
+    // VERIFY ALL THE SUBCLASS RESULT ARE ALSO CONTAINED IN SUPERCLASS
+    // RESULT
     for (ODocument d : subClassResult) {
       Assert.assertTrue(superClassResult.contains(d));
     }
@@ -808,7 +811,8 @@ public class CRUDDocumentPhysicalTest {
 
       Assert.assertEquals(callBackCalled.intValue(), total);
 
-      // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION TO AVOID TO ENQUEUE THE COUNT ITSELF
+      // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
+      // TO AVOID TO ENQUEUE THE COUNT ITSELF
       final ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
       long tot;
       while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
@@ -839,5 +843,40 @@ public class CRUDDocumentPhysicalTest {
     doc.field("out");
     final byte[] streamDest = doc.toStream();
     Assert.assertEquals(streamOrigin, streamDest);
+  }
+
+  public void testEmbeddeDocumentInTx() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+    ODocument bank = database.newInstance("Account");
+
+    try {
+      database.begin();
+
+      bank.field("Name", "MyBank");
+
+      ODocument bank2 = database.newInstance("Account");
+      bank.field("embedded", bank2, OType.EMBEDDED);
+      bank.save();
+
+      database.commit();
+
+    } finally {
+      database.close();
+    }
+
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      database.begin();
+
+      bank.reload();
+      Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
+      Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
+
+      bank.delete();
+
+    } finally {
+      database.close();
+    }
   }
 }
