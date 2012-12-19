@@ -92,6 +92,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         create();
 
       // CLEAR PREVIOUS STUFF
+      flush();
       indexes.clear();
       classPropertyIndex.clear();
 
