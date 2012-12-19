@@ -1,6 +1,8 @@
 build.number
 *.class
 */target
+*/test-output
+*/databases
 
 # Package Files #
 *.jar
