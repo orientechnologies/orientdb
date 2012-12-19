@@ -59,7 +59,7 @@ public class GremlinTest {
   private ODocument gremlin(OGraphDatabase gdb, String rid) {
     logger.info("run gremlin: " + gdb.hashCode());
     String req = String.format("g.v('%s').inE('%s').outV", rid, "edge");
-    return gdb.command(new OCommandGremlin(req)).execute();
+    return (ODocument) gdb.command(new OCommandGremlin(req)).execute();
   }
 
   public void test2(String rid) {
