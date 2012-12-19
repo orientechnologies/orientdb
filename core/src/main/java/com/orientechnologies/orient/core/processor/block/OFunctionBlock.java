@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -51,12 +52,44 @@ public class OFunctionBlock extends OAbstractBlock {
       args = null;
 
     final OFunction f = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(function);
-    if (f == null)
-      throw new OProcessException("Function '" + function + "' was not found");
+    if (f != null) {
+      debug(iContext, "Calling: " + function + "(" + Arrays.toString(args) + ")...");
+      return f.executeInContext(iContext, args);
+    }
 
-    debug(iContext, "Calling: " + function + "(" + Arrays.toString(args) + ")...");
+    int lastDot = function.lastIndexOf('.');
+    if (lastDot > -1) {
+      final String clsName = function.substring(0, lastDot);
+      final String methodName = function.substring(lastDot + 1);
+      Class<?> cls = null;
+      try {
+        cls = Class.forName(clsName);
 
-    return f.executeInContext(iContext, args);
+        Class<?>[] argTypes = new Class<?>[args.length];
+        for (int i = 0; i < args.length; ++i)
+          argTypes[i] = args[i].getClass();
+
+        Method m = cls.getMethod(methodName, argTypes);
+        return m.invoke(null, args);
+      } catch (NoSuchMethodException e) {
+
+        for (Method m : cls.getMethods()) {
+          if (m.getName().equals(methodName) && m.getParameterTypes().length == args.length) {
+            try {
+              return m.invoke(null, args);
+            } catch (Exception e1) {
+              e1.printStackTrace();
+              throw new OProcessException("Error on call function '" + function + "'", e);
+            }
+          }
+        }
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    throw new OProcessException("Function '" + function + "' was not found");
   }
 
   @Override
