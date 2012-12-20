@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -61,7 +62,6 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -993,6 +993,86 @@ public class OStorageLocal extends OStorageEmbedded {
     return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }
 
+  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion recordVersion,
+															 final byte recordType) throws IOException {
+    if (rid.isNew())
+      throw new OStorageException("Passed record with id " + rid + " is new and can not be treated as replica.");
+
+    checkOpeness();
+
+    final OCluster cluster = getClusterById(rid.clusterId);
+    final ODataLocal dataSegment = getDataSegmentById(dataSegmentId);
+
+    modificationLock.requestModificationLock();
+    try {
+      lock.acquireExclusiveLock();
+      try {
+        lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        try {
+          OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
+          if (ppos == null) {
+            if (!cluster.isLHBased())
+              throw new OStorageException("Cluster with LH support is required.");
+
+            ppos = new OPhysicalPosition(rid.clusterPosition, recordVersion);
+
+            ppos.recordType = recordType;
+            ppos.dataSegmentId = dataSegment.getId();
+            ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+            cluster.addPhysicalPosition(ppos);
+						return true;
+          } else {
+            if (ppos.recordType != recordType)
+              throw new OStorageException("Record types of provided and stored replicas are different " + recordType + ":"
+                  + ppos.recordType + ".");
+
+            if (ppos.recordVersion.compareTo(recordVersion) < 0) {
+              cluster.updateVersion(ppos.clusterPosition, recordVersion);
+              dataSegment.setRecord(ppos.dataSegmentPos, rid, content);
+							return true;
+            }
+          }
+
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        }
+      } finally {
+        lock.releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+
+		return false;
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
+    if (exclusiveLock) {
+      modificationLock.requestModificationLock();
+      lock.acquireExclusiveLock();
+    } else
+      lock.acquireSharedLock();
+    try {
+      lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+      try {
+        return callable.call();
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+      }
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new OException("Error on nested call in lock", e);
+    } finally {
+      if (exclusiveLock) {
+        modificationLock.releaseModificationLock();
+        lock.releaseExclusiveLock();
+      } else
+        lock.releaseSharedLock();
+    }
+  }
+
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
     checkOpeness();
@@ -1524,92 +1604,69 @@ public class OStorageLocal extends OStorageEmbedded {
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
-  protected OPhysicalPosition createRecord(final ODataLocal iDataSegment, final OCluster iClusterSegment, final byte[] iContent,
-      final byte iRecordType, final ORecordId iRid, final ORecordVersion iRecordVersion) {
+  protected OPhysicalPosition createRecord(final ODataLocal dataSegment, final OCluster cluster, final byte[] content,
+      final byte recordType, final ORecordId rid, final ORecordVersion recordVersion) {
     checkOpeness();
 
-    if (iContent == null)
+    if (content == null)
       throw new IllegalArgumentException("Record is null");
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
-    lock.acquireExclusiveLock();
-    try {
-      final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, iRecordType);
-
-      boolean sequentialPositionGeneration = false;
-      if (iClusterSegment.isRequiresValidPositionBeforeCreation()) {
-        if (iRid.isNew()) {
-          iRid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
-          sequentialPositionGeneration = true;
-        } // GENERATED EXTERNALLY
-      } else {
-        iClusterSegment.addPhysicalPosition(ppos);
-        iRid.clusterPosition = ppos.clusterPosition;
-      }
-
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      try {
-
-        ppos.dataSegmentId = iDataSegment.getId();
-        ppos.dataSegmentPos = iDataSegment.addRecord(iRid, iContent);
-
-        if (iClusterSegment.isRequiresValidPositionBeforeCreation()) {
-          if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) > 0)
-            ppos.recordVersion = iRecordVersion;
-
-          ppos.clusterPosition = iRid.clusterPosition;
-          addPhysicalPosition(iDataSegment, iClusterSegment, iRid, ppos, sequentialPositionGeneration);
+    final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, recordType);
+    if (cluster.isLHBased()) {
+      if (rid.isNew()) {
+        if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
+          ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
         } else {
-          // UPDATE THE POSITION IN CLUSTER WITH THE POSITION OF RECORD IN DATA
-          iClusterSegment.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
-
-          if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) > 0) {
-            // OVERWRITE THE VERSION
-            iClusterSegment.updateVersion(iRid.clusterPosition, iRecordVersion);
-            ppos.recordVersion = iRecordVersion;
-          }
+          ppos.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
         }
-
-        return ppos;
-      } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      } else {
+        ppos.clusterPosition = rid.clusterPosition;
       }
-    } catch (IOException e) {
+    }
 
-      OLogManager.instance().error(this, "Error on creating record in cluster: " + iClusterSegment, e);
+    try {
+      if (!cluster.addPhysicalPosition(ppos))
+        throw new OStorageException("Record with given id " + rid + " has already exists.");
+
+      rid.clusterPosition = ppos.clusterPosition;
+
+      lock.acquireExclusiveLock();
+      try {
+        lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        try {
+          ppos.dataSegmentId = dataSegment.getId();
+          ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+
+          cluster.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
+
+          if (recordVersion.getCounter() > -1 && recordVersion.compareTo(ppos.recordVersion) > 0) {
+            // OVERWRITE THE VERSION
+            cluster.updateVersion(rid.clusterPosition, recordVersion);
+            ppos.recordVersion = recordVersion;
+          }
+
+          return ppos;
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        }
+      } finally {
+        lock.releaseExclusiveLock();
+      }
+    } catch (IOException ioe) {
+      try {
+        if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
+          cluster.removePhysicalPosition(ppos.clusterPosition);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on removing physical position in cluster: " + cluster, e);
+      }
+
+      OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
       return null;
-
     } finally {
-      lock.releaseExclusiveLock();
-
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer, "db.*.createRecord");
-    }
-  }
-
-  private void addPhysicalPosition(ODataLocal iDataSegment, OCluster iClusterSegment, ORecordId iRid, OPhysicalPosition ppos,
-      boolean sequentialPositionGeneration) throws IOException {
-    if (!iClusterSegment.addPhysicalPosition(ppos)) {
-
-      if (sequentialPositionGeneration) {
-
-        do {
-          // iRid.clusterPosition = positionGenerator.nextLong(Long.MAX_VALUE);
-          lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-
-          iRid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(positionGenerator++);
-          ppos.clusterPosition = iRid.clusterPosition;
-
-          lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-          iDataSegment.setRecordRid(ppos.dataSegmentPos, iRid);
-        } while (!iClusterSegment.addPhysicalPosition(ppos));
-
-      } else {
-        iDataSegment.deleteRecord(ppos.dataSegmentPos);
-        throw new ORecordDuplicatedException("Record with rid=" + iRid.toString() + " already exists in the database", iRid);
-      }
-
     }
   }
 
@@ -1657,8 +1714,8 @@ public class OStorageLocal extends OStorageEmbedded {
     // OUTSIDE.
     if (iAtomicLock)
       lock.acquireSharedLock();
-    try {
 
+    try {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
@@ -1678,10 +1735,8 @@ public class OStorageLocal extends OStorageEmbedded {
       }
 
     } catch (IOException e) {
-
       OLogManager.instance().error(this, "Error on reading record " + iRid + " (cluster: " + iClusterSegment + ')', e);
       return null;
-
     } finally {
       if (iAtomicLock)
         lock.releaseSharedLock();
@@ -1784,7 +1839,6 @@ public class OStorageLocal extends OStorageEmbedded {
 
     lock.acquireExclusiveLock();
     try {
-
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       try {
 
@@ -1815,12 +1869,9 @@ public class OStorageLocal extends OStorageEmbedded {
         lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       }
     } catch (IOException e) {
-
       OLogManager.instance().error(this, "Error on deleting record " + iRid + "( cluster: " + iClusterSegment + ")", e);
-
     } finally {
       lock.releaseExclusiveLock();
-
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer, "db.*.deleteRecord");
     }

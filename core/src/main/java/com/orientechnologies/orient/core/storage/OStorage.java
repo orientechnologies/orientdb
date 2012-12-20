@@ -93,7 +93,14 @@ public interface OStorage extends OSharedContainer {
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
 
-  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
+	public boolean updateReplica(final int dataSegmentId, final ORecordId rid,
+															 final byte[] content, final ORecordVersion recordVersion,
+															 final byte recordType) throws IOException;
+
+	public ORecordMetadata getRecordMetadata(final ORID rid);
+
+	public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode,
+																ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
   public void commit(OTransaction iTx);
@@ -205,6 +212,8 @@ public interface OStorage extends OSharedContainer {
   public OClusterPosition[] getClusterDataRange(int currentClusterId);
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
+
+	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
 
   public ODataSegment getDataSegmentById(int iDataSegmentId);
 

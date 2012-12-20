@@ -318,7 +318,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-  @Override
+	@Override
+	public boolean updateReplica(ORecordInternal<?> iRecord) {
+		throw new UnsupportedOperationException("updateReplica()");
+	}
+
+	@Override
   public String toString() {
     return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
         + indexEntries.size() + ']';

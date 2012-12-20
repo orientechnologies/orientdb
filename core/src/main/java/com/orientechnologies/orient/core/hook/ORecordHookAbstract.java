@@ -128,6 +128,36 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordDeleteReplicated(final ORecord<?> iiRecord) {
   }
 
+  public RESULT onRecordBeforeReplicaAdd(final ORecord<?> record) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaAdd(final ORecord<?> record) {
+  }
+
+  public void onRecordReplicaAddFailed(final ORecord<?> record) {
+  }
+
+  public RESULT onRecordBeforeReplicaUpdate(final ORecord<?> record) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaUpdate(final ORecord<?> record) {
+  }
+
+  public void onRecordReplicaUpdateFailed(final ORecord<?> record) {
+  }
+
+  public RESULT onRecordBeforeReplicaDelete(final ORecord<?> record) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaDelete(final ORecord<?> record) {
+  }
+
+  public void onRecordReplicaDeleteFailed(final ORecord<?> record) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     switch (iType) {
     case BEFORE_CREATE:
@@ -189,6 +219,40 @@ public abstract class ORecordHookAbstract implements ORecordHook {
     case DELETE_REPLICATED:
       onRecordDeleteReplicated(iRecord);
       break;
+
+    case BEFORE_REPLICA_ADD:
+      return onRecordBeforeReplicaAdd(iRecord);
+
+    case AFTER_REPLICA_ADD:
+      onRecordAfterReplicaAdd(iRecord);
+      break;
+
+    case REPLICA_ADD_FAILED:
+      onRecordAfterReplicaAdd(iRecord);
+      break;
+
+    case BEFORE_REPLICA_UPDATE:
+      return onRecordBeforeReplicaUpdate(iRecord);
+
+    case AFTER_REPLICA_UPDATE:
+      onRecordAfterReplicaUpdate(iRecord);
+      break;
+
+    case REPLICA_UPDATE_FAILED:
+      onRecordReplicaUpdateFailed(iRecord);
+      break;
+
+    case BEFORE_REPLICA_DELETE:
+      return onRecordBeforeReplicaDelete(iRecord);
+
+    case AFTER_REPLICA_DELETE:
+      onRecordAfterReplicaDelete(iRecord);
+      break;
+
+    case REPLICA_DELETE_FAILED:
+      onRecordReplicaDeleteFailed(iRecord);
+      break;
+
     }
     return RESULT.RECORD_NOT_CHANGED;
   }

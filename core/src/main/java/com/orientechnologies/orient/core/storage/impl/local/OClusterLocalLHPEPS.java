@@ -697,7 +697,7 @@ public class OClusterLocalLHPEPS extends OSharedResourceAdaptive implements OClu
     return name;
   }
 
-  public boolean isRequiresValidPositionBeforeCreation() {
+  public boolean isLHBased() {
     return true;
   }
 

@@ -232,7 +232,12 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
-  @SuppressWarnings("unchecked")
+	@Override
+	public boolean updatedReplica(ORecordInternal<?> iContent) {
+		return currentTx.updateReplica(iContent);
+	}
+
+	@SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,

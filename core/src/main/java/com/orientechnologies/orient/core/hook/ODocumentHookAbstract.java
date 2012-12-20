@@ -185,6 +185,36 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
+  public RESULT onRecordBeforeReplicaAdd(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaAdd(final ODocument iDocument) {
+  }
+
+  public void onRecordReplicaAddFailed(final ODocument iDocument) {
+  }
+
+  public RESULT onRecordBeforeReplicaUpdate(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaUpdate(final ODocument iDocument) {
+  }
+
+  public void onRecordReplicaUpdateFailed(final ODocument iDocument) {
+  }
+
+  public RESULT onRecordBeforeReplicaDelete(final ODocument iDocument) {
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
+  public void onRecordAfterReplicaDelete(final ODocument iDocument) {
+  }
+
+  public void onRecordReplicaDeleteFailed(final ODocument iDocument) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
@@ -256,6 +286,39 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     case DELETE_REPLICATED:
       onRecordDeleteReplicated(document);
+      break;
+
+    case BEFORE_REPLICA_ADD:
+      return onRecordBeforeReplicaAdd(document);
+
+    case AFTER_REPLICA_ADD:
+      onRecordAfterReplicaAdd(document);
+      break;
+
+    case REPLICA_ADD_FAILED:
+      onRecordReplicaAddFailed(document);
+      break;
+
+    case BEFORE_REPLICA_UPDATE:
+      return onRecordBeforeReplicaUpdate(document);
+
+    case AFTER_REPLICA_UPDATE:
+      onRecordAfterReplicaUpdate(document);
+      break;
+
+    case REPLICA_UPDATE_FAILED:
+      onRecordReplicaUpdateFailed(document);
+      break;
+
+    case BEFORE_REPLICA_DELETE:
+      return onRecordBeforeReplicaDelete(document);
+
+    case AFTER_REPLICA_DELETE:
+      onRecordAfterReplicaDelete(document);
+      break;
+
+    case REPLICA_DELETE_FAILED:
+      onRecordReplicaDeleteFailed(document);
       break;
 
     default:

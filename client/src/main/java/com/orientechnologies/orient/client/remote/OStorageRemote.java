@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -383,6 +384,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       }
     } while (true);
+  }
+
+  @Override
+  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateReplica()");
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    throw new UnsupportedOperationException("callInRecordLock()");
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    throw new UnsupportedOperationException("getRecordMetadata()");
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
@@ -879,7 +896,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           for (int iClusterId : iClusterIds)
             network.writeShort((short) iClusterId);
 
-          if (network.getSrvProtocolVersion() >= 12)
+          if (network.getSrvProtocolVersion() >= 13)
             network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
         } finally {
           endRequest(network);

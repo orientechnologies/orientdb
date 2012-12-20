@@ -269,7 +269,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (RET) underlying.save(iRecord, iClusterName);
   }
 
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
+	@Override
+	public boolean updatedReplica(ORecordInternal<?> iObject) {
+		return underlying.updatedReplica(iObject);
+	}
+
+	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
@@ -291,7 +296,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
   public ODatabaseRecord setRetainRecords(boolean iValue) {
     underlying.setRetainRecords(iValue);
-    return (ODatabaseRecord) this;
+    return (ODatabaseRecord) this.getClass().cast(this);
   }
 
   public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {

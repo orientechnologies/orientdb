@@ -23,7 +23,9 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
@@ -433,6 +435,11 @@ public interface ODatabase extends Closeable {
   public void unregisterListener(ODatabaseListener iListener);
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
+
+	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
+
+	public ORecordMetadata getRecordMetadata(final ORID rid);
+
 
   /**
    * Flush cached storage content to the disk.

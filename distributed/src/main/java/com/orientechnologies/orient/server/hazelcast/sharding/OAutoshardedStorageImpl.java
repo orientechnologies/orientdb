@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.hazelcast.sharding;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -159,6 +161,17 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     else
       return new OStorageOperationResult<Boolean>(node.deleteRecord(wrapped.getName(), iRecordId, iVersion), true);
+  }
+
+  @Override
+  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    return wrapped.getRecordMetadata(rid);
   }
 
   @Override
@@ -351,6 +364,11 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return wrapped.callInLock(iCallable, iExclusiveLock);
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    return wrapped.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
   public ODataSegment getDataSegmentById(final int iDataSegmentId) {

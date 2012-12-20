@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -205,6 +207,17 @@ public class ODistributedStorage implements OStorage {
 
     // DELETE LOCALLY
     return new OStorageOperationResult<Boolean>((Boolean) result);
+  }
+
+  @Override
+  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    return wrapped.getRecordMetadata(rid);
   }
 
   @Override
@@ -394,6 +407,11 @@ public class ODistributedStorage implements OStorage {
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return wrapped.callInLock(iCallable, iExclusiveLock);
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    return wrapped.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
   public ODataSegment getDataSegmentById(final int iDataSegmentId) {

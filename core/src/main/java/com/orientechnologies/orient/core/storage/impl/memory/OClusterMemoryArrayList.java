@@ -46,7 +46,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     }
   }
 
-  public boolean isRequiresValidPositionBeforeCreation() {
+  public boolean isLHBased() {
     return false;
   }
 

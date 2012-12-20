@@ -42,11 +42,13 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -258,7 +260,8 @@ public class ODatabaseRaw implements ODatabase {
   public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    // CHECK IF RECORD TYPE IS SUPPORTED
+
+   // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
     try {
@@ -277,6 +280,26 @@ public class ODatabaseRaw implements ODatabase {
       throw e;
     } catch (Throwable t) {
       throw new ODatabaseException("Error on saving record " + iRid, t);
+    }
+  }
+
+  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion version,
+      final byte recordType) {
+    // CHECK IF RECORD TYPE IS SUPPORTED
+    Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
+
+    try {
+      if (rid.clusterPosition.isNew()) {
+        throw new ODatabaseException("Passed in record was not stored and can not be treated as replica.");
+      } else {
+        // UPDATE REPLICA
+        return storage.updateReplica(dataSegmentId, rid, content, version, recordType);
+      }
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Throwable t) {
+      throw new ODatabaseException("Error on replica update " + rid, t);
     }
   }
 
@@ -638,7 +661,17 @@ public class ODatabaseRaw implements ODatabase {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
-  public void callOnCloseListeners() {
+	@Override
+	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+		return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
+	}
+
+	@Override
+	public ORecordMetadata getRecordMetadata(ORID rid) {
+		return storage.getRecordMetadata(rid);
+	}
+
+	public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
       it.next().onClose(getDatabaseOwner());

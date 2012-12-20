@@ -184,7 +184,7 @@ public class OClusterMemoryLinearHashing extends OClusterMemory implements OClus
   }
 
   @Override
-  public boolean isRequiresValidPositionBeforeCreation() {
+  public boolean isLHBased() {
     return true;
   }
 

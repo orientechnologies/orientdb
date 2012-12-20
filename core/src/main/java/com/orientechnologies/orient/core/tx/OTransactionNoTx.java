@@ -88,7 +88,22 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  /**
+	@Override
+	public boolean updateReplica(ORecordInternal<?> iRecord) {
+		try {
+			return database.updatedReplica(iRecord);
+		} catch (Exception e) {
+			// REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
+			final ORecordId rid = (ORecordId) iRecord.getIdentity();
+			database.getLevel1Cache().freeRecord(rid);
+
+			if (e instanceof RuntimeException)
+				throw (RuntimeException) e;
+			throw new OException(e);
+		}
+	}
+
+	/**
    * Deletes the record.
    */
   public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {

@@ -198,7 +198,12 @@ public class ODatabaseGraphTx extends ODatabasePojoAbstract<OGraphElement> {
     return (RET) iObject;
   }
 
-  public <RET extends OGraphElement> RET save(final OGraphElement iObject, final String iClusterName, final OPERATION_MODE iMode,
+	@Override
+	public boolean updatedReplica(OGraphElement iObject) {
+		return underlying.updatedReplica(iObject.getDocument());
+	}
+
+	public <RET extends OGraphElement> RET save(final OGraphElement iObject, final String iClusterName, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     underlying.save(iObject.getDocument(), iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);

@@ -249,6 +249,33 @@ public class ODatabaseObjectTx extends ODatabasePojoAbstract<Object> implements 
     return save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
+  @Override
+  public boolean updatedReplica(Object iPojo) {
+    checkOpeness();
+
+    boolean result;
+
+    OSerializationThreadLocal.INSTANCE.get().clear();
+
+    // GET THE ASSOCIATED DOCUMENT
+    final ODocument record = getRecordByUserObject(iPojo, true);
+    try {
+      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
+
+      pojo2Stream(iPojo, record);
+
+      result = underlying.updatedReplica(record);
+
+      // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
+      registerUserObject(iPojo, record);
+
+    } finally {
+      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+    }
+
+    return result;
+  }
+
   /**
    * Saves an object to the database forcing a record cluster where to store it. First checks if the object is new or not. In case
    * it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is

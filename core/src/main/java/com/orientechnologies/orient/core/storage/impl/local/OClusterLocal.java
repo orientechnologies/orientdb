@@ -540,7 +540,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return TYPE;
   }
 
-  public boolean isRequiresValidPositionBeforeCreation() {
+  public boolean isLHBased() {
     return false;
   }
 

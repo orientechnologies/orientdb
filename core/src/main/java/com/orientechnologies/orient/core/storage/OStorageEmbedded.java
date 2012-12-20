@@ -16,9 +16,11 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -200,6 +202,35 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
   }
 
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    if (rid.isNew())
+      throw new OStorageException("Passed record with id " + rid + " is new and can not be stored.");
+
+    checkOpeness();
+
+    final OCluster cluster = getClusterById(rid.getClusterId());
+    lock.acquireSharedLock();
+    try {
+      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
+      try {
+        final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
+				if (ppos == null || ppos.dataSegmentId < 0)
+					return null;
+
+        return new ORecordMetadata(rid, ppos.recordVersion);
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.SHARED);
+      }
+    } catch (IOException ioe) {
+      OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+
+    return null;
+  }
+
   protected OPhysicalPosition moveRecord(ORID originalId, ORID newId) throws IOException {
     final OCluster originalCluster = getClusterById(originalId.getClusterId());
     final OCluster destinationCluster = getClusterById(newId.getClusterId());
@@ -208,7 +239,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Original and destination clusters use different data segment ids "
           + originalCluster.getDataSegmentId() + "<->" + destinationCluster.getDataSegmentId());
 
-    if (!destinationCluster.isRequiresValidPositionBeforeCreation()) {
+    if (!destinationCluster.isLHBased()) {
       if (originalId.getClusterId() == newId.getClusterId())
         throw new OStorageException("Record identity can not be moved inside of the same non LH based cluster.");
 
@@ -231,7 +262,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Record with id " + originalId + " does not exist");
 
     ppos.clusterPosition = newId.getClusterPosition();
-    if (destinationCluster.isRequiresValidPositionBeforeCreation()) {
+    if (destinationCluster.isLHBased()) {
       if (!destinationCluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with id " + newId + " has already exists in cluster " + destinationCluster.getName());
     } else {

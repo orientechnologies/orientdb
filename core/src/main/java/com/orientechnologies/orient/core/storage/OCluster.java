@@ -132,7 +132,7 @@ public interface OCluster {
    */
   public long getRecordsSize();
 
-  public boolean isRequiresValidPositionBeforeCreation();
+  public boolean isLHBased();
 
   public OClusterEntryIterator absoluteIterator();
 

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -165,6 +166,25 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    delegate.setSessionId(sessionId);
+    return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    delegate.setSessionId(sessionId);
+    return delegate.getRecordMetadata(rid);
+  }
+
+	@Override
+	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+		delegate.setSessionId(sessionId);
+		return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
+	}
+
+	@Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     delegate.setSessionId(sessionId);
     return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);

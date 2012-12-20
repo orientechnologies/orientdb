@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
@@ -320,6 +322,16 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return getStorage().callInLock(iCallable, iExclusiveLock);
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    return underlying.callInRecordLock(iCallable, rid, iExclusiveLock);
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    return underlying.getRecordMetadata(rid);
   }
 
   public long getSize() {
