@@ -465,18 +465,32 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (rec == null)
       return;
 
-    if (rec.getIdentity().isValid())
-      rec.reload();
+    try {
+      if (rec.getIdentity().isValid())
+        rec.reload();
 
-    if (recordExported > 0)
-      writer.append(",");
+      if (recordExported > 0)
+        writer.append(",");
 
-    writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
+      writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
 
-    recordExported++;
-    recordNum++;
+      recordExported++;
+      recordNum++;
 
-    if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
-      listener.onMessage(".");
+      if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
+        listener.onMessage(".");
+    } catch (Throwable t) {
+      if (rec != null) {
+        final byte[] buffer = rec.toStream();
+
+        OLogManager
+            .instance()
+            .error(
+                this,
+                "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                t, rec.getIdentity(), buffer.length, new String(buffer));
+      }
+    }
+
   }
 }
