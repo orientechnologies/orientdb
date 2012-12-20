@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,7 +71,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable {
+public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable, Externalizable {
   private static final long                                              serialVersionUID = 1L;
 
   public static final byte                                               RECORD_TYPE      = 'd';
@@ -1535,5 +1539,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   public void setSerializationId(long serializationId) {
     this.serializationId = serializationId;
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput stream) throws IOException {
+    final byte[] bytes = toStream();
+    stream.writeInt(bytes.length);
+    stream.write(bytes);
+  }
+
+  @Override
+  public void readExternal(ObjectInput stream) throws IOException {
+    final int len = stream.readInt();
+    final byte[] bytes = new byte[len];
+    stream.readFully(bytes);
+
+    fromStream(bytes);
   }
 }
