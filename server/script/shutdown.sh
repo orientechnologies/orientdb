@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 1999-2010 Luca Garulli
 #
@@ -44,7 +44,7 @@ WWW_PATH=$ORIENTDB_HOME/www
 
 java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
-if [ "x$wait" == "xyes" ] ; then
+if [ "x$wait" = "xyes" ] ; then
   while true ; do
     ps -ef | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
     sleep 1;
