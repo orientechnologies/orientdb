@@ -1,8 +1,10 @@
 build.number
 *.class
-*/target
+*/target/*
 */test-output
 */databases
+*.gz
+*.patch
 
 # Package Files #
 *.jar
