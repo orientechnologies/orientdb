@@ -416,14 +416,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     }
   }
 
-  protected void deleteOrphans(OObjectProxyMethodHandler handler) {
-    for (ORID orphan : handler.getOrphans()) {
-      deleteCascade((ODocument) underlying.load(orphan));
-      underlying.delete(orphan);
-    }
-    handler.getOrphans().clear();
-  }
-
   public ODatabaseObject delete(final Object iPojo) {
     checkOpeness();
 
@@ -712,18 +704,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return TYPE;
   }
 
-  protected void init() {
-    entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
-    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
-    saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
-    OObjectSerializerHelper.register();
-    lazyLoading = true;
-    if (!isClosed() && entityManager.getEntityClass(OUser.class.getSimpleName()) == null) {
-      entityManager.registerEntityClass(OUser.class);
-      entityManager.registerEntityClass(ORole.class);
-    }
-  }
-
   @Override
   public ODocument getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
     if (iPojo instanceof Proxy)
@@ -738,9 +718,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return OObjectEntityEnhancer.getInstance().getProxiedInstance(document.getClassName(), getEntityManager(), document, null);
   }
 
-  /**
-   * Register a new POJO
-   */
   @Override
   public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
   }
@@ -756,8 +733,28 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     OObjectEntityEnhancer.getInstance().registerClassMethodFilter(iClass, iMethodFilter);
   }
 
-  public void deregisterClassMethodFilter(Class<?> iClass) {
+  public void deregisterClassMethodFilter(final Class<?> iClass) {
     OObjectEntityEnhancer.getInstance().deregisterClassMethodFilter(iClass);
+  }
+
+  protected void init() {
+    entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
+    entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
+    saveOnlyDirty = OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY.getValueAsBoolean();
+    OObjectSerializerHelper.register();
+    lazyLoading = true;
+    if (!isClosed() && entityManager.getEntityClass(OUser.class.getSimpleName()) == null) {
+      entityManager.registerEntityClass(OUser.class);
+      entityManager.registerEntityClass(ORole.class);
+    }
+  }
+
+  protected void deleteOrphans(final OObjectProxyMethodHandler handler) {
+    for (ORID orphan : handler.getOrphans()) {
+      deleteCascade((ODocument) underlying.load(orphan));
+      underlying.delete(orphan);
+    }
+    handler.getOrphans().clear();
   }
 
 }
