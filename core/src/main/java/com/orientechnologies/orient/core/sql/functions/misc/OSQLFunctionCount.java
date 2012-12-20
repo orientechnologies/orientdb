@@ -42,7 +42,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
     if (iParameters[0] != null)
       total++;
 
-    return null;
+    return total;
   }
 
   public boolean aggregateResults() {
