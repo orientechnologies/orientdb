@@ -464,20 +464,31 @@ public class OStorageMemory extends OStorageEmbedded {
 
           ppos.recordType = recordType;
           ppos.dataSegmentId = data.getId();
-          ppos.dataSegmentPos = data.createRecord(content);
+
+          if (!recordVersion.isTombstone()) {
+            ppos.dataSegmentPos = data.createRecord(content);
+          }
+
           cluster.addPhysicalPosition(ppos);
 
-					return true;
+          return true;
         } else {
           if (ppos.recordType != recordType)
             throw new OStorageException("Record types of provided and stored replicas are different " + recordType + ":"
                 + ppos.recordType + ".");
 
           if (ppos.recordVersion.compareTo(recordVersion) < 0) {
-            cluster.updateVersion(ppos.clusterPosition, recordVersion);
-            data.updateRecord(ppos.dataSegmentPos, content);
+            if (!recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+              data.updateRecord(ppos.dataSegmentPos, content);
+            } else if (recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+              data.deleteRecord(ppos.dataSegmentPos);
+            } else if (!recordVersion.isTombstone() && ppos.recordVersion.isTombstone()) {
+              ppos.dataSegmentPos = data.createRecord(content);
+              cluster.updateDataSegmentPosition(ppos.clusterPosition, dataSegmentId, ppos.dataSegmentPos);
+            }
 
-						return true;
+            cluster.updateVersion(ppos.clusterPosition, recordVersion);
+            return true;
           }
         }
 
@@ -488,7 +499,7 @@ public class OStorageMemory extends OStorageEmbedded {
       lock.releaseSharedLock();
     }
 
-		return false;
+    return false;
   }
 
   @Override
@@ -520,7 +531,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
   @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
-    return deleteRecord(recordId, recordVersion, OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean(), callback);
+    return deleteRecord(recordId, recordVersion, false, callback);
   }
 
   private boolean deleteRecord(ORecordId iRid, ORecordVersion iVersion, boolean useTombstones, ORecordCallback<Boolean> iCallback) {
@@ -535,7 +546,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
-        if (ppos == null || ppos.recordVersion.isTombstone()) {
+        if (ppos == null || (ppos.recordVersion.isTombstone() && useTombstones)) {
           if (iCallback != null)
             iCallback.call(iRid, false);
           return false;
@@ -548,14 +559,16 @@ public class OStorageMemory extends OStorageEmbedded {
           else
             throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
+        if (!ppos.recordVersion.isTombstone()) {
+          final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+          dataSegment.deleteRecord(ppos.dataSegmentPos);
+          ppos.dataSegmentPos = -1;
+        }
+
         if (useTombstones && cluster.hasTombstonesSupport())
           cluster.convertToTombstone(iRid.clusterPosition);
         else
           cluster.removePhysicalPosition(iRid.clusterPosition);
-
-        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
-
-        dataSegment.deleteRecord(ppos.dataSegmentPos);
 
         if (iCallback != null)
           iCallback.call(null, true);

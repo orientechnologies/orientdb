@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
@@ -8,15 +7,12 @@ import java.util.TreeSet;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -30,40 +26,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @Test
 public class TombstonesIterationTest {
-  private String              url;
   private ODatabaseDocumentTx db;
 
   @Parameters(value = "url")
-  public TombstonesIterationTest(String iURL) {
-    url = iURL;
-  }
-
-  @BeforeClass
-  public void beforeClass() throws IOException {
-    int pos = url.lastIndexOf("/");
-    final String u;
-
-    if (pos > -1)
-      u = url.substring(0, pos) + "/zombieDB";
-    else {
-      pos = url.lastIndexOf(":");
-      u = url.substring(0, pos + 1) + "/zombieDB";
-    }
-
-    db = new ODatabaseDocumentTx(u);
-
-    try {
-      ODatabaseHelper.dropDatabase(db);
-    } catch (OStorageException e) {
-      Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
-    }
-
-    ODatabaseHelper.createDatabase(db, u);
+  public TombstonesIterationTest(String url) {
+    db = new ODatabaseDocumentTx(url);
   }
 
   @BeforeMethod
   public void beforeMethod() {
     db.open("admin", "admin");
+
+    initSchema();
   }
 
   @AfterMethod
@@ -74,8 +48,6 @@ public class TombstonesIterationTest {
   public void testTombstoneIteration() throws Exception {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
-
-    initSchema();
 
     final int docCount = 10000;
 
@@ -144,8 +116,6 @@ public class TombstonesIterationTest {
   public void testTombstoneIterationInInterval() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
-
-    initSchema();
 
     final int docCount = 10000;
 
@@ -227,6 +197,9 @@ public class TombstonesIterationTest {
   }
 
   private void initSchema() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
     final OSchema schema = db.getMetadata().getSchema();
 
     if (schema.existsClass("Zombie"))
