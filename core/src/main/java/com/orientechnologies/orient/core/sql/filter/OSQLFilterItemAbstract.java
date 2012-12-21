@@ -204,20 +204,20 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           } else if (operator == OSQLFilterFieldOperator.ASSTRING.id)
             ioResult = ioResult != null ? ioResult.toString() : null;
           else if (operator == OSQLFilterFieldOperator.ASINTEGER.id)
-            ioResult = ioResult != null ? new Integer(ioResult.toString()) : null;
+            ioResult = ioResult != null ? new Integer(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASLONG.id)
             if (ioResult instanceof Date)
               ioResult = ((Date) ioResult).getTime();
             else
-              ioResult = ioResult != null ? new Long(ioResult.toString()) : null;
+              ioResult = ioResult != null ? new Long(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
-            ioResult = ioResult != null ? new Float(ioResult.toString()) : null;
+            ioResult = ioResult != null ? new Float(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASDECIMAL.id)
-            ioResult = ioResult != null ? new BigDecimal(ioResult.toString()) : null;
+            ioResult = ioResult != null ? new BigDecimal(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
             if (ioResult != null) {
               if (ioResult instanceof String)
-                ioResult = Boolean.valueOf((String) ioResult);
+                ioResult = Boolean.valueOf(((String) ioResult).trim());
               else if (ioResult instanceof Number) {
                 final int bValue = ((Number) ioResult).intValue();
                 if (bValue == 0)
