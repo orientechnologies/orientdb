@@ -1,6 +1,7 @@
 build.number
 *.class
 */target/*
+target
 */test-output
 */databases
 *.gz
