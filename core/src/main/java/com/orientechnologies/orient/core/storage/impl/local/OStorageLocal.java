@@ -1858,7 +1858,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
-        if (!checkForRecordValidity(ppos))
+        if (ppos == null || ppos.dataSegmentId < 0 || (useTombstones && ppos.recordVersion.isTombstone()))
           // ALREADY DELETED
           return null;
 
@@ -1869,7 +1869,7 @@ public class OStorageLocal extends OStorageEmbedded {
           else
             throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
-        if (ppos.dataSegmentPos > -1)
+        if (!ppos.recordVersion.isTombstone() && ppos.dataSegmentPos > -1)
           getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
 
         if (useTombstones && iClusterSegment.hasTombstonesSupport())

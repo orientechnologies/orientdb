@@ -834,7 +834,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       // if cache is switched off record will be unreachable after delete.
       ORecord<?> rec = iRecord.getRecord();
-      if (iCallTriggers && (!prohibitTombstones || !rec.getRecordVersion().isTombstone()))
+      if (iCallTriggers && rec != null)
         callbackHooks(TYPE.BEFORE_DELETE, rec);
 
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
@@ -849,9 +849,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
 
         if (iCallTriggers) {
-          if (!operationResult.isMoved() && (!prohibitTombstones || !rec.getRecordVersion().isTombstone()))
+          if (!operationResult.isMoved() && rec != null)
             callbackHooks(TYPE.AFTER_DELETE, rec);
-          else if (!prohibitTombstones || !rec.getRecordVersion().isTombstone())
+          else if (rec != null)
             callbackHooks(TYPE.DELETE_REPLICATED, rec);
         }
 
