@@ -103,6 +103,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(new OIntentMassiveInsert());
   }
 
+  @Override
+  public ODatabaseImport setOptions(String iOptions) {
+    super.setOptions(iOptions);
+
+    return this;
+  }
+
   public ODatabaseImport importDatabase() {
     try {
       listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
@@ -522,11 +529,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId != id) {
         if (database.countClusterElements(clusterId - 1) == 0) {
           listener.onMessage("Found previous version: migrating old clusters...");
-          //removeDefaultClusters();
+          // removeDefaultClusters();
           database.dropCluster(name);
           clusterId = database.addCluster(type, "temp_" + clusterId, null, null);
           clusterId = database.addCluster(type, name, null, null);
-          //recreateManualIndex = true;
+          // recreateManualIndex = true;
         } else
           throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
               + " different from the original: " + id + ". To continue the import drop the cluster '"
@@ -597,7 +604,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     System.out.print("\nImporting records...");
 
     ORID rid;
-    int lastClusterId = 0;
+    int lastClusterId = -1;
     long clusterRecords = 0;
     while (jsonReader.lastChar() != ']') {
       rid = importRecord();
@@ -605,7 +612,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (rid != null) {
         ++clusterRecords;
 
-        if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
+        if (lastClusterId == -1)
+          lastClusterId = rid.getClusterId();
+        else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
           System.out.print("\n- Imported records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
               + lastClusterId + "): " + clusterRecords + " records");
