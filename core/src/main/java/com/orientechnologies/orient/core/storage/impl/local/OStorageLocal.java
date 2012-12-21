@@ -993,8 +993,8 @@ public class OStorageLocal extends OStorageEmbedded {
     return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }
 
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion recordVersion,
-															 final byte recordType) throws IOException {
+  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
+      final ORecordVersion recordVersion, final byte recordType) throws IOException {
     if (rid.isNew())
       throw new OStorageException("Passed record with id " + rid + " is new and can not be treated as replica.");
 
@@ -1018,9 +1018,13 @@ public class OStorageLocal extends OStorageEmbedded {
 
             ppos.recordType = recordType;
             ppos.dataSegmentId = dataSegment.getId();
-            ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+
+            if (!recordVersion.isTombstone()) {
+              ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+            }
+
             cluster.addPhysicalPosition(ppos);
-						return true;
+            return true;
           } else {
             if (ppos.recordType != recordType)
               throw new OStorageException("Record types of provided and stored replicas are different " + recordType + ":"
@@ -1028,8 +1032,18 @@ public class OStorageLocal extends OStorageEmbedded {
 
             if (ppos.recordVersion.compareTo(recordVersion) < 0) {
               cluster.updateVersion(ppos.clusterPosition, recordVersion);
-              dataSegment.setRecord(ppos.dataSegmentPos, rid, content);
-							return true;
+
+              if (!recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+                ppos.dataSegmentPos = dataSegment.setRecord(ppos.dataSegmentPos, rid, content);
+                cluster.updateDataSegmentPosition(ppos.clusterPosition, dataSegmentId, ppos.dataSegmentPos);
+              } else if (!recordVersion.isTombstone() && ppos.recordVersion.isTombstone()) {
+                ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+                cluster.updateDataSegmentPosition(ppos.clusterPosition, dataSegmentId, ppos.dataSegmentPos);
+              } else if (recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+                dataSegment.deleteRecord(ppos.dataSegmentPos);
+              }
+
+              return true;
             }
           }
 
@@ -1043,7 +1057,7 @@ public class OStorageLocal extends OStorageEmbedded {
       modificationLock.releaseModificationLock();
     }
 
-		return false;
+    return false;
   }
 
   @Override

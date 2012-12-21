@@ -464,20 +464,31 @@ public class OStorageMemory extends OStorageEmbedded {
 
           ppos.recordType = recordType;
           ppos.dataSegmentId = data.getId();
-          ppos.dataSegmentPos = data.createRecord(content);
+
+          if (!recordVersion.isTombstone()) {
+            ppos.dataSegmentPos = data.createRecord(content);
+          }
+
           cluster.addPhysicalPosition(ppos);
 
-					return true;
+          return true;
         } else {
           if (ppos.recordType != recordType)
             throw new OStorageException("Record types of provided and stored replicas are different " + recordType + ":"
                 + ppos.recordType + ".");
 
           if (ppos.recordVersion.compareTo(recordVersion) < 0) {
-            cluster.updateVersion(ppos.clusterPosition, recordVersion);
-            data.updateRecord(ppos.dataSegmentPos, content);
+            if (!recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+              data.updateRecord(ppos.dataSegmentPos, content);
+            } else if (recordVersion.isTombstone() && !ppos.recordVersion.isTombstone()) {
+              data.deleteRecord(ppos.dataSegmentPos);
+            } else if (!recordVersion.isTombstone() && ppos.recordVersion.isTombstone()) {
+              ppos.dataSegmentPos = data.createRecord(content);
+              cluster.updateDataSegmentPosition(ppos.clusterPosition, dataSegmentId, ppos.dataSegmentPos);
+            }
 
-						return true;
+            cluster.updateVersion(ppos.clusterPosition, recordVersion);
+            return true;
           }
         }
 
@@ -488,7 +499,7 @@ public class OStorageMemory extends OStorageEmbedded {
       lock.releaseSharedLock();
     }
 
-		return false;
+    return false;
   }
 
   @Override

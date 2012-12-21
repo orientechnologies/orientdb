@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -31,21 +32,9 @@ public class ReplicaPlacementTest {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
-    final ODatabaseDocumentTx dbOne = new ODatabaseDocumentTx(getDBUrl("replicaAddOne"));
-    dbOne.create();
-
-    final OSchema schemaOne = dbOne.getMetadata().getSchema();
-    final OClass classReplicaTestOne = schemaOne.createClass("ReplicaTest");
-    classReplicaTestOne.createProperty("prop", OType.STRING);
-    schemaOne.save();
-
-    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(getDBUrl("replicaAddTwo"));
-    dbTwo.create();
-
-    final OSchema schemaTwo = dbTwo.getMetadata().getSchema();
-    final OClass classReplicaTestTwo = schemaTwo.createClass("ReplicaTest");
-    classReplicaTestTwo.createProperty("prop", OType.STRING);
-    schemaTwo.save();
+    InitScheme initScheme = new InitScheme("ReplicaAddition").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     final ODocument docOne = new ODocument("ReplicaTest");
@@ -58,27 +47,52 @@ public class ReplicaPlacementTest {
     Assert.assertNotNull(docTwo);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(1, propindex.getSize());
+    Assert.assertTrue(propindex.contains("value"));
+
+    dbOne.close();
+    dbTwo.close();
+  }
+
+  public void testReplicaAdditionTombstone() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    InitScheme initScheme = new InitScheme("ReplicaAdditionTombstone").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ODocument docOne = new ODocument("ReplicaTest");
+    docOne.field("prop", "value");
+    docOne.save();
+    docOne.delete();
+
+    docOne = dbOne.load(docOne.getIdentity(), "*:0", false, true);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(docOne);
+    final ODocument docTwo = dbTwo.load(docOne.getIdentity(), "*:0", false, true);
+    Assert.assertNotNull(docTwo);
+
+    Assert.assertEquals(docOne.getRecordVersion(), docTwo.getRecordVersion());
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(0, propindex.getSize());
+
+    dbOne.close();
+    dbTwo.close();
   }
 
   public void testReplicaReplacementSuccess() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
-    final ODatabaseDocumentTx dbOne = new ODatabaseDocumentTx(getDBUrl("replicaReplacementSuccess1"));
-    dbOne.create();
-
-    final OSchema schemaOne = dbOne.getMetadata().getSchema();
-    final OClass classReplicaTestOne = schemaOne.createClass("ReplicaTest");
-    classReplicaTestOne.createProperty("prop", OType.STRING);
-    schemaOne.save();
-
-    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(getDBUrl("replicaReplacementSuccess2"));
-    dbTwo.create();
-
-    final OSchema schemaTwo = dbTwo.getMetadata().getSchema();
-    final OClass classReplicaTestTwo = schemaTwo.createClass("ReplicaTest");
-    classReplicaTestTwo.createProperty("prop", OType.STRING);
-    schemaTwo.save();
+    InitScheme initScheme = new InitScheme("ReplicaReplacementSuccess").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     final ODocument docOne = new ODocument("ReplicaTest");
@@ -102,27 +116,22 @@ public class ReplicaPlacementTest {
     Assert.assertNotNull(docTwo);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(1, propindex.getSize());
+    Assert.assertTrue(propindex.contains("value2"));
+
+    dbOne.close();
+    dbTwo.close();
   }
 
   public void testReplicaReplacementFail() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
-    final ODatabaseDocumentTx dbOne = new ODatabaseDocumentTx(getDBUrl("replicaReplacementFail1"));
-    dbOne.create();
-
-    final OSchema schemaOne = dbOne.getMetadata().getSchema();
-    final OClass classReplicaTestOne = schemaOne.createClass("ReplicaTest");
-    classReplicaTestOne.createProperty("prop", OType.STRING);
-    schemaOne.save();
-
-    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(getDBUrl("replicaReplacementFail2"));
-    dbTwo.create();
-
-    final OSchema schemaTwo = dbTwo.getMetadata().getSchema();
-    final OClass classReplicaTestTwo = schemaTwo.createClass("ReplicaTest");
-    classReplicaTestTwo.createProperty("prop", OType.STRING);
-    schemaTwo.save();
+    InitScheme initScheme = new InitScheme("ReplicaReplacementFail").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     final ODocument docOne = new ODocument("ReplicaTest");
@@ -155,27 +164,22 @@ public class ReplicaPlacementTest {
     Assert.assertEquals("value4", docTwo.field("prop"));
 
     Assert.assertFalse(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(1, propindex.getSize());
+    Assert.assertTrue(propindex.contains("value4"));
+
+    dbOne.close();
+    dbTwo.close();
   }
 
   public void testReplicaReplacementTombstoneToRecord() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
-    final ODatabaseDocumentTx dbOne = new ODatabaseDocumentTx(getDBUrl("ReplicaReplacementTombstoneToRecordOne"));
-    dbOne.create();
-
-    final OSchema schemaOne = dbOne.getMetadata().getSchema();
-    final OClass classReplicaTestOne = schemaOne.createClass("ReplicaTest");
-    classReplicaTestOne.createProperty("prop", OType.STRING);
-    schemaOne.save();
-
-    final ODatabaseDocumentTx dbTwo = new ODatabaseDocumentTx(getDBUrl("ReplicaReplacementTombstoneToRecordTwo"));
-    dbTwo.create();
-
-    final OSchema schemaTwo = dbTwo.getMetadata().getSchema();
-    final OClass classReplicaTestTwo = schemaTwo.createClass("ReplicaTest");
-    classReplicaTestTwo.createProperty("prop", OType.STRING);
-    schemaTwo.save();
+    InitScheme initScheme = new InitScheme("ReplicaReplacementTombstoneToRecord").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     final ODocument docOne = new ODocument("ReplicaTest");
@@ -200,6 +204,90 @@ public class ReplicaPlacementTest {
 
     Assert.assertNotNull(docTwo);
     Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(1, propindex.getSize());
+    Assert.assertTrue(propindex.contains("value5"));
+
+    dbOne.close();
+    dbTwo.close();
+  }
+
+  public void testReplicaReplacementRecordToTombstone() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    InitScheme initScheme = new InitScheme("ReplicaReplacementRecordToTombstone").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ODocument docOne = new ODocument("ReplicaTest");
+    docOne.field("prop", "value");
+    docOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(docOne);
+    ODocument docTwo = dbTwo.load(docOne.getIdentity());
+    Assert.assertNotNull(docTwo);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    docOne.field("prop", "value3");
+    docOne.save();
+    docOne.delete();
+    docOne = dbOne.load(docOne.getIdentity(), "*:0", false, true);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(docOne);
+    docTwo = dbTwo.load(docOne.getIdentity());
+
+    Assert.assertNull(docTwo);
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(0, propindex.getSize());
+
+    dbOne.close();
+    dbTwo.close();
+  }
+
+  public void testReplicaReplacementTombstoneToTombstone() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    InitScheme initScheme = new InitScheme("ReplicaReplacementTombstoneToTombstone").invoke();
+    ODatabaseDocumentTx dbOne = initScheme.getDbOne();
+    ODatabaseDocumentTx dbTwo = initScheme.getDbTwo();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ODocument docOne = new ODocument("ReplicaTest");
+    docOne.field("prop", "value");
+    docOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(docOne);
+    ODocument docTwo = dbTwo.load(docOne.getIdentity());
+    Assert.assertNotNull(docTwo);
+    docTwo.delete();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    docOne.field("prop", "value3");
+    docOne.save();
+    docOne.delete();
+    docOne = dbOne.load(docOne.getIdentity(), "*:0", false, true);
+
+    ORecordVersion docOneVersion = docOne.getRecordVersion();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(docOne);
+    docTwo = dbTwo.load(docOne.getIdentity(), "*:0", false, true);
+
+    Assert.assertEquals(docOneVersion, docTwo.getRecordVersion());
+
+    final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
+    Assert.assertEquals(0, propindex.getSize());
+
+    dbOne.close();
+    dbTwo.close();
   }
 
   private String getDBUrl(String dbName) {
@@ -215,5 +303,44 @@ public class ReplicaPlacementTest {
 
     return u;
 
+  }
+
+  private class InitScheme {
+    private ODatabaseDocumentTx dbOne;
+    private ODatabaseDocumentTx dbTwo;
+    private final String        dbName;
+
+    private InitScheme(String dbName) {
+      this.dbName = dbName;
+    }
+
+    public ODatabaseDocumentTx getDbOne() {
+      return dbOne;
+    }
+
+    public ODatabaseDocumentTx getDbTwo() {
+      return dbTwo;
+    }
+
+    public InitScheme invoke() {
+      dbOne = new ODatabaseDocumentTx(getDBUrl(dbName + "One"));
+      dbOne.create();
+
+      final OSchema schemaOne = dbOne.getMetadata().getSchema();
+      final OClass classReplicaTestOne = schemaOne.createClass("ReplicaTest");
+      classReplicaTestOne.createProperty("prop", OType.STRING);
+      classReplicaTestOne.createIndex("propindex", OClass.INDEX_TYPE.UNIQUE, "prop");
+      schemaOne.save();
+
+      dbTwo = new ODatabaseDocumentTx(getDBUrl(dbName + "Two"));
+      dbTwo.create();
+
+      final OSchema schemaTwo = dbTwo.getMetadata().getSchema();
+      final OClass classReplicaTestTwo = schemaTwo.createClass("ReplicaTest");
+      classReplicaTestTwo.createProperty("prop", OType.STRING);
+      classReplicaTestTwo.createIndex("propindex", OClass.INDEX_TYPE.UNIQUE, "prop");
+      schemaTwo.save();
+      return this;
+    }
   }
 }

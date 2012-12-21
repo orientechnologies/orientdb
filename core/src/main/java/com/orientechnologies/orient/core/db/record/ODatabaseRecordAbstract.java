@@ -1032,7 +1032,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     private final ORecordInternal<?> record;
 
     public ExecuteReplicaUpdateCallable(ORecordInternal<?> record) {
-      this.rid = (ORecordId)record.getIdentity();
+      this.rid = (ORecordId) record.getIdentity();
       this.record = record;
     }
 
@@ -1057,17 +1057,19 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     private boolean processReplicaUpdate(ORecordMetadata recordMetadata) throws Exception {
       ORecordInternal<?> replicaToUpdate = record;
       boolean result;
-			final ORecordVersion version = record.getRecordVersion();
+      final ORecordVersion version = record.getRecordVersion();
 
       try {
         if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
-          replicaToUpdate = mergeWithDocument();
+          replicaToUpdate = mergeWithDocument(null);
           callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToUpdate);
         } else if (!recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
-          replicaToUpdate = mergeWithDocument();
+          replicaToUpdate = mergeWithDocument(rid);
           callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
-        } else if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
-          replicaToUpdate = mergeWithDocument();
+        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
+          replicaToUpdate = load(rid, "*:0", false, true);
+          replicaToUpdate.getRecordVersion().copyFrom(version);
+
           callbackHooks(TYPE.BEFORE_REPLICA_DELETE, replicaToUpdate);
         }
 
@@ -1083,7 +1085,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           callbackHooks(TYPE.AFTER_REPLICA_UPDATE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
           getLevel1Cache().updateRecord(replicaToUpdate);
-        } else if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_DELETE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
           getLevel1Cache().deleteRecord(rid);
@@ -1093,7 +1095,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           callbackHooks(TYPE.REPLICA_ADD_FAILED, replicaToUpdate);
         } else if (!recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
           callbackHooks(TYPE.REPLICA_UPDATE_FAILED, replicaToUpdate);
-        } else if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
           callbackHooks(TYPE.REPLICA_DELETE_FAILED, replicaToUpdate);
         }
 
@@ -1106,12 +1108,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     private boolean processReplicaAdd() throws Exception {
       ORecordInternal<?> replicaToAdd = record;
       boolean result;
-			final ORecordVersion version = record.getRecordVersion();
+      final ORecordVersion version = record.getRecordVersion();
 
       try {
         if (!version.isTombstone()) {
           if (record instanceof ODocument) {
-            replicaToAdd = mergeWithDocument();
+            replicaToAdd = mergeWithDocument(null);
           } else
             replicaToAdd = record;
 
@@ -1141,12 +1143,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       return result;
     }
 
-    private ORecordInternal<?> mergeWithDocument() {
-      ORecordInternal<?> replicaToAdd;
-      replicaToAdd = new ODocument();
+    private ORecordInternal<?> mergeWithDocument(ORID rid) {
+      final ORecordInternal<?> replicaToAdd;
+      if (rid == null)
+        replicaToAdd = new ODocument();
+      else
+        replicaToAdd = load(rid, "*:0", false, true);
+
       ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
       replicaToAdd.getRecordVersion().copyFrom(record.getRecordVersion());
-      replicaToAdd.setIdentity(rid);
+      replicaToAdd.setIdentity(this.rid);
       return replicaToAdd;
     }
   }
