@@ -53,7 +53,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
     final OFunction f = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(function);
     if (f != null) {
-      debug(iContext, "Calling: " + function + "(" + Arrays.toString(args) + ")...");
+      debug(iContext, "Calling database function: " + function + "(" + Arrays.toString(args) + ")...");
       return f.executeInContext(iContext, args);
     }
 
@@ -67,15 +67,19 @@ public class OFunctionBlock extends OAbstractBlock {
 
         Class<?>[] argTypes = new Class<?>[args.length];
         for (int i = 0; i < args.length; ++i)
-          argTypes[i] = args[i].getClass();
+          argTypes[i] = args[i] == null ? null : args[i].getClass();
 
         Method m = cls.getMethod(methodName, argTypes);
+
+        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
         return m.invoke(null, args);
+
       } catch (NoSuchMethodException e) {
 
         for (Method m : cls.getMethods()) {
           if (m.getName().equals(methodName) && m.getParameterTypes().length == args.length) {
             try {
+              debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
               return m.invoke(null, args);
             } catch (Exception e1) {
               e1.printStackTrace();
@@ -84,6 +88,17 @@ public class OFunctionBlock extends OAbstractBlock {
           }
         }
 
+        // METHOD NOT FOUND!
+        for (Method m : cls.getMethods()) {
+          StringBuilder candidates = new StringBuilder();
+          if (m.getName().equals(methodName)) {
+            candidates.append("-" + m + "\n");
+          }
+          debug(iContext, "Candidate methods were: \n" + candidates);
+        }
+
+      } catch (ClassNotFoundException e) {
+        throw new OProcessException("Function '" + function + "' was not found because the class '" + clsName + "' was not found");
       } catch (Exception e) {
         e.printStackTrace();
       }
