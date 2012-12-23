@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.util.OHostInfo;
 public class OVersionFactory {
   private static final OVersionFactory instance       = new OVersionFactory();
   private static final boolean         useDistributed = OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean();
-  private static final long            macAddress     = convertMacToLong(OHostInfo.getMac());
+  private static final long            macAddress     = useDistributed ? convertMacToLong(OHostInfo.getMac()) : 0L;
 
   private static long convertMacToLong(byte[] mac) {
     long result = 0;
