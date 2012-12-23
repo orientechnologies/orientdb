@@ -43,7 +43,7 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 ## Online cloud service
 
 <table>
-  <tr><td>[![](http://www.nuvolabase.com/site/images/nuvola_small.png)](http://www.nuvolabase.com)]
+  <tr><td><a href="http://www.nuvolabase.com"><img src="http://www.nuvolabase.com/site/images/nuvola_small.png"></a>
   </td><td>OrientDB is available on the cloud through [NuvolaBase.com](http://www.nuvolabase.com). FREE accounts are available for small sized databases.</td></tr>
 </table>
 
