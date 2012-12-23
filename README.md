@@ -1,3 +1,5 @@
+## OrientDB
+
 [<img src="http://www.orientdb.org/images/graphed-tutorial-graph_small.png">](http://studio.nuvolabase.com/db/free/demo/GratefulDeadConcerts/studio/?user=reader&passthrough=false&database=/db/free/demo/GratefulDeadConcerts&password=reader)
 
 ## What is Orient?
@@ -41,8 +43,8 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 ## Online cloud service
 
 <table>
-  <tr><td>[<img src="http://www.nuvolabase.com/site/images/nuvola_small.png">](http://www.nuvolabase.com)
-  </td><td>OrientDB is available on the cloud through [NuvolaBase.com](http://www.nuvolabase.com). FREE accounts are available for small sized databases.</td></tr>
+  <tr><td><img src="http://www.nuvolabase.com/site/images/nuvola_small.png">(http://www.nuvolabase.com)
+  </td><td>OrientDB is available on the cloud through [![](NuvolaBase.com)](http://www.nuvolabase.com). FREE accounts are available for small sized databases.</td></tr>
 </table>
 
 ## Know more

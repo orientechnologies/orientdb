@@ -355,8 +355,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
         if (!iClusterSegment.isLHBased()) {
           if (iRid.clusterPosition.compareTo(lastPos) > 0)
-            throw new ORecordNotFoundException("Record " + iRid + " is outside cluster size. Valid range for cluster '"
-                + iClusterSegment.getName() + "' is 0-" + lastPos);
+            return null;
         }
 
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
