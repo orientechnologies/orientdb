@@ -158,9 +158,15 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   protected void save(final ODatabaseRecord iDb) {
-    record.fromStream(toStream());
-    record.setDirty();
-    record.save(clusterName);
+    for (int i = 0; i < 3; ++i)
+      try {
+        record.fromStream(toStream());
+        record.setDirty();
+        record.save(clusterName);
+        break;
+      } catch (OConcurrentModificationException e) {
+        record.reload();
+      }
   }
 
   public void save() {
