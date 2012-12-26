@@ -49,6 +49,6 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 
 ## Know more
 
-Start to learn OrientDB from the [WiKi Main page](https://github.com/nuvolabase/orientdb/wiki). For any question visit the [OrientDB User Group](http://groups.google.com/group/orient-database). Need help? Go to the [Online support](http://chat.stackoverflow.com/rooms/6625/orientdb). Do you want to hear about OrientDB in a conference? Take a look at the [[Events|Events page]].
+Start to learn OrientDB from the [WiKi Main page](https://github.com/nuvolabase/orientdb/wiki). For any question visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm). Need help? Go to the [Online support](http://chat.stackoverflow.com/rooms/6625/orientdb). Do you want to hear about OrientDB in a conference? Take a look at the [[Events|Events page]].
 
 [![](http://mac.softpedia.com/base_img/softpedia_free_award_f.gif)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
