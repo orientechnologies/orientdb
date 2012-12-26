@@ -241,7 +241,13 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
-          rebuild();
+          try {
+            rebuild();
+          } catch (Throwable t) {
+            OLogManager.instance().error(this,
+                "Cannot rebuild index '%s' from storage (rid=%s). The index will be removed in configuration", getName(), rid);
+            getDatabase().getMetadata().getIndexManager().dropIndex(name);
+          }
         }
       }
 
