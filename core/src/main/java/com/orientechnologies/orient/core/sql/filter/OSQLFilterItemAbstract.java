@@ -204,14 +204,22 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           } else if (operator == OSQLFilterFieldOperator.ASSTRING.id)
             ioResult = ioResult != null ? ioResult.toString() : null;
           else if (operator == OSQLFilterFieldOperator.ASINTEGER.id)
-            ioResult = ioResult != null ? new Integer(ioResult.toString().trim()) : null;
+            if (ioResult instanceof Number)
+              ioResult = ((Number) ioResult).intValue();
+            else
+              ioResult = ioResult != null ? new Integer(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASLONG.id)
-            if (ioResult instanceof Date)
+            if (ioResult instanceof Number)
+              ioResult = ((Number) ioResult).longValue();
+            else if (ioResult instanceof Date)
               ioResult = ((Date) ioResult).getTime();
             else
               ioResult = ioResult != null ? new Long(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASFLOAT.id)
-            ioResult = ioResult != null ? new Float(ioResult.toString().trim()) : null;
+            if (ioResult instanceof Number)
+              ioResult = ((Number) ioResult).floatValue();
+            else
+              ioResult = ioResult != null ? new Float(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASDECIMAL.id)
             ioResult = ioResult != null ? new BigDecimal(ioResult.toString().trim()) : null;
           else if (operator == OSQLFilterFieldOperator.ASBOOLEAN.id) {
