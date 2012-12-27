@@ -284,9 +284,11 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   protected boolean nextPosition() {
-    if (positionsToProcess == null)
+    if (positionsToProcess == null) {
       positionsToProcess = dbStorage.ceilingPhysicalPositions(current.clusterId, new OPhysicalPosition(firstClusterEntry));
-    else {
+      if (positionsToProcess == null)
+        return false;
+    } else {
       if (currentEntry.compareTo(lastClusterEntry) >= 0)
         return false;
     }
@@ -323,6 +325,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected boolean prevPosition() {
     if (positionsToProcess == null) {
       positionsToProcess = dbStorage.floorPhysicalPositions(current.clusterId, new OPhysicalPosition(lastClusterEntry));
+      if (positionsToProcess == null)
+        return false;
 
       if (positionsToProcess.length == 0)
         return false;
