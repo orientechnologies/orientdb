@@ -80,6 +80,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -772,7 +773,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     } else {
       // LOCAL CONNECTION
       currentDatabase = new ODatabaseDocumentTx(iDatabaseURL);
-      currentDatabase.drop();
+      if (currentDatabase.exists()) {
+        currentDatabase.open(iUserName, iUserPassword);
+        currentDatabase.drop();
+      } else
+        out.println("\nCannot drop database '" + iDatabaseURL + "' because was not found");
+
       currentDatabase = null;
       currentDatabaseName = null;
     }
@@ -1373,15 +1379,38 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Export a database")
-  public void exportDatabase(@ConsoleParameter(name = "output-file", description = "Output file path") final String iOutputFilePath)
+  @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
       throws IOException {
     checkForDatabase();
 
-    out.println("Exporting current database to: " + iOutputFilePath + "...");
+    out.println("Importing database " + iText + "...");
+
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
+    final String options = fileName != null ? iText.substring(
+        ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
 
     try {
-      new ODatabaseExport(currentDatabase, iOutputFilePath, this).exportDatabase().close();
+      new ODatabaseImport(currentDatabase, fileName, this).setOptions(options).importDatabase().close();
+    } catch (ODatabaseImportException e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Export a database", splitInWords = false)
+  public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
+      throws IOException {
+    checkForDatabase();
+
+    out.println(new StringBuilder("Exporting current database to: ").append(iText).append("..."));
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
+    final String options = fileName != null ? iText.substring(
+        ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
+
+    try {
+      new ODatabaseExport(currentDatabase, fileName, this).setOptions(options).exportDatabase().close();
     } catch (ODatabaseExportException e) {
       printError(e);
     }
@@ -1399,20 +1428,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       exporter.setIncludeRecords(false);
       exporter.exportDatabase().close();
     } catch (ODatabaseExportException e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Import a database into the current one")
-  public void importDatabase(@ConsoleParameter(name = "input-file", description = "Input file path") final String iInputFilePath)
-      throws IOException {
-    checkForDatabase();
-
-    out.println("Importing database from file " + iInputFilePath + "...");
-
-    try {
-      new ODatabaseImport(currentDatabase, iInputFilePath, this).importDatabase().close();
-    } catch (ODatabaseImportException e) {
       printError(e);
     }
   }

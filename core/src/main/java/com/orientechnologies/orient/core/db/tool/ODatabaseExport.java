@@ -88,6 +88,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     iDatabase.getLevel2Cache().setEnable(false);
   }
 
+  @Override
+  public ODatabaseExport setOptions(final String s) {
+    super.setOptions(s);
+    return this;
+  }
+
   public ODatabaseExport exportDatabase() {
     try {
       listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
@@ -99,7 +105,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       if (includeInfo)
         exportInfo();
-      exportClusters();
+      if (includeClusterDefinitions)
+        exportClusters();
       if (includeSchema)
         exportSchema();
       if (includeRecords)
@@ -122,7 +129,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   }
 
   public long exportRecords() throws IOException {
-    long totalRecords = 0;
+    long totalFoundRecords = 0;
+    long totalExportedRecords = 0;
+
     int level = 1;
     listener.onMessage("\nExporting records...");
 
@@ -134,28 +143,28 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       exportedClusters++;
 
-      final long recordTot;
+      long clusterExportedRecordsTot = 0;
 
       if (clusterName != null) {
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-          if (!includeClusters.contains(clusterName))
+          if (!includeClusters.contains(clusterName.toUpperCase()))
             continue;
         } else if (excludeClusters != null) {
-          if (excludeClusters.contains(clusterName))
+          if (excludeClusters.contains(clusterName.toUpperCase()))
             continue;
         }
 
-        if (excludeClusters != null && excludeClusters.contains(clusterName))
+        if (excludeClusters != null && excludeClusters.contains(clusterName.toUpperCase()))
           continue;
 
-        recordTot = database.countClusterElements(clusterName);
-      } else
-        recordTot = 0;
+        clusterExportedRecordsTot = database.countClusterElements(clusterName);
+      } else if (includeClusters != null && !includeClusters.isEmpty())
+        continue;
 
       listener.onMessage("\n- Cluster " + (clusterName != null ? "'" + clusterName + "'" : "NULL") + " (id=" + i + ")...");
 
-      long recordNum = 0;
+      long clusterExportedRecordsCurrent = 0;
       if (clusterName != null) {
         ORecordInternal<?> rec = null;
         try {
@@ -165,16 +174,19 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             if (rec instanceof ODocument) {
               // CHECK IF THE CLASS OF THE DOCUMENT IS INCLUDED
               ODocument doc = (ODocument) rec;
+              final String className = doc.getClassName() != null ? doc.getClassName().toUpperCase() : null;
               if (includeClasses != null) {
-                if (!includeClasses.contains(doc.getClassName()))
+                if (!includeClasses.contains(className))
                   continue;
               } else if (excludeClasses != null) {
-                if (excludeClasses.contains(doc.getClassName()))
+                if (excludeClasses.contains(className))
                   continue;
               }
-            }
+            } else if (includeClasses != null && !includeClasses.isEmpty())
+              continue;
 
-            exportRecord(recordTot, recordNum++, rec);
+            if (exportRecord(clusterExportedRecordsTot, clusterExportedRecordsCurrent, rec))
+              clusterExportedRecordsCurrent++;
           }
         } catch (IOException e) {
           OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
@@ -198,15 +210,16 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         }
       }
 
-      listener.onMessage("OK (records=" + recordTot + ")");
+      listener.onMessage("OK (records=" + clusterExportedRecordsCurrent + "/" + clusterExportedRecordsTot + ")");
 
-      totalRecords += recordTot;
+      totalExportedRecords += clusterExportedRecordsCurrent;
+      totalFoundRecords += clusterExportedRecordsTot;
     }
     writer.endCollection(level, true);
 
-    listener.onMessage("\n\nDone. Exported " + totalRecords + " records\n");
+    listener.onMessage("\n\nDone. Exported " + totalExportedRecords + " of total " + totalFoundRecords + " records\n");
 
-    return totalRecords;
+    return totalFoundRecords;
   }
 
   public void close() {
@@ -235,15 +248,17 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       final String clusterName = database.getClusterNameById(clusterId);
 
-      if (clusterName != null)
+      if (clusterName != null) {
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-          if (!includeClusters.contains(clusterName))
+          if (!includeClusters.contains(clusterName.toUpperCase()))
             continue;
         } else if (excludeClusters != null) {
-          if (excludeClusters.contains(clusterName))
+          if (excludeClusters.contains(clusterName.toUpperCase()))
             continue;
         }
+      } else if (includeClusters != null && !includeClusters.isEmpty())
+        continue;
 
       writer.beginObject(2, true, null);
 
@@ -461,36 +476,37 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + s.getClasses().size() + " classes)");
   }
 
-  private void exportRecord(long recordTot, long recordNum, ORecordInternal<?> rec) throws IOException {
-    if (rec == null)
-      return;
+  private boolean exportRecord(long recordTot, long recordNum, ORecordInternal<?> rec) throws IOException {
+    if (rec != null)
+      try {
+        if (rec.getIdentity().isValid())
+          rec.reload();
 
-    try {
-      if (rec.getIdentity().isValid())
-        rec.reload();
+        if (recordExported > 0)
+          writer.append(",");
 
-      if (recordExported > 0)
-        writer.append(",");
+        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
 
-      writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
+        recordExported++;
+        recordNum++;
 
-      recordExported++;
-      recordNum++;
+        if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
+          listener.onMessage(".");
 
-      if (recordTot > 10 && (recordNum + 1) % (recordTot / 10) == 0)
-        listener.onMessage(".");
-    } catch (Throwable t) {
-      if (rec != null) {
-        final byte[] buffer = rec.toStream();
+        return true;
+      } catch (Throwable t) {
+        if (rec != null) {
+          final byte[] buffer = rec.toStream();
 
-        OLogManager
-            .instance()
-            .error(
-                this,
-                "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
-                t, rec.getIdentity(), buffer.length, new String(buffer));
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "\nError on exporting record %s. It seems corrupted; size: %d bytes, raw content (as string):\n==========\n%s\n==========",
+                  t, rec.getIdentity(), buffer.length, new String(buffer));
+        }
       }
-    }
 
+    return false;
   }
 }

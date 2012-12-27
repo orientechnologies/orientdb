@@ -659,10 +659,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           return null;
         }
       } else if (excludeClusters != null) {
-        if (excludeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
-          jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        if (excludeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId())))
           return null;
-        }
       }
 
       if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition().longValue() == 1)
