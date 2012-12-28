@@ -967,13 +967,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       for (final OProperty p : cls.properties()) {
         try {
-          out.printf(" %-30s| %-12s| %-30s| %-10s| %-10s| %-9s| %-10s| %-10s|\n", p.getName(), p.getType(),
+          out.printf(" %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s|\n", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
               p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "");
         } catch (Exception e) {
         }
       }
-      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+-----------+-----------+");
+      out.println("-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+");
     }
 
     final Set<OIndex<?>> indexes = cls.getClassIndexes();
