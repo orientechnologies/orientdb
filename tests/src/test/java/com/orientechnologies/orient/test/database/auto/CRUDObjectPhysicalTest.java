@@ -1807,6 +1807,29 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test
+  public void queryWithListOfObjectAsParameter() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    database.getMetadata().getSchema().reload();
+
+    final OSQLSynchQuery<Profile> query = new OSQLSynchQuery<Profile>(
+        "select from Profile where name = :name and surname = :surname");
+
+    HashMap<String, String> params = new HashMap<String, String>();
+    params.put("name", "Barack");
+    params.put("surname", "Obama");
+
+    List<Profile> result = database.query(query, params);
+    Assert.assertTrue(result.size() != 0);
+
+
+    result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings in (:who)"), result);
+    Assert.assertTrue(result.size() != 0);
+
+    database.close();
+  }
+  
+  @Test
   public void queryConcatAttrib() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
