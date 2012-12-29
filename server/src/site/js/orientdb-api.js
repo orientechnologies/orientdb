@@ -249,8 +249,8 @@ function ODatabase(databasePath) {
 			}
 			iFetchPlan = '/' + iFetchPlan;
 		}
-		iQuery = this.URLEncode(iQuery);
-		iFetchPlan = this.URLEncode(iFetchPlan);
+		iQuery = encodeURIComponent(iQuery);
+		iFetchPlan = encodeURIComponent(iFetchPlan);
 		$.ajax({
 			type : "GET",
 			url : this.urlPrefix + 'query/' + this.encodedDatabaseName
@@ -287,7 +287,7 @@ function ODatabase(databasePath) {
 		if (iRID && iRID.charAt(0) == '#')
 			iRID = iRID.substring(1);
 
-		iRID = this.URLEncode(iRID);
+		iRID = encodeURIComponent(iRID);
 		$.ajax({
 			type : "GET",
 			url : this.urlPrefix + 'document/' + this.encodedDatabaseName + '/'
@@ -320,7 +320,7 @@ function ODatabase(databasePath) {
 		}
 		var url = this.urlPrefix + 'document/' + this.encodedDatabaseName;
 		if (rid)
-			url += '/' + this.URLEncode(rid);
+			url += '/' + encodeURIComponent(rid);
 
 		$.ajax({
 			type : methodType,
@@ -362,7 +362,7 @@ function ODatabase(databasePath) {
 		else
 			rid = obj['@rid'];
 
-		rid = this.URLEncode(rid);
+		rid = encodeURIComponent(rid);
 		$.ajax({
 			type : "DELETE",
 			url : this.urlPrefix + 'document/' + this.encodedDatabaseName + '/'
@@ -632,11 +632,11 @@ function ODatabase(databasePath) {
 		if (iFetchPlan == null || iFetchPlan == '')
 			iFetchPlan = '';
 		else
-			iFetchPlan = "/" + this.URLEncode(iFetchPlan);
+			iFetchPlan = "/" + encodeURIComponent(iFetchPlan);
 
 		var dataType = this.evalResponse ? null : 'text';
 
-		iCommand = this.URLEncode(iCommand);
+		iCommand = encodeURIComponent(iCommand);
 		$.ajax({
 			type : "POST",
 			url : this.urlPrefix + 'command/' + this.encodedDatabaseName + '/'
@@ -694,7 +694,7 @@ function ODatabase(databasePath) {
 
 		var asynchCall = iSuccessCallback != null;
 
-		iName = this.URLEncode(iName);
+		iName = encodeURIComponent(iName);
 		$.ajax({
 			type : "POST",
 			url : this.urlPrefix + iType + '/' + this.encodedDatabaseName + '/'
@@ -1138,42 +1138,6 @@ function ODatabase(databasePath) {
 			}
 		}
 		return o;
-	}
-
-	ODatabase.prototype.URLDecode = function(s) {
-		var o = s;
-		var binVal, t;
-		var r = /(%[^%]{2})/;
-		while ((m = r.exec(o)) != null && m.length > 1 && m[1] != '') {
-			b = parseInt(m[1].substr(1), 16);
-			t = String.fromCharCode(b);
-			o = o.replace(m[1], t);
-		}
-		return o;
-	}
-
-	ODatabase.prototype.URLDecodeU = function(string) {
-		string = string.replace(/\r\n/g, "\n");
-		var utftext = "";
-
-		for ( var n = 0; n < string.length; n++) {
-
-			var c = string.charCodeAt(n);
-
-			if (c < 128) {
-				utftext += String.fromCharCode(c);
-			} else if ((c > 127) && (c < 2048)) {
-				utftext += String.fromCharCode((c >> 6) | 192);
-				utftext += String.fromCharCode((c & 63) | 128);
-			} else {
-				utftext += String.fromCharCode((c >> 12) | 224);
-				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
-				utftext += String.fromCharCode((c & 63) | 128);
-			}
-
-		}
-
-		return utftext;
 	}
 
 	ODatabase.prototype.UTF8Encode = function(string) {
