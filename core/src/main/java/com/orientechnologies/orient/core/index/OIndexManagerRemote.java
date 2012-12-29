@@ -27,118 +27,118 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
-	private static final String	QUERY_DROP	= "drop index %s";
+  private static final String QUERY_DROP = "drop index %s";
 
-	public OIndexManagerRemote(final ODatabaseRecord iDatabase) {
-		super(iDatabase);
-	}
+  public OIndexManagerRemote(final ODatabaseRecord iDatabase) {
+    super(iDatabase);
+  }
 
-	@Override
-	protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
-		if (iIndex instanceof OIndexMultiValues)
-			return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-					getConfiguration(), iIndex.getClusters());
-		return new OIndexRemoteOneValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-				getConfiguration(), iIndex.getClusters());
-	}
+  @Override
+  protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
+    if (iIndex instanceof OIndexMultiValues)
+      return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
+          getConfiguration(), iIndex.getClusters());
+    return new OIndexRemoteOneValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
+        getConfiguration(), iIndex.getClusters());
+  }
 
-	public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-			final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-		final String createIndexDDL;
-		if (iIndexDefinition != null) {
-			createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
-		} else {
-			createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
-		}
+  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+    final String createIndexDDL;
+    if (iIndexDefinition != null) {
+      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
+    } else {
+      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
+    }
 
-		acquireExclusiveLock();
-		try {
-			if (iProgressListener != null) {
-				iProgressListener.onBegin(this, 0);
-			}
+    acquireExclusiveLock();
+    try {
+      if (iProgressListener != null) {
+        iProgressListener.onBegin(this, 0);
+      }
 
-			getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
+      getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
-			document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+      document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
-			if (iProgressListener != null) {
-				iProgressListener.onCompletition(this, true);
-			}
+      if (iProgressListener != null) {
+        iProgressListener.onCompletition(this, true);
+      }
 
-			reload();
+      reload();
 
-			return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	public OIndexManager dropIndex(final String iIndexName) {
-		acquireExclusiveLock();
-		try {
-			final String text = String.format(QUERY_DROP, iIndexName);
-			getDatabase().command(new OCommandSQL(text)).execute();
+  public OIndexManager dropIndex(final String iIndexName) {
+    acquireExclusiveLock();
+    try {
+      final String text = String.format(QUERY_DROP, iIndexName);
+      getDatabase().command(new OCommandSQL(text)).execute();
 
-			// REMOVE THE INDEX LOCALLY
-			indexes.remove(iIndexName.toLowerCase());
-			reload();
+      // REMOVE THE INDEX LOCALLY
+      indexes.remove(iIndexName.toLowerCase());
+      reload();
 
-			return this;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      return this;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	@Override
-	protected void fromStream() {
-		acquireExclusiveLock();
+  @Override
+  protected void fromStream() {
+    acquireExclusiveLock();
 
-		try {
+    try {
 
-			final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
+      final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
-			indexes.clear();
-			classPropertyIndex.clear();
+      indexes.clear();
+      classPropertyIndex.clear();
 
-			if (idxs != null) {
-				OIndexInternal<?> index;
-				for (final ODocument d : idxs) {
-					index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-					((OIndexInternal<?>) index).loadFromConfiguration(d);
-					addIndexInternal(index);
-				}
-			}
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      if (idxs != null) {
+        OIndexInternal<?> index;
+        for (final ODocument d : idxs) {
+          index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+          if (((OIndexInternal<?>) index).loadFromConfiguration(d))
+            addIndexInternal(index);
+        }
+      }
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
-	/**
-	 * Binds POJO to ODocument.
-	 */
-	@Override
-	public ODocument toStream() {
-		acquireExclusiveLock();
+  /**
+   * Binds POJO to ODocument.
+   */
+  @Override
+  public ODocument toStream() {
+    acquireExclusiveLock();
 
-		try {
-			document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    try {
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-			try {
-				final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+      try {
+        final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-				for (final OIndexInternal<?> i : indexes.values()) {
-					idxs.add(i.updateConfiguration());
-				}
-				document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
+        for (final OIndexInternal<?> i : indexes.values()) {
+          idxs.add(i.updateConfiguration());
+        }
+        document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 
-			} finally {
-				document.setInternalStatus(ORecordElement.STATUS.LOADED);
-			}
-			document.setDirty();
+      } finally {
+        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+      document.setDirty();
 
-			return document;
-		} finally {
-			releaseExclusiveLock();
-		}
-	}
+      return document;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 }

@@ -59,7 +59,7 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * @param iConfig
    *          ODocument instance containing the configuration
    */
-  public OIndexInternal<T> loadFromConfiguration(ODocument iConfig);
+  public boolean loadFromConfiguration(ODocument iConfig);
 
   /**
    * Saves the index configuration to disk.

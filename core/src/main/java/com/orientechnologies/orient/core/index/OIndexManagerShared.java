@@ -76,8 +76,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ?
-          defaultClusterName : manualClusterName;
+      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
+          : manualClusterName;
 
       index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, iProgressListener);
       addIndexInternal(index);
@@ -148,16 +148,22 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
       if (idxs != null) {
         OIndexInternal<?> index;
+        boolean configUpdated = false;
         for (final ODocument d : idxs) {
           try {
             index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-            ((OIndexInternal<?>) index).loadFromConfiguration(d);
-            addIndexInternal(index);
+            if (((OIndexInternal<?>) index).loadFromConfiguration(d)) {
+              addIndexInternal(index);
+            } else
+              configUpdated = true;
 
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on loading index by configuration: %s", e, d);
           }
         }
+
+        if (configUpdated)
+          save();
       }
     } finally {
       releaseExclusiveLock();
