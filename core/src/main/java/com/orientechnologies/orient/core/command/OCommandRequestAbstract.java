@@ -34,6 +34,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected int                    limit     = -1;
   protected Map<Object, Object>    parameters;
   protected String                 fetchPlan = null;
+  protected boolean                useCache  = false;
 
   protected OCommandRequestAbstract() {
   }
@@ -105,6 +106,14 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   public <RET extends OCommandRequest> RET setFetchPlan(String fetchPlan) {
     this.fetchPlan = fetchPlan;
     return (RET) this;
+  }
+
+  public boolean isUseCache() {
+    return useCache;
+  }
+
+  public void setUseCache(boolean useCache) {
+    this.useCache = useCache;
   }
 
 }

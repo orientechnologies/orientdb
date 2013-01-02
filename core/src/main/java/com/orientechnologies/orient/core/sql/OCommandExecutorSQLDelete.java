@@ -208,4 +208,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       return OSQLHelper.getValue(value);
     }
   }
+
+  @Override
+  public void end() {
+  }
 }

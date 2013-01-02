@@ -29,31 +29,36 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(enabled = false)
 public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
-	protected int								resultCount	= 0;
-	private ODatabaseDocumentTx	database;
+  protected int               resultCount = 0;
+  private ODatabaseDocumentTx database;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		SQLSynchQuerySpeedTest test = new SQLSynchQuerySpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    SQLSynchQuerySpeedTest test = new SQLSynchQuerySpeedTest();
+    test.data.go(test);
+  }
 
-	public SQLSynchQuerySpeedTest() {
-		super(1);
-		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+  public SQLSynchQuerySpeedTest() {
+    super(1);
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
-		System.out.println("Finding Accounts between " + database.countClass("Profile") + " records");
-	}
+    System.out.println("Finding Accounts between " + database.countClass("Profile") + " records");
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
-		List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 100010")).execute();
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 100010")).execute();
 
-		for (ODocument d : result)
-			result(d);
-	}
+    for (ODocument d : result)
+      result(d);
+  }
 
-	public boolean result(final Object iRecord) {
-		OrientTest.printRecord(resultCount++, iRecord);
-		return true;
-	}
+  public boolean result(final Object iRecord) {
+    OrientTest.printRecord(resultCount++, iRecord);
+    return true;
+  }
+
+  @Override
+  public void end() {
+  }
+
 }

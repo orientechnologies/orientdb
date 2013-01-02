@@ -26,10 +26,12 @@ import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 @SuppressWarnings("serial")
 public class OCommandGremlin extends OCommandRequestTextAbstract {
   public OCommandGremlin() {
+    useCache = true;
   }
 
   public OCommandGremlin(final String iText) {
     super(iText);
+    useCache = true;
   }
 
   public boolean isIdempotent() {

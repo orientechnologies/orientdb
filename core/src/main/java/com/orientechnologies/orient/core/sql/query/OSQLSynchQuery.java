@@ -37,115 +37,119 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
-	private ORID								nextPageRID;
-	private final List<T>				result							= new ArrayList<T>();
-	private Map<Object, Object>	previousQueryParams	= new HashMap<Object, Object>();
+  private ORID                nextPageRID;
+  private final List<T>       result              = new ArrayList<T>();
+  private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
-	public OSQLSynchQuery() {
-		resultListener = this;
-	}
+  public OSQLSynchQuery() {
+    resultListener = this;
+  }
 
-	public OSQLSynchQuery(final String iText) {
-		super(iText);
-		resultListener = this;
-	}
+  public OSQLSynchQuery(final String iText) {
+    super(iText);
+    resultListener = this;
+  }
 
-	public OSQLSynchQuery(final String iText, final int iLimit) {
-		super(iText, iLimit, null);
-		resultListener = this;
-	}
+  public OSQLSynchQuery(final String iText, final int iLimit) {
+    super(iText, iLimit, null);
+    resultListener = this;
+  }
 
-	@Override
-	public void reset() {
-		result.clear();
-	}
+  @Override
+  public void reset() {
+    result.clear();
+  }
 
-	public boolean result(final Object iRecord) {
-		result.add((T) iRecord);
-		return true;
-	}
+  public boolean result(final Object iRecord) {
+    result.add((T) iRecord);
+    return true;
+  }
 
-	@Override
-	public List<T> run(Object... iArgs) {
-		if (!result.isEmpty()) {
-			result.clear();
-		}
+  @Override
+  public void end() {
+  }
 
-		final Map<Object, Object> queryParams;
-		queryParams = fetchQueryParams(iArgs);
-		resetNextRIDIfParametersWereChanged(queryParams);
+  @Override
+  public List<T> run(Object... iArgs) {
+    if (!result.isEmpty()) {
+      result.clear();
+    }
 
-		super.run(iArgs);
+    final Map<Object, Object> queryParams;
+    queryParams = fetchQueryParams(iArgs);
+    resetNextRIDIfParametersWereChanged(queryParams);
 
-		if (!result.isEmpty()) {
-			previousQueryParams = new HashMap<Object, Object>(queryParams);
-			final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
-			nextPageRID = new ORecordId(lastRid.next());
-		}
+    super.run(iArgs);
 
-		return result;
-	}
+    if (!result.isEmpty()) {
+      previousQueryParams = new HashMap<Object, Object>(queryParams);
+      final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
+      nextPageRID = new ORecordId(lastRid.next());
+    }
 
-	private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
-		if (!queryParams.equals(previousQueryParams))
-			nextPageRID = null;
-	}
+    return result;
+  }
 
-	private Map<Object, Object> fetchQueryParams(Object... iArgs) {
-		if (iArgs.length > 0) {
-			return convertToParameters(iArgs);
-		}
+  private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
+    if (!queryParams.equals(previousQueryParams))
+      nextPageRID = null;
+  }
 
-		Map<Object, Object> queryParams = getParameters();
-		if (queryParams == null)
-			queryParams = new HashMap<Object, Object>();
-		return queryParams;
-	}
+  private Map<Object, Object> fetchQueryParams(Object... iArgs) {
+    if (iArgs.length > 0) {
+      return convertToParameters(iArgs);
+    }
 
-	public Object getResult() {
-		return result;
-	}
+    Map<Object, Object> queryParams = getParameters();
+    if (queryParams == null)
+      queryParams = new HashMap<Object, Object>();
+    return queryParams;
+  }
 
-	@Override
-	protected OMemoryStream queryToStream() {
-		final OMemoryStream buffer = super.queryToStream();
+  public Object getResult() {
+    return result;
+  }
 
-		buffer.set(nextPageRID != null ? nextPageRID.toString() : "");
+  @Override
+  protected OMemoryStream queryToStream() {
+    final OMemoryStream buffer = super.queryToStream();
 
-		final byte[] queryParams = serializeQueryParameters(previousQueryParams);
-		buffer.set(queryParams);
+    buffer.set(nextPageRID != null ? nextPageRID.toString() : "");
 
-		return buffer;
-	}
+    final byte[] queryParams = serializeQueryParameters(previousQueryParams);
+    buffer.set(queryParams);
 
-	@Override
-	protected void queryFromStream(OMemoryStream buffer) {
-		super.queryFromStream(buffer);
+    return buffer;
+  }
 
-		final String rid = buffer.getAsString();
-		if ("".equals(rid))
-			nextPageRID = null;
-		else
-			nextPageRID = new ORecordId(rid);
+  @Override
+  protected void queryFromStream(OMemoryStream buffer) {
+    super.queryFromStream(buffer);
 
-		final byte[] serializedPrevParams = buffer.getAsByteArray();
-		previousQueryParams = deserializeQueryParameters(serializedPrevParams);
+    final String rid = buffer.getAsString();
+    if ("".equals(rid))
+      nextPageRID = null;
+    else
+      nextPageRID = new ORecordId(rid);
 
-	}
+    final byte[] serializedPrevParams = buffer.getAsByteArray();
+    previousQueryParams = deserializeQueryParameters(serializedPrevParams);
 
-	/**
-	 * @return RID of the record that will be processed first during pagination mode.
-	 */
-	public ORID getNextPageRID() {
-		return nextPageRID;
-	}
+  }
 
-	public void resetPagination() {
-		nextPageRID = null;
-	}
+  /**
+   * @return RID of the record that will be processed first during pagination mode.
+   */
+  public ORID getNextPageRID() {
+    return nextPageRID;
+  }
 
-	public Iterator<T> iterator() {
-		execute();
-		return ((Iterable<T>) getResult()).iterator();
-	}
+  public void resetPagination() {
+    nextPageRID = null;
+  }
+
+  public Iterator<T> iterator() {
+    execute();
+    return ((Iterable<T>) getResult()).iterator();
+  }
 }

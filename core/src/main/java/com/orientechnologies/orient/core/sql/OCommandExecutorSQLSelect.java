@@ -335,6 +335,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     while (target.hasNext())
       if (!executeSearchRecord(target.next()))
         break;
+
+    if (request.getResultListener() != null)
+      request.getResultListener().end();
   }
 
   @Override

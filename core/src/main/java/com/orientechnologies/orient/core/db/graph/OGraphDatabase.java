@@ -132,7 +132,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public Iterable<ODocument> browseElements(final String iClass, final boolean iPolymorphic) {
-    return new ORecordIteratorClass<ODocument>(this, (ODatabaseRecordAbstract) getUnderlying(), iClass, iPolymorphic, false);
+    return new ORecordIteratorClass<ODocument>(this, (ODatabaseRecordAbstract) getUnderlying(), iClass, iPolymorphic, true, false);
   }
 
   public ODocument createVertex() {

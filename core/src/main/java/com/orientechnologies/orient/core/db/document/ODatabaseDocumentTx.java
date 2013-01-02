@@ -185,14 +185,14 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic, false);
+    return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic, true, false);
   }
 
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName));
+    return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), true);
   }
 
   @Override
@@ -201,7 +201,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), startClusterPosition,
-        endClusterPosition, loadTombstones);
+        endClusterPosition, true, loadTombstones);
   }
 
   /**

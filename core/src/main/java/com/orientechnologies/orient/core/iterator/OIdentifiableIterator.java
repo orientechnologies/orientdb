@@ -65,13 +65,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   private int                           currentEntryPosition   = -1;
   private OPhysicalPosition[]           positionsToProcess     = null;
 
+  private final boolean                 useCache;
   private final boolean                 iterateThroughTombstones;
 
   public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      boolean iterateThroughTombstones) {
+      final boolean useCache, final boolean iterateThroughTombstones) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
     this.iterateThroughTombstones = iterateThroughTombstones;
+    this.useCache = useCache;
 
     dbStorage = lowLevelDatabase.getStorage();
 
@@ -270,9 +272,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
       if (iRecord != null) {
         iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
-        iRecord = lowLevelDatabase.load(iRecord, fetchPlan, false, iterateThroughTombstones);
+        iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
       } else
-        iRecord = lowLevelDatabase.load(current, fetchPlan, false, iterateThroughTombstones);
+        iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
 
       if (iRecord != null) {
         browsedRecords++;

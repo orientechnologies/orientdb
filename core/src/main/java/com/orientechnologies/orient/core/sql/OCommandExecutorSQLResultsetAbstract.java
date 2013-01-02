@@ -346,8 +346,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
     final ORID[] range = getRange();
-    target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true, false)
-        .setRange(range[0], range[1]);
+    target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true,
+        request.isUseCache(), false).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -386,8 +386,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, clIds, false).setRange(
-        range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, clIds, false,
+        request.isUseCache()).setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

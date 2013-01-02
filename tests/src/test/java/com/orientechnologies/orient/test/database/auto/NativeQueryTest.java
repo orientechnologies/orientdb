@@ -30,45 +30,49 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(groups = "query")
 public class NativeQueryTest {
-	private ODatabaseDocument	database;
-	private ODocument					record;
+  private ODatabaseDocument database;
+  private ODocument         record;
 
-	@Parameters(value = "url")
-	public NativeQueryTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public NativeQueryTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void queryNativeLike() {
-		database.open("admin", "admin");
+  @Test
+  public void queryNativeLike() {
+    database.open("admin", "admin");
 
-		@SuppressWarnings("serial")
-		ONativeSynchQuery<OQueryContextNative> q = (ONativeSynchQuery<OQueryContextNative>) new ONativeSynchQuery<OQueryContextNative>(
-				database, "Profile", new OQueryContextNative()) {
+    @SuppressWarnings("serial")
+    ONativeSynchQuery<OQueryContextNative> q = (ONativeSynchQuery<OQueryContextNative>) new ONativeSynchQuery<OQueryContextNative>(
+        database, "Profile", new OQueryContextNative()) {
 
-			@Override
-			public boolean filter(OQueryContextNative iRecord) {
-				return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
-			};
+      @Override
+      public boolean filter(OQueryContextNative iRecord) {
+        return iRecord.field("location").field("city").field("name").eq("Rome").and().field("name").like("G%").go();
+      }
 
-		}.setLimit(20);
+      @Override
+      public void end() {
+      };
 
-		List<ODocument> result = (List<ODocument>) q.execute();
-		int firstResultSize = result.size();
+    }.setLimit(20);
 
-		for (int i = 0; i < result.size(); ++i) {
-			record = result.get(i);
+    List<ODocument> result = (List<ODocument>) q.execute();
+    int firstResultSize = result.size();
 
-			OrientTest.printRecord(i, record);
+    for (int i = 0; i < result.size(); ++i) {
+      record = result.get(i);
 
-			Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
-			Assert.assertEquals(((ODocument) ((ODocument) record.field("location")).field("city")).field("name"), "Rome");
-			Assert.assertTrue(record.field("name").toString().startsWith("G"));
-		}
+      OrientTest.printRecord(i, record);
 
-		result = (List<ODocument>) q.execute();
-		Assert.assertEquals(result.size(), firstResultSize);
+      Assert.assertTrue(record.getClassName().equalsIgnoreCase("Profile"));
+      Assert.assertEquals(((ODocument) ((ODocument) record.field("location")).field("city")).field("name"), "Rome");
+      Assert.assertTrue(record.field("name").toString().startsWith("G"));
+    }
 
-		database.close();
-	}
+    result = (List<ODocument>) q.execute();
+    Assert.assertEquals(result.size(), firstResultSize);
+
+    database.close();
+  }
 }

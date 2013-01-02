@@ -395,7 +395,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, true);
   }
 
   @Override
@@ -407,7 +407,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
   }
 
   @Override
@@ -419,7 +419,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
   }
 
   public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
@@ -429,7 +429,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId);
+    return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId, true);
   }
 
   public OCommandRequest command(final OCommandRequest iCommand) {

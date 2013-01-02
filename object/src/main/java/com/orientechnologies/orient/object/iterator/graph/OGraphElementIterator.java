@@ -44,7 +44,7 @@ public abstract class OGraphElementIterator<T extends OGraphElement> implements 
     className = iClassName;
     underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(),
         (ODatabaseRecordAbstract) ((ODatabaseDocumentTx) iDatabase.getUnderlying()).getUnderlying(), iClassName, iPolymorphic,
-        false);
+        true, false);
 
     setReuseSameObject(false);
     underlying.setReuseSameRecord(false);

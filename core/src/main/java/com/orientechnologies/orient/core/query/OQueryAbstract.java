@@ -25,6 +25,7 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
   protected OCommandContext context;
 
   public OQueryAbstract() {
+    useCache = true;
   }
 
   @SuppressWarnings("unchecked")

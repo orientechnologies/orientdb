@@ -73,4 +73,8 @@ public class OHazelcastResultListener implements OCommandResultListener {
   public long getSelectId() {
     return selectId;
   }
+
+  @Override
+  public void end() {
+  }
 }

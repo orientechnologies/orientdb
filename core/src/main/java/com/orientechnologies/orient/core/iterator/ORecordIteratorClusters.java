@@ -44,15 +44,15 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   protected ORID       endRange;
 
   public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int[] iClusterIds, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
+      final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
     clusterIds = iClusterIds;
     config();
   }
 
   protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {

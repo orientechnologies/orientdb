@@ -30,25 +30,30 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 
 @Test(enabled = false)
 public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
-	protected int								resultCount	= 0;
-	private ODatabaseDocumentTx	database;
+  protected int               resultCount = 0;
+  private ODatabaseDocumentTx database;
 
-	public SQLAsynchQuerySpeedTest(String iURL) {
-		super(1);
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  public SQLAsynchQuerySpeedTest(String iURL) {
+    super(1);
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public void cycle() throws UnsupportedEncodingException {
-		System.out.println("1 -----------------------");
-		OrientTest.printRecords((List<? extends ORecord<?>>) database.command(
-				new OSQLAsynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7", this))
-				.execute());
-	}
+  @Override
+  @SuppressWarnings("unchecked")
+  public void cycle() throws UnsupportedEncodingException {
+    System.out.println("1 -----------------------");
+    OrientTest.printRecords((List<? extends ORecord<?>>) database.command(
+        new OSQLAsynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7", this))
+        .execute());
+  }
 
-	public boolean result(final Object iRecord) {
-		OrientTest.printRecord(resultCount++, iRecord);
-		return true;
-	}
+  public boolean result(final Object iRecord) {
+    OrientTest.printRecord(resultCount++, iRecord);
+    return true;
+  }
+
+  @Override
+  public void end() {
+  }
+
 }

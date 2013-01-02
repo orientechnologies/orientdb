@@ -27,32 +27,36 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class NativeSynchQuerySpeedTest extends SpeedTestMonoThread {
-	private ODatabaseDocumentTx	database;
-	private List<ODocument>			result;
+  private ODatabaseDocumentTx database;
+  private List<ODocument>     result;
 
-	public NativeSynchQuerySpeedTest() {
-		super(1);
-	}
+  public NativeSynchQuerySpeedTest() {
+    super(1);
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
-		new ONativeSynchQuery<OQueryContextNative>(database, "Animal", new OQueryContextNative()) {
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
+    new ONativeSynchQuery<OQueryContextNative>(database, "Animal", new OQueryContextNative()) {
 
-			@Override
-			public boolean filter(OQueryContextNative iRecord) {
-				return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
-			}
+      @Override
+      public boolean filter(OQueryContextNative iRecord) {
+        return iRecord.column("race").like("Euro%").and().column("race").like("%an").and().column("id").toInt().eq(10).go();
+      }
 
-		}.execute();
-	}
+      @Override
+      public void end() {
+      }
 
-	@Override
-	public void deinit() throws IOException {
-		if (result == null)
-			System.out.println("Error on execution");
-		else {
-			System.out.println("Record found: " + result.size());
-			OrientTest.printRecords(result);
-		}
-	}
+    }.execute();
+  }
+
+  @Override
+  public void deinit() throws IOException {
+    if (result == null)
+      System.out.println("Error on execution");
+    else {
+      System.out.println("Record found: " + result.size());
+      OrientTest.printRecords(result);
+    }
+  }
 }

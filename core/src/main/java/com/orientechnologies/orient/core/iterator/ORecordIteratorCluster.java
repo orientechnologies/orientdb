@@ -34,14 +34,15 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   private ORecord<?> currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int iClusterId) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, false);
+      final int iClusterId, final boolean iUseCache) {
+    this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, iUseCache,
+        false);
   }
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
-      final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");

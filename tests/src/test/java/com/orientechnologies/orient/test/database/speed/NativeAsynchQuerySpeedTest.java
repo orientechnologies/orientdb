@@ -25,27 +25,31 @@ import com.orientechnologies.orient.core.query.nativ.OQueryContextNative;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 
 public class NativeAsynchQuerySpeedTest extends SpeedTestMonoThread implements OCommandResultListener {
-	private ODatabaseDocumentTx	database;
-	protected int								resultCount	= 0;
+  private ODatabaseDocumentTx database;
+  protected int               resultCount = 0;
 
-	public NativeAsynchQuerySpeedTest() {
-		super(1);
-	}
+  public NativeAsynchQuerySpeedTest() {
+    super(1);
+  }
 
-	@Override
-	public void cycle() throws UnsupportedEncodingException {
+  @Override
+  public void cycle() throws UnsupportedEncodingException {
 
-		new ONativeAsynchQuery<OQueryContextNative>(database, "Animal", new OQueryContextNative(), this) {
+    new ONativeAsynchQuery<OQueryContextNative>(database, "Animal", new OQueryContextNative(), this) {
 
-			@Override
-			public boolean filter(OQueryContextNative iRecord) {
-				return iRecord.column("id").toInt().minor(10).go();
-			}
-		}.run();
-	}
+      @Override
+      public boolean filter(OQueryContextNative iRecord) {
+        return iRecord.column("id").toInt().minor(10).go();
+      }
+    }.run();
+  }
 
-	public boolean result(final Object iRecord) {
-		OrientTest.printRecord(resultCount++, iRecord);
-		return true;
-	}
+  public boolean result(final Object iRecord) {
+    OrientTest.printRecord(resultCount++, iRecord);
+    return true;
+  }
+
+  @Override
+  public void end() {
+  }
 }

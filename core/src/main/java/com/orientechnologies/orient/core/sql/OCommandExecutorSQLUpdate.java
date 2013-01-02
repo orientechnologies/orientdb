@@ -152,6 +152,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         queryArgs.put(i - parameterCounter, parameters.getByName(i));
     }
 
+    query.setUseCache(false);
     getDatabase().query(query, queryArgs);
     return recordCount;
   }
@@ -396,6 +397,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   @Override
   public String getSyntax() {
     return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT] [[,] <field-name> = <expression>|<sub-command>]* [WHERE <conditions>]";
+  }
+
+  @Override
+  public void end() {
   }
 
   protected String getBlock(String fieldValue) {

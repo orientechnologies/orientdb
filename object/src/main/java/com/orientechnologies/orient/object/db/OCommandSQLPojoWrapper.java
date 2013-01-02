@@ -92,4 +92,9 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
     command.setFetchPlan(iFetchPlan);
     return null;
   }
+
+  @Override
+  public void setUseCache(boolean iUseCache) {
+    command.setUseCache(iUseCache);
+  }
 }

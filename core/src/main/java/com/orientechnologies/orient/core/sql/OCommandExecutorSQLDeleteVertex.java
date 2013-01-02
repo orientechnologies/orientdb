@@ -135,4 +135,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLSetAware
   public String getSyntax() {
     return "DELETE VERTEX <rid>|<[<class>] [WHERE <conditions>] [LIMIT <max-records>]>";
   }
+
+  @Override
+  public void end() {
+  }
 }

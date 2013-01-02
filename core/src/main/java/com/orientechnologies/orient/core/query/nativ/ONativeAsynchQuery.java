@@ -84,7 +84,7 @@ public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extend
       throw new OCommandExecutionException("Class '" + className + "' was not found");
 
     final ORecordIteratorClass<ORecordInternal<?>> target = new ORecordIteratorClass<ORecordInternal<?>>(database,
-        (ODatabaseRecordAbstract) database, className, isPolymorphic(), false);
+        (ODatabaseRecordAbstract) database, className, isPolymorphic(), useCache, false);
 
     // BROWSE ALL THE RECORDS
     for (OIdentifiable id : target) {
@@ -105,6 +105,8 @@ public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extend
           break;
       }
     }
+
+    resultListener.end();
 
     return null;
   }

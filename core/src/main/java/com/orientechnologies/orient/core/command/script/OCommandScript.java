@@ -36,11 +36,13 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   private CompiledScript compiledScript;
 
   public OCommandScript() {
+    useCache = true;
   }
 
   public OCommandScript(final String iLanguage, final String iText) {
     super(iText);
     language = iLanguage;
+    useCache = true;
   }
 
   public OCommandScript(final String iText) {

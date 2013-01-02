@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-
-import java.util.Map;
 
 /**
  * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called for each
@@ -51,7 +51,8 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     this(iText, -1, iResultListener);
   }
 
-  public OSQLAsynchQuery(final String iText, final int iLimit, final String iFetchPlan, final Map<Object, Object> iArgs, final OCommandResultListener iResultListener) {
+  public OSQLAsynchQuery(final String iText, final int iLimit, final String iFetchPlan, final Map<Object, Object> iArgs,
+      final OCommandResultListener iResultListener) {
     this(iText, iLimit, iResultListener);
     this.fetchPlan = iFetchPlan;
     this.parameters = iArgs;

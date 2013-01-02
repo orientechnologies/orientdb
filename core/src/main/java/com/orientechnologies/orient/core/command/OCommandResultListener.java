@@ -22,5 +22,17 @@ package com.orientechnologies.orient.core.command;
  * 
  */
 public interface OCommandResultListener {
-	public boolean result(Object iRecord);
+  /**
+   * This method is called for each result.
+   * 
+   * @param iRecord
+   *          Current record
+   * @return True to continue the query, otherwise false
+   */
+  public boolean result(Object iRecord);
+
+  /**
+   * Called at the end of processing. This is useful to clean-up local attributes.
+   */
+  public void end();
 }

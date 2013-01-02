@@ -1556,5 +1556,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       return true;
     }
+
+    @Override
+    public void end() {
+    }
+
   }
 }
