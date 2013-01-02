@@ -39,7 +39,8 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     // AGGREGATION MODE (STATEFULL)
     for (Object value : iParameters) {
       if (value != null) {
@@ -82,11 +83,12 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     final Map<Long, Collection<Object>> chunks = new HashMap<Long, Collection<Object>>();
     for (Object iParameter : resultsToMerge) {
-      final Map<String, Object> container = (Map<String, Object>) ((Collection) iParameter).iterator().next();
+      final Map<String, Object> container = (Map<String, Object>) ((Collection<?>) iParameter).iterator().next();
       chunks.put((Long) container.get("node"), (Collection<Object>) container.get("context"));
     }
     final Collection<Object> result = new ArrayList<Object>();

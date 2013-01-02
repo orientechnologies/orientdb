@@ -43,6 +43,7 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     super(NAME, 1, -1);
   }
 
+  @SuppressWarnings("unchecked")
   public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     if (iParameters[0] == null)
       return null;
@@ -123,6 +124,7 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     return result;
   }
 
+  @SuppressWarnings("unchecked")
   private Set<Object> unwrap(Object obj, String field) {
     final Set<Object> objAsSet = (Set<Object>) obj;
     final Map<String, Object> objAsMap = (Map<String, Object>) objAsSet.iterator().next();

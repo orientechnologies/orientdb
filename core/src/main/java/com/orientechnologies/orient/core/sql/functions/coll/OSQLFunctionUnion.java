@@ -89,6 +89,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     final Collection<Object> result = new HashSet<Object>();
     for (Object iParameter : resultsToMerge) {
+      @SuppressWarnings("unchecked")
       final Collection<Object> items = (Collection<Object>) iParameter;
       if (items != null) {
         result.addAll(items);

@@ -89,6 +89,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     return "Syntax error: intersect(<field>*)";
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     final Collection<Object> result = new HashSet<Object>();

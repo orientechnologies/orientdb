@@ -38,7 +38,8 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (context == null)
       context = new HashMap<Object, Object>();
 
@@ -79,6 +80,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     final Map<Long, Map<Object, Object>> chunks = new HashMap<Long, Map<Object, Object>>();
