@@ -78,7 +78,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
       try {
         compiledScript = c.compile(parserText);
       } catch (ScriptException e) {
-        throw new OCommandScriptException("Error on compiling script", request.getText(), e.getColumnNumber(), e);
+        scriptManager.getErrorMessage(e, lib);
       }
 
       request.setCompiledScript(compiledScript);

@@ -182,7 +182,18 @@ public class OScriptManager {
   }
 
   public String getErrorMessage(final ScriptException e, final String lib) {
-    final int errorLineNumber = e.getLineNumber();
+    int errorLineNumber = e.getLineNumber();
+
+    if (errorLineNumber <= 0) {
+      // FIX TO RHINO: SOMETIMES HAS THE LINE NUMBER INSIDE THE TEXT :-(
+      final String excMessage = e.toString();
+      final int pos = excMessage.indexOf("<Unknown Source>#");
+      if (pos > -1) {
+        final int end = excMessage.indexOf(')', pos + "<Unknown Source>#".length());
+        String lineNumberAsString = excMessage.substring(pos + "<Unknown Source>#".length(), end);
+        errorLineNumber = Integer.parseInt(lineNumberAsString);
+      }
+    }
 
     if (errorLineNumber <= 0) {
       throw new OCommandScriptException("Error on evaluation of the script library. Error: " + e.getMessage()
