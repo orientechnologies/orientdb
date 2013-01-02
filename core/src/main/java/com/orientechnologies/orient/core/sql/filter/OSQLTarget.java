@@ -118,7 +118,8 @@ public class OSQLTarget extends OBaseParser {
     } else {
 
       while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null)) {
-        String subjectName = parserRequiredWord(true, "Target not found");
+        String originalSubjectName = parserRequiredWord(false, "Target not found");
+        String subjectName = originalSubjectName.toUpperCase();
 
         final String alias;
         if (subjectName.equals("AS"))
@@ -136,6 +137,16 @@ public class OSQLTarget extends OBaseParser {
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
           // REGISTER AS INDEX
           targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.DICTIONARY_PREFIX)) {
+          // DICTIONARY
+          final String key = originalSubjectName.substring(OCommandExecutorSQLAbstract.DICTIONARY_PREFIX.length());
+          targetRecords = new ArrayList<OIdentifiable>();
+
+          final OIdentifiable value = ODatabaseRecordThreadLocal.INSTANCE.get().getDictionary().get(key);
+          if (value != null)
+            ((List<OIdentifiable>) targetRecords).add(value);
+
         } else {
           if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
             // REGISTER AS CLASS
