@@ -245,7 +245,7 @@ public class OHttpResponse {
           } else if (OMultiValue.isMultiValue(entry))
             formatMultiValue(OMultiValue.getMultiValueIterator(entry), buffer, format);
           else
-            buffer.append(OJSONWriter.writeValue(entry));
+            buffer.append(OJSONWriter.writeValue(entry, format));
         }
       }
     }
