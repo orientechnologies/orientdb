@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -71,7 +72,13 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
         if (value instanceof OSQLFilterItemVariable)
           value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
 
-        result.retainAll((Collection<?>) value);
+        if (value != null) {
+          if (!(value instanceof Collection<?>))
+            // CONVERT IT INTO A COLLECTION
+            value = Arrays.asList(value);
+
+          result.retainAll((Collection<?>) value);
+        }
       }
 
       return result;
