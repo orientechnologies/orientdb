@@ -223,7 +223,7 @@
 									<td>
 										<button id="removeCluster" class="btn"
 											style="text-align: left">
-											Remove Cluster <img border="0" alt="Remove Cluster"
+											Drop Cluster <img border="0" alt="Drop Cluster"
 												src="images/delete.png" align="top" />
 										</button>
 									</td>
@@ -509,7 +509,10 @@
 		} ], databaseInfo['clusters'], {
 			width : '900px',
 			sortname : 'id',
-			editurl : getStudioURL('clusters')
+			editurl : getStudioURL('clusters'),
+			onSelectRow : function(rowNum) {
+			  selectedCluster =  databaseInfo['clusters'][rowNum - 1].name; 
+			}
 		});
 
 		$("#addPhysicalCluster").click(function() {
@@ -546,7 +549,7 @@
 												{
 													reloadAfterSubmit : false,
 													closeOnEscape : true,
-													delData : [ selectedClassName ],
+													delData : [ selectedCluster ],
 													afterSubmit : function(
 															response, postdata) {
 														$("#output")
