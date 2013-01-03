@@ -1455,9 +1455,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * @param iException
    */
   protected void handleException(final String iMessage, final Exception iException) {
-    if (iException instanceof OTimeoutException) {
-      // DO NOTHING
-    } else if (iException instanceof OException)
+    if (iException instanceof OTimeoutException)
+      // TIMEOUT, AVOID LOOP, RE-THROW IT
+      throw (OTimeoutException) iException;
+    else if (iException instanceof OException)
       // RE-THROW IT
       throw (OException) iException;
     else if (!(iException instanceof IOException))
