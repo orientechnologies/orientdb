@@ -203,7 +203,8 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(final String iString) {
-    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
+    //return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
+    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString, true));
   }
 
   public ODocument save(ORecordInternal<?> iRecord) {
