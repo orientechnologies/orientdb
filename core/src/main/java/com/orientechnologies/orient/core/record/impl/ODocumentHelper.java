@@ -258,12 +258,9 @@ public class ODocumentHelper {
             final HashSet<Object> temp = new HashSet<Object>();
             for (Object o : (Collection<?>) value) {
               if (o instanceof OIdentifiable) {
-                Object r = getIdentifiableValue((OIdentifiable) o, fieldName);
+                Object r = getFieldValue(o, iFieldName);
                 if (r != null)
-                  if (r instanceof Collection<?>)
-                    temp.addAll((Collection<? extends Object>) r);
-                  else
-                    temp.add(r);
+                  OMultiValue.add(temp, r);
               }
             }
             value = temp;
