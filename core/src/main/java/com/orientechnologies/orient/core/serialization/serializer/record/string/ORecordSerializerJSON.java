@@ -30,6 +30,7 @@ import java.util.TimeZone;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
@@ -75,13 +76,17 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     dateFormat = new SimpleDateFormat(DEF_DATE_FORMAT);
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
+  
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
+    return fromString(iSource, iRecord, iFields, null, needReload);
+  }
 
   @Override
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields) {
-    return fromString(iSource, iRecord, iFields, null);
+    return fromString(iSource, iRecord, iFields, null, false);
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions) {
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions, boolean needReload) {
     if (iSource == null)
       throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -135,6 +140,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
             iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
+          } 
+        } else if(needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
+          if(fieldValue != null && fieldValue.length() > 0) {
+            ORecordInternal<?> localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
+            if(localRecord != null)
+                iRecord = localRecord;
           }
         }
       }
@@ -273,7 +284,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       if (iNoMap || hasTypeField(fields)) {
         // OBJECT
-        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions);
+        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions, false);
         if (iType != null && iType.isLink()) {
         } else if (recordInternal instanceof ODocument)
           ((ODocument) recordInternal).addOwner(iRecord);
