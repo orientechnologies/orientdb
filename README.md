@@ -30,7 +30,7 @@ Orient ODBMS was the very first version of the Orient engine developed in C++ in
 
 ## How does it compares with other products?
 
-Take a look to [GraphDB comparison](https://github.com/nuvolabase/orientdb/wiki/GraphDBComparison) and [DocumentDB comparison](https://github.com/nuvolabase/orientdb/wiki/DocumentDBComparison).
+Take a look to [GraphDB comparison](https://github.com/nuvolabase/orientdb/wiki/GraphDB-Comparison) and [DocumentDB comparison](https://github.com/nuvolabase/orientdb/wiki/DocumentDB-Comparison).
 
 ## Easy to install and use
 
