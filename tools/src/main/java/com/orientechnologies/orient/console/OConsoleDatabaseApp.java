@@ -917,9 +917,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         out.println(" (" + localStorage.getHoles() + " holes, total size of holes: " + OFileUtils.getSizeAsString(holeSize) + ")");
       }
 
-      clusters();
-      classes();
-      indexes();
+      listClusters();
+      listClasses();
+      listIndexes();
     }
   }
 
@@ -1002,8 +1002,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Display all indexes")
-  public void indexes() {
+  @ConsoleCommand(description = "Display all indexes", aliases = { "indexes" })
+  public void listIndexes() {
     if (currentDatabaseName != null) {
       out.println("\nINDEXES:");
       out.println("----------------------------------------------+------------+-----------------------+----------------+-----------+");
@@ -1053,8 +1053,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       out.println("No database selected yet.");
   }
 
-  @ConsoleCommand(description = "Display all the configured clusters")
-  public void clusters() {
+  @ConsoleCommand(description = "Display all the configured clusters", aliases = { "clusters" })
+  public void listClusters() {
     if (currentDatabaseName != null) {
       out.println("\nCLUSTERS:");
       out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
@@ -1097,8 +1097,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       out.println("No database selected yet.");
   }
 
-  @ConsoleCommand(description = "Display all the configured classes")
-  public void classes() {
+  @ConsoleCommand(description = "Display all the configured classes", aliases = { "classes" })
+  public void listClasses() {
     if (currentDatabaseName != null) {
       out.println("\nCLASSES:");
       out.println("----------------------------------------------+---------------------+-----------+");
