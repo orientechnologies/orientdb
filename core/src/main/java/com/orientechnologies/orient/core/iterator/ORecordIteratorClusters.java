@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -43,14 +42,14 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   protected ORID       beginRange;
   protected ORID       endRange;
 
-  public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones) {
+  public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final int[] iClusterIds,
+      final boolean iUseCache, final boolean iterateThroughTombstones) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
     clusterIds = iClusterIds;
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
   }

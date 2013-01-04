@@ -20,7 +20,6 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -83,8 +82,8 @@ public abstract class ONativeAsynchQuery<CTX extends OQueryContextNative> extend
     if (cls == null)
       throw new OCommandExecutionException("Class '" + className + "' was not found");
 
-    final ORecordIteratorClass<ORecordInternal<?>> target = new ORecordIteratorClass<ORecordInternal<?>>(database,
-        (ODatabaseRecordAbstract) database, className, isPolymorphic(), useCache, false);
+    final ORecordIteratorClass<ORecordInternal<?>> target = new ORecordIteratorClass<ORecordInternal<?>>(database, database,
+        className, isPolymorphic(), useCache, false);
 
     // BROWSE ALL THE RECORDS
     for (OIdentifiable id : target) {
