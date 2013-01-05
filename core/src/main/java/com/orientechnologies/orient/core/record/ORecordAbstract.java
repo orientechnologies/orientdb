@@ -176,13 +176,19 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
-    ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
+    //ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
+    ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); //Add new parameter to accommodate new API, noting change
     return (RET) this;
   }
 
   public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null);
     return (RET) this;
+  }
+  
+  //Add New API to load record if rid exist
+  public <RET extends ORecord<T>> RET fromJSON(final String iSource, boolean needReload) {
+    return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
   public String toJSON() {
