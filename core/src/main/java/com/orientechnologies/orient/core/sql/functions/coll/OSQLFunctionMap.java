@@ -34,13 +34,15 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   public static final String NAME = "map";
 
   public OSQLFunctionMap() {
-    super(NAME, 1, 2);
+    super(NAME, 1, -1);
   }
 
   @SuppressWarnings("unchecked")
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (context == null)
+
+    if (iParameters.length > 2)
+      // IN LINE MODE
       context = new HashMap<Object, Object>();
 
     if (iParameters.length == 1) {
@@ -48,9 +50,23 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
         // INSERT EVERY SINGLE COLLECTION ITEM
         context.putAll((Map<Object, Object>) iParameters[0]);
       else
-        throw new IllegalArgumentException("Map function: expected a map or two parameters as key, value");
-    } else
-      context.put(iParameters[0], iParameters[1]);
+        throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
+    } else if (iParameters.length % 2 != 0)
+      throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
+    else
+      for (int i = 0; i < iParameters.length; i += 2) {
+        final Object key = iParameters[i];
+        final Object value = iParameters[i + 1];
+
+        if (value != null) {
+          if (iParameters.length <= 2 && context == null)
+            // AGGREGATION MODE (STATEFULL)
+            context = new HashMap<Object, Object>();
+
+          context.put(key, value);
+        }
+      }
+
     return prepareResult(context);
   }
 
@@ -59,7 +75,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
-    return false;
+    return configuredParameters.length <= 2;
   }
 
   @Override

@@ -41,11 +41,16 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    // AGGREGATION MODE (STATEFULL)
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
+    if (iParameters.length > 1)
+      // IN LINE MODE
+      context = new HashSet<Object>();
+
     for (Object value : iParameters) {
       if (value != null) {
-        if (context == null)
+        if (iParameters.length == 1 && context == null)
+          // AGGREGATION MODE (STATEFULL)
           context = new HashSet<Object>();
 
         if (value instanceof Collection<?>)
@@ -55,6 +60,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
           context.add(value);
       }
     }
+
     return prepareResult(context);
   }
 
@@ -63,7 +69,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
-    return false;
+    return configuredParameters.length == 1;
   }
 
   @Override
