@@ -332,12 +332,20 @@ public abstract class OStringSerializerHelper {
 
   public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
       final int iEndPosition, final char iRecordSeparator, final char... iJumpCharacters) {
+    return split(iParts, iSource, iStartPosition, iEndPosition, String.valueOf(iRecordSeparator), iJumpCharacters);
+  }
+
+  public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
+      int iEndPosition, final String iRecordSeparators, final char... iJumpCharacters) {
+    if (iEndPosition == -1)
+      iEndPosition = iSource.length();
+
     final StringBuilder buffer = new StringBuilder();
 
     for (int i = iStartPosition; i < iEndPosition; ++i) {
       char c = iSource.charAt(i);
 
-      if (c == iRecordSeparator) {
+      if (iRecordSeparators.indexOf(c) > -1) {
         iParts.add(buffer.toString());
         buffer.setLength(0);
       } else {

@@ -39,7 +39,8 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
       final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
   /**
-   * At run-time the evaluation per record must return always true since the recordset are filtered at the begin.
+   * At run-time the evaluation per record must return always true since the recordset are filtered at the beginning unless an
+   * operator can work in both modes. In this case sub-class must extend it.
    */
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
