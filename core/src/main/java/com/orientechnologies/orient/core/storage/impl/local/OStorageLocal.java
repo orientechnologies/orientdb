@@ -31,6 +31,7 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -1869,8 +1870,13 @@ public class OStorageLocal extends OStorageEmbedded {
           else
             throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
 
-        if (!ppos.recordVersion.isTombstone() && ppos.dataSegmentPos > -1)
-          getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
+        if (!ppos.recordVersion.isTombstone() && ppos.dataSegmentPos > -1) {
+          try {
+            getDataSegmentById(ppos.dataSegmentId).deleteRecord(ppos.dataSegmentPos);
+          } catch (OIOException e) {
+            OLogManager.instance().error(this, "Cannot remove the record in data segment, however remove it from cluster", e);
+          }
+        }
 
         if (useTombstones && iClusterSegment.hasTombstonesSupport())
           iClusterSegment.convertToTombstone(iRid.clusterPosition);

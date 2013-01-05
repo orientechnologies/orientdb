@@ -19,9 +19,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -269,11 +271,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       if (!moveResult)
         return null;
 
-      if (iRecord != null) {
-        iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
-        iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
-      } else
-        iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
+      try {
+        if (iRecord != null) {
+          iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
+          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
+        } else
+          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
+      } catch (ODatabaseException e) {
+        OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
+      }
 
       if (iRecord != null) {
         browsedRecords++;

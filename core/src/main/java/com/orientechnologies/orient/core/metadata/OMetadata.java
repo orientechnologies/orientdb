@@ -132,7 +132,7 @@ public class OMetadata {
                   try {
                     OLogManager.instance().info(idx, "Rebuilding index " + idx.getName() + "..");
                     idx.rebuild();
-                  } catch (Exception e) {
+                  } catch (Throwable e) {
                     OLogManager.instance().info(idx, "Continue with remaining indexes...");
                   }
                 }
