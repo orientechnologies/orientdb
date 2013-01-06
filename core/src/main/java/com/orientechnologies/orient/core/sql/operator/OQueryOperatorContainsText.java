@@ -139,6 +139,10 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
+
+    if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
+      return ((Collection<?>) result).size();
+
     return result;
   }
 
