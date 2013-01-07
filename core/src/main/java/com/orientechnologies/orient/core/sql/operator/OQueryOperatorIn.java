@@ -57,12 +57,17 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof Collection<?>) {
         // AGAINST COLLECTION OF ITEMS
         final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
+
+        boolean found = false;
         for (final Object o1 : sourceCollection) {
           for (final Object o2 : collectionToMatch) {
-            if (OQueryOperatorEquals.equals(o1, o2))
-              return true;
+            if (OQueryOperatorEquals.equals(o1, o2)) {
+              found = true;
+              break;
+            }
           }
         }
+        return found;
       } else {
         // AGAINST SINGLE ITEM
         if (sourceCollection instanceof Set<?>)
