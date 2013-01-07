@@ -84,17 +84,17 @@
     </modules>
 
     <scm>
-        <connection>scm:svn:http://orient.googlecode.com/svn/trunk/</connection>
-        <developerConnection>scm:svn:https://orient.googlecode.com/svn/trunk/</developerConnection>
-        <url>http://orient.googlecode.com/svn/trunk/</url>
+        <connection>scm:git:git@github.com:nuvolabase/orientdb.git</connection>
+        <developerConnection>scm:git:git@github.com:nuvolabase/orientdb.git</developerConnection>
+        <url>scm:git:git@github.com:nuvolabase/orientdb.git</url>
     </scm>
     <issueManagement>
-        <system>google code</system>
-        <url>http://code.google.com/p/orient/issues/list</url>
+        <system>GitHub Issues</system>
+        <url>https://github.com/nuvolabase/orientdb/issues</url>
     </issueManagement>
     <ciManagement>
         <system>jenkins</system>
-        <url>http://datastorm.com.ua/jenkins/</url>
+        <url>http://datastorm.com.ua/</url>
     </ciManagement>
     <distributionManagement>
         <repository>

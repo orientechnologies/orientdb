@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -34,6 +35,14 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   protected final OClass targetClass;
   protected boolean      polymorphic;
   protected boolean      useCache;
+
+  /**
+   * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
+   */
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic) {
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
+  }
 
   public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
       final boolean iPolymorphic) {
