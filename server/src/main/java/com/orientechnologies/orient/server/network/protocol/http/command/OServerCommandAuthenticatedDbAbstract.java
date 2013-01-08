@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -149,9 +150,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
-    // final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase("graph", iRequest.databaseName, parts.get(0),
-        parts.get(1));
+    final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    // final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase("graph", iRequest.databaseName, parts.get(0),
+    // parts.get(1));
 
     if (db != null) {
       iRequest.data.lastDatabase = db.getName();
