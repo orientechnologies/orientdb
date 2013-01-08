@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -29,6 +30,8 @@ public class ODocumentSerializationTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
+    OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.setValue(Boolean.TRUE);
+
     db = new ODatabaseDocumentTx("memory:testdocumentserialization");
     db.create();
 
@@ -57,6 +60,8 @@ public class ODocumentSerializationTest {
     final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     final ODocument loadedDoc = (ODocument) in.readObject();
 
+    Assert.assertEquals(loadedDoc.getIdentity(), docId);
+    Assert.assertEquals(loadedDoc.getRecordVersion(), doc.getRecordVersion());
     Assert.assertEquals(loadedDoc.field("name"), "Artem");
     Assert.assertEquals(loadedDoc.field("country", OType.LINK), linkedId);
 

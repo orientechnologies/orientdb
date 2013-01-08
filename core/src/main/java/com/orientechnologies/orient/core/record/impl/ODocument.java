@@ -71,7 +71,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable, Externalizable {
+public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable,
+    Externalizable {
   private static final long                                              serialVersionUID = 1L;
 
   public static final byte                                               RECORD_TYPE      = 'd';
@@ -1543,17 +1544,29 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   @Override
   public void writeExternal(ObjectOutput stream) throws IOException {
-    final byte[] bytes = toStream();
-    stream.writeInt(bytes.length);
-    stream.write(bytes);
+    final byte[] idBuffer = _recordId.toStream();
+    stream.writeInt(idBuffer.length);
+    stream.write(idBuffer);
+
+    _recordVersion.getSerializer().writeTo(stream, _recordVersion);
+
+    final byte[] content = toStream();
+    stream.writeInt(content.length);
+    stream.write(content);
   }
 
   @Override
-  public void readExternal(ObjectInput stream) throws IOException {
-    final int len = stream.readInt();
-    final byte[] bytes = new byte[len];
-    stream.readFully(bytes);
+  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
+    final byte[] idBuffer = new byte[stream.readInt()];
+    stream.readFully(idBuffer);
+    _recordId.fromStream(idBuffer);
 
-    fromStream(bytes);
+    _recordVersion.getSerializer().readFrom(stream, _recordVersion);
+
+    final int len = stream.readInt();
+    final byte[] content = new byte[len];
+    stream.readFully(content);
+
+    fromStream(content);
   }
 }
