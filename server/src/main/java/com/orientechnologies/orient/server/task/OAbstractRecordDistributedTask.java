@@ -78,7 +78,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       try {
         operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, opType, this);
       } catch (IOException e) {
-        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%d", e, nodeSource, getName(),
+        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%s", e, nodeSource, getName(),
             rid, version);
         throw new ODistributedException("Error on logging operation", e);
       }
