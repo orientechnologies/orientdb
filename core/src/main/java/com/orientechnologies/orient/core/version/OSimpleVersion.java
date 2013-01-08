@@ -65,17 +65,17 @@ public final class OSimpleVersion implements ORecordVersion {
   @Override
   public boolean isUntracked() {
     return version == -1;
-	}
+  }
 
-	@Override
-	public boolean isTemporary() {
-		return version < -1;
-	}
+  @Override
+  public boolean isTemporary() {
+    return version < -1;
+  }
 
-	@Override
-	public boolean isValid() {
-		return version > -1;
-	}
+  @Override
+  public boolean isValid() {
+    return version > -1;
+  }
 
   @Override
   public boolean isTombstone() {
@@ -89,6 +89,19 @@ public final class OSimpleVersion implements ORecordVersion {
 
     version++;
     version = -version;
+  }
+
+  @Override
+  public byte[] toStream() {
+    final byte[] buffer = new byte[OBinaryProtocol.SIZE_INT];
+    getSerializer().writeTo(buffer, 0, this);
+
+    return buffer;
+  }
+
+  @Override
+  public void fromStream(byte[] stream) {
+    getSerializer().readFrom(stream, 0, this);
   }
 
   @Override
