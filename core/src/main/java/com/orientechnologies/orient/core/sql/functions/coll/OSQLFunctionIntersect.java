@@ -48,8 +48,11 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     if (value instanceof OSQLFilterItemVariable)
       value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
 
-    if (value == null || !(value instanceof Collection<?>))
+    if (value == null)
       return Collections.emptySet();
+
+    if (!(value instanceof Collection<?>))
+      value = Arrays.asList(value);
 
     final Collection<?> coll = (Collection<?>) value;
 
