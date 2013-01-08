@@ -27,7 +27,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 /**
- * Dynamic script engine for OrientDB SQL commands.
+ * Dynamic script engine for OrientDB SQL commands. This implementation is multi-threads.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
