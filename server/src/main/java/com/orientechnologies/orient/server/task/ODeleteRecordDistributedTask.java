@@ -53,7 +53,7 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%d", nodeSource, databaseName, rid, version);
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%s", nodeSource, databaseName, rid.toString(), version.toString());
 
     final ODatabaseDocumentTx database = openDatabase();
     try {

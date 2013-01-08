@@ -60,7 +60,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
   public T call() {
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%d", nodeSource, getName(), rid, version);
+      OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(), version.toString());
 
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
@@ -79,7 +79,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
         operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, opType, this);
       } catch (IOException e) {
         OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%s", e, nodeSource, getName(),
-            rid, version);
+            rid.toString(), version.toString());
         throw new ODistributedException("Error on logging operation", e);
       }
     else
@@ -94,8 +94,8 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
         try {
           setAsCompleted(dbSynchronizer, operationLogOffset);
         } catch (IOException e) {
-          OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%d", e,
-              nodeSource, getName(), rid, version);
+          OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%s", e,
+              nodeSource, getName(), rid.toString(), version.toString());
           throw new ODistributedException("Error on changing the log status", e);
         }
 
