@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
               // OPERATOR MATCH
               final List<String> arguments;
 
-              if (op.minArguments > 0) {
+              if (op.maxArguments > 0) {
                 arguments = OStringSerializerHelper.getParameters(part);
                 if (arguments.size() < op.minArguments || arguments.size() > op.maxArguments)
                   throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + op.keyword
@@ -173,6 +174,19 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
           } else if (operator == OSQLFilterFieldOperator.REPLACE.id) {
             ioResult = ioResult != null ? ioResult.toString().replace(op.value.get(0), op.value.get(1)) : null;
+
+          } else if (operator == OSQLFilterFieldOperator.NORMALIZE.id) {
+            if (ioResult != null) {
+              final Normalizer.Form form = op.value != null && op.value.size() > 0 ? Normalizer.Form
+                  .valueOf(OStringSerializerHelper.getStringContent(op.value.get(0))) : Normalizer.Form.NFD;
+
+              String normalized = Normalizer.normalize(ioResult.toString(), form);
+              if (op.value != null && op.value.size() > 1)
+                normalized = normalized.replaceAll(OStringSerializerHelper.getStringContent(op.value.get(1)), "");
+              else
+                normalized = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+              ioResult = normalized;
+            }
 
           } else if (operator == OSQLFilterFieldOperator.APPEND.id) {
             final Object v = getParameterValue(iRecord, op.value.get(0));
