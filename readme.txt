@@ -52,10 +52,10 @@ You can download from here:
 Follow the instruction below:
 
 a) Open a shell and go in the path where you want to download the
-   sources.
+   sources
 b) Type:
-   svn checkout https://orient.googlecode.com/svn/trunk/ orient
-c) Move to the directory *trunk* and execute *ant*
+   git clone git://github.com/nuvolabase/orientdb.git
+c) Move to the directory *orientdb* and execute *ant*
 d) Wait for building and when finished
 e) Enjoy ;-)
 
@@ -67,8 +67,9 @@ If you want help start from here:
 Follow the instruction below:
 
 a) Open a shell and go in the path where you have installed the OrientDB sources.
-b) Type: ant test
-c) Wait for the completition.
+b) Type: 
+   ant test
+c) Wait the process completes
 d) Once finished you can close the OrientDB Server instance started for the tests 
 
-Orient Database staff
+OrientDB Team
