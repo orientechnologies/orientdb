@@ -162,10 +162,27 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseType, String iStorageMode) throws IOException {
+    return createDatabase(storage.getName(), iDatabaseType, iStorageMode);
+  }
+
+  /**
+   * Creates a database in a remote server.
+   * 
+   * @param iDatabaseName
+   *          The database name
+   * @param iDatabaseType
+   *          'document' or 'graph'
+   * @param iStorageMode
+   *          local or memory
+   * @return The instance itself. Useful to execute method in chain
+   * @throws IOException
+   */
+  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, String iStorageMode)
+      throws IOException {
     storage.checkConnection();
 
     try {
-      if (storage.getName() == null || storage.getName().length() <= 0) {
+      if (iDatabaseName == null || iDatabaseName.length() <= 0) {
         OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
       } else {
         if (iStorageMode == null)
@@ -173,7 +190,7 @@ public class OServerAdmin {
 
         final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
         try {
-          network.writeString(storage.getName());
+          network.writeString(iDatabaseName);
           if (network.getSrvProtocolVersion() >= 8)
             network.writeString(iDatabaseType);
           network.writeString(iStorageMode);
