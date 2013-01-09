@@ -128,16 +128,18 @@ public abstract class OAbstractFile implements OFile {
     init();
 
     final int fileSize = getFileSize();
-    final int filledUpTo = getFilledUpTo();
+    int filledUpTo = getFilledUpTo();
 
     if (filledUpTo > 0 && filledUpTo > fileSize) {
       OLogManager
           .instance()
-          .warn(
+          .error(
               this,
-              "invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time",
+              "invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time. Please assure the right number of records in the cluster",
               filledUpTo, getOsFile().getAbsolutePath(), fileSize, fileSize);
       setSize(fileSize);
+      setFilledUpTo(fileSize);
+      filledUpTo = getFilledUpTo();
     }
 
     if (filledUpTo > fileSize || filledUpTo < 0)

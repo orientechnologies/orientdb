@@ -87,7 +87,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parserRequiredKeyword(KEYWORD_UPDATE);
 
-    subjectName = parserRequiredWord(true, "Invalid target", " =><,\r\n");
+    subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
     if (subjectName == null)
       throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
