@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.WeakHashMap;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
@@ -56,7 +57,7 @@ public class OProfilerData {
     public String description;
 
     public void toJSON(final StringBuilder buffer) {
-      buffer.append(String.format("\"%s\":{", name));
+      buffer.append(String.format("\"%s\":{", OIOUtils.encode(name)));
       buffer.append(String.format("\"%s\":%d,", "entries", entries));
       buffer.append(String.format("\"%s\":%d,", "last", last));
       buffer.append(String.format("\"%s\":%d,", "min", min));
@@ -169,13 +170,14 @@ public class OProfilerData {
         buffer.append(',');
 
       if (value == null)
-        buffer.append(String.format("\"%s\":null", k));
+        buffer.append(String.format("\"%s\":null", OIOUtils.encode(k)));
       else if (value instanceof Number)
-        buffer.append(String.format("\"%s\":%d", k, value));
+        buffer.append(String.format("\"%s\":%d", OIOUtils.encode(k), value));
       else if (value instanceof Boolean)
-        buffer.append(String.format("\"%s\":%s", k, value));
-      else
-        buffer.append(String.format("\"%s\":\"%s\"", k, value.toString()));
+        buffer.append(String.format("\"%s\":%s", OIOUtils.encode(k), value));
+      else {
+        buffer.append(String.format("\"%s\":\"%s\"", OIOUtils.encode(k), OIOUtils.encode(value)));
+      }
     }
     buffer.append("}");
 
@@ -229,7 +231,7 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
-      buffer.append(String.format("\"%s\":%d", k, counters.get(k)));
+      buffer.append(String.format("\"%s\":%d", OIOUtils.encode(k), counters.get(k)));
     }
     buffer.append("}");
 

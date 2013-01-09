@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
@@ -107,7 +106,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       Orient
           .instance()
           .getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.getText(),
+          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
               "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
@@ -215,8 +214,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
-				if (ppos == null || ppos.dataSegmentId < 0)
-					return null;
+        if (ppos == null || ppos.dataSegmentId < 0)
+          return null;
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } finally {

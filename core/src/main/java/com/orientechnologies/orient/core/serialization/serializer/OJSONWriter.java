@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -326,10 +327,7 @@ public class OJSONWriter {
   }
 
   public static Object encode(final Object iValue) {
-    if (iValue instanceof String) {
-      return OStringSerializerHelper.java2unicode(((String) iValue).replace("\\", "\\\\").replace("\"", "\\\""));
-    } else
-      return iValue;
+    return OIOUtils.encode(iValue);
   }
 
   public static String listToJSON(final Collection<? extends OIdentifiable> iRecords, final String iFormat) {

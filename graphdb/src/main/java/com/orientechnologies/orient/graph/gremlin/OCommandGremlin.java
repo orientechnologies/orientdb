@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.graph.gremlin;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 
 /**
@@ -37,4 +38,10 @@ public class OCommandGremlin extends OCommandRequestTextAbstract {
   public boolean isIdempotent() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "gremlin." + OIOUtils.getStringMaxLength(text, 50, "...");
+  }
+
 }

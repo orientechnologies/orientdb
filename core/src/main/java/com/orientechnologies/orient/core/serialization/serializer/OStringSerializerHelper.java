@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -664,46 +665,9 @@ public abstract class OStringSerializerHelper {
     return iLinkedClass;
   }
 
-  public static String java2unicode(final String iInput) {
-    final StringBuilder result = new StringBuilder();
-    final int inputSize = iInput.length();
-
-    char ch;
-    String hex;
-    for (int i = 0; i < inputSize; i++) {
-      ch = iInput.charAt(i);
-
-      if (ch >= 0x0020 && ch <= 0x007e) // Does the char need to be converted to unicode?
-        result.append(ch); // No.
-      else // Yes.
-      {
-        result.append("\\u"); // standard unicode format.
-        hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
-        for (int j = 0; j < 4 - hex.length(); j++)
-          // Prepend zeros because unicode requires 4 digits
-          result.append('0');
-        result.append(hex.toLowerCase()); // standard unicode format.
-        // ostr.append(hex.toLowerCase(Locale.ENGLISH));
-      }
-    }
-
-    return result.toString();
-  }
-
   public static String getStringContent(final Object iValue) {
-    if (iValue == null)
-      return null;
-
-    final String s = iValue.toString();
-
-    if (s == null)
-      return null;
-
-    if (s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
-      return s.substring(1, s.length() - 1);
-
-    return s;
+    // MOVED
+    return OIOUtils.getStringContent(iValue);
   }
 
   /**
