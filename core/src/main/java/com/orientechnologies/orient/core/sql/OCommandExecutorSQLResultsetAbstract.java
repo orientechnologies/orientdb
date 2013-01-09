@@ -386,8 +386,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, clIds, false,
-        request.isUseCache()).setRange(range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false).setRange(
+        range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

@@ -367,18 +367,23 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   private void decrementEntreePosition() {
     if (positionsToProcess.length > 0)
-      do {
+      if (iterateThroughTombstones)
         currentEntryPosition--;
-      } while (currentEntryPosition > 0 && !iterateThroughTombstones
-          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+      else
+        do {
+          currentEntryPosition--;
+        } while (currentEntryPosition >= 0 && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   private void incrementEntreePosition() {
     if (positionsToProcess.length > 0)
-      do {
+      if (iterateThroughTombstones)
         currentEntryPosition++;
-      } while (currentEntryPosition < positionsToProcess.length && !iterateThroughTombstones
-          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+      else
+        do {
+          currentEntryPosition++;
+        } while (currentEntryPosition < positionsToProcess.length
+            && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   protected void resetCurrentPosition() {
