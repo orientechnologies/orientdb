@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -175,7 +176,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
 
     Object value;
-    String cmd = "select from " + destClassName + " where " + destField + " = ";
+    
+    String cmd = "select from ";
+    if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
+    	cmd = "select from " + destClassName + " where " + destField + " = ";
+    }
+    
     List<ODocument> result;
     ODocument target;
     Object oldValue;
@@ -215,7 +221,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
             // SEARCH THE DESTINATION RECORD
             target = null;
 
-            if (value instanceof String)
+            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
               if (((String) value).length() == 0)
                 value = null;
               else
