@@ -71,7 +71,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
         Method m = cls.getMethod(methodName, argTypes);
 
-        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
+        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args).replace("%", "%%") + ")...");
         return m.invoke(null, args);
 
       } catch (NoSuchMethodException e) {
