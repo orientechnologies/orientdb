@@ -340,7 +340,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   private OClass getLinkInfo(final ODatabaseComplex<?> iDatabase, final String iFieldClassName) {
-    if (iDatabase == null || iDatabase.isClosed())
+    if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 
     OClass linkedClass = iDatabase.getMetadata().getSchema().getClass(iFieldClassName);
