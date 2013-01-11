@@ -341,6 +341,9 @@ public enum OType {
           return iValue;
         else if (iValue instanceof String)
           return Double.parseDouble((String) iValue);
+        else if (iValue instanceof Float)
+          // THIS IS NECESSARY DUE TO A BUG/STRANGE BEHAVIOR OF JAVA BY LOSSING PRECISION
+          return Double.parseDouble((String) iValue.toString());
         else
           return ((Number) iValue).doubleValue();
 
