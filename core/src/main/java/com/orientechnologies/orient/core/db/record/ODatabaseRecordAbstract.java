@@ -1038,13 +1038,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     @Override
     public Boolean call() throws Exception {
-      final ORecordMetadata recordMetadata = getRecordMetadata(rid);
+      final ORecordMetadata loadedRecordMetadata = getRecordMetadata(rid);
       final boolean result;
 
-      if (recordMetadata == null)
+      if (loadedRecordMetadata == null)
         result = processReplicaAdd();
-      else if (recordMetadata.getRecordVersion().compareTo(record.getRecordVersion()) < 0)
-        result = processReplicaUpdate(recordMetadata);
+      else if (loadedRecordMetadata.getRecordVersion().compareTo(record.getRecordVersion()) < 0)
+        result = processReplicaUpdate(loadedRecordMetadata);
       else
         return false;
 
@@ -1054,48 +1054,49 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       return true;
     }
 
-    private boolean processReplicaUpdate(ORecordMetadata recordMetadata) throws Exception {
+    private boolean processReplicaUpdate(ORecordMetadata loadedRecordMetadata) throws Exception {
       ORecordInternal<?> replicaToUpdate = record;
       boolean result;
-      final ORecordVersion version = record.getRecordVersion();
+      final ORecordVersion replicaVersion = record.getRecordVersion();
+      final byte recordType = record.getRecordType();
 
       try {
-        if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
-          replicaToUpdate = mergeWithDocument(null);
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          replicaToUpdate = mergeWithRecord(null);
           callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
-          replicaToUpdate = mergeWithDocument(rid);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          replicaToUpdate = mergeWithRecord(rid);
           callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
           replicaToUpdate = load(rid, "*:0", false, true);
-          replicaToUpdate.getRecordVersion().copyFrom(version);
+          replicaToUpdate.getRecordVersion().copyFrom(replicaVersion);
 
           callbackHooks(TYPE.BEFORE_REPLICA_DELETE, replicaToUpdate);
         }
 
         byte[] stream = replicaToUpdate.toStream();
         final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToUpdate);
-        result = underlying.updateReplica(dataSegmentId, rid, stream, version, recordType);
+        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, recordType);
 
-        if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToUpdate);
           replicaToUpdate.unsetDirty();
           getLevel1Cache().updateRecord(replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_UPDATE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
           getLevel1Cache().updateRecord(replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_DELETE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
           getLevel1Cache().deleteRecord(rid);
         }
       } catch (Exception e) {
-        if (recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.REPLICA_ADD_FAILED, replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && !version.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.REPLICA_UPDATE_FAILED, replicaToUpdate);
-        } else if (!recordMetadata.getRecordVersion().isTombstone() && version.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
           callbackHooks(TYPE.REPLICA_DELETE_FAILED, replicaToUpdate);
         }
 
@@ -1108,33 +1109,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     private boolean processReplicaAdd() throws Exception {
       ORecordInternal<?> replicaToAdd = record;
       boolean result;
-      final ORecordVersion version = record.getRecordVersion();
+      final ORecordVersion replicaVersion = record.getRecordVersion();
 
       try {
-        if (!version.isTombstone()) {
-          if (record instanceof ODocument) {
-            replicaToAdd = mergeWithDocument(null);
-          } else
-            replicaToAdd = record;
+        if (!replicaVersion.isTombstone()) {
+          replicaToAdd = mergeWithRecord(null);
 
           callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToAdd);
         } else
-          replicaToAdd = record;
+          replicaToAdd = (ORecordInternal<?>) record.copy();
 
         byte[] stream = replicaToAdd.toStream();
 
         final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToAdd);
 
-        result = underlying.updateReplica(dataSegmentId, rid, stream, version, recordType);
+        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, replicaToAdd.getRecordType());
 
-        if (!version.isTombstone()) {
+        if (!replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
           replicaToAdd.unsetDirty();
           getLevel1Cache().updateRecord(replicaToAdd);
         }
 
       } catch (Exception e) {
-        if (!version.isTombstone())
+        if (!replicaVersion.isTombstone())
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
 
         throw e;
@@ -1143,16 +1141,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       return result;
     }
 
-    private ORecordInternal<?> mergeWithDocument(ORID rid) {
+    private ORecordInternal<?> mergeWithRecord(ORID rid) {
       final ORecordInternal<?> replicaToAdd;
-      if (rid == null)
-        replicaToAdd = new ODocument();
-      else
-        replicaToAdd = load(rid, "*:0", false, true);
+      if (record instanceof ODocument) {
+        if (rid == null)
+          replicaToAdd = new ODocument();
+        else
+          replicaToAdd = load(rid, "*:0", false, true);
 
-      ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
-      replicaToAdd.getRecordVersion().copyFrom(record.getRecordVersion());
-      replicaToAdd.setIdentity(this.rid);
+        ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
+
+        replicaToAdd.getRecordVersion().copyFrom(record.getRecordVersion());
+        replicaToAdd.setIdentity(this.rid);
+      } else
+        replicaToAdd = (ORecordInternal<?>) record.copy();
+
       return replicaToAdd;
     }
   }
