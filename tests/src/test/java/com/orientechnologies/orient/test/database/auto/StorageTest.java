@@ -50,6 +50,7 @@ public class StorageTest {
 
     File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
     tempDir.mkdirs();
+		tempDir.deleteOnExit();
 
     final int segmentId = database.addDataSegment("binary", tempDir.toString());
     Assert.assertEquals(segmentId, 1);
