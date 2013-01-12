@@ -1281,7 +1281,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       ignoreCache = channel.readByte() == 1;
 
     boolean loadTombstones = false;
-    if (connection.data.protocolVersion >= 12)
+    if (connection.data.protocolVersion >= 13)
       loadTombstones = channel.readByte() > 0;
 
     if (rid.clusterId == 0 && rid.clusterPosition.longValue() == 0) {
