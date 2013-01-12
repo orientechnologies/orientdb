@@ -63,7 +63,7 @@ public abstract class AbstractIndexReuseTest {
 
 	private OProfilerMBean getProfilerInstance() throws Exception {
 		if (isRemoteStorage()) {
-			final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:10005/jmxrmi");
+			final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:10005/jmxrmi");
 			jmxConnector = JMXConnectorFactory.connect(url, null);
 			final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
 			final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
