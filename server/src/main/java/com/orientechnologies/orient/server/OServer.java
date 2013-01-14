@@ -471,7 +471,7 @@ public class OServer {
       hookManager = new OConfigurableHooksManager(iConfiguration);
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
     }
   }
 
