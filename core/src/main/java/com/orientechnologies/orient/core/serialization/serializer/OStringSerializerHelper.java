@@ -189,7 +189,7 @@ public abstract class OStringSerializerHelper {
     int i = 0;
     for (; i < buffer.length; ++i) {
       final char c = buffer[i];
-      if (!isCharPresent(c, iSeparator))
+      if (!isCharPresent(c, iJumpChars))
         break;
     }
 
