@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.parser.OBaseParser;
@@ -25,6 +24,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 
 /**
  * Represent an object field as value in the query condition.
@@ -81,8 +82,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return true;
     }
 
-    for (OPair<Integer, List<String>> pair : operationsChain) {
-      if (!pair.getKey().equals(OSQLFilterFieldOperator.FIELD.id)) {
+    for (OPair<OSQLMethod, Object[]> pair : operationsChain) {
+      if (!pair.getKey().getName().equals(OSQLMethodField.NAME)) {
         return false;
       }
     }
@@ -116,7 +117,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       if (fieldIndex == 0) {
         return name;
       } else {
-        return operationsChain.get(fieldIndex - 1).getValue().get(0);
+        return operationsChain.get(fieldIndex - 1).getValue()[0].toString();
       }
     }
 
