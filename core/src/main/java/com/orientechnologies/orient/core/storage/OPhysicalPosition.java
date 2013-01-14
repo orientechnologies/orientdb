@@ -137,8 +137,19 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
     final OPhysicalPosition other = (OPhysicalPosition) obj;
 
-    return clusterPosition == other.clusterPosition && recordType == other.recordType && recordVersion.equals(other.recordVersion)
-        && recordSize == other.recordSize;
+    return clusterPosition.equals(other.clusterPosition) && recordType == other.recordType
+        && recordVersion.equals(other.recordVersion) && recordSize == other.recordSize;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = clusterPosition != null ? clusterPosition.hashCode() : 0;
+    result = 31 * result + dataSegmentId;
+    result = 31 * result + (int) (dataSegmentPos ^ (dataSegmentPos >>> 32));
+    result = 31 * result + (int) recordType;
+    result = 31 * result + (recordVersion != null ? recordVersion.hashCode() : 0);
+    result = 31 * result + recordSize;
+    return result;
   }
 
   public int compareTo(final OPhysicalPosition iOther) {
