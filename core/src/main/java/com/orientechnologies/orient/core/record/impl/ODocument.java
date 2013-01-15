@@ -679,7 +679,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
           return this;
       } else {
         try {
-          if (iPropertyValue == oldValue) {
+          if (iPropertyValue.equals(oldValue)) {
             if (!(iPropertyValue instanceof ORecordElement))
               // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
               setDirty();
