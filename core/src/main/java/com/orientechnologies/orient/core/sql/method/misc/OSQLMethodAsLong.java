@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Date;
 
@@ -33,7 +34,7 @@ public class OSQLMethodAsLong extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) {
+    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         if (ioResult instanceof Number) {
             ioResult = ((Number) ioResult).longValue();
         } else if (ioResult instanceof Date) {

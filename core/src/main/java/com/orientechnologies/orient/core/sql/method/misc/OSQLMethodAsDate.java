@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.text.ParseException;
@@ -35,7 +36,7 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) throws ParseException{
+    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) throws ParseException{
 
         if (ioResult != null) {
             if (ioResult instanceof Number) {

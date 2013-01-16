@@ -37,7 +37,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) {
+    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         
         if(ioResult instanceof String){
             try {

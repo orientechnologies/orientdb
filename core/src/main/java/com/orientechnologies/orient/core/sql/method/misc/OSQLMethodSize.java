@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -34,7 +35,7 @@ public class OSQLMethodSize extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) {
+    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         if (ioResult != null) {
             if (ioResult instanceof ORecord<?>) {
                 ioResult = 1;

@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,7 +35,7 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iRecord, Object ioResult, Object[] iMethodParams) {
+    public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         
         final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
         if (v != null) {

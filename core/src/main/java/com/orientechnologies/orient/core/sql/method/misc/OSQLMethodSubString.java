@@ -16,30 +16,39 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodSubString extends OAbstractSQLMethod {
 
-    public static final String NAME = "substring";
+  public static final String NAME = "substring";
 
-    public OSQLMethodSubString() {
-        super(NAME, 1, 2);
-    }
+  public OSQLMethodSubString() {
+    super(NAME, 1, 2);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) {
-        final String param0 = iMethodParams[0].toString();
-        if (iMethodParams.length > 1) {
-            ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(param0),
-                    Integer.parseInt(iMethodParams[1].toString())) : null;
-        } else {
-            ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(param0)) : null;
-        }
-        return ioResult;
-    }
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    final Object param0 = OSQLHelper.getValue(iMethodParams[0].toString(), (ORecordInternal<?>) iCurrentRecord.getRecord(),
+        iContext);
+
+    if (param0 != null)
+      if (iMethodParams.length > 1) {
+        final Object param1 = OSQLHelper.getValue(iMethodParams[1].toString(), (ORecordInternal<?>) iCurrentRecord.getRecord(),
+            iContext);
+
+        ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(param0.toString()),
+            Integer.parseInt(param1.toString())) : null;
+      } else {
+        ioResult = ioResult != null ? ioResult.toString().substring(Integer.parseInt(param0.toString())) : null;
+      }
+    return ioResult;
+  }
 }

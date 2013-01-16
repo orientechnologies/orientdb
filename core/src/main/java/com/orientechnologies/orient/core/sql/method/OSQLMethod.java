@@ -15,57 +15,62 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.text.ParseException;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 /**
- * Methods can be used on various objects with different number of arguments.
- * SQL syntax : <object_name>.<method_name>([parameters])
+ * Methods can be used on various objects with different number of arguments. SQL syntax : <object_name>.<method_name>([parameters])
  * 
  * @author Johann Sorel (Geomatys)
  */
 public interface OSQLMethod extends Comparable<OSQLMethod> {
-    
-    /**
-     * @return method name
-     */
-    String getName();
-    
-    /**
-     * Returns a convinient SQL String representation of the method. <p>
-     * Example :
-     *
-     * <pre>
-     *  field.myMethod( param1, param2, [optionalParam3])
-     * </pre>
-     *
-     * This text will be used in exception messages.
-     *
-     * @return String , never null.
-     */
-    public String getSyntax();
 
-    /**
-     * @return minimum number of arguments requiered by this method
-     */
-    int getMinParams();
-    
-    /**
-     * @return maximum number of arguments requiered by this method
-     */
-    int getMaxParams();
-    
-    /**
-     * Process a record.
-     * 
-     * @param iCurrentRecord 
-     *      : current record
-     * @param ioResult 
-     *      : field value
-     * @param iMethodParams 
-     *      : function parameters, number is ensured to be within minParams and maxParams.
-     * @return evaluation result
-     */
-    Object execute(final OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) throws ParseException;
-    
+  /**
+   * @return method name
+   */
+  String getName();
+
+  /**
+   * Returns a convinient SQL String representation of the method.
+   * <p>
+   * Example :
+   * 
+   * <pre>
+   *  field.myMethod( param1, param2, [optionalParam3])
+   * </pre>
+   * 
+   * This text will be used in exception messages.
+   * 
+   * @return String , never null.
+   */
+  public String getSyntax();
+
+  /**
+   * @return minimum number of arguments requiered by this method
+   */
+  int getMinParams();
+
+  /**
+   * @return maximum number of arguments requiered by this method
+   */
+  int getMaxParams();
+
+  /**
+   * Process a record.
+   * 
+   * @param iCurrentRecord
+   *          : current record
+   * @param iContext
+   *          execution context
+   * @param ioResult
+   *          : field value
+   * @param iMethodParams
+   *          : function parameters, number is ensured to be within minParams and maxParams.
+   * @return evaluation result
+   */
+  Object execute(final OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams)
+      throws ParseException;
+
 }

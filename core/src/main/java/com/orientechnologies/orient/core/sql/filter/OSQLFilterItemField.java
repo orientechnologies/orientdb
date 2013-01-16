@@ -57,7 +57,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     // UNMARSHALL THE SINGLE FIELD
     if (doc.deserializeFields(preLoadedFieldsArray))
       // FIELD FOUND
-      return transformValue(iRecord, ODocumentHelper.getFieldValue(doc, name));
+      return transformValue(iRecord, iContext,  ODocumentHelper.getFieldValue(doc, name));
 
     return null;
   }

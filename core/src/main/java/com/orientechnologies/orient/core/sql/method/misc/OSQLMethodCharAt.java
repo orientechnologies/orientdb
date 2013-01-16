@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -32,7 +33,7 @@ public class OSQLMethodCharAt extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, Object ioResult, Object[] iMethodParams) {
+    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         int index = Integer.parseInt(iMethodParams[0].toString());
         ioResult = ioResult != null ? ioResult.toString().substring(index, index + 1) : null;
         return ioResult;
