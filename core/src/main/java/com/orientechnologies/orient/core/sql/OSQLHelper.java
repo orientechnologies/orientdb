@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -240,6 +241,12 @@ public class OSQLHelper {
 
     if (iObject instanceof OSQLFilterItem)
       return ((OSQLFilterItem) iObject).getValue(iRecord, iContext);
+    else if (iObject instanceof String) {
+      final String s = ((String) iObject).trim();
+      if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
+        // INTERPRETS IT
+        return ODocumentHelper.getFieldValue(iRecord, s, iContext);
+    }
 
     return iObject;
   }

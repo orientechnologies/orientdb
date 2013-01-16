@@ -301,8 +301,10 @@ public class ODocumentHelper {
               .getRecord() : null;
 
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
+          final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
-          if (indexParts.size() == 1 && indexCondition.size() == 1)
+
+          if (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1)
             // SINGLE VALUE
             value = ((ODocument) record).field(indexAsString);
           else if (indexParts.size() > 1) {
@@ -312,6 +314,24 @@ public class ODocumentHelper {
               values[i] = ((ODocument) record).field(indexParts.get(i));
             }
             value = values;
+          } else if (indexRanges.size() > 1) {
+
+            // MULTI VALUES RANGE
+            String from = indexRanges.get(0);
+            String to = indexRanges.get(1);
+
+            final String[] fieldNames = ((ODocument) value).fieldNames();
+            final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
+                : fieldNames.length - 1;
+
+            final Object[] values = new Object[rangeTo - rangeFrom + 1];
+
+            for (int i = rangeFrom; i <= rangeTo; ++i)
+              values[i - rangeFrom] = ((ODocument) value).field(fieldNames[i]);
+
+            value = values;
+
           } else if (!indexCondition.isEmpty()) {
             // CONDITION
             final String conditionFieldName = indexCondition.get(0);
@@ -365,8 +385,12 @@ public class ODocumentHelper {
           } else if (indexRanges.size() > 1) {
 
             // MULTI VALUES RANGE
-            final int rangeFrom = Integer.parseInt(indexRanges.get(0));
-            final int rangeTo = Math.min(Integer.parseInt(indexRanges.get(1)), OMultiValue.getSize(value) - 1);
+            String from = indexRanges.get(0);
+            String to = indexRanges.get(1);
+
+            final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
+                : OMultiValue.getSize(value) - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
             for (int i = rangeFrom; i <= rangeTo; ++i)

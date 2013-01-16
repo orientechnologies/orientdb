@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.processor.block;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +32,7 @@ public class OIterateBlock extends OAbstractBlock {
 
     final String var = getFieldOfClass(iContext, iConfig, "variable", String.class);
     final String range = getFieldOfClass(iContext, iConfig, "range", String.class);
+    final Object value = getField(iContext, iConfig, "value");
 
     if (range != null) {
       final String[] fromTo = range.split("-");
@@ -48,6 +50,9 @@ public class OIterateBlock extends OAbstractBlock {
         }
 
       result = new OIterateBlockIterable(values, iContext, var);
+    } else if (value != null) {
+      if (OMultiValue.isIterable(value))
+        result = OMultiValue.getMultiValueIterable(value);
     }
 
     return result;

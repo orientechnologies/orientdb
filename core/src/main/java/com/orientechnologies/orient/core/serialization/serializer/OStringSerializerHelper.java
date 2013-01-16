@@ -159,13 +159,15 @@ public abstract class OStringSerializerHelper {
     final StringBuilder buffer = new StringBuilder();
     final ArrayList<String> parts = new ArrayList<String>();
 
-    while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iJumpChars)) > -1) {
-      parts.add(buffer.toString());
-      buffer.setLength(0);
-    }
+    if (iSource != null && !iSource.isEmpty()) {
+      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iJumpChars)) > -1) {
+        parts.add(buffer.toString());
+        buffer.setLength(0);
+      }
 
-    if (buffer.length() > 0)
-      parts.add(buffer.toString());
+      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+        parts.add(buffer.toString());
+    }
 
     return parts;
   }

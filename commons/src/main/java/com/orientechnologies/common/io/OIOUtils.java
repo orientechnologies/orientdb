@@ -218,6 +218,19 @@ public class OIOUtils {
     return result.toString();
   }
 
+  public static boolean isStringContent(final Object iValue) {
+    if (iValue == null)
+      return false;
+
+    final String s = iValue.toString();
+
+    if (s == null)
+      return false;
+
+    return s.length() > 1
+        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
+  }
+
   public static String getStringContent(final Object iValue) {
     if (iValue == null)
       return null;

@@ -323,6 +323,10 @@ public class OMultiValue {
           for (int i = 0; i < Array.getLength(iToAdd); ++i)
             coll.add(Array.get(iToAdd, i));
 
+        } else if (iObject instanceof Map<?, ?>) {
+          // MAP
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iObject).entrySet())
+            coll.add(entry.getValue());
         } else
           coll.add(iToAdd);
 

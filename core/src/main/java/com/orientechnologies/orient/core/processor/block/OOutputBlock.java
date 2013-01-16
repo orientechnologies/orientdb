@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.processor.block;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,6 +30,7 @@ public class OOutputBlock extends OAbstractBlock {
       ODocument iOutput, final boolean iReadOnly) {
 
     final Object value = getRequiredField(iContext, iConfig, "value");
+    final Boolean flatMultivalues = getFieldOfClass(iContext, iConfig, "flatMultivalues", Boolean.class);
 
     Object result;
     if (isBlock(value))
@@ -44,6 +46,8 @@ public class OOutputBlock extends OAbstractBlock {
           list.add(((ODocument) source).field(o.toString()));
       }
       result = list;
+    } else if (OMultiValue.isMultiValue(result) && flatMultivalues != null && flatMultivalues) {
+      result = flatMultivalues(iContext, false, flatMultivalues, result);
     }
 
     final String field = getFieldOfClass(iContext, iConfig, "field", String.class);
