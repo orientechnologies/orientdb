@@ -59,38 +59,34 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
       // GET ALL SPECIAL OPERATIONS
       for (int i = 1; i < parts.size(); ++i) {
-        String part = parts.get(i);
-        String partUpperCase = part.toLowerCase(Locale.ENGLISH);
-
-        if (part.indexOf('(') > -1) {
-          boolean operatorFound = false;
-          for (OSQLMethod op : getAllMethods())
-            if (partUpperCase.startsWith(op.getName() + "(")) {
-              // OPERATOR MATCH
+        final String part = parts.get(i);
+        
+        final int pindex = part.indexOf('(');
+        if (pindex > -1) {
+          final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
+          final OSQLMethod method = getMethod(methodName);          
+          if(method != null){
               final Object[] arguments;
 
-              if (op.getMaxParams() > 0) {
+              if (method.getMaxParams() > 0) {
                 arguments = OStringSerializerHelper.getParameters(part).toArray();
-                if (arguments.length < op.getMinParams() || arguments.length > op.getMaxParams())
-                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + op.getName()
+                if (arguments.length < method.getMinParams() || arguments.length > method.getMaxParams())
+                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + method.getName()
                       + "' needs "
-                      + (op.getMinParams() == op.getMaxParams() ? op.getMinParams() : op.getMinParams() + "-" + op.getMaxParams())
+                      + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-" + method.getMaxParams())
                       + " argument(s) while has been received " + arguments.length, 0);
               } else {
                 arguments = null;
               }
 
               // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
-              operationsChain.add(new OPair<OSQLMethod, Object[]>(op, arguments));
-              operatorFound = true;
-              break;
-            }
-
-          if (!operatorFound)
+              operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
+          }else{
             // ERROR: OPERATOR NOT FOUND OR MISPELLED
             throw new OQueryParsingException(iQueryToParse.parserText,
                 "Syntax error: field operator not recognized between the supported ones: " + Arrays.toString(getAllMethodNames()),
                 0);
+          }
         } else {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(getMethod(OSQLMethodField.NAME), new Object[] { part }));
         }
@@ -151,18 +147,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     return buffer.toString();
   }
 
-  private static Collection<OSQLMethod> getAllMethods() {
-    final List<OSQLMethod> methods = new ArrayList<OSQLMethod>();
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
-      for (String name : factory.getMethodNames()) {
-        methods.add(factory.createMethod(name));
-      }
-    }
-    return methods;
-  }
-
   private static String[] getAllMethodNames() {
     final List<String> methods = new ArrayList<String>();
     final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
@@ -178,7 +162,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
     while (ite.hasNext()) {
       final OSQLMethodFactory factory = ite.next();
-      if (factory.getMethodNames().contains(name)) {
+      if (factory.hasMethod(name)) {
         return factory.createMethod(name);
       }
     }
