@@ -167,7 +167,6 @@ public class SQLSelectProjectionsTest {
     for (ODocument d : result) {
       Assert.assertEquals(d.field("test").toString(), "Mr. " + d.field("name") + " " + d.field("surname") + "!");
 
-      Assert.assertFalse(d.getIdentity().isPersistent());
       Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
     }
 

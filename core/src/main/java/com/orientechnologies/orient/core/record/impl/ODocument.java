@@ -241,40 +241,45 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * instance has the same identity and values but all the internal structure are totally independent by the source.
    */
   public ODocument copy() {
-    return copy((ODocument) copyTo(new ODocument()));
+    return (ODocument) copyTo(new ODocument());
   }
 
   /**
    * Copies all the fields into iDestination document.
    */
-  public ODocument copy(final ODocument iDestination) {
+  @Override
+  public ORecordAbstract<Object> copyTo(final ORecordAbstract<Object> iDestination) {
     // TODO: REMOVE THIS
     checkForFields();
 
-    iDestination._ordered = _ordered;
-    iDestination._clazz = _clazz;
-    iDestination._trackingChanges = _trackingChanges;
+    ODocument destination = (ODocument) iDestination;
+
+    super.copyTo(iDestination);
+
+    destination._ordered = _ordered;
+    destination._clazz = _clazz;
+    destination._trackingChanges = _trackingChanges;
     if (_owners != null)
-      iDestination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
+      destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
     if (_fieldValues != null) {
-      iDestination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
+      destination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
           : new HashMap<String, Object>();
       for (Entry<String, Object> entry : _fieldValues.entrySet())
-        ODocumentHelper.copyFieldValue(iDestination, entry);
+        ODocumentHelper.copyFieldValue(destination, entry);
     }
 
     if (_fieldTypes != null)
-      iDestination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+      destination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
 
-    iDestination._fieldChangeListeners = null;
-    iDestination._fieldCollectionChangeTimeLines = null;
-    iDestination._fieldOriginalValues = null;
-    iDestination.addAllMultiValueChangeListeners();
+    destination._fieldChangeListeners = null;
+    destination._fieldCollectionChangeTimeLines = null;
+    destination._fieldOriginalValues = null;
+    destination.addAllMultiValueChangeListeners();
 
-    iDestination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
+    destination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
 
-    return iDestination;
+    return destination;
   }
 
   @Override
@@ -283,6 +288,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
     final ODocument cloned = new ODocument();
+    cloned.setOrdered(_ordered);
     cloned.fill(_recordId, _recordVersion, _source, false);
     return cloned;
   }

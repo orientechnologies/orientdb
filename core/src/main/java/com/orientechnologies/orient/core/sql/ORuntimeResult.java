@@ -78,7 +78,7 @@ public class ORuntimeResult {
 
     if (iProjections.isEmpty())
       // SELECT * CASE
-      inputDocument.copy(iValue);
+      inputDocument.copyTo(iValue);
     else {
 
       for (Entry<String, Object> projection : iProjections.entrySet()) {
@@ -90,7 +90,7 @@ public class ORuntimeResult {
         final Object projectionValue;
         if (v.equals("*")) {
           // COPY ALL
-          inputDocument.copy(iValue);
+          inputDocument.copyTo(iValue);
           projectionValue = null;
         } else if (v instanceof OSQLFilterItemVariable) {
           // RETURN A VARIABLE FROM THE CONTEXT
