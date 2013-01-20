@@ -18,6 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -60,4 +64,24 @@ public class DbDeleteTest {
 
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
+
+	public void testDbDeleteWithIndex() {
+		final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/testDbDeleteWithIndex");
+		if (db.exists()) {
+			db.open("admin", "admin");
+			db.drop();
+		}
+
+		db.create();
+
+		final OClass indexedClass = db.getMetadata().getSchema().createClass("IndexedClass");
+		indexedClass.createProperty("value", OType.STRING);
+		indexedClass.createIndex("indexValue", OClass.INDEX_TYPE.UNIQUE, "value");
+
+		final ODocument document = new ODocument("IndexedClass");
+		document.field("value", "value");
+		document.save();
+
+		db.drop();
+	}
 }
