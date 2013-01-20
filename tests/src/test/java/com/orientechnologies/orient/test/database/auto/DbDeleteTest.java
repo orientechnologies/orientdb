@@ -66,7 +66,7 @@ public class DbDeleteTest {
   }
 
 	public void testDbDeleteWithIndex() {
-		final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/testDbDeleteWithIndex");
+		final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "target/testDbDeleteWithIndex");
 		if (db.exists()) {
 			db.open("admin", "admin");
 			db.drop();
