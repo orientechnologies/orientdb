@@ -408,8 +408,7 @@ public enum OGlobalConfiguration {
   }
 
   public String getValueAsString() {
-    final Object v = value != null ? value : defValue;
-    return v.toString();
+    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
   }
 
   public int getValueAsInteger() {
