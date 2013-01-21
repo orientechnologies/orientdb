@@ -137,7 +137,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
     final OPhysicalPosition other = (OPhysicalPosition) obj;
 
-    return clusterPosition == other.clusterPosition && recordType == other.recordType && recordVersion.equals(other.recordVersion)
+    return clusterPosition.equals(other.clusterPosition) && recordType == other.recordType && recordVersion.equals(other.recordVersion)
         && recordSize == other.recordSize;
   }
 
