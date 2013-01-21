@@ -71,4 +71,9 @@ public abstract class OClusterPosition extends Number implements Comparable<OClu
    * @return Hi long value of cluster position content.
    */
   public abstract long longValueHigh();
+  
+  /**
+   * trigger equal function in subclass
+   */
+  public abstract boolean equals(Object o);
 }
