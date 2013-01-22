@@ -56,6 +56,8 @@ public interface OSecurity {
 
   public ORole getRole(String iRoleName);
 
+  public ORole getRole(OIdentifiable role);
+
   public ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
 
   public ORole createRole(String iRoleName, ORole iParent, ORole.ALLOW_MODES iAllowMode);

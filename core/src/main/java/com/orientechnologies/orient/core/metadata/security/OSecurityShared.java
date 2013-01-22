@@ -212,6 +212,21 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
+  public ORole getRole(final OIdentifiable iRole) {
+    acquireExclusiveLock();
+    try {
+
+      final ODocument doc = iRole.getRecord();
+      if ("ORole".equals(doc.getClassName()))
+        return new ORole(doc);
+
+      return null;
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public ORole getRole(final String iRoleName) {
     acquireExclusiveLock();
     try {
