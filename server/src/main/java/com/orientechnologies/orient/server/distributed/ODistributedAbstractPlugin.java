@@ -195,12 +195,15 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       if (sync == null) {
         try {
           sync = new OStorageSynchronizer(this, iDatabaseName);
+          synchronizers.put(iDatabaseName, sync);
+          sync.recoverUncommited(this, iDatabaseName);
         } catch (IllegalArgumentException e) {
+            synchronizers.remove(iDatabaseName);
           return null;
         } catch (IOException e) {
+            synchronizers.remove(iDatabaseName);
           throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
         }
-        synchronizers.put(iDatabaseName, sync);
       }
       return sync;
     }
