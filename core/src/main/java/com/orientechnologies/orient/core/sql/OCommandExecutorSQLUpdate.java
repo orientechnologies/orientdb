@@ -134,6 +134,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
+    else if (additionalStatement != null && !additionalStatement.isEmpty())
+      throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 

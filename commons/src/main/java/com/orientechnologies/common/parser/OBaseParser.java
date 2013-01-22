@@ -399,6 +399,9 @@ public abstract class OBaseParser {
             if (stringBeginChar == c) {
               // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
               stringBeginChar = ' ';
+              parserLastWord.append(c);
+              parserCurrentPos++;
+              break;
             }
           } else
             // START STRING
