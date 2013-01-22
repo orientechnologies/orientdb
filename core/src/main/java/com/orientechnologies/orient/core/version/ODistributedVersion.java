@@ -39,10 +39,10 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public final class ODistributedVersion implements ORecordVersion {
-	public static final int STREAMED_SIZE =
-					OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_LONG;
+  public static final int              STREAMED_SIZE = OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
+                                                         + OBinaryProtocol.SIZE_LONG;
 
-  public static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static final OBinaryConverter CONVERTER     = OBinaryConverterFactory.getConverter();
 
   private int                          counter;
   private long                         timestamp;
@@ -65,20 +65,20 @@ public final class ODistributedVersion implements ORecordVersion {
 
   @Override
   public void increment() {
-		if (isTombstone())
-			throw new IllegalStateException("Record was deleted and can not be updated.");
+    if (isTombstone())
+      throw new IllegalStateException("Record was deleted and can not be updated.");
 
-		counter++;
+    counter++;
     timestamp = System.currentTimeMillis();
     macAddress = OVersionFactory.instance().getMacAddress();
   }
 
   @Override
   public void decrement() {
-		if (isTombstone())
-			throw new IllegalStateException("Record was deleted and can not be updated.");
+    if (isTombstone())
+      throw new IllegalStateException("Record was deleted and can not be updated.");
 
-		counter--;
+    counter--;
     timestamp = System.currentTimeMillis();
     macAddress = OVersionFactory.instance().getMacAddress();
   }
@@ -117,11 +117,25 @@ public final class ODistributedVersion implements ORecordVersion {
     if (isTombstone())
       throw new IllegalStateException("Record was deleted and can not be updated.");
 
-		counter++;
+    counter++;
     counter = -counter;
 
     timestamp = System.currentTimeMillis();
     macAddress = OVersionFactory.instance().getMacAddress();
+  }
+
+  @Override
+  public byte[] toStream() {
+    final byte[] buffer = new byte[STREAMED_SIZE];
+
+    getSerializer().writeTo(buffer, 0, this);
+
+    return buffer;
+  }
+
+  @Override
+  public void fromStream(byte[] stream) {
+    getSerializer().readFrom(stream, 0, this);
   }
 
   @Override
@@ -199,17 +213,17 @@ public final class ODistributedVersion implements ORecordVersion {
   public int compareTo(ORecordVersion o) {
     ODistributedVersion other = (ODistributedVersion) o;
 
-		final int myCounter;
-		if (isTombstone())
-			myCounter = -counter;
-		else
-		  myCounter = counter;
+    final int myCounter;
+    if (isTombstone())
+      myCounter = -counter;
+    else
+      myCounter = counter;
 
-		final int otherCounter;
-		if (o.isTombstone())
-			otherCounter = -o.getCounter();
-		else
-			otherCounter = o.getCounter();
+    final int otherCounter;
+    if (o.isTombstone())
+      otherCounter = -o.getCounter();
+    else
+      otherCounter = o.getCounter();
 
     if (myCounter != otherCounter)
       return myCounter > otherCounter ? 1 : -1;
@@ -233,23 +247,22 @@ public final class ODistributedVersion implements ORecordVersion {
     return macAddress;
   }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		ODistributedVersionSerializer.INSTANCE.writeTo(out, this);
-	}
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+    ODistributedVersionSerializer.INSTANCE.writeTo(out, this);
+  }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		ODistributedVersionSerializer.INSTANCE.readFrom(in, this);
-	}
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    ODistributedVersionSerializer.INSTANCE.readFrom(in, this);
+  }
 
-	private static final class ODistributedVersionSerializer implements ORecordVersionSerializer {
-		private static final ODistributedVersionSerializer INSTANCE = new ODistributedVersionSerializer();
-
+  private static final class ODistributedVersionSerializer implements ORecordVersionSerializer {
+    private static final ODistributedVersionSerializer INSTANCE = new ODistributedVersionSerializer();
 
     @Override
     public void writeTo(DataOutput out, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       out.writeInt(distributedVersion.counter);
       out.writeLong(distributedVersion.timestamp);
@@ -258,16 +271,16 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public void readFrom(DataInput in, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       distributedVersion.counter = in.readInt();
-			distributedVersion.timestamp = in.readLong();
-			distributedVersion.macAddress = in.readLong();
+      distributedVersion.timestamp = in.readLong();
+      distributedVersion.macAddress = in.readLong();
     }
 
     @Override
     public void writeTo(OutputStream stream, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       OBinaryProtocol.int2bytes(distributedVersion.counter, stream);
       OBinaryProtocol.long2bytes(distributedVersion.timestamp, stream);
@@ -276,16 +289,16 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public void readFrom(InputStream stream, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
-			distributedVersion.counter = OBinaryProtocol.bytes2int(stream);
-			distributedVersion.timestamp = OBinaryProtocol.bytes2long(stream);
-			distributedVersion.macAddress = OBinaryProtocol.bytes2long(stream);
+      distributedVersion.counter = OBinaryProtocol.bytes2int(stream);
+      distributedVersion.timestamp = OBinaryProtocol.bytes2long(stream);
+      distributedVersion.macAddress = OBinaryProtocol.bytes2long(stream);
     }
 
     @Override
     public int writeTo(byte[] stream, int pos, ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
       OBinaryProtocol.int2bytes(distributedVersion.counter, stream, pos + len);
@@ -300,21 +313,21 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public int readFrom(byte[] iStream, int pos, ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
-			distributedVersion.counter = OBinaryProtocol.bytes2int(iStream, pos + len);
+      distributedVersion.counter = OBinaryProtocol.bytes2int(iStream, pos + len);
       len += OBinaryProtocol.SIZE_INT;
-			distributedVersion.timestamp = OBinaryProtocol.bytes2long(iStream, pos + len);
+      distributedVersion.timestamp = OBinaryProtocol.bytes2long(iStream, pos + len);
       len += OBinaryProtocol.SIZE_LONG;
-			distributedVersion.macAddress = OBinaryProtocol.bytes2long(iStream, pos + len);
+      distributedVersion.macAddress = OBinaryProtocol.bytes2long(iStream, pos + len);
       len += OBinaryProtocol.SIZE_LONG;
       return len;
     }
 
     @Override
     public int writeTo(OFile file, long pos, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
       file.writeInt(pos + len, distributedVersion.counter);
@@ -329,21 +342,21 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public long readFrom(OFile file, long pos, ORecordVersion version) throws IOException {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
-			distributedVersion.counter = file.readInt(pos + len);
+      distributedVersion.counter = file.readInt(pos + len);
       len += OBinaryProtocol.SIZE_INT;
-			distributedVersion.timestamp = file.readLong(pos + len);
+      distributedVersion.timestamp = file.readLong(pos + len);
       len += OBinaryProtocol.SIZE_LONG;
-			distributedVersion.macAddress = file.readLong(pos + len);
+      distributedVersion.macAddress = file.readLong(pos + len);
       len += OBinaryProtocol.SIZE_LONG;
       return len;
     }
 
     @Override
     public int fastWriteTo(byte[] iStream, int pos, ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
       CONVERTER.putInt(iStream, pos + len, distributedVersion.counter);
@@ -358,14 +371,14 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public int fastReadFrom(byte[] iStream, int pos, ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
-			distributedVersion.counter = CONVERTER.getInt(iStream, pos + len);
+      distributedVersion.counter = CONVERTER.getInt(iStream, pos + len);
       len += OBinaryProtocol.SIZE_INT;
-			distributedVersion.timestamp = CONVERTER.getLong(iStream, pos + len);
+      distributedVersion.timestamp = CONVERTER.getLong(iStream, pos + len);
       len += OBinaryProtocol.SIZE_LONG;
-			distributedVersion.macAddress = CONVERTER.getLong(iStream, pos + len);
+      distributedVersion.macAddress = CONVERTER.getLong(iStream, pos + len);
       len += OBinaryProtocol.SIZE_LONG;
       return len;
     }
@@ -380,23 +393,23 @@ public final class ODistributedVersion implements ORecordVersion {
 
     @Override
     public String toString(ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       return distributedVersion.counter + "." + distributedVersion.timestamp + "." + distributedVersion.macAddress;
     }
 
     @Override
     public void fromString(String string, ORecordVersion version) {
-			final ODistributedVersion distributedVersion = (ODistributedVersion) version;
+      final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       String[] parts = string.split("\\.");
       if (parts.length != 3)
         throw new IllegalArgumentException(
             "Not correct format of distributed version. Expected <recordVersion>.<timestamp>.<macAddress>");
 
-			distributedVersion.counter = Integer.valueOf(parts[0]);
-			distributedVersion.timestamp = Long.valueOf(parts[1]);
-			distributedVersion.macAddress = Long.valueOf(parts[2]);
+      distributedVersion.counter = Integer.valueOf(parts[0]);
+      distributedVersion.timestamp = Long.valueOf(parts[1]);
+      distributedVersion.macAddress = Long.valueOf(parts[2]);
     }
   }
 }

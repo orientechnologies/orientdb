@@ -89,7 +89,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
   @Override
   public String toString() {
-    return "OSQLQuery [text=" + text + "]";
+    return "sql." + text;
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {

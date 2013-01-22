@@ -103,7 +103,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       currentRecord = readCurrentRecord(record, -1);
     }
 
-    return thereAreRecordsToBrowse;
+    return currentRecord != null;
   }
 
   private void updateRangesOnLiveUpdate() {

@@ -87,7 +87,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parserRequiredKeyword(KEYWORD_UPDATE);
 
-    subjectName = parserRequiredWord(true, "Invalid target", " =><,\r\n");
+    subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
     if (subjectName == null)
       throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
@@ -134,6 +134,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
+    else if (additionalStatement != null && !additionalStatement.isEmpty())
+      throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
 
@@ -408,7 +410,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;

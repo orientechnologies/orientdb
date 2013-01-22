@@ -93,7 +93,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + " [text=" + text + "]";
+    return "?." + text;
   }
 
   protected byte[] toStream(final OMemoryStream buffer) {

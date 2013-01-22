@@ -36,7 +36,7 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
     if (iContext == null)
       return null;
 
-    return transformValue(iRecord, iContext.getVariable(name));
+    return transformValue(iRecord, iContext, iContext.getVariable(name));
   }
 
   public String getRoot() {

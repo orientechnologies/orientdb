@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,11 +30,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Fast index for full-text searches.
  * 
@@ -38,15 +38,18 @@ import java.util.Set;
  */
 public class OIndexFullText extends OIndexMultiValues {
 
-  public static final String  TYPE_ID             = OClass.INDEX_TYPE.FULLTEXT.toString();
+  public static final String  TYPE_ID                = OClass.INDEX_TYPE.FULLTEXT.toString();
 
-  private static final String CONFIG_STOP_WORDS   = "stopWords";
-  private static final String CONFIG_IGNORE_CHARS = "ignoreChars";
+  private static final String CONFIG_STOP_WORDS      = "stopWords";
+  private static final String CONFIG_SEPARATOR_CHARS = "separatorChars";
+  private static final String CONFIG_IGNORE_CHARS    = "ignoreChars";
 
-  private static String       DEF_IGNORE_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()'\"";
-  private static String       DEF_STOP_WORDS      = "the in a at as and or for his her " + "him this that what which while "
-                                                      + "up with be was is";
-  private final String        ignoreChars         = DEF_IGNORE_CHARS;
+  private static String       DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
+  private static String       DEF_IGNORE_CHARS       = "'\"";
+  private static String       DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
+                                                         + "up with be was is";
+  private final String        separatorChars         = DEF_SEPARATOR_CHARS;
+  private final String        ignoreChars            = DEF_IGNORE_CHARS;
   private final Set<String>   stopWords;
 
   public OIndexFullText() {
@@ -199,6 +202,7 @@ public class OIndexFullText extends OIndexMultiValues {
     configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
     try {
+      configuration.field(CONFIG_SEPARATOR_CHARS, separatorChars);
       configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
       configuration.field(CONFIG_STOP_WORDS, stopWords);
 
@@ -211,7 +215,7 @@ public class OIndexFullText extends OIndexMultiValues {
   private List<String> splitIntoWords(final String iKey) {
     final List<String> result = new ArrayList<String>();
 
-    final List<String> words = OStringSerializerHelper.split(iKey, ' ');
+    final List<String> words = (List<String>) OStringSerializerHelper.split(new ArrayList<String>(), iKey, 0, -1, separatorChars);
 
     final StringBuilder buffer = new StringBuilder();
     // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT

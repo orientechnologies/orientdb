@@ -76,6 +76,10 @@ public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizab
 
   void convertToTombstone();
 
+  byte[] toStream();
+
+  void fromStream(byte[] stream);
+
   /**
    * Provides serialization to different sources.
    */

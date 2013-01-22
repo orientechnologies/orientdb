@@ -459,7 +459,7 @@ public class SQLSelectTest {
     record.save();
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100,105]")).execute();
+        new OSQLSynchQuery<ODocument>("select * from cluster:animal where rates in [100,200]")).execute();
 
     boolean found = false;
     for (int i = 0; i < result.size() && !found; ++i) {
@@ -530,12 +530,11 @@ public class SQLSelectTest {
 
   @Test
   public void queryInAsParameter() {
-    List<ODocument> roles = database.query(new OSQLSynchQuery<Object>("select from orole"));
-    roles.remove(0);
+    List<ODocument> roles = database.query(new OSQLSynchQuery<Object>("select from orole limit 1"));
 
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from OUser where roles in ?")).execute(roles);
 
-    Assert.assertEquals(result.size(), 2);
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test

@@ -229,7 +229,7 @@ public class OServer {
 
       if (plugins.size() > 0) {
         // SHUTDOWN HANDLERS
-        OLogManager.instance().info(this, "Shutdowning plugins:");
+        OLogManager.instance().info(this, "Shutting down plugins:");
         for (OServerHandler h : plugins.values()) {
           OLogManager.instance().info(this, "- %s", h.getName());
           try {
@@ -241,13 +241,13 @@ public class OServer {
 
       if (networkProtocols.size() > 0) {
         // PROTOCOL SHUTDOWN
-        OLogManager.instance().info(this, "Shutdowning protocols");
+        OLogManager.instance().info(this, "Shutting down protocols");
         networkProtocols.clear();
       }
 
       if (networkListeners.size() > 0) {
         // SHUTDOWN LISTENERS
-        OLogManager.instance().info(this, "Shutdowning listeners:");
+        OLogManager.instance().info(this, "Shutting down listeners:");
         // SHUTDOWN LISTENERS
         for (OServerNetworkListener l : networkListeners) {
           OLogManager.instance().info(this, "- %s", l);
@@ -471,7 +471,7 @@ public class OServer {
       hookManager = new OConfigurableHooksManager(iConfiguration);
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
     }
   }
 

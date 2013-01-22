@@ -41,10 +41,14 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
 
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    // AGGREGATION MODE (STATEFULL)
+    if (iParameters.length > 1)
+      // IN LINE MODE
+      context = new ArrayList<Object>();
+
     for (Object value : iParameters) {
       if (value != null) {
-        if (context == null)
+        if (iParameters.length == 1 && context == null)
+          // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
         if (value instanceof Collection<?>)

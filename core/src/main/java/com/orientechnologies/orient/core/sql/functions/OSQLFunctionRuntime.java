@@ -96,11 +96,11 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
 
-    return transformValue(iCurrentRecord, functionResult);
+    return transformValue(iCurrentRecord, iContext, functionResult);
   }
 
   public Object getResult() {
-    return transformValue(null, function.getResult());
+    return transformValue(null, null, function.getResult());
   }
 
   public void setResult(final Object iValue) {

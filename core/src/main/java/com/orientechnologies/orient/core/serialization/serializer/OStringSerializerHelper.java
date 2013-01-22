@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -150,27 +151,30 @@ public abstract class OStringSerializerHelper {
   }
 
   public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
-    return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, false, iJumpChars);
+    return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, false, true, iJumpChars);
   }
 
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
-      final boolean iStringSeparatorExtended, final char... iJumpChars) {
+      final boolean iStringSeparatorExtended, boolean iConsiderBraces, final char... iJumpChars) {
     final StringBuilder buffer = new StringBuilder();
     final ArrayList<String> parts = new ArrayList<String>();
 
-    while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iJumpChars)) > -1) {
-      parts.add(buffer.toString());
-      buffer.setLength(0);
-    }
+    if (iSource != null && !iSource.isEmpty()) {
+      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
+          iConsiderBraces, iJumpChars)) > -1) {
+        parts.add(buffer.toString());
+        buffer.setLength(0);
+      }
 
-    if (buffer.length() > 0)
-      parts.add(buffer.toString());
+      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+        parts.add(buffer.toString());
+    }
 
     return parts;
   }
 
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
-      final char[] iSeparator, final boolean iStringSeparatorExtended, final char... iJumpChars) {
+      final char[] iSeparator, final boolean iStringSeparatorExtended, boolean iConsiderBraces, final char... iJumpChars) {
     char stringBeginChar = ' ';
     boolean encodeMode = false;
     int insideParenthesis = 0;
@@ -188,7 +192,7 @@ public abstract class OStringSerializerHelper {
     int i = 0;
     for (; i < buffer.length; ++i) {
       final char c = buffer[i];
-      if (!isCharPresent(c, iSeparator))
+      if (!isCharPresent(c, iJumpChars))
         break;
     }
 
@@ -198,43 +202,44 @@ public abstract class OStringSerializerHelper {
       if (stringBeginChar == ' ') {
         // OUTSIDE A STRING
 
-        if (c == COLLECTION_BEGIN)
-          insideCollection++;
-        else if (c == COLLECTION_END) {
-          if (!isCharPresent(c, iSeparator)) {
-            if (insideCollection == 0)
-              throw new OSerializationException("Found invalid " + COLLECTION_END
+        if (iConsiderBraces)
+          if (c == COLLECTION_BEGIN)
+            insideCollection++;
+          else if (c == COLLECTION_END) {
+            if (!isCharPresent(c, iSeparator)) {
+              if (insideCollection == 0)
+                throw new OSerializationException("Found invalid " + COLLECTION_END
+                    + " character. Ensure it is opened and closed correctly.");
+              insideCollection--;
+            }
+
+          } else if (c == EMBEDDED_BEGIN) {
+            insideParenthesis++;
+          } else if (c == EMBEDDED_END) {
+            // if (!isCharPresent(c, iRecordSeparator)) {
+            if (insideParenthesis == 0)
+              throw new OSerializationException("Found invalid " + EMBEDDED_END
                   + " character. Ensure it is opened and closed correctly.");
-            insideCollection--;
+            // }
+            insideParenthesis--;
+
+          } else if (c == MAP_BEGIN) {
+            insideMap++;
+          } else if (c == MAP_END) {
+            if (!isCharPresent(c, iSeparator)) {
+              if (insideMap == 0)
+                throw new OSerializationException("Found invalid " + MAP_END
+                    + " character. Ensure it is opened and closed correctly.");
+              insideMap--;
+            }
           }
 
-        } else if (c == EMBEDDED_BEGIN) {
-          insideParenthesis++;
-        } else if (c == EMBEDDED_END) {
-          // if (!isCharPresent(c, iRecordSeparator)) {
-          if (insideParenthesis == 0)
-            throw new OSerializationException("Found invalid " + EMBEDDED_END
-                + " character. Ensure it is opened and closed correctly.");
-          // }
-          insideParenthesis--;
-
-        } else if (c == MAP_BEGIN) {
-          insideMap++;
-        } else if (c == MAP_END) {
-          if (!isCharPresent(c, iSeparator)) {
-            if (insideMap == 0)
-              throw new OSerializationException("Found invalid " + MAP_END
-                  + " character. Ensure it is opened and closed correctly.");
-            insideMap--;
-          }
-        }
-
-        else if (c == LINK)
-          // FIRST PART OF LINK
-          insideLinkPart = 1;
-        else if (insideLinkPart == 1 && c == ORID.SEPARATOR)
-          // SECOND PART OF LINK
-          insideLinkPart = 2;
+          else if (c == LINK)
+            // FIRST PART OF LINK
+            insideLinkPart = 1;
+          else if (insideLinkPart == 1 && c == ORID.SEPARATOR)
+            // SECOND PART OF LINK
+            insideLinkPart = 2;
 
         if (insideLinkPart > 0 && c != '-' && !Character.isDigit(c) && c != ORID.SEPARATOR && c != LINK)
           insideLinkPart = 0;
@@ -332,12 +337,20 @@ public abstract class OStringSerializerHelper {
 
   public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
       final int iEndPosition, final char iRecordSeparator, final char... iJumpCharacters) {
+    return split(iParts, iSource, iStartPosition, iEndPosition, String.valueOf(iRecordSeparator), iJumpCharacters);
+  }
+
+  public static Collection<String> split(final Collection<String> iParts, final String iSource, final int iStartPosition,
+      int iEndPosition, final String iRecordSeparators, final char... iJumpCharacters) {
+    if (iEndPosition == -1)
+      iEndPosition = iSource.length();
+
     final StringBuilder buffer = new StringBuilder();
 
     for (int i = iStartPosition; i < iEndPosition; ++i) {
       char c = iSource.charAt(i);
 
-      if (c == iRecordSeparator) {
+      if (iRecordSeparators.indexOf(c) > -1) {
         iParts.add(buffer.toString());
         buffer.setLength(0);
       } else {
@@ -495,12 +508,12 @@ public abstract class OStringSerializerHelper {
       return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder();
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true);
+    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true);
     if (buffer.length() == 0)
       return iBeginPosition;
 
     final String t = buffer.substring(1, buffer.length() - 1).trim();
-    final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true);
+    final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true, true);
 
     for (int i = 0; i < pars.size(); ++i)
       iParameters.add(pars.get(i).trim());
@@ -514,7 +527,7 @@ public abstract class OStringSerializerHelper {
       return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder();
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true);
+    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true);
     if (buffer.length() == 0)
       return iBeginPosition;
 
@@ -656,46 +669,9 @@ public abstract class OStringSerializerHelper {
     return iLinkedClass;
   }
 
-  public static String java2unicode(final String iInput) {
-    final StringBuilder result = new StringBuilder();
-    final int inputSize = iInput.length();
-
-    char ch;
-    String hex;
-    for (int i = 0; i < inputSize; i++) {
-      ch = iInput.charAt(i);
-
-      if (ch >= 0x0020 && ch <= 0x007e) // Does the char need to be converted to unicode?
-        result.append(ch); // No.
-      else // Yes.
-      {
-        result.append("\\u"); // standard unicode format.
-        hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
-        for (int j = 0; j < 4 - hex.length(); j++)
-          // Prepend zeros because unicode requires 4 digits
-          result.append('0');
-        result.append(hex.toLowerCase()); // standard unicode format.
-        // ostr.append(hex.toLowerCase(Locale.ENGLISH));
-      }
-    }
-
-    return result.toString();
-  }
-
   public static String getStringContent(final Object iValue) {
-    if (iValue == null)
-      return null;
-
-    final String s = iValue.toString();
-
-    if (s == null)
-      return null;
-
-    if (s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
-      return s.substring(1, s.length() - 1);
-
-    return s;
+    // MOVED
+    return OIOUtils.getStringContent(iValue);
   }
 
   /**

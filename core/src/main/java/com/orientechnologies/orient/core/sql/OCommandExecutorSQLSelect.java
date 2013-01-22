@@ -272,6 +272,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         applyFlatten();
         handleNoTarget();
         handleGroupBy();
+        applyOrderBy();
 
         subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
         lastRecord = null;

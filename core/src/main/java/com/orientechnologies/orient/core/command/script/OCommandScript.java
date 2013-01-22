@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.command.script;
 
 import javax.script.CompiledScript;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -81,5 +82,12 @@ public class OCommandScript extends OCommandRequestTextAbstract {
 
   public CompiledScript getCompiledScript() {
     return compiledScript;
+  }
+
+  @Override
+  public String toString() {
+    if (language != null)
+      return language + "." + OIOUtils.getStringMaxLength(text, 50, "...");
+    return "script." + text;
   }
 }

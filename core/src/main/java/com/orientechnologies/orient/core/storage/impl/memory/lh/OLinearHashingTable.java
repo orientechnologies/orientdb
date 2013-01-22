@@ -710,22 +710,22 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
   }
 
   public Entry<K, V>[] floorEntries(K currentRecord) {
-    int[] bucketLevelAndOrder = calculateBucketNumberAndLevel(currentRecord);
+    int[] bucketNumberAndLevel = calculateBucketNumberAndLevel(currentRecord);
 
-    Entry<K, V>[] result = fetchFloorEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    Entry<K, V>[] result = fetchFloorEntries(currentRecord, bucketNumberAndLevel[0], bucketNumberAndLevel[1]);
     if (result.length > 0)
       return result;
 
     int step = 1;
-    bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
+    bucketNumberAndLevel = calculatePrevBucketNumberAndLevel(currentRecord, step);
 
-    while (bucketLevelAndOrder != null) {
-      result = fetchFloorEntries(currentRecord, bucketLevelAndOrder[0], bucketLevelAndOrder[1]);
+    while (bucketNumberAndLevel != null) {
+      result = fetchFloorEntries(currentRecord, bucketNumberAndLevel[0], bucketNumberAndLevel[1]);
       if (result.length > 0)
         return result;
 
       step++;
-      bucketLevelAndOrder = calculatePrevBucketNumberAndLevel(currentRecord, step);
+      bucketNumberAndLevel = calculatePrevBucketNumberAndLevel(currentRecord, step);
     }
 
     return new Entry[0];
@@ -860,14 +860,17 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
 
     naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
 
-    naturalOrderedKey += step;
-    if (currentLevel > level && naturalOrderedKey >= 2 * next) {
-      currentLevel--;
-      naturalOrderedKey = naturalOrderedKey / 2;
-    }
+    for (int i = 0; i < step; i++) {
+      naturalOrderedKey++;
 
-    if (naturalOrderedKey >= 1 << currentLevel)
-      return null;
+      if (currentLevel > level && naturalOrderedKey >= 2 * next) {
+        currentLevel--;
+        naturalOrderedKey = naturalOrderedKey / 2;
+      }
+
+      if (naturalOrderedKey >= (1 << currentLevel))
+        return null;
+    }
 
     final int bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderedKey, currentLevel);
 
@@ -882,14 +885,16 @@ public class OLinearHashingTable<K extends OClusterPosition, V extends OPhysical
       currentLevel++;
 
     naturalOrderedKey = OLinearHashingHashCalculator.INSTANCE.calculateNaturalOrderedHash(currentRecord, currentLevel);
-    naturalOrderedKey -= step;
+    for (int i = 0; i < step; i++) {
+      naturalOrderedKey--;
 
-    if (naturalOrderedKey < 0)
-      return null;
+      if (naturalOrderedKey < 0)
+        return null;
 
-    if (currentLevel == level && naturalOrderedKey < next) {
-      naturalOrderedKey = naturalOrderedKey * 2 + 1;
-      currentLevel++;
+      if (currentLevel == level && naturalOrderedKey < next) {
+        naturalOrderedKey = naturalOrderedKey * 2 + 1;
+        currentLevel++;
+      }
     }
 
     final int bucketNumber = OLinearHashingHashCalculator.INSTANCE.calculateBucketNumber(naturalOrderedKey, currentLevel);

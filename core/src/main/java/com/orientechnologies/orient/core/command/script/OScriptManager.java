@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.command.script;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,38 +52,41 @@ import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
  * 
  */
 public class OScriptManager {
-  protected final String                  DEF_LANGUAGE       = "javascript";
-  protected ScriptEngineManager           scriptEngineManager;
-  protected Map<String, ScriptEngine>     engines;
-  protected String                        defaultLanguage    = DEF_LANGUAGE;
-  protected Map<String, OScriptFormatter> formatters         = new HashMap<String, OScriptFormatter>();
-  protected List<OScriptInjection>        injections         = new ArrayList<OScriptInjection>();
-  protected static final Object[]         EMPTY_PARAMS       = new Object[] {};
-  protected static final int              LINES_AROUND_ERROR = 5;
+  protected final String                     DEF_LANGUAGE       = "javascript";
+  protected ScriptEngineManager              scriptEngineManager;
+  protected Map<String, ScriptEngineFactory> engines            = new HashMap<String, ScriptEngineFactory>();
+  protected Map<String, ScriptEngine>        sharedEngines      = new HashMap<String, ScriptEngine>();
+  protected String                           defaultLanguage    = DEF_LANGUAGE;
+  protected Map<String, OScriptFormatter>    formatters         = new HashMap<String, OScriptFormatter>();
+  protected List<OScriptInjection>           injections         = new ArrayList<OScriptInjection>();
+  protected static final Object[]            EMPTY_PARAMS       = new Object[] {};
+  protected static final int                 LINES_AROUND_ERROR = 5;
 
   public OScriptManager() {
-    if (engines == null) {
-      engines = new HashMap<String, ScriptEngine>();
-      scriptEngineManager = new ScriptEngineManager();
+    scriptEngineManager = new ScriptEngineManager();
 
-      registerEngine(OSQLScriptEngine.NAME, new OSQLScriptEngineFactory().getScriptEngine());
+    registerSharedEngine(OSQLScriptEngine.NAME, new OSQLScriptEngineFactory().getScriptEngine());
 
-      for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
-        registerEngine(f.getLanguageName().toLowerCase(), f.getScriptEngine());
+    for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
+      if (f.getParameter("THREADING") != null)
+        // MULTI-THREAD: CACHE IT AS SHARED
+        registerSharedEngine(f.getLanguageName().toLowerCase(), f.getScriptEngine());
+      else
+        registerEngine(f.getLanguageName().toLowerCase(), f);
 
-        if (defaultLanguage == null)
-          defaultLanguage = f.getLanguageName();
-      }
-
-      if (!engines.containsKey(DEF_LANGUAGE)) {
-        registerEngine(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE));
-        defaultLanguage = DEF_LANGUAGE;
-      }
-
-      registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
-      registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
-      registerFormatter("ruby", new ORubyScriptFormatter());
+      if (defaultLanguage == null)
+        defaultLanguage = f.getLanguageName();
     }
+
+    if (!existsEngine(DEF_LANGUAGE)) {
+      // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH getEngineFactories() ABOVE!
+      registerEngine(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE).getFactory());
+      defaultLanguage = DEF_LANGUAGE;
+    }
+
+    registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
+    registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
+    registerFormatter("ruby", new ORubyScriptFormatter());
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
@@ -136,19 +140,36 @@ public class OScriptManager {
     return code.length() == 0 ? null : code.toString();
   }
 
+  public boolean existsEngine(String iLanguage) {
+    if (iLanguage == null)
+      return false;
+
+    iLanguage = iLanguage.toLowerCase();
+    return sharedEngines.containsKey(iLanguage) || engines.containsKey(iLanguage);
+  }
+
   public ScriptEngine getEngine(final String iLanguage) {
     if (iLanguage == null)
       throw new OCommandScriptException("No language was specified");
 
     final String lang = iLanguage.toLowerCase();
-    if (!engines.containsKey(lang))
-      throw new OCommandScriptException("Unsupported language: " + iLanguage + ". Supported languages are: " + engines);
-
-    final ScriptEngine scriptEngine = engines.get(lang);
-    if (scriptEngine == null)
-      throw new OCommandScriptException("Cannot find script engine: " + iLanguage);
+    ScriptEngine scriptEngine = sharedEngines.get(lang);
+    if (scriptEngine == null) {
+      final ScriptEngineFactory scriptEngineFactory = engines.get(lang);
+      if (scriptEngineFactory == null)
+        throw new OCommandScriptException("Unsupported language: " + iLanguage + ". Supported languages are: "
+            + getSupportedLanguages());
+      scriptEngine = scriptEngineFactory.getScriptEngine();
+    }
 
     return scriptEngine;
+  }
+
+  public Iterable<String> getSupportedLanguages() {
+    final HashSet<String> result = new HashSet<String>();
+    result.addAll(sharedEngines.keySet());
+    result.addAll(engines.keySet());
+    return result;
   }
 
   public Bindings bind(final Bindings binding, final ODatabaseRecordTx db, final OCommandContext iContext,
@@ -252,13 +273,26 @@ public class OScriptManager {
     injections.remove(iInj);
   }
 
-  public OScriptManager registerEngine(final String iLanguage, final ScriptEngine iEngine) {
+  public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
     engines.put(iLanguage, iEngine);
     return this;
   }
 
+  /**
+   * Registers multi-thread engines can be cached and shared between threads.
+   * 
+   * @param iLanguage
+   *          Language name
+   * @param iEngine
+   *          Engine instance
+   */
+  public OScriptManager registerSharedEngine(final String iLanguage, final ScriptEngine iEngine) {
+    sharedEngines.put(iLanguage.toLowerCase(), iEngine);
+    return this;
+  }
+
   public OScriptManager registerFormatter(final String iLanguage, final OScriptFormatter iFormatterImpl) {
-    formatters.put(iLanguage, iFormatterImpl);
+    formatters.put(iLanguage.toLowerCase(), iFormatterImpl);
     return this;
   }
 }

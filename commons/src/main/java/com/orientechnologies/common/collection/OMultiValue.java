@@ -17,6 +17,7 @@ package com.orientechnologies.common.collection;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -189,7 +190,7 @@ public class OMultiValue {
           }
         }
       } else if (iObject.getClass().isArray())
-        return Array.get(iObject, 0);
+        return Array.get(iObject, iIndex);
     } catch (Exception e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
@@ -296,5 +297,67 @@ public class OMultiValue {
     }
 
     return iObject.toString();
+  }
+
+  /**
+   * Utility function that add a value to the main object. It takes care about collections/array and single values.
+   * 
+   * @param iObject
+   *          MultiValue where to add value(s)
+   * @param iToAdd
+   *          Single value, array of values or collections of values. Map are not supported.
+   * @return
+   */
+  public static Object add(final Object iObject, final Object iToAdd) {
+    if (iObject != null) {
+      if (iObject instanceof Collection<?>) {
+        // COLLECTION - ?
+        final Collection<Object> coll = (Collection<Object>) iObject;
+
+        if (iToAdd instanceof Collection<?>)
+          // COLLECTION - COLLECTION
+          coll.addAll((Collection<Object>) iToAdd);
+
+        else if (iToAdd != null && iToAdd.getClass().isArray()) {
+          // ARRAY - COLLECTION
+          for (int i = 0; i < Array.getLength(iToAdd); ++i)
+            coll.add(Array.get(iToAdd, i));
+
+        } else if (iObject instanceof Map<?, ?>) {
+          // MAP
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iObject).entrySet())
+            coll.add(entry.getValue());
+        } else
+          coll.add(iToAdd);
+
+      } else if (iObject.getClass().isArray()) {
+        // ARRAY - ?
+
+        final Object[] copy;
+        if (iToAdd instanceof Collection<?>) {
+          // ARRAY - COLLECTION
+          final int tot = Array.getLength(iObject) + ((Collection<Object>) iToAdd).size();
+          copy = Arrays.copyOf((Object[]) iObject, tot);
+          final Iterator<Object> it = ((Collection<Object>) iToAdd).iterator();
+          for (int i = Array.getLength(iObject); i < tot; ++i)
+            copy[i] = it.next();
+
+        } else if (iToAdd != null && iToAdd.getClass().isArray()) {
+          // ARRAY - ARRAY
+          final int tot = Array.getLength(iObject) + Array.getLength(iToAdd);
+          copy = Arrays.copyOf((Object[]) iObject, tot);
+          System.arraycopy(iToAdd, 0, iObject, Array.getLength(iObject), Array.getLength(iToAdd));
+
+        } else {
+          copy = Arrays.copyOf((Object[]) iObject, Array.getLength(iObject) + 1);
+          copy[copy.length - 1] = iToAdd;
+        }
+        return copy;
+
+      } else
+        throw new IllegalArgumentException("Object " + iObject + " is not a multi value");
+    }
+
+    return iObject;
   }
 }

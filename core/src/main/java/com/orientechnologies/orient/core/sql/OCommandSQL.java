@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandRequestTextAbstract;
 
 /**
@@ -35,4 +36,10 @@ public class OCommandSQL extends OCommandRequestTextAbstract {
   public boolean isIdempotent() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "sql." + OIOUtils.getStringMaxLength(text, 50, "...");
+  }
+
 }

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
@@ -38,10 +39,10 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
-  private static final long serialVersionUID = 1L;
-  
-  public static final String ADMIN      = "admin";
-  public static final String CLASS_NAME = "ORole";
+  private static final long  serialVersionUID = 1L;
+
+  public static final String ADMIN            = "admin";
+  public static final String CLASS_NAME       = "ORole";
 
   public enum ALLOW_MODES {
     DENY_ALL_BUT, ALLOW_ALL_BUT
@@ -96,8 +97,8 @@ public class ORole extends ODocumentWrapper {
 
     mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
 
-    final String roleName = document.field("inheritedRole");
-    parentRole = roleName != null ? document.getDatabase().getMetadata().getSecurity().getRole(roleName) : null;
+    final OIdentifiable role = document.field("inheritedRole");
+    parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
 
     final Map<String, Number> storedRules = document.field("rules");
     if (storedRules != null)

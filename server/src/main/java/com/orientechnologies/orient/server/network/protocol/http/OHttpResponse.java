@@ -52,6 +52,7 @@ public class OHttpResponse {
   public String              serverInfo;
   public String              sessionId;
   public String              callbackFunction;
+  public boolean             sendStarted   = false;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
@@ -71,6 +72,11 @@ public class OHttpResponse {
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders,
       final boolean iKeepAlive) throws IOException {
+    if (sendStarted)
+      // AVOID TO SEND RESPONSE TWICE
+      return;
+    sendStarted = true;
+
     final String content;
     final String contentType;
 

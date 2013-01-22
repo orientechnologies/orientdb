@@ -152,12 +152,15 @@ public class OFetchHelper {
     Object fieldValue;
     for (String fieldName : record.fieldNames()) {
       final int depthLevel;
-      String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
-      if (iFieldDepthLevel > -1) {
+      final String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
+
+      if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
-      } else {
+      else
         depthLevel = getDepthLevel(iFetchPlan, fieldPath);
-      }
+
+      if (depthLevel == -2)
+        continue;
 
       fieldValue = record.field(fieldName);
       if (fieldValue == null
@@ -287,11 +290,14 @@ public class OFetchHelper {
     for (String fieldName : record.fieldNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
       final int depthLevel;
-      if (iFieldDepthLevel > -1) {
+      if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
-      } else {
+      else
         depthLevel = getDepthLevel(iFetchPlan, fieldPath);
-      }
+
+      if (depthLevel == -2)
+        continue;
+
       fieldValue = record.field(fieldName);
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)

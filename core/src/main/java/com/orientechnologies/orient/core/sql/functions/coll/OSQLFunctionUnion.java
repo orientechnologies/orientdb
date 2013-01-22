@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,14 +53,10 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
         if (context == null)
           context = new HashSet<Object>();
 
-        if (value instanceof Collection<?>)
-          // INSERT EVERY SINGLE COLLECTION ITEM
-          context.addAll((Collection<?>) value);
-        else
-          context.add(value);
+        OMultiValue.add(context, value);
       }
 
-      return null;
+      return context;
     } else {
       // IN-LINE MODE (STATELESS)
       final HashSet<Object> result = new HashSet<Object>();
@@ -69,11 +66,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
           if (value instanceof OSQLFilterItemVariable)
             value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
 
-          if (value instanceof Collection<?>)
-            // INSERT EVERY SINGLE COLLECTION ITEM
-            result.addAll((Collection<?>) value);
-          else
-            result.add(value);
+          OMultiValue.add(result, value);
         }
       }
 

@@ -37,16 +37,16 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
     names = iNames;
   }
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
     if (names.size() == 1)
-      return transformValue(iRecord, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
+      return transformValue(iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 
     final Object[] values = ((ODocument) iRecord).fieldValues();
 
     if (hasChainOperators()) {
       // TRANSFORM ALL THE VALUES
       for (int i = 0; i < values.length; ++i)
-        values[i] = transformValue(iRecord, values[i]);
+        values[i] = transformValue(iRecord, iContext, values[i]);
     }
 
     return new OQueryRuntimeValueMulti(this, values);

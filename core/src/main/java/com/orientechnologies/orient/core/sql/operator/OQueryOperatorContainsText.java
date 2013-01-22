@@ -27,11 +27,13 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
 /**
- * CONTAINS KEY operator.
+ * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
+ * piece of text.
  * 
  * @author Luca Garulli
  * 
@@ -51,6 +53,18 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   @Override
   public String getSyntax() {
     return "<left> CONTAINSTEXT[( noignorecase ] )] <right>";
+  }
+
+  /**
+   * This is executed on non-indexed fields.
+   */
+  @Override
+  public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
+      final Object iLeft, final Object iRight, OCommandContext iContext) {
+    if (iLeft == null || iRight == null)
+      return false;
+
+    return iLeft.toString().indexOf(iRight.toString()) > -1;
   }
 
   @SuppressWarnings({ "unchecked", "deprecation" })
@@ -125,6 +139,10 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
+
+    if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
+      return ((Collection<?>) result).size();
+
     return result;
   }
 

@@ -36,8 +36,21 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   protected boolean      polymorphic;
   protected boolean      useCache;
 
+  /**
+   * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
+   */
   public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
+      final String iClassName, final boolean iPolymorphic) {
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
+  }
+
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
+      final boolean iPolymorphic) {
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
+  }
+
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
+      final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
 
     targetClass = database.getMetadata().getSchema().getClass(iClassName);

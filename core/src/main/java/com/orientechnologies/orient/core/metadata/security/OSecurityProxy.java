@@ -95,6 +95,10 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.getRole(iRoleName);
   }
 
+  public ORole getRole(final OIdentifiable iRole) {
+    return delegate.getRole(iRole);
+  }
+
   public ORole createRole(final String iRoleName, final ALLOW_MODES iAllowMode) {
     return delegate.createRole(iRoleName, iAllowMode);
   }

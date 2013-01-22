@@ -37,9 +37,6 @@ public class OLogManager {
     if (iMessage != null) {
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
       if (log.isLoggable(iLevel)) {
-        // ENCODE OF SPECIAL FORMAT CHAR '%' IF ANY
-        // if (iMessage.contains("%"))
-        // iMessage = iMessage.replaceAll("%", "%%");
         final String msg = String.format(iMessage, iAdditionalArgs);
         if (iException != null)
           log.log(iLevel, msg, iException);

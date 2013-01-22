@@ -19,10 +19,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -37,39 +38,39 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
-  protected final ODatabaseRecord       database;
-  private final ODatabaseRecordAbstract lowLevelDatabase;
-  private final OStorage                dbStorage;
+  protected final ODatabaseRecord  database;
+  private final ODatabaseRecord    lowLevelDatabase;
+  private final OStorage           dbStorage;
 
-  protected boolean                     liveUpdated            = false;
-  protected long                        limit                  = -1;
-  protected long                        browsedRecords         = 0;
+  protected boolean                liveUpdated            = false;
+  protected long                   limit                  = -1;
+  protected long                   browsedRecords         = 0;
 
-  private String                        fetchPlan;
-  private ORecordInternal<?>            reusedRecord           = null;                                          // DEFAULT = NOT
-                                                                                                                 // REUSE IT
-  private Boolean                       directionForward;
+  private String                   fetchPlan;
+  private ORecordInternal<?>       reusedRecord           = null;                                          // DEFAULT = NOT
+                                                                                                            // REUSE IT
+  private Boolean                  directionForward;
 
-  protected final ORecordId             current                = new ORecordId();
+  protected final ORecordId        current                = new ORecordId();
 
-  protected long                        totalAvailableRecords;
-  protected List<ORecordOperation>      txEntries;
+  protected long                   totalAvailableRecords;
+  protected List<ORecordOperation> txEntries;
 
-  protected int                         currentTxEntryPosition = -1;
+  protected int                    currentTxEntryPosition = -1;
 
-  protected OClusterPosition            firstClusterEntry      = OClusterPositionFactory.INSTANCE.valueOf(0);
-  protected OClusterPosition            lastClusterEntry       = OClusterPositionFactory.INSTANCE.getMaxValue();
+  protected OClusterPosition       firstClusterEntry      = OClusterPositionFactory.INSTANCE.valueOf(0);
+  protected OClusterPosition       lastClusterEntry       = OClusterPositionFactory.INSTANCE.getMaxValue();
 
-  private OClusterPosition              currentEntry           = OClusterPosition.INVALID_POSITION;
+  private OClusterPosition         currentEntry           = OClusterPosition.INVALID_POSITION;
 
-  private int                           currentEntryPosition   = -1;
-  private OPhysicalPosition[]           positionsToProcess     = null;
+  private int                      currentEntryPosition   = -1;
+  private OPhysicalPosition[]      positionsToProcess     = null;
 
-  private final boolean                 useCache;
-  private final boolean                 iterateThroughTombstones;
+  private final boolean            useCache;
+  private final boolean            iterateThroughTombstones;
 
-  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final boolean useCache, final boolean iterateThroughTombstones) {
+  public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final boolean useCache,
+      final boolean iterateThroughTombstones) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
     this.iterateThroughTombstones = iterateThroughTombstones;
@@ -270,11 +271,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       if (!moveResult)
         return null;
 
-      if (iRecord != null) {
-        iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
-        iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
-      } else
-        iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
+      try {
+        if (iRecord != null) {
+          iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
+          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
+        } else
+          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
+      } catch (ODatabaseException e) {
+        OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
+      }
 
       if (iRecord != null) {
         browsedRecords++;
@@ -362,18 +367,23 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   private void decrementEntreePosition() {
     if (positionsToProcess.length > 0)
-      do {
+      if (iterateThroughTombstones)
         currentEntryPosition--;
-      } while (currentEntryPosition > 0 && !iterateThroughTombstones
-          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+      else
+        do {
+          currentEntryPosition--;
+        } while (currentEntryPosition >= 0 && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   private void incrementEntreePosition() {
     if (positionsToProcess.length > 0)
-      do {
+      if (iterateThroughTombstones)
         currentEntryPosition++;
-      } while (currentEntryPosition < positionsToProcess.length && !iterateThroughTombstones
-          && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+      else
+        do {
+          currentEntryPosition++;
+        } while (currentEntryPosition < positionsToProcess.length
+            && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
   }
 
   protected void resetCurrentPosition() {

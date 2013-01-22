@@ -299,6 +299,11 @@ public class Orient extends OSharedResourceAbstract {
             l.onShutdown();
         }
 
+      // SHUTDOWN ENGINES
+      for (OEngine engine : engines.values()) {
+        engine.shutdown();
+      }
+
       if (databaseFactory != null)
         // CLOSE ALL DATABASES
         databaseFactory.shutdown();

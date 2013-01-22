@@ -54,6 +54,10 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
+  public ORole getRole(OIdentifiable iRole) {
+    return null;
+  }
+
   public ORole createRole(String iRoleName, ALLOW_MODES iAllowMode) {
     return null;
   }
