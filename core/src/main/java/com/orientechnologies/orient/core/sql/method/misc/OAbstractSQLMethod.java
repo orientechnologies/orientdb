@@ -94,20 +94,20 @@ public abstract class OAbstractSQLMethod extends OSQLFunctionAbstract implements
             return null;
         }
     }
-    
-    protected  Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
-        if(iValue == null){
-            return null;
-        }
-
-        if(iValue.charAt(0) == '\'' || iValue.charAt(0) == '"'){
-            // GET THE VALUE AS STRING
-            return iValue.substring(1, iValue.length() - 1);
-        }
-
-        // SEARCH FOR FIELD
-        return ((ODocument) iRecord.getRecord()).field(iValue);
-    }
+//    
+//    protected  Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
+//        if(iValue == null){
+//            return null;
+//        }
+//
+//        if(iValue.charAt(0) == '\'' || iValue.charAt(0) == '"'){
+//            // GET THE VALUE AS STRING
+//            return iValue.substring(1, iValue.length() - 1);
+//        }
+//
+//        // SEARCH FOR FIELD
+//        return ((ODocument) iRecord.getRecord()).field(iValue);
+//    }
 
     @Override
     public int compareTo(OSQLMethod o) {

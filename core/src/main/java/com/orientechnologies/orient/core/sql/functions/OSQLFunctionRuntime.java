@@ -71,13 +71,13 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
   public Object execute(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
     // RESOLVE VALUES USING THE CURRENT RECORD
     for (int i = 0; i < configuredParameters.length; ++i) {
-      if (configuredParameters[i] instanceof OSQLFilterItemField)
+      if (configuredParameters[i] instanceof OSQLFilterItemField){
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-      else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
+      }else if (configuredParameters[i] instanceof OSQLFunctionRuntime){
         runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentResult, iContext);
-      else if (configuredParameters[i] instanceof OSQLFilterItemVariable)
+      }else if (configuredParameters[i] instanceof OSQLFilterItemVariable){
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-      else if (configuredParameters[i] instanceof OCommandSQL) {
+      }else if (configuredParameters[i] instanceof OCommandSQL) {
         try {
           runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
         } catch (OCommandExecutorNotFoundException e) {
@@ -89,9 +89,12 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           configuredParameters[i] = pred;
 
         }
-      } else if (configuredParameters[i] instanceof OSQLPredicate)
+      } else if (configuredParameters[i] instanceof OSQLPredicate){
         runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate((ORecord<?>) iCurrentRecord, iCurrentResult,
             iContext);
+      }else{
+        runtimeParameters[i] = configuredParameters[i];
+      }
     }
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
