@@ -582,7 +582,7 @@ public class OServer {
 
   protected void createAdminAndDbListerUsers() throws IOException {
     addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
-    addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases");
+    addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases,server.dblist");
     saveConfiguration();
   }
 
