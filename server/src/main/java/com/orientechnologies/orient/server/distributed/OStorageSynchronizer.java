@@ -63,32 +63,36 @@ public class OStorageSynchronizer {
         + storageName);
 
     log = new ODatabaseJournal(storage, logDirectory);
+  }
+  
+  public void recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException{
+    final OStorage storage = openStorage(storageName);
 
-    // RECOVER ALL THE UNCOMMITTED RECORDS ASKING TO THE CURRENT SERVERS FOR THEM
-    for (ORecordId rid : log.getUncommittedOperations()) {
-      try {
-        if (getConflictResolver().existConflictsForRecord(rid))
-          continue;
+	  // RECOVER ALL THE UNCOMMITTED RECORDS ASKING TO THE CURRENT SERVERS FOR THEM
+	  for (ORecordId rid : log.getUncommittedOperations()) {
+		  try {
+			  if (getConflictResolver().existConflictsForRecord(rid))
+				  continue;
 
-        final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(getClusterNameByRID(storage, rid), rid,
-            new OReadRecordDistributedTask(iCluster.getLocalNodeId(), storageName, rid));
+			  final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(getClusterNameByRID(storage, rid), rid,
+					  new OReadRecordDistributedTask(iCluster.getLocalNodeId(), storageName, rid));
 
-        if (record == null)
-          // DELETE IT
-          storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
-        else
-          // UPDATE IT
-          storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
+			  if (record == null)
+				  // DELETE IT
+				  storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
+			  else
+				  // UPDATE IT
+				  storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
 
-      } catch (ExecutionException e) {
-        OLogManager
-            .instance()
-            .warn(
-                this,
-                "DISTRIBUTED Error on acquiring uncommitted record %s from other servers. The database could be unaligned with others!",
-                e, rid);
-      }
-    }
+		  } catch (ExecutionException e) {
+			  OLogManager
+			  .instance()
+			  .warn(
+					  this,
+					  "DISTRIBUTED Error on acquiring uncommitted record %s from other servers. The database could be unaligned with others!",
+					  e, rid);
+		  }
+	  } 
   }
 
   public Map<String, Object> distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
