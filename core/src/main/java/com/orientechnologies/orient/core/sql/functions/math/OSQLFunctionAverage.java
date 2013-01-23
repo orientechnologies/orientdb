@@ -55,10 +55,9 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       sum = null;
       for (int i = 0; i < iParameters.length; ++i)
         sum((Number) iParameters[i]);
-      return getResult();
     }
 
-    return null;
+    return getResult();
   }
 
   protected void sum(Number value) {
