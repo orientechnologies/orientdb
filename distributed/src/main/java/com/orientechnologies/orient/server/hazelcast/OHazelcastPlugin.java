@@ -503,7 +503,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         try {
           final long[] lastOperationId = entry.getValue().getLog().getLastOperationId();
 
-          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s", databaseName);
+          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
 
           synchronized (pendingAlignments) {
             for (String node : remoteClusterNodes.keySet()) {
