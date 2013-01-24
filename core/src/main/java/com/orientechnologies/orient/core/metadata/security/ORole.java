@@ -103,7 +103,7 @@ public class ORole extends ODocumentWrapper {
     final Map<String, Number> storedRules = document.field("rules");
     if (storedRules != null)
       for (Entry<String, Number> a : storedRules.entrySet()) {
-        rules.put(a.getKey(), a.getValue().byteValue());
+        rules.put(a.getKey().toLowerCase(), a.getValue().byteValue());
       }
   }
 
@@ -124,7 +124,7 @@ public class ORole extends ODocumentWrapper {
   }
 
   public void addRule(final String iResource, final int iOperation) {
-    rules.put(iResource, (byte) iOperation);
+    rules.put(iResource.toLowerCase(), (byte) iOperation);
     document.field("rules", rules);
   }
 
@@ -142,7 +142,7 @@ public class ORole extends ODocumentWrapper {
 
     currentValue |= (byte) iOperation;
 
-    rules.put(iResource, currentValue);
+    rules.put(iResource.toLowerCase(), currentValue);
     document.field("rules", rules);
   }
 
@@ -168,7 +168,7 @@ public class ORole extends ODocumentWrapper {
       currentValue &= ~(byte) iOperation;
     }
 
-    rules.put(iResource, currentValue);
+    rules.put(iResource.toLowerCase(), currentValue);
     document.field("rules", rules);
   }
 
