@@ -77,7 +77,9 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
         final OMultipleDistributedTasks tasks = new OMultipleDistributedTasks(localNode, databaseName, EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
 
-        for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
+        Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId });
+        //for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
+        while(it.hasNext()) {
           final long pos = it.next();
 
           final OAbstractDistributedTask<?> operation = log.getOperation(pos);
