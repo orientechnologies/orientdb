@@ -225,6 +225,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordVersion;
   }
 
+  public void setRecordVersion(final ORecordVersion recordVersion) {
+    _recordVersion = recordVersion;
+  }
+  
   public ORecordAbstract<T> unload() {
     _status = ORecordElement.STATUS.NOT_LOADED;
     _source = null;
