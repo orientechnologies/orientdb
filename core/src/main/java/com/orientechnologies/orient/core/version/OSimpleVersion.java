@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * @see OVersionFactory
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public final class OSimpleVersion implements ORecordVersion {
+public class OSimpleVersion implements ORecordVersion {
   public static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
   protected int                        version;
 
