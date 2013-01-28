@@ -57,6 +57,7 @@ public class OProfilerData {
     public String description;
 
     public void toJSON(final StringBuilder buffer) {
+      buffer.append(String.format("\"%s\":{", name.replaceAll("\"","\\\\\"")));
       buffer.append(String.format("\"%s\":{", OIOUtils.encode(name)));
       buffer.append(String.format("\"%s\":%d,", "entries", entries));
       buffer.append(String.format("\"%s\":%d,", "last", last));
