@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory.eh;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  * @since 21.01.13
  */
 public class OExtendibleHashingBucket {
-  public static final int     BUCKET_MAX_SIZE = 4;
+  public static final int     BUCKET_MAX_SIZE = 256;
 
   private OClusterPosition[]  keys            = new OClusterPosition[BUCKET_MAX_SIZE];
   private OPhysicalPosition[] values          = new OPhysicalPosition[BUCKET_MAX_SIZE];
@@ -35,11 +35,14 @@ public class OExtendibleHashingBucket {
 
   private int                 size;
 
+  private long                nextBucket      = -1;
+  private long                prevBucket      = -1;
+
   public OExtendibleHashingBucket(int depth) {
     this.depth = depth;
   }
 
-  public OPhysicalPosition get(final OClusterPosition key) {
+  public OPhysicalPosition find(final OClusterPosition key) {
     final int index = Arrays.binarySearch(keys, 0, size, key);
 
     if (index >= 0)
@@ -48,13 +51,12 @@ public class OExtendibleHashingBucket {
     return null;
   }
 
+  public OPhysicalPosition get(int index) {
+    return values[index];
+  }
+
   public int getPosition(final OClusterPosition key) {
-    final int index = Arrays.binarySearch(keys, 0, size, key);
-
-    if (index >= 0)
-      return index;
-
-    return -1;
+    return Arrays.binarySearch(keys, 0, size, key);
   }
 
   public int size() {
@@ -65,7 +67,7 @@ public class OExtendibleHashingBucket {
     size = 0;
   }
 
-  public Collection<OPhysicalPosition> getContent() {
+  public List<OPhysicalPosition> getContent() {
     return Arrays.asList(values).subList(0, size);
   }
 
@@ -111,5 +113,21 @@ public class OExtendibleHashingBucket {
 
   public void setDepth(int depth) {
     this.depth = depth;
+  }
+
+  public long getNextBucket() {
+    return nextBucket;
+  }
+
+  public void setNextBucket(long nextBucket) {
+    this.nextBucket = nextBucket;
+  }
+
+  public long getPrevBucket() {
+    return prevBucket;
+  }
+
+  public void setPrevBucket(long prevBucket) {
+    this.prevBucket = prevBucket;
   }
 }

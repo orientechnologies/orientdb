@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.storage.impl.memory.eh;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -18,7 +19,7 @@ import org.testng.annotations.Test;
  */
 @Test
 public class ExtendibleHashingTableTest {
-  private static final int KEYS_COUNT = 120000;
+  private static final int KEYS_COUNT = 50000;
   public static final int  MAX_SEED   = 3;
 
   public void testKeyPut() {
@@ -171,7 +172,6 @@ public class ExtendibleHashingTableTest {
     }
   }
 
-  @Test(enabled = false)
   public void testKeyAddDeleteRandom() {
     OExtendibleHashingTable extendibleHashingTable;
     int seed = 0;
@@ -221,6 +221,128 @@ public class ExtendibleHashingTableTest {
     }
   }
 
+  public void testNextHaveRightOrder() throws Exception {
+    OExtendibleHashingTable extendibleHashingTable;
+    MersenneTwisterFast random;
+    List<Long> keys = new ArrayList<Long>();
+    long i = 0;// Long.MIN_VALUE;
+
+    while (i < MAX_SEED) {
+      extendibleHashingTable = new OExtendibleHashingTable();
+      random = new MersenneTwisterFast(i);
+      keys.clear();
+
+      while (keys.size() < KEYS_COUNT) {
+        long key = random.nextLong(Long.MAX_VALUE);
+
+        OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+        if (extendibleHashingTable.put(position)) {
+          keys.add(key);
+          Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition), "key " + key);
+        }
+      }
+
+      Collections.sort(keys);
+
+      OExtendibleHashingTable.Entry[] hashTableEntries = extendibleHashingTable.ceilingEntries(new OClusterPositionLong(0));
+      int curPos = 0;
+      for (Long key : keys) {
+        OClusterPosition lhKey = hashTableEntries[curPos].key;
+
+        Assert.assertEquals(new OClusterPositionLong(key), lhKey, "" + key);
+        curPos++;
+        if (curPos >= hashTableEntries.length) {
+          hashTableEntries = extendibleHashingTable.higherEntries(hashTableEntries[hashTableEntries.length - 1].key);
+          curPos = 0;
+        }
+      }
+      i++;
+    }
+  }
+
+  public void testNextSkipsRecordValid() throws Exception {
+    OExtendibleHashingTable extendibleHashingTable;
+    MersenneTwisterFast random;
+    List<Long> keys = new ArrayList<Long>();
+    long i = 0;// Long.MIN_VALUE;
+
+    while (i < MAX_SEED) {
+      extendibleHashingTable = new OExtendibleHashingTable();
+      random = new MersenneTwisterFast(i);
+      keys.clear();
+
+      while (keys.size() < KEYS_COUNT) {
+        long key = random.nextLong(Long.MAX_VALUE);
+
+        OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+        if (extendibleHashingTable.put(position)) {
+          keys.add(key);
+          Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition), "key " + key);
+        }
+      }
+
+      Collections.sort(keys);
+
+      OExtendibleHashingTable.Entry[] hashTableEntries = extendibleHashingTable.ceilingEntries(new OClusterPositionLong(keys
+          .get(10)));
+      int curPos = 0;
+      for (Long key : keys) {
+        if (key < keys.get(10)) {
+          continue;
+        }
+        OClusterPosition lhKey = hashTableEntries[curPos].key;
+        Assert.assertEquals(new OClusterPositionLong(key), lhKey, "" + key);
+
+        curPos++;
+        if (curPos >= hashTableEntries.length) {
+          hashTableEntries = extendibleHashingTable.higherEntries(hashTableEntries[hashTableEntries.length - 1].key);
+          curPos = 0;
+        }
+
+      }
+
+      i++;
+    }
+  }
+
+  public void testNextHaveRightOrderUsingNextMethod() throws Exception {
+    OExtendibleHashingTable extendibleHashingTable;
+    MersenneTwisterFast random;
+    List<Long> keys = new ArrayList<Long>();
+    long i = 0;
+    while (i < MAX_SEED) {
+      extendibleHashingTable = new OExtendibleHashingTable();
+      random = new MersenneTwisterFast(i);
+      keys.clear();
+
+      while (keys.size() < KEYS_COUNT) {
+        long key = random.nextLong(Long.MAX_VALUE);
+        OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+        if (extendibleHashingTable.put(position)) {
+          keys.add(key);
+          Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition), "key " + key);
+        }
+      }
+
+      Collections.sort(keys);
+
+      // test finding is unsuccessful
+      for (Long key : keys) {
+        OClusterPosition lhKey = extendibleHashingTable.ceilingEntries(new OClusterPositionLong(key))[0].key;
+        Assert.assertEquals(new OClusterPositionLong(key), lhKey, "" + key);
+      }
+
+      // test finding is successful
+      for (int j = 0, keysSize = keys.size() - 1; j < keysSize; j++) {
+        Long key = keys.get(j);
+        OClusterPosition lhKey = extendibleHashingTable.higherEntries(new OClusterPositionLong(key))[0].key;
+        Assert.assertEquals(new OClusterPositionLong(keys.get(j + 1)), lhKey, "" + j);
+      }
+
+      i++;
+    }
+  }
+
   private List<Long> getUniqueRandomValuesArray(int seed, int size) {
     MersenneTwisterFast random = new MersenneTwisterFast(seed);
     long data[] = new long[size];
@@ -246,5 +368,4 @@ public class ExtendibleHashingTableTest {
     data[firstIndex] = data[secondIndex];
     data[secondIndex] = tmp;
   }
-
 }
