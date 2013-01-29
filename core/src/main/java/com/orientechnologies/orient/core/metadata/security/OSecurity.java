@@ -50,7 +50,9 @@ public interface OSecurity {
 
   public OUser getUser(String iUserName);
 
-  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles);
+  public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
+
+  public OUser createUser(String iUserName, String iUserPassword, ORole... iRoles);
 
   public boolean dropUser(String iUserName);
 

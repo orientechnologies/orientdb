@@ -46,7 +46,11 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles) {
+  public OUser createUser(String iUserName, String iUserPassword, String... iRoles) {
+    return null;
+  }
+
+  public OUser createUser(String iUserName, String iUserPassword, ORole... iRoles) {
     return null;
   }
 
