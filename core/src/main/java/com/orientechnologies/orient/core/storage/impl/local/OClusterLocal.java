@@ -459,7 +459,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     acquireSharedLock();
     try {
 
-      return OClusterPositionFactory.INSTANCE.valueOf(endOffsetData);
+      return OClusterPositionFactory.INSTANCE.valueOf(endOffsetData > -1 ? endOffsetData : fileSegment.getFilledUpTo()
+          / RECORD_SIZE - 1);
 
     } finally {
       releaseSharedLock();
@@ -646,7 +647,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       fileSegment.files[0].writeHeaderLong(0, beginOffsetData);
     }
 
-    if (iPosition > endOffsetData) {
+    if (endOffsetData > -1 && iPosition > endOffsetData) {
       // UPDATE END OF DATA
       endOffsetData = iPosition;
       fileSegment.files[0].writeHeaderLong(OBinaryProtocol.SIZE_LONG, endOffsetData);
