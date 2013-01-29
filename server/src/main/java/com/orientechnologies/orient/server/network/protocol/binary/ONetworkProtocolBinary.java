@@ -975,8 +975,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeShort((short) OGlobalConfiguration.values().length);
       for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-        channel.writeString(cfg.getKey());
-        channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+
+        String key;
+        try {
+          key = cfg.getKey();
+        } catch (Exception e) {
+          key = "?";
+        }
+
+        String value;
+        try {
+          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+        } catch (Exception e) {
+          value = "";
+        }
+
+        channel.writeString(key);
+        channel.writeString(value);
       }
     } finally {
       endResponse();
