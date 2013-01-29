@@ -20,7 +20,6 @@ import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -475,10 +474,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
-
-    } else {
-      OLogManager.instance().error(this, "No security has been installed, create default users and roles");
-      repair();
     }
   }
 
