@@ -155,10 +155,10 @@ public class OMetadata {
                 instance.load();
               }
 
-              if (instance.getAllRoles().isEmpty()) {
-                OLogManager.instance().error(this, "No security has been installed, create default users and roles");
-                security.repair();
-              }
+//              if (instance.getAllRoles().isEmpty()) {
+//                OLogManager.instance().error(this, "No security has been installed, create default users and roles");
+//                security.repair();
+//              }
 
               return instance;
             }
