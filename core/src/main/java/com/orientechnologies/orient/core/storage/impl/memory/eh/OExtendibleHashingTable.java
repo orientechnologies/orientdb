@@ -67,10 +67,30 @@ public class OExtendibleHashingTable {
 
     if (filePosition == 0) {
       bucket = new OExtendibleHashingBucket(nodeInfo.nodeGlobalDepth);
+
+      final long nextBucketPos = nextBucket(new NodeInfo(nodeInfo.parent, nodeInfo.hashMapOffset, nodeInfo.itemIndex + 1,
+          nodeInfo.nodeIndex, nodeInfo.nodeGlobalDepth));
+      bucket.setNextBucket(nextBucketPos);
+      final long prevBucketPos = prevBucket(new NodeInfo(nodeInfo.parent, nodeInfo.hashMapOffset, nodeInfo.itemIndex - 1,
+          nodeInfo.nodeIndex, nodeInfo.nodeGlobalDepth));
+      bucket.setPrevBucket(prevBucketPos);
+
       file.add(bucket);
       newFilePosition = file.size();
 
       node[nodeInfo.itemIndex + nodeInfo.hashMapOffset] = newFilePosition;
+
+      if (nextBucketPos > 0) {
+        final OExtendibleHashingBucket nextBucket = file.get((int) nextBucketPos - 1);
+        nextBucket.setPrevBucket(newFilePosition);
+      }
+
+      if (prevBucketPos > 0) {
+        final OExtendibleHashingBucket prevBucket = file.get((int) prevBucketPos - 1);
+        prevBucket.setNextBucket(newFilePosition);
+      }
+
+      assert checkFileOrder();
     } else {
       bucket = file.get((int) filePosition - 1);
     }
@@ -91,6 +111,36 @@ public class OExtendibleHashingTable {
     file.add(newBucket);
 
     newFilePosition = file.size();
+
+    if (((nodeInfo.itemIndex >>> (64 - bucketDepth + 1)) & 1) == 0) {
+      final long oldNextBucketPosition = bucket.getNextBucket();
+
+      bucket.setNextBucket(newFilePosition);
+      newBucket.setPrevBucket(filePosition);
+
+      newBucket.setNextBucket(oldNextBucketPosition);
+
+      if (oldNextBucketPosition > 0) {
+        final OExtendibleHashingBucket oldNextBucket = file.get((int) oldNextBucketPosition - 1);
+        assert oldNextBucket.getPrevBucket() == filePosition;
+
+        oldNextBucket.setPrevBucket(newFilePosition);
+      }
+    } else {
+      newBucket.setNextBucket(filePosition);
+
+      final long oldPrevBucketPosition = bucket.getPrevBucket();
+      bucket.setPrevBucket(newFilePosition);
+
+      if (oldPrevBucketPosition > 0) {
+        final OExtendibleHashingBucket prevBucket = file.get((int) oldPrevBucketPosition - 1);
+        assert prevBucket.getNextBucket() == filePosition;
+
+        prevBucket.setNextBucket(newFilePosition);
+      }
+    }
+
+    assert checkFileOrder();
 
     if (bucketDepth <= nodeInfo.nodeGlobalDepth) {
       updateNodeAfterSplit(nodeInfo, bucketDepth, newFilePosition);
@@ -143,7 +193,7 @@ public class OExtendibleHashingTable {
 
     final OExtendibleHashingBucket bucket = file.get((int) position - 1);
 
-    return bucket.getPosition(clusterPosition) != -1;
+    return bucket.getPosition(clusterPosition) >= 0;
   }
 
   public OPhysicalPosition delete(OClusterPosition clusterPosition) {
@@ -151,26 +201,30 @@ public class OExtendibleHashingTable {
     final long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
     final OExtendibleHashingBucket bucket = file.get((int) position - 1);
     final int positionIndex = bucket.getPosition(clusterPosition);
-    if (positionIndex == -1)
+    if (positionIndex < 0)
       return null;
 
     final OPhysicalPosition removedPosition = bucket.deleteEntry(positionIndex);
-    if (bucket.size() > 0)
-      return removedPosition;
-
-    final long[] node = hashTree[nodeInfo.nodeIndex];
-    mergeNodesAfterDeletion(nodeInfo, bucket);
-
-    if (nodeInfo.parent != null) {
-      final int hashMapSize = 1 << nodeLocalDepths[nodeInfo.nodeIndex];
-
-      final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
-      if (allMapsContainSameBucket)
-        mergeNodeToParent(node, nodeInfo);
-
-    }
+    // if (bucket.size() > 0)
+    // return removedPosition;
+    //
+    // final long[] node = hashTree[nodeInfo.nodeIndex];
+    // mergeNodesAfterDeletion(nodeInfo, bucket);
+    //
+    // if (nodeInfo.parent != null) {
+    // final int hashMapSize = 1 << nodeLocalDepths[nodeInfo.nodeIndex];
+    //
+    // final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
+    // if (allMapsContainSameBucket)
+    // mergeNodeToParent(node, nodeInfo);
+    //
+    // }
 
     return removedPosition;
+  }
+
+  protected List<OExtendibleHashingBucket> getFile() {
+    return file;
   }
 
   private void mergeNodeToParent(long[] node, NodeInfo nodeInfo) {
@@ -242,6 +296,13 @@ public class OExtendibleHashingTable {
         buddyPosition = hashTree[nodeIndex][itemOffset];
       }
 
+      if (buddyPosition == 0)
+        return;
+
+      final OExtendibleHashingBucket buddyBucket = file.get((int) buddyPosition - 1);
+      if (buddyBucket.getDepth() >= bucketDepth)
+        return;
+
       for (int i = secondStartIndex; i < secondEndIndex; i++) {
         updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPosition);
       }
@@ -255,10 +316,115 @@ public class OExtendibleHashingTable {
         buddyPosition = hashTree[nodeIndex][itemOffset];
       }
 
+      if (buddyPosition == 0)
+        return;
+
+      final OExtendibleHashingBucket buddyBucket = file.get((int) buddyPosition - 1);
+      if (buddyBucket.getDepth() >= bucketDepth)
+        return;
+
       for (int i = firstStartIndex; i < firstEndIndex; i++) {
         updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPosition);
       }
     }
+  }
+
+  private long nextBucket(NodeInfo nodeInfo) {
+    nextBucketLoop: while (nodeInfo != null) {
+      final long[] node = hashTree[nodeInfo.nodeIndex];
+      final int startIndex = nodeInfo.itemIndex + nodeInfo.hashMapOffset;
+      final int endIndex = MAX_LEVEL_SIZE;
+
+      for (int i = startIndex; i < endIndex; i++) {
+        final long position = node[i];
+        if (position > 0)
+          return position;
+
+        if (position < 0) {
+          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
+          final int childItemOffset = (int) position & 0xFF;
+
+          final NodeInfo parent = new NodeInfo(nodeInfo.parent, 0, i, nodeInfo.nodeIndex, -1);
+          nodeInfo = new NodeInfo(parent, childItemOffset, 0, childNodeIndex, -1);
+          continue nextBucketLoop;
+        }
+      }
+
+      nodeInfo = nextLevelUp(nodeInfo);
+    }
+
+    return 0;
+  }
+
+  private NodeInfo nextLevelUp(NodeInfo nodeInfo) {
+    if (nodeInfo.parent == null)
+      return null;
+
+    final int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
+
+    final NodeInfo parent = nodeInfo.parent;
+
+    if (parent.itemIndex < MAX_LEVEL_SIZE / 2) {
+      final int nextParentIndex = (parent.itemIndex / pointersSize + 1) * pointersSize;
+      return new NodeInfo(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
+    }
+
+    final int nextParentIndex = ((nodeInfo.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize + 1) * pointersSize;
+    if (nextParentIndex < MAX_LEVEL_SIZE)
+      return new NodeInfo(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
+
+    return nextLevelUp(new NodeInfo(parent.parent, 0, MAX_LEVEL_SIZE - 1, parent.nodeIndex, parent.nodeGlobalDepth));
+  }
+
+  private long prevBucket(NodeInfo nodeInfo) {
+    prevBucketLoop: while (nodeInfo != null) {
+      final long[] node = hashTree[nodeInfo.nodeIndex];
+      final int startIndex = 0;
+      final int endIndex = nodeInfo.itemIndex + nodeInfo.hashMapOffset;
+
+      for (int i = endIndex; i >= startIndex; i--) {
+        final long position = node[i];
+        if (position > 0)
+          return position;
+
+        if (position < 0) {
+          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
+          final int childItemOffset = (int) position & 0xFF;
+          final int localDepth = nodeLocalDepths[childNodeIndex];
+          final int endChildIndex = 1 << localDepth - 1;
+
+          final NodeInfo parent = new NodeInfo(nodeInfo.parent, 0, i, nodeInfo.nodeIndex, -1);
+          nodeInfo = new NodeInfo(parent, childItemOffset, endChildIndex, childNodeIndex, -1);
+          continue prevBucketLoop;
+        }
+      }
+
+      nodeInfo = prevLevelUp(nodeInfo);
+    }
+
+    return 0;
+  }
+
+  private NodeInfo prevLevelUp(NodeInfo nodeInfo) {
+    if (nodeInfo.parent == null)
+      return null;
+
+    final int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
+
+    final NodeInfo parent = nodeInfo.parent;
+
+    if (parent.itemIndex > MAX_LEVEL_SIZE / 2) {
+      final int prevParentIndex = ((nodeInfo.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize - 1;
+      return new NodeInfo(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
+    }
+
+    final int prevParentIndex = (parent.itemIndex / pointersSize) * pointersSize - 1;
+    if (prevParentIndex >= 0)
+      return new NodeInfo(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
+
+    return prevLevelUp(new NodeInfo(parent.parent, 0, 0, parent.nodeIndex, -1));
   }
 
   public void clear() {
@@ -283,25 +449,146 @@ public class OExtendibleHashingTable {
   public OPhysicalPosition get(OClusterPosition clusterPosition) {
     NodeInfo nodeInfo = getBucket(clusterPosition);
     long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    if (position == 0)
+      return null;
+
     final OExtendibleHashingBucket bucket = file.get((int) position - 1);
 
-    return bucket.get(clusterPosition);
+    return bucket.find(clusterPosition);
   }
 
-  public Entry[] higherEntries(OClusterPosition currentRecord) {
-    return null;
+  public Entry[] higherEntries(OClusterPosition key) {
+    final NodeInfo nodeInfo = getBucket(key);
+    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    if (position == 0)
+      position = nextBucket(nodeInfo);
+
+    if (position == 0)
+      return new Entry[0];
+
+    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    while (bucket != null && (bucket.size() == 0 || bucket.get(bucket.size() - 1).clusterPosition.compareTo(key) <= 0)) {
+      final long nextPosition = bucket.getNextBucket();
+      if (nextPosition > 0)
+        bucket = file.get((int) nextPosition - 1);
+      else
+        bucket = null;
+    }
+
+    if (bucket != null) {
+      final int index = bucket.getPosition(key);
+      final int startIndex;
+      if (index >= 0)
+        startIndex = index + 1;
+      else
+        startIndex = -index - 1;
+
+      final int endIndex = bucket.size();
+      return convertBucketToEntries(bucket, startIndex, endIndex);
+    }
+
+    return new Entry[0];
   }
 
-  public Entry[] ceilingEntries(OClusterPosition currentRecord) {
-    return null;
+  public Entry[] ceilingEntries(OClusterPosition key) {
+    final NodeInfo nodeInfo = getBucket(key);
+    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    if (position == 0)
+      position = nextBucket(nodeInfo);
+
+    if (position == 0)
+      return new Entry[0];
+
+    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    while (bucket != null && bucket.size() == 0) {
+      final long nextPosition = bucket.getNextBucket();
+      if (nextPosition > 0)
+        bucket = file.get((int) nextPosition - 1);
+      else
+        bucket = null;
+    }
+
+    if (bucket != null) {
+      final int index = bucket.getPosition(key);
+      final int startIndex;
+      if (index >= 0)
+        startIndex = index;
+      else
+        startIndex = -index - 1;
+
+      final int endIndex = bucket.size();
+      return convertBucketToEntries(bucket, startIndex, endIndex);
+    }
+
+    return new Entry[0];
   }
 
-  public Entry[] lowerEntries(OClusterPosition currentRecord) {
-    return null;
+  public Entry[] lowerEntries(OClusterPosition key) {
+    final NodeInfo nodeInfo = getBucket(key);
+    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    if (position == 0)
+      position = prevBucket(nodeInfo);
+
+    if (position == 0)
+      return new Entry[0];
+
+    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    while (bucket != null && (bucket.size() == 0 || bucket.get(0).clusterPosition.compareTo(key) >= 0)) {
+      final long prevPosition = bucket.getPrevBucket();
+      if (prevPosition > 0)
+        bucket = file.get((int) prevPosition - 1);
+      else
+        bucket = null;
+    }
+
+    if (bucket != null) {
+      final int startIndex = 0;
+      final int index = bucket.getPosition(key);
+
+      final int endIndex;
+      if (index >= 0)
+        endIndex = index;
+      else
+        endIndex = -index - 1;
+
+      return convertBucketToEntries(bucket, startIndex, endIndex);
+    }
+
+    return new Entry[0];
   }
 
-  public Entry[] floorEntries(OClusterPosition currentRecord) {
-    return null;
+  public Entry[] floorEntries(OClusterPosition key) {
+    final NodeInfo nodeInfo = getBucket(key);
+    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    if (position == 0)
+      position = prevBucket(nodeInfo);
+
+    if (position == 0)
+      return new Entry[0];
+
+    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    while (bucket != null && bucket.size() == 0) {
+      final long prevPosition = bucket.getPrevBucket();
+      if (prevPosition > 0)
+        bucket = file.get((int) prevPosition - 1);
+      else
+        bucket = null;
+    }
+
+    if (bucket != null) {
+      final int startIndex = 0;
+      final int index = bucket.getPosition(key);
+
+      final int endIndex;
+      if (index >= 0)
+        endIndex = index + 1;
+      else
+        endIndex = -index - 1;
+
+      return convertBucketToEntries(bucket, startIndex, endIndex);
+    }
+
+    return new Entry[0];
   }
 
   public static final class Entry implements Comparable<Entry> {
@@ -317,6 +604,17 @@ public class OExtendibleHashingTable {
     public int compareTo(Entry otherEntry) {
       return key.compareTo(otherEntry.key);
     }
+  }
+
+  private Entry[] convertBucketToEntries(final OExtendibleHashingBucket bucket, int startIndex, int endIndex) {
+    final Entry[] entries = new Entry[endIndex - startIndex];
+    final List<OPhysicalPosition> content = bucket.getContent();
+    for (int i = 0, k = startIndex; k < endIndex; i++, k++) {
+      final OPhysicalPosition position = content.get(k);
+      entries[i] = new Entry(position.clusterPosition, position);
+    }
+
+    return entries;
   }
 
   private void addNewLevelNode(NodeInfo nodeInfo, long[] node, long newFilePosition) {
@@ -628,6 +926,39 @@ public class OExtendibleHashingTable {
     }
 
     return true;
+  }
+
+  private boolean checkFileOrder() {
+    if (size == 0)
+      return true;
+
+    final long firstBucket = nextBucket(new NodeInfo(null, 0, 0, 0, MAX_LEVEL_DEPTH));
+
+    int bucketCount = 1;
+    OExtendibleHashingBucket bucket = file.get((int) firstBucket - 1);
+    OClusterPosition lastPrevKey = null;
+    OClusterPosition nextFirstKey = null;
+
+    while (bucket.getNextBucket() > 0) {
+      OExtendibleHashingBucket nextBucket = file.get((int) bucket.getNextBucket() - 1);
+
+      if (nextBucket.size() > 0) {
+        nextFirstKey = nextBucket.get(0).clusterPosition;
+
+        if (bucket.size() > 0)
+          lastPrevKey = bucket.get(bucket.size() - 1).clusterPosition;
+      }
+
+      if (nextFirstKey != null && lastPrevKey != null)
+        if (lastPrevKey.compareTo(nextFirstKey) >= 0)
+          return false;
+
+      bucketCount++;
+
+      bucket = nextBucket;
+    }
+
+    return bucketCount == file.size();
   }
 
   private static final class NodeInfo {

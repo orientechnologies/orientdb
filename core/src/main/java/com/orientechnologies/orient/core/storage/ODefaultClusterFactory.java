@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocalLHPEPS;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
-import com.orientechnologies.orient.core.storage.impl.memory.lh.OClusterMemoryLinearHashing;
+import com.orientechnologies.orient.core.storage.impl.memory.lh.OClusterMemoryHashing;
 
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
@@ -38,7 +38,7 @@ public class ODefaultClusterFactory implements OClusterFactory {
     if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
       return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean() ? new OClusterLocalLHPEPS() : new OClusterLocal();
     else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
-      return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() ? new OClusterMemoryLinearHashing()
+      return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() ? new OClusterMemoryHashing()
           : new OClusterMemoryArrayList();
     else
       OLogManager.instance().exception(
@@ -55,7 +55,7 @@ public class ODefaultClusterFactory implements OClusterFactory {
     else if (iConfig instanceof OStorageMemoryClusterConfiguration)
       return new OClusterMemoryArrayList();
     else if (iConfig instanceof OStorageMemoryLinearHashingClusterConfiguration)
-      return new OClusterMemoryLinearHashing();
+      return new OClusterMemoryHashing();
     else
       OLogManager.instance().exception(
           "Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
