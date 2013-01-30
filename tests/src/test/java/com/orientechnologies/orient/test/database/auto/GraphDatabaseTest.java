@@ -593,4 +593,42 @@ public class GraphDatabaseTest {
     result = database.command(new OCommandSQL("drop class E1")).execute();
   }
 
+  @Test
+  public void testTransactionNative() {
+    ODocument a = null;
+    try {
+      database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+
+      a = database.createVertex().save();
+
+      database.commit();
+    } catch (Exception e) {
+      database.rollback();
+      e.printStackTrace();
+    }
+
+    try {
+      database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+
+      for (int i = 0; i < 100; ++i) {
+        database.createEdge(database.createVertex().save(), a.save()).save();
+      }
+
+      database.commit();
+    } catch (Exception e) {
+      database.rollback();
+      e.printStackTrace();
+    }
+
+    try {
+      database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+
+      database.createEdge(database.createVertex().save(), a.save()).save();
+
+      database.commit();
+    } catch (Exception e) {
+      database.rollback();
+      e.printStackTrace();
+    }
+  }
 }
