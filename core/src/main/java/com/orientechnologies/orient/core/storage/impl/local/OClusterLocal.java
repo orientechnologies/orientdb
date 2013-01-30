@@ -135,7 +135,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         if (endOffsetData < 0) {
           endOffsetData = fileSegment.getFilledUpTo() / RECORD_SIZE - 1;
 
-          if (endOffsetData > 0) {
+          if (endOffsetData >= 0) {
             long[] fetchPos;
             for (long currentPos = endOffsetData * RECORD_SIZE; currentPos >= beginOffsetData; currentPos -= RECORD_SIZE) {
 
