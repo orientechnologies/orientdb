@@ -58,27 +58,27 @@ public class OExtendibleHashingTable {
   }
 
   public boolean put(OPhysicalPosition value) {
-    NodeInfo nodeInfo = getBucket(value.clusterPosition);
-    long[] node = hashTree[nodeInfo.nodeIndex];
+    NodePath nodePath = getBucket(value.clusterPosition);
+    long[] node = hashTree[nodePath.nodeIndex];
 
-    long filePosition = node[nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    long filePosition = node[nodePath.itemIndex + nodePath.hashMapOffset];
     final OExtendibleHashingBucket bucket;
     long newFilePosition;
 
     if (filePosition == 0) {
-      bucket = new OExtendibleHashingBucket(nodeInfo.nodeGlobalDepth);
+      bucket = new OExtendibleHashingBucket(nodePath.nodeGlobalDepth);
 
-      final long nextBucketPos = nextBucket(new NodeInfo(nodeInfo.parent, nodeInfo.hashMapOffset, nodeInfo.itemIndex + 1,
-          nodeInfo.nodeIndex, nodeInfo.nodeGlobalDepth));
+      final long nextBucketPos = nextBucket(new NodePath(nodePath.parent, nodePath.hashMapOffset, nodePath.itemIndex + 1,
+          nodePath.nodeIndex, nodePath.nodeGlobalDepth));
       bucket.setNextBucket(nextBucketPos);
-      final long prevBucketPos = prevBucket(new NodeInfo(nodeInfo.parent, nodeInfo.hashMapOffset, nodeInfo.itemIndex - 1,
-          nodeInfo.nodeIndex, nodeInfo.nodeGlobalDepth));
+      final long prevBucketPos = prevBucket(new NodePath(nodePath.parent, nodePath.hashMapOffset, nodePath.itemIndex - 1,
+          nodePath.nodeIndex, nodePath.nodeGlobalDepth));
       bucket.setPrevBucket(prevBucketPos);
 
       file.add(bucket);
       newFilePosition = file.size();
 
-      node[nodeInfo.itemIndex + nodeInfo.hashMapOffset] = newFilePosition;
+      node[nodePath.itemIndex + nodePath.hashMapOffset] = newFilePosition;
 
       if (nextBucketPos > 0) {
         final OExtendibleHashingBucket nextBucket = file.get((int) nextBucketPos - 1);
@@ -112,7 +112,7 @@ public class OExtendibleHashingTable {
 
     newFilePosition = file.size();
 
-    if (((nodeInfo.itemIndex >>> (64 - bucketDepth + 1)) & 1) == 0) {
+    if (((nodePath.itemIndex >>> (64 - bucketDepth + 1)) & 1) == 0) {
       final long oldNextBucketPosition = bucket.getNextBucket();
 
       bucket.setNextBucket(newFilePosition);
@@ -142,13 +142,13 @@ public class OExtendibleHashingTable {
 
     assert checkFileOrder();
 
-    if (bucketDepth <= nodeInfo.nodeGlobalDepth) {
-      updateNodeAfterSplit(nodeInfo, bucketDepth, newFilePosition);
+    if (bucketDepth <= nodePath.nodeGlobalDepth) {
+      updateNodeAfterSplit(nodePath, bucketDepth, newFilePosition);
     } else {
-      if (nodeLocalDepths[nodeInfo.nodeIndex] < MAX_LEVEL_DEPTH) {
-        final long[] newNode = splitNode(nodeInfo, node);
+      if (nodeLocalDepths[nodePath.nodeIndex] < MAX_LEVEL_DEPTH) {
+        final long[] newNode = splitNode(nodePath, node);
 
-        final int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+        final int nodeLocalDepth = nodeLocalDepths[nodePath.nodeIndex];
         final int hashMapSize = 1 << nodeLocalDepth;
 
         boolean allHashMapsEquals = checkAllMapsContainSameBucket(newNode, hashMapSize);
@@ -158,27 +158,27 @@ public class OExtendibleHashingTable {
           newNodeIndex = addNewNode(newNode, nodeLocalDepth);
         }
 
-        updateNodesAfterSplit(nodeInfo, newNode, nodeLocalDepth, hashMapSize, allHashMapsEquals, newNodeIndex);
+        updateNodesAfterSplit(nodePath, newNode, nodeLocalDepth, hashMapSize, allHashMapsEquals, newNodeIndex);
 
-        final int newIndex = nodeInfo.itemIndex << 1;
-        final int newOffset = nodeInfo.hashMapOffset << 1;
-        final int newGlobalDepth = nodeInfo.nodeGlobalDepth + 1;
+        final int newIndex = nodePath.itemIndex << 1;
+        final int newOffset = nodePath.hashMapOffset << 1;
+        final int newGlobalDepth = nodePath.nodeGlobalDepth + 1;
 
         if (newOffset < MAX_LEVEL_SIZE) {
-          final NodeInfo updatedNodeInfo = new NodeInfo(nodeInfo.parent, newOffset, newIndex, nodeInfo.nodeIndex, newGlobalDepth);
-          updateNodeAfterSplit(updatedNodeInfo, bucketDepth, newFilePosition);
+          final NodePath updatedNodePath = new NodePath(nodePath.parent, newOffset, newIndex, nodePath.nodeIndex, newGlobalDepth);
+          updateNodeAfterSplit(updatedNodePath, bucketDepth, newFilePosition);
         } else {
-          final NodeInfo newNodeInfo;
+          final NodePath newNodePath;
           if (!allHashMapsEquals) {
-            newNodeInfo = new NodeInfo(nodeInfo.parent, newOffset - MAX_LEVEL_SIZE, newIndex, newNodeIndex, newGlobalDepth);
+            newNodePath = new NodePath(nodePath.parent, newOffset - MAX_LEVEL_SIZE, newIndex, newNodeIndex, newGlobalDepth);
           } else {
-            newNodeInfo = nodeInfo.parent;
+            newNodePath = nodePath.parent;
           }
 
-          updateNodeAfterSplit(newNodeInfo, bucketDepth, newFilePosition);
+          updateNodeAfterSplit(newNodePath, bucketDepth, newFilePosition);
         }
       } else {
-        addNewLevelNode(nodeInfo, node, newFilePosition);
+        addNewLevelNode(nodePath, node, newFilePosition);
       }
     }
 
@@ -186,8 +186,8 @@ public class OExtendibleHashingTable {
   }
 
   public boolean contains(OClusterPosition clusterPosition) {
-    NodeInfo nodeInfo = getBucket(clusterPosition);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    NodePath nodePath = getBucket(clusterPosition);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
       return false;
 
@@ -197,8 +197,8 @@ public class OExtendibleHashingTable {
   }
 
   public OPhysicalPosition delete(OClusterPosition clusterPosition) {
-    final NodeInfo nodeInfo = getBucket(clusterPosition);
-    final long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    final NodePath nodePath = getBucket(clusterPosition);
+    final long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     final OExtendibleHashingBucket bucket = file.get((int) position - 1);
     final int positionIndex = bucket.getPosition(clusterPosition);
     if (positionIndex < 0)
@@ -208,38 +208,38 @@ public class OExtendibleHashingTable {
     if (bucket.size() > 0)
       return removedPosition;
 
-    mergeNodesAfterDeletion(nodeInfo, bucket, position);
+    mergeNodesAfterDeletion(nodePath, bucket, position);
 
     assert checkFileOrder();
 
-    if (nodeInfo.parent != null) {
-      final int hashMapSize = 1 << nodeLocalDepths[nodeInfo.nodeIndex];
+    if (nodePath.parent != null) {
+      final int hashMapSize = 1 << nodeLocalDepths[nodePath.nodeIndex];
 
-      final long[] node = hashTree[nodeInfo.nodeIndex];
+      final long[] node = hashTree[nodePath.nodeIndex];
       final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
       if (allMapsContainSameBucket)
-        mergeNodeToParent(node, nodeInfo);
+        mergeNodeToParent(node, nodePath);
     }
 
     return removedPosition;
   }
 
-  private void mergeNodeToParent(long[] node, NodeInfo nodeInfo) {
-    final long[] parentNode = hashTree[nodeInfo.parent.nodeIndex];
+  private void mergeNodeToParent(long[] node, NodePath nodePath) {
+    final long[] parentNode = hashTree[nodePath.parent.nodeIndex];
     int startIndex = -1;
     for (int i = 0; i < parentNode.length; i++)
-      if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == nodeInfo.nodeIndex) {
+      if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == nodePath.nodeIndex) {
         startIndex = i;
         break;
       }
 
-    final int hashMapSize = 1 << nodeLocalDepths[nodeInfo.nodeIndex];
+    final int hashMapSize = 1 << nodeLocalDepths[nodePath.nodeIndex];
 
     for (int i = 0, k = startIndex; i < node.length; i += hashMapSize, k++) {
       parentNode[k] = node[i];
     }
 
-    deleteNode(nodeInfo.nodeIndex);
+    deleteNode(nodePath.nodeIndex);
   }
 
   private void deleteNode(int nodeIndex) {
@@ -259,15 +259,15 @@ public class OExtendibleHashingTable {
     }
   }
 
-  private void mergeNodesAfterDeletion(NodeInfo nodeInfo, OExtendibleHashingBucket bucket, long filePosition) {
+  private void mergeNodesAfterDeletion(NodePath nodePath, OExtendibleHashingBucket bucket, long filePosition) {
     final int bucketDepth = bucket.getDepth();
-    int offset = nodeInfo.nodeGlobalDepth - (bucketDepth - 1);
-    NodeInfo currentNode = nodeInfo;
-    int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+    int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
+    NodePath currentNode = nodePath;
+    int nodeLocalDepth = nodeLocalDepths[nodePath.nodeIndex];
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
-        currentNode = nodeInfo.parent;
+        currentNode = nodePath.parent;
         nodeLocalDepth = nodeLocalDepths[currentNode.nodeIndex];
       }
     }
@@ -354,10 +354,10 @@ public class OExtendibleHashingTable {
     assert checkBucketDepth(buddyBucket);
   }
 
-  private long nextBucket(NodeInfo nodeInfo) {
-    nextBucketLoop: while (nodeInfo != null) {
-      final long[] node = hashTree[nodeInfo.nodeIndex];
-      final int startIndex = nodeInfo.itemIndex + nodeInfo.hashMapOffset;
+  private long nextBucket(NodePath nodePath) {
+    nextBucketLoop: while (nodePath != null) {
+      final long[] node = hashTree[nodePath.nodeIndex];
+      final int startIndex = nodePath.itemIndex + nodePath.hashMapOffset;
       final int endIndex = MAX_LEVEL_SIZE;
 
       for (int i = startIndex; i < endIndex; i++) {
@@ -369,44 +369,44 @@ public class OExtendibleHashingTable {
           final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
           final int childItemOffset = (int) position & 0xFF;
 
-          final NodeInfo parent = new NodeInfo(nodeInfo.parent, 0, i, nodeInfo.nodeIndex, -1);
-          nodeInfo = new NodeInfo(parent, childItemOffset, 0, childNodeIndex, -1);
+          final NodePath parent = new NodePath(nodePath.parent, 0, i, nodePath.nodeIndex, -1);
+          nodePath = new NodePath(parent, childItemOffset, 0, childNodeIndex, -1);
           continue nextBucketLoop;
         }
       }
 
-      nodeInfo = nextLevelUp(nodeInfo);
+      nodePath = nextLevelUp(nodePath);
     }
 
     return 0;
   }
 
-  private NodeInfo nextLevelUp(NodeInfo nodeInfo) {
-    if (nodeInfo.parent == null)
+  private NodePath nextLevelUp(NodePath nodePath) {
+    if (nodePath.parent == null)
       return null;
 
-    final int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+    final int nodeLocalDepth = nodeLocalDepths[nodePath.nodeIndex];
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
 
-    final NodeInfo parent = nodeInfo.parent;
+    final NodePath parent = nodePath.parent;
 
     if (parent.itemIndex < MAX_LEVEL_SIZE / 2) {
       final int nextParentIndex = (parent.itemIndex / pointersSize + 1) * pointersSize;
-      return new NodeInfo(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
+      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
     }
 
-    final int nextParentIndex = ((nodeInfo.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize + 1) * pointersSize;
+    final int nextParentIndex = ((nodePath.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize + 1) * pointersSize;
     if (nextParentIndex < MAX_LEVEL_SIZE)
-      return new NodeInfo(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
+      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeGlobalDepth);
 
-    return nextLevelUp(new NodeInfo(parent.parent, 0, MAX_LEVEL_SIZE - 1, parent.nodeIndex, parent.nodeGlobalDepth));
+    return nextLevelUp(new NodePath(parent.parent, 0, MAX_LEVEL_SIZE - 1, parent.nodeIndex, parent.nodeGlobalDepth));
   }
 
-  private long prevBucket(NodeInfo nodeInfo) {
-    prevBucketLoop: while (nodeInfo != null) {
-      final long[] node = hashTree[nodeInfo.nodeIndex];
+  private long prevBucket(NodePath nodePath) {
+    prevBucketLoop: while (nodePath != null) {
+      final long[] node = hashTree[nodePath.nodeIndex];
       final int startIndex = 0;
-      final int endIndex = nodeInfo.itemIndex + nodeInfo.hashMapOffset;
+      final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
 
       for (int i = endIndex; i >= startIndex; i--) {
         final long position = node[i];
@@ -419,37 +419,37 @@ public class OExtendibleHashingTable {
           final int localDepth = nodeLocalDepths[childNodeIndex];
           final int endChildIndex = 1 << localDepth - 1;
 
-          final NodeInfo parent = new NodeInfo(nodeInfo.parent, 0, i, nodeInfo.nodeIndex, -1);
-          nodeInfo = new NodeInfo(parent, childItemOffset, endChildIndex, childNodeIndex, -1);
+          final NodePath parent = new NodePath(nodePath.parent, 0, i, nodePath.nodeIndex, -1);
+          nodePath = new NodePath(parent, childItemOffset, endChildIndex, childNodeIndex, -1);
           continue prevBucketLoop;
         }
       }
 
-      nodeInfo = prevLevelUp(nodeInfo);
+      nodePath = prevLevelUp(nodePath);
     }
 
     return 0;
   }
 
-  private NodeInfo prevLevelUp(NodeInfo nodeInfo) {
-    if (nodeInfo.parent == null)
+  private NodePath prevLevelUp(NodePath nodePath) {
+    if (nodePath.parent == null)
       return null;
 
-    final int nodeLocalDepth = nodeLocalDepths[nodeInfo.nodeIndex];
+    final int nodeLocalDepth = nodeLocalDepths[nodePath.nodeIndex];
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
 
-    final NodeInfo parent = nodeInfo.parent;
+    final NodePath parent = nodePath.parent;
 
     if (parent.itemIndex > MAX_LEVEL_SIZE / 2) {
-      final int prevParentIndex = ((nodeInfo.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize - 1;
-      return new NodeInfo(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
+      final int prevParentIndex = ((nodePath.parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize - 1;
+      return new NodePath(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
     }
 
     final int prevParentIndex = (parent.itemIndex / pointersSize) * pointersSize - 1;
     if (prevParentIndex >= 0)
-      return new NodeInfo(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
+      return new NodePath(parent.parent, 0, prevParentIndex, parent.nodeIndex, -1);
 
-    return prevLevelUp(new NodeInfo(parent.parent, 0, 0, parent.nodeIndex, -1));
+    return prevLevelUp(new NodePath(parent.parent, 0, 0, parent.nodeIndex, -1));
   }
 
   public void clear() {
@@ -474,8 +474,8 @@ public class OExtendibleHashingTable {
   }
 
   public OPhysicalPosition get(OClusterPosition clusterPosition) {
-    NodeInfo nodeInfo = getBucket(clusterPosition);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    NodePath nodePath = getBucket(clusterPosition);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
       return null;
 
@@ -485,10 +485,10 @@ public class OExtendibleHashingTable {
   }
 
   public Entry[] higherEntries(OClusterPosition key) {
-    final NodeInfo nodeInfo = getBucket(key);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    final NodePath nodePath = getBucket(key);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
-      position = nextBucket(nodeInfo);
+      position = nextBucket(nodePath);
 
     if (position == 0)
       return new Entry[0];
@@ -518,10 +518,10 @@ public class OExtendibleHashingTable {
   }
 
   public Entry[] ceilingEntries(OClusterPosition key) {
-    final NodeInfo nodeInfo = getBucket(key);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    final NodePath nodePath = getBucket(key);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
-      position = nextBucket(nodeInfo);
+      position = nextBucket(nodePath);
 
     if (position == 0)
       return new Entry[0];
@@ -551,10 +551,10 @@ public class OExtendibleHashingTable {
   }
 
   public Entry[] lowerEntries(OClusterPosition key) {
-    final NodeInfo nodeInfo = getBucket(key);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    final NodePath nodePath = getBucket(key);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
-      position = prevBucket(nodeInfo);
+      position = prevBucket(nodePath);
 
     if (position == 0)
       return new Entry[0];
@@ -585,10 +585,10 @@ public class OExtendibleHashingTable {
   }
 
   public Entry[] floorEntries(OClusterPosition key) {
-    final NodeInfo nodeInfo = getBucket(key);
-    long position = hashTree[nodeInfo.nodeIndex][nodeInfo.itemIndex + nodeInfo.hashMapOffset];
+    final NodePath nodePath = getBucket(key);
+    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
     if (position == 0)
-      position = prevBucket(nodeInfo);
+      position = prevBucket(nodePath);
 
     if (position == 0)
       return new Entry[0];
@@ -644,14 +644,14 @@ public class OExtendibleHashingTable {
     return entries;
   }
 
-  private void addNewLevelNode(NodeInfo nodeInfo, long[] node, long newFilePosition) {
+  private void addNewLevelNode(NodePath nodePath, long[] node, long newFilePosition) {
     final long[] newNode = new long[MAX_LEVEL_SIZE];
 
     final int newNodeDepth;
     final int newNodeStartIndex;
     final int mapInterval;
 
-    if (nodeInfo.itemIndex < node.length / 2) {
+    if (nodePath.itemIndex < node.length / 2) {
       final int maxDepth = getMaxLevelDepth(node, 0, node.length / 2);
       if (maxDepth > 0)
         newNodeDepth = maxDepth;
@@ -659,7 +659,7 @@ public class OExtendibleHashingTable {
         newNodeDepth = 1;
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
-      newNodeStartIndex = (nodeInfo.itemIndex / mapInterval) * mapInterval;
+      newNodeStartIndex = (nodePath.itemIndex / mapInterval) * mapInterval;
     } else {
       final int maxDepth = getMaxLevelDepth(node, node.length / 2, node.length);
       if (maxDepth > 0)
@@ -668,7 +668,7 @@ public class OExtendibleHashingTable {
         newNodeDepth = 1;
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
-      newNodeStartIndex = ((nodeInfo.itemIndex - node.length / 2) / mapInterval) * mapInterval + node.length / 2;
+      newNodeStartIndex = ((nodePath.itemIndex - node.length / 2) / mapInterval) * mapInterval + node.length / 2;
     }
 
     final int newNodeIndex = addNewNode(newNode, newNodeDepth);
@@ -676,7 +676,7 @@ public class OExtendibleHashingTable {
     for (int i = 0; i < mapInterval; i++) {
       final int nodeOffset = i + newNodeStartIndex;
       final long position = node[nodeOffset];
-      if (nodeOffset != nodeInfo.itemIndex) {
+      if (nodeOffset != nodePath.itemIndex) {
         for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++)
           newNode[n] = position;
       } else {
@@ -712,19 +712,19 @@ public class OExtendibleHashingTable {
     return maxDepth;
   }
 
-  private void updateNodesAfterSplit(NodeInfo nodeInfo, long[] newNode, int nodeLocalDepth, int hashMapSize,
+  private void updateNodesAfterSplit(NodePath nodePath, long[] newNode, int nodeLocalDepth, int hashMapSize,
       boolean allHashMapsEquals, int newNodeIndex) {
-    final long[] parentNode = hashTree[nodeInfo.parent.nodeIndex];
+    final long[] parentNode = hashTree[nodePath.parent.nodeIndex];
     int startIndex = -1;
     for (int i = 0; i < parentNode.length; i++)
-      if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == nodeInfo.nodeIndex) {
+      if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == nodePath.nodeIndex) {
         startIndex = i;
         break;
       }
 
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
     for (int i = 0; i < pointersSize; i++) {
-      parentNode[startIndex + i] = (nodeInfo.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE;
+      parentNode[startIndex + i] = (nodePath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE;
     }
 
     if (allHashMapsEquals) {
@@ -777,7 +777,7 @@ public class OExtendibleHashingTable {
     return true;
   }
 
-  private long[] splitNode(NodeInfo nodeInfo, long[] node) {
+  private long[] splitNode(NodePath nodePath, long[] node) {
     final long[] newNode = new long[MAX_LEVEL_SIZE];
 
     for (int i = MAX_LEVEL_SIZE / 2; i < MAX_LEVEL_SIZE; i++) {
@@ -795,8 +795,8 @@ public class OExtendibleHashingTable {
       updatedNode[2 * i + 1] = position;
     }
 
-    nodeLocalDepths[nodeInfo.nodeIndex]++;
-    hashTree[nodeInfo.nodeIndex] = updatedNode;
+    nodeLocalDepths[nodePath.nodeIndex]++;
+    hashTree[nodePath.nodeIndex] = updatedNode;
 
     return newNode;
   }
@@ -835,9 +835,9 @@ public class OExtendibleHashingTable {
     return hashTreeSize - 1;
   }
 
-  private void updateNodeAfterSplit(NodeInfo info, int bucketDepth, long newFilePosition) {
+  private void updateNodeAfterSplit(NodePath info, int bucketDepth, long newFilePosition) {
     int offset = info.nodeGlobalDepth - (bucketDepth - 1);
-    NodeInfo currentNode = info;
+    NodePath currentNode = info;
     int nodeLocalDepth = nodeLocalDepths[info.nodeIndex];
     while (offset > 0) {
       offset -= nodeLocalDepth;
@@ -877,16 +877,16 @@ public class OExtendibleHashingTable {
     }
   }
 
-  private NodeInfo getBucket(final OClusterPosition key) {
+  private NodePath getBucket(final OClusterPosition key) {
     return getBucket(key, null);
   }
 
-  private NodeInfo getBucket(final OClusterPosition key, NodeInfo startNode) {
+  private NodePath getBucket(final OClusterPosition key, NodePath startNode) {
     final long hash = key.longValueHigh();
 
     int nodeDepth;
     int localNodeDepth;
-    NodeInfo parentNode;
+    NodePath parentNode;
     int nodeIndex;
     int offset;
 
@@ -905,7 +905,7 @@ public class OExtendibleHashingTable {
     }
 
     int index = (int) ((hash >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
-    NodeInfo currentNode = new NodeInfo(parentNode, 0, index, 0, nodeDepth);
+    NodePath currentNode = new NodePath(parentNode, 0, index, 0, nodeDepth);
     do {
       final long position = hashTree[nodeIndex][index + offset];
       if (position >= 0)
@@ -920,7 +920,7 @@ public class OExtendibleHashingTable {
       index = (int) ((hash >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
 
       parentNode = currentNode;
-      currentNode = new NodeInfo(parentNode, offset, index, nodeIndex, nodeDepth);
+      currentNode = new NodePath(parentNode, offset, index, nodeIndex, nodeDepth);
     } while (nodeDepth <= 64);
 
     throw new IllegalStateException("Extendible hashing tree in corrupted state.");
@@ -972,7 +972,7 @@ public class OExtendibleHashingTable {
     if (size == 0)
       return true;
 
-    final long firstBucket = nextBucket(new NodeInfo(null, 0, 0, 0, MAX_LEVEL_DEPTH));
+    final long firstBucket = nextBucket(new NodePath(null, 0, 0, 0, MAX_LEVEL_DEPTH));
 
     OExtendibleHashingBucket bucket = file.get((int) firstBucket - 1);
     OClusterPosition lastPrevKey = null;
@@ -997,14 +997,14 @@ public class OExtendibleHashingTable {
     return true;
   }
 
-  private static final class NodeInfo {
-    private final NodeInfo parent;
+  private static final class NodePath {
+    private final NodePath parent;
     private final int      hashMapOffset;
     private final int      itemIndex;
     private final int      nodeIndex;
     private final int      nodeGlobalDepth;
 
-    private NodeInfo(NodeInfo parent, int hashMapOffset, int itemIndex, int nodeIndex, int nodeDepth) {
+    private NodePath(NodePath parent, int hashMapOffset, int itemIndex, int nodeIndex, int nodeDepth) {
       this.parent = parent;
       this.hashMapOffset = hashMapOffset;
       this.itemIndex = itemIndex;

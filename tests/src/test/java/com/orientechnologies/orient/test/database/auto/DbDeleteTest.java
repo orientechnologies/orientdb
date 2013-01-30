@@ -18,10 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -32,6 +28,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = "db")
 public class DbDeleteTest {
@@ -65,23 +64,23 @@ public class DbDeleteTest {
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
 
-	public void testDbDeleteWithIndex() {
-		final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "target/testDbDeleteWithIndex");
-		if (db.exists()) {
-			db.open("admin", "admin");
-			db.drop();
-		}
+  public void testDbDeleteWithIndex() {
+    final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
+    }
 
-		db.create();
+    db.create();
 
-		final OClass indexedClass = db.getMetadata().getSchema().createClass("IndexedClass");
-		indexedClass.createProperty("value", OType.STRING);
-		indexedClass.createIndex("indexValue", OClass.INDEX_TYPE.UNIQUE, "value");
+    final OClass indexedClass = db.getMetadata().getSchema().createClass("IndexedClass");
+    indexedClass.createProperty("value", OType.STRING);
+    indexedClass.createIndex("indexValue", OClass.INDEX_TYPE.UNIQUE, "value");
 
-		final ODocument document = new ODocument("IndexedClass");
-		document.field("value", "value");
-		document.save();
+    final ODocument document = new ODocument("IndexedClass");
+    document.field("value", "value");
+    document.save();
 
-		db.drop();
-	}
+    db.drop();
+  }
 }
