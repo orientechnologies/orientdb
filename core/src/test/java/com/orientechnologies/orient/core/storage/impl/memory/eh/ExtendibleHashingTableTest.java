@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  */
 @Test
 public class ExtendibleHashingTableTest {
-  private static final int KEYS_COUNT = 50000;
+  private static final int KEYS_COUNT = 300000;
   public static final int  MAX_SEED   = 3;
 
   public void testKeyPut() {
