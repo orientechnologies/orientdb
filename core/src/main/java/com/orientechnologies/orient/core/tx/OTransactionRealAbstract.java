@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new IdentityHashMap<ORID, ORecordOperation>();
+  protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();

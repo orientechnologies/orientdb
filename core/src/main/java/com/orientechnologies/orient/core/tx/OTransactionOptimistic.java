@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -219,6 +220,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
       if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
+
         // I'M COMMITTING: BYPASS LOCAL BUFFER
         switch (iStatus) {
         case ORecordOperation.CREATED:
@@ -230,6 +232,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS, false);
           break;
         }
+
+        final ORecordOperation txRecord = getRecordEntry(iRecord.getIdentity());
+
+        if (txRecord != null && txRecord.record != iRecord) {
+          // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
+          OLogManager.instance().debug(this,
+              "Update record in transaction: " + txRecord + ", rid=" + (txRecord != null ? txRecord.record : "NULL"));
+          txRecord.record = iRecord;
+        }
+
       } else {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
@@ -318,12 +330,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-	@Override
-	public boolean updateReplica(ORecordInternal<?> iRecord) {
-		throw new UnsupportedOperationException("updateReplica()");
-	}
+  @Override
+  public boolean updateReplica(ORecordInternal<?> iRecord) {
+    throw new UnsupportedOperationException("updateReplica()");
+  }
 
-	@Override
+  @Override
   public String toString() {
     return "OTransactionOptimistic [id=" + id + ", status=" + status + ", recEntries=" + recordEntries.size() + ", idxEntries="
         + indexEntries.size() + ']';
