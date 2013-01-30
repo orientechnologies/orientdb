@@ -53,6 +53,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   public static final String ONCREATE_FIELD         = "onCreate.fields";
 
+  public OSecurityShared() {
+  }
+
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
     if (user == null)
@@ -180,7 +183,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
+  public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
     acquireExclusiveLock();
     try {
 
@@ -188,6 +191,24 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (iRoles != null)
         for (String r : iRoles) {
+          user.addRole(r);
+        }
+
+      return user.save();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
+    acquireExclusiveLock();
+    try {
+
+      final OUser user = new OUser(iUserName, iUserPassword);
+
+      if (iRoles != null)
+        for (ORole r : iRoles) {
           user.addRole(r);
         }
 
@@ -356,7 +377,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  protected OUser createMetadata() {
+  public OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
 
     OClass identityClass = database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME); // SINCE 1.2.0
@@ -402,7 +423,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
     OUser adminUser = getUser(OUser.ADMIN);
     if (adminUser == null)
-      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
 
     // SINCE 1.2.0
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
@@ -428,11 +449,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public void load() {
-    // @COMPATIBILITY <1.3.0
-
-    // USER
     final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
     if (userClass != null) {
+      // @COMPATIBILITY <1.3.0
       if (!userClass.existsProperty("status")) {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
       }
@@ -455,7 +474,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
-
     }
   }
 

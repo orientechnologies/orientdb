@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -450,8 +451,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   @Override
   public void fromStream() {
     // READ CURRENT SCHEMA VERSION
-    int schemaVersion = (Integer) document.field("schemaVersion");
-    if (schemaVersion != CURRENT_VERSION_NUMBER) {
+    Integer schemaVersion = (Integer) document.field("schemaVersion");
+    if (schemaVersion == null) {
+      OLogManager
+          .instance()
+          .error(
+              this,
+              "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
+      return;
+    } else if (schemaVersion.intValue() != CURRENT_VERSION_NUMBER) {
       // HANDLE SCHEMA UPGRADE
       throw new OConfigurationException(
           "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
@@ -582,7 +590,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }, true);
   }
 
-	@Deprecated
+  @Deprecated
   public int getVersion() {
     return getDatabase().getStorage().callInLock(new Callable<Integer>() {
       @Override
