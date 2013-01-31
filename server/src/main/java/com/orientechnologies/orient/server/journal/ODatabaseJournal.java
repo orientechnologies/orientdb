@@ -161,10 +161,6 @@ public class ODatabaseJournal {
         localOperationId = getOperationId(prevOffset);
         fileOffset = prevOffset;
       }
-      //if result.size() > 0, means contains records need to be aligned, get one more previous offset
-      if(result.size() > 0) {
-        result.add(fileOffset);
-      }
       return result.descendingIterator();
 
     } finally {
