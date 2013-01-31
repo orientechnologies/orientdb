@@ -59,8 +59,10 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
   protected abstract T executeOnLocalNode(final OStorageSynchronizer dbSynchronizer);
 
   public T call() {
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(), version.toString());
+    if (OLogManager.instance().isDebugEnabled()) {
+      if(rid != null && version != null)
+        OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(), version.toString());
+    }
 
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
