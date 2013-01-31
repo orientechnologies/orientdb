@@ -38,8 +38,11 @@ public class OExtendibleHashingBucket {
   private long                nextBucket      = -1;
   private long                prevBucket      = -1;
 
-  public OExtendibleHashingBucket(int depth) {
+  private final int           maxBucketSize;
+
+  public OExtendibleHashingBucket(int depth, int maxBucketSize) {
     this.depth = depth;
+    this.maxBucketSize = maxBucketSize;
   }
 
   public OPhysicalPosition find(final OClusterPosition key) {

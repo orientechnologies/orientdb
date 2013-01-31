@@ -23,7 +23,7 @@ public class ExtendibleHashingTableTest {
   public static final int  MAX_SEED   = 3;
 
   public void testKeyPut() {
-    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable();
+    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(i));
@@ -50,7 +50,7 @@ public class ExtendibleHashingTableTest {
     long i = 0;
 
     while (i < MAX_SEED) {
-      extendibleHashingTable = new OExtendibleHashingTable();
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       random = new MersenneTwisterFast(i);
       keys.clear();
 
@@ -76,7 +76,7 @@ public class ExtendibleHashingTableTest {
   public void testKeyDeleteRandom() {
     int seed = 0;
     while (seed < MAX_SEED) {
-      OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable();
+      OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       HashSet<Long> longs = new HashSet<Long>();
 
       MersenneTwisterFast random = new MersenneTwisterFast(seed);
@@ -109,7 +109,7 @@ public class ExtendibleHashingTableTest {
   }
 
   public void testKeyDelete() {
-    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable();
+    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(i));
@@ -135,7 +135,7 @@ public class ExtendibleHashingTableTest {
   }
 
   public void testKeyAddDelete() {
-    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable();
+    OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(i));
@@ -176,7 +176,7 @@ public class ExtendibleHashingTableTest {
     OExtendibleHashingTable extendibleHashingTable;
     int seed = 0;
     while (seed < MAX_SEED) {
-      extendibleHashingTable = new OExtendibleHashingTable();
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       List<Long> longs = getUniqueRandomValuesArray(seed, 2 * KEYS_COUNT);
 
       // add
@@ -228,7 +228,7 @@ public class ExtendibleHashingTableTest {
     long i = 0;// Long.MIN_VALUE;
 
     while (i < MAX_SEED) {
-      extendibleHashingTable = new OExtendibleHashingTable();
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       random = new MersenneTwisterFast(i);
       keys.clear();
 
@@ -267,7 +267,7 @@ public class ExtendibleHashingTableTest {
     long i = 0;// Long.MIN_VALUE;
 
     while (i < MAX_SEED) {
-      extendibleHashingTable = new OExtendibleHashingTable();
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       random = new MersenneTwisterFast(i);
       keys.clear();
 
@@ -311,7 +311,7 @@ public class ExtendibleHashingTableTest {
     List<Long> keys = new ArrayList<Long>();
     long i = 0;
     while (i < MAX_SEED) {
-      extendibleHashingTable = new OExtendibleHashingTable();
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
       random = new MersenneTwisterFast(i);
       keys.clear();
 
