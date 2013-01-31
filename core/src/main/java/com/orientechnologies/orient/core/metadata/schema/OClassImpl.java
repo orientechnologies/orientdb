@@ -1108,7 +1108,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OIndexException("List of fields to index cannot be empty.");
     }
 
-    final Set<String> existingFieldNames = properties.keySet();
+    final Set<String> existingFieldNames = new HashSet<String>();
+    OClassImpl currentClass = this;
+    do {
+      existingFieldNames.addAll(currentClass.properties.keySet());
+      currentClass = (OClassImpl) currentClass.getSuperClass();
+    } while (currentClass != null);
 
     for (final String fieldToIndex : fields) {
       final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
@@ -1128,7 +1133,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final List<OType> types = new ArrayList<OType>(fieldNames.length);
 
     for (String fieldName : fieldNames) {
-      types.add(properties.get(OIndexDefinitionFactory.extractFieldName(fieldName).toLowerCase()).getType());
+      types.add(getProperty(OIndexDefinitionFactory.extractFieldName(fieldName).toLowerCase()).getType());
     }
     return types;
   }
