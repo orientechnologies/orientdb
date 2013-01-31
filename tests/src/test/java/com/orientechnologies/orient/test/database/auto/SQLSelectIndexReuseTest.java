@@ -2434,6 +2434,42 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   }
 
   @Test
+  public void testReuseOfIndexOnSeveralClassesFields() {
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass superClass = schema.createClass("sqlSelectIndexReuseTestSuperClass");
+    superClass.createProperty("prop0", OType.INTEGER);
+    final OClass oClass = schema.createClass("sqlSelectIndexReuseTestChildClass", superClass);
+    oClass.createProperty("prop1", OType.INTEGER);
+
+    oClass.createIndex("sqlSelectIndexReuseTestOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE, "prop0", "prop1");
+
+    schema.save();
+
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long oldcompositeIndexUsed2 = profiler.getCounter("db.demo.query.compositeIndexUsed.2");
+
+    final ODocument docOne = new ODocument("sqlSelectIndexReuseTestChildClass");
+    docOne.field("prop0", 0);
+    docOne.field("prop1", 1);
+    docOne.save();
+
+    final ODocument docTwo = new ODocument("sqlSelectIndexReuseTestChildClass");
+    docTwo.field("prop0", 2);
+    docTwo.field("prop1", 3);
+    docTwo.save();
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestChildClass where prop0 = 0 and prop1 = 1")).execute();
+
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2 + 1);
+  }
+
+  @Test
   public void testCountFunctionWithNotUniqueIndex() {
     OClass klazz = database.getMetadata().getSchema().getOrCreateClass("test");
     if (!klazz.existsProperty("a")) {
