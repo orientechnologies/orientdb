@@ -451,7 +451,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   @Override
   public void fromStream() {
     // READ CURRENT SCHEMA VERSION
-    Integer schemaVersion = (Integer) document.field("schemaVersion");
+    final Integer schemaVersion = (Integer) document.field("schemaVersion");
     if (schemaVersion == null) {
       OLogManager
           .instance()

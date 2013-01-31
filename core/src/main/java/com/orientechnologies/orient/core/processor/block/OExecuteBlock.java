@@ -112,10 +112,13 @@ public class OExecuteBlock extends OAbstractBlock {
       merge = Boolean.FALSE;
 
     Object result;
-    if (isBlock(iValue))
+    if (isBlock(iValue)) {
       // EXECUTE SINGLE BLOCK
-      result = delegate(iName, iManager, (ODocument) iValue, iContext, iOutput, iReadOnly);
-    else {
+      final ODocument value = (ODocument) iValue;
+      result = delegate(iName, iManager, value, iContext, iOutput, iReadOnly);
+      if (value.containsField("return"))
+        return returnValue;
+    } else {
       // EXECUTE ENTIRE PROCESS
       try {
         result = iManager.processFromFile(iName, iContext, iReadOnly);
