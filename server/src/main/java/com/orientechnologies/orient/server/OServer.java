@@ -515,7 +515,12 @@ public class OServer {
         if (stg.userPassword == null)
           stg.userPassword = OUser.ADMIN;
 
-        type = stg.path.substring(0, stg.path.indexOf(':'));
+        int idx = stg.path.indexOf(':');
+        if (idx == -1) {
+          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
+          return;
+        }
+        type = stg.path.substring(0, idx);
 
         ODatabaseDocument db = null;
         try {
