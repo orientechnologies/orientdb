@@ -19,43 +19,24 @@ import java.text.ParseException;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
 /**
  * Methods can be used on various objects with different number of arguments. SQL syntax : <object_name>.<method_name>([parameters])
  * 
  * @author Johann Sorel (Geomatys)
  */
-public interface OSQLMethod extends Comparable<OSQLMethod> {
-
-  /**
-   * @return method name
-   */
-  String getName();
-
-  /**
-   * Returns a convinient SQL String representation of the method.
-   * <p>
-   * Example :
-   * 
-   * <pre>
-   *  field.myMethod( param1, param2, [optionalParam3])
-   * </pre>
-   * 
-   * This text will be used in exception messages.
-   * 
-   * @return String , never null.
-   */
-  public String getSyntax();
+public interface OSQLMethod extends OSQLFunction, Comparable<OSQLMethod> {
 
   /**
    * @return minimum number of arguments requiered by this method
    */
-  int getMinParams();
+  int getMethodMinParams();
 
   /**
    * @return maximum number of arguments requiered by this method
    */
-  int getMaxParams();
+  int getMethodMaxParams();
 
   /**
    * Process a record.

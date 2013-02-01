@@ -34,7 +34,7 @@ public class OSQLMethodPrefix extends OAbstractSQLMethod {
 
     @Override
     public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
+        final Object v = iMethodParams[0];
         if (v != null) {
             ioResult = ioResult != null ? v + ioResult.toString() : null;
         }

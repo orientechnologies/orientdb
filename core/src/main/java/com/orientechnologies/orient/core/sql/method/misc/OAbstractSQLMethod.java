@@ -15,19 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Johann Sorel (Geomatys)
  */
-public abstract class OAbstractSQLMethod implements OSQLMethod {
-
-    private final String name;
-    private final int minparams;
-    private final int maxparams;
+public abstract class OAbstractSQLMethod extends OSQLFunctionAbstract implements OSQLMethod {
 
     public OAbstractSQLMethod(String name) {
         this(name,0);
@@ -37,18 +39,14 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
     }
     
     public OAbstractSQLMethod(String name, int minparams, int maxparams) {
-        this.name = name;
-        this.minparams = minparams;
-        this.maxparams = maxparams;
+        super(name, minparams+1, maxparams+1);
     }
     
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
     public String getSyntax() {
+        final int minparams = getMethodMinParams();
+        final int maxparams = getMethodMaxParams();
+        
         final StringBuilder sb = new StringBuilder("<field>.");
         sb.append(getName());
         sb.append('(');
@@ -76,28 +74,40 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
     }
 
     @Override
-    public int getMinParams() {
-        return minparams;
+    public final int getMethodMinParams() {
+        return getMinParams()-1;
     }
 
     @Override
-    public int getMaxParams() {
-        return maxparams;
+    public final int getMethodMaxParams() {
+        return getMaxParams()-1;
     }
-    
-    protected  Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
-        if(iValue == null){
+
+    @Override
+    public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+        final Object self = iFuncParams[0];
+        final Object[] methodParams = Arrays.copyOfRange(iFuncParams, 1, iFuncParams.length);
+        try {
+            return execute(iCurrentRecord, iContext, self, methodParams);
+        } catch (ParseException ex) {
+            Logger.getLogger(OAbstractSQLMethod.class.getName()).log(Level.WARNING, ex.getMessage(), ex);
             return null;
         }
-
-        if(iValue.charAt(0) == '\'' || iValue.charAt(0) == '"'){
-            // GET THE VALUE AS STRING
-            return iValue.substring(1, iValue.length() - 1);
-        }
-
-        // SEARCH FOR FIELD
-        return ((ODocument) iRecord.getRecord()).field(iValue);
     }
+//    
+//    protected  Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
+//        if(iValue == null){
+//            return null;
+//        }
+//
+//        if(iValue.charAt(0) == '\'' || iValue.charAt(0) == '"'){
+//            // GET THE VALUE AS STRING
+//            return iValue.substring(1, iValue.length() - 1);
+//        }
+//
+//        // SEARCH FOR FIELD
+//        return ((ODocument) iRecord.getRecord()).field(iValue);
+//    }
 
     @Override
     public int compareTo(OSQLMethod o) {

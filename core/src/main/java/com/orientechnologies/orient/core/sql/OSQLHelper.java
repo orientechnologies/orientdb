@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 
 /**
  * SQL Helper class
@@ -201,15 +202,47 @@ public class OSQLHelper {
     return new OSQLFilterItemField(iCommand, iWord);
   }
 
-  public static Object getFunction(final OBaseParser iCommand, final String iWord) {
-    final int separator = iWord.indexOf('.');
-    final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
+  public static Object getFunction(final OBaseParser iCommand, String iWord) {
+    int separator = iWord.indexOf('.');
+    int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
       final int endParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
 
       if (endParenthesis > -1 && Character.isLetter(iWord.charAt(0)))
         // FUNCTION: CREATE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
         return new OSQLFunctionRuntime(iCommand, iWord);
+    }else if(beginParenthesis > -1 && separator > 0 && separator < beginParenthesis){
+        // METHOD: CREATE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
+        // reformulate the method to look like a function for proper parsing
+        // it's a loop since it can be a succesive call of methods
+        // last method will become the first function
+        String methodSelf,methodName,params;
+        for(;;){
+          methodSelf = iWord.substring(0, separator);
+          methodName = iWord.substring(separator+1, beginParenthesis);
+          params = iWord.substring(beginParenthesis+1, iWord.length()).trim();
+          final int end = OStringSerializerHelper.findEndBlock(iWord, 
+                  OStringSerializerHelper.EMBEDDED_BEGIN, 
+                  OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
+          if(iWord.length()>end+1 && iWord.charAt(end+1) == '.'){
+            //succesive calls of methods, previous method become first argument of this method
+            separator = end+1;
+            beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN+"", separator);
+            continue;
+          }
+          
+          final StringBuilder sb = new StringBuilder(methodName);
+          sb.append('(').append(methodSelf);
+          if(!params.startsWith(")")){
+              //other parameters
+              sb.append(", ");
+          }
+          sb.append(params);
+          iWord = sb.toString();
+          break;
+        }
+        
+        return new OSQLMethodRuntime(iCommand, iWord);
     }
 
     return null;
