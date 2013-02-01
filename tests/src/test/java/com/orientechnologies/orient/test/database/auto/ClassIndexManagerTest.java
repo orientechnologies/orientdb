@@ -233,11 +233,9 @@ public class ClassIndexManagerTest {
 
   public void testPropertiesCheckUniqueNullKeys() {
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
-    docOne.field("prop3", "a");
     docOne.save();
 
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
-    docTwo.field("prop3", "a");
     docTwo.save();
   }
 

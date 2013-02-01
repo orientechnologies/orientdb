@@ -355,7 +355,7 @@ public enum OType {
             return Boolean.TRUE;
           else if (((String) iValue).equalsIgnoreCase("false"))
             return Boolean.FALSE;
-          return null;
+          throw new IllegalArgumentException("Value is not boolean. Expected true or false but received '" + iValue + "'");
         } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
@@ -378,6 +378,9 @@ public enum OType {
         }
       } else if (iTargetClass.equals(String.class))
         return iValue.toString();
+    } catch (IllegalArgumentException e) {
+      // PASS THROUGH
+      throw e;
     } catch (Exception e) {
       OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", iValue, iTargetClass);
       return null;

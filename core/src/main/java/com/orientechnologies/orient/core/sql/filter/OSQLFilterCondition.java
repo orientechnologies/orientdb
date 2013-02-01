@@ -90,7 +90,14 @@ public class OSQLFilterCondition {
       return l;
     }
 
-    return operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
+    Object result;
+    try {
+      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
+    } catch (Exception e) {
+      result = Boolean.FALSE;
+    }
+
+    return result;
   }
 
   public ORID getBeginRidRange() {
