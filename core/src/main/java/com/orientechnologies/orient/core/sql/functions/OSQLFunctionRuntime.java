@@ -89,9 +89,13 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           configuredParameters[i] = pred;
 
         }
-      } else if (configuredParameters[i] instanceof OSQLPredicate)
+      } else if (configuredParameters[i] instanceof OSQLPredicate){
         runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate((ORecord<?>) iCurrentRecord, iCurrentResult,
             iContext);
+      }else{
+          //plain value
+          runtimeParameters[i] = configuredParameters[i];
+      }
     }
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
