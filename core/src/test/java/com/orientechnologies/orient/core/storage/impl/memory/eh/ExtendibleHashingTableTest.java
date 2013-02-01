@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  */
 @Test
 public class ExtendibleHashingTableTest {
-  private static final int KEYS_COUNT = 5000;
+  private static final int KEYS_COUNT = 10000;
   public static final int  MAX_SEED   = 3;
 
   public void testKeyPut() {
@@ -42,7 +42,7 @@ public class ExtendibleHashingTableTest {
     }
   }
 
-  public void testKeyPutRandom() {
+  public void testKeyPutRandomUniform() {
     OExtendibleHashingTable extendibleHashingTable;
 
     MersenneTwisterFast random;
@@ -72,8 +72,40 @@ public class ExtendibleHashingTableTest {
     }
   }
 
+  public void testKeyPutRandomGaussian() {
+    OExtendibleHashingTable extendibleHashingTable;
+
+    MersenneTwisterFast random;
+    List<Long> keys = new ArrayList<Long>();
+    long i = 0;
+
+    while (i < MAX_SEED) {
+      extendibleHashingTable = new OExtendibleHashingTable(3, 4);
+      random = new MersenneTwisterFast(i);
+      keys.clear();
+
+      while (keys.size() < KEYS_COUNT) {
+        long key = (long) (random.nextGaussian() * Long.MAX_VALUE / 2 + Long.MAX_VALUE);
+        if (key < 0)
+          continue;
+
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+        if (extendibleHashingTable.put(position)) {
+          keys.add(key);
+          Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition), "key " + key);
+        }
+      }
+
+      for (long key : keys) {
+        final OClusterPosition position = new OClusterPositionLong(key);
+        Assert.assertTrue(extendibleHashingTable.contains(position), "" + key);
+      }
+      i++;
+    }
+  }
+
   @Test
-  public void testKeyDeleteRandom() {
+  public void testKeyDeleteRandomUniform() {
     int seed = 0;
     while (seed < MAX_SEED) {
       OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
@@ -82,6 +114,45 @@ public class ExtendibleHashingTableTest {
       MersenneTwisterFast random = new MersenneTwisterFast(seed);
       for (int i = 0; i < KEYS_COUNT; i++) {
         long key = random.nextLong(Long.MAX_VALUE);
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+        if (extendibleHashingTable.put(position)) {
+          longs.add(key);
+        }
+      }
+
+      for (long key : longs) {
+        if (key % 3 == 0) {
+          final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
+          Assert.assertEquals(position, extendibleHashingTable.delete(position.clusterPosition));
+        }
+      }
+
+      for (long key : longs) {
+        if (key % 3 == 0) {
+          OClusterPosition position = new OClusterPositionLong(key);
+          Assert.assertFalse(extendibleHashingTable.contains(position));
+        } else {
+          OClusterPosition position = new OClusterPositionLong(key);
+          Assert.assertTrue(extendibleHashingTable.contains(position));
+        }
+      }
+      seed++;
+    }
+  }
+
+  @Test
+  public void testKeyDeleteRandomGaussian() {
+    int seed = 0;
+    while (seed < MAX_SEED) {
+      OExtendibleHashingTable extendibleHashingTable = new OExtendibleHashingTable(3, 4);
+      HashSet<Long> longs = new HashSet<Long>();
+
+      MersenneTwisterFast random = new MersenneTwisterFast(seed);
+      while (longs.size() < KEYS_COUNT) {
+        long key = (long) (random.nextGaussian() * Long.MAX_VALUE / 2 + Long.MAX_VALUE);
+        if (key < 0)
+          continue;
+
         final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(key));
         if (extendibleHashingTable.put(position)) {
           longs.add(key);
