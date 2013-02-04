@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 /**
  * @author luca.molino
@@ -24,113 +25,107 @@ import java.io.InputStream;
  */
 public class OHttpMultipartBaseInputStream extends InputStream {
 
-	protected StringBuilder	buffer;
-	protected int						contentLength	= 0;
-	protected InputStream		wrappedInputStream;
+  protected ArrayList<Integer> buffer;
+  protected int                contentLength = 0;
+  protected InputStream        wrappedInputStream;
 
-	public OHttpMultipartBaseInputStream(final InputStream in, final int iSkipInput, final int iContentLength) {
-		wrappedInputStream = in;
-		contentLength = iContentLength;
-		buffer = new StringBuilder();
-		buffer.append((char) iSkipInput);
-	}
+  public OHttpMultipartBaseInputStream(final InputStream in, final int iSkipInput, final int iContentLength) {
+    wrappedInputStream = in;
+    contentLength = iContentLength;
+    this.buffer = new ArrayList<Integer>();
+    this.buffer.add(iSkipInput);
+  }
 
-	public OHttpMultipartBaseInputStream(final InputStream in, final char iSkipInput, final int iContentLength) {
-		wrappedInputStream = in;
-		contentLength = iContentLength;
-		buffer = new StringBuilder();
-		buffer.append(iSkipInput);
-	}
+  public InputStream getWrappedInputStream() {
+    return wrappedInputStream;
+  }
 
-	public InputStream getWrappedInputStream() {
-		return wrappedInputStream;
-	}
+  public void setSkipInput(final int iSkipInput) {
+    this.buffer.add(iSkipInput);
+    contentLength++;
+  }
 
-	public void setSkipInput(final int iSkipInput) {
-		this.buffer.append((char) iSkipInput);
-		contentLength++;
-	}
+  public void setSkipInput(final ArrayList<Integer> iSkipInput) {
+    this.buffer.addAll(iSkipInput);
+    contentLength += iSkipInput.size();
+  }
 
-	public void setSkipInput(final StringBuilder iSkipInput) {
-		this.buffer.append(iSkipInput);
-		contentLength += iSkipInput.length();
-	}
+  @Override
+  public synchronized int available() throws IOException {
+    return contentLength;
+  }
 
-	@Override
-	public synchronized int available() throws IOException {
-		return contentLength;
-	}
+  @Override
+  public synchronized int read() throws IOException {
+    if (contentLength < 1)
+      return -1;
 
-	@Override
-	public synchronized int read() throws IOException {
-		contentLength--;
-		if (buffer.length() > 0) {
-			final int returnValue = buffer.charAt(0);
-			buffer.deleteCharAt(0);
-			return returnValue;
-		}
-		return wrappedInputStream.read();
-	}
+    contentLength--;
+    if (this.buffer.size() > 0) {
+      final int returnValue = this.buffer.remove(0);
+      return returnValue;
+    }
+    return wrappedInputStream.read();
+  }
 
-	@Override
-	public void close() throws IOException {
-		wrappedInputStream.close();
-	}
+  @Override
+  public void close() throws IOException {
+    wrappedInputStream.close();
+  }
 
-	@Override
-	public synchronized void mark(final int readlimit) {
-		wrappedInputStream.mark(readlimit);
-	}
+  @Override
+  public synchronized void mark(final int readlimit) {
+    wrappedInputStream.mark(readlimit);
+  }
 
-	@Override
-	public boolean markSupported() {
-		return wrappedInputStream.markSupported();
-	}
+  @Override
+  public boolean markSupported() {
+    return wrappedInputStream.markSupported();
+  }
 
-	@Override
-	public int read(final byte[] b, final int off, final int len) throws IOException {
-		if (buffer.length() > 0) {
-			int tot2Read = Math.min(buffer.length(), len);
+  @Override
+  public int read(final byte[] b, final int off, final int len) throws IOException {
+    if (buffer.size() > 0) {
+      int tot2Read = Math.min(buffer.size(), len);
 
-			for (int i = 0; i < tot2Read; ++i) {
-				b[i] = (byte) buffer.charAt(0);
-				buffer.deleteCharAt(0);
-				contentLength--;
-			}
-			return tot2Read;
-		}
+      for (int i = 0; i < tot2Read; ++i) {
+        b[i] = (byte) buffer.remove(0).byteValue();
+        contentLength--;
+      }
+      return tot2Read;
+    }
 
-		int totRead = wrappedInputStream.read(b, off, len);
-		contentLength -= totRead;
-		return totRead;
-	}
+    int totRead = wrappedInputStream.read(b, off, len);
+    contentLength -= totRead;
+    return totRead;
+  }
 
-	@Override
-	public int read(byte[] b) throws IOException {
-		return read(b, 0, b.length);
-	}
+  @Override
+  public int read(byte[] b) throws IOException {
+    return read(b, 0, b.length);
+  }
 
-	@Override
-	public synchronized void reset() throws IOException {
-		wrappedInputStream.reset();
-	}
+  @Override
+  public synchronized void reset() throws IOException {
+    wrappedInputStream.reset();
+  }
 
-	@Override
-	public long skip(final long n) throws IOException {
-		return wrappedInputStream.skip(n);
-	}
+  @Override
+  public long skip(final long n) throws IOException {
+    return wrappedInputStream.skip(n);
+  }
 
-	@Override
-	public String toString() {
-		return wrappedInputStream.toString();
-	}
+  @Override
+  public String toString() {
+    return wrappedInputStream.toString();
+  }
 
-	public void resetBuffer() {
-		buffer.setLength(0);
-	}
+  public void resetBuffer() {
+    buffer.clear();
+  }
 
-	public int wrappedAvailable() throws IOException {
-		return wrappedInputStream.available();
-	}
+  public int wrappedAvailable() throws IOException {
+    return wrappedInputStream.available();
+  }
 
 }

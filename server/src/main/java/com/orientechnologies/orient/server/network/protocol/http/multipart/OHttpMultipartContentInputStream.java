@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 /**
  * @author luca.molino
@@ -24,105 +25,108 @@ import java.io.InputStream;
  */
 public class OHttpMultipartContentInputStream extends InputStream {
 
-	protected String												boundary;
+  protected String                        boundary;
 
-	protected OHttpMultipartBaseInputStream	wrappedInputStream;
+  protected OHttpMultipartBaseInputStream wrappedInputStream;
 
-	protected int														previousData;
+  protected int                           nextByte;
 
-	protected boolean												internalAvailable	= true;
+  protected boolean                       internalAvailable = true;
 
-	public OHttpMultipartContentInputStream(OHttpMultipartBaseInputStream in, String iBoundary) throws IOException {
-		wrappedInputStream = in;
-		boundary = '\n' + "--" + iBoundary;
-	}
+  public OHttpMultipartContentInputStream(OHttpMultipartBaseInputStream in, String iBoundary) throws IOException {
+    wrappedInputStream = in;
+    boundary = '\n' + "--" + iBoundary;
+  }
 
-	public InputStream getWrappedInputStream() {
-		return wrappedInputStream;
-	}
+  public InputStream getWrappedInputStream() {
+    return wrappedInputStream;
+  }
 
-	@Override
-	public synchronized int available() throws IOException {
-		if (internalAvailable) {
-			return wrappedInputStream.available();
-		} else {
-			return -1;
-		}
-	}
+  @Override
+  public synchronized int available() throws IOException {
+    if (internalAvailable) {
+      return wrappedInputStream.available();
+    } else {
+      return -1;
+    }
+  }
 
-	@Override
-	public synchronized int read() throws IOException {
-		int value = previousData;
-		previousData = wrappedInputStream.read();
-		if (((char) previousData) == '\r') {
-			bufferData();
-		}
-		return value;
-	}
+  @Override
+  public synchronized int read() throws IOException {
+    if (!internalAvailable)
+      return -1;
 
-	@Override
-	public void close() throws IOException {
-	}
+    int value = nextByte;
+    nextByte = wrappedInputStream.read();
+    if (((char) nextByte) == '\r') {
+      bufferData();
+    }
+    return value;
+  }
 
-	@Override
-	public synchronized void mark(int readlimit) {
-		wrappedInputStream.mark(readlimit);
-	}
+  @Override
+  public void close() throws IOException {
+  }
 
-	@Override
-	public boolean markSupported() {
-		return wrappedInputStream.markSupported();
-	}
+  @Override
+  public synchronized void mark(int readlimit) {
+    wrappedInputStream.mark(readlimit);
+  }
 
-	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
-		return wrappedInputStream.read(b, off, len);
-	}
+  @Override
+  public boolean markSupported() {
+    return wrappedInputStream.markSupported();
+  }
 
-	@Override
-	public int read(byte[] b) throws IOException {
-		return wrappedInputStream.read(b);
-	}
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    return wrappedInputStream.read(b, off, len);
+  }
 
-	@Override
-	public synchronized void reset() throws IOException {
-		previousData = wrappedInputStream.read();
-		internalAvailable = true;
-		if (((char) previousData) == '\r') {
-			bufferData();
-		}
-	}
+  @Override
+  public int read(byte[] b) throws IOException {
+    return wrappedInputStream.read(b);
+  }
 
-	@Override
-	public long skip(long n) throws IOException {
-		return wrappedInputStream.skip(n);
-	}
+  @Override
+  public synchronized void reset() throws IOException {
+    nextByte = wrappedInputStream.read();
+    internalAvailable = true;
+    if (((char) nextByte) == '\r') {
+      bufferData();
+    }
+  }
 
-	@Override
-	public String toString() {
-		return wrappedInputStream.toString();
-	}
+  @Override
+  public long skip(long n) throws IOException {
+    return wrappedInputStream.skip(n);
+  }
 
-	protected void bufferData() throws IOException {
-		boolean checkingEnd = true;
-		int boundaryCursor = 0;
-		final StringBuilder buffer = new StringBuilder();
-		int b;
-		while ((b = wrappedInputStream.read()) > 0 && checkingEnd) {
-			buffer.append((char) b);
-			if (((char) b) == boundary.charAt(boundaryCursor)) {
-				internalAvailable = false;
-				boundaryCursor++;
-				if (boundaryCursor == boundary.length()) {
-					checkingEnd = false;
-					wrappedInputStream.resetBuffer();
-				}
-			} else {
-				internalAvailable = true;
-				checkingEnd = false;
-				if (buffer.length() > 0)
-					wrappedInputStream.setSkipInput(buffer);
-			}
-		}
-	}
+  @Override
+  public String toString() {
+    return wrappedInputStream.toString();
+  }
+
+  protected void bufferData() throws IOException {
+    boolean checkingEnd = true;
+    int boundaryCursor = 0;
+    final ArrayList<Integer> buffer = new ArrayList<Integer>();
+    int b;
+    while (checkingEnd && (b = wrappedInputStream.read()) > 0) {
+      buffer.add(b);
+      if (((char) b) == boundary.charAt(boundaryCursor)) {
+        internalAvailable = false;
+        boundaryCursor++;
+        if (boundaryCursor == boundary.length()) {
+          checkingEnd = false;
+          wrappedInputStream.resetBuffer();
+        }
+      } else {
+        internalAvailable = true;
+        checkingEnd = false;
+        if (buffer.size() > 0)
+          wrappedInputStream.setSkipInput(buffer);
+      }
+    }
+  }
 }

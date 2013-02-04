@@ -166,15 +166,15 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
         in = iRequest.multipartStream.read();
         currChar = (char) in;
         if (currChar == '\n') {
-          // in = iRequest.multipartStream.read();
-          // currChar = (char) in;
-          // if (currChar == '\r') {
-          // in = iRequest.multipartStream.read();
-          // currChar = (char) in;
-          // if (currChar == '\n') {
-          endOfHeaders = true;
-          // }
-          // }
+          in = iRequest.multipartStream.read();
+          currChar = (char) in;
+          if (currChar == '\r') {
+            in = iRequest.multipartStream.read();
+            currChar = (char) in;
+            if (currChar == '\n') {
+              endOfHeaders = true;
+            }
+          }
         }
       } else {
         in = iRequest.multipartStream.read();
@@ -236,7 +236,6 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
     B result = contentParser.parse(iRequest, headers, in, database);
     parseStatus = STATUS.STATUS_EXPECTED_END_REQUEST;
     processBaseContent(iRequest, result, headers);
-    headers.clear();
   }
 
   protected void parseFileContent(final OHttpRequest iRequest, final OHttpMultipartContentParser<F> contentParser,

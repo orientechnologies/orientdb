@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,42 +36,43 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<InputStream> {
 
-	protected String	path;
+  protected String path;
 
-	public OHttpMultipartFileToDiskContentParser(String iPath) {
-		path = iPath;
-	}
+  public OHttpMultipartFileToDiskContentParser(String iPath) {
+    path = iPath;
+    new File(path).mkdirs();
+  }
 
-	@Override
-	public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-			final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
-		final StringWriter buffer = new StringWriter();
-		final OJSONWriter json = new OJSONWriter(buffer);
-		json.beginObject();
-		String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
-		int fileSize = 0;
-		if (fileName.charAt(0) == '"') {
-			fileName = new String(fileName.substring(1));
-		}
-		if (fileName.charAt(fileName.length() - 1) == '"') {
-			fileName = new String(fileName.substring(0, fileName.length() - 1));
-		}
-		final OutputStream out = new BufferedOutputStream(new FileOutputStream(path + fileName.toString()));
-		try {
-			int b;
-			while ((b = in.read()) > 0) {
-				out.write(b);
-				fileSize++;
-			}
-		} finally {
-			out.flush();
-			out.close();
-		}
-		json.writeAttribute(1, true, "name", fileName);
-		json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
-		json.writeAttribute(1, true, "size", fileSize);
-		json.endObject();
-		return new ByteArrayInputStream(buffer.toString().getBytes());
-	}
+  @Override
+  public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
+      final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
+    final StringWriter buffer = new StringWriter();
+    final OJSONWriter json = new OJSONWriter(buffer);
+    json.beginObject();
+    String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
+    int fileSize = 0;
+    if (fileName.charAt(0) == '"') {
+      fileName = new String(fileName.substring(1));
+    }
+    if (fileName.charAt(fileName.length() - 1) == '"') {
+      fileName = new String(fileName.substring(0, fileName.length() - 1));
+    }
+    final OutputStream out = new BufferedOutputStream(new FileOutputStream(path + fileName.toString()));
+    try {
+      int b;
+      while ((b = in.read()) > -1) {
+        out.write(b);
+        fileSize++;
+      }
+    } finally {
+      out.flush();
+      out.close();
+    }
+    json.writeAttribute(1, true, "name", fileName);
+    json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
+    json.writeAttribute(1, true, "size", fileSize);
+    json.endObject();
+    return new ByteArrayInputStream(buffer.toString().getBytes());
+  }
 
 }
