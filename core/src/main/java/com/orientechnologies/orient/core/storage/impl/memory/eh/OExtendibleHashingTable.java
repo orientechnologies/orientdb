@@ -110,16 +110,16 @@ public class OExtendibleHashingTable {
     newFilePosition = file.size();
 
     if (bucketDepth <= nodePath.nodeGlobalDepth) {
-      updateNodeAfterSplit(nodePath, bucketDepth, newFilePosition);
+      updateNodeAfterBucketSplit(nodePath, bucketDepth, newFilePosition);
     } else {
-      if (nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth() < maxLevelDepth) {
+      if (nodePath.nodeLocalDepth < maxLevelDepth) {
         final NodeSplitResult nodeSplitResult = splitNode(nodePath, node);
 
         assert !(nodeSplitResult.allLeftHashMapsEqual && nodeSplitResult.allRightHashMapsEqual);
 
         final long[] newNode = nodeSplitResult.newNode;
 
-        final int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+        final int nodeLocalDepth = nodePath.nodeLocalDepth + 1;
         final int hashMapSize = 1 << nodeLocalDepth;
 
         assert nodeSplitResult.allRightHashMapsEqual == checkAllMapsContainSameBucket(newNode, hashMapSize);
@@ -139,12 +139,12 @@ public class OExtendibleHashingTable {
           allLeftHashMapsEqual = false;
           final NodePath updatedNodePath = new NodePath(nodePath.parent, updatedOffset, updatedItemIndex, nodePath.nodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
-          updateNodeAfterSplit(updatedNodePath, bucketDepth, newFilePosition);
+          updateNodeAfterBucketSplit(updatedNodePath, bucketDepth, newFilePosition);
         } else {
           allRightHashMapsEqual = false;
           final NodePath newNodePath = new NodePath(nodePath.parent, updatedOffset - maxLevelSize, updatedItemIndex, newNodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
-          updateNodeAfterSplit(newNodePath, bucketDepth, newFilePosition);
+          updateNodeAfterBucketSplit(newNodePath, bucketDepth, newFilePosition);
         }
 
         final long[] updatedNode = hashTree[nodePath.nodeIndex];
@@ -188,7 +188,7 @@ public class OExtendibleHashingTable {
     mergeNodesAfterDeletion(nodePath, bucket, position);
 
     if (nodePath.parent != null) {
-      final int hashMapSize = 1 << nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+      final int hashMapSize = 1 << nodePath.nodeLocalDepth;
 
       final long[] node = hashTree[nodePath.nodeIndex];
       final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
@@ -201,7 +201,7 @@ public class OExtendibleHashingTable {
 
   private void mergeNodeToParent(long[] node, NodePath nodePath) {
     final int startIndex = findParentNodeStartIndex(nodePath);
-    final int localNodeDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    final int localNodeDepth = nodePath.nodeLocalDepth;
     final int hashMapSize = 1 << localNodeDepth;
 
     final long[] parentNode = hashTree[nodePath.parent.nodeIndex];
@@ -247,12 +247,12 @@ public class OExtendibleHashingTable {
     final int bucketDepth = bucket.getDepth();
     int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
     NodePath currentNode = nodePath;
-    int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    int nodeLocalDepth = nodePath.nodeLocalDepth;
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
         currentNode = nodePath.parent;
-        nodeLocalDepth = nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth();
+        nodeLocalDepth = currentNode.nodeLocalDepth;
       }
     }
 
@@ -357,21 +357,23 @@ public class OExtendibleHashingTable {
     if (nodePath.parent == null)
       return null;
 
-    final int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    final int nodeLocalDepth = nodePath.nodeLocalDepth;
+    assert nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth() == nodePath.nodeLocalDepth;
     final int pointersSize = 1 << (maxLevelDepth - nodeLocalDepth);
 
     final NodePath parent = nodePath.parent;
 
     if (parent.itemIndex < maxLevelSize / 2) {
       final int nextParentIndex = (parent.itemIndex / pointersSize + 1) * pointersSize;
-      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, nodeLocalDepth, parent.nodeGlobalDepth);
+      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
     }
 
     final int nextParentIndex = ((parent.itemIndex - maxLevelSize / 2) / pointersSize + 1) * pointersSize + maxLevelSize / 2;
     if (nextParentIndex < maxLevelSize)
-      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, nodeLocalDepth, parent.nodeGlobalDepth);
+      return new NodePath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
 
-    return nextLevelUp(new NodePath(parent.parent, 0, maxLevelSize - 1, parent.nodeIndex, nodeLocalDepth, parent.nodeGlobalDepth));
+    return nextLevelUp(new NodePath(parent.parent, 0, maxLevelSize - 1, parent.nodeIndex, parent.nodeLocalDepth,
+        parent.nodeGlobalDepth));
   }
 
   private NodePath prevNonEmptyNode(NodePath nodePath) {
@@ -415,7 +417,7 @@ public class OExtendibleHashingTable {
     if (nodePath.parent == null)
       return null;
 
-    final int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    final int nodeLocalDepth = nodePath.nodeLocalDepth;
     final int pointersSize = 1 << (maxLevelDepth - nodeLocalDepth);
 
     final NodePath parent = nodePath.parent;
@@ -429,7 +431,7 @@ public class OExtendibleHashingTable {
     if (prevParentIndex >= 0)
       return new NodePath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
 
-    return prevLevelUp(new NodePath(parent.parent, 0, 0, parent.nodeIndex, nodeLocalDepth, -1));
+    return prevLevelUp(new NodePath(parent.parent, 0, 0, parent.nodeIndex, parent.nodeLocalDepth, -1));
   }
 
   public void clear() {
@@ -539,11 +541,14 @@ public class OExtendibleHashingTable {
 
     NodePath currentNode = nodePath;
     int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    assert nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth() == nodePath.nodeLocalDepth;
+
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
         currentNode = nodePath.parent;
-        nodeLocalDepth = nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth();
+        nodeLocalDepth = currentNode.nodeLocalDepth;
+        assert nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth() == currentNode.nodeLocalDepth;
       }
     }
 
@@ -659,12 +664,12 @@ public class OExtendibleHashingTable {
     int offset = nodePath.nodeGlobalDepth - bucketDepth;
 
     NodePath currentNode = nodePath;
-    int nodeLocalDepth = nodesMetadata[nodePath.nodeIndex].getNodeLocalDepth();
+    int nodeLocalDepth = nodePath.nodeLocalDepth;
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
         currentNode = nodePath.parent;
-        nodeLocalDepth = nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth();
+        nodeLocalDepth = currentNode.nodeLocalDepth;
       }
     }
 
@@ -989,15 +994,15 @@ public class OExtendibleHashingTable {
     return hashTreeSize - 1;
   }
 
-  private void updateNodeAfterSplit(NodePath info, int bucketDepth, long newFilePosition) {
-    int offset = info.nodeGlobalDepth - (bucketDepth - 1);
-    NodePath currentNode = info;
-    int nodeLocalDepth = nodesMetadata[info.nodeIndex].getNodeLocalDepth();
+  private void updateNodeAfterBucketSplit(NodePath nodePath, int bucketDepth, long newFilePosition) {
+    int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
+    NodePath currentNode = nodePath;
+    int nodeLocalDepth = nodePath.nodeLocalDepth;
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
-        currentNode = info.parent;
-        nodeLocalDepth = nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth();
+        currentNode = nodePath.parent;
+        nodeLocalDepth = currentNode.nodeLocalDepth;
       }
     }
 
