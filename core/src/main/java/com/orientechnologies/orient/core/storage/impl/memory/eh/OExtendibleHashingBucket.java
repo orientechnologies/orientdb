@@ -28,21 +28,21 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 public class OExtendibleHashingBucket {
   public static final int     BUCKET_MAX_SIZE = 256;
 
-  private OClusterPosition[]  keys            = new OClusterPosition[BUCKET_MAX_SIZE];
-  private OPhysicalPosition[] values          = new OPhysicalPosition[BUCKET_MAX_SIZE];
+  private OClusterPosition[]  keys;
+  private OPhysicalPosition[] values;
 
   private int                 depth;
 
   private int                 size;
-
-  private long                nextBucket      = -1;
-  private long                prevBucket      = -1;
 
   private final int           maxBucketSize;
 
   public OExtendibleHashingBucket(int depth, int maxBucketSize) {
     this.depth = depth;
     this.maxBucketSize = maxBucketSize;
+
+    keys = new OClusterPosition[maxBucketSize];
+    values = new OPhysicalPosition[maxBucketSize];
   }
 
   public OPhysicalPosition find(final OClusterPosition key) {
@@ -91,7 +91,7 @@ public class OExtendibleHashingBucket {
   }
 
   public void addEntry(final OPhysicalPosition value) {
-    if (BUCKET_MAX_SIZE - size <= 0) {
+    if (maxBucketSize - size <= 0) {
       throw new IllegalArgumentException("There is no enough size in bucket.");
     } else {
       final int index = Arrays.binarySearch(keys, 0, size, value.clusterPosition);
@@ -116,21 +116,5 @@ public class OExtendibleHashingBucket {
 
   public void setDepth(int depth) {
     this.depth = depth;
-  }
-
-  public long getNextBucket() {
-    return nextBucket;
-  }
-
-  public void setNextBucket(long nextBucket) {
-    this.nextBucket = nextBucket;
-  }
-
-  public long getPrevBucket() {
-    return prevBucket;
-  }
-
-  public void setPrevBucket(long prevBucket) {
-    this.prevBucket = prevBucket;
   }
 }

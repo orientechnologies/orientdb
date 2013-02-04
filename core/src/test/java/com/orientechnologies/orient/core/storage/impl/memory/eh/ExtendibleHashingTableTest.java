@@ -28,7 +28,7 @@ public class ExtendibleHashingTableTest {
     for (int i = 0; i < KEYS_COUNT; i++) {
       final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionLong(i));
       Assert.assertTrue(extendibleHashingTable.put(position), "i " + i);
-      Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition), "i " + i);
+      Assert.assertTrue(extendibleHashingTable.contains(position.clusterPosition));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -296,7 +296,7 @@ public class ExtendibleHashingTableTest {
     OExtendibleHashingTable extendibleHashingTable;
     MersenneTwisterFast random;
     List<Long> keys = new ArrayList<Long>();
-    long i = 0;// Long.MIN_VALUE;
+    long i = 0;
 
     while (i < MAX_SEED) {
       extendibleHashingTable = new OExtendibleHashingTable(3, 4);
