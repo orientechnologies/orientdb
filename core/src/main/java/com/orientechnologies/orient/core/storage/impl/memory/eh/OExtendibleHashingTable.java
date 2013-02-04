@@ -132,24 +132,28 @@ public class OExtendibleHashingTable {
         final int updatedOffset = nodePath.hashMapOffset << 1;
         final int updatedGlobalDepth = nodePath.nodeGlobalDepth + 1;
 
-        boolean allLeftHashMapEqual = nodeSplitResult.allLeftHashMapsEqual;
-        boolean allRightHashMapEqual = nodeSplitResult.allRightHashMapsEqual;
+        boolean allLeftHashMapsEqual = nodeSplitResult.allLeftHashMapsEqual;
+        boolean allRightHashMapsEqual = nodeSplitResult.allRightHashMapsEqual;
 
         if (updatedOffset < maxLevelSize) {
-          allLeftHashMapEqual = false;
+          allLeftHashMapsEqual = false;
           final NodePath updatedNodePath = new NodePath(nodePath.parent, updatedOffset, updatedItemIndex, nodePath.nodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
           updateNodeAfterSplit(updatedNodePath, bucketDepth, newFilePosition);
         } else {
-          allRightHashMapEqual = false;
+          allRightHashMapsEqual = false;
           final NodePath newNodePath = new NodePath(nodePath.parent, updatedOffset - maxLevelSize, updatedItemIndex, newNodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
           updateNodeAfterSplit(newNodePath, bucketDepth, newFilePosition);
         }
 
         final long[] updatedNode = hashTree[nodePath.nodeIndex];
-        updateNodesAfterSplit(nodePath, updatedNode, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapEqual,
-            allRightHashMapEqual, newNodeIndex);
+        updateNodesAfterSplit(nodePath, updatedNode, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapsEqual,
+            allRightHashMapsEqual, newNodeIndex);
+
+        if (allLeftHashMapsEqual)
+          deleteNode(nodePath.nodeIndex);
+
       } else {
         addNewLevelNode(nodePath, node, newFilePosition);
       }
