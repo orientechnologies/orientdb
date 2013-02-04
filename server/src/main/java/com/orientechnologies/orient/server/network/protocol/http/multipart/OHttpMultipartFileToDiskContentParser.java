@@ -36,10 +36,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<InputStream> {
 
-  protected String path;
+  protected boolean overwrite = false;
+  protected String  path;
 
   public OHttpMultipartFileToDiskContentParser(String iPath) {
     path = iPath;
+    if (!path.endsWith("/"))
+      path += "/";
     new File(path).mkdirs();
   }
 
@@ -51,13 +54,31 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
     json.beginObject();
     String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
     int fileSize = 0;
-    if (fileName.charAt(0) == '"') {
-      fileName = new String(fileName.substring(1));
-    }
-    if (fileName.charAt(fileName.length() - 1) == '"') {
-      fileName = new String(fileName.substring(0, fileName.length() - 1));
-    }
-    final OutputStream out = new BufferedOutputStream(new FileOutputStream(path + fileName.toString()));
+
+    if (fileName.charAt(0) == '"')
+      fileName = fileName.substring(1);
+
+    if (fileName.charAt(fileName.length() - 1) == '"')
+      fileName = fileName.substring(0, fileName.length() - 1);
+
+    fileName = path + fileName;
+
+    if (!overwrite)
+      // CHANGE THE FILE NAME TO AVOID OVERWRITING
+      if (new File(fileName).exists()) {
+        final String fileExt = fileName.substring(fileName.lastIndexOf("."));
+        final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
+
+        for (int i = 1;; ++i) {
+          if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
+            fileName = fileNoExt + "_" + i + fileExt;
+            break;
+          }
+        }
+      }
+
+    // WRITE THE FILE
+    final OutputStream out = new BufferedOutputStream(new FileOutputStream(fileName.toString()));
     try {
       int b;
       while ((b = in.read()) > -1) {
@@ -68,11 +89,22 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
       out.flush();
       out.close();
     }
+
+    // FORMAT THE RETURNING DOCUMENT
     json.writeAttribute(1, true, "name", fileName);
     json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
     json.writeAttribute(1, true, "size", fileSize);
     json.endObject();
     return new ByteArrayInputStream(buffer.toString().getBytes());
+  }
+
+  public boolean isOverwrite() {
+    return overwrite;
+  }
+
+  public OHttpMultipartFileToDiskContentParser setOverwrite(boolean overwrite) {
+    this.overwrite = overwrite;
+    return this;
   }
 
 }
