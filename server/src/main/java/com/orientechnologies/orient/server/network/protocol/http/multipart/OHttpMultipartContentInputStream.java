@@ -112,7 +112,7 @@ public class OHttpMultipartContentInputStream extends InputStream {
     int boundaryCursor = 0;
     final ArrayList<Integer> buffer = new ArrayList<Integer>();
     int b;
-    while (checkingEnd && (b = wrappedInputStream.read()) > 0) {
+    while (checkingEnd && (b = wrappedInputStream.read()) > -1) {
       buffer.add(b);
       if (((char) b) == boundary.charAt(boundaryCursor)) {
         internalAvailable = false;
