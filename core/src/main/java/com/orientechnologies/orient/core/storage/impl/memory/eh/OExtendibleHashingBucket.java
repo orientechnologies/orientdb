@@ -33,16 +33,22 @@ public class OExtendibleHashingBucket {
 
   private int                 depth;
 
+  private final long[]        splitHistory;
+
   private int                 size;
 
   private final int           maxBucketSize;
 
-  public OExtendibleHashingBucket(int depth, int maxBucketSize) {
+  private long                nextRemovedBucketPair;
+
+  public OExtendibleHashingBucket(int depth, int maxBucketSize, long[] splitHistory) {
     this.depth = depth;
     this.maxBucketSize = maxBucketSize;
 
-    keys = new OClusterPosition[maxBucketSize];
-    values = new OPhysicalPosition[maxBucketSize];
+    this.keys = new OClusterPosition[maxBucketSize];
+    this.values = new OPhysicalPosition[maxBucketSize];
+
+    this.splitHistory = splitHistory;
   }
 
   public OPhysicalPosition find(final OClusterPosition key) {
@@ -116,5 +122,37 @@ public class OExtendibleHashingBucket {
 
   public void setDepth(int depth) {
     this.depth = depth;
+  }
+
+  public void setSplitHistory(int index, long position) {
+    splitHistory[index] = position;
+  }
+
+  public long getSplitHistory(int index) {
+    return splitHistory[index];
+  }
+
+  public long[] getSplitHistory() {
+    return splitHistory;
+  }
+
+  public long getNextRemovedBucketPair() {
+    return nextRemovedBucketPair;
+  }
+
+  public void setNextRemovedBucketPair(long nextRemovedBucketPair) {
+    this.nextRemovedBucketPair = nextRemovedBucketPair;
+  }
+
+  public OExtendibleHashingBucket copy() {
+    final OExtendibleHashingBucket bucket = new OExtendibleHashingBucket(depth, maxBucketSize, Arrays.copyOf(splitHistory,
+        splitHistory.length));
+
+    bucket.keys = Arrays.copyOf(this.keys, this.keys.length);
+    bucket.values = Arrays.copyOf(this.values, this.values.length);
+    bucket.size = size;
+    bucket.nextRemovedBucketPair = nextRemovedBucketPair;
+
+    return bucket;
   }
 }

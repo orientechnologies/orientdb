@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory.eh;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -27,24 +28,26 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  * @since 21.01.13
  */
 public class OExtendibleHashingTable {
-  private static final int                 MAX_LEVEL_DEPTH   = 8;
+  private static final int                     MAX_LEVEL_DEPTH   = 8;
 
-  private long[][]                         hashTree;
-  private OExtendibleHashingNodeMetadata[] nodesMetadata;
+  private long[][]                             hashTree;
+  private OExtendibleHashingNodeMetadata[]     nodesMetadata;
 
-  private List<OExtendibleHashingBucket>   file;
+  private List<List<OExtendibleHashingBucket>> files;
+  private final long[]                         fileLevelSizes;
+  private final long[]                         fileTombstones;
 
-  private int                              hashTreeSize;
+  private int                                  hashTreeSize;
 
-  private int                              size;
+  private int                                  size;
 
-  private int                              hashTreeTombstone = -1;
+  private int                                  hashTreeTombstone = -1;
 
-  private final int                        maxLevelDepth;
-  private final int                        maxLevelSize;
-  private final int                        levelMask;
+  private final int                            maxLevelDepth;
+  private final int                            maxLevelSize;
+  private final int                            levelMask;
 
-  private final int                        maxBucketSize;
+  private final int                            maxBucketSize;
 
   public OExtendibleHashingTable() {
     this(MAX_LEVEL_DEPTH, OExtendibleHashingBucket.BUCKET_MAX_SIZE);
@@ -56,11 +59,21 @@ public class OExtendibleHashingTable {
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
     this.maxBucketSize = maxBucketSize;
 
+    fileLevelSizes = new long[64];
+    fileTombstones = new long[64];
+
     init();
   }
 
   private void init() {
+    final List<OExtendibleHashingBucket> firstLevel = new ArrayList<OExtendibleHashingBucket>();
+    for (int i = 0; i < maxLevelSize; i++)
+      firstLevel.add(new OExtendibleHashingBucket(maxLevelDepth, maxBucketSize, new long[64]));
+
     final long[] rootTree = new long[maxLevelSize];
+    for (int i = 0; i < maxLevelSize; i++) {
+      rootTree[i] = createBucketPointer(i + 1, 0);
+    }
 
     hashTree = new long[1][];
     hashTree[0] = rootTree;
@@ -71,46 +84,89 @@ public class OExtendibleHashingTable {
     size = 0;
     hashTreeSize = 1;
 
-    file = new ArrayList<OExtendibleHashingBucket>();
+    files = new ArrayList<List<OExtendibleHashingBucket>>();
+    files.add(firstLevel);
+
+    fileLevelSizes[0] = maxLevelSize;
+
+    for (int i = 1; i < 64; i++)
+      fileLevelSizes[i] = 0;
+
+    Arrays.fill(fileTombstones, 0);
   }
 
   public boolean put(OPhysicalPosition value) {
-    NodePath nodePath = getBucket(value.clusterPosition);
+    final NodePath nodePath = getBucket(value.clusterPosition);
     long[] node = hashTree[nodePath.nodeIndex];
 
-    long filePosition = node[nodePath.itemIndex + nodePath.hashMapOffset];
-    final OExtendibleHashingBucket bucket;
-    long newFilePosition;
+    final long bucketPointer = node[nodePath.itemIndex + nodePath.hashMapOffset];
+    if (bucketPointer == 0)
+      throw new IllegalStateException("In this version of hash table buckets are added through split only.");
 
-    if (filePosition == 0) {
-      bucket = new OExtendibleHashingBucket(nodePath.nodeGlobalDepth, maxBucketSize);
-      file.add(bucket);
+    final int fileLevel = getFileLevel(bucketPointer);
+    final long filePosition = getFilePosition(bucketPointer);
 
-      newFilePosition = file.size();
-      node[nodePath.itemIndex + nodePath.hashMapOffset] = newFilePosition;
-    } else {
-      bucket = file.get((int) filePosition - 1);
-    }
+    final OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1).copy();
+    assert bucket.getDepth() - maxLevelDepth == fileLevel;
 
     if (bucket.getPosition(value.clusterPosition) > -1)
       return false;
 
     if (bucket.size() < maxBucketSize) {
       bucket.addEntry(value);
+      files.get(fileLevel).set((int) filePosition - 1, bucket);
       size++;
       return true;
     }
 
-    final OExtendibleHashingBucket newBucket = new OExtendibleHashingBucket(bucket.getDepth(), maxBucketSize);
+    final OExtendibleHashingBucket newBucket = new OExtendibleHashingBucket(bucket.getDepth(), maxBucketSize,
+        bucket.getSplitHistory());
+
     int bucketDepth = bucket.getDepth();
     bucketDepth = splitBucket(bucket, newBucket, bucketDepth);
 
-    file.add(newBucket);
+    fileLevelSizes[fileLevel]--;
+    assert fileLevelSizes[fileLevel] >= 0;
 
-    newFilePosition = file.size();
+    if (fileLevelSizes[fileLevel] == 0)
+      files.get(fileLevel).clear();
+
+    int newFileLevel = bucketDepth - maxLevelDepth;
+
+    if (newFileLevel >= files.size())
+      files.add(new ArrayList<OExtendibleHashingBucket>());
+
+    final long tombstonePosition = fileTombstones[newFileLevel];
+    final List<OExtendibleHashingBucket> file = files.get(newFileLevel);
+
+    bucket.setSplitHistory(fileLevel, filePosition);
+    newBucket.setSplitHistory(fileLevel, filePosition);
+
+    final long newFilePosition;
+    if (tombstonePosition > 0) {
+      final OExtendibleHashingBucket tombstone = files.get(newFileLevel).get((int) tombstonePosition - 1);
+      fileTombstones[newFileLevel] = tombstone.getNextRemovedBucketPair();
+
+      file.set((int) tombstonePosition - 1, newBucket);
+      file.set((int) tombstonePosition, bucket);
+
+      newFilePosition = tombstonePosition;
+    } else {
+      file.add(newBucket);
+      newFilePosition = files.get(newFileLevel).size();
+
+      file.add(bucket);
+    }
+
+    fileLevelSizes[newFileLevel] += 2;
+
+    final long updatedFilePosition = newFilePosition + 1;
+
+    final long newBucketPointer = createBucketPointer(newFilePosition, newFileLevel);
+    final long updatedBucketPointer = createBucketPointer(updatedFilePosition, newFileLevel);
 
     if (bucketDepth <= nodePath.nodeGlobalDepth) {
-      updateNodeAfterBucketSplit(nodePath, bucketDepth, newFilePosition);
+      updateNodeAfterBucketSplit(nodePath, bucketDepth, newBucketPointer, updatedBucketPointer);
     } else {
       if (nodePath.nodeLocalDepth < maxLevelDepth) {
         final NodeSplitResult nodeSplitResult = splitNode(nodePath, node);
@@ -139,12 +195,12 @@ public class OExtendibleHashingTable {
           allLeftHashMapsEqual = false;
           final NodePath updatedNodePath = new NodePath(nodePath.parent, updatedOffset, updatedItemIndex, nodePath.nodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
-          updateNodeAfterBucketSplit(updatedNodePath, bucketDepth, newFilePosition);
+          updateNodeAfterBucketSplit(updatedNodePath, bucketDepth, newBucketPointer, updatedBucketPointer);
         } else {
           allRightHashMapsEqual = false;
           final NodePath newNodePath = new NodePath(nodePath.parent, updatedOffset - maxLevelSize, updatedItemIndex, newNodeIndex,
               nodeLocalDepth, updatedGlobalDepth);
-          updateNodeAfterBucketSplit(newNodePath, bucketDepth, newFilePosition);
+          updateNodeAfterBucketSplit(newNodePath, bucketDepth, newBucketPointer, updatedBucketPointer);
         }
 
         final long[] updatedNode = hashTree[nodePath.nodeIndex];
@@ -155,7 +211,7 @@ public class OExtendibleHashingTable {
           deleteNode(nodePath.nodeIndex);
 
       } else {
-        addNewLevelNode(nodePath, node, newFilePosition);
+        addNewLevelNode(nodePath, node, newBucketPointer, updatedBucketPointer);
       }
     }
 
@@ -164,28 +220,40 @@ public class OExtendibleHashingTable {
 
   public boolean contains(OClusterPosition clusterPosition) {
     NodePath nodePath = getBucket(clusterPosition);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    if (position == 0)
+    long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+    if (bucketPointer == 0)
       return false;
 
-    final OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    final int fileLevel = getFileLevel(bucketPointer);
+    final long filePosition = getFilePosition(bucketPointer);
+
+    final OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
 
     return bucket.getPosition(clusterPosition) >= 0;
   }
 
   public OPhysicalPosition delete(OClusterPosition clusterPosition) {
     final NodePath nodePath = getBucket(clusterPosition);
-    final long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    final OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+
+    final int fileLevel = getFileLevel(bucketPointer);
+    final long filePosition = getFilePosition(bucketPointer);
+
+    final OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1).copy();
+
     final int positionIndex = bucket.getPosition(clusterPosition);
     if (positionIndex < 0)
       return null;
 
     final OPhysicalPosition removedPosition = bucket.deleteEntry(positionIndex);
-    if (bucket.size() > 0)
+    if (bucket.size() > 0) {
+      files.get(fileLevel).set((int) filePosition - 1, bucket);
+      size--;
       return removedPosition;
+    }
 
-    mergeNodesAfterDeletion(nodePath, bucket, position);
+    if (!mergeBucketsAfterDeletion(nodePath, bucket))
+      files.get(fileLevel).set((int) filePosition - 1, bucket);
 
     if (nodePath.parent != null) {
       final int hashMapSize = 1 << nodePath.nodeLocalDepth;
@@ -196,6 +264,7 @@ public class OExtendibleHashingTable {
         mergeNodeToParent(node, nodePath);
     }
 
+    size--;
     return removedPosition;
   }
 
@@ -243,8 +312,11 @@ public class OExtendibleHashingTable {
     nodesMetadata[nodeIndex] = null;
   }
 
-  private void mergeNodesAfterDeletion(NodePath nodePath, OExtendibleHashingBucket bucket, long filePosition) {
+  private boolean mergeBucketsAfterDeletion(NodePath nodePath, OExtendibleHashingBucket bucket) {
     final int bucketDepth = bucket.getDepth();
+    if (bucketDepth - maxLevelDepth < 1)
+      return false;
+
     int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
     NodePath currentNode = nodePath;
     int nodeLocalDepth = nodePath.nodeLocalDepth;
@@ -267,51 +339,87 @@ public class OExtendibleHashingTable {
 
     final OExtendibleHashingBucket buddyBucket;
 
+    int buddyLevel;
+    long buddyPosition;
+    long buddyPointer;
+
     final long[] node = hashTree[currentNode.nodeIndex];
     if ((currentNode.itemIndex >>> (nodeLocalDepth - diff - 1) & 1) == 1) {
-      long buddyPosition = node[firstStartIndex + currentNode.hashMapOffset];
+      buddyPointer = node[firstStartIndex + currentNode.hashMapOffset];
 
-      while (buddyPosition < 0) {
-        final int nodeIndex = (int) ((buddyPosition & Long.MAX_VALUE) >> 8);
-        final int itemOffset = (int) buddyPosition & 0xFF;
+      while (buddyPointer < 0) {
+        final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
+        final int itemOffset = (int) buddyPointer & 0xFF;
 
-        buddyPosition = hashTree[nodeIndex][itemOffset];
+        buddyPointer = hashTree[nodeIndex][itemOffset];
       }
 
-      if (buddyPosition == 0)
-        return;
+      assert buddyPointer > 0;
 
-      buddyBucket = file.get((int) buddyPosition - 1);
-      if (buddyBucket.getDepth() != bucketDepth)
-        return;
-
-      for (int i = secondStartIndex; i < secondEndIndex; i++) {
-        updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPosition);
-      }
+      buddyLevel = getFileLevel(buddyPointer);
+      buddyPosition = getFilePosition(buddyPointer);
     } else {
-      long buddyPosition = node[secondStartIndex + currentNode.hashMapOffset];
+      buddyPointer = node[secondStartIndex + currentNode.hashMapOffset];
 
-      while (buddyPosition < 0) {
-        final int nodeIndex = (int) ((buddyPosition & Long.MAX_VALUE) >> 8);
-        final int itemOffset = (int) buddyPosition & 0xFF;
+      while (buddyPointer < 0) {
+        final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
+        final int itemOffset = (int) buddyPointer & 0xFF;
 
-        buddyPosition = hashTree[nodeIndex][itemOffset];
+        buddyPointer = hashTree[nodeIndex][itemOffset];
       }
 
-      if (buddyPosition == 0)
-        return;
+      assert buddyPointer > 0;
 
-      buddyBucket = file.get((int) buddyPosition - 1);
-      if (buddyBucket.getDepth() != bucketDepth)
-        return;
-
-      for (int i = firstStartIndex; i < firstEndIndex; i++) {
-        updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPosition);
-      }
+      buddyLevel = getFileLevel(buddyPointer);
+      buddyPosition = getFilePosition(buddyPointer);
     }
 
+    buddyBucket = files.get(buddyLevel).get((int) buddyPosition - 1).copy();
+
+    if (buddyBucket.getDepth() != bucketDepth)
+      return false;
+
+    final long bucketPosition = getFilePosition(hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset]);
+
+    int oldBuddyLevel = buddyLevel;
+    long oldBuddyPosition = buddyPosition;
+
+    fileLevelSizes[buddyLevel] -= 2;
+
+    buddyLevel--;
+    fileLevelSizes[buddyLevel]++;
+
+    buddyPosition = buddyBucket.getSplitHistory(buddyLevel);
+
+    assert bucketPosition == oldBuddyPosition - 1 || oldBuddyPosition == bucketPosition - 1;
+
+    final List<OExtendibleHashingBucket> file = files.get(buddyLevel);
+    while (file.size() < buddyPosition)
+      file.add(new OExtendibleHashingBucket(0, 0, new long[0]));
+
     buddyBucket.setDepth(bucketDepth - 1);
+    file.set((int) buddyPosition - 1, buddyBucket);
+    buddyPointer = createBucketPointer(buddyPosition, buddyLevel);
+
+    for (int i = firstStartIndex; i < secondEndIndex; i++)
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPointer);
+
     assert checkBucketDepth(buddyBucket);
+
+    if (fileLevelSizes[oldBuddyLevel] > 0) {
+      final OExtendibleHashingBucket tombstone = new OExtendibleHashingBucket(0, 0, new long[0]);
+      if (fileTombstones[oldBuddyLevel] > 0)
+        tombstone.setNextRemovedBucketPair(fileTombstones[oldBuddyLevel]);
+
+      fileTombstones[oldBuddyLevel] = Math.min(bucketPosition, oldBuddyPosition);
+
+      files.get(oldBuddyLevel).set((int) oldBuddyPosition - 1, tombstone);
+    } else {
+      fileTombstones[oldBuddyLevel] = 0;
+      files.get(oldBuddyLevel).clear();
+    }
+
+    return true;
   }
 
   private NodePath nextNonEmptyNode(NodePath nodePath) {
@@ -444,40 +552,37 @@ public class OExtendibleHashingTable {
 
   public OPhysicalPosition get(OClusterPosition clusterPosition) {
     NodePath nodePath = getBucket(clusterPosition);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    if (position == 0)
+    final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+    if (bucketPointer == 0)
       return null;
 
-    final OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    final int fileLevel = getFileLevel(bucketPointer);
+    final long filePosition = getFilePosition(bucketPointer);
+
+    final OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
 
     return bucket.find(clusterPosition);
   }
 
   public Entry[] higherEntries(OClusterPosition key) {
     NodePath nodePath = getBucket(key);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+    long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
 
-    if (position == 0) {
-      nodePath = nextNonEmptyNode(nodePath);
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
 
-      if (nodePath == null)
-        return new Entry[0];
-
-      position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    }
-
-    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
     while (bucket != null && (bucket.size() == 0 || bucket.get(bucket.size() - 1).clusterPosition.compareTo(key) <= 0)) {
       nodePath = nextBucketToFind(nodePath, bucket.getDepth());
       if (nodePath == null)
         return new Entry[0];
 
-      final long nextPosition = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+      final long nextPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
 
-      if (nextPosition > 0)
-        bucket = file.get((int) nextPosition - 1);
-      else
-        bucket = null;
+      fileLevel = getFileLevel(nextPointer);
+      filePosition = getFilePosition(nextPointer);
+
+      bucket = files.get(fileLevel).get((int) filePosition - 1);
     }
 
     if (bucket != null) {
@@ -497,28 +602,23 @@ public class OExtendibleHashingTable {
 
   public Entry[] ceilingEntries(OClusterPosition key) {
     NodePath nodePath = getBucket(key);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+    long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
 
-    if (position == 0) {
-      nodePath = nextNonEmptyNode(nodePath);
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
 
-      if (nodePath == null)
-        return new Entry[0];
-
-      position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    }
-
-    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
     while (bucket != null && bucket.size() == 0) {
       nodePath = nextBucketToFind(nodePath, bucket.getDepth());
       if (nodePath == null)
         return new Entry[0];
 
-      final long nextPosition = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-      if (nextPosition > 0)
-        bucket = file.get((int) nextPosition - 1);
-      else
-        bucket = null;
+      final long nextPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+
+      fileLevel = getFileLevel(nextPointer);
+      filePosition = getFilePosition(nextPointer);
+
+      bucket = files.get(fileLevel).get((int) filePosition - 1);
     }
 
     if (bucket != null) {
@@ -575,27 +675,23 @@ public class OExtendibleHashingTable {
 
   public Entry[] lowerEntries(OClusterPosition key) {
     NodePath nodePath = getBucket(key);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    if (position == 0) {
-      nodePath = prevNonEmptyNode(nodePath);
+    long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
 
-      if (nodePath == null)
-        return new Entry[0];
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
 
-      position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    }
-
-    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
     while (bucket != null && (bucket.size() == 0 || bucket.get(0).clusterPosition.compareTo(key) >= 0)) {
       final NodePath prevNodePath = prevBucketToFind(nodePath, bucket.getDepth());
       if (prevNodePath == null)
         return new Entry[0];
 
-      final long prevPosition = hashTree[prevNodePath.nodeIndex][prevNodePath.itemIndex + prevNodePath.hashMapOffset];
-      if (prevPosition > 0)
-        bucket = file.get((int) prevPosition - 1);
-      else
-        bucket = null;
+      final long prevPointer = hashTree[prevNodePath.nodeIndex][prevNodePath.itemIndex + prevNodePath.hashMapOffset];
+
+      fileLevel = getFileLevel(prevPointer);
+      filePosition = getFilePosition(prevPointer);
+
+      bucket = files.get(fileLevel).get((int) filePosition - 1);
 
       nodePath = prevNodePath;
     }
@@ -618,28 +714,24 @@ public class OExtendibleHashingTable {
 
   public Entry[] floorEntries(OClusterPosition key) {
     NodePath nodePath = getBucket(key);
-    long position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    if (position == 0) {
-      nodePath = prevNonEmptyNode(nodePath);
+    long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
 
-      if (nodePath == null)
-        return new Entry[0];
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
 
-      position = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-    }
-
-    OExtendibleHashingBucket bucket = file.get((int) position - 1);
+    OExtendibleHashingBucket bucket = files.get(fileLevel).get((int) filePosition - 1);
 
     while (bucket != null && bucket.size() == 0) {
       final NodePath prevNodePath = prevBucketToFind(nodePath, bucket.getDepth());
       if (prevNodePath == null)
         return new Entry[0];
 
-      final long prevPosition = hashTree[prevNodePath.nodeIndex][prevNodePath.hashMapOffset + prevNodePath.itemIndex];
-      if (prevPosition > 0)
-        bucket = file.get((int) prevPosition - 1);
-      else
-        bucket = null;
+      final long prevPointer = hashTree[prevNodePath.nodeIndex][prevNodePath.hashMapOffset + prevNodePath.itemIndex];
+
+      fileLevel = getFileLevel(prevPointer);
+      filePosition = getFilePosition(prevPointer);
+
+      bucket = files.get(fileLevel).get((int) filePosition - 1);
 
       nodePath = prevNodePath;
     }
@@ -719,7 +811,7 @@ public class OExtendibleHashingTable {
     return entries;
   }
 
-  private void addNewLevelNode(NodePath nodePath, long[] node, long newFilePosition) {
+  private void addNewLevelNode(NodePath nodePath, long[] node, long newBucketPointer, long updatedBucketPointer) {
     final long[] newNode = new long[maxLevelSize];
 
     final int newNodeDepth;
@@ -752,16 +844,17 @@ public class OExtendibleHashingTable {
     final int mapSize = 1 << newNodeDepth;
     for (int i = 0; i < mapInterval; i++) {
       final int nodeOffset = i + newNodeStartIndex;
-      final long position = node[nodeOffset];
+      final long bucketPointer = node[nodeOffset];
+
       if (nodeOffset != nodePath.itemIndex) {
         for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++)
-          newNode[n] = position;
+          newNode[n] = bucketPointer;
       } else {
         for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++)
-          newNode[n] = position;
+          newNode[n] = updatedBucketPointer;
 
         for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++)
-          newNode[n] = newFilePosition;
+          newNode[n] = newBucketPointer;
       }
 
       node[nodeOffset] = (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE;
@@ -994,7 +1087,7 @@ public class OExtendibleHashingTable {
     return hashTreeSize - 1;
   }
 
-  private void updateNodeAfterBucketSplit(NodePath nodePath, int bucketDepth, long newFilePosition) {
+  private void updateNodeAfterBucketSplit(NodePath nodePath, int bucketDepth, long newBucketPointer, long updatedBucketPointer) {
     int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
     NodePath currentNode = nodePath;
     int nodeLocalDepth = nodePath.nodeLocalDepth;
@@ -1008,15 +1101,18 @@ public class OExtendibleHashingTable {
 
     final int diff = bucketDepth - 1 - (currentNode.nodeGlobalDepth - nodeLocalDepth);
 
-    final int interval = (1 << (nodeLocalDepth - diff));
+    final int interval = (1 << (nodeLocalDepth - diff - 1));
     final int firstStartIndex = currentNode.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
-    final int firstEndIndex = firstStartIndex + (1 << (nodeLocalDepth - diff));
+    final int firstEndIndex = firstStartIndex + interval;
 
-    final int secondStartIndex = firstStartIndex + (interval >>> 1);
-    final int secondEndIndex = firstEndIndex;
+    final int secondStartIndex = firstEndIndex;
+    final int secondEndIndex = secondStartIndex + interval;
+
+    for (int i = firstStartIndex; i < firstEndIndex; i++)
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, updatedBucketPointer);
 
     for (int i = secondStartIndex; i < secondEndIndex; i++)
-      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newFilePosition);
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
   }
 
   private void updateBucket(int nodeIndex, int itemIndex, int offset, long newFilePosition) {
@@ -1108,6 +1204,18 @@ public class OExtendibleHashingTable {
     }
 
     return true;
+  }
+
+  private long createBucketPointer(long filePosition, int fileLevel) {
+    return filePosition << 8 | fileLevel;
+  }
+
+  private long getFilePosition(long bucketPointer) {
+    return bucketPointer >>> 8;
+  }
+
+  private int getFileLevel(long bucketPointer) {
+    return (int) (bucketPointer & 0xFF);
   }
 
   private static final class NodeSplitResult {
