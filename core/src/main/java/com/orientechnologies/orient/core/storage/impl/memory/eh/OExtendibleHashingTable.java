@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
  */
 public class OExtendibleHashingTable {
   private static final int                     MAX_LEVEL_DEPTH   = 8;
+  private static final double                  MERGE_THRESHOLD   = 0.5;
 
   private long[][]                             hashTree;
   private OExtendibleHashingNodeMetadata[]     nodesMetadata;
@@ -246,11 +247,7 @@ public class OExtendibleHashingTable {
       return null;
 
     final OPhysicalPosition removedPosition = bucket.deleteEntry(positionIndex);
-    if (bucket.size() > 0) {
-      files.get(fileLevel).set((int) filePosition - 1, bucket);
-      size--;
-      return removedPosition;
-    }
+    size--;
 
     if (!mergeBucketsAfterDeletion(nodePath, bucket))
       files.get(fileLevel).set((int) filePosition - 1, bucket);
@@ -264,7 +261,6 @@ public class OExtendibleHashingTable {
         mergeNodeToParent(node, nodePath);
     }
 
-    size--;
     return removedPosition;
   }
 
@@ -314,6 +310,9 @@ public class OExtendibleHashingTable {
 
   private boolean mergeBucketsAfterDeletion(NodePath nodePath, OExtendibleHashingBucket bucket) {
     final int bucketDepth = bucket.getDepth();
+    if (bucket.size() > maxBucketSize * MERGE_THRESHOLD)
+      return false;
+
     if (bucketDepth - maxLevelDepth < 1)
       return false;
 
@@ -378,6 +377,13 @@ public class OExtendibleHashingTable {
 
     if (buddyBucket.getDepth() != bucketDepth)
       return false;
+
+    if (bucket.size() + buddyBucket.size() >= maxBucketSize)
+      return false;
+
+    final List<OPhysicalPosition> content = bucket.getContent();
+    for (OPhysicalPosition position : content)
+      buddyBucket.addEntry(position);
 
     final long bucketPosition = getFilePosition(hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset]);
 
