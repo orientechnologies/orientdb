@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,42 +36,75 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartContentParser<InputStream> {
 
-	protected String	path;
+  protected boolean overwrite = false;
+  protected String  path;
 
-	public OHttpMultipartFileToDiskContentParser(String iPath) {
-		path = iPath;
-	}
+  public OHttpMultipartFileToDiskContentParser(String iPath) {
+    path = iPath;
+    if (!path.endsWith("/"))
+      path += "/";
+    new File(path).mkdirs();
+  }
 
-	@Override
-	public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-			final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
-		final StringWriter buffer = new StringWriter();
-		final OJSONWriter json = new OJSONWriter(buffer);
-		json.beginObject();
-		String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
-		int fileSize = 0;
-		if (fileName.charAt(0) == '"') {
-			fileName = new String(fileName.substring(1));
-		}
-		if (fileName.charAt(fileName.length() - 1) == '"') {
-			fileName = new String(fileName.substring(0, fileName.length() - 1));
-		}
-		final OutputStream out = new BufferedOutputStream(new FileOutputStream(path + fileName.toString()));
-		try {
-			int b;
-			while ((b = in.read()) > 0) {
-				out.write(b);
-				fileSize++;
-			}
-		} finally {
-			out.flush();
-			out.close();
-		}
-		json.writeAttribute(1, true, "name", fileName);
-		json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
-		json.writeAttribute(1, true, "size", fileSize);
-		json.endObject();
-		return new ByteArrayInputStream(buffer.toString().getBytes());
-	}
+  @Override
+  public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
+      final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
+    final StringWriter buffer = new StringWriter();
+    final OJSONWriter json = new OJSONWriter(buffer);
+    json.beginObject();
+    String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
+    int fileSize = 0;
+
+    if (fileName.charAt(0) == '"')
+      fileName = fileName.substring(1);
+
+    if (fileName.charAt(fileName.length() - 1) == '"')
+      fileName = fileName.substring(0, fileName.length() - 1);
+
+    fileName = path + fileName;
+
+    if (!overwrite)
+      // CHANGE THE FILE NAME TO AVOID OVERWRITING
+      if (new File(fileName).exists()) {
+        final String fileExt = fileName.substring(fileName.lastIndexOf("."));
+        final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
+
+        for (int i = 1;; ++i) {
+          if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
+            fileName = fileNoExt + "_" + i + fileExt;
+            break;
+          }
+        }
+      }
+
+    // WRITE THE FILE
+    final OutputStream out = new BufferedOutputStream(new FileOutputStream(fileName.toString()));
+    try {
+      int b;
+      while ((b = in.read()) > -1) {
+        out.write(b);
+        fileSize++;
+      }
+    } finally {
+      out.flush();
+      out.close();
+    }
+
+    // FORMAT THE RETURNING DOCUMENT
+    json.writeAttribute(1, true, "name", fileName);
+    json.writeAttribute(1, true, "type", headers.get(OHttpUtils.MULTIPART_CONTENT_TYPE));
+    json.writeAttribute(1, true, "size", fileSize);
+    json.endObject();
+    return new ByteArrayInputStream(buffer.toString().getBytes());
+  }
+
+  public boolean isOverwrite() {
+    return overwrite;
+  }
+
+  public OHttpMultipartFileToDiskContentParser setOverwrite(boolean overwrite) {
+    this.overwrite = overwrite;
+    return this;
+  }
 
 }

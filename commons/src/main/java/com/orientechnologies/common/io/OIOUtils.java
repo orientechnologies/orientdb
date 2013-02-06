@@ -21,7 +21,9 @@ import java.io.Externalizable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -142,6 +144,20 @@ public class OIOUtils {
       reader.close();
     }
     return fileData.toString();
+  }
+
+  public static int copyStream(final InputStream in, final OutputStream out, int iMax) throws java.io.IOException {
+    if (iMax < 0)
+      iMax = Integer.MAX_VALUE;
+    
+    final byte[] buf = new byte[1024];
+    int byteRead = 0;
+    int byteTotal = 0;
+    while ((byteRead = in.read(buf, 0, Math.min(buf.length, iMax - byteTotal))) > 0) {
+      out.write(buf, 0, byteRead);
+      byteTotal += byteRead;
+    }
+    return byteTotal;
   }
 
   /**
