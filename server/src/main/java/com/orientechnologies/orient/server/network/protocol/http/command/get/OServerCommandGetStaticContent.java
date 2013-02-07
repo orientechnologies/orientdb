@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -145,6 +146,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         else
           path = rootPath + url;
       }
+
+      path = URLDecoder.decode(path, "UTF-8");
 
       if (cacheContents != null) {
         synchronized (cacheContents) {
