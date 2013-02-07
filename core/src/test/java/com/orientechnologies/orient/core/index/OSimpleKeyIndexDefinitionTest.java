@@ -104,11 +104,9 @@ public class OSimpleKeyIndexDefinitionTest {
     Assert.assertNull(result);
   }
 
-  @Test
+  @Test(expectedExceptions = NumberFormatException.class)
   public void testWrongParamType() {
-    final Object result = simpleKeyIndexDefinition.createValue("a", "3");
-
-    Assert.assertNull(result);
+    simpleKeyIndexDefinition.createValue("a", "3");
   }
 
   @Test
