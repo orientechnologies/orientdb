@@ -12,29 +12,18 @@ public class OSlf4JLogger implements OLogger {
 			Throwable iException, Object... iAdditionalArgs) {
 		Logger logger = LoggerFactory.getLogger(name);
 
-		if (Level.INFO == iLevel) {
-			if (logger.isInfoEnabled()) {
-				String msg = String.format(iMessage, iAdditionalArgs);
-				logger.info(msg, iException);
-			}
-		} else if (Level.WARNING == iLevel) {
-			if (logger.isWarnEnabled()) {
-				String msg = String.format(iMessage, iAdditionalArgs);
-				logger.info(msg, iException);
-			}
-		} else if (Level.SEVERE == iLevel) {
-			if (logger.isErrorEnabled()) {
-				String msg = String.format(iMessage, iAdditionalArgs);
-				logger.info(msg, iException);
-			}
-		} else if (Level.FINE == iLevel || Level.FINER == iLevel
-				|| Level.FINEST == iLevel) {
-			if (logger.isDebugEnabled()) {
-				String msg = String.format(iMessage, iAdditionalArgs);
-				logger.info(msg, iException);
-			}
+		if (canLog(logger, iLevel)) {
+			String msg = String.format(iMessage, iAdditionalArgs);
+			logger.info(msg, iException);
+
 		}
 
 	}
 
+	private boolean canLog(Logger logger, Level iLevel) {
+		return (Level.INFO == iLevel && logger.isInfoEnabled()
+				|| Level.WARNING == iLevel && logger.isWarnEnabled()
+				|| Level.SEVERE == iLevel && logger.isErrorEnabled() 
+				|| (Level.FINE == iLevel || Level.FINER == iLevel || Level.FINEST == iLevel) && logger.isDebugEnabled());
+	}
 }
