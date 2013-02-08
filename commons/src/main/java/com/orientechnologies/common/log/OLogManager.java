@@ -20,7 +20,16 @@ public class OLogManager {
   private boolean                  error        = true;
   private Level                    minimumLevel = Level.SEVERE;
 
+  private OLogger                  loggerImpl;
+
   protected OLogManager() {
+	  try {
+		  Class.forName("org.slf4j.Logger");
+		  loggerImpl = new OSlf4JLogger();
+	  }
+	  catch(ClassNotFoundException e) {
+		  loggerImpl = new OJulLogger();
+	  }
   }
 
   public static OLogManager instance() {
@@ -58,26 +67,7 @@ public class OLogManager {
   public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
-      final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
-      if (log == null) {
-        // USE SYSERR
-        try {
-          System.err.println(String.format(iMessage, iAdditionalArgs));
-        } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message", e);
-        }
-      } else if (log.isLoggable(iLevel)) {
-        // USE THE LOG
-        try {
-          final String msg = String.format(iMessage, iAdditionalArgs);
-          if (iException != null)
-            log.log(iLevel, msg, iException);
-          else
-            log.log(iLevel, msg);
-        } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message", e);
-        }
-      }
+    	loggerImpl.log(iRequester != null ? iRequester.getClass().getName() : DEFAULT_LOG, iLevel, iMessage, iException, iAdditionalArgs);
     }
   }
 
