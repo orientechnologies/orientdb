@@ -85,4 +85,10 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   public Iterator<OIdentifiable> valuesInverseIterator() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public boolean supportsOrderedIterations() {
+    return false;
+  }
+
 }

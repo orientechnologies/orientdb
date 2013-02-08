@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -53,7 +54,8 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%s", nodeSource, databaseName, rid.toString(), version.toString());
+    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%s", nodeSource, databaseName, rid.toString(),
+        version.toString());
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
@@ -87,6 +89,8 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
   }
 
@@ -94,6 +98,8 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
   }
 
