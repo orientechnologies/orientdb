@@ -526,4 +526,9 @@ public class OIndexProxy<T> implements OIndex<T> {
   public Set<String> getClusters() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
+
+  public boolean supportsOrderedIterations() {
+    return false;
+  }
+
 }

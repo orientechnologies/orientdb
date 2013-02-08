@@ -66,4 +66,8 @@ public class OIndexDictionary extends OIndexOneValue {
   public boolean canBeUsedInEqualityOperators() {
     return true;
   }
+
+  public boolean supportsOrderedIterations() {
+    return false;
+  }
 }

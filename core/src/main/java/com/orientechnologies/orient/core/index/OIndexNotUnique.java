@@ -24,14 +24,19 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  * 
  */
 public class OIndexNotUnique extends OIndexMultiValues {
-    
-    public static final String TYPE_ID = OClass.INDEX_TYPE.NOTUNIQUE.toString();
-    
-	public OIndexNotUnique() {
-		super(TYPE_ID);
-	}
 
-	public boolean canBeUsedInEqualityOperators() {
-		return true;
-	}
+  public static final String TYPE_ID = OClass.INDEX_TYPE.NOTUNIQUE.toString();
+
+  public OIndexNotUnique() {
+    super(TYPE_ID);
+  }
+
+  public boolean canBeUsedInEqualityOperators() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsOrderedIterations() {
+    return true;
+  }
 }
