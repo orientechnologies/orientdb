@@ -183,7 +183,7 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   }
 
   @Override
-  public boolean isLHBased() {
+  public boolean isHashBased() {
     return true;
   }
 

@@ -31,9 +31,9 @@ public class OExtendibleHashingBucket {
   private OClusterPosition[]  keys;
   private OPhysicalPosition[] values;
 
-  private int                 depth;
-
   private final long[]        splitHistory;
+
+  private int                 depth;
 
   private int                 size;
 

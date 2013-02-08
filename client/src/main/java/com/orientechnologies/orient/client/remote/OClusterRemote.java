@@ -170,7 +170,7 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("getRecordsSize()");
   }
 
-  public boolean isLHBased() {
+  public boolean isHashBased() {
     return false;
   }
 

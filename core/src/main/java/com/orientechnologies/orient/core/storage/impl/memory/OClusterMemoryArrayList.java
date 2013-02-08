@@ -46,7 +46,7 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     }
   }
 
-  public boolean isLHBased() {
+  public boolean isHashBased() {
     return false;
   }
 
