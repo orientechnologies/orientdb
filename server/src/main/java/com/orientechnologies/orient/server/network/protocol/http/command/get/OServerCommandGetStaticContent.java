@@ -227,6 +227,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         try {
           is.close();
         } catch (IOException e) {
+          OLogManager.instance().warn(this, "Error on closing file", e);
         }
     }
     return false;

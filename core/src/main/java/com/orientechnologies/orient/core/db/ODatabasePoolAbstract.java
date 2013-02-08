@@ -116,7 +116,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
 
     if (pool != null) {
       for (DB db : pool.getResources()) {
-        if (db.getStorage().getStatus() == OStorage.STATUS.OPEN)
+        if (db.getStorage() != null && db.getStorage().getStatus() == OStorage.STATUS.OPEN)
           try {
             OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
             ((ODatabasePooled) db).forceClose();
