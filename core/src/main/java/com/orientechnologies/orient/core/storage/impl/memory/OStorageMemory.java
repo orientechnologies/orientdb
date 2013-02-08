@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -304,7 +303,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
       // ASSIGN THE POSITION IN THE CLUSTER
       final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, offset, iRecordType);
-      if (cluster.isLHBased()) {
+      if (cluster.isHashBased()) {
         if (iRid.isNew()) {
           if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
             ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
@@ -353,7 +352,7 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
         final OClusterPosition lastPos = iClusterSegment.getLastPosition();
 
-        if (!iClusterSegment.isLHBased()) {
+        if (!iClusterSegment.isHashBased()) {
           if (iRid.clusterPosition.compareTo(lastPos) > 0)
             return null;
         }
@@ -456,7 +455,7 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
         OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
         if (ppos == null) {
-          if (!cluster.isLHBased())
+          if (!cluster.isHashBased())
             throw new OStorageException("Cluster with LH support is required.");
 
           ppos = new OPhysicalPosition(rid.clusterPosition, recordVersion);

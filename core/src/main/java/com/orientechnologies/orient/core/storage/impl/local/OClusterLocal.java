@@ -562,7 +562,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return TYPE;
   }
 
-  public boolean isLHBased() {
+  public boolean isHashBased() {
     return false;
   }
 

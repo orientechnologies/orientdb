@@ -30,21 +30,20 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysicalPosition>, Externalizable {
   // POSITION IN THE CLUSTER
-  public OClusterPosition  clusterPosition;
+  public OClusterPosition clusterPosition;
   // ID OF DATA SEGMENT
-  public int               dataSegmentId;
+  public int              dataSegmentId;
   // POSITION OF CHUNK EXPRESSES AS OFFSET IN BYTES INSIDE THE DATA SEGMENT
-  public long              dataSegmentPos;
+  public long             dataSegmentPos;
   // TYPE
-  public byte              recordType;
+  public byte             recordType;
   // VERSION
-  public ORecordVersion    recordVersion = OVersionFactory.instance().createVersion();
+  public ORecordVersion   recordVersion   = OVersionFactory.instance().createVersion();
   // SIZE IN BYTES OF THE RECORD. USED ONLY IN MEMORY
-  public int               recordSize;
+  public int              recordSize;
 
-  private static final int BINARY_SIZE   = OClusterPositionFactory.INSTANCE.getSerializedSize() + OBinaryProtocol.SIZE_INT
-                                             + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OBinaryProtocol.SIZE_INT
-                                             + OBinaryProtocol.SIZE_INT;
+  public static int       binarySize;
+  private static boolean  binarySizeKnown = false;
 
   public OPhysicalPosition() {
   }
@@ -107,7 +106,7 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
   }
 
   public byte[] toStream() throws OSerializationException {
-    byte[] buffer = new byte[BINARY_SIZE];
+    byte[] buffer = new byte[binarySize()];
     int pos = 0;
 
     final byte[] clusterContent = clusterPosition.toStream();
@@ -175,5 +174,16 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
     recordType = in.readByte();
     recordSize = in.readInt();
     recordVersion.getSerializer().readFrom(in, recordVersion);
+  }
+
+  public static int binarySize() {
+    if (binarySizeKnown)
+      return binarySize;
+
+    binarySizeKnown = true;
+    binarySize = OClusterPositionFactory.INSTANCE.getSerializedSize() + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
+        + OBinaryProtocol.SIZE_BYTE + OVersionFactory.instance().getVersionSize() + OBinaryProtocol.SIZE_INT;
+
+    return binarySize;
   }
 }

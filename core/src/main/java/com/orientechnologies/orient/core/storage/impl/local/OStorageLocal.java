@@ -1012,7 +1012,7 @@ public class OStorageLocal extends OStorageEmbedded {
         try {
           OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
           if (ppos == null) {
-            if (!cluster.isLHBased())
+            if (!cluster.isHashBased())
               throw new OStorageException("Cluster with LH support is required.");
 
             ppos = new OPhysicalPosition(rid.clusterPosition, recordVersion);
@@ -1629,7 +1629,7 @@ public class OStorageLocal extends OStorageEmbedded {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, recordType);
-    if (cluster.isLHBased()) {
+    if (cluster.isHashBased()) {
       if (rid.isNew()) {
         if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
           ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();

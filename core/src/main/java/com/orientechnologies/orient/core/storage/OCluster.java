@@ -132,7 +132,7 @@ public interface OCluster {
    */
   public long getRecordsSize();
 
-  public boolean isLHBased();
+  public boolean isHashBased();
 
   public OClusterEntryIterator absoluteIterator();
 
