@@ -20,8 +20,16 @@ public class OLogManager {
   private static final String      DEFAULT_LOG  = "com.orientechnologies";
 
   private static final OLogManager instance     = new OLogManager();
+  private OLogger                  loggerImpl;
 
   protected OLogManager() {
+	  try {
+		  Class.forName("org.slf4j.Logger");
+		  loggerImpl = new OSlf4JLogger();
+	  }
+	  catch(ClassNotFoundException e) {
+		  loggerImpl = new OJulLogger();
+	  }
   }
 
   public void setConsoleLevel(final String iLevel) {
@@ -35,14 +43,7 @@ public class OLogManager {
   public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
-      final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
-      if (log.isLoggable(iLevel)) {
-        final String msg = String.format(iMessage, iAdditionalArgs);
-        if (iException != null)
-          log.log(iLevel, msg, iException);
-        else
-          log.log(iLevel, msg);
-      }
+    	loggerImpl.log(iRequester != null ? iRequester.getClass().getName() : DEFAULT_LOG, iLevel, iMessage, iException, iAdditionalArgs);
     }
   }
 
