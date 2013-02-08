@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @since 06.02.13
  */
 public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster {
+  private static final double              MERGE_THRESHOLD   = 0.2;
+
   public static final String               TYPE              = "PHYSICAL";
   private static final String              DEF_EXTENSION     = ".oeh";
 
@@ -125,8 +127,6 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     final OEHBucket emptyBucket = new OEHBucket(maxLevelDepth, emptyBuffer, 0, keySize, entreeSize, clusterPositionFactory);
 
     final OFile zeroLevelFile = files[0].getFile();
-    if (!zeroLevelFile.isOpen())
-      zeroLevelFile.open();
 
     zeroLevelFile.allocateSpace(bucketBufferSize * maxLevelSize);
 
@@ -167,8 +167,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     acquireExclusiveLock();
     try {
       for (OEHFileMetadata metadata : files)
-        if (metadata.getFile().isOpen())
-          metadata.getFile().close();
+        metadata.getFile().close();
 
     } finally {
       releaseExclusiveLock();
@@ -226,14 +225,9 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       }
 
       for (OEHFileMetadata metadata : files) {
-        if (metadata.getFile().isOpen())
-          metadata.getFile().shrink(0);
-        else {
-          metadata.getFile().open();
-          metadata.getFile().shrink(0);
-        }
-
-        metadata.getFile().close();
+        metadata.getFile().shrink(0);
+        metadata.setBucketsCount(0);
+        metadata.setTombstonePosition(-1);
       }
 
       initHashTreeState();
@@ -344,6 +338,146 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     }
   }
 
+  private void mergeNodeToParent(long[] node, BucketPath nodePath) {
+    final int startIndex = findParentNodeStartIndex(nodePath);
+    final int localNodeDepth = nodePath.nodeLocalDepth;
+    final int hashMapSize = 1 << localNodeDepth;
+
+    final long[] parentNode = hashTree[nodePath.parent.nodeIndex];
+    for (int i = 0, k = startIndex; i < node.length; i += hashMapSize, k++) {
+      parentNode[k] = node[i];
+    }
+
+    deleteNode(nodePath.nodeIndex);
+
+    final OExtendibleHashingNodeMetadata metadata = nodesMetadata[nodePath.parent.nodeIndex];
+    if (nodePath.parent.itemIndex < maxLevelSize / 2) {
+      final int maxChildDepth = metadata.getMaxLeftChildDepth();
+      if (maxChildDepth == localNodeDepth)
+        metadata.setMaxLeftChildDepth(getMaxLevelDepth(parentNode, 0, parentNode.length / 2));
+    } else {
+      final int maxChildDepth = metadata.getMaxRightChildDepth();
+      if (maxChildDepth == localNodeDepth)
+        metadata.setMaxRightChildDepth(getMaxLevelDepth(parentNode, parentNode.length / 2, parentNode.length));
+    }
+  }
+
+  private boolean mergeBucketsAfterDeletion(BucketPath nodePath, OEHBucket bucket) throws IOException {
+    final int bucketDepth = bucket.getDepth();
+    if (bucket.size() > OEHBucket.MAX_BUCKET_SIZE * MERGE_THRESHOLD)
+      return false;
+
+    if (bucketDepth - maxLevelDepth < 1)
+      return false;
+
+    int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
+    BucketPath currentNode = nodePath;
+    int nodeLocalDepth = nodePath.nodeLocalDepth;
+    while (offset > 0) {
+      offset -= nodeLocalDepth;
+      if (offset > 0) {
+        currentNode = nodePath.parent;
+        nodeLocalDepth = currentNode.nodeLocalDepth;
+      }
+    }
+
+    final int diff = bucketDepth - 1 - (currentNode.nodeGlobalDepth - nodeLocalDepth);
+    final int interval = (1 << (nodeLocalDepth - diff - 1));
+
+    int firstStartIndex = currentNode.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
+    int firstEndIndex = firstStartIndex + interval;
+
+    final int secondStartIndex = firstEndIndex;
+    final int secondEndIndex = secondStartIndex + interval;
+
+    final OEHBucket buddyBucket;
+
+    int buddyLevel;
+    long buddyPosition;
+    long buddyPointer;
+
+    final long[] node = hashTree[currentNode.nodeIndex];
+    if ((currentNode.itemIndex >>> (nodeLocalDepth - diff - 1) & 1) == 1) {
+      buddyPointer = node[firstStartIndex + currentNode.hashMapOffset];
+
+      while (buddyPointer < 0) {
+        final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
+        final int itemOffset = (int) buddyPointer & 0xFF;
+
+        buddyPointer = hashTree[nodeIndex][itemOffset];
+      }
+
+      assert buddyPointer > 0;
+
+      buddyLevel = getFileLevel(buddyPointer);
+      buddyPosition = getFilePosition(buddyPointer);
+    } else {
+      buddyPointer = node[secondStartIndex + currentNode.hashMapOffset];
+
+      while (buddyPointer < 0) {
+        final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
+        final int itemOffset = (int) buddyPointer & 0xFF;
+
+        buddyPointer = hashTree[nodeIndex][itemOffset];
+      }
+
+      assert buddyPointer > 0;
+
+      buddyLevel = getFileLevel(buddyPointer);
+      buddyPosition = getFilePosition(buddyPointer);
+    }
+
+    buddyBucket = readBucket(buddyLevel, buddyPosition);
+
+    if (buddyBucket.getDepth() != bucketDepth)
+      return false;
+
+    if (bucket.size() + buddyBucket.size() >= OEHBucket.MAX_BUCKET_SIZE)
+      return false;
+
+    for (OPhysicalPosition position : bucket)
+      buddyBucket.addEntry(position);
+
+    final long bucketPosition = getFilePosition(hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset]);
+
+    int oldBuddyLevel = buddyLevel;
+    long oldBuddyPosition = buddyPosition;
+
+    files[buddyLevel].setBucketsCount(files[buddyLevel].geBucketsCount() - 2);
+
+    buddyLevel--;
+    files[buddyLevel].setBucketsCount(files[buddyLevel].geBucketsCount() + 1);
+
+    buddyPosition = buddyBucket.getSplitHistory(buddyLevel);
+
+    assert bucketPosition == oldBuddyPosition - bucketBufferSize || oldBuddyPosition == bucketPosition - bucketBufferSize;
+
+    buddyBucket.setDepth(bucketDepth - 1);
+    saveBucket(buddyLevel, buddyPosition, buddyBucket);
+
+    buddyPointer = createBucketPointer(buddyPosition, buddyLevel);
+
+    for (int i = firstStartIndex; i < secondEndIndex; i++)
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, buddyPointer);
+
+    assert checkBucketDepth(buddyBucket);
+
+    final OEHFileMetadata oldBuddyFileMetadata = files[oldBuddyLevel];
+    if (oldBuddyFileMetadata.geBucketsCount() > 0) {
+      final OEHBucket tombstone = new OEHBucket(new byte[bucketBufferSize], 0, keySize, entreeSize, clusterPositionFactory);
+
+      if (oldBuddyFileMetadata.getTombstonePosition() >= 0)
+        tombstone.setNextRemovedBucketPair(oldBuddyFileMetadata.getTombstonePosition());
+
+      oldBuddyFileMetadata.setTombstonePosition(Math.min(bucketPosition, oldBuddyPosition));
+
+      saveBucket(oldBuddyLevel, oldBuddyPosition, tombstone);
+    } else
+      oldBuddyFileMetadata.setTombstonePosition(-1);
+
+    return true;
+  }
+
   private BucketPath nextBucketToFind(final BucketPath bucketPath, int bucketDepth) {
     int offset = bucketPath.nodeGlobalDepth - bucketDepth;
 
@@ -444,10 +578,10 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   }
 
   private void closeBucketFileIfNeeded(OEHFileMetadata fileMetadata) throws IOException {
-    if (fileMetadata.geBucketsCount() == 0) {
-      final OFile file = fileMetadata.getFile();
-      file.close();
-    }
+    // if (fileMetadata.geBucketsCount() == 0) {
+    // final OFile file = fileMetadata.getFile();
+    // file.close();
+    // }
   }
 
   private void saveBucket(int fileLevel, long filePosition, OEHBucket bucket) throws IOException {
@@ -455,18 +589,12 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     final OFile bucketFile = fileMetadata.getFile();
     bucket.save();
 
-    if (!bucketFile.isOpen())
-      bucketFile.open();
-
     bucketFile.write(filePosition, bucket.getDataBuffer());
   }
 
   private OEHBucket readBucket(int fileLevel, long filePosition) throws IOException {
     final OEHFileMetadata fileMetadata = files[fileLevel];
     final OFile bucketFile = fileMetadata.getFile();
-
-    if (!bucketFile.isOpen())
-      bucketFile.open();
 
     final byte[] serializedFile = new byte[bucketBufferSize];
     bucketFile.read(filePosition, serializedFile, serializedFile.length);
@@ -582,8 +710,6 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
     assert fileMetadata.geBucketsCount() >= 0;
 
-    closeBucketFileIfNeeded(fileMetadata);
-
     int newFileLevel = bucketDepth - maxLevelDepth;
     final OEHFileMetadata newFileMetadata = files[newFileLevel];
 
@@ -601,16 +727,11 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       newFileMetadata.setTombstonePosition(tombstone.getNextRemovedBucketPair());
 
       final OFile file = newFileMetadata.getFile();
-      if (!file.isOpen())
-        file.open();
-
       file.write(tombstonePosition, updatedBucket.getDataBuffer());
 
       updatedFilePosition = tombstonePosition;
     } else {
       final OFile file = newFileMetadata.getFile();
-      if (!file.isOpen())
-        file.open();
 
       updatedFilePosition = file.allocateSpace(2 * bucketBufferSize);
       file.write(updatedFilePosition, updatedBucket.getDataBuffer());
@@ -987,7 +1108,32 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   @Override
   public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
-    // To change body of implemented methods use File | Settings | File Templates.
+    final BucketPath nodePath = getBucket(iPosition);
+    final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+
+    final int fileLevel = getFileLevel(bucketPointer);
+    final long filePosition = getFilePosition(bucketPointer);
+
+    final OEHBucket bucket = readBucket(fileLevel, filePosition);
+
+    final int positionIndex = bucket.getIndex(iPosition);
+    if (positionIndex < 0)
+      return;
+
+    bucket.deleteEntry(positionIndex);
+    size--;
+
+    if (!mergeBucketsAfterDeletion(nodePath, bucket))
+      saveBucket(fileLevel, filePosition, bucket);
+
+    if (nodePath.parent != null) {
+      final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+
+      final long[] node = hashTree[nodePath.nodeIndex];
+      final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
+      if (allMapsContainSameBucket)
+        mergeNodeToParent(node, nodePath);
+    }
   }
 
   @Override
