@@ -168,17 +168,13 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     return new EntryIterator();
   }
 
-  public OPhysicalPosition deleteEntry(int index) {
-    final OPhysicalPosition physicalPosition = getEntry(index);
-
+  public void deleteEntry(int index) {
     System.arraycopy(dataBuffer, (index + 1) * keySize + keyLineOffset + dataBufferOffset, dataBuffer, index * keySize
-        + keyLineOffset + dataBufferOffset, size() * entreeSize - (index - 1) * keySize);
-    System.arraycopy(dataBuffer, (index + 1) * entreeSize + entriesOffset + dataBufferOffset, dataBuffer, index * entriesOffset
-        + entriesOffset + dataBufferOffset, size() * entreeSize - (index - 1) * entreeSize);
+        + keyLineOffset + dataBufferOffset, size() * keySize - (index + 1) * keySize);
 
+    System.arraycopy(dataBuffer, (index + 1) * entreeSize + entriesOffset + dataBufferOffset, dataBuffer, index * entreeSize
+        + entriesOffset + dataBufferOffset, size() * entreeSize - (index + 1) * entreeSize);
     size--;
-
-    return physicalPosition;
   }
 
   public void addEntry(final OPhysicalPosition value) {

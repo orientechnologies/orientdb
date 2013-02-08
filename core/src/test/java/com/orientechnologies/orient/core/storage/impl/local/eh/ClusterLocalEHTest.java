@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.mockito.Mock;
@@ -110,4 +111,64 @@ public class ClusterLocalEHTest {
     }
   }
 
+  public void testKeyDelete() throws IOException {
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      final ONodeId nodeId = ONodeId.valueOf(i).shiftLeft(128);
+      final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+
+      extendibleHashingCluster.addPhysicalPosition(position);
+    }
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0) {
+        final ONodeId nodeId = ONodeId.valueOf(i).shiftLeft(128);
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+
+        extendibleHashingCluster.removePhysicalPosition(position.clusterPosition);
+      }
+    }
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0) {
+        final ONodeId nodeId = ONodeId.valueOf(i).shiftLeft(128);
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+
+        Assert.assertNull(extendibleHashingCluster.getPhysicalPosition(position));
+      } else {
+        final ONodeId nodeId = ONodeId.valueOf(i).shiftLeft(128);
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position));
+      }
+    }
+  }
+
+  public void testKeyDeleteRandomUniform() throws IOException {
+    HashSet<ONodeId> keys = new HashSet<ONodeId>();
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      ONodeId key = ONodeId.generateUniqueId();
+      final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        keys.add(key);
+      }
+    }
+
+    for (ONodeId key : keys) {
+      if (key.longValueHigh() % 3 == 0) {
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+        extendibleHashingCluster.removePhysicalPosition(position.clusterPosition);
+      }
+    }
+
+    for (ONodeId key : keys) {
+      if (key.longValueHigh() % 3 == 0) {
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+        Assert.assertNull(extendibleHashingCluster.getPhysicalPosition(position));
+      } else {
+        final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position));
+      }
+    }
+  }
 }
