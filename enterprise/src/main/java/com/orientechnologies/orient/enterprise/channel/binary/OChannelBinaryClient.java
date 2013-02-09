@@ -28,8 +28,9 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-  final protected int socketTimeout;     // IN MS
-  final private short srvProtocolVersion;
+  final protected int  socketTimeout;     // IN MS
+  final private short  srvProtocolVersion;
+  final private String orientVersion;
 
   public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int iProtocolVersion) throws IOException {
@@ -56,6 +57,10 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 
     try {
       srvProtocolVersion = readShort();
+      if (srvProtocolVersion >= 14)
+        orientVersion = readString();
+      else
+        orientVersion = null;
       // if (srvProtocolVersion >= 10) {
       // // READ ALL THE SUPPORTED VERSIONS
       // short next;
@@ -98,5 +103,9 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
+  }
+
+  public String getOrientVersion() {
+    return orientVersion;
   }
 }

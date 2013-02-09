@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -102,6 +103,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+
+    channel.writeString(OConstants.getVersion());
+
     channel.flush();
     start();
 
@@ -721,7 +725,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
-
       } finally {
         endResponse();
       }
