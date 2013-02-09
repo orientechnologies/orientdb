@@ -104,7 +104,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    channel.writeString(OConstants.getVersion());
+    if (connection.data.protocolVersion >= 14)
+      channel.writeString(OConstants.getVersion());
 
     channel.flush();
     start();
