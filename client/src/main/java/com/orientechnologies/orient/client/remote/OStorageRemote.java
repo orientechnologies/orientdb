@@ -1574,9 +1574,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           // READ CLUSTER CONFIGURATION
           updateClusterConfiguration(network.readBytes());
+
+          // read OrientDB release info
+          if (network.getSrvProtocolVersion() >= 14)
+            network.readString();
+
           status = STATUS.OPEN;
           return;
-
         } finally {
           endResponse(network);
         }

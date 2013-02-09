@@ -104,9 +104,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    if (connection.data.protocolVersion >= 14)
-      channel.writeString(OConstants.getVersion());
-
     channel.flush();
     start();
 
@@ -726,6 +723,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
+
+        if (connection.data.protocolVersion >= 14)
+          channel.writeString(OConstants.getVersion());
       } finally {
         endResponse();
       }
