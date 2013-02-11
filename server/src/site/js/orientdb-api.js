@@ -233,28 +233,20 @@ function ODatabase(databasePath) {
 
 	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan,
 			successCallback) {
-		if (this.databaseInfo == null) {
+		if (this.databaseInfo == null)
 			this.open();
-		}
-		if (iLimit == null || iLimit == '') {
-			iLimit = '';
-		} else {
-			iLimit = '/' + iLimit;
-		}
-		if (iFetchPlan == null || iFetchPlan == '') {
-			iFetchPlan = '';
-		} else {
-			if (iLimit == '') {
-				iLimit = '/20';
-			}
-			iFetchPlan = '/' + iFetchPlan;
-		}
-		iQuery = encodeURIComponent(iQuery);
-		iFetchPlan = encodeURIComponent(iFetchPlan);
+		
+		if (iLimit == null || iLimit == '')
+			iLimit = '20';
+
+		var url = 'query/' + this.encodedDatabaseName + '/sql/' + encodeURIComponent(iQuery) + '/' + iLimit;
+
+		if (iFetchPlan != null && iFetchPlan != '')
+			url += '/' + encodeURIComponent(iFetchPlan);
+
 		$.ajax({
 			type : "GET",
-			url : this.urlPrefix + 'query/' + this.encodedDatabaseName
-					+ '/sql/' + iQuery + iLimit + iFetchPlan + this.urlSuffix,
+			url : this.urlPrefix + url + this.urlSuffix,
 			context : this,
 			async : false,
 			contentType : "application/json; charset=utf-8",
