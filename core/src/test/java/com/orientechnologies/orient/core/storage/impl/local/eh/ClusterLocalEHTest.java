@@ -20,6 +20,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionNodeId;
@@ -113,6 +114,30 @@ public class ClusterLocalEHTest {
     }
   }
 
+  public void testKeyPutRandomGaussian() throws IOException {
+    List<ONodeId> keys = new ArrayList<ONodeId>();
+    MersenneTwisterFast random = new MersenneTwisterFast();
+    keys.clear();
+
+    while (keys.size() < KEYS_COUNT) {
+      long key = (long) (random.nextGaussian() * Long.MAX_VALUE / 2 + Long.MAX_VALUE);
+      if (key < 0)
+        continue;
+      final ONodeId nodeId = ONodeId.valueOf(key).shiftLeft(128);
+
+      final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        keys.add(nodeId);
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position), "key " + key);
+      }
+    }
+
+    for (ONodeId key : keys) {
+      final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+      Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position), "" + key);
+    }
+  }
+
   public void testKeyDelete() throws IOException {
     for (int i = 0; i < KEYS_COUNT; i++) {
       final ONodeId nodeId = ONodeId.valueOf(i).shiftLeft(128);
@@ -169,6 +194,41 @@ public class ClusterLocalEHTest {
         Assert.assertNull(extendibleHashingCluster.getPhysicalPosition(position));
       } else {
         final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position));
+      }
+    }
+  }
+
+  @Test
+  public void testKeyDeleteRandomGaussian() throws IOException {
+    HashSet<ONodeId> nodeIds = new HashSet<ONodeId>();
+
+    MersenneTwisterFast random = new MersenneTwisterFast();
+    while (nodeIds.size() < KEYS_COUNT) {
+      long key = (long) (random.nextGaussian() * Long.MAX_VALUE / 2 + Long.MAX_VALUE);
+      if (key < 0)
+        continue;
+
+      final ONodeId nodeId = ONodeId.valueOf(key).shiftLeft(128);
+      final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        nodeIds.add(nodeId);
+      }
+    }
+
+    for (ONodeId nodeId : nodeIds) {
+      if (nodeId.longValueHigh() % 3 == 0) {
+        final OClusterPosition position = new OClusterPositionNodeId(nodeId);
+        extendibleHashingCluster.removePhysicalPosition(position);
+      }
+    }
+
+    for (ONodeId nodeId : nodeIds) {
+      if (nodeId.longValueHigh() % 3 == 0) {
+        OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
+        Assert.assertNull(extendibleHashingCluster.getPhysicalPosition(position));
+      } else {
+        OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(nodeId));
         Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position));
       }
     }
