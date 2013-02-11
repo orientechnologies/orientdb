@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionNodeId;
 import com.orientechnologies.orient.core.id.ONodeId;
@@ -169,6 +171,101 @@ public class ClusterLocalEHTest {
         final OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
         Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position));
       }
+    }
+  }
+
+  public void testNextHaveRightOrder() throws Exception {
+    List<ONodeId> keys = new ArrayList<ONodeId>();
+    keys.clear();
+
+    while (keys.size() < KEYS_COUNT) {
+      ONodeId key = ONodeId.generateUniqueId();
+
+      OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        keys.add(key);
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position), "key " + key);
+      }
+    }
+
+    Collections.sort(keys);
+
+    OPhysicalPosition[] positions = extendibleHashingCluster.ceilingPositions(new OPhysicalPosition(new OClusterPositionNodeId(
+        ONodeId.ZERO)));
+    int curPos = 0;
+    for (ONodeId key : keys) {
+      OClusterPosition lhKey = positions[curPos].clusterPosition;
+
+      Assert.assertEquals(new OClusterPositionNodeId(key), lhKey, "" + key);
+      curPos++;
+      if (curPos >= positions.length) {
+        positions = extendibleHashingCluster.higherPositions(positions[positions.length - 1]);
+        curPos = 0;
+      }
+    }
+  }
+
+  public void testNextSkipsRecordValid() throws Exception {
+    List<ONodeId> keys = new ArrayList<ONodeId>();
+    keys.clear();
+
+    while (keys.size() < KEYS_COUNT) {
+      ONodeId key = ONodeId.generateUniqueId();
+
+      OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        keys.add(key);
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position), "key " + key);
+      }
+    }
+
+    Collections.sort(keys);
+
+    OPhysicalPosition[] positions = extendibleHashingCluster.ceilingPositions(new OPhysicalPosition(new OClusterPositionNodeId(keys
+        .get(10))));
+    int curPos = 0;
+    for (ONodeId key : keys) {
+      if (key.compareTo(keys.get(10)) < 0) {
+        continue;
+      }
+      OClusterPosition lhKey = positions[curPos].clusterPosition;
+      Assert.assertEquals(new OClusterPositionNodeId(key), lhKey, "" + key);
+
+      curPos++;
+      if (curPos >= positions.length) {
+        positions = extendibleHashingCluster.higherPositions(positions[positions.length - 1]);
+        curPos = 0;
+      }
+    }
+  }
+
+  public void testNextHaveRightOrderUsingNextMethod() throws Exception {
+    List<ONodeId> keys = new ArrayList<ONodeId>();
+    keys.clear();
+
+    while (keys.size() < KEYS_COUNT) {
+      ONodeId key = ONodeId.generateUniqueId();
+
+      OPhysicalPosition position = new OPhysicalPosition(new OClusterPositionNodeId(key));
+      if (extendibleHashingCluster.addPhysicalPosition(position)) {
+        keys.add(key);
+        Assert.assertNotNull(extendibleHashingCluster.getPhysicalPosition(position), "key " + key);
+      }
+    }
+
+    Collections.sort(keys);
+
+    // test finding is unsuccessful
+    for (ONodeId key : keys) {
+      OClusterPosition lhKey = extendibleHashingCluster.ceilingPositions(new OPhysicalPosition(new OClusterPositionNodeId(key)))[0].clusterPosition;
+      Assert.assertEquals(new OClusterPositionNodeId(key), lhKey, "" + key);
+    }
+
+    // test finding is successful
+    for (int j = 0, keysSize = keys.size() - 1; j < keysSize; j++) {
+      ONodeId key = keys.get(j);
+      OClusterPosition lhKey = extendibleHashingCluster.higherPositions(new OPhysicalPosition(new OClusterPositionNodeId(key)))[0].clusterPosition;
+      Assert.assertEquals(new OClusterPositionNodeId(keys.get(j + 1)), lhKey, "" + j);
     }
   }
 }

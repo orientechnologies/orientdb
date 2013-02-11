@@ -577,13 +577,6 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
         parent.nodeGlobalDepth));
   }
 
-  private void closeBucketFileIfNeeded(OEHFileMetadata fileMetadata) throws IOException {
-    // if (fileMetadata.geBucketsCount() == 0) {
-    // final OFile file = fileMetadata.getFile();
-    // file.close();
-    // }
-  }
-
   private void saveBucket(int fileLevel, long filePosition, OEHBucket bucket) throws IOException {
     final OEHFileMetadata fileMetadata = files[fileLevel];
     final OFile bucketFile = fileMetadata.getFile();
@@ -1208,22 +1201,223 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   @Override
   public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0]; // To change body of implemented methods use File | Settings | File Templates.
+    BucketPath bucketPath = getBucket(position.clusterPosition);
+    long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
+
+    OEHBucket bucket = readBucket(fileLevel, filePosition);
+    while (bucket != null && (bucket.size() == 0 || bucket.getKey(bucket.size() - 1).compareTo(position.clusterPosition) <= 0)) {
+      bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
+      if (bucketPath == null)
+        return new OPhysicalPosition[0];
+
+      final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      fileLevel = getFileLevel(nextPointer);
+      filePosition = getFilePosition(nextPointer);
+
+      bucket = readBucket(fileLevel, filePosition);
+    }
+
+    if (bucket != null) {
+      final int index = bucket.getIndex(position.clusterPosition);
+      final int startIndex;
+      if (index >= 0)
+        startIndex = index + 1;
+      else
+        startIndex = -index - 1;
+
+      final int endIndex = bucket.size();
+      return convertBucketToPositions(bucket, startIndex, endIndex);
+    }
+
+    return new OPhysicalPosition[0];
+  }
+
+  private OPhysicalPosition[] convertBucketToPositions(final OEHBucket bucket, int startIndex, int endIndex) {
+    final OPhysicalPosition[] entries = new OPhysicalPosition[endIndex - startIndex];
+    final Iterator<OPhysicalPosition> iterator = bucket.iterator(startIndex);
+    for (int i = 0, k = startIndex; k < endIndex; i++, k++)
+      entries[i] = iterator.next();
+
+    return entries;
   }
 
   @Override
   public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0]; // To change body of implemented methods use File | Settings | File Templates.
+    BucketPath bucketPath = getBucket(position.clusterPosition);
+    long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
+
+    OEHBucket bucket = readBucket(fileLevel, filePosition);
+    while (bucket != null && bucket.size() == 0) {
+      bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
+      if (bucketPath == null)
+        return new OPhysicalPosition[0];
+
+      final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      fileLevel = getFileLevel(nextPointer);
+      filePosition = getFilePosition(nextPointer);
+
+      bucket = readBucket(fileLevel, filePosition);
+    }
+
+    if (bucket != null) {
+      final int index = bucket.getIndex(position.clusterPosition);
+      final int startIndex;
+      if (index >= 0)
+        startIndex = index;
+      else
+        startIndex = -index - 1;
+
+      final int endIndex = bucket.size();
+      return convertBucketToPositions(bucket, startIndex, endIndex);
+    }
+
+    return new OPhysicalPosition[0];
+
   }
 
   @Override
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException {
-    return new OPhysicalPosition[0]; // To change body of implemented methods use File | Settings | File Templates.
+    BucketPath bucketPath = getBucket(position.clusterPosition);
+    long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+    int fileLevel = getFileLevel(bucketPointer);
+    long filePosition = getFilePosition(bucketPointer);
+
+    OEHBucket bucket = readBucket(fileLevel, filePosition);
+    while (bucket != null && (bucket.size() == 0 || bucket.getKey(0).compareTo(position.clusterPosition) >= 0)) {
+      final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
+      if (prevBucketPath == null)
+        return new OPhysicalPosition[0];
+
+      final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+
+      fileLevel = getFileLevel(prevPointer);
+      filePosition = getFilePosition(prevPointer);
+
+      bucket = readBucket(fileLevel, filePosition);
+
+      bucketPath = prevBucketPath;
+    }
+
+    if (bucket != null) {
+      final int startIndex = 0;
+      final int index = bucket.getIndex(position.clusterPosition);
+
+      final int endIndex;
+      if (index >= 0)
+        endIndex = index;
+      else
+        endIndex = -index - 1;
+
+      return convertBucketToPositions(bucket, startIndex, endIndex);
+    }
+
+    return new OPhysicalPosition[0];
+
   }
 
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     return new OPhysicalPosition[0]; // To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  private BucketPath prevBucketToFind(final BucketPath bucketPath, int bucketDepth) {
+    int offset = bucketPath.nodeGlobalDepth - bucketDepth;
+
+    BucketPath currentBucket = bucketPath;
+    int nodeLocalDepth = bucketPath.nodeLocalDepth;
+    while (offset > 0) {
+      offset -= nodeLocalDepth;
+      if (offset > 0) {
+        currentBucket = bucketPath.parent;
+        nodeLocalDepth = currentBucket.nodeLocalDepth;
+      }
+    }
+
+    final int diff = bucketDepth - (currentBucket.nodeGlobalDepth - nodeLocalDepth);
+    final int firstStartIndex = currentBucket.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
+    final int globalIndex = firstStartIndex + currentBucket.hashMapOffset - 1;
+
+    final BucketPath bucketPathToFind;
+    if (globalIndex < 0)
+      bucketPathToFind = prevLevelUp(bucketPath);
+    else {
+      final int hashMapSize = 1 << currentBucket.nodeLocalDepth;
+      final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
+
+      final int startIndex = globalIndex - hashMapOffset;
+
+      bucketPathToFind = new BucketPath(currentBucket.parent, hashMapOffset, startIndex, currentBucket.nodeIndex,
+          currentBucket.nodeLocalDepth, currentBucket.nodeGlobalDepth);
+    }
+
+    return prevNonEmptyNode(bucketPathToFind);
+  }
+
+  private BucketPath prevNonEmptyNode(BucketPath nodePath) {
+    prevBucketLoop: while (nodePath != null) {
+      final long[] node = hashTree[nodePath.nodeIndex];
+      final int startIndex = 0;
+      final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
+
+      for (int i = endIndex; i >= startIndex; i--) {
+        final long position = node[i];
+        if (position > 0) {
+          final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+          final int hashMapOffset = (i / hashMapSize) * hashMapSize;
+          final int itemIndex = i - hashMapOffset;
+
+          return new BucketPath(nodePath.parent, hashMapOffset, itemIndex, nodePath.nodeIndex, nodePath.nodeLocalDepth,
+              nodePath.nodeGlobalDepth);
+        }
+
+        if (position < 0) {
+          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
+          final int childItemOffset = (int) position & 0xFF;
+          final int nodeLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+          final int endChildIndex = 1 << nodeLocalDepth - 1;
+
+          final BucketPath parent = new BucketPath(nodePath.parent, 0, i, nodePath.nodeIndex, nodePath.nodeLocalDepth,
+              nodePath.nodeGlobalDepth);
+          nodePath = new BucketPath(parent, childItemOffset, endChildIndex, childNodeIndex, nodeLocalDepth, parent.nodeGlobalDepth
+              + nodeLocalDepth);
+          continue prevBucketLoop;
+        }
+      }
+
+      nodePath = prevLevelUp(nodePath);
+    }
+
+    return null;
+  }
+
+  private BucketPath prevLevelUp(BucketPath bucketPath) {
+    if (bucketPath.parent == null)
+      return null;
+
+    final int nodeLocalDepth = bucketPath.nodeLocalDepth;
+    final int pointersSize = 1 << (maxLevelDepth - nodeLocalDepth);
+
+    final BucketPath parent = bucketPath.parent;
+
+    if (parent.itemIndex > maxLevelSize / 2) {
+      final int prevParentIndex = ((parent.itemIndex - maxLevelSize / 2) / pointersSize) * pointersSize + maxLevelSize / 2 - 1;
+      return new BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+    }
+
+    final int prevParentIndex = (parent.itemIndex / pointersSize) * pointersSize - 1;
+    if (prevParentIndex >= 0)
+      return new BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+
+    return prevLevelUp(new BucketPath(parent.parent, 0, 0, parent.nodeIndex, parent.nodeLocalDepth, -1));
   }
 
   private static final class BucketPath {
