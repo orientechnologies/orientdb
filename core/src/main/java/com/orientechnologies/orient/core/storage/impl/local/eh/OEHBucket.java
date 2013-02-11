@@ -165,7 +165,11 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
   }
 
   public Iterator<OPhysicalPosition> iterator() {
-    return new EntryIterator();
+    return new EntryIterator(0);
+  }
+
+  public Iterator<OPhysicalPosition> iterator(int index) {
+    return new EntryIterator(index);
   }
 
   public void deleteEntry(int index) {
@@ -308,7 +312,11 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
   }
 
   private final class EntryIterator implements Iterator<OPhysicalPosition> {
-    private int currentIndex = 0;
+    private int currentIndex;
+
+    private EntryIterator(int currentIndex) {
+      this.currentIndex = currentIndex;
+    }
 
     @Override
     public boolean hasNext() {
