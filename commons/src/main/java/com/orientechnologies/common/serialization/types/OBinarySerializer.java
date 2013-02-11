@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+
 /**
  * This interface is used for serializing OrientDB datatypes in binary format. Serialized content is written into buffer that will
  * contain not only given object presentation but all binary content. Such approach prevents creation of separate byte array for
@@ -121,4 +123,10 @@ public interface OBinarySerializer<T> {
    * @return Size serialized presentation of given object in bytes.
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
+
+  void serializeInDirectMemory(T object, ODirectMemory memory, long pointer);
+
+  T deserializeFromDirectMemory(ODirectMemory memory, long pointer);
+
+  int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer);
 }

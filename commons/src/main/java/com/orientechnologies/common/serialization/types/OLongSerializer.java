@@ -16,6 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -76,6 +77,21 @@ public class OLongSerializer implements OBinarySerializer<Long> {
 
   public Long deserializeNative(byte[] stream, int startPosition) {
     return CONVERTER.getLong(stream, startPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(Long object, ODirectMemory memory, long pointer) {
+    memory.setLong(pointer, object);
+  }
+
+  @Override
+  public Long deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getLong(pointer);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return LONG_SIZE;
   }
 
   public boolean isFixedLength() {

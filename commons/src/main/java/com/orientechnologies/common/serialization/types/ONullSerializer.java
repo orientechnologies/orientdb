@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+
 /**
  * Serialize and deserialize null values
  * 
@@ -56,6 +58,20 @@ public class ONullSerializer implements OBinarySerializer<Object> {
 
   public Object deserializeNative(byte[] stream, int startPosition) {
     return null;
+  }
+
+  @Override
+  public void serializeInDirectMemory(Object object, ODirectMemory memory, long pointer) {
+  }
+
+  @Override
+  public Object deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return null;
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return 0;
   }
 
   public boolean isFixedLength() {

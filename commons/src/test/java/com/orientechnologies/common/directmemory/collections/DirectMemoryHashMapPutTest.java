@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import com.orientechnologies.common.directmemory.OBuddyMemory;
 import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 import org.testng.Assert;
@@ -39,11 +39,17 @@ public class DirectMemoryHashMapPutTest {
 
   @BeforeMethod
   public void setUp() {
-    memory = new OBuddyMemory(16000000, 32);
+    memory = ODirectMemoryFactory.INSTANCE.directMemory();
+    if (memory == null)
+      return;
+
     hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 2, 2);
   }
 
   public void testAddOneItem() {
+    if (memory == null)
+      return;
+
     final int clusterId = 1;
 
     hashMap.put(clusterId, 10);
@@ -52,6 +58,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAddTwoItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 4;
 
@@ -64,6 +73,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAddThreeItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -79,6 +91,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAddFourItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -97,6 +112,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAddThreeItemsUpdateOne() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -114,6 +132,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAddFourItemsUpdateTwo() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -135,6 +156,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAdd10000RandomItems() {
+    if (memory == null)
+      return;
+
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
@@ -156,6 +180,9 @@ public class DirectMemoryHashMapPutTest {
   }
 
   public void testAdd10000RandomItemsUpdateHalf() {
+    if (memory == null)
+      return;
+
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 

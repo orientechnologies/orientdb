@@ -16,30 +16,25 @@
 
 package com.orientechnologies.orient.test.java.collection;
 
-import java.util.Random;
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.collections.ODirectMemoryHashMap;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
 
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.directmemory.OBuddyMemory;
-import com.orientechnologies.common.directmemory.collections.ODirectMemoryHashMap;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 19.08.12
  */
 public class DirectMemoryHashMapSpeedTest extends CollectionBaseAbstractSpeedTest {
-  private static final int                            COUNT  = 1000000;
-  private static final ORID                           rid    = new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(100));
+  private static final int                     COUNT  = 1000000;
 
-  private ODirectMemoryHashMap<String, OIdentifiable> hashMap;
-  private Random                                      random = new Random();
-  private OBuddyMemory                                memory;
+  private ODirectMemoryHashMap<String, byte[]> hashMap;
+  private MersenneTwisterFast                  random = new MersenneTwisterFast();
+  private ODirectMemory                        memory;
 
   public DirectMemoryHashMapSpeedTest() {
     super(COUNT);
@@ -48,25 +43,17 @@ public class DirectMemoryHashMapSpeedTest extends CollectionBaseAbstractSpeedTes
   @Override
   @Test(enabled = false)
   public void cycle() {
-    hashMap.get(String.valueOf(random.nextInt(COUNT)));
+    hashMap.get(String.valueOf(random.nextInt()));
   }
 
   @Override
   @Test(enabled = false)
   public void init() throws Exception {
-    memory = new OBuddyMemory(1000000000, 32);
-    hashMap = new ODirectMemoryHashMap<String, OIdentifiable>(memory, OLinkSerializer.INSTANCE, OStringSerializer.INSTANCE);
+    memory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-    for (int i = 0; i < COUNT; i++)
-      hashMap.put(String.valueOf(random.nextInt(COUNT)), rid);
+    hashMap = new ODirectMemoryHashMap<String, byte[]>(memory, OBinaryTypeSerializer.INSTANCE, OStringSerializer.INSTANCE);
 
-    System.gc();
-    Thread.sleep(500);
-  }
-
-  @Override
-  @Test(enabled = false)
-  public void deinit() throws Exception {
-    System.out.println("\nFree memory " + memory.freeSpace() + " bytes");
+    while (hashMap.size() < COUNT)
+      hashMap.put(String.valueOf(random.nextInt()), new byte[1024]);
   }
 }
