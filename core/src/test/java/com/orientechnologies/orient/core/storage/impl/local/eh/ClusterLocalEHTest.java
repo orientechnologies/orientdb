@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 
 /**
  * @author Andrey Lomakin
@@ -44,11 +45,16 @@ public class ClusterLocalEHTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
+    String buildDirectory = System.getProperty("buildDirectory");
+    if (buildDirectory == null)
+      buildDirectory = ".";
+
     extendibleHashingCluster = new OClusterLocalEH(46, 25, new OClusterPositionNodeId(ONodeId.ZERO),
         new OClusterPositionFactory.OClusterPositionFactoryNodeId());
 
     MockitoAnnotations.initMocks(this);
     when(storageLocal.getMode()).thenReturn("rw");
+    when(storageLocal.getVariableParser()).thenReturn(new OStorageVariableParser(buildDirectory));
     extendibleHashingCluster.configure(storageLocal, 1, "ehtest", "", 1);
     extendibleHashingCluster.create(-1);
   }

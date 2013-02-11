@@ -215,8 +215,7 @@ public class OMultiFileSegment extends OSegment {
 
     // COPY THE OLD ARRAY TO THE NEW ONE
     OFile[] newFiles = new OFile[files.length + 1];
-    for (int i = 0; i < files.length; ++i)
-      newFiles[i] = files[i];
+    System.arraycopy(files, 0, newFiles, 0, files.length);
     files = newFiles;
 
     // CREATE THE NEW FILE AND PUT IT AS LAST OF THE ARRAY
