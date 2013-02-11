@@ -114,7 +114,9 @@ public class ORole extends ODocumentWrapper {
       final byte mask = (byte) iCRUDOperation;
 
       return (access.byteValue() & mask) == mask;
-    }
+    } else if (parentRole != null)
+      // DELEGATE TO THE PARENT ROLE IF ANY
+      return parentRole.allow(iResource, iCRUDOperation);
 
     return mode == ALLOW_MODES.ALLOW_ALL_BUT;
   }
