@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 public abstract class OAbstractBlock implements OProcessorBlock {
-  protected String returnVariable;
+  protected OProcessorBlock parentBlock;
 
   protected abstract Object processBlock(OComposableProcessor iManager, OCommandContext iContext, ODocument iConfig,
       ODocument iOutput, boolean iReadOnly);
@@ -54,7 +54,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (enabled != null && !enabled)
       return null;
 
-    returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
+    String returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
 
     debug(iContext, "Executing {%s} block...", iConfig.field("type"));
 
@@ -78,7 +78,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final Object iContent,
       final OCommandContext iContext, ODocument iOutput, final boolean iReadOnly) {
     try {
-      return iManager.process(iContent, iContext, iOutput, iReadOnly);
+      return iManager.process(this, iContent, iContext, iOutput, iReadOnly);
     } catch (Exception e) {
       throw new OProcessException("Error on processing '" + iElementName + "' field of '" + getName() + "' block", e);
     }
@@ -87,7 +87,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final String iType,
       final ODocument iContent, final OCommandContext iContext, ODocument iOutput, final boolean iReadOnly) {
     try {
-      return iManager.process(iType, iContent, iContext, iOutput, iReadOnly);
+      return iManager.process(this, iType, iContent, iContext, iOutput, iReadOnly);
     } catch (Exception e) {
       throw new OProcessException("Error on processing '" + iElementName + "' field of '" + getName() + "' block", e);
     }
@@ -314,6 +314,14 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       return newColl;
     }
     return value;
+  }
+
+  public OProcessorBlock getParentBlock() {
+    return parentBlock;
+  }
+
+  public void setParentBlock(OProcessorBlock parentBlock) {
+    this.parentBlock = parentBlock;
   }
 
 }

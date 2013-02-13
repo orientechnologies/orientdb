@@ -186,6 +186,7 @@ public class OScriptManager {
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
+      binding.put("ctx", iContext);
       for (Entry<String, Object> a : iContext.getVariables().entrySet())
         binding.put(a.getKey(), a.getValue());
     }

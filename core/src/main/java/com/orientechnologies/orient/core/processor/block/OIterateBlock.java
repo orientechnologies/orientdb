@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIterateBlock extends OAbstractBlock {
+  public static final String NAME = "iterate";
+
   @Override
   public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -60,7 +62,7 @@ public class OIterateBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "iterate";
+    return NAME;
   }
 
   protected class OIterateBlockIterable implements Iterable<Object> {

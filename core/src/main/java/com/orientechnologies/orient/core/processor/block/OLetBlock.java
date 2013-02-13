@@ -23,6 +23,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLetBlock extends OAbstractBlock {
+  public static final String NAME = "let";
+
   @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
@@ -71,6 +73,6 @@ public class OLetBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "let";
+    return NAME;
   }
 }
