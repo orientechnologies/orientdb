@@ -505,6 +505,56 @@ public class ObjectTreeTest {
     database.delete(test);
   }
 
+  @SuppressWarnings("unused")
+  @Test(dependsOnMethods = "testCascadeDeleteCollections")
+  public void testDeleteRecordOutsideCollection() {
+    JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
+    Child listChild1 = database.newInstance(Child.class);
+    listChild1.setName("list1");
+    test.getList().add(listChild1);
+    Child listChild2 = database.newInstance(Child.class);
+    listChild2.setName("list2");
+    test.getList().add(listChild2);
+    Child listChild3 = database.newInstance(Child.class);
+    listChild3.setName("list3");
+    test.getList().add(listChild3);
+
+    Child setChild1 = database.newInstance(Child.class);
+    setChild1.setName("set1");
+    test.getSet().add(setChild1);
+    Child setChild2 = database.newInstance(Child.class);
+    setChild2.setName("set2");
+    test.getSet().add(setChild2);
+    Child setChild3 = database.newInstance(Child.class);
+    setChild3.setName("set3");
+    test.getSet().add(setChild3);
+
+    database.save(test);
+    ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
+    ORID list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
+    ORID set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
+    close();
+    open();
+    database.delete(list1Rid);
+    database.delete(set2Rid);
+    test = database.load(testRid);
+    try {
+      for (int i = 0; i < test.getList().size(); i++) {
+        if (i == 0) {
+          Assert.assertNull(test.getList().get(i));
+        } else {
+          Assert.assertNotNull(test.getList().get(i));
+        }
+      }
+      for (Child c : test.getSet()) {
+      }
+    } catch (NullPointerException npe) {
+      Assert.fail("NullPointer on list retrieving that shouldn't happen");
+    }
+
+    database.delete(test);
+  }
+
   @Test(dependsOnMethods = "testCascadeDeleteCollections")
   public void testCascadeDeleteMap() {
     JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
