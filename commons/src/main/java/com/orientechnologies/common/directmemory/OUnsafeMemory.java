@@ -78,42 +78,15 @@ public class OUnsafeMemory implements ODirectMemory {
   @Override
   public byte[] get(long pointer, int length) {
     final byte[] result = new byte[length];
-    if (length < 6) {
-      for (int i = 0; i < length; i++)
-        result[i] = unsafe.getByte(pointer++);
-    } else {
-      long arrayOffset = arrayBaseOffset;
-
-      while (length > 0) {
-        long size = (length > UNSAFE_COPY_THRESHOLD) ? UNSAFE_COPY_THRESHOLD : length;
-        unsafe.copyMemory(null, pointer, result, arrayOffset, size);
-
-        length -= size;
-        pointer += size;
-        arrayOffset += size;
-      }
-    }
-
+    for (int i = 0; i < length; i++)
+      result[i] = unsafe.getByte(pointer++);
     return result;
   }
 
   @Override
   public void set(long pointer, byte[] content, int length) {
-    if (length < 6) {
-      for (int i = 0; i < length; i++)
-        unsafe.putByte(pointer++, content[i]);
-    } else {
-      long arrayOffset = arrayBaseOffset;
-
-      while (length > 0) {
-        long size = (length > UNSAFE_COPY_THRESHOLD) ? UNSAFE_COPY_THRESHOLD : length;
-        unsafe.copyMemory(content, arrayOffset, null, pointer, size);
-
-        length -= size;
-        arrayOffset += size;
-        pointer += size;
-      }
-    }
+    for (int i = 0; i < length; i++)
+      unsafe.putByte(pointer++, content[i]);
   }
 
   @Override
