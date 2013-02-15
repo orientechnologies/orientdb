@@ -151,6 +151,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.getUser();
   }
 
+  public void setUser(OUser user) {
+    underlying.setUser(user);
+  }
+  
   public OMetadata getMetadata() {
     return underlying.getMetadata();
   }
