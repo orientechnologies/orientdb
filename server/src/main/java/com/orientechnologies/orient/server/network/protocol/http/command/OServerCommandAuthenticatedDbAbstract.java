@@ -20,9 +20,14 @@ import java.util.List;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
@@ -112,7 +117,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       db = (ODatabaseDocumentTx) server.openDatabase("graph", iDatabaseName, iAuthenticationParts.get(0),
           iAuthenticationParts.get(1));
       // db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
-
+      iRequest.data.currentUserId = db.getUser().getDocument().getIdentity().toString(); //Set user rid after authentication
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
       iResponse.sessionId = iRequest.sessionId;
@@ -151,6 +156,15 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
 
     final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
+    // after authentication, if current login user is different compare with current DB user, reset DB user to login user
+    ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    String currentUserId = iRequest.data.currentUserId;
+    if(currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+      if(!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+        ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
+        localDatabase.setUser(new OUser(userDoc));
+      }
+    }
     // final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase("graph", iRequest.databaseName, parts.get(0),
     // parts.get(1));
 
