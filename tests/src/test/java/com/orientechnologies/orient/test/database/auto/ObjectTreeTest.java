@@ -43,11 +43,14 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import com.orientechnologies.orient.test.domain.base.Animal;
+import com.orientechnologies.orient.test.domain.base.ComplicatedPerson;
 import com.orientechnologies.orient.test.domain.base.JavaCascadeDeleteTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.Planet;
 import com.orientechnologies.orient.test.domain.base.Satellite;
+import com.orientechnologies.orient.test.domain.base.SimplePerson;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
@@ -301,6 +304,110 @@ public class ObjectTreeTest {
   }
 
   @Test(dependsOnMethods = "testQueryMultiCircular")
+  public void simpleEntiyEquals() {
+    Set<String> animals = new HashSet<String>();
+    animals.add("cat");
+    animals.add("dog");
+    animals.add("sneake");
+    SimplePerson person = new SimplePerson("John", animals);
+    SimplePerson proxy = database.save(person);
+
+    Assert.assertEquals(person, proxy);
+    Assert.assertEquals(proxy, person);
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "simpleEntiyEquals")
+  public void simpleEntiySetEquals() {
+    Set<String> animals = new HashSet<String>();
+    animals.add("cat");
+    animals.add("dog");
+    animals.add("sneake");
+    SimplePerson person = new SimplePerson("John", animals);
+    SimplePerson proxy = database.save(person);
+
+    Assert.assertEquals(person, proxy);
+    Assert.assertEquals(proxy, person);
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "simpleEntiySetEquals")
+  public void complicatedEntityEquals() {
+    Set<Animal> animals = new HashSet<Animal>();
+    animals.add(new Animal("cat"));
+    animals.add(new Animal("dog"));
+    animals.add(new Animal("sneake"));
+    ComplicatedPerson person = new ComplicatedPerson("John", animals);
+    ComplicatedPerson proxy = database.save(person);
+
+    Assert.assertEquals(person, proxy);
+    Assert.assertEquals(proxy, person);
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "complicatedEntityEquals")
+  public void complicatedEntitiesSetEquals() {
+    Set<Animal> animals = new HashSet<Animal>();
+    animals.add(new Animal("cat"));
+    animals.add(new Animal("dog"));
+    animals.add(new Animal("sneake"));
+    ComplicatedPerson person = new ComplicatedPerson("John", animals);
+    ComplicatedPerson proxy = database.save(person);
+
+    Assert.assertTrue(proxy.getAnimals().equals(person.getAnimals()));
+    Assert.assertTrue(person.getAnimals().equals(proxy.getAnimals()));
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "complicatedEntitiesSetEquals")
+  public void simpleProxySelfEquals() {
+    Set<String> animals = new HashSet<String>();
+    animals.add("cat");
+    animals.add("dog");
+    animals.add("sneake");
+    SimplePerson proxy = database.save(new SimplePerson("John", animals));
+
+    Assert.assertEquals(proxy, proxy);
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "simpleProxySelfEquals")
+  public void simpleProxySetsSelfEquals() {
+    Set<String> animals = new HashSet<String>();
+    animals.add("cat");
+    animals.add("dog");
+    animals.add("sneake");
+    SimplePerson proxy = database.save(new SimplePerson("John", animals));
+
+    Assert.assertEquals(proxy.getAnimals(), proxy.getAnimals());
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "simpleProxySetsSelfEquals")
+  public void complicatedProxySelfEquals() {
+    Set<Animal> animals = new HashSet<Animal>();
+    animals.add(new Animal("cat"));
+    animals.add(new Animal("dog"));
+    animals.add(new Animal("sneake"));
+    ComplicatedPerson proxy = database.save(new ComplicatedPerson("John", animals));
+
+    Assert.assertEquals(proxy, proxy);
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "complicatedProxySelfEquals")
+  public void complicatedProxySetsSelfEquals() {
+    Set<Animal> animals = new HashSet<Animal>();
+    animals.add(new Animal("cat"));
+    animals.add(new Animal("dog"));
+    animals.add(new Animal("sneake"));
+    ComplicatedPerson proxy = database.save(new ComplicatedPerson("John", animals));
+
+    Assert.assertEquals(proxy.getAnimals(), proxy.getAnimals());
+    database.delete(proxy);
+  }
+
+  @Test(dependsOnMethods = "complicatedProxySetsSelfEquals")
   public void testSetFieldSize() {
     JavaComplexTestClass test = database.newInstance(JavaComplexTestClass.class);
     for (int i = 0; i < 100; i++) {
