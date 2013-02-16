@@ -232,6 +232,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       fileSegment.truncate();
       holeSegment.truncate();
 
+      beginOffsetData = -1;
+      endOffsetData = -1;
     } finally {
       releaseExclusiveLock();
     }

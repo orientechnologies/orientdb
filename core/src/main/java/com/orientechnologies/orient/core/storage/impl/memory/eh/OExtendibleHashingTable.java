@@ -32,7 +32,7 @@ public class OExtendibleHashingTable {
   private static final double                  MERGE_THRESHOLD   = 0.5;
 
   private long[][]                             hashTree;
-  private OExtendibleHashingNodeMetadata[]     nodesMetadata;
+  private OEHNodeMetadata[]                    nodesMetadata;
 
   private List<List<OExtendibleHashingBucket>> files;
   private final long[]                         fileLevelSizes;
@@ -79,8 +79,8 @@ public class OExtendibleHashingTable {
     hashTree = new long[1][];
     hashTree[0] = rootTree;
 
-    nodesMetadata = new OExtendibleHashingNodeMetadata[1];
-    nodesMetadata[0] = new OExtendibleHashingNodeMetadata((byte) 0, (byte) 0, (byte) maxLevelDepth);
+    nodesMetadata = new OEHNodeMetadata[1];
+    nodesMetadata[0] = new OEHNodeMetadata((byte) 0, (byte) 0, (byte) maxLevelDepth);
 
     size = 0;
     hashTreeSize = 1;
@@ -276,7 +276,7 @@ public class OExtendibleHashingTable {
 
     deleteNode(nodePath.nodeIndex);
 
-    final OExtendibleHashingNodeMetadata metadata = nodesMetadata[nodePath.parent.nodeIndex];
+    final OEHNodeMetadata metadata = nodesMetadata[nodePath.parent.nodeIndex];
     if (nodePath.parent.itemIndex < maxLevelSize / 2) {
       final int maxChildDepth = metadata.getMaxLeftChildDepth();
       if (maxChildDepth == localNodeDepth)
@@ -926,7 +926,7 @@ public class OExtendibleHashingTable {
     if (parentPath == null)
       return;
 
-    final OExtendibleHashingNodeMetadata metadata = nodesMetadata[parentPath.nodeIndex];
+    final OEHNodeMetadata metadata = nodesMetadata[parentPath.nodeIndex];
     if (parentPath.itemIndex < maxLevelSize / 2) {
       final int maxChildDepth = metadata.getMaxLeftChildDepth();
       if (childDepth > maxChildDepth)
@@ -1062,7 +1062,7 @@ public class OExtendibleHashingTable {
       long[] tombstone = hashTree[hashTreeTombstone];
 
       hashTree[hashTreeTombstone] = newNode;
-      nodesMetadata[hashTreeTombstone] = new OExtendibleHashingNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
+      nodesMetadata[hashTreeTombstone] = new OEHNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
 
       final int nodeIndex = hashTreeTombstone;
       if (tombstone != null)
@@ -1079,14 +1079,14 @@ public class OExtendibleHashingTable {
       hashTree = newHashTree;
       newHashTree = null;
 
-      OExtendibleHashingNodeMetadata[] newNodeMetadata = new OExtendibleHashingNodeMetadata[nodesMetadata.length << 1];
+      OEHNodeMetadata[] newNodeMetadata = new OEHNodeMetadata[nodesMetadata.length << 1];
       System.arraycopy(nodesMetadata, 0, newNodeMetadata, 0, nodesMetadata.length);
       nodesMetadata = newNodeMetadata;
       newNodeMetadata = null;
     }
 
     hashTree[hashTreeSize] = newNode;
-    nodesMetadata[hashTreeSize] = new OExtendibleHashingNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
+    nodesMetadata[hashTreeSize] = new OEHNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
 
     hashTreeSize++;
 

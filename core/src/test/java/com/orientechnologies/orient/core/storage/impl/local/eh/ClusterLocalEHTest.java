@@ -13,14 +13,9 @@ import java.util.List;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionNodeId;
@@ -29,6 +24,13 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -50,11 +52,12 @@ public class ClusterLocalEHTest {
       buildDirectory = ".";
 
     extendibleHashingCluster = new OClusterLocalEH(46, 25, new OClusterPositionNodeId(ONodeId.ZERO),
-        new OClusterPositionFactory.OClusterPositionFactoryNodeId());
+        new OClusterPositionFactory.OClusterPositionFactoryNodeId(), false);
 
     MockitoAnnotations.initMocks(this);
     when(storageLocal.getMode()).thenReturn("rw");
     when(storageLocal.getVariableParser()).thenReturn(new OStorageVariableParser(buildDirectory));
+    when(storageLocal.getConfiguration()).thenReturn(new OStorageConfiguration(storageLocal));
     extendibleHashingCluster.configure(storageLocal, 1, "ehtest", "", 1);
     extendibleHashingCluster.create(-1);
   }

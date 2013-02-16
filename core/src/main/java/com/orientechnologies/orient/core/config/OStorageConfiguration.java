@@ -211,17 +211,7 @@ public class OStorageConfiguration implements OSerializableStream {
         // MEMORY CLUSTER
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
       else if (clusterType.equals("h")) {
-        final OStoragePhysicalClusterLHPEPSConfiguration phyClusterLocal = new OStoragePhysicalClusterLHPEPSConfiguration(this,
-            clusterId, targetDataSegmentId);
-        phyClusterLocal.name = clusterName;
-
-        index = phySegmentFromStream(values, index, phyClusterLocal);
-
-        phyClusterLocal.setOverflowFile(new OStorageClusterLocalLHPEOverflowConfiguration(this, phyClusterLocal.name, clusterId));
-        phyClusterLocal.setOverflowStatisticsFile(new OStorageClusterLocalLHPEStatisticConfiguration(phyClusterLocal,
-            read(values[index++]), read(values[index++]), read(values[index++])));
-
-        currentCluster = phyClusterLocal;
+        currentCluster = new OStorageEHClusterConfiguration(this, clusterId, clusterName, null, targetDataSegmentId);
       } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
@@ -304,12 +294,8 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (c instanceof OStorageMemoryClusterConfiguration) {
         // MEMORY
         write(buffer, "m");
-      } else if (c instanceof OStoragePhysicalClusterLHPEPSConfiguration) {
+      } else if (c instanceof OStorageEHClusterConfiguration) {
         write(buffer, "h");
-        phySegmentToStream(buffer, (OStoragePhysicalClusterLHPEPSConfiguration) c);
-        // TODO in this place we need serialize info about overflow bucket but it seems that there is no such info
-        // fileSegmentConfigurationToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowSegment());
-        fileToStream(buffer, ((OStoragePhysicalClusterLHPEPSConfiguration) c).getOverflowStatisticsFile());
       }
     }
 

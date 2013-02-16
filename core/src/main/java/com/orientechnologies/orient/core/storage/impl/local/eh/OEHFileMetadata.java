@@ -51,4 +51,8 @@ public class OEHFileMetadata {
   public void setTombstonePosition(long tombstonePosition) {
     this.tombstonePosition = tombstonePosition;
   }
+
+  public void rename(String iOldName, String iNewName) {
+    file.rename(iOldName, iNewName);
+  }
 }

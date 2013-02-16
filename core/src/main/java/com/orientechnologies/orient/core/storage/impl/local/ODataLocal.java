@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Handle the table to resolve logical address to physical address.<br/>
@@ -52,8 +51,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 public class ODataLocal extends OMultiFileSegment implements ODataSegment {
   static final String                           DEF_EXTENSION    = ".oda";
   private static final int                      CLUSTER_POS_SIZE = OClusterPositionFactory.INSTANCE.getSerializedSize();
-  public static final int                       RECORD_FIX_SIZE  = 2 + CLUSTER_POS_SIZE
-                                                                     + OVersionFactory.instance().getVersionSize();
+  public static final int                       RECORD_FIX_SIZE  = 6 + CLUSTER_POS_SIZE;
 
   protected final int                           id;
   protected final ODataLocalHole                holeSegment;
@@ -664,7 +662,6 @@ public class ODataLocal extends OMultiFileSegment implements ODataSegment {
 
     file.writeInt(iFilePosition[1], iContent != null ? iContent.length : 0);
     file.writeShort(iFilePosition[1] + OBinaryProtocol.SIZE_INT, (short) iClusterSegment);
-    // TestSimulateError.onDataLocalWriteRecord(this, iFilePosition, iClusterSegment, iClusterPosition, iContent);
     file.write(iFilePosition[1] + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_SHORT, iClusterPosition.toStream());
 
     file.write(iFilePosition[1] + RECORD_FIX_SIZE, iContent);

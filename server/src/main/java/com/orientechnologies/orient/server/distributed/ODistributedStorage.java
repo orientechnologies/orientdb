@@ -303,8 +303,8 @@ public class ODistributedStorage implements OStorage {
   }
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, final Object... iParameters) {
-    return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, iParameters);
+      final String iDataSegmentName, boolean forceListBased, final Object... iParameters) {
+    return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName) {
@@ -441,8 +441,8 @@ public class ODistributedStorage implements OStorage {
   }
 
   @Override
-  public boolean isLHClustersAreUsed() {
-    return wrapped.isLHClustersAreUsed();
+  public boolean isHashClustersAreUsed() {
+    return wrapped.isHashClustersAreUsed();
   }
 
   @Override
