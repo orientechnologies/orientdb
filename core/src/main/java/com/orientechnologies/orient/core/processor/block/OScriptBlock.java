@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OScriptBlock extends OAbstractBlock {
+  public static final String NAME = "script";
+
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -42,11 +44,14 @@ public class OScriptBlock extends OAbstractBlock {
 
     final OCommandScript script = new OCommandScript(language, code.toString());
     script.getContext().setParent(iContext);
+
+    iContext.setVariable("block", this);
+
     return script.execute();
   }
 
   @Override
   public String getName() {
-    return "script";
+    return NAME;
   }
 }

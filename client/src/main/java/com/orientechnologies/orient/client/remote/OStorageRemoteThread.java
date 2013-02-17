@@ -178,13 +178,13 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getRecordMetadata(rid);
   }
 
-	@Override
-	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-		delegate.setSessionId(sessionId);
-		return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
-	}
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    delegate.setSessionId(sessionId);
+    return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
+  }
 
-	@Override
+  @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     delegate.setSessionId(sessionId);
     return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);
@@ -292,9 +292,9 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, final Object... iArguments) {
+      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
     delegate.setSessionId(sessionId);
-    return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, iArguments);
+    return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
   }
 
   public boolean dropCluster(final int iClusterId) {
@@ -391,9 +391,9 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public boolean isLHClustersAreUsed() {
+  public boolean isHashClustersAreUsed() {
     delegate.setSessionId(sessionId);
-    return delegate.isLHClustersAreUsed();
+    return delegate.isHashClustersAreUsed();
   }
 
   public String getURL() {

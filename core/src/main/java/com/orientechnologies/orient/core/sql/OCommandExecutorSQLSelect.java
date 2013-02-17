@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -1293,7 +1292,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final Set<OIndex<?>> involvedIndexes = cls.getInvolvedIndexes(orderByFirstField.getKey());
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
-              if (idx.getKeyTypes().length == 1 && !idx.getType().equals(INDEX_TYPE.FULLTEXT.toString())) {
+              if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
                 if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
                   target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
                 else

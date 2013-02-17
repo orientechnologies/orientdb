@@ -280,4 +280,10 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public String getDatabaseName() {
     return delegate.getDatabaseName();
   }
+
+  @Override
+  public boolean supportsOrderedIterations() {
+    return delegate.supportsOrderedIterations();
+  }
+
 }

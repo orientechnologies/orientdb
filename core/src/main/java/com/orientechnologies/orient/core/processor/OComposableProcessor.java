@@ -35,30 +35,30 @@ import com.orientechnologies.orient.core.processor.block.OScriptBlock;
 import com.orientechnologies.orient.core.processor.block.OTableBlock;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OComposableProcessor extends ODynamicFactory<String, OProcessorBlock> implements OProcessor {
+public class OComposableProcessor extends ODynamicFactory<String, Class<? extends OProcessorBlock>> implements OProcessor {
 
   private String path;
   private String extension;
 
   public OComposableProcessor() {
-    register(new OFunctionBlock());
-    register(new OIfBlock());
-    register(new OIterateBlock());
-    register(new OLetBlock());
-    register(new OExecuteBlock());
-    register(new OOutputBlock());
-    register(new OQueryBlock());
-    register(new OScriptBlock());
-    register(new OTableBlock());
+    register(OFunctionBlock.NAME, OFunctionBlock.class);
+    register(OIfBlock.NAME, OIfBlock.class);
+    register(OIterateBlock.NAME, OIterateBlock.class);
+    register(OLetBlock.NAME, OLetBlock.class);
+    register(OExecuteBlock.NAME, OExecuteBlock.class);
+    register(OOutputBlock.NAME, OOutputBlock.class);
+    register(OQueryBlock.NAME, OQueryBlock.class);
+    register(OScriptBlock.NAME, OScriptBlock.class);
+    register(OTableBlock.NAME, OTableBlock.class);
   }
 
   public Object processFromFile(final String iFileName, final OCommandContext iContext, final boolean iReadOnly) throws IOException {
     final ODocument template = new ODocument().fromJSON(loadTemplate(iFileName), "noMap");
 
-    return process(template, iContext, new ODocument().setOrdered(true), iReadOnly);
+    return process(null, template, iContext, new ODocument().setOrdered(true), iReadOnly);
   }
 
-  public Object process(final Object iContent, final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
+  public Object process(final OProcessorBlock iParent, final Object iContent, final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
     if (!(iContent instanceof ODocument))
       throw new OProcessException("Composable processor needs a document");
 
@@ -68,17 +68,26 @@ public class OComposableProcessor extends ODynamicFactory<String, OProcessorBloc
     if (type == null)
       throw new OProcessException("Composable processor needs 'type' field");
 
-    return process(type, document, iContext, iOutput, iReadOnly);
+    return process(iParent, type, document, iContext, iOutput, iReadOnly);
   }
 
-  public Object process(final String iType, final ODocument iContent, final OCommandContext iContext, final ODocument iOutput,
-      final boolean iReadOnly) {
+  public Object process(final OProcessorBlock iParent, final String iType, final ODocument iContent,
+      final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
     if (iContent == null)
       throw new OProcessException("Cannot find block type '" + iType + "'");
 
-    final OProcessorBlock block = registry.get(iType);
-    if (block == null)
+    final Class<? extends OProcessorBlock> blockClass = registry.get(iType);
+    if (blockClass == null)
       throw new OProcessException("Cannot find block type '" + iType + "'");
+
+    OProcessorBlock block;
+    try {
+      block = blockClass.newInstance();
+    } catch (Exception e) {
+      throw new OProcessException("Cannot create block of class '" + iType + "'", e);
+    }
+
+    block.setParentBlock(iParent);
 
     final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
     iContext.setVariable("depthLevel", depthLevel == null ? 0 : depthLevel + 1);
@@ -95,10 +104,6 @@ public class OComposableProcessor extends ODynamicFactory<String, OProcessorBloc
       if (depthLevel == null)
         OLogManager.instance().info(this, "End of processing. Elapsed %dms", (System.currentTimeMillis() - start));
     }
-  }
-
-  public void register(final OProcessorBlock iValue) {
-    super.register(iValue.getName(), iValue);
   }
 
   public String getPath() {

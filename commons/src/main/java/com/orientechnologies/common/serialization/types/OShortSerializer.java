@@ -16,6 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -68,6 +69,21 @@ public class OShortSerializer implements OBinarySerializer<Short> {
 
   public Short deserializeNative(byte[] stream, int startPosition) {
     return CONVERTER.getShort(stream, startPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(Short object, ODirectMemory memory, long pointer) {
+    memory.setShort(pointer, object);
+  }
+
+  @Override
+  public Short deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getShort(pointer);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return SHORT_SIZE;
   }
 
   public boolean isFixedLength() {

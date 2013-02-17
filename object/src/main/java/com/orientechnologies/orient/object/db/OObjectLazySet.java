@@ -115,9 +115,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   public boolean containsAll(final Collection<?> c) {
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    convertAll();
     for (Object o : c)
-      if (!underlying.contains(database.getRecordByUserObject(o, false)))
+      if (!contains(o))
         return false;
 
     return true;

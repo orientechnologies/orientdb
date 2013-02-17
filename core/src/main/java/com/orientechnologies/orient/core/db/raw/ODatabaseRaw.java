@@ -261,7 +261,7 @@ public class ODatabaseRaw implements ODatabase {
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
-   // CHECK IF RECORD TYPE IS SUPPORTED
+    // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
     try {
@@ -412,11 +412,11 @@ public class ODatabaseRaw implements ODatabase {
 
   public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
       final Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
+    return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
   public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iStartSize) {
-    return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, iLocation, iStartSize);
+    return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
 
   public boolean dropCluster(final String iClusterName) {
@@ -661,17 +661,17 @@ public class ODatabaseRaw implements ODatabase {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
-	@Override
-	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-		return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
-	}
+  @Override
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+    return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
+  }
 
-	@Override
-	public ORecordMetadata getRecordMetadata(ORID rid) {
-		return storage.getRecordMetadata(rid);
-	}
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    return storage.getRecordMetadata(rid);
+  }
 
-	public void callOnCloseListeners() {
+  public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
       it.next().onClose(getDatabaseOwner());

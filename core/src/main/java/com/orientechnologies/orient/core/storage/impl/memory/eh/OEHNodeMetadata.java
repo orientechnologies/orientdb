@@ -4,13 +4,13 @@ package com.orientechnologies.orient.core.storage.impl.memory.eh;
  * @author Andrey Lomakin
  * @since 30.01.13
  */
-public class OExtendibleHashingNodeMetadata {
+public class OEHNodeMetadata {
   private byte maxLeftChildDepth;
   private byte maxRightChildDepth;
 
   private byte nodeLocalDepth;
 
-  public OExtendibleHashingNodeMetadata(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth) {
+  public OEHNodeMetadata(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth) {
     this.maxLeftChildDepth = maxLeftChildDepth;
     this.maxRightChildDepth = maxRightChildDepth;
     this.nodeLocalDepth = nodeLocalDepth;

@@ -950,7 +950,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public boolean isLHClustersAreUsed() {
+  public boolean isHashClustersAreUsed() {
     checkConnection();
 
     do {
@@ -1236,7 +1236,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, final Object... iArguments) {
+      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
     checkConnection();
 
     do {
@@ -1574,9 +1574,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           // READ CLUSTER CONFIGURATION
           updateClusterConfiguration(network.readBytes());
+
+          // read OrientDB release info
+          if (network.getSrvProtocolVersion() >= 14)
+            network.readString();
+
           status = STATUS.OPEN;
           return;
-
         } finally {
           endResponse(network);
         }

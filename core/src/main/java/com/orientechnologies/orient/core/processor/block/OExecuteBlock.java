@@ -28,6 +28,9 @@ import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OExecuteBlock extends OAbstractBlock {
+  public static final String NAME = "execute";
+  private Object             returnValue;
+
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -35,7 +38,7 @@ public class OExecuteBlock extends OAbstractBlock {
     final Object foreach = getField(iContext, iConfig, "foreach");
     String returnType = (String) getFieldOfClass(iContext, iConfig, "returnType", String.class);
 
-    Object returnValue = null;
+    returnValue = null;
     if (returnType == null)
       returnType = "last";
     else if ("list".equalsIgnoreCase(returnType))
@@ -44,6 +47,10 @@ public class OExecuteBlock extends OAbstractBlock {
       returnValue = new HashSet<Object>();
 
     int iterated = 0;
+
+    final Object beginClause = getField(iContext, iConfig, "begin");
+    if (beginClause != null)
+      executeBlock(iManager, iContext, "begin", beginClause, iOutput, iReadOnly, returnType, returnValue);
 
     if (foreach != null) {
       Object result;
@@ -79,6 +86,10 @@ public class OExecuteBlock extends OAbstractBlock {
       returnValue = executeDo(iManager, iContext, doClause, returnType, returnValue, iOutput, iReadOnly);
       debug(iContext, "Done");
     }
+
+    final Object endClause = getField(iContext, iConfig, "end");
+    if (endClause != null)
+      executeBlock(iManager, iContext, "end", endClause, iOutput, iReadOnly, returnType, returnValue);
 
     debug(iContext, "Executed %d iteration and returned type %s", iterated, returnType);
     return returnValue;
@@ -143,6 +154,14 @@ public class OExecuteBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "execute";
+    return NAME;
+  }
+
+  public Object getReturnValue() {
+    return returnValue;
+  }
+
+  public void setReturnValue(Object returnValue) {
+    this.returnValue = returnValue;
   }
 }

@@ -35,7 +35,7 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
   private final OBinarySerializer<E> serializer;
 
   private int                        size;
-  private int                        elementData;
+  private long                       elementData;
 
   public ODirectMemoryList(int initialCapacity, ODirectMemory memory, OBinarySerializer<E> serializer) {
     super();
@@ -184,9 +184,9 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
 
   private void ensureCapacity(int minCapacity) {
     modCount++;
-    int oldCapacity = memory.getInt(elementData, 0);
+    int oldCapacity = memory.getInt(elementData);
     if (minCapacity > oldCapacity) {
-      int oldData = elementData;
+      long oldData = elementData;
       int newCapacity = (oldCapacity * 3) / 2 + 1;
       if (newCapacity < minCapacity)
         newCapacity = minCapacity;
@@ -197,18 +197,18 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
     }
   }
 
-  private void copyData(int ptr, int fromIndex, int toIndex, int len) {
-    final int fromOffset = fromIndex * 4 + 4;
-    final int toOffset = toIndex * 4 + 4;
+  private void copyData(long ptr, int fromIndex, int toIndex, int len) {
+    final long fromOffset = fromIndex * 8 + 4;
+    final long toOffset = toIndex * 8 + 4;
 
-    memory.copyData(ptr, fromOffset, ptr, toOffset, len * 4);
+    memory.copyData(ptr + fromOffset, ptr + toOffset, len * 8);
   }
 
-  private void copyData(int fromPtr, int fromIndex, int toPtr, int toIndex, int len) {
-    final int fromOffset = fromIndex * 4 + 4;
-    final int toOffset = toIndex * 4 + 4;
+  private void copyData(long fromPtr, int fromIndex, long toPtr, int toIndex, int len) {
+    final long fromOffset = fromIndex * 8 + 4;
+    final long toOffset = toIndex * 8 + 4;
 
-    memory.copyData(fromPtr, fromOffset, toPtr, toOffset, len * 4);
+    memory.copyData(fromPtr + fromOffset, toPtr + toOffset, len * 8);
   }
 
   private void rangeCheck(int index) {
@@ -216,54 +216,54 @@ public class ODirectMemoryList<E> extends AbstractList<E> implements List<E>, Ra
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
   }
 
-  private E getData(int ptr, int index) {
-    final int offset = index * 4 + 4;
+  private E getData(long ptr, int index) {
+    final int offset = index * 8 + 4;
 
-    final int dataPtr = memory.getInt(ptr, offset);
+    final long dataPtr = memory.getLong(ptr + offset);
 
     if (dataPtr == ODirectMemory.NULL_POINTER)
       return null;
 
-    return memory.get(dataPtr, 0, serializer);
+    return memory.get(dataPtr, serializer);
   }
 
-  private void setData(int ptr, int index, E data) {
-    final int dataPtr;
+  private void setData(long ptr, int index, E data) {
+    final long dataPtr;
     if (data != null) {
       dataPtr = memory.allocate(serializer.getObjectSize(data));
       if (dataPtr == ODirectMemory.NULL_POINTER)
         throw new IllegalStateException("There is no enough memory to allocate for item " + data);
-      memory.set(dataPtr, 0, data, serializer);
+      memory.set(dataPtr, data, serializer);
     } else
       dataPtr = ODirectMemory.NULL_POINTER;
 
-    final int offset = index * 4 + 4;
+    final long offset = index * 8 + 4;
 
-    final int oldPtr = memory.getInt(ptr, offset);
+    final long oldPtr = memory.getLong(ptr + offset);
     if (oldPtr != ODirectMemory.NULL_POINTER)
       memory.free(oldPtr);
 
-    memory.setInt(ptr, offset, dataPtr);
+    memory.setLong(ptr + offset, dataPtr);
   }
 
-  private void clearData(int ptr, int index) {
-    final int offset = index * 4 + 4;
-    memory.setInt(ptr, offset, ODirectMemory.NULL_POINTER);
+  private void clearData(long ptr, int index) {
+    final long offset = index * 8 + 4;
+    memory.setLong(ptr + offset, ODirectMemory.NULL_POINTER);
   }
 
-  private int allocateSpace(int capacity) {
-    final int size = capacity * 4 + 4;
-    final int ptr = memory.allocate(size);
+  private long allocateSpace(int capacity) {
+    final long size = capacity * 8 + 4;
+    final long ptr = memory.allocate(size);
     if (ptr == ODirectMemory.NULL_POINTER)
       throw new IllegalStateException("There is no enough memory to allocate for capacity = " + capacity);
 
-    int pos = 4;
+    long itemPtr = 4 + ptr;
     for (int i = 0; i < capacity; i++) {
-      memory.setInt(ptr, pos, ODirectMemory.NULL_POINTER);
-      pos += 4;
+      memory.setLong(itemPtr, ODirectMemory.NULL_POINTER);
+      itemPtr += 8;
     }
 
-    memory.setInt(ptr, 0, capacity);
+    memory.setInt(ptr, capacity);
 
     return ptr;
   }

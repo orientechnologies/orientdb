@@ -294,6 +294,10 @@ public class OScriptDocumentDatabaseWrapper {
   public OUser getUser() {
     return database.getUser();
   }
+  
+  public void setUser(OUser user) {
+    database.setUser(user);
+  }
 
   public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {

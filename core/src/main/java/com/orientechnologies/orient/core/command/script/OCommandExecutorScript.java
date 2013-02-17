@@ -51,7 +51,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    return executeInContext(null, iArgs);
+    return executeInContext(context, iArgs);
   }
 
   public Object executeInContext(final OCommandContext iContext, final Map<Object, Object> iArgs) {

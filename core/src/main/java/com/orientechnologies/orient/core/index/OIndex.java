@@ -410,4 +410,6 @@ public interface OIndex<T> {
    * @return Names of clusters that will be indexed.
    */
   public Set<String> getClusters();
+
+  public boolean supportsOrderedIterations();
 }

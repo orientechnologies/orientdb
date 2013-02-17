@@ -16,6 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -66,6 +67,21 @@ public class OCharSerializer implements OBinarySerializer<Character> {
 
   public Character deserializeNative(byte[] stream, int startPosition) {
     return BINARY_CONVERTER.getChar(stream, startPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(Character object, ODirectMemory memory, long pointer) {
+    memory.setChar(pointer, object);
+  }
+
+  @Override
+  public Character deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getChar(pointer);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return CHAR_SIZE;
   }
 
   public boolean isFixedLength() {

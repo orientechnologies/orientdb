@@ -1,240 +1,288 @@
 package com.orientechnologies.common.test;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+
 public class SpeedTestData {
-	protected static final int	TIME_WAIT						= 200;
-	protected long							cycles							= 1;
-	protected long							cyclesDone					= 0;
-	protected final static int	DUMP_PERCENT				= 10;
+  protected static final int TIME_WAIT           = 200;
+  protected long             cycles              = 1;
+  protected long             cyclesDone          = 0;
+  protected final static int DUMP_PERCENT        = 10;
 
-	protected String						currentTestName;
-	protected long							currentTestTimer;
-	protected long							currentTestFreeMemory;
-	protected long							currentTestTotalMemory;
-	protected long							currentTestMaxMemory;
-	protected SpeedTestGroup		testGroup;
-	protected Object[]					configuration;
-	protected boolean						printResults				= true;
+  protected String           currentTestName;
+  protected long             currentTestTimer;
 
-	protected long							partialTimer				= 0;
-	protected int								partialTimerCounter	= 0;
-	private long								cyclesElapsed;
+  protected long             currentTestHeapCommittedMemory;
+  protected long             currentTestHeapUsedMemory;
+  protected long             currentTestHeapMaxMemory;
 
-	protected SpeedTestData() {
-	}
+  protected long             currentTestNonHeapCommittedMemory;
+  protected long             currentTestNonHeapUsedMemory;
+  protected long             currentTestNonHeapMaxMemory;
 
-	protected SpeedTestData(final long iCycles) {
-		cycles = iCycles;
-	}
+  protected SpeedTestGroup   testGroup;
+  protected Object[]         configuration;
+  protected boolean          printResults        = true;
 
-	protected SpeedTestData(final SpeedTestGroup iGroup) {
-		setTestGroup(iGroup);
-	}
+  protected long             partialTimer        = 0;
+  protected int              partialTimerCounter = 0;
+  private long               cyclesElapsed;
 
-	public SpeedTestData config(final Object... iArgs) {
-		configuration = iArgs;
-		return this;
-	}
+  protected SpeedTestData() {
+  }
 
-	public void go(final SpeedTest iTarget) {
-		currentTestName = iTarget.getClass().getSimpleName();
+  protected SpeedTestData(final long iCycles) {
+    cycles = iCycles;
+  }
 
-		try {
-			if (SpeedTestData.executeInit(iTarget, configuration))
-				executeTest(iTarget, configuration);
-		} finally {
-			SpeedTestData.executeDeinit(iTarget, configuration);
+  protected SpeedTestData(final SpeedTestGroup iGroup) {
+    setTestGroup(iGroup);
+  }
 
-			collectResults(takeTimer());
-		}
-	}
+  public SpeedTestData config(final Object... iArgs) {
+    configuration = iArgs;
+    return this;
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.orientechnologies.common.test.SpeedTest#startTimer(java.lang.String)
-	 */
-	public void startTimer(final String iName) {
-		Runtime.getRuntime().runFinalization();
-		Runtime.getRuntime().gc();
+  public void go(final SpeedTest iTarget) {
+    currentTestName = iTarget.getClass().getSimpleName();
 
-		try {
-			Thread.sleep(TIME_WAIT);
-		} catch (InterruptedException e) {
-		}
+    try {
+      if (SpeedTestData.executeInit(iTarget, configuration))
+        executeTest(iTarget, configuration);
+    } finally {
+      collectResults(takeTimer());
 
-		currentTestName = iName;
-		currentTestFreeMemory = Runtime.getRuntime().freeMemory();
-		currentTestTotalMemory = Runtime.getRuntime().totalMemory();
-		currentTestMaxMemory = Runtime.getRuntime().maxMemory();
+      SpeedTestData.executeDeinit(iTarget, configuration);
+    }
+  }
 
-		System.out.println("-> Started the test of '" + currentTestName + "' (" + cycles + " cycles)");
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.common.test.SpeedTest#startTimer(java.lang.String)
+   */
+  public void startTimer(final String iName) {
+    Runtime.getRuntime().runFinalization();
+    Runtime.getRuntime().gc();
 
-		currentTestTimer = System.currentTimeMillis();
-	}
+    try {
+      Thread.sleep(TIME_WAIT);
+    } catch (InterruptedException e) {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.orientechnologies.common.test.SpeedTest#takeTimer()
-	 */
-	public long takeTimer() {
-		return System.currentTimeMillis() - currentTestTimer;
-	}
+    final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    final MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+    final MemoryUsage nonHeapMemoryUsage = memoryMXBean.getNonHeapMemoryUsage();
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.orientechnologies.common.test.SpeedTest#collectResults(long)
-	 */
-	public void collectResults(final long elapsed) {
-		Runtime.getRuntime().runFinalization();
-		Runtime.getRuntime().gc();
+    currentTestName = iName;
 
-		final long nowFreeMemory = Runtime.getRuntime().freeMemory();
-		final long nowTotalMemory = Runtime.getRuntime().totalMemory();
-		final long nowMaxMemory = Runtime.getRuntime().maxMemory();
+    currentTestHeapCommittedMemory = heapMemoryUsage.getCommitted();
+    currentTestHeapUsedMemory = heapMemoryUsage.getUsed();
+    currentTestHeapMaxMemory = heapMemoryUsage.getMax();
 
-		final long freeMemory = nowFreeMemory - currentTestFreeMemory;
-		final long totalMemory = nowTotalMemory - currentTestTotalMemory;
-		final long maxMemory = nowMaxMemory - currentTestMaxMemory;
+    currentTestNonHeapCommittedMemory = nonHeapMemoryUsage.getCommitted();
+    currentTestNonHeapUsedMemory = nonHeapMemoryUsage.getUsed();
+    currentTestNonHeapMaxMemory = nonHeapMemoryUsage.getMax();
 
-		if (printResults) {
-			System.out.println();
-			System.out.println("   Completed the test of '" + currentTestName + "' in " + elapsed + " ms. Memory used: " + freeMemory);
-			System.out.println("   Cycles done.........: " + cyclesDone + "/" + cycles);
-			System.out.println("   Cycles Elapsed......: " + cyclesElapsed + " ms");
-			System.out.println("   Elapsed.............: " + elapsed + " ms");
-			System.out.println("   Medium cycle elapsed: " + (float) elapsed / cyclesDone);
-			System.out.println("   Cycles per second...: " + (float) cyclesDone / elapsed * 1000);
-			System.out.println("   Free memory diff....: " + freeMemory + " (" + currentTestFreeMemory + "->" + nowFreeMemory + ")");
-			System.out.println("   Total memory diff...: " + totalMemory + " (" + currentTestTotalMemory + "->" + nowTotalMemory + ")");
-			System.out.println("   Max memory diff.....: " + maxMemory + " (" + currentTestMaxMemory + "->" + nowMaxMemory + ")");
-			System.out.println();
-		}
+    System.out.println("-> Started the test of '" + currentTestName + "' (" + cycles + " cycles)");
 
-		if (testGroup != null) {
-			testGroup.setResult("Execution time", currentTestName, elapsed);
-			testGroup.setResult("Free memory", currentTestName, freeMemory);
-		}
+    currentTestTimer = System.currentTimeMillis();
+  }
 
-		currentTestFreeMemory = freeMemory;
-		currentTestTotalMemory = totalMemory;
-		currentTestMaxMemory = maxMemory;
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.common.test.SpeedTest#takeTimer()
+   */
+  public long takeTimer() {
+    return System.currentTimeMillis() - currentTestTimer;
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.orientechnologies.common.test.SpeedTest#printSnapshot()
-	 */
-	public long printSnapshot() {
-		final long e = takeTimer();
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.common.test.SpeedTest#collectResults(long)
+   */
+  public void collectResults(final long elapsed) {
+    Runtime.getRuntime().runFinalization();
+    Runtime.getRuntime().gc();
 
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("Partial timer #");
-		buffer.append(++partialTimerCounter);
-		buffer.append(" elapsed: ");
-		buffer.append(e);
-		buffer.append(" ms");
+    final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+    final MemoryUsage heapMemoryUsage = memoryMXBean.getHeapMemoryUsage();
+    final MemoryUsage nonHeapMemoryUsage = memoryMXBean.getNonHeapMemoryUsage();
+    final int objectsPendingFinalizationCount = memoryMXBean.getObjectPendingFinalizationCount();
 
-		if (partialTimer > 0) {
-			buffer.append(" (from last partial: ");
-			buffer.append(e - partialTimer);
-			buffer.append(" ms)");
-		}
+    final long nowHeapCommittedMemory = heapMemoryUsage.getCommitted();
+    final long nowHeapUsedMemory = heapMemoryUsage.getUsed();
+    final long nowHeapMaxMemory = heapMemoryUsage.getMax();
 
-		System.out.println(buffer);
+    final long heapCommittedMemory = nowHeapCommittedMemory - currentTestHeapCommittedMemory;
+    final long heapUsedMemory = nowHeapUsedMemory - currentTestHeapUsedMemory;
+    final long heapMaxMemory = nowHeapMaxMemory - currentTestHeapMaxMemory;
 
-		partialTimer = e;
+    final long nowNonHeapCommittedMemory = nonHeapMemoryUsage.getCommitted();
+    final long nowNonHeapUsedMemory = nonHeapMemoryUsage.getUsed();
+    final long nowNonHeapMaxMemory = nonHeapMemoryUsage.getMax();
 
-		return partialTimer;
-	}
+    final long nonHeapCommittedMemory = nowNonHeapCommittedMemory - currentTestNonHeapCommittedMemory;
+    final long nonHeapUsedMemory = nowNonHeapUsedMemory - currentTestNonHeapUsedMemory;
+    final long nonHeapMaxMemory = nowNonHeapMaxMemory - currentTestNonHeapMaxMemory;
 
-	public long getCycles() {
-		return cycles;
-	}
+    if (printResults) {
+      System.out.println();
+      System.out.println("   Completed the test of '" + currentTestName + "' in " + elapsed + " ms. Heap memory used: "
+          + nowHeapUsedMemory + " bytes. Non heap memory used: " + nowNonHeapUsedMemory + " .");
+      System.out.println("   Cycles done.......................: " + cyclesDone + "/" + cycles);
+      System.out.println("   Cycles Elapsed....................: " + cyclesElapsed + " ms");
+      System.out.println("   Elapsed...........................: " + elapsed + " ms");
+      System.out.println("   Medium cycle elapsed:.............: " + (float) elapsed / cyclesDone);
+      System.out.println("   Cycles per second.................: " + (float) cyclesDone / elapsed * 1000);
+      System.out.println("   Committed heap memory diff........: " + heapCommittedMemory + " (" + currentTestHeapCommittedMemory
+          + "->" + nowHeapCommittedMemory + ")");
+      System.out.println("   Used heap memory diff.............: " + heapUsedMemory + " (" + currentTestHeapUsedMemory + "->"
+          + nowHeapUsedMemory + ")");
+      System.out.println("   Max heap memory diff..............: " + heapMaxMemory + " (" + currentTestHeapMaxMemory + "->"
+          + nowHeapMaxMemory + ")");
+      System.out.println("   Committed non heap memory diff....: " + nonHeapCommittedMemory + " ("
+          + currentTestNonHeapCommittedMemory + "->" + nowNonHeapCommittedMemory + ")");
+      System.out.println("   Used non heap memory diff.........: " + nonHeapUsedMemory + " (" + currentTestNonHeapUsedMemory + "->"
+          + nowNonHeapUsedMemory + ")");
+      System.out.println("   Max non heap memory diff..........: " + nonHeapMaxMemory + " (" + currentTestNonHeapMaxMemory + "->"
+          + nowNonHeapMaxMemory + ")");
+      System.out.println("   Objects pending finalization......: " + objectsPendingFinalizationCount);
 
-	public SpeedTestData setCycles(final long cycles) {
-		this.cycles = cycles;
-		return this;
-	}
+      System.out.println();
+    }
 
-	public SpeedTestGroup getTestGroup() {
-		return testGroup;
-	}
+    if (testGroup != null) {
+      testGroup.setResult("Execution time", currentTestName, elapsed);
+      testGroup.setResult("Free memory", currentTestName, heapCommittedMemory);
+    }
 
-	public SpeedTestData setTestGroup(final SpeedTestGroup testGroup) {
-		this.testGroup = testGroup;
-		return this;
-	}
+    currentTestHeapCommittedMemory = heapCommittedMemory;
+    currentTestHeapUsedMemory = heapUsedMemory;
+    currentTestHeapMaxMemory = heapMaxMemory;
 
-	public Object[] getConfiguration() {
-		return configuration;
-	}
+    currentTestNonHeapCommittedMemory = nonHeapCommittedMemory;
+    currentTestNonHeapUsedMemory = nonHeapUsedMemory;
+    currentTestNonHeapMaxMemory = nonHeapMaxMemory;
+  }
 
-	protected static boolean executeInit(final SpeedTest iTarget, final Object... iArgs) {
-		try {
-			iTarget.init();
-			return true;
-		} catch (Throwable t) {
-			System.err.println("Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
-			t.printStackTrace();
-			return false;
-		}
-	}
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.orientechnologies.common.test.SpeedTest#printSnapshot()
+   */
+  public long printSnapshot() {
+    final long e = takeTimer();
 
-	protected long executeTest(final SpeedTest iTarget, final Object... iArgs) {
-		try {
-			startTimer(iTarget.getClass().getSimpleName());
+    StringBuilder buffer = new StringBuilder();
+    buffer.append("Partial timer #");
+    buffer.append(++partialTimerCounter);
+    buffer.append(" elapsed: ");
+    buffer.append(e);
+    buffer.append(" ms");
 
-			cyclesElapsed = 0;
+    if (partialTimer > 0) {
+      buffer.append(" (from last partial: ");
+      buffer.append(e - partialTimer);
+      buffer.append(" ms)");
+    }
 
-			long previousLapTimerElapsed = 0;
-			long lapTimerElapsed = 0;
-			int delta;
-			lapTimerElapsed = System.nanoTime();
+    System.out.println(buffer);
 
-			for (cyclesDone = 0; cyclesDone < cycles; ++cyclesDone) {
-				iTarget.beforeCycle();
+    partialTimer = e;
 
-				iTarget.cycle();
+    return partialTimer;
+  }
 
-				iTarget.afterCycle();
+  public long getCycles() {
+    return cycles;
+  }
 
-				if (cycles > DUMP_PERCENT && (cyclesDone + 1) % (cycles / DUMP_PERCENT) == 0) {
-					lapTimerElapsed = (System.nanoTime() - lapTimerElapsed) / 1000000;
+  public SpeedTestData setCycles(final long cycles) {
+    this.cycles = cycles;
+    return this;
+  }
 
-					cyclesElapsed += lapTimerElapsed;
+  public SpeedTestGroup getTestGroup() {
+    return testGroup;
+  }
 
-					delta = (int) (previousLapTimerElapsed > 0 ? lapTimerElapsed * 100 / previousLapTimerElapsed - 100 : 0);
+  public SpeedTestData setTestGroup(final SpeedTestGroup testGroup) {
+    this.testGroup = testGroup;
+    return this;
+  }
 
-					System.out.print(String.format("\n%3d%% lap elapsed: %7dms, total: %7dms, delta: %+3d%%, forecast: %7dms",
-							(cyclesDone + 1) * 100 / cycles, lapTimerElapsed, cyclesElapsed, delta, cyclesElapsed * cycles / cyclesDone));
+  public Object[] getConfiguration() {
+    return configuration;
+  }
 
-					previousLapTimerElapsed = lapTimerElapsed;
-					lapTimerElapsed = System.nanoTime();
-				}
-			}
+  protected static boolean executeInit(final SpeedTest iTarget, final Object... iArgs) {
+    try {
+      iTarget.init();
+      return true;
+    } catch (Throwable t) {
+      System.err.println("Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
+      t.printStackTrace();
+      return false;
+    }
+  }
 
-			return takeTimer();
+  protected long executeTest(final SpeedTest iTarget, final Object... iArgs) {
+    try {
+      startTimer(iTarget.getClass().getSimpleName());
 
-		} catch (Throwable t) {
-			System.err.println("Exception caught when executing CYCLE test: " + iTarget.getClass().getSimpleName());
-			t.printStackTrace();
-		}
-		return -1;
-	}
+      cyclesElapsed = 0;
 
-	protected static void executeDeinit(final SpeedTest iTarget, final Object... iArgs) {
-		try {
-			iTarget.deinit();
-		} catch (Throwable t) {
-			System.err.println("Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
-			t.printStackTrace();
-		}
-	}
+      long previousLapTimerElapsed = 0;
+      long lapTimerElapsed = 0;
+      int delta;
+      lapTimerElapsed = System.nanoTime();
 
-	public long getCyclesDone() {
-		return cyclesDone;
-	}
+      for (cyclesDone = 0; cyclesDone < cycles; ++cyclesDone) {
+        iTarget.beforeCycle();
+
+        iTarget.cycle();
+
+        iTarget.afterCycle();
+
+        if (cycles > DUMP_PERCENT && (cyclesDone + 1) % (cycles / DUMP_PERCENT) == 0) {
+          lapTimerElapsed = (System.nanoTime() - lapTimerElapsed) / 1000000;
+
+          cyclesElapsed += lapTimerElapsed;
+
+          delta = (int) (previousLapTimerElapsed > 0 ? lapTimerElapsed * 100 / previousLapTimerElapsed - 100 : 0);
+
+          System.out.print(String.format("\n%3d%% lap elapsed: %7dms, total: %7dms, delta: %+3d%%, forecast: %7dms",
+              (cyclesDone + 1) * 100 / cycles, lapTimerElapsed, cyclesElapsed, delta, cyclesElapsed * cycles / cyclesDone));
+
+          previousLapTimerElapsed = lapTimerElapsed;
+          lapTimerElapsed = System.nanoTime();
+        }
+      }
+
+      return takeTimer();
+
+    } catch (Throwable t) {
+      System.err.println("Exception caught when executing CYCLE test: " + iTarget.getClass().getSimpleName());
+      t.printStackTrace();
+    }
+    return -1;
+  }
+
+  protected static void executeDeinit(final SpeedTest iTarget, final Object... iArgs) {
+    try {
+      iTarget.deinit();
+    } catch (Throwable t) {
+      System.err.println("Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
+      t.printStackTrace();
+    }
+  }
+
+  public long getCyclesDone() {
+    return cyclesDone;
+  }
 }

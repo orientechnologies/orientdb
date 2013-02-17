@@ -15,12 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Handles the holes inside cluster segments. The synchronization is in charge to the OClusterLocal instance.<br/>
@@ -146,19 +144,6 @@ public class OClusterLocalHole extends OSingleFileSegment {
         canShrink = false;
     }
     return false;
-  }
-
-  public void rename(String iOldName, String iNewName) {
-    final String osFileName = file.getName();
-    if (osFileName.startsWith(iOldName)) {
-      final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-          + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
-      boolean renamed = file.renameTo(newFile);
-      while (!renamed) {
-        OMemoryWatchDog.freeMemory(100);
-        renamed = file.renameTo(newFile);
-      }
-    }
   }
 
   /**

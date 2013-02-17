@@ -929,6 +929,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return user;
   }
 
+  public void setUser(OUser user) {
+    this.user = user;
+  }
+  
   public boolean isMVCC() {
     return mvcc;
   }
