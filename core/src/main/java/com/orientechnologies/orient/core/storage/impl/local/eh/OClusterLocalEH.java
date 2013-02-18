@@ -906,11 +906,15 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
     bucketDepth++;
 
-    for (OPhysicalPosition position : bucket) {
-      if (((position.clusterPosition.longValueHigh() >>> (64 - bucketDepth)) & 1) == 0)
-        updatedBucket.appendEntry(position);
+    final Iterator<OEHBucket.BinaryEntry> binaryIterator = bucket.binaryIterator();
+
+    while (binaryIterator.hasNext()) {
+      OEHBucket.BinaryEntry binaryEntry = binaryIterator.next();
+
+      if (((binaryEntry.key.longValueHigh() >>> (64 - bucketDepth)) & 1) == 0)
+        updatedBucket.appendEntry(binaryEntry.entry);
       else
-        newBucket.appendEntry(position);
+        newBucket.appendEntry(binaryEntry.entry);
     }
 
     updatedBucket.setDepth(bucketDepth);

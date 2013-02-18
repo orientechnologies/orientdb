@@ -217,6 +217,10 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     return new EntryIterator(index);
   }
 
+  public Iterator<BinaryEntry> binaryIterator() {
+    return new BinaryIterator(0);
+  }
+
   public void deleteEntry(int index) {
     System.arraycopy(dataBuffer, (index + 1) * keySize + keyLineOffset + dataBufferOffset, dataBuffer, index * keySize
         + keyLineOffset + dataBufferOffset, size() * keySize - (index + 1) * keySize);
@@ -247,12 +251,19 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     size++;
   }
 
-  public void appendEntry(final OPhysicalPosition value) {
+  public void appendEntry(final byte[] value) {
     if (MAX_BUCKET_SIZE - size() <= 0)
       throw new IllegalArgumentException("There is no enough space in bucket.");
 
     serializeEntry(value, size());
     size++;
+  }
+
+  private void serializeEntry(byte[] value, int insertionPoint) {
+    System.arraycopy(value, 0, dataBuffer, insertionPoint * keySize + keyLineOffset + dataBufferOffset, keySize);
+
+    int bufferPosition = dataBufferOffset + entriesOffset + insertionPoint * entreeSize;
+    System.arraycopy(value, 0, dataBuffer, bufferPosition, entreeSize);
   }
 
   private void serializeEntry(OPhysicalPosition value, int insertionPoint) {
@@ -385,4 +396,47 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
       throw new UnsupportedOperationException("Remove operation is not supported");
     }
   }
+
+  private final class BinaryIterator implements Iterator<BinaryEntry> {
+    private int    currentIndex;
+    private byte[] itemBuffer = new byte[entreeSize];
+
+    private BinaryIterator(int currentIndex) {
+      this.currentIndex = currentIndex;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return currentIndex < size();
+    }
+
+    @Override
+    public BinaryEntry next() {
+      if (currentIndex >= size())
+        throw new NoSuchElementException("Iterator was reached last element");
+
+      final int bufferPosition = dataBufferOffset + entriesOffset + currentIndex * entreeSize;
+      System.arraycopy(dataBuffer, bufferPosition, itemBuffer, 0, itemBuffer.length);
+
+      currentIndex++;
+      final OClusterPosition position = clusterPositionFactory.fromStream(itemBuffer);
+      return new BinaryEntry(position, itemBuffer);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove operation is not supported");
+    }
+  }
+
+  public static final class BinaryEntry {
+    public final OClusterPosition key;
+    public final byte[]           entry;
+
+    public BinaryEntry(OClusterPosition key, byte[] entry) {
+      this.key = key;
+      this.entry = entry;
+    }
+  }
+
 }
