@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -38,6 +39,8 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
  * @since 2/17/13
  */
 public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T> {
+  public static final String   TYPE_ID           = OClass.INDEX_TYPE.HASH.toString();
+
   private static final int     SEED              = 362498820;
 
   private static final double  MERGE_THRESHOLD   = 0.2;
@@ -69,8 +72,10 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   private OBinarySerializer    keySerializer;
 
-  public OAbstractLocalHashIndex() {
+  public OAbstractLocalHashIndex(ODatabaseRecord iDatabase) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+
+    storage = (OStorageLocal) iDatabase.getStorage();
 
     this.maxLevelSize = 1 << maxLevelDepth;
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
@@ -1333,7 +1338,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public boolean supportsOrderedIterations() {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
