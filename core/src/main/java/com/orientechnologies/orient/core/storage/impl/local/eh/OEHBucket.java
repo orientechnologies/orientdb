@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
@@ -143,6 +144,50 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     return position;
   }
 
+  public void updateDataSegmentPosition(int index, int dataSegmentId, long dataSegmentPos) {
+    int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize;
+    bufferPosition += clusterPositionFactory.getSerializedSize();
+
+    OIntegerSerializer.INSTANCE.serializeNative(dataSegmentId, dataBuffer, bufferPosition);
+    bufferPosition += OIntegerSerializer.INT_SIZE;
+
+    OLongSerializer.INSTANCE.serializeNative(dataSegmentPos, dataBuffer, bufferPosition);
+  }
+
+  public void updateRecordType(int index, byte recordType) {
+    int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize;
+    bufferPosition += clusterPositionFactory.getSerializedSize();
+    bufferPosition += OIntegerSerializer.INT_SIZE;
+    bufferPosition += OLongSerializer.LONG_SIZE;
+
+    dataBuffer[bufferPosition] = recordType;
+  }
+
+  public void updateVersion(int index, ORecordVersion recordVersion) {
+    int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize;
+    bufferPosition += clusterPositionFactory.getSerializedSize();
+    bufferPosition += OIntegerSerializer.INT_SIZE;
+    bufferPosition += OLongSerializer.LONG_SIZE;
+    bufferPosition += OByteSerializer.BYTE_SIZE;
+
+    recordVersion.getSerializer().fastWriteTo(dataBuffer, bufferPosition, recordVersion);
+  }
+
+  public void convertToTombstone(int index) {
+    int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize;
+    bufferPosition += clusterPositionFactory.getSerializedSize();
+    bufferPosition += OIntegerSerializer.INT_SIZE;
+    bufferPosition += OLongSerializer.LONG_SIZE;
+    bufferPosition += OByteSerializer.BYTE_SIZE;
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    ORecordVersion.ORecordVersionSerializer versionSerializer = recordVersion.getSerializer();
+
+    versionSerializer.fastReadFrom(dataBuffer, bufferPosition, recordVersion);
+    recordVersion.convertToTombstone();
+    versionSerializer.fastWriteTo(dataBuffer, bufferPosition, recordVersion);
+  }
+
   public OClusterPosition getKey(int index) {
     final int bufferPosition = index * keySize + keyLineOffset + dataBufferOffset;
     return clusterPositionFactory.fromStream(dataBuffer, bufferPosition);
@@ -170,6 +215,10 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
 
   public Iterator<OPhysicalPosition> iterator(int index) {
     return new EntryIterator(index);
+  }
+
+  public Iterator<BinaryEntry> binaryIterator() {
+    return new BinaryIterator(0);
   }
 
   public void deleteEntry(int index) {
@@ -202,12 +251,19 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     size++;
   }
 
-  public void appendEntry(final OPhysicalPosition value) {
+  public void appendEntry(final byte[] value) {
     if (MAX_BUCKET_SIZE - size() <= 0)
       throw new IllegalArgumentException("There is no enough space in bucket.");
 
     serializeEntry(value, size());
     size++;
+  }
+
+  private void serializeEntry(byte[] value, int insertionPoint) {
+    System.arraycopy(value, 0, dataBuffer, insertionPoint * keySize + keyLineOffset + dataBufferOffset, keySize);
+
+    int bufferPosition = dataBufferOffset + entriesOffset + insertionPoint * entreeSize;
+    System.arraycopy(value, 0, dataBuffer, bufferPosition, entreeSize);
   }
 
   private void serializeEntry(OPhysicalPosition value, int insertionPoint) {
@@ -263,9 +319,11 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
     OLongSerializer.INSTANCE.serializeNative(nextRemovedBucketPair, dataBuffer, dataBufferOffset + nextRemovedBucket);
   }
 
-  public void save() {
-    if (size() > -1)
+  public void toStream() {
+    if (size > -1)
       OIntegerSerializer.INSTANCE.serializeNative(size, dataBuffer, dataBufferOffset + sizeOffset);
+
+    size = -1;
   }
 
   public byte[] getDataBuffer() {
@@ -320,12 +378,12 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
 
     @Override
     public boolean hasNext() {
-      return currentIndex < size;
+      return currentIndex < size();
     }
 
     @Override
     public OPhysicalPosition next() {
-      if (currentIndex >= size)
+      if (currentIndex >= size())
         throw new NoSuchElementException("Iterator was reached last element");
 
       final OPhysicalPosition position = getEntry(currentIndex);
@@ -338,4 +396,47 @@ public class OEHBucket implements Iterable<OPhysicalPosition> {
       throw new UnsupportedOperationException("Remove operation is not supported");
     }
   }
+
+  private final class BinaryIterator implements Iterator<BinaryEntry> {
+    private int    currentIndex;
+    private byte[] itemBuffer = new byte[entreeSize];
+
+    private BinaryIterator(int currentIndex) {
+      this.currentIndex = currentIndex;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return currentIndex < size();
+    }
+
+    @Override
+    public BinaryEntry next() {
+      if (currentIndex >= size())
+        throw new NoSuchElementException("Iterator was reached last element");
+
+      final int bufferPosition = dataBufferOffset + entriesOffset + currentIndex * entreeSize;
+      System.arraycopy(dataBuffer, bufferPosition, itemBuffer, 0, itemBuffer.length);
+
+      currentIndex++;
+      final OClusterPosition position = clusterPositionFactory.fromStream(itemBuffer);
+      return new BinaryEntry(position, itemBuffer);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove operation is not supported");
+    }
+  }
+
+  public static final class BinaryEntry {
+    public final OClusterPosition key;
+    public final byte[]           entry;
+
+    public BinaryEntry(OClusterPosition key, byte[] entry) {
+      this.key = key;
+      this.entry = entry;
+    }
+  }
+
 }

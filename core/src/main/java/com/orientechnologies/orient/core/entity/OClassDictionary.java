@@ -19,9 +19,9 @@ import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -67,7 +67,7 @@ public class OClassDictionary {
     case 'd':
       return OStorageFileConfiguration.class;
     case 'e':
-      return OStoragePhysicalClusterLHPEPSConfiguration.class;
+      return OStorageEHClusterConfiguration.class;
 
     }
 
@@ -105,7 +105,7 @@ public class OClassDictionary {
       return 'c';
     if (iClass.equals(OStorageFileConfiguration.class))
       return 'd';
-    if (iClass.equals(OStoragePhysicalClusterLHPEPSConfiguration.class))
+    if (iClass.equals(OStorageEHClusterConfiguration.class))
       return 'e';
 
     return null;

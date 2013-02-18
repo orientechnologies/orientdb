@@ -636,7 +636,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkDatabase();
 
-    final boolean isLHClustersAreUsed = connection.database.getStorage().isLHClustersAreUsed();
+    final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
 
     beginResponse();
     try {

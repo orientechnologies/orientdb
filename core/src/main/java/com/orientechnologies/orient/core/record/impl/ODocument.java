@@ -1576,6 +1576,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     final byte[] content = toStream();
     stream.writeInt(content.length);
     stream.write(content);
+
+		stream.writeBoolean(_dirty);
   }
 
   @Override
@@ -1591,5 +1593,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     stream.readFully(content);
 
     fromStream(content);
-  }
+
+		_dirty = stream.readBoolean();
+	}
 }
