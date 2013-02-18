@@ -296,6 +296,9 @@ public class ODocumentHelper {
 
         final String indexAsString = index != null ? index.toString() : null;
 
+        if (value instanceof OCommandContext)
+          value = ((OCommandContext) value).getVariables();
+
         if (value instanceof OIdentifiable) {
           final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
               .getRecord() : null;
