@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.comparator.OComparatorFactory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -20,7 +21,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   public static final int                        MAX_BUCKET_SIZE = 256;
 
-  private final int                              keySize         = 1024;
+  private final int                              maxKeySize      = 1024;
 
   private final int                              entreeSize;
 
@@ -45,11 +46,12 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
 
   private final Comparator<byte[]>               arrayComparator = OComparatorFactory.INSTANCE.getComparator(byte[].class);
   private final OBinarySerializer<OIdentifiable> ridSerializer   = OLinkSerializer.INSTANCE;
+  private final OBinaryTypeSerializer            keySerializer   = OBinaryTypeSerializer.INSTANCE;
 
   public OHashIndexBucket(byte[] dataBuffer, int dataBufferOffset, int entreeSize) {
     this.entreeSize = entreeSize;
 
-    final BucketOffsets bucketOffsets = calculateBufferSize(keySize, entreeSize);
+    final BucketOffsets bucketOffsets = calculateBufferSize(maxKeySize, entreeSize);
 
     entriesOffset = bucketOffsets.entriesOffset;
     historyOffset = bucketOffsets.historyOffset;
@@ -104,20 +106,16 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
 
   public Entry getEntry(int index) {
     int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize;
-    final byte[] key = new byte[keySize];
-    System.arraycopy(dataBuffer, bufferPosition, key, 0, key.length);
-
-    bufferPosition += keySize;
+    final byte[] key = keySerializer.deserializeNative(dataBuffer, bufferPosition);
+    bufferPosition += keySerializer.getObjectSizeNative(dataBuffer, bufferPosition);
 
     final ORID rid = ridSerializer.deserializeNative(dataBuffer, bufferPosition).getIdentity();
     return new Entry(key, rid);
   }
 
   public byte[] getKey(int index) {
-    final int bufferPosition = index * keySize + keyLineOffset + dataBufferOffset;
-    final byte[] key = new byte[keySize];
-    System.arraycopy(dataBuffer, bufferPosition, key, 0, key.length);
-    return key;
+    final int bufferPosition = index * maxKeySize + keyLineOffset + dataBufferOffset;
+    return keySerializer.deserializeNative(dataBuffer, bufferPosition);
   }
 
   public int getIndex(final byte[] key) {
@@ -145,8 +143,8 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   }
 
   public void deleteEntry(int index) {
-    System.arraycopy(dataBuffer, (index + 1) * keySize + keyLineOffset + dataBufferOffset, dataBuffer, index * keySize
-        + keyLineOffset + dataBufferOffset, size() * keySize - (index + 1) * keySize);
+    System.arraycopy(dataBuffer, (index + 1) * maxKeySize + keyLineOffset + dataBufferOffset, dataBuffer, index * maxKeySize
+        + keyLineOffset + dataBufferOffset, size() * maxKeySize - (index + 1) * maxKeySize);
 
     System.arraycopy(dataBuffer, (index + 1) * entreeSize + entriesOffset + dataBufferOffset, dataBuffer, index * entreeSize
         + entriesOffset + dataBufferOffset, size() * entreeSize - (index + 1) * entreeSize);
@@ -157,14 +155,18 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
     if (MAX_BUCKET_SIZE - size() <= 0)
       throw new IllegalArgumentException("There is no enough space in bucket.");
 
+    final int serializedSize = keySerializer.getObjectSize(key);
+    if (serializedSize > maxKeySize)
+      throw new OIndexMaximumLimitReachedException("Maximum limit " + maxKeySize + " for key was reached.");
+
     final int index = binarySearch(key);
 
     if (index >= 0)
       throw new IllegalArgumentException("Given value is present in bucket.");
 
     final int insertionPoint = -index - 1;
-    System.arraycopy(dataBuffer, insertionPoint * keySize + keyLineOffset + dataBufferOffset, dataBuffer, (insertionPoint + 1)
-        * keySize + keyLineOffset + dataBufferOffset, size() * keySize - insertionPoint * keySize);
+    System.arraycopy(dataBuffer, insertionPoint * maxKeySize + keyLineOffset + dataBufferOffset, dataBuffer, (insertionPoint + 1)
+        * maxKeySize + keyLineOffset + dataBufferOffset, size() * maxKeySize - insertionPoint * maxKeySize);
 
     System.arraycopy(dataBuffer, insertionPoint * entreeSize + entriesOffset + dataBufferOffset, dataBuffer, (insertionPoint + 1)
         * entreeSize + entriesOffset + dataBufferOffset, size() * entreeSize - insertionPoint * entreeSize);
@@ -183,12 +185,12 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   }
 
   private void serializeEntry(byte[] key, ORID rid, int insertionPoint) {
-    System.arraycopy(key, 0, dataBuffer, insertionPoint * keySize + keyLineOffset + dataBufferOffset, key.length);
+    keySerializer.serializeNative(key, dataBuffer, insertionPoint * maxKeySize + keyLineOffset + dataBufferOffset);
 
     int bufferPosition = dataBufferOffset + entriesOffset + insertionPoint * entreeSize;
-    System.arraycopy(key, 0, dataBuffer, bufferPosition, key.length);
+    keySerializer.serializeNative(key, dataBuffer, bufferPosition);
 
-    bufferPosition += key.length;
+    bufferPosition += keySerializer.getObjectSizeNative(dataBuffer, bufferPosition);
 
     ridSerializer.serializeNative(rid, dataBuffer, bufferPosition);
   }
@@ -241,7 +243,7 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   }
 
   public void updateEntry(int index, ORID rid) {
-    final int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize + keySize;
+    final int bufferPosition = dataBufferOffset + entriesOffset + index * entreeSize + maxKeySize;
     ridSerializer.serializeNative(rid, dataBuffer, bufferPosition);
   }
 
@@ -312,5 +314,4 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
       throw new UnsupportedOperationException("Remove operation is not supported");
     }
   }
-
 }

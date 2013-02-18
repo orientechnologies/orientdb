@@ -96,24 +96,6 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     }
   }
 
-  public int count(final OIdentifiable iRecord) {
-
-    acquireExclusiveLock();
-    try {
-
-      int tot = 0;
-      for (final Entry<Object, OIdentifiable> entries : map.entrySet()) {
-        if (entries.getValue().equals((iRecord)))
-          ++tot;
-      }
-
-      return tot;
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   @Override
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXIST
