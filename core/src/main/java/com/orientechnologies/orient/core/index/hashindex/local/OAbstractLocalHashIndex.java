@@ -11,7 +11,7 @@ import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,10 +24,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.fs.OFile;
-import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OEHFileMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OEHFileMetadataStore;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OEHTreeStateStore;
@@ -105,10 +103,9 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   private OEHFileMetadata createFileMetadata(int i) throws IOException {
     final OEHFileMetadata metadata = new OEHFileMetadata();
-    final OStorageFileConfiguration fileConfiguration = new OStorageFileConfiguration(null, OStorageVariableParser.DB_PATH_VARIABLE
-        + '/' + name + i + OEHFileMetadata.DEF_EXTENSION, OFileFactory.MMAP, "0", "100%");
-
-    final OSingleFileSegment bucketFile = new OSingleFileSegment(storage, fileConfiguration);
+    final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name + i, i);
+    final OMultiFileSegment bucketFile = new OMultiFileSegment(storage, fileConfiguration, OEHFileMetadata.DEF_EXTENSION,
+        bucketBufferSize);
     bucketFile.create(bucketBufferSize * maxLevelSize);
 
     metadata.setFile(bucketFile);
@@ -119,9 +116,9 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
     final byte[] emptyBuffer = new byte[bucketBufferSize];
     final OHashIndexBucket emptyBucket = new OHashIndexBucket(maxLevelDepth, emptyBuffer, 0, entreeSize);
 
-    final OSingleFileSegment zeroLevelFile = filesMetadata[0].getFile();
+    final OMultiFileSegment zeroLevelFile = filesMetadata[0].getFile();
 
-    zeroLevelFile.getFile().allocateSpace(bucketBufferSize * maxLevelSize);
+    zeroLevelFile.allocateSpace(bucketBufferSize * maxLevelSize);
 
     for (long filePosition = 0; filePosition < bucketBufferSize * maxLevelSize; filePosition += bucketBufferSize)
       saveBucket(0, filePosition, emptyBucket);
@@ -561,29 +558,26 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
       fileMetadata = createFileMetadata(fileLevel);
       filesMetadata[fileLevel] = fileMetadata;
     }
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
     bucket.toStream();
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
 
-    bucketFile.getFile().write(filePosition, bucket.getDataBuffer());
+    file.write(pos[1], bucket.getDataBuffer());
   }
 
   private OHashIndexBucket readBucket(int fileLevel, long filePosition) throws IOException {
     final OEHFileMetadata fileMetadata = filesMetadata[fileLevel];
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
 
     final byte[] serializedFile = new byte[bucketBufferSize];
-    bucketFile.getFile().read(filePosition, serializedFile, serializedFile.length);
+
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
+
+    file.read(pos[1], serializedFile, serializedFile.length);
+
     return new OHashIndexBucket(serializedFile, 0, entreeSize);
-  }
-
-  private OHashIndexBucket readBucket(BucketPath bucketPath) throws IOException {
-    long[] node = hashTree[bucketPath.nodeIndex];
-    long bucketPointer = node[bucketPath.itemIndex + bucketPath.hashMapOffset];
-
-    long filePosition = getFilePosition(bucketPointer);
-    int fileLevel = getFileLevel(bucketPointer);
-
-    return readBucket(fileLevel, filePosition);
   }
 
   private void updateNodeAfterBucketSplit(BucketPath bucketPath, int bucketDepth, long newBucketPointer, long updatedBucketPointer) {
@@ -706,15 +700,19 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
       final OHashIndexBucket tombstone = readBucket(newFileLevel, tombstonePosition);
       newFileMetadata.setTombstonePosition(tombstone.getNextRemovedBucketPair());
 
-      final OFile file = newFileMetadata.getFile().getFile();
-      file.write(tombstonePosition, updatedBucket.getDataBuffer());
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.getRelativePosition(filePosition);
+      final OFile file = newFile.getFile((int) pos[0]);
 
+      file.write(tombstonePosition, updatedBucket.getDataBuffer());
       updatedFilePosition = tombstonePosition;
     } else {
-      final OFile file = newFileMetadata.getFile().getFile();
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.allocateSpace(2 * bucketBufferSize);
+      final OFile file = newFile.getFile((int) pos[0]);
 
-      updatedFilePosition = file.allocateSpace(2 * bucketBufferSize);
-      file.write(updatedFilePosition, updatedBucket.getDataBuffer());
+      file.write(pos[1], updatedBucket.getDataBuffer());
+      updatedFilePosition = newFile.getAbsolutePosition(pos);
     }
 
     final long newFilePosition = updatedFilePosition + bucketBufferSize;
@@ -1351,7 +1349,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
       }
 
       for (OEHFileMetadata metadata : filesMetadata)
-        if (metadata != null && metadata.getFile().getFile().isOpen())
+        if (metadata != null)
           metadata.getFile().close();
     } catch (IOException e) {
       throw new OIndexException("Error during index save", e);
