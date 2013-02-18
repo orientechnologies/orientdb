@@ -1268,7 +1268,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public String getType() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return OClass.INDEX_TYPE.HASH.toString();
   }
 
   @Override
