@@ -8,21 +8,21 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * @author Andrey Lomakin
+ * @author Luca Garulli
  * @since 30.01.13
  */
-public class HashIndexSpeedTest extends SpeedTestMonoThread {
+public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OUniqueHashIndex    hashIndex = new OUniqueHashIndex();
-  private Random              random    = new Random();
+  private OIndexUnique        index;
+  private Random              random = new Random();
 
-  public HashIndexSpeedTest() {
+  public MVRBTreeInsertionSpeedTest() {
     super(1000000);
   }
 
@@ -41,19 +41,19 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.STRING), databaseDocumentTx,
-        OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
+    index = (OIndexUnique) databaseDocumentTx.getMetadata().getIndexManager()
+        .createIndex("mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null);
   }
 
   @Override
   @Test(enabled = false)
   public void cycle() throws Exception {
     String key = "bsadfasfas" + random.nextInt();
-    hashIndex.put(key, new ORecordId(0, new OClusterPositionLong(0)));
+    index.put(key, new ORecordId(0, new OClusterPositionLong(0)));
   }
 
   @Override
   public void deinit() throws Exception {
-    hashIndex.close();
+    databaseDocumentTx.close();
   }
 }
