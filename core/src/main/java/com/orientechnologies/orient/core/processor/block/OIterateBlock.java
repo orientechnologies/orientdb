@@ -38,6 +38,9 @@ public class OIterateBlock extends OAbstractBlock {
 
     if (range != null) {
       final String[] fromTo = range.split("-");
+      if (fromTo.length < 2)
+        throw new IllegalArgumentException("Invalid range for: " + range);
+
       final int from = Integer.parseInt(fromTo[0]);
       final int to = Integer.parseInt(fromTo[1]);
 

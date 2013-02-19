@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.processor.block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -40,7 +41,11 @@ public class OOutputBlock extends OAbstractBlock {
     else
       result = value;
 
-    final Object source = getField(iContext, iConfig, "source");
+    Object source = getField(iContext, iConfig, "source");
+
+    if (source instanceof Map<?, ?>)
+      source = new ODocument((Map<String, Object>) source);
+
     if (source instanceof ODocument && result instanceof List<?>) {
       result = addDocumentFields((ODocument) source, (List<Object>) result);
     } else if (OMultiValue.isMultiValue(result) && flatMultivalues != null && flatMultivalues) {
