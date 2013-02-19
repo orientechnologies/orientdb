@@ -187,7 +187,7 @@ public class OrientDbWriteLotsOfDataTest {
         this.statTotalSecs = 1.0E-3 * (t1 - t0);
       } catch (Exception e) {
         db.rollback();
-        //throw e;
+        // throw e;
       } finally {
         db.close();
       }

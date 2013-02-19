@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,8 +56,6 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
  * @since 2/17/13
  */
 public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T>, OCloseable {
-  public static final String   TYPE_ID           = OClass.INDEX_TYPE.HASH.toString();
-  
   private static final String  CONFIG_CLUSTERS   = "clusters";
   private static final String  CONFIG_MAP_RID    = "mapRid";
 
