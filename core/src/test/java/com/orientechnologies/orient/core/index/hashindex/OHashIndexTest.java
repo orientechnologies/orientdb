@@ -36,7 +36,7 @@ public class OHashIndexTest {
     db.close();
   }
 
-  @Test
+  @Test(enabled = false)
   public void testCreateAutomaticHashIndex() throws Exception {
     final OClass oClass = db.getMetadata().getSchema().createClass("testClass");
     oClass.createProperty("name", OType.STRING);

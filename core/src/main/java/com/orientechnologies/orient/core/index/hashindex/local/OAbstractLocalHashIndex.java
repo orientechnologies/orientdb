@@ -56,23 +56,26 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
  * @since 2/17/13
  */
 public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T>, OCloseable {
-  private static final String  CONFIG_CLUSTERS   = "clusters";
-  private static final String  CONFIG_MAP_RID    = "mapRid";
+  private static final String  CONFIG_CLUSTERS                       = "clusters";
+  private static final String  CONFIG_MAP_RID                        = "mapRid";
+  private static final String  BUCKET_FILE_EXTENSION                 = ".obf";
+  public static final String   METADATA_CONFIGURATION_FILE_EXTENSION = ".imc";
+  public static final String   TREE_STATE_FILE_EXTENSION             = ".tsc";
 
-  private static final int     SEED              = 362498820;
+  private static final int     SEED                                  = 362498820;
 
-  private static final double  MERGE_THRESHOLD   = 0.2;
+  private static final double  MERGE_THRESHOLD                       = 0.2;
 
   private long[][]             hashTree;
   private OEHNodeMetadata[]    nodesMetadata;
 
-  private OEHFileMetadata[]    filesMetadata     = new OEHFileMetadata[64];
+  private OEHFileMetadata[]    filesMetadata                         = new OEHFileMetadata[64];
 
   private int                  hashTreeSize;
   private long                 size;
-  private int                  hashTreeTombstone = -1;
+  private int                  hashTreeTombstone                     = -1;
 
-  private final int            maxLevelDepth     = 8;
+  private final int            maxLevelDepth                         = 8;
   private final int            maxLevelSize;
 
   private final int            levelMask;
@@ -83,11 +86,11 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private String               type;
 
   private final int            bucketBufferSize;
-  private final int            maxKeySize        = 1024;
+  private final int            maxKeySize                            = 1024;
   private final int            entreeSize;
 
   private OIndexDefinition     indexDefinition;
-  private Set<String>          clustersToIndex   = new LinkedHashSet<String>();
+  private Set<String>          clustersToIndex                       = new LinkedHashSet<String>();
 
   private OEHFileMetadataStore metadataStore;
   private OEHTreeStateStore    treeStateStore;
@@ -138,10 +141,11 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           clustersToIndex.add(database.getClusterNameById(id));
 
       final OStorageFileConfiguration metadataConfiguration = new OStorageFileConfiguration(null,
-          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + OEHFileMetadataStore.DEF_EXTENSION, OFileFactory.MMAP, "0", "50%");
+          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + METADATA_CONFIGURATION_FILE_EXTENSION, OFileFactory.MMAP, "0",
+          "50%");
 
       final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
-          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + OEHTreeStateStore.DEF_EXTENSION, OFileFactory.MMAP, "0", "50%");
+          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + TREE_STATE_FILE_EXTENSION, OFileFactory.MMAP, "0", "50%");
 
       metadataStore = new OEHFileMetadataStore(storage, metadataConfiguration);
       treeStateStore = new OEHTreeStateStore(storage, treeStateConfiguration);
@@ -184,8 +188,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private OEHFileMetadata createFileMetadata(int i) throws IOException {
     final OEHFileMetadata metadata = new OEHFileMetadata();
     final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name + i, i);
-    final OMultiFileSegment bucketFile = new OMultiFileSegment(storage, fileConfiguration, OEHFileMetadata.DEF_EXTENSION,
-        bucketBufferSize);
+    final OMultiFileSegment bucketFile = new OMultiFileSegment(storage, fileConfiguration, BUCKET_FILE_EXTENSION, bucketBufferSize);
     bucketFile.create(bucketBufferSize * maxLevelSize);
 
     metadata.setFile(bucketFile);
