@@ -83,7 +83,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private String               type;
 
   private final int            bucketBufferSize;
-  private final int            keySize           = 1024;
+  private final int            maxKeySize        = 1024;
   private final int            entreeSize;
 
   private OIndexDefinition     indexDefinition;
@@ -102,7 +102,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     this.maxLevelSize = 1 << maxLevelDepth;
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
     entreeSize = OLinkSerializer.RID_SIZE;
-    bucketBufferSize = OHashIndexBucket.calculateBufferSize(keySize, entreeSize).getBufferSize();
+    bucketBufferSize = OHashIndexBucket.calculateBufferSize(maxKeySize, entreeSize).getBufferSize();
   }
 
   public OAbstractLocalHashIndex(String type) {
@@ -111,8 +111,8 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     this.maxLevelSize = 1 << maxLevelDepth;
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
     this.type = type;
-    entreeSize = OLinkSerializer.RID_SIZE;
-    bucketBufferSize = OHashIndexBucket.calculateBufferSize(keySize, entreeSize).getBufferSize();
+    entreeSize = OLinkSerializer.RID_SIZE + maxKeySize;
+    bucketBufferSize = OHashIndexBucket.calculateBufferSize(maxKeySize, entreeSize).getBufferSize();
   }
 
   @Override
@@ -259,6 +259,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     acquireSharedLock();
     try {
       final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      keySerializer.serializeNative(key, serializedKey, 0);
       final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
 
       BucketPath bucketPath = getBucket(hashCode);
@@ -271,7 +272,11 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
       final OHashIndexBucket bucket = readBucket(fileLevel, filePosition);
 
-      return (T) bucket.find(serializedKey).rid;
+      OHashIndexBucket.Entry entry = bucket.find(serializedKey);
+      if (entry == null)
+        return null;
+
+      return (T) entry.rid;
     } catch (IOException e) {
       throw new OIndexException("Exception during index value retrieval", e);
     } finally {
@@ -284,6 +289,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     acquireSharedLock();
     try {
       final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      keySerializer.serializeNative(key, serializedKey, 0);
       final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
 
       BucketPath bucketPath = getBucket(hashCode);
@@ -311,6 +317,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     acquireSharedLock();
     try {
       final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      keySerializer.serializeNative(key, serializedKey, 0);
       final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
 
       BucketPath bucketPath = getBucket(hashCode);
@@ -335,6 +342,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     acquireExclusiveLock();
     try {
       final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      keySerializer.serializeNative(key, serializedKey, 0);
       final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
 
       final BucketPath bucketPath = getBucket(hashCode);
@@ -1092,6 +1100,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     acquireExclusiveLock();
     try {
       final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      keySerializer.serializeNative(key, serializedKey, 0);
       final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
 
       final BucketPath nodePath = getBucket(hashCode);

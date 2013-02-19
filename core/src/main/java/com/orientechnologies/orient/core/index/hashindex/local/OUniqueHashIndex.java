@@ -15,10 +15,10 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  * @author Andrey Lomakin
  * @since 18.02.13
  */
-public class OIndexUnique extends OAbstractLocalHashIndex<OIdentifiable> {
+public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
   public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE_HASH.toString();
 
-  public OIndexUnique() {
+  public OUniqueHashIndex() {
     super(TYPE_ID);
   }
 
