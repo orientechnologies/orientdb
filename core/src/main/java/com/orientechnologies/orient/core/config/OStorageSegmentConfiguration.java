@@ -19,50 +19,50 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
-	public transient OStorageConfiguration	root;
+  public transient OStorageConfiguration root;
 
-	public int															id;
-	public String														name;
-	public String														maxSize						= "0";
-	public String														fileType					= "mmap";
-	public String														fileStartSize			= "500Kb";
-	public String														fileMaxSize				= "500Mb";
-	public String														fileIncrementSize	= "50%";
-	public String														defrag						= "auto";
+  public int                             id;
+  public String                          name;
+  public String                          maxSize           = "0";
+  public String                          fileType          = "mmap";
+  public String                          fileStartSize     = "500Kb";
+  public String                          fileMaxSize       = "500Mb";
+  public String                          fileIncrementSize = "50%";
+  public String                          defrag            = "auto";
 
-	public OStorageFileConfiguration[]			infoFiles;
-	String																	location;
+  public OStorageFileConfiguration[]     infoFiles;
+  String                                 location;
 
-	public OStorageSegmentConfiguration() {
-		infoFiles = new OStorageFileConfiguration[0];
-	}
+  public OStorageSegmentConfiguration() {
+    infoFiles = new OStorageFileConfiguration[0];
+  }
 
-	public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
-		root = iRoot;
-		name = iSegmentName;
-		id = iId;
-		infoFiles = new OStorageFileConfiguration[0];
-	}
+  public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
+    root = iRoot;
+    name = iSegmentName;
+    id = iId;
+    infoFiles = new OStorageFileConfiguration[0];
+  }
 
-	public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId,
-			final String iDirectory) {
-		root = iRoot;
-		name = iSegmentName;
-		id = iId;
-		location = iDirectory;
-		infoFiles = new OStorageFileConfiguration[0];
-	}
+  public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId,
+      final String iDirectory) {
+    root = iRoot;
+    name = iSegmentName;
+    id = iId;
+    location = iDirectory;
+    infoFiles = new OStorageFileConfiguration[0];
+  }
 
-	public void setRoot(OStorageConfiguration iRoot) {
-		this.root = iRoot;
-		for (OStorageFileConfiguration f : infoFiles)
-			f.parent = this;
-	}
+  public void setRoot(OStorageConfiguration iRoot) {
+    this.root = iRoot;
+    for (OStorageFileConfiguration f : infoFiles)
+      f.parent = this;
+  }
 
-	public String getLocation() {
-		if (location != null)
-			return location;
+  public String getLocation() {
+    if (location != null)
+      return location;
 
-		return root != null ? root.getDirectory() : null;
-	}
+    return root != null ? root.getDirectory() : null;
+  }
 }
