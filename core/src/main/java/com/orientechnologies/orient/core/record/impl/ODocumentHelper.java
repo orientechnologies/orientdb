@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.record.impl;
 import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -607,31 +608,31 @@ public class ODocumentHelper {
 
     Object result = null;
 
-    iFunction = iFunction.toUpperCase();
+    final String function = iFunction.toUpperCase();
 
-    if (iFunction.startsWith("SIZE("))
+    if (function.startsWith("SIZE("))
       result = currentValue instanceof ORecord<?> ? 1 : OMultiValue.getSize(currentValue);
-    else if (iFunction.startsWith("LENGTH("))
+    else if (function.startsWith("LENGTH("))
       result = currentValue.toString().length();
-    else if (iFunction.startsWith("TOUPPERCASE("))
+    else if (function.startsWith("TOUPPERCASE("))
       result = currentValue.toString().toUpperCase();
-    else if (iFunction.startsWith("TOLOWERCASE("))
+    else if (function.startsWith("TOLOWERCASE("))
       result = currentValue.toString().toLowerCase();
-    else if (iFunction.startsWith("TRIM("))
+    else if (function.startsWith("TRIM("))
       result = currentValue.toString().trim();
-    else if (iFunction.startsWith("TOJSON("))
+    else if (function.startsWith("TOJSON("))
       result = currentValue instanceof ODocument ? ((ODocument) currentValue).toJSON() : null;
-    else if (iFunction.startsWith("KEYS("))
+    else if (function.startsWith("KEYS("))
       result = currentValue instanceof Map<?, ?> ? ((Map<?, ?>) currentValue).keySet() : null;
-    else if (iFunction.startsWith("VALUES("))
+    else if (function.startsWith("VALUES("))
       result = currentValue instanceof Map<?, ?> ? ((Map<?, ?>) currentValue).values() : null;
-    else if (iFunction.startsWith("ASSTRING("))
+    else if (function.startsWith("ASSTRING("))
       result = currentValue.toString();
-    else if (iFunction.startsWith("ASINTEGER("))
+    else if (function.startsWith("ASINTEGER("))
       result = new Integer(currentValue.toString());
-    else if (iFunction.startsWith("ASFLOAT("))
+    else if (function.startsWith("ASFLOAT("))
       result = new Float(currentValue.toString());
-    else if (iFunction.startsWith("ASBOOLEAN(")) {
+    else if (function.startsWith("ASBOOLEAN(")) {
       if (currentValue instanceof String)
         result = new Boolean((String) currentValue);
       else if (currentValue instanceof Number) {
@@ -641,7 +642,7 @@ public class ODocumentHelper {
         else if (bValue == 1)
           result = Boolean.TRUE;
       }
-    } else if (iFunction.startsWith("ASDATE("))
+    } else if (function.startsWith("ASDATE("))
       if (currentValue instanceof Long)
         result = new Date((Long) currentValue);
       else
@@ -650,7 +651,7 @@ public class ODocumentHelper {
               .parse(currentValue.toString());
         } catch (ParseException e) {
         }
-    else if (iFunction.startsWith("ASDATETIME("))
+    else if (function.startsWith("ASDATETIME("))
       if (currentValue instanceof Long)
         result = new Date((Long) currentValue);
       else
@@ -663,30 +664,33 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      if (iFunction.startsWith("CHARAT("))
+      if (function.startsWith("CHARAT("))
         result = currentValue.toString().charAt(Integer.parseInt(args.get(0)));
-      else if (iFunction.startsWith("INDEXOF("))
+      else if (function.startsWith("INDEXOF("))
         if (args.size() == 1)
           result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)));
         else
           result = currentValue.toString().indexOf(OStringSerializerHelper.getStringContent(args.get(0)),
               Integer.parseInt(args.get(1)));
-      else if (iFunction.startsWith("SUBSTRING("))
+      else if (function.startsWith("SUBSTRING("))
         if (args.size() == 1)
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)));
         else
           result = currentValue.toString().substring(Integer.parseInt(args.get(0)), Integer.parseInt(args.get(1)));
-      else if (iFunction.startsWith("APPEND("))
+      else if (function.startsWith("APPEND("))
         result = currentValue.toString() + OStringSerializerHelper.getStringContent(args.get(0));
-      else if (iFunction.startsWith("PREFIX("))
+      else if (function.startsWith("PREFIX("))
         result = OStringSerializerHelper.getStringContent(args.get(0)) + currentValue.toString();
-      else if (iFunction.startsWith("FORMAT("))
-        result = String.format(OStringSerializerHelper.getStringContent(args.get(0)), currentValue.toString());
-      else if (iFunction.startsWith("LEFT(")) {
+      else if (function.startsWith("FORMAT("))
+        if (currentValue instanceof Date)
+          result = new SimpleDateFormat(OStringSerializerHelper.getStringContent(args.get(0))).format(currentValue);
+        else
+          result = String.format(OStringSerializerHelper.getStringContent(args.get(0)), currentValue.toString());
+      else if (function.startsWith("LEFT(")) {
         final int len = Integer.parseInt(args.get(0));
         final String stringValue = currentValue.toString();
         result = stringValue.substring(0, len <= stringValue.length() ? len : stringValue.length());
-      } else if (iFunction.startsWith("RIGHT(")) {
+      } else if (function.startsWith("RIGHT(")) {
         final int offset = Integer.parseInt(args.get(0));
         final String stringValue = currentValue.toString();
         result = stringValue.substring(offset < stringValue.length() ? stringValue.length() - offset : 0);

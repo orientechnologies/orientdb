@@ -331,7 +331,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           } else
             varValue = f.execute(iRecord, null, context);
         } else
-          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim());
+          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
 
         context.setVariable(varName, varValue);
       }
