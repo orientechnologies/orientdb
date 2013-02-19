@@ -18,13 +18,9 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -33,36 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndex<T> {
-
-  /**
-   * Creates the index.
-   * 
-   * 
-   * @param iName
-   * 
-   * @param iDatabase
-   *          Current Database instance
-   * @param iClusterIndexName
-   *          Cluster name where to place the TreeMap
-   * @param iClusterIdsToIndex
-   * @param iProgressListener
-   */
-  public OIndex<T> create(String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
-
-  /**
-   * Unloads the index freeing the resource in memory.
-   */
-  public void unload();
-
-  public String getDatabaseName();
-
-  /**
-   * Types of the keys that index can accept, if index contains composite key, list of types of elements from which this index
-   * consist will be returned, otherwise single element (key type obviously) will be returned.
-   */
-  public OType[] getKeyTypes();
+public interface OIndex<T> extends OKeyValueIndex<T> {
 
   /**
    * Returns an iterator to walk across all the index items from the first to the latest one.
@@ -91,78 +58,6 @@ public interface OIndex<T> {
    * @return
    */
   public Iterator<OIdentifiable> valuesInverseIterator();
-
-  /**
-   * Gets the set of records associated with the passed key.
-   * 
-   * @param iKey
-   *          The key to search
-   * @return The Record set if found, otherwise an empty Set
-   */
-  public T get(Object iKey);
-
-  /**
-   * Counts the elements associated with the passed key, if any.
-   * 
-   * @param iKey
-   *          The key to count
-   * @return The size of found records, otherwise 0 if the key is not found
-   */
-  public long count(Object iKey);
-
-  /**
-   * Tells if a key is contained in the index.
-   * 
-   * @param iKey
-   *          The key to search
-   * @return True if the key is contained, otherwise false
-   */
-  public boolean contains(Object iKey);
-
-  /**
-   * Inserts a new entry in the index. The behaviour depends by the index implementation.
-   * 
-   * @param iKey
-   *          Entry's key
-   * @param iValue
-   *          Entry's value as OIdentifiable instance
-   * @return The index instance itself to allow in chain calls
-   */
-  public OIndex<T> put(Object iKey, OIdentifiable iValue);
-
-  /**
-   * Removes an entry by its key.
-   * 
-   * @param iKey
-   *          The entry's key to remove
-   * @return True if the entry has been found and removed, otherwise false
-   */
-  public boolean remove(Object iKey);
-
-  /**
-   * Removes an entry by its key and value.
-   * 
-   * @param iKey
-   *          The entry's key to remove
-   * @return True if the entry has been found and removed, otherwise false
-   */
-  public boolean remove(Object iKey, OIdentifiable iRID);
-
-  /**
-   * Removes a value in all the index entries.
-   * 
-   * @param iRID
-   *          Record id to search
-   * @return Times the record was found, 0 if not found at all
-   */
-  public int remove(OIdentifiable iRID);
-
-  /**
-   * Clears the index removing all the entries in one shot.
-   * 
-   * @return The index instance itself to allow in chain calls
-   */
-  public OIndex<T> clear();
 
   /**
    * Returns an Iterable instance of all the keys contained in the index.
@@ -289,127 +184,11 @@ public interface OIndex<T> {
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
   /**
-   * @return number of entries in the index.
-   */
-  public long getSize();
-
-  /**
-   * @return Number of keys in index
-   */
-  public long getKeySize();
-
-  /**
-   * For unique indexes it will throw exception if passed in key is contained in index.
-   * 
-   * @param iRecord
-   * @param iKey
-   */
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey);
-
-  /**
-   * Stores all the in-memory changes to disk.
-   * 
-   * @return The index instance itself to allow in chain calls
-   */
-  public OIndex<T> lazySave();
-
-  /**
-   * Delete the index.
-   * 
-   * @return The index instance itself to allow in chain calls
-   */
-  public OIndex<T> delete();
-
-  /**
-   * Returns the index name.
-   * 
-   * @return The name of the index
-   */
-  public String getName();
-
-  /**
-   * Returns the type of the index as string.
-   */
-  public String getType();
-
-  /**
-   * Tells if the index is automatic. Automatic means it's maintained automatically by OrientDB. This is the case of indexes created
-   * against schema properties. Automatic indexes can always been rebuilt.
-   * 
-   * @return True if the index is automatic, otherwise false
-   */
-  public boolean isAutomatic();
-
-  /**
-   * Rebuilds an automatic index.
-   * 
-   * @return The number of entries rebuilt
-   */
-  public long rebuild();
-
-  /**
-   * Populate the index with all the existent records.
-   */
-  public long rebuild(final OProgressListener iProgressListener);
-
-  /**
-   * Returns the index configuration.
-   * 
-   * @return An ODocument object containing all the index properties
-   */
-  public ODocument getConfiguration();
-
-  /**
    * Returns the Record Identity of the index if persistent.
    * 
    * @return Valid ORID if it's persistent, otherwise ORID(-1:-1)
    */
   public ORID getIdentity();
-
-  /**
-   * Commits changes as atomic. It's called during the transaction's commit.
-   * 
-   * @param iDocument
-   *          Collection of entries to commit
-   */
-  public void commit(ODocument iDocument);
-
-  /**
-   * Returns the internal index used.
-   * 
-   */
-  public OIndexInternal<T> getInternal();
-
-  /**
-   * Returns set of records with keys in specific set
-   * 
-   * @param iKeys
-   *          Set of keys
-   * @return
-   */
-  public Collection<OIdentifiable> getValues(Collection<?> iKeys);
-
-  public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch);
-
-  /**
-   * Returns a set of documents with keys in specific set
-   * 
-   * @param iKeys
-   *          Set of keys
-   * @return
-   */
-  public Collection<ODocument> getEntries(Collection<?> iKeys);
-
-  public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
-
-  public OIndexDefinition getDefinition();
-
-  /**
-   * Returns Names of clusters that will be indexed.
-   * 
-   * @return Names of clusters that will be indexed.
-   */
-  public Set<String> getClusters();
 
   public boolean supportsOrderedIterations();
 }

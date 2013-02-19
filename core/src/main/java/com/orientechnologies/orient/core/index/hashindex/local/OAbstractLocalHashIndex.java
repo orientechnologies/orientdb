@@ -96,8 +96,10 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ODocument            configuration;
   private ORID                 identity;
 
-  public OAbstractLocalHashIndex() {
+  public OAbstractLocalHashIndex(ODatabaseRecord iDatabase) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+
+    storage = (OStorageLocal) iDatabase.getStorage();
 
     this.maxLevelSize = 1 << maxLevelDepth;
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
@@ -1292,7 +1294,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public String getType() {
-    return type;
+    return null; // To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
@@ -1456,7 +1458,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public boolean supportsOrderedIterations() {
-    return false;
+    return false; // To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
