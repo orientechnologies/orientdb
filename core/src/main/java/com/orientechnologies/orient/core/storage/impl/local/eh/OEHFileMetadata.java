@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.eh;
 
-import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 
 /**
  * @author Andrey Lomakin
@@ -24,15 +24,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 public class OEHFileMetadata {
   public static final String DEF_EXTENSION     = ".oef";
 
-  private OSingleFileSegment file;
+  private OMultiFileSegment  file;
   private long               bucketsCount;
   private long               tombstonePosition = -1;
 
-  public OSingleFileSegment getFile() {
+  public OMultiFileSegment getFile() {
     return file;
   }
 
-  public void setFile(OSingleFileSegment file) {
+  public void setFile(OMultiFileSegment file) {
     this.file = file;
   }
 

@@ -21,6 +21,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
@@ -66,11 +68,10 @@ public class OEHFileMetadataStore extends OSingleFileSegment {
       if (bucketFile == null)
         break;
 
-      final OStorageFileConfiguration fileConfiguration = bucketFile.getFile().getConfig();
+      final OStorageSegmentConfiguration fileConfiguration = bucketFile.getFile().getConfig();
 
-      bufferSize += OStringSerializer.INSTANCE.getObjectSize(fileConfiguration.incrementSize);
-      bufferSize += OStringSerializer.INSTANCE.getObjectSize(fileConfiguration.path);
-      bufferSize += OStringSerializer.INSTANCE.getObjectSize(fileConfiguration.type);
+      bufferSize += OStringSerializer.INSTANCE.getObjectSize(fileConfiguration.name);
+      bufferSize += OIntegerSerializer.INT_SIZE;
 
       bufferSize += 2 * OLongSerializer.LONG_SIZE;
     }
@@ -86,15 +87,12 @@ public class OEHFileMetadataStore extends OSingleFileSegment {
       if (bucketFile == null)
         break;
 
-      final OStorageFileConfiguration fileConfiguration = bucketFile.getFile().getConfig();
+      final OStorageSegmentConfiguration fileConfiguration = bucketFile.getFile().getConfig();
 
-      OStringSerializer.INSTANCE.serializeNative(fileConfiguration.incrementSize, buffer, offset);
+      OStringSerializer.INSTANCE.serializeNative(fileConfiguration.name, buffer, offset);
       offset += OStringSerializer.INSTANCE.getObjectSizeNative(buffer, offset);
 
-      OStringSerializer.INSTANCE.serializeNative(fileConfiguration.path, buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSizeNative(buffer, offset);
-
-      OStringSerializer.INSTANCE.serializeNative(fileConfiguration.type, buffer, offset);
+      OIntegerSerializer.INSTANCE.serializeNative(fileConfiguration.id, buffer, offset);
       offset += OStringSerializer.INSTANCE.getObjectSizeNative(buffer, offset);
 
       OLongSerializer.INSTANCE.serializeNative(bucketFile.geBucketsCount(), buffer, offset);
@@ -109,7 +107,7 @@ public class OEHFileMetadataStore extends OSingleFileSegment {
     file.write(2 * OIntegerSerializer.INT_SIZE, buffer);
   }
 
-  public OEHFileMetadata[] loadMetadata() throws IOException {
+  public OEHFileMetadata[] loadMetadata(OStorageLocal storageLocal, int bucketBufferSize) throws IOException {
     final int len = file.readInt(0);
     final OEHFileMetadata[] metadata = new OEHFileMetadata[len];
 
@@ -120,14 +118,11 @@ public class OEHFileMetadataStore extends OSingleFileSegment {
     int offset = 0;
     int i = 0;
     while (offset < bufferSize) {
-      final String incrementSize = OStringSerializer.INSTANCE.deserializeNative(buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(incrementSize);
+      final String name = OStringSerializer.INSTANCE.deserializeNative(buffer, offset);
+      offset += OStringSerializer.INSTANCE.getObjectSize(name);
 
-      final String path = OStringSerializer.INSTANCE.deserializeNative(buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(path);
-
-      final String type = OStringSerializer.INSTANCE.deserializeNative(buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(type);
+      final int id = OIntegerSerializer.INSTANCE.deserializeNative(buffer, offset);
+      offset += OIntegerSerializer.INT_SIZE;
 
       final long bucketsCount = OLongSerializer.INSTANCE.deserializeNative(buffer, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -135,11 +130,12 @@ public class OEHFileMetadataStore extends OSingleFileSegment {
       final long tombstone = OLongSerializer.INSTANCE.deserializeNative(buffer, offset);
       offset += OLongSerializer.LONG_SIZE;
 
-      final OStorageFileConfiguration fileConfiguration = new OStorageFileConfiguration(null, path, type, "0", incrementSize);
+      final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name, id);
 
-      final OSingleFileSegment singleFileSegment = new OSingleFileSegment(storage, fileConfiguration);
+      final OMultiFileSegment multiFileSegment = new OMultiFileSegment(storage, fileConfiguration, OEHFileMetadata.DEF_EXTENSION,
+          bucketBufferSize);
       final OEHFileMetadata bucketFile = new OEHFileMetadata();
-      bucketFile.setFile(singleFileSegment);
+      bucketFile.setFile(multiFileSegment);
       bucketFile.setBucketsCount(bucketsCount);
       bucketFile.setTombstonePosition(tombstone);
 

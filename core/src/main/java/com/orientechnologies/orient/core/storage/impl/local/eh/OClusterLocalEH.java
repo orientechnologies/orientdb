@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
@@ -164,10 +165,10 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   private OEHFileMetadata createFileMetadata(int i) throws IOException {
     final OEHFileMetadata metadata = new OEHFileMetadata();
-    final OStorageFileConfiguration fileConfiguration = new OStorageFileConfiguration(null, OStorageVariableParser.DB_PATH_VARIABLE
-        + '/' + name + i + OEHFileMetadata.DEF_EXTENSION, OFileFactory.MMAP, "0", "100%");
+    final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name + i, i);
+    final OMultiFileSegment bucketFile = new OMultiFileSegment(storage, fileConfiguration, OEHFileMetadata.DEF_EXTENSION,
+        bucketBufferSize);
 
-    final OSingleFileSegment bucketFile = new OSingleFileSegment(storage, fileConfiguration);
     bucketFile.create(bucketBufferSize * maxLevelSize);
 
     metadata.setFile(bucketFile);
@@ -178,9 +179,9 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     final byte[] emptyBuffer = new byte[bucketBufferSize];
     final OEHBucket emptyBucket = new OEHBucket(maxLevelDepth, emptyBuffer, 0, keySize, entreeSize, clusterPositionFactory);
 
-    final OSingleFileSegment zeroLevelFile = filesMetadata[0].getFile();
+    final OMultiFileSegment zeroLevelFile = filesMetadata[0].getFile();
 
-    zeroLevelFile.getFile().allocateSpace(bucketBufferSize * maxLevelSize);
+    zeroLevelFile.allocateSpace(bucketBufferSize * maxLevelSize);
 
     for (long filePosition = 0; filePosition < bucketBufferSize * maxLevelSize; filePosition += bucketBufferSize)
       saveBucket(0, filePosition, emptyBucket);
@@ -208,7 +209,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       metadataStore.open();
       treeStateStore.open();
 
-      filesMetadata = metadataStore.loadMetadata();
+      filesMetadata = metadataStore.loadMetadata(storage, bucketBufferSize);
       for (OEHFileMetadata fileMetadata : filesMetadata)
         if (fileMetadata != null)
           fileMetadata.getFile().open();
@@ -273,7 +274,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       }
 
       for (OEHFileMetadata metadata : filesMetadata)
-        if (metadata != null && metadata.getFile().getFile().isOpen())
+        if (metadata != null)
           metadata.getFile().close();
     } finally {
       releaseExclusiveLock();
@@ -805,18 +806,24 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       fileMetadata = createFileMetadata(fileLevel);
       filesMetadata[fileLevel] = fileMetadata;
     }
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
     bucket.toStream();
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
 
-    bucketFile.getFile().write(filePosition, bucket.getDataBuffer());
+    file.write(pos[1], bucket.getDataBuffer());
   }
 
   private OEHBucket readBucket(int fileLevel, long filePosition) throws IOException {
     final OEHFileMetadata fileMetadata = filesMetadata[fileLevel];
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
 
     final byte[] serializedFile = new byte[bucketBufferSize];
-    bucketFile.getFile().read(filePosition, serializedFile, serializedFile.length);
+
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
+
+    file.read(pos[1], serializedFile, serializedFile.length);
     return new OEHBucket(serializedFile, 0, keySize, entreeSize, clusterPositionFactory);
   }
 
@@ -899,11 +906,15 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
     bucketDepth++;
 
-    for (OPhysicalPosition position : bucket) {
-      if (((position.clusterPosition.longValueHigh() >>> (64 - bucketDepth)) & 1) == 0)
-        updatedBucket.appendEntry(position);
+    final Iterator<OEHBucket.BinaryEntry> binaryIterator = bucket.binaryIterator();
+
+    while (binaryIterator.hasNext()) {
+      OEHBucket.BinaryEntry binaryEntry = binaryIterator.next();
+
+      if (((binaryEntry.key.longValueHigh() >>> (64 - bucketDepth)) & 1) == 0)
+        updatedBucket.appendEntry(binaryEntry.entry);
       else
-        newBucket.appendEntry(position);
+        newBucket.appendEntry(binaryEntry.entry);
     }
 
     updatedBucket.setDepth(bucketDepth);
@@ -949,15 +960,19 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       final OEHBucket tombstone = readBucket(newFileLevel, tombstonePosition);
       newFileMetadata.setTombstonePosition(tombstone.getNextRemovedBucketPair());
 
-      final OFile file = newFileMetadata.getFile().getFile();
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.getRelativePosition(filePosition);
+      final OFile file = newFile.getFile((int) pos[0]);
+
       file.write(tombstonePosition, updatedBucket.getDataBuffer());
 
       updatedFilePosition = tombstonePosition;
     } else {
-      final OFile file = newFileMetadata.getFile().getFile();
-
-      updatedFilePosition = file.allocateSpace(2 * bucketBufferSize);
-      file.write(updatedFilePosition, updatedBucket.getDataBuffer());
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.allocateSpace(2 * bucketBufferSize);
+      final OFile file = newFile.getFile((int) pos[0]);
+      file.write(pos[1], updatedBucket.getDataBuffer());
+      updatedFilePosition = newFile.getAbsolutePosition(pos);
     }
 
     final long newFilePosition = updatedFilePosition + bucketBufferSize;

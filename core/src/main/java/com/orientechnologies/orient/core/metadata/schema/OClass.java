@@ -35,7 +35,7 @@ public interface OClass extends Comparable<OClass> {
   }
 
   public static enum INDEX_TYPE {
-    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), HASH(true);
+    UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH(false);
 
     private final boolean automaticIndexable;
 

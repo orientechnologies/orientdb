@@ -1,32 +1,50 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
+import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
+import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OEHFileMetadata;
@@ -38,8 +56,11 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
  * @author Andrey Lomakin
  * @since 2/17/13
  */
-public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T> {
+public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T>, OCloseable {
   public static final String   TYPE_ID           = OClass.INDEX_TYPE.HASH.toString();
+  
+  private static final String  CONFIG_CLUSTERS   = "clusters";
+  private static final String  CONFIG_MAP_RID    = "mapRid";
 
   private static final int     SEED              = 362498820;
 
@@ -62,15 +83,21 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
   private OStorageLocal        storage;
 
   private String               name;
+  private String               type;
 
   private final int            bucketBufferSize;
   private final int            keySize           = 1024;
   private final int            entreeSize;
 
+  private OIndexDefinition     indexDefinition;
+  private Set<String>          clustersToIndex   = new LinkedHashSet<String>();
+
   private OEHFileMetadataStore metadataStore;
   private OEHTreeStateStore    treeStateStore;
 
   private OBinarySerializer    keySerializer;
+  private ODocument            configuration;
+  private ORID                 identity;
 
   public OAbstractLocalHashIndex(ODatabaseRecord iDatabase) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -79,16 +106,49 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
     this.maxLevelSize = 1 << maxLevelDepth;
     this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
-    entreeSize = OPhysicalPosition.binarySize();
+    entreeSize = OLinkSerializer.RID_SIZE;
+    bucketBufferSize = OHashIndexBucket.calculateBufferSize(keySize, entreeSize).getBufferSize();
+  }
+
+  public OAbstractLocalHashIndex(String type) {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
+
+    this.maxLevelSize = 1 << maxLevelDepth;
+    this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
+    this.type = type;
+    entreeSize = OLinkSerializer.RID_SIZE;
     bucketBufferSize = OHashIndexBucket.calculateBufferSize(keySize, entreeSize).getBufferSize();
   }
 
   @Override
-  public OIndex<T> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
-      int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
-
+  public OIndex<T> create(String name, OIndexDefinition indexDefinition, ODatabaseRecord database, String clusterIndexName,
+      int[] clusterIdsToIndex, OProgressListener progressListener) {
     acquireExclusiveLock();
     try {
+      configuration = new ODocument();
+      this.indexDefinition = indexDefinition;
+      this.name = name;
+      storage = (OStorageLocal) database.getStorage();
+
+      final ORecord<?> emptyRecord = new ORecordBytes(new byte[] {});
+      emptyRecord.save(clusterIndexName);
+      identity = emptyRecord.getIdentity();
+
+      keySerializer = detectKeySerializer(indexDefinition);
+
+      if (clusterIdsToIndex != null)
+        for (final int id : clusterIdsToIndex)
+          clustersToIndex.add(database.getClusterNameById(id));
+
+      final OStorageFileConfiguration metadataConfiguration = new OStorageFileConfiguration(null,
+          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + OEHFileMetadataStore.DEF_EXTENSION, OFileFactory.MMAP, "0", "50%");
+
+      final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
+          OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + OEHTreeStateStore.DEF_EXTENSION, OFileFactory.MMAP, "0", "50%");
+
+      metadataStore = new OEHFileMetadataStore(storage, metadataConfiguration);
+      treeStateStore = new OEHTreeStateStore(storage, treeStateConfiguration);
+
       for (int i = 0; i < 2; i++) {
         final OEHFileMetadata metadata = createFileMetadata(i);
 
@@ -100,6 +160,8 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
       initHashTreeState();
 
+      updateConfiguration();
+      rebuild(progressListener);
       return this;
     } catch (IOException e) {
       throw new OIndexException("Error during index creation.", e);
@@ -108,12 +170,25 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
     }
   }
 
+  private OBinarySerializer detectKeySerializer(OIndexDefinition indexDefinition) {
+    if (indexDefinition != null) {
+      if (indexDefinition instanceof ORuntimeKeyIndexDefinition)
+        return ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+      else {
+        if (indexDefinition.getTypes().length > 1)
+          return OCompositeKeySerializer.INSTANCE;
+        else
+          return OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
+      }
+    } else
+      return new OSimpleKeySerializer();
+  }
+
   private OEHFileMetadata createFileMetadata(int i) throws IOException {
     final OEHFileMetadata metadata = new OEHFileMetadata();
-    final OStorageFileConfiguration fileConfiguration = new OStorageFileConfiguration(null, OStorageVariableParser.DB_PATH_VARIABLE
-        + '/' + name + i + OEHFileMetadata.DEF_EXTENSION, OFileFactory.MMAP, "0", "100%");
-
-    final OSingleFileSegment bucketFile = new OSingleFileSegment(storage, fileConfiguration);
+    final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name + i, i);
+    final OMultiFileSegment bucketFile = new OMultiFileSegment(storage, fileConfiguration, OEHFileMetadata.DEF_EXTENSION,
+        bucketBufferSize);
     bucketFile.create(bucketBufferSize * maxLevelSize);
 
     metadata.setFile(bucketFile);
@@ -124,9 +199,9 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
     final byte[] emptyBuffer = new byte[bucketBufferSize];
     final OHashIndexBucket emptyBucket = new OHashIndexBucket(maxLevelDepth, emptyBuffer, 0, entreeSize);
 
-    final OSingleFileSegment zeroLevelFile = filesMetadata[0].getFile();
+    final OMultiFileSegment zeroLevelFile = filesMetadata[0].getFile();
 
-    zeroLevelFile.getFile().allocateSpace(bucketBufferSize * maxLevelSize);
+    zeroLevelFile.allocateSpace(bucketBufferSize * maxLevelSize);
 
     for (long filePosition = 0; filePosition < bucketBufferSize * maxLevelSize; filePosition += bucketBufferSize)
       saveBucket(0, filePosition, emptyBucket);
@@ -153,12 +228,15 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public String getDatabaseName() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return storage.getName();
   }
 
   @Override
   public OType[] getKeyTypes() {
-    return new OType[0];
+    if (indexDefinition == null)
+      return null;
+
+    return indexDefinition.getTypes();
   }
 
   @Override
@@ -168,7 +246,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public Iterator<Map.Entry<Object, T>> inverseIterator() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -178,7 +256,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public Iterator<OIdentifiable> valuesInverseIterator() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -207,13 +285,54 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
   }
 
   @Override
-  public long count(Object iKey) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+  public long count(Object key) {
+    acquireSharedLock();
+    try {
+      final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
+
+      BucketPath bucketPath = getBucket(hashCode);
+      final long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      if (bucketPointer == 0)
+        return 0;
+
+      final int fileLevel = getFileLevel(bucketPointer);
+      final long filePosition = getFilePosition(bucketPointer);
+
+      final OHashIndexBucket bucket = readBucket(fileLevel, filePosition);
+      if (bucket.getIndex(serializedKey) >= 0)
+        return 1;
+
+      return 0;
+    } catch (IOException e) {
+      throw new OIndexException("Exception during index value retrieval", e);
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   @Override
-  public boolean contains(Object iKey) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+  public boolean contains(Object key) {
+    acquireSharedLock();
+    try {
+      final byte[] serializedKey = new byte[keySerializer.getObjectSize(key)];
+      final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedKey, SEED);
+
+      BucketPath bucketPath = getBucket(hashCode);
+      final long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      if (bucketPointer == 0)
+        return false;
+
+      final int fileLevel = getFileLevel(bucketPointer);
+      final long filePosition = getFilePosition(bucketPointer);
+
+      final OHashIndexBucket bucket = readBucket(fileLevel, filePosition);
+      return bucket.getIndex(serializedKey) >= 0;
+    } catch (IOException e) {
+      throw new OIndexException("Exception during index value retrieval", e);
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   @Override
@@ -312,6 +431,9 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
       }
 
       return put(key, value);
+    } catch (OIndexMaximumLimitReachedException e) {
+      OLogManager.instance().warn(this, "Key " + key + " is too large to fit in index and will be skipped", e);
+      return this;
     } catch (IOException e) {
       throw new OIndexException("Error during index update", e);
     } finally {
@@ -461,134 +583,32 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
     return true;
   }
 
-  private BucketPath nextBucketToFind(final BucketPath bucketPath, int bucketDepth) {
-    int offset = bucketPath.nodeGlobalDepth - bucketDepth;
-
-    BucketPath currentNode = bucketPath;
-    int nodeLocalDepth = nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth();
-    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
-
-    while (offset > 0) {
-      offset -= nodeLocalDepth;
-      if (offset > 0) {
-        currentNode = bucketPath.parent;
-        nodeLocalDepth = currentNode.nodeLocalDepth;
-        assert nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth() == currentNode.nodeLocalDepth;
-      }
-    }
-
-    final int diff = bucketDepth - (currentNode.nodeGlobalDepth - nodeLocalDepth);
-    final int interval = (1 << (nodeLocalDepth - diff));
-    final int firstStartIndex = currentNode.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
-
-    final BucketPath bucketPathToFind;
-    final int globalIndex = firstStartIndex + interval + currentNode.hashMapOffset;
-    if (globalIndex >= maxLevelSize)
-      bucketPathToFind = nextLevelUp(currentNode);
-    else {
-      final int hashMapSize = 1 << currentNode.nodeLocalDepth;
-      final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
-
-      final int startIndex = globalIndex - hashMapOffset;
-
-      bucketPathToFind = new BucketPath(currentNode.parent, hashMapOffset, startIndex, currentNode.nodeIndex,
-          currentNode.nodeLocalDepth, currentNode.nodeGlobalDepth);
-    }
-
-    return nextNonEmptyNode(bucketPathToFind);
-  }
-
-  private BucketPath nextNonEmptyNode(BucketPath bucketPath) {
-    nextBucketLoop: while (bucketPath != null) {
-      final long[] node = hashTree[bucketPath.nodeIndex];
-      final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
-      final int endIndex = maxLevelSize;
-
-      for (int i = startIndex; i < endIndex; i++) {
-        final long position = node[i];
-
-        if (position > 0) {
-          final int hashMapSize = 1 << bucketPath.nodeLocalDepth;
-          final int hashMapOffset = (i / hashMapSize) * hashMapSize;
-          final int itemIndex = i - hashMapOffset;
-
-          return new BucketPath(bucketPath.parent, hashMapOffset, itemIndex, bucketPath.nodeIndex, bucketPath.nodeLocalDepth,
-              bucketPath.nodeGlobalDepth);
-        }
-
-        if (position < 0) {
-          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
-          final int childItemOffset = (int) position & 0xFF;
-
-          final BucketPath parent = new BucketPath(bucketPath.parent, 0, i, bucketPath.nodeIndex, bucketPath.nodeLocalDepth,
-              bucketPath.nodeGlobalDepth);
-
-          final int childLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
-          bucketPath = new BucketPath(parent, childItemOffset, 0, childNodeIndex, childLocalDepth, bucketPath.nodeGlobalDepth
-              + childLocalDepth);
-
-          continue nextBucketLoop;
-        }
-      }
-
-      bucketPath = nextLevelUp(bucketPath);
-    }
-
-    return null;
-  }
-
-  private BucketPath nextLevelUp(BucketPath bucketPath) {
-    if (bucketPath.parent == null)
-      return null;
-
-    final int nodeLocalDepth = bucketPath.nodeLocalDepth;
-    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
-    final int pointersSize = 1 << (maxLevelDepth - nodeLocalDepth);
-
-    final BucketPath parent = bucketPath.parent;
-
-    if (parent.itemIndex < maxLevelSize / 2) {
-      final int nextParentIndex = (parent.itemIndex / pointersSize + 1) * pointersSize;
-      return new BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
-    }
-
-    final int nextParentIndex = ((parent.itemIndex - maxLevelSize / 2) / pointersSize + 1) * pointersSize + maxLevelSize / 2;
-    if (nextParentIndex < maxLevelSize)
-      return new BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
-
-    return nextLevelUp(new BucketPath(parent.parent, 0, maxLevelSize - 1, parent.nodeIndex, parent.nodeLocalDepth,
-        parent.nodeGlobalDepth));
-  }
-
   private void saveBucket(int fileLevel, long filePosition, OHashIndexBucket bucket) throws IOException {
     OEHFileMetadata fileMetadata = filesMetadata[fileLevel];
     if (fileMetadata == null) {
       fileMetadata = createFileMetadata(fileLevel);
       filesMetadata[fileLevel] = fileMetadata;
     }
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
     bucket.toStream();
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
 
-    bucketFile.getFile().write(filePosition, bucket.getDataBuffer());
+    file.write(pos[1], bucket.getDataBuffer());
   }
 
   private OHashIndexBucket readBucket(int fileLevel, long filePosition) throws IOException {
     final OEHFileMetadata fileMetadata = filesMetadata[fileLevel];
-    final OSingleFileSegment bucketFile = fileMetadata.getFile();
+    final OMultiFileSegment bucketFile = fileMetadata.getFile();
 
     final byte[] serializedFile = new byte[bucketBufferSize];
-    bucketFile.getFile().read(filePosition, serializedFile, serializedFile.length);
+
+    final long[] pos = bucketFile.getRelativePosition(filePosition);
+    final OFile file = bucketFile.getFile((int) pos[0]);
+
+    file.read(pos[1], serializedFile, serializedFile.length);
+
     return new OHashIndexBucket(serializedFile, 0, entreeSize);
-  }
-
-  private OHashIndexBucket readBucket(BucketPath bucketPath) throws IOException {
-    long[] node = hashTree[bucketPath.nodeIndex];
-    long bucketPointer = node[bucketPath.itemIndex + bucketPath.hashMapOffset];
-
-    long filePosition = getFilePosition(bucketPointer);
-    int fileLevel = getFileLevel(bucketPointer);
-
-    return readBucket(fileLevel, filePosition);
   }
 
   private void updateNodeAfterBucketSplit(BucketPath bucketPath, int bucketDepth, long newBucketPointer, long updatedBucketPointer) {
@@ -711,15 +731,19 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
       final OHashIndexBucket tombstone = readBucket(newFileLevel, tombstonePosition);
       newFileMetadata.setTombstonePosition(tombstone.getNextRemovedBucketPair());
 
-      final OFile file = newFileMetadata.getFile().getFile();
-      file.write(tombstonePosition, updatedBucket.getDataBuffer());
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.getRelativePosition(filePosition);
+      final OFile file = newFile.getFile((int) pos[0]);
 
+      file.write(tombstonePosition, updatedBucket.getDataBuffer());
       updatedFilePosition = tombstonePosition;
     } else {
-      final OFile file = newFileMetadata.getFile().getFile();
+      final OMultiFileSegment newFile = newFileMetadata.getFile();
+      final long[] pos = newFile.allocateSpace(2 * bucketBufferSize);
+      final OFile file = newFile.getFile((int) pos[0]);
 
-      updatedFilePosition = file.allocateSpace(2 * bucketBufferSize);
-      file.write(updatedFilePosition, updatedBucket.getDataBuffer());
+      file.write(pos[1], updatedBucket.getDataBuffer());
+      updatedFilePosition = newFile.getAbsolutePosition(pos);
     }
 
     final long newFilePosition = updatedFilePosition + bucketBufferSize;
@@ -1117,7 +1141,7 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public int remove(OIdentifiable iRID) {
-    throw new UnsupportedOperationException("onAfterTxCommit");
+    throw new UnsupportedOperationException("remove(rid)");
   }
 
   @Override
@@ -1148,98 +1172,94 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public Iterable<Object> keys() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("keys");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
       boolean iToInclusive, int maxValuesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
   public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
   public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
   public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
   public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesBetween");
   }
 
   @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesBetween");
   }
 
   @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntriesBetween");
   }
 
   @Override
   public long getSize() {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    return size;
   }
 
   @Override
   public long getKeySize() {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
-  public void checkEntry(OIdentifiable iRecord, Object iKey) {
-    // To change body of implemented methods use File | Settings | File Templates.
+    return size;
   }
 
   @Override
   public OIndex<T> lazySave() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    flush();
+    return this;
   }
 
   @Override
@@ -1263,101 +1283,187 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
 
   @Override
   public String getName() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return name;
   }
 
   @Override
   public String getType() {
-    return OClass.INDEX_TYPE.HASH.toString();
+    return null; // To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public boolean isAutomatic() {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    return indexDefinition != null && indexDefinition.getClassName() != null;
   }
 
   @Override
   public long rebuild() {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    return rebuild(null);
   }
 
   @Override
   public long rebuild(OProgressListener iProgressListener) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    long documentIndexed = 0;
+
+    final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
+
+    acquireExclusiveLock();
+    try {
+      try {
+        clear();
+      } catch (Exception e) {
+        // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+      }
+
+      int documentNum = 0;
+      long documentTotal = 0;
+
+      for (final String cluster : clustersToIndex)
+        documentTotal += getDatabase().countClusterElements(cluster);
+
+      if (iProgressListener != null)
+        iProgressListener.onBegin(this, documentTotal);
+
+      for (final String clusterName : clustersToIndex)
+        try {
+          for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+            if (record instanceof ODocument) {
+              final ODocument doc = (ODocument) record;
+
+              if (indexDefinition == null)
+                throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
+                    + indexDefinition + ")");
+
+              final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
+
+              if (fieldValue != null) {
+                if (fieldValue instanceof Collection) {
+                  for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+                    put(fieldValueItem, doc);
+                  }
+                } else
+                  put(fieldValue, doc);
+
+                ++documentIndexed;
+              }
+            }
+            documentNum++;
+
+            if (iProgressListener != null)
+              iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+          }
+        } catch (NoSuchElementException e) {
+          // END OF CLUSTER REACHED, IGNORE IT
+        }
+
+      lazySave();
+
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, true);
+
+    } catch (final Exception e) {
+      if (iProgressListener != null)
+        iProgressListener.onCompletition(this, false);
+
+      try {
+        clear();
+      } catch (Exception e2) {
+        // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+      }
+
+      throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
+
+    } finally {
+      if (intentInstalled)
+        getDatabase().declareIntent(null);
+
+      releaseExclusiveLock();
+    }
+
+    return documentIndexed;
+  }
+
+  protected ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   @Override
   public ODocument getConfiguration() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return configuration;
   }
 
   @Override
   public ORID getIdentity() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return identity;
   }
 
   @Override
   public void commit(ODocument iDocument) {
-    // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("commit");
   }
 
   @Override
   public OIndexInternal<T> getInternal() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return this;
+  }
+
+  protected void checkForKeyType(final Object iKey) {
+    if (indexDefinition == null) {
+      // RECOGNIZE THE KEY TYPE AT RUN-TIME
+
+      final OType type = OType.getTypeByClass(iKey.getClass());
+      if (type == null)
+        return;
+
+      indexDefinition = new OSimpleKeyIndexDefinition(type);
+      updateConfiguration();
+    }
   }
 
   @Override
   public Collection<OIdentifiable> getValues(Collection<?> iKeys) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValues()");
   }
 
   @Override
   public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getValues()");
   }
 
   @Override
   public Collection<ODocument> getEntries(Collection<?> iKeys) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntries()");
   }
 
   @Override
   public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    throw new UnsupportedOperationException("getEntries()");
   }
 
   @Override
   public OIndexDefinition getDefinition() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return indexDefinition;
   }
 
   @Override
   public Set<String> getClusters() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return Collections.unmodifiableSet(clustersToIndex);
   }
 
   @Override
   public boolean supportsOrderedIterations() {
-    return false;
+    return false; // To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public void flush() {
     acquireExclusiveLock();
     try {
-      if (metadataStore.getFile().isOpen()) {
+      if (metadataStore.getFile().isOpen())
         storeMetadata();
-        metadataStore.close();
-      }
 
-      if (treeStateStore.getFile().isOpen()) {
+      if (treeStateStore.getFile().isOpen())
         storeHashTree();
-        treeStateStore.close();
-      }
-
-      for (OEHFileMetadata metadata : filesMetadata)
-        if (metadata != null && metadata.getFile().getFile().isOpen())
-          metadata.getFile().close();
     } catch (IOException e) {
       throw new OIndexException("Error during index save", e);
     } finally {
@@ -1377,28 +1483,160 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
   }
 
   @Override
-  public int count(OIdentifiable iRecord) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+  public boolean loadFromConfiguration(ODocument configuration) {
+    acquireExclusiveLock();
+    try {
+      final ORID rid = (ORID) configuration.field(CONFIG_MAP_RID, ORID.class);
+      if (rid == null)
+        throw new OIndexException("Error during deserialization of index definition: '" + CONFIG_MAP_RID + "' attribute is null");
+      identity = rid;
+
+      this.configuration = configuration;
+      name = configuration.field(OIndexInternal.CONFIG_NAME);
+      type = configuration.field(OIndexInternal.CONFIG_TYPE);
+
+      final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
+      if (indexDefinitionDoc != null) {
+        try {
+          final String indexDefClassName = configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+          final Class<?> indexDefClass = Class.forName(indexDefClassName);
+          indexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
+          indexDefinition.fromStream(indexDefinitionDoc);
+
+        } catch (final ClassNotFoundException e) {
+          throw new OIndexException("Error during deserialization of index definition", e);
+        } catch (final NoSuchMethodException e) {
+          throw new OIndexException("Error during deserialization of index definition", e);
+        } catch (final InvocationTargetException e) {
+          throw new OIndexException("Error during deserialization of index definition", e);
+        } catch (final InstantiationException e) {
+          throw new OIndexException("Error during deserialization of index definition", e);
+        } catch (final IllegalAccessException e) {
+          throw new OIndexException("Error during deserialization of index definition", e);
+        }
+
+        clustersToIndex.clear();
+
+        final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
+        if (clusters != null)
+          clustersToIndex.addAll(clusters);
+
+        keySerializer = detectKeySerializer(indexDefinition);
+
+        metadataStore.open();
+        treeStateStore.open();
+
+        filesMetadata = metadataStore.loadMetadata(storage, bucketBufferSize);
+        for (OEHFileMetadata fileMetadata : filesMetadata)
+          if (fileMetadata != null)
+            fileMetadata.getFile().open();
+
+        size = metadataStore.getRecordsCount();
+
+        hashTreeSize = (int) treeStateStore.getHashTreeSize();
+
+        final int arraySize;
+        int bitsCount = Integer.bitCount(hashTreeSize);
+        if (bitsCount == 1)
+          arraySize = hashTreeSize;
+        else
+          arraySize = 1 << (Integer.highestOneBit(hashTreeSize) + 1);
+
+        hashTree = new long[arraySize][];
+        nodesMetadata = new OEHNodeMetadata[arraySize];
+
+        for (int i = 0; i < hashTreeSize; i++) {
+          hashTree[i] = treeStateStore.loadTreeNode(i);
+          nodesMetadata[i] = treeStateStore.loadMetadata(i);
+        }
+
+        size = metadataStore.getRecordsCount();
+      }
+      return true;
+    } catch (IOException e) {
+      throw new OIndexException("Exception during index loading", e);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
-  public boolean loadFromConfiguration(ODocument iConfig) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+  public boolean equals(final Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    final OAbstractLocalHashIndex<?> that = (OAbstractLocalHashIndex<?>) o;
+
+    if (!name.equals(that.name))
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
   }
 
   @Override
   public ODocument updateConfiguration() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    acquireExclusiveLock();
+    try {
+
+      configuration.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+      try {
+        configuration.field(OIndexInternal.CONFIG_TYPE, type);
+        configuration.field(OIndexInternal.CONFIG_NAME, name);
+
+        if (indexDefinition != null) {
+          final ODocument indexDefDocument = indexDefinition.toStream();
+          if (!indexDefDocument.hasOwners())
+            indexDefDocument.addOwner(configuration);
+
+          configuration.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
+          configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
+        } else {
+          configuration.removeField(OIndexInternal.INDEX_DEFINITION);
+          configuration.removeField(OIndexInternal.INDEX_DEFINITION_CLASS);
+        }
+
+        configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
+        configuration.field(CONFIG_MAP_RID, identity);
+      } finally {
+        configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+
+      return configuration;
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
   public OIndex<T> addCluster(String iClusterName) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    acquireExclusiveLock();
+    try {
+      if (clustersToIndex.add(iClusterName))
+        updateConfiguration();
+      return this;
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
   public OIndex<T> removeCluster(String iClusterName) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    acquireExclusiveLock();
+    try {
+      if (clustersToIndex.remove(iClusterName))
+        updateConfiguration();
+      return this;
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
@@ -1474,6 +1712,28 @@ public class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implemen
   @Override
   public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
     throw new UnsupportedOperationException("onCorruptionRepairDatabase");
+  }
+
+  @Override
+  public void close() {
+    acquireExclusiveLock();
+    try {
+      if (metadataStore.getFile().isOpen()) {
+        metadataStore.close();
+      }
+
+      if (treeStateStore.getFile().isOpen()) {
+        treeStateStore.close();
+      }
+
+      for (OEHFileMetadata metadata : filesMetadata)
+        if (metadata != null)
+          metadata.getFile().close();
+    } catch (IOException e) {
+      throw new OIndexException("Error during index save", e);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   private static final class BucketPath {
