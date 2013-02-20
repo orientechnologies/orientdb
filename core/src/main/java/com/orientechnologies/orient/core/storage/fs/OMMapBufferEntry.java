@@ -36,8 +36,8 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
   volatile MappedByteBuffer         buffer;
   final long                        beginOffset;
   final int                         size;
-  volatile long                     counter;
   volatile boolean                  dirty;
+  private volatile long             lastUsed;
 
   static {
     FORCE_DELAY = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -57,8 +57,8 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
     this.buffer = buffer;
     this.beginOffset = beginOffset;
     this.size = size;
-    this.counter = 0;
     this.dirty = false;
+    updateLastUsedTime();
   }
 
   /**
@@ -134,7 +134,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
 
         buffer = null;
       }
-      counter = 0;
+      lastUsed = 0;
       file = null;
 
     } finally {
@@ -172,5 +172,13 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
 
   void releaseReadLock() {
     super.releaseExclusiveLock();
+  }
+
+  public void updateLastUsedTime() {
+    lastUsed = System.currentTimeMillis();
+  }
+
+  public long getLastUsed() {
+    return lastUsed;
   }
 }

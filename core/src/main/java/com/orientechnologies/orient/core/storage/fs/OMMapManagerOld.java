@@ -318,7 +318,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     // SORT AS LRU, FIRST = MOST USED
     Collections.sort(bufferPoolLRU, new Comparator<OMMapBufferEntry>() {
       public int compare(final OMMapBufferEntry o1, final OMMapBufferEntry o2) {
-        return (int) (o1.counter - o2.counter);
+        return (int) (o1.getLastUsed() - o2.getLastUsed());
       }
     });
 
@@ -349,7 +349,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
         if (e.isValid() && e.file == iFile && iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
           // FOUND: USE IT
           metricReusedPagesBetweenLast++;
-          e.counter++;
+          e.updateLastUsedTime();
           return e;
         }
       }
@@ -560,7 +560,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
       if (iBeginOffset >= e.beginOffset && iBeginOffset + iSize <= e.beginOffset + e.size) {
         // FOUND: USE IT
         metricReusedPages++;
-        e.counter++;
+        e.updateLastUsedTime();
         return mid;
       }
 
