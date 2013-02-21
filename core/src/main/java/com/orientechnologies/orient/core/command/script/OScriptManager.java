@@ -273,6 +273,10 @@ public class OScriptManager {
     injections.remove(iInj);
   }
 
+  public List<OScriptInjection> getInjections() {
+    return injections;
+  }
+  
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
     engines.put(iLanguage, iEngine);
     return this;
