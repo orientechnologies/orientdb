@@ -143,6 +143,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -179,6 +180,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
