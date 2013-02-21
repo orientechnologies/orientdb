@@ -199,7 +199,7 @@ public enum OGlobalConfiguration {
       "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
 
   FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
-      int.class, 60),
+      int.class, 0),
 
   FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
       "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 60),
