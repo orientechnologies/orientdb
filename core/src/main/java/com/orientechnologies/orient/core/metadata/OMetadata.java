@@ -80,6 +80,7 @@ public class OMetadata {
     schema.create();
     indexManager.create();
     functionLibrary.create();
+    security.createClassTrigger();
   }
 
   public OSchema getSchema() {
