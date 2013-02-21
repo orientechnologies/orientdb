@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -103,6 +104,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
       clusters.add(OSecurityShared.RESTRICTED_CLASSNAME.toLowerCase());
       clusters.add(OSecurityShared.IDENTITY_CLASSNAME.toLowerCase());
       clusters.add(OFunction.CLASS_NAME.toLowerCase());
+      clusters.add(OClassTrigger.CLASSNAME.toLowerCase());
     }
 
     @Override
