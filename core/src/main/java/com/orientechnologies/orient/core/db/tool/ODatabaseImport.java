@@ -34,6 +34,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -580,6 +581,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       schema.dropClass(OFunction.CLASS_NAME);
     if (schema.existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
       schema.dropClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    if (schema.existsClass(OClassTrigger.CLASSNAME))
+      schema.dropClass(OClassTrigger.CLASSNAME);
     schema.save();
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
