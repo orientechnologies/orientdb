@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.eh;
 import java.io.IOException;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
@@ -38,28 +39,58 @@ public class OEHTreeStateStore extends OSingleFileSegment {
     return file.readHeaderLong(0);
   }
 
-  public void storeTreeState(int index, long[] node, OEHNodeMetadata nodeMetadata) throws IOException {
-    long nodePosition = index * RECORD_SIZE;
-    if (getFilledUpTo() < nodePosition + RECORD_SIZE)
-      file.allocateSpace((int) (nodePosition + RECORD_SIZE - file.getFilledUpTo()));
+  public void storeTreeState(long[][] hashTree, OEHNodeMetadata[] nodesMetadata, int[] bucketsSizes) throws IOException {
+    truncate();
 
-    byte[] nodeContentBuffer = new byte[RECORD_SIZE];
-    int offset = 0;
+    file.allocateSpace(hashTree.length * RECORD_SIZE + bucketsSizes.length * OIntegerSerializer.INT_SIZE
+        + OIntegerSerializer.INT_SIZE);
 
-    for (long position : node) {
-      OLongSerializer.INSTANCE.serializeNative(position, nodeContentBuffer, offset);
-      offset += OLongSerializer.LONG_SIZE;
+    long filePosition = 0;
+    file.writeInt(filePosition, bucketsSizes.length);
+
+    for (int bucketSize : bucketsSizes) {
+      file.writeInt(filePosition, bucketSize);
+      filePosition += OIntegerSerializer.INT_SIZE;
     }
 
-    nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxLeftChildDepth();
-    nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxRightChildDepth();
-    nodeContentBuffer[offset] = (byte) nodeMetadata.getNodeLocalDepth();
+    for (int i = 0; i < hashTree.length; i++) {
+      long[] node = hashTree[i];
+      byte[] nodeContentBuffer = new byte[RECORD_SIZE];
+      int offset = 0;
 
-    file.write(nodePosition, nodeContentBuffer);
+      for (long position : node) {
+        OLongSerializer.INSTANCE.serializeNative(position, nodeContentBuffer, offset);
+        offset += OLongSerializer.LONG_SIZE;
+      }
+
+      OEHNodeMetadata nodeMetadata = nodesMetadata[i];
+      nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxLeftChildDepth();
+      nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxRightChildDepth();
+      nodeContentBuffer[offset] = (byte) nodeMetadata.getNodeLocalDepth();
+
+      file.write(filePosition, nodeContentBuffer);
+      filePosition += nodeContentBuffer.length;
+    }
   }
 
-  public long[] loadTreeNode(int index) throws IOException {
-    long nodePosition = index * RECORD_SIZE;
+  public long getBucketsOffset() throws IOException {
+    return file.readInt(0) * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
+  }
+
+  public int[] loadBucketsSizes() throws IOException {
+    int len = file.readInt(0);
+    final int[] bucketsSizes = new int[len];
+
+    long filePosition = OIntegerSerializer.INT_SIZE;
+    for (int i = 0; i < len; i++) {
+      bucketsSizes[i] = file.readInt(filePosition);
+      filePosition += OIntegerSerializer.INT_SIZE;
+    }
+    return bucketsSizes;
+  }
+
+  public long[] loadTreeNode(int index, long bucketsOffset) throws IOException {
+    long nodePosition = index * RECORD_SIZE + bucketsOffset;
     byte[] nodeContentBuffer = new byte[256 * OLongSerializer.LONG_SIZE];
     file.read(nodePosition, nodeContentBuffer, nodeContentBuffer.length);
 
@@ -70,8 +101,8 @@ public class OEHTreeStateStore extends OSingleFileSegment {
     return node;
   }
 
-  public OEHNodeMetadata loadMetadata(int index) throws IOException {
-    long nodePosition = index * RECORD_SIZE + 256 * OLongSerializer.LONG_SIZE;
+  public OEHNodeMetadata loadMetadata(int index, long bucketsOffset) throws IOException {
+    long nodePosition = index * RECORD_SIZE + 256 * OLongSerializer.LONG_SIZE + bucketsOffset;
     byte[] nodeContentBuffer = new byte[3];
 
     file.read(nodePosition, nodeContentBuffer, 3);

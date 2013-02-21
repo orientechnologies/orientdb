@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  */
 @Test
 public class UniqueHashIndexTest {
-  private static final int    KEYS_COUNT = 50000;
+  private static final int    KEYS_COUNT = 200000;
 
   private ODatabaseDocumentTx databaseDocumentTx;
   private OUniqueHashIndex    hashIndex  = new OUniqueHashIndex();

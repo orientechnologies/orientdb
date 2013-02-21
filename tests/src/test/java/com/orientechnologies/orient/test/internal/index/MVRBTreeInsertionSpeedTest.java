@@ -5,6 +5,7 @@ import java.util.Random;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -23,12 +24,15 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private Random              random = new Random();
 
   public MVRBTreeInsertionSpeedTest() {
-    super(1000000);
+    super(5000000);
   }
 
   @Override
   @Test(enabled = false)
   public void init() throws Exception {
+    OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue("");
+    OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
+
     String buildDirectory = System.getProperty("buildDirectory", "/temp");
     if (buildDirectory == null)
       buildDirectory = ".";

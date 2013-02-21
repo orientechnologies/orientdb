@@ -228,9 +228,11 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       hashTree = new long[arraySize][];
       nodesMetadata = new OEHNodeMetadata[arraySize];
 
+      final long bucketsOffset = treeStateStore.getBucketsOffset();
+
       for (int i = 0; i < hashTreeSize; i++) {
-        hashTree[i] = treeStateStore.loadTreeNode(i);
-        nodesMetadata[i] = treeStateStore.loadMetadata(i);
+        hashTree[i] = treeStateStore.loadTreeNode(i, bucketsOffset);
+        nodesMetadata[i] = treeStateStore.loadMetadata(i, bucketsOffset);
       }
 
       size = metadataStore.getRecordsCount();
@@ -289,8 +291,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   private void storeHashTree() throws IOException {
     treeStateStore.setHashTreeSize(hashTreeSize);
-    for (int i = 0; i < hashTreeSize; i++)
-      treeStateStore.storeTreeState(i, hashTree[i], nodesMetadata[i]);
+    treeStateStore.storeTreeState(hashTree, nodesMetadata, null);
   }
 
   @Override

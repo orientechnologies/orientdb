@@ -23,7 +23,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private Random              random    = new Random();
 
   public HashIndexSpeedTest() {
-    super(1000000);
+    super(5000000);
   }
 
   @Override

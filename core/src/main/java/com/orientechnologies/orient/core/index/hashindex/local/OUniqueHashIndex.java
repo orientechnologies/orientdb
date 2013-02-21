@@ -44,6 +44,7 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
         ((ORecord<?>) value.getRecord()).save();
 
       super.put(key, value.getIdentity());
+      get(key);
       return this;
 
     } finally {
