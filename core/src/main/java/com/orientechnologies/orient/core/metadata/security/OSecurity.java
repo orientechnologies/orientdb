@@ -71,4 +71,6 @@ public interface OSecurity {
   public OUser repair();
 
   public void close();
+  
+  public void createClassTrigger();
 }
