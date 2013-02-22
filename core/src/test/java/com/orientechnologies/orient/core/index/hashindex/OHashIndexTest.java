@@ -21,7 +21,7 @@ public class OHashIndexTest {
   @BeforeClass
   public void setUp() throws Exception {
 
-    db = new ODatabaseDocumentTx("local:hashIndexTest");
+    db = new ODatabaseDocumentTx("local:target/hashIndexTest");
 
     if (db.exists()) {
       db.open("admin", "admin");
