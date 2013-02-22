@@ -94,9 +94,11 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   }
 
   public boolean checkForCondition(final OCommandContext iContext, final ODocument iConfig) {
-    final String condition = getFieldOfClass(iContext, iConfig, "if", String.class);
-    if (condition != null) {
-      Object result = evaluate(iContext, condition);
+    Object condition = getField(iContext, iConfig, "if");
+    if (condition instanceof Boolean)
+      return (Boolean) condition;
+    else if (condition != null) {
+      Object result = evaluate(iContext, (String) condition);
       return result != null && (Boolean) result;
     }
     return true;
