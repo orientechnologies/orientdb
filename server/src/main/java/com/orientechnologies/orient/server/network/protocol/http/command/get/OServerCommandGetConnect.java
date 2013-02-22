@@ -202,7 +202,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
           json.writeAttribute(3, false, "mode", role.getMode().toString());
 
           json.beginCollection(3, true, "rules");
-          if(role.getRules() != null) {
+          if (role.getRules() != null) {
             for (Entry<String, Byte> rule : role.getRules().entrySet()) {
               json.beginObject(4);
               json.writeAttribute(4, true, "name", rule.getKey());
@@ -250,9 +250,6 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       json.flush();
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-    } catch (Exception ex)  {
-      OLogManager.instance().error(this, "Error to show pages " + ex.getMessage());
-      throw new InterruptedException(ex.getMessage());
     } finally {
       if (db != null)
         db.close();
