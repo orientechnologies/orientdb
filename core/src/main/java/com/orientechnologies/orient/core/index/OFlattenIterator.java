@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,26 +27,41 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * Iterator that allow to iterate against multiple collection of elements.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
- * @param <T>
  */
-public class OFlattenIterator<T> implements Iterator<OIdentifiable> {
-  private Iterator<? extends Collection<OIdentifiable>> subIterator;
-  private Iterator<OIdentifiable>                       partialIterator;
+public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIdentifiable> {
+  private List<Object>            internalCollections;
+  private Iterator<?>             iteratorOfInternalCollections;
+  private Iterator<OIdentifiable> partialIterator;
+
+  public OFlattenIterator() {
+    internalCollections = new ArrayList<Object>();
+  }
+
+  public OFlattenIterator(final Collection<Collection<OIdentifiable>> iterators) {
+    iteratorOfInternalCollections = iterators.iterator();
+    getNextPartial();
+  }
 
   public OFlattenIterator(final Iterator<? extends Collection<OIdentifiable>> iterator) {
-    subIterator = iterator;
+    iteratorOfInternalCollections = iterator;
     getNextPartial();
   }
 
   @Override
   public boolean hasNext() {
+    if (internalCollections != null) {
+      // THE FIRST TIME CREATE THE ITERATOR
+      iteratorOfInternalCollections = internalCollections.iterator();
+      internalCollections = null;
+      getNextPartial();
+    }
+
     if (partialIterator == null)
       return false;
 
     if (partialIterator.hasNext())
       return true;
-    else if (subIterator.hasNext())
+    else if (iteratorOfInternalCollections.hasNext())
       return getNextPartial();
 
     return false;
@@ -59,21 +76,47 @@ public class OFlattenIterator<T> implements Iterator<OIdentifiable> {
   }
 
   @Override
+  public Iterator<OIdentifiable> iterator() {
+    return this;
+  }
+
+  public void add(final Object iValue) {
+    if (internalCollections == null)
+      throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
+
+    internalCollections.add(iValue);
+  }
+
+  @Override
   public void remove() {
     throw new UnsupportedOperationException("OFlattenIterator.remove()");
   }
 
+  @SuppressWarnings("unchecked")
   protected boolean getNextPartial() {
-    if (subIterator != null)
-      while (subIterator.hasNext()) {
-        final Collection<OIdentifiable> next = subIterator.next();
-        if (next != null && !next.isEmpty()) {
-          partialIterator = next.iterator();
-          return true;
+    if (iteratorOfInternalCollections != null)
+      while (iteratorOfInternalCollections.hasNext()) {
+        final Object next = iteratorOfInternalCollections.next();
+        if (next != null) {
+          if (next instanceof Iterator<?>) {
+            if (((Iterator<OIdentifiable>) next).hasNext()) {
+              partialIterator = (Iterator<OIdentifiable>) next;
+              return true;
+            }
+          } else if (next instanceof Collection<?>) {
+            if (!((Collection<OIdentifiable>) next).isEmpty()) {
+              partialIterator = ((Collection<OIdentifiable>) next).iterator();
+              return true;
+            }
+          } else if (next instanceof OIdentifiable) {
+            final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+            list.add((OIdentifiable) next);
+            partialIterator = list.iterator();
+            return true;
+          }
         }
       }
 
     return false;
   }
-
 }
