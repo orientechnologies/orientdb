@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OFlattenIterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
@@ -433,7 +434,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
-      tempResult.add(iRecord);
+      ((Collection<OIdentifiable>) tempResult).add(iRecord);
     }
   }
 
@@ -938,7 +939,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
-    ODocumentHelper.sort(tempResult, orderedFields);
+    ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
     orderedFields.clear();
   }
 
@@ -957,15 +958,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         Object r = ((OSQLFilterItemVariable) flattenTarget).getValue(null, context);
         if (r != null) {
           if (r instanceof OIdentifiable)
-            tempResult.add((OIdentifiable) r);
+            ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
           else if (OMultiValue.isMultiValue(r)) {
             for (Object o : OMultiValue.getMultiValueIterable(r))
-              tempResult.add((OIdentifiable) o);
+              ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
           }
         }
       }
     } else {
-      final List<OIdentifiable> finalResult = new ArrayList<OIdentifiable>();
+      OFlattenIterator finalResult = new OFlattenIterator();
       for (OIdentifiable id : tempResult) {
         if (flattenTarget instanceof OSQLFilterItem)
           fieldValue = ((OSQLFilterItem) flattenTarget).getValue(id.getRecord(), context);
@@ -976,28 +977,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (fieldValue != null)
           if (fieldValue instanceof Collection<?>) {
-            for (Object o : ((Collection<?>) fieldValue)) {
-              if (o instanceof OIdentifiable)
-                finalResult.add(((OIdentifiable) o).getRecord());
-              else if (o instanceof List) {
-                List<OIdentifiable> list = (List<OIdentifiable>) o;
-                for (int i = 0; i < list.size(); i++)
-                  finalResult.add(list.get(i).getRecord());
-              }
-            }
+            finalResult.add((Collection<OIdentifiable>) fieldValue);
           } else if (fieldValue instanceof Map<?, ?>) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
-              final Object o = entry.getValue();
-
-              if (o instanceof OIdentifiable)
-                finalResult.add(((OIdentifiable) o).getRecord());
-              else if (o instanceof List) {
-                List<OIdentifiable> list = (List<OIdentifiable>) o;
-                for (int i = 0; i < list.size(); i++)
-                  finalResult.add(list.get(i).getRecord());
-              }
-            }
-          } else
+            finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
+          } else if (fieldValue instanceof OFlattenIterator) {
+            finalResult = (OFlattenIterator) fieldValue;
+          } else if (fieldValue instanceof OIdentifiable)
             finalResult.add((OIdentifiable) fieldValue);
       }
       tempResult = finalResult;
@@ -1223,7 +1208,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (g.getKey() != null || groupedResult.size() == 1) {
           final ODocument doc = g.getValue().getResult();
           if (doc != null && !doc.isEmpty())
-            tempResult.add(doc);
+            ((List<OIdentifiable>) tempResult).add(doc);
         }
       }
     }
@@ -1277,7 +1262,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (tempResult == null)
             tempResult = new ArrayList<OIdentifiable>();
-          tempResult.add(new ODocument().field(entry.getKey(), count));
+          ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
           return true;
         }
       }
