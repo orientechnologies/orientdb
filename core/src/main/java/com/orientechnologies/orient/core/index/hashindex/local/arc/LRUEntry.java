@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index.hashindex.local;
-
-import com.orientechnologies.orient.core.index.OIndexException;
+package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
 /**
  * @author Andrey Lomakin
- * @since 18.02.13
+ * @since 25.02.13
  */
-public class OIndexMaximumLimitReachedException extends OIndexException {
-  public OIndexMaximumLimitReachedException(String string) {
-    super(string);
-  }
+class LRUEntry {
+  String   fileName;
+  long     filePosition;
 
-  public OIndexMaximumLimitReachedException(String message, Throwable cause) {
-    super(message, cause);
-  }
+  long     dataPointer;
+
+  long     hashCode;
+
+  LRUEntry next;
+
+  LRUEntry after;
+  LRUEntry before;
+
+  boolean  isDirty;
 }

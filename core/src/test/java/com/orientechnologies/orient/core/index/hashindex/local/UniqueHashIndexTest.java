@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.index.hashindex.local;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
