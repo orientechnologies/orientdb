@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
@@ -58,7 +73,7 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
 public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive implements OIndexInternal<T>, OCloseable {
   private static final String  CONFIG_CLUSTERS                       = "clusters";
   private static final String  CONFIG_MAP_RID                        = "mapRid";
-  private static final String  BUCKET_FILE_EXTENSION                 = ".obf";
+  public static final String   BUCKET_FILE_EXTENSION                 = ".obf";
   public static final String   METADATA_CONFIGURATION_FILE_EXTENSION = ".imc";
   public static final String   TREE_STATE_FILE_EXTENSION             = ".tsc";
 
@@ -78,10 +93,10 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private int                  hashTreeTombstone                     = -1;
   private long                 bucketTombstonePointer                = -1;
 
-  private final int            maxLevelDepth                         = 8;
-  private final int            maxLevelSize;
+  public static final int      MAX_LEVEL_DEPTH                       = 8;
+  public static final int      MAX_LEVEL_SIZE                        = 1 << MAX_LEVEL_DEPTH;
 
-  private final int            levelMask;
+  public static final int      LEVEL_MASK                            = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
   private OStorageLocal        storage;
 
@@ -99,20 +114,9 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ORID                 identity;
   private OMultiFileSegment    bucketFile;
 
-  public OAbstractLocalHashIndex(ODatabaseRecord iDatabase) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
-
-    storage = (OStorageLocal) iDatabase.getStorage();
-
-    this.maxLevelSize = 1 << maxLevelDepth;
-    this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
-  }
-
   public OAbstractLocalHashIndex(String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
-    this.maxLevelSize = 1 << maxLevelDepth;
-    this.levelMask = Integer.MAX_VALUE >>> (31 - maxLevelDepth);
     this.type = type;
   }
 
@@ -148,7 +152,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
       final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name, 0);
       bucketFile = new OMultiFileSegment(storage, fileConfiguration, BUCKET_FILE_EXTENSION, OHashIndexBucket.MAX_BUCKET_SIZE_BYTES);
-      bucketFile.create(OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * maxLevelSize);
+      bucketFile.create(OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * MAX_LEVEL_SIZE);
 
       metadataStore.create(-1);
       treeStateStore.create(-1);
@@ -185,18 +189,18 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   }
 
   private void initHashTreeState() throws IOException {
-    final OHashIndexBucket emptyBucket = new OHashIndexBucket(maxLevelDepth);
+    final OHashIndexBucket emptyBucket = new OHashIndexBucket(MAX_LEVEL_DEPTH);
 
-    bucketFile.allocateSpace(OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * maxLevelSize);
+    bucketFile.allocateSpace(OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * MAX_LEVEL_SIZE);
 
-    for (long filePosition = 0; filePosition < OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * maxLevelSize; filePosition += OHashIndexBucket.MAX_BUCKET_SIZE_BYTES)
+    for (long filePosition = 0; filePosition < OHashIndexBucket.MAX_BUCKET_SIZE_BYTES * MAX_LEVEL_SIZE; filePosition += OHashIndexBucket.MAX_BUCKET_SIZE_BYTES)
       saveBucket(filePosition, emptyBucket);
 
-    final long[] rootTree = new long[maxLevelSize];
-    bucketsSizes = new int[maxLevelSize];
-    bucketsCount = maxLevelSize;
+    final long[] rootTree = new long[MAX_LEVEL_SIZE];
+    bucketsSizes = new int[MAX_LEVEL_SIZE];
+    bucketsCount = MAX_LEVEL_SIZE;
 
-    for (int i = 0; i < maxLevelSize; i++) {
+    for (int i = 0; i < MAX_LEVEL_SIZE; i++) {
       rootTree[i] = createBucketPointer(i * OHashIndexBucket.MAX_BUCKET_SIZE_BYTES);
       bucketsSizes[i] = emptyBucket.getDataBufferLength();
     }
@@ -205,7 +209,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     hashTree[0] = rootTree;
 
     nodesMetadata = new OEHNodeMetadata[1];
-    nodesMetadata[0] = new OEHNodeMetadata((byte) 0, (byte) 0, (byte) maxLevelDepth);
+    nodesMetadata[0] = new OEHNodeMetadata((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH);
 
     size = 0;
     hashTreeSize = 1;
@@ -385,7 +389,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       if (bucketDepth <= bucketPath.nodeGlobalDepth) {
         updateNodeAfterBucketSplit(bucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
       } else {
-        if (bucketPath.nodeLocalDepth < maxLevelDepth) {
+        if (bucketPath.nodeLocalDepth < MAX_LEVEL_DEPTH) {
           final NodeSplitResult nodeSplitResult = splitNode(bucketPath, node);
 
           assert !(nodeSplitResult.allLeftHashMapsEqual && nodeSplitResult.allRightHashMapsEqual);
@@ -398,7 +402,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           assert nodeSplitResult.allRightHashMapsEqual == checkAllMapsContainSameBucket(newNode, hashMapSize);
 
           int newNodeIndex = -1;
-          if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= maxLevelSize / 2)
+          if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= MAX_LEVEL_SIZE / 2)
             newNodeIndex = addNewNode(newNode, nodeLocalDepth);
 
           final int updatedItemIndex = bucketPath.itemIndex << 1;
@@ -408,14 +412,14 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           boolean allLeftHashMapsEqual = nodeSplitResult.allLeftHashMapsEqual;
           boolean allRightHashMapsEqual = nodeSplitResult.allRightHashMapsEqual;
 
-          if (updatedOffset < maxLevelSize) {
+          if (updatedOffset < MAX_LEVEL_SIZE) {
             allLeftHashMapsEqual = false;
             final BucketPath updatedBucketPath = new BucketPath(bucketPath.parent, updatedOffset, updatedItemIndex,
                 bucketPath.nodeIndex, nodeLocalDepth, updatedGlobalDepth);
             updateNodeAfterBucketSplit(updatedBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
           } else {
             allRightHashMapsEqual = false;
-            final BucketPath newBucketPath = new BucketPath(bucketPath.parent, updatedOffset - maxLevelSize, updatedItemIndex,
+            final BucketPath newBucketPath = new BucketPath(bucketPath.parent, updatedOffset - MAX_LEVEL_SIZE, updatedItemIndex,
                 newNodeIndex, nodeLocalDepth, updatedGlobalDepth);
             updateNodeAfterBucketSplit(newBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
           }
@@ -461,7 +465,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     deleteNode(nodePath.nodeIndex);
 
     final OEHNodeMetadata metadata = nodesMetadata[nodePath.parent.nodeIndex];
-    if (nodePath.parent.itemIndex < maxLevelSize / 2) {
+    if (nodePath.parent.itemIndex < MAX_LEVEL_SIZE / 2) {
       final int maxChildDepth = metadata.getMaxLeftChildDepth();
       if (maxChildDepth == localNodeDepth)
         metadata.setMaxLeftChildDepth(getMaxLevelDepth(parentNode, 0, parentNode.length / 2));
@@ -477,7 +481,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     if (bucket.size() > OHashIndexBucket.MAX_BUCKET_SIZE * MERGE_THRESHOLD)
       return false;
 
-    if (bucketDepth - maxLevelDepth < 1)
+    if (bucketDepth - MAX_LEVEL_DEPTH < 1)
       return false;
 
     int offset = nodePath.nodeGlobalDepth - (bucketDepth - 1);
@@ -494,7 +498,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     final int diff = bucketDepth - 1 - (currentNode.nodeGlobalDepth - nodeLocalDepth);
     final int interval = (1 << (nodeLocalDepth - diff - 1));
 
-    int firstStartIndex = currentNode.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
+    int firstStartIndex = currentNode.itemIndex & ((LEVEL_MASK << (nodeLocalDepth - diff)) & LEVEL_MASK);
     int firstEndIndex = firstStartIndex + interval;
 
     final int secondStartIndex = firstEndIndex;
@@ -613,7 +617,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     final int diff = bucketDepth - 1 - (currentNode.nodeGlobalDepth - nodeLocalDepth);
 
     final int interval = (1 << (nodeLocalDepth - diff - 1));
-    final int firstStartIndex = currentNode.itemIndex & ((levelMask << (nodeLocalDepth - diff)) & levelMask);
+    final int firstStartIndex = currentNode.itemIndex & ((LEVEL_MASK << (nodeLocalDepth - diff)) & LEVEL_MASK);
     final int firstEndIndex = firstStartIndex + interval;
 
     final int secondStartIndex = firstEndIndex;
@@ -774,7 +778,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     int nodeIndex = 0;
     int offset = 0;
 
-    int index = (int) ((hashCode >>> (64 - nodeDepth)) & (levelMask >>> (maxLevelDepth - localNodeDepth)));
+    int index = (int) ((hashCode >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
     BucketPath currentNode = new BucketPath(parentNode, 0, index, 0, localNodeDepth, nodeDepth);
     do {
       final long position = hashTree[nodeIndex][index + offset];
@@ -787,7 +791,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       localNodeDepth = nodesMetadata[nodeIndex].getNodeLocalDepth();
       nodeDepth += localNodeDepth;
 
-      index = (int) ((hashCode >>> (64 - nodeDepth)) & (levelMask >>> (maxLevelDepth - localNodeDepth)));
+      index = (int) ((hashCode >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
 
       parentNode = currentNode;
       currentNode = new BucketPath(parentNode, offset, index, nodeIndex, localNodeDepth, nodeDepth);
@@ -798,7 +802,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   }
 
   private void addNewLevelNode(BucketPath bucketPath, long[] node, long newBucketPointer, long updatedBucketPointer) {
-    final long[] newNode = new long[maxLevelSize];
+    final long[] newNode = new long[MAX_LEVEL_SIZE];
 
     final int newNodeDepth;
     final int newNodeStartIndex;
@@ -812,7 +816,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       else
         newNodeDepth = 1;
 
-      mapInterval = 1 << (maxLevelDepth - newNodeDepth);
+      mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
       newNodeStartIndex = (bucketPath.itemIndex / mapInterval) * mapInterval;
     } else {
       final int maxDepth = nodesMetadata[bucketPath.nodeIndex].getMaxRightChildDepth();
@@ -822,7 +826,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       else
         newNodeDepth = 1;
 
-      mapInterval = 1 << (maxLevelDepth - newNodeDepth);
+      mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
       newNodeStartIndex = ((bucketPath.itemIndex - node.length / 2) / mapInterval) * mapInterval + node.length / 2;
     }
 
@@ -878,7 +882,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     final long[] parentNode = hashTree[bucketPath.parent.nodeIndex];
     assert assertParentNodeStartIndex(bucketPath, parentNode, startIndex);
 
-    final int pointersSize = 1 << (maxLevelDepth - nodeLocalDepth);
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
     if (allLeftHashMapEquals) {
       for (int i = 0; i < pointersSize; i++) {
         final long position = node[i * hashMapSize];
@@ -907,7 +911,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       return;
 
     final OEHNodeMetadata metadata = nodesMetadata[parentPath.nodeIndex];
-    if (parentPath.itemIndex < maxLevelSize / 2) {
+    if (parentPath.itemIndex < MAX_LEVEL_SIZE / 2) {
       final int maxChildDepth = metadata.getMaxLeftChildDepth();
       if (childDepth > maxChildDepth)
         metadata.setMaxLeftChildDepth(childDepth);
@@ -931,12 +935,12 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   private int findParentNodeStartIndex(BucketPath bucketPath) {
     final BucketPath parentBucketPath = bucketPath.parent;
-    final int pointersSize = 1 << (maxLevelDepth - bucketPath.nodeLocalDepth);
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - bucketPath.nodeLocalDepth);
 
-    if (parentBucketPath.itemIndex < maxLevelSize / 2)
+    if (parentBucketPath.itemIndex < MAX_LEVEL_SIZE / 2)
       return (parentBucketPath.itemIndex / pointersSize) * pointersSize;
 
-    return ((parentBucketPath.itemIndex - maxLevelSize / 2) / pointersSize) * pointersSize + maxLevelSize / 2;
+    return ((parentBucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize + MAX_LEVEL_SIZE / 2;
   }
 
   private boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
@@ -979,7 +983,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   }
 
   private NodeSplitResult splitNode(BucketPath bucketPath, long[] node) {
-    final long[] newNode = new long[maxLevelSize];
+    final long[] newNode = new long[MAX_LEVEL_SIZE];
     final int hashMapSize = 1 << (bucketPath.nodeLocalDepth + 1);
 
     boolean hashMapItemsAreEqual = true;
@@ -989,13 +993,13 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     int mapCounter = 0;
     long firstPosition = -1;
 
-    for (int i = maxLevelSize / 2; i < maxLevelSize; i++) {
+    for (int i = MAX_LEVEL_SIZE / 2; i < MAX_LEVEL_SIZE; i++) {
       final long position = node[i];
       if (hashMapItemsAreEqual && mapCounter == 0)
         firstPosition = position;
 
-      newNode[2 * (i - maxLevelSize / 2)] = position;
-      newNode[2 * (i - maxLevelSize / 2) + 1] = position;
+      newNode[2 * (i - MAX_LEVEL_SIZE / 2)] = position;
+      newNode[2 * (i - MAX_LEVEL_SIZE / 2) + 1] = position;
 
       if (hashMapItemsAreEqual) {
         hashMapItemsAreEqual = firstPosition == position;
@@ -1011,7 +1015,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
     hashMapItemsAreEqual = true;
     final long[] updatedNode = new long[node.length];
-    for (int i = 0; i < maxLevelSize / 2; i++) {
+    for (int i = 0; i < MAX_LEVEL_SIZE / 2; i++) {
       final long position = node[i];
       if (hashMapItemsAreEqual && mapCounter == 0)
         firstPosition = position;
@@ -1245,7 +1249,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public String getType() {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    return type;
   }
 
   @Override
