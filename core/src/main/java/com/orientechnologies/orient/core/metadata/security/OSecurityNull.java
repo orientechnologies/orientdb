@@ -126,4 +126,8 @@ public class OSecurityNull implements OSecurity {
   public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return null;
   }
+  
+  @Override
+  public void createClassTrigger() {
+  }
 }

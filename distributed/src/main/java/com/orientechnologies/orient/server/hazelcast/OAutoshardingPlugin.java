@@ -78,7 +78,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   public void onOpen(ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex<?>) {
       iDatabase.replaceStorage(new OAutoshardedStorageImpl(serverInstance, (OStorageEmbedded) iDatabase.getStorage(),
-							dhtConfiguration));
+          dhtConfiguration));
     }
   }
 
