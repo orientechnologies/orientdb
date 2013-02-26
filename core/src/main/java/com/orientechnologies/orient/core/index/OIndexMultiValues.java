@@ -576,7 +576,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(map.values().iterator());
+      return new OFlattenIterator(map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
@@ -589,7 +589,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
+      return new OFlattenIterator(((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();
