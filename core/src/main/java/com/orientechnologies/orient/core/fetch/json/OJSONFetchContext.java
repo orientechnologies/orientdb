@@ -72,7 +72,8 @@ public class OJSONFetchContext implements OFetchContext {
     StringBuilder buffer = typesStack.pop();
     if (keepTypes && buffer.length() > 0)
       try {
-        jsonWriter.writeAttribute(indentLevel + 1, true, ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
+        jsonWriter.writeAttribute(indentLevel > -1 ? indentLevel + 1 : -1, true, ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES,
+            buffer.toString());
       } catch (IOException e) {
         throw new OFetchException("Error writing field types", e);
       }
