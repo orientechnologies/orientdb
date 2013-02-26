@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.arc;
  */
 class LRUEntry {
   String   fileName;
-  long     filePosition;
+  long     pageIndex;
 
   long     dataPointer;
 

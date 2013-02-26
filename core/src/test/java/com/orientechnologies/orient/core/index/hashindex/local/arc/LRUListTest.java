@@ -274,7 +274,7 @@ public class LRUListTest {
 
   private void assertLRUEntry(LRUEntry lruEntry, String fileName, long filePosition, long dataPointer) {
     Assert.assertEquals(lruEntry.fileName, fileName);
-    Assert.assertEquals(lruEntry.filePosition, filePosition);
+    Assert.assertEquals(lruEntry.pageIndex, filePosition);
     Assert.assertEquals(lruEntry.dataPointer, dataPointer);
   }
 }

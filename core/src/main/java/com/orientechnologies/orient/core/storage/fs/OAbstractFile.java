@@ -453,7 +453,9 @@ public abstract class OAbstractFile implements OFile {
     if (accessFile == null)
       throw new FileNotFoundException(osFile.getAbsolutePath());
 
-    accessFile.setLength(iNewSize);
+    if (accessFile.length() != iNewSize)
+      accessFile.setLength(iNewSize);
+
     accessFile.seek(0);
     channel = accessFile.getChannel();
 

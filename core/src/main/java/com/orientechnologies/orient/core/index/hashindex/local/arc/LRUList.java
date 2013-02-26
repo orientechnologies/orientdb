@@ -26,7 +26,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 25.02.13
  */
-public class LRUList implements Iterable<LRUEntry> {
+class LRUList implements Iterable<LRUEntry> {
   private static final int SEED = 362498820;
 
   private LRUEntry         head;
@@ -49,7 +49,7 @@ public class LRUList implements Iterable<LRUEntry> {
     LRUEntry lruEntry = entries[index];
 
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.filePosition != filePosition || !lruEntry.fileName.equals(fileName)))
+        && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != filePosition || !lruEntry.fileName.equals(fileName)))
       lruEntry = lruEntry.next;
 
     return lruEntry;
@@ -63,7 +63,7 @@ public class LRUList implements Iterable<LRUEntry> {
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.filePosition != filePosition)) {
+        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -102,7 +102,7 @@ public class LRUList implements Iterable<LRUEntry> {
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.filePosition != filePosition)) {
+        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -110,7 +110,7 @@ public class LRUList implements Iterable<LRUEntry> {
     if (lruEntry == null) {
       lruEntry = new LRUEntry();
 
-      lruEntry.filePosition = filePosition;
+      lruEntry.pageIndex = filePosition;
       lruEntry.fileName = fileName;
       lruEntry.hashCode = hashCode;
 
@@ -137,15 +137,25 @@ public class LRUList implements Iterable<LRUEntry> {
       head = lruEntry;
       tail = lruEntry;
     } else {
-      tail.after = lruEntry;
-      lruEntry.before = tail;
-      tail = lruEntry;
+      if (tail != lruEntry) {
+        tail.after = lruEntry;
+        lruEntry.before = tail;
+        tail = lruEntry;
+      }
     }
 
     if (size >= nextThreshold)
       rehash();
 
     return lruEntry;
+  }
+
+  public void clear() {
+    entries = new LRUEntry[1024];
+    nextThreshold = (int) (entries.length * 0.75);
+
+    head = tail = null;
+    size = 0;
   }
 
   private void rehash() {
@@ -198,7 +208,11 @@ public class LRUList implements Iterable<LRUEntry> {
   }
 
   public LRUEntry removeLRU() {
-    return remove(head.fileName, head.filePosition);
+    return remove(head.fileName, head.pageIndex);
+  }
+
+  public LRUEntry getLRU() {
+    return head;
   }
 
   @Override
