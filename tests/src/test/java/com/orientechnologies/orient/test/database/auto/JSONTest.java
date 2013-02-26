@@ -581,7 +581,7 @@ public class JSONTest {
     String res = doc.toJSON();
 
     // LOOK FOR "quotes": \"\",\"oops\":\"123\"
-    Assert.assertTrue(res.contains("\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
+    Assert.assertTrue(res.contains("\"quotes\":\"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 
   public void testDates() {

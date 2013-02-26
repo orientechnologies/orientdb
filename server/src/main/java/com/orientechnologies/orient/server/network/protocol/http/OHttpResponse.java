@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:2,rid,version,attribSameRow,class";
+  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class";
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
@@ -219,9 +219,9 @@ public class OHttpResponse {
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
 
     // WRITE RECORDS
-    json.beginCollection(1, true, "result");
+    json.beginCollection(-1, true, "result");
     formatMultiValue(iRecords, buffer, format);
-    json.endCollection(1, true);
+    json.endCollection(-1, true);
 
     json.endObject();
 

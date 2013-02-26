@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.version.ODistributedVersion;
 public class OJSONFetchContext implements OFetchContext {
 
   protected final OJSONWriter                  jsonWriter;
-  protected int                                indentLevel     = 0;
+  protected int                                indentLevel     = -1;
   protected final boolean                      includeType;
   protected final boolean                      includeId;
   protected final boolean                      includeVer;
@@ -206,33 +206,37 @@ public class OJSONFetchContext implements OFetchContext {
   public void writeSignature(final OJSONWriter json, int indentLevel, boolean includeType, boolean includeId, boolean includeVer,
       boolean includeClazz, boolean attribSameRow, final ORecordInternal<?> record) throws IOException {
     boolean firstAttribute = true;
+
+    if (indentLevel > -1)
+      indentLevel++;
+
     if (includeType) {
-      json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
+      json.writeAttribute(firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE,
           "" + (char) record.getRecordType());
       if (attribSameRow)
         firstAttribute = false;
     }
     if (includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
-      json.writeAttribute(!firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
-          .getIdentity().toString());
+      json.writeAttribute(!firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record.getIdentity()
+          .toString());
       if (attribSameRow)
         firstAttribute = false;
     }
     if (includeVer) {
-      json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
+      json.writeAttribute(firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
           .getRecordVersion().getCounter());
       if (attribSameRow)
         firstAttribute = false;
       if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
         final ODistributedVersion ver = (ODistributedVersion) record.getRecordVersion();
-        json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP,
+        json.writeAttribute(firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP,
             ver.getTimestamp());
-        json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS,
+        json.writeAttribute(firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS,
             ver.getMacAddress());
       }
     }
     if (includeClazz && record instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) record).getClassName() != null) {
-      json.writeAttribute(firstAttribute ? indentLevel + 1 : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
+      json.writeAttribute(firstAttribute ? indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
           ((ORecordSchemaAware<?>) record).getClassName());
       if (attribSameRow)
         firstAttribute = false;
