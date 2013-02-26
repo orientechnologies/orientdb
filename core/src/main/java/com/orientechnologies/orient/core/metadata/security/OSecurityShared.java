@@ -486,6 +486,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
 	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_DELETE))    //after delete
 		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  classTrigger.setSuperClass(db.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME));
+	  //classTrigger.setSuperClass(db.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME));
   }
 }
