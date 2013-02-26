@@ -69,6 +69,7 @@ public class OExecuteBlock extends OAbstractBlock {
           current = ((Entry<?, ?>) current).getValue();
 
         assignVariable(iContext, "current", current);
+        assignVariable(iContext, "currentIndex", iterated);
 
         debug(iContext, "Executing...");
         final Object doClause = getRequiredField(iContext, iConfig, "do");
