@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OFlattenIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
@@ -40,6 +42,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
     super(NAME, 1, -1);
   }
 
+  @SuppressWarnings("unchecked")
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters.length == 1) {
@@ -59,18 +62,17 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
       return context;
     } else {
       // IN-LINE MODE (STATELESS)
-      final HashSet<Object> result = new HashSet<Object>();
+      final List<Collection<OIdentifiable>> result = new ArrayList<Collection<OIdentifiable>>();
       for (Object value : iParameters) {
         if (value != null) {
-
           if (value instanceof OSQLFilterItemVariable)
             value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
 
-          OMultiValue.add(result, value);
+          result.add((Collection<OIdentifiable>) value);
         }
       }
 
-      return result;
+      return new OFlattenIterator(result);
     }
   }
 
