@@ -43,7 +43,12 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
   public void init() {
     Orient.instance().getProfiler().startRecording();
 
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    database = new ODatabaseFlat(System.getProperty("url"));
+    if (database.exists())
+      database.open("admin", "admin");
+    else
+      database.create();
+
     record = database.newInstance();
 
     database.declareIntent(new OIntentMassiveInsert());
