@@ -17,22 +17,21 @@ package com.orientechnologies.orient.core.memory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-  private final Map<Listener, Object> listeners    = new IdentityHashMap<Listener, Object>(128);
+  private final Map<Listener, Object> listeners    = new WeakHashMap<Listener, Object>(128);
   private int                         alertTimes   = 0;
   protected ReferenceQueue<Object>    monitorQueue = new ReferenceQueue<Object>();
   protected SoftReference<Object>     monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
@@ -73,6 +72,15 @@ public class OMemoryWatchDog extends Thread {
                 return alertTimes;
               }
             });
+      Orient
+          .instance()
+          .getProfiler()
+          .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation",
+              METRIC_TYPE.STAT, new OProfilerHookValue() {
+                public Object getValue() {
+                  return lastGC;
+                }
+              });
 
     while (true) {
       try {
@@ -130,14 +138,28 @@ public class OMemoryWatchDog extends Thread {
     }
   }
 
-  public static void freeMemory(final long iDelayTime) {
-    // INVOKE GC AND WAIT A BIT
-    System.gc();
-    if (iDelayTime > 0)
-      try {
-        Thread.sleep(iDelayTime);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+  private static long lastGC = 0;
+
+  public static void freeMemoryForOptimization(final long iDelayTime) {
+      freeMemory(iDelayTime, OGlobalConfiguration.GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
+  }
+
+  public static void freeMemoryForResourceCleanup(final long iDelayTime) {
+      freeMemory(iDelayTime, OGlobalConfiguration.GC_DELAY_FOR_RESOURCE_CLEANUP.getValueAsLong());
+  }
+
+  private static void freeMemory(final long iDelayTime, long minimalTimeAmount) {
+      long dateFromLastGC = new Date().getTime() - lastGC;
+      if (dateFromLastGC > minimalTimeAmount) {
+          System.gc();
+          lastGC = new Date().getTime();
+          if (iDelayTime > 0)
+            try {
+              Thread.sleep(iDelayTime);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
       }
   }
+
 }

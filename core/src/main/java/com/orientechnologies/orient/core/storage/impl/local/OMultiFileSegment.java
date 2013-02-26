@@ -439,7 +439,7 @@ public class OMultiFileSegment extends OSegment {
         }
         boolean renamed = file.renameTo(newFile);
         while (!renamed) {
-          OMemoryWatchDog.freeMemory(100);
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           renamed = file.renameTo(newFile);
         }
       }

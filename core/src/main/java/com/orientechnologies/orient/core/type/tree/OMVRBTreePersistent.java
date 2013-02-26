@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -975,14 +976,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected void freeMemory(final int i) {
     // LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
     optimize(true);
-
-    System.gc();
-
-    if (i > 0)
-      // WAIT A PROPORTIONAL TIME
-      try {
-        Thread.sleep(300 * i);
-      } catch (InterruptedException e1) {
-      }
+    OMemoryWatchDog.freeMemoryForOptimization(300 * i);
   }
 }
