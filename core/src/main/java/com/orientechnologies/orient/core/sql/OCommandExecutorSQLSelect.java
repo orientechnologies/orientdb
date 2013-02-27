@@ -939,6 +939,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
+    if (tempResult instanceof OFlattenIterator) {
+      final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+      for (OIdentifiable o : tempResult)
+        list.add(o);
+      tempResult = list;
+    }
+
     ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
     orderedFields.clear();
   }
