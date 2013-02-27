@@ -84,7 +84,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
         } catch (Exception e) {
           OLogManager.instance().debug(this,
               "Cannot write memory buffer to disk. Retrying (" + (i + 1) + "/" + FORCE_RETRY + ")...");
-          OMemoryWatchDog.freeMemory(FORCE_DELAY);
+          OMemoryWatchDog.freeMemoryForResourceCleanup(FORCE_DELAY);
         }
       }
 

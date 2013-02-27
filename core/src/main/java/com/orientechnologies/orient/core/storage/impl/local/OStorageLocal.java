@@ -423,7 +423,7 @@ public class OStorageLocal extends OStorageEmbedded {
                 DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
         // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-        OMemoryWatchDog.freeMemory(DELETE_WAIT_TIME);
+        OMemoryWatchDog.freeMemoryForResourceCleanup(DELETE_WAIT_TIME);
       }
 
       throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
