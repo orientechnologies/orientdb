@@ -640,7 +640,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         }
         boolean renamed = fileSegment.files[i].renameTo(newFile);
         while (!renamed) {
-          OMemoryWatchDog.freeMemory(100);
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           renamed = fileSegment.files[i].renameTo(newFile);
         }
       }
