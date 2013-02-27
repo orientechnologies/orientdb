@@ -91,19 +91,19 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       final OJSONWriter json = new OJSONWriter(buffer);
       json.beginObject();
 
-      json.beginObject(1, true, "server");
-      json.writeAttribute(2, true, "version", OConstants.ORIENT_VERSION);
+      json.beginObject("server");
+      json.writeAttribute("version", OConstants.ORIENT_VERSION);
       if (OConstants.getBuildNumber() != null)
-        json.writeAttribute(2, true, "build", OConstants.getBuildNumber());
-      json.writeAttribute(2, true, "osName", System.getProperty("os.name"));
-      json.writeAttribute(2, true, "osVersion", System.getProperty("os.version"));
-      json.writeAttribute(2, true, "osArch", System.getProperty("os.arch"));
-      json.writeAttribute(2, true, "javaVendor", System.getProperty("java.vm.vendor"));
-      json.writeAttribute(2, true, "javaVersion", System.getProperty("java.vm.version"));
-      json.endObject(1, true);
+        json.writeAttribute("build", OConstants.getBuildNumber());
+      json.writeAttribute("osName", System.getProperty("os.name"));
+      json.writeAttribute("osVersion", System.getProperty("os.version"));
+      json.writeAttribute("osArch", System.getProperty("os.arch"));
+      json.writeAttribute("javaVendor", System.getProperty("java.vm.vendor"));
+      json.writeAttribute("javaVersion", System.getProperty("java.vm.version"));
+      json.endObject();
 
       if (db.getMetadata().getSchema().getClasses() != null) {
-        json.beginCollection(1, true, "classes");
+        json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 
         for (OClass cls : db.getMetadata().getSchema().getClasses())
@@ -119,133 +119,132 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
             OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
           }
         }
-        json.endCollection(1, true);
+        json.endCollection();
       }
 
       if (db.getStorage() instanceof OStorageLocal) {
-        json.beginCollection(1, false, "dataSegments");
+        json.beginCollection("dataSegments");
         for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
-          json.beginObject(2, true, null);
-          json.writeAttribute(3, false, "id", data.getId());
-          json.writeAttribute(3, false, "name", data.getName());
-          json.writeAttribute(3, false, "size", data.getSize());
-          json.writeAttribute(3, false, "filled", data.getFilledUpTo());
-          json.writeAttribute(3, false, "maxSize", data.getConfig().maxSize);
-          json.writeAttribute(3, false, "files", Arrays.toString(data.getConfig().infoFiles));
-          json.endObject(2, false);
+          json.beginObject();
+          json.writeAttribute("id", data.getId());
+          json.writeAttribute("name", data.getName());
+          json.writeAttribute("size", data.getSize());
+          json.writeAttribute("filled", data.getFilledUpTo());
+          json.writeAttribute("maxSize", data.getConfig().maxSize);
+          json.writeAttribute("files", Arrays.toString(data.getConfig().infoFiles));
+          json.endObject();
         }
-        json.endCollection(1, true);
+        json.endCollection();
       }
 
       if (db.getClusterNames() != null) {
-        json.beginCollection(1, false, "clusters");
+        json.beginCollection("clusters");
         OCluster cluster;
         for (String clusterName : db.getClusterNames()) {
           cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
 
           try {
-            json.beginObject(2, true, null);
-            json.writeAttribute(3, false, "id", cluster.getId());
-            json.writeAttribute(3, false, "name", clusterName);
-            json.writeAttribute(3, false, "type", cluster.getType());
-            json.writeAttribute(3, false, "records", cluster.getEntries() - cluster.getTombstonesCount());
+            json.beginObject();
+            json.writeAttribute("id", cluster.getId());
+            json.writeAttribute("name", clusterName);
+            json.writeAttribute("type", cluster.getType());
+            json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
             if (cluster instanceof OClusterLocal) {
-              json.writeAttribute(3, false, "size", ((OClusterLocal) cluster).getSize());
-              json.writeAttribute(3, false, "filled", ((OClusterLocal) cluster).getFilledUpTo());
-              json.writeAttribute(3, false, "maxSize", ((OClusterLocal) cluster).getConfig().getMaxSize());
-              json.writeAttribute(3, false, "files", Arrays.toString(((OClusterLocal) cluster).getConfig().getInfoFiles()));
+              json.writeAttribute("size", ((OClusterLocal) cluster).getSize());
+              json.writeAttribute("filled", ((OClusterLocal) cluster).getFilledUpTo());
+              json.writeAttribute("maxSize", ((OClusterLocal) cluster).getConfig().getMaxSize());
+              json.writeAttribute("files", Arrays.toString(((OClusterLocal) cluster).getConfig().getInfoFiles()));
             } else {
-              json.writeAttribute(3, false, "size", "-");
-              json.writeAttribute(3, false, "filled", "-");
-              json.writeAttribute(3, false, "maxSize", "-");
-              json.writeAttribute(3, false, "files", "-");
+              json.writeAttribute("size", "-");
+              json.writeAttribute("filled", "-");
+              json.writeAttribute("maxSize", "-");
+              json.writeAttribute("files", "-");
             }
           } catch (Exception e) {
-            json.writeAttribute(3, false, "records", "? (Unauthorized)");
+            json.writeAttribute("records", "? (Unauthorized)");
           }
-          json.endObject(2, false);
+          json.endObject();
         }
-        json.endCollection(1, true);
+        json.endCollection();
       }
 
       if (db.getStorage() instanceof OStorageLocal) {
-        json.beginCollection(1, false, "txSegment");
+        json.beginCollection("txSegment");
         final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
-        json.beginObject(2, true, null);
-        json.writeAttribute(3, false, "size", txSegment.getSize());
-        json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
-        json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
-        json.writeAttribute(3, false, "file", txSegment.getConfig().path);
-        json.endObject(2, false);
-        json.endCollection(1, true);
+        json.beginObject();
+        json.writeAttribute("size", txSegment.getSize());
+        json.writeAttribute("filled", txSegment.getFilledUpTo());
+        json.writeAttribute("maxSize", txSegment.getConfig().maxSize);
+        json.writeAttribute("file", txSegment.getConfig().path);
+        json.endObject();
+        json.endCollection();
       }
 
       if (db.getUser() != null) {
-        json.writeAttribute(1, false, "currentUser", db.getUser().getName());
+        json.writeAttribute("currentUser", db.getUser().getName());
 
-        json.beginCollection(1, false, "users");
+        json.beginCollection("users");
         for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
           OUser user = new OUser(doc);
-          json.beginObject(2, true, null);
-          json.writeAttribute(3, false, "name", user.getName());
-          json.writeAttribute(3, false, "roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
-          json.endObject(2, false);
+          json.beginObject();
+          json.writeAttribute("name", user.getName());
+          json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+          json.endObject();
         }
-        json.endCollection(1, true);
+        json.endCollection();
 
-        json.beginCollection(1, true, "roles");
+        json.beginCollection("roles");
         ORole role;
         for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
           role = new ORole(doc);
-          json.beginObject(2, true, null);
-          json.writeAttribute(3, false, "name", role.getName());
-          json.writeAttribute(3, false, "mode", role.getMode().toString());
+          json.beginObject();
+          json.writeAttribute("name", role.getName());
+          json.writeAttribute("mode", role.getMode().toString());
 
-          json.beginCollection(3, true, "rules");
+          json.beginCollection("rules");
           if (role.getRules() != null) {
             for (Entry<String, Byte> rule : role.getRules().entrySet()) {
-              json.beginObject(4);
-              json.writeAttribute(4, true, "name", rule.getKey());
-              json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
-              json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
-              json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
-              json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
-              json.endObject(4, true);
+              json.beginObject();
+              json.writeAttribute("name", rule.getKey());
+              json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+              json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+              json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+              json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+              json.endObject();
             }
           }
-          json.endCollection(3, false);
+          json.endCollection();
 
-          json.endObject(2, true);
+          json.endObject();
         }
-        json.endCollection(1, true);
+        json.endCollection();
       }
 
-      json.beginObject(1, true, "config");
+      json.beginObject("config");
 
-      json.beginCollection(2, true, "values");
-      json.writeObjects(3, true, null,
-          new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().dateFormat }, new Object[] { "name",
-              "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] { "name",
-              "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
+      json.beginCollection("values");
+      json.writeObjects(null, new Object[] { "name", "dateFormat", "value", db.getStorage().getConfiguration().dateFormat },
+          new Object[] { "name", "dateTimeFormat", "value", db.getStorage().getConfiguration().dateTimeFormat }, new Object[] {
+              "name", "localeCountry", "value", db.getStorage().getConfiguration().getLocaleCountry() }, new Object[] { "name",
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
               "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
               db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
               db.getStorage().getConfiguration().version });
-      json.endCollection(2, true);
+      json.endCollection();
 
-      json.beginCollection(2, true, "properties");
+      json.beginCollection("properties");
       if (db.getStorage().getConfiguration().properties != null)
         for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
           if (entry != null) {
-            json.beginObject(3, true, null);
-            json.writeAttribute(4, false, "name", entry.name);
-            json.writeAttribute(4, false, "value", entry.value);
-            json.endObject(3, true);
+            json.beginObject();
+            json.writeAttribute("name", entry.name);
+            json.writeAttribute("value", entry.value);
+            json.endObject();
           }
         }
-      json.endCollection(2, true);
+      json.endCollection();
 
-      json.endObject(1, true);
+      json.endObject();
       json.endObject();
       json.flush();
 
@@ -257,71 +256,71 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
   }
 
   public static void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
-    json.beginObject(2, true, null);
-    json.writeAttribute(3, true, "name", cls.getName());
-    json.writeAttribute(3, true, "superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
-    json.writeAttribute(3, true, "alias", cls.getShortName());
-    json.writeAttribute(3, true, "abstract", cls.isAbstract());
-    json.writeAttribute(3, true, "clusters", cls.getClusterIds());
-    json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
+    json.beginObject();
+    json.writeAttribute("name", cls.getName());
+    json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
+    json.writeAttribute("alias", cls.getShortName());
+    json.writeAttribute("abstract", cls.isAbstract());
+    json.writeAttribute("clusters", cls.getClusterIds());
+    json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
     if (cls instanceof OClassImpl) {
       final Map<String, String> custom = ((OClassImpl) cls).getCustomInternal();
       if (custom != null && !custom.isEmpty()) {
-        json.writeAttribute(4, true, "custom", custom);
+        json.writeAttribute("custom", custom);
       }
     }
 
     try {
-      json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
+      json.writeAttribute("records", db.countClass(cls.getName()));
     } catch (OSecurityAccessException e) {
-      json.writeAttribute(3, false, "records", "? (Unauthorized)");
+      json.writeAttribute("records", "? (Unauthorized)");
     }
 
     if (cls.properties() != null && cls.properties().size() > 0) {
-      json.beginCollection(3, true, "properties");
+      json.beginCollection("properties");
       for (final OProperty prop : cls.properties()) {
-        json.beginObject(4, true, null);
-        json.writeAttribute(4, true, "name", prop.getName());
+        json.beginObject();
+        json.writeAttribute("name", prop.getName());
         if (prop.getLinkedClass() != null)
-          json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+          json.writeAttribute("linkedClass", prop.getLinkedClass().getName());
         if (prop.getLinkedType() != null)
-          json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
-        json.writeAttribute(4, true, "type", prop.getType().toString());
-        json.writeAttribute(4, true, "mandatory", prop.isMandatory());
-        json.writeAttribute(4, true, "readonly", prop.isReadonly());
-        json.writeAttribute(4, true, "notNull", prop.isNotNull());
-        json.writeAttribute(4, true, "min", prop.getMin());
-        json.writeAttribute(4, true, "max", prop.getMax());
+          json.writeAttribute("linkedType", prop.getLinkedType().toString());
+        json.writeAttribute("type", prop.getType().toString());
+        json.writeAttribute("mandatory", prop.isMandatory());
+        json.writeAttribute("readonly", prop.isReadonly());
+        json.writeAttribute("notNull", prop.isNotNull());
+        json.writeAttribute("min", prop.getMin());
+        json.writeAttribute("max", prop.getMax());
 
         if (prop instanceof OPropertyImpl) {
           final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();
           if (custom != null && !custom.isEmpty()) {
-            json.writeAttribute(5, true, "custom", custom);
+            json.writeAttribute("custom", custom);
           }
         }
 
-        json.endObject(3, true);
+        json.endObject();
       }
-      json.endCollection(1, true);
+      json.endCollection();
     }
 
     final Set<OIndex<?>> indexes = cls.getIndexes();
     if (!indexes.isEmpty()) {
-      json.beginCollection(3, true, "indexes");
+      json.beginCollection("indexes");
       for (final OIndex<?> index : indexes) {
-        json.beginObject(4, true, null);
-        json.writeAttribute(4, true, "name", index.getName());
-        json.writeAttribute(4, true, "type", index.getType());
+        json.beginObject();
+        json.writeAttribute("name", index.getName());
+        json.writeAttribute("type", index.getType());
 
         final OIndexDefinition indexDefinition = index.getDefinition();
         if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
-          json.writeAttribute(4, true, "fields", indexDefinition.getFields());
-        json.endObject(3, true);
+          json.writeAttribute("fields", indexDefinition.getFields());
+        json.endObject();
       }
-      json.endCollection(1, true);
+      json.endCollection();
     }
 
-    json.endObject(1, false);
+    json.endObject();
   }
 
   @Override
