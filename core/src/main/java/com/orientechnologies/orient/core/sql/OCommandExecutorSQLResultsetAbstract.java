@@ -403,9 +403,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           newList.add(t.get(i));
 
         t.clear();
+        tempResult = newList;
       }
-
-      tempResult = newList;
     }
   }
 

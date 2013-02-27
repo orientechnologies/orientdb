@@ -33,6 +33,9 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
   private Iterator<?>             iteratorOfInternalCollections;
   private Iterator<OIdentifiable> partialIterator;
 
+  private int                     browsed = 0;
+  private int                     limit   = -1;
+
   public OFlattenIterator() {
     internalCollections = new ArrayList<Object>();
   }
@@ -59,6 +62,9 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
     if (partialIterator == null)
       return false;
 
+    if (limit > -1 && browsed >= limit)
+      return false;
+
     if (partialIterator.hasNext())
       return true;
     else if (iteratorOfInternalCollections.hasNext())
@@ -72,6 +78,7 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
     if (!hasNext())
       throw new NoSuchElementException();
 
+    browsed++;
     return partialIterator.next();
   }
 
@@ -90,6 +97,14 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
   @Override
   public void remove() {
     throw new UnsupportedOperationException("OFlattenIterator.remove()");
+  }
+
+  public int getLimit() {
+    return limit;
+  }
+
+  public void setLimit(final int limit) {
+    this.limit = limit;
   }
 
   @SuppressWarnings("unchecked")

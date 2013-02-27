@@ -967,6 +967,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     } else {
       OFlattenIterator finalResult = new OFlattenIterator();
+      finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
         if (flattenTarget instanceof OSQLFilterItem)
           fieldValue = ((OSQLFilterItem) flattenTarget).getValue(id.getRecord(), context);
