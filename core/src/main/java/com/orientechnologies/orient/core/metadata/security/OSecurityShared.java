@@ -20,6 +20,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -214,21 +215,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  public ORole getRole(final OIdentifiable iRole) {
-    acquireExclusiveLock();
-    try {
-
-      final ODocument doc = iRole.getRecord();
-      if ("ORole".equals(doc.getClassName()))
-        return new ORole(doc);
-
-      return null;
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   public ORole getRole(final String iRoleName) {
     acquireExclusiveLock();
     try {
@@ -242,6 +228,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       return null;
 
+    } catch(Exception ex) {
+    	OLogManager.instance().error(this, "Failed to get role : " + iRoleName + " " + ex.getMessage());
+    	return null;
     } finally {
       releaseExclusiveLock();
     }
@@ -466,7 +455,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
   
   public void createClassTrigger() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+	  final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 	  OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
 	  if(classTrigger == null)
 		  classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);

@@ -22,6 +22,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
@@ -31,25 +32,17 @@ import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public class OClassTrigger extends ODocumentHookAbstract {
 	public static final String CLASSNAME = "OTriggered";
-	
-	//Record Level Trigger (property name)
-	public static final String PROP_BEFORE_CREATE  = "beforeCreate"; 
-	public static final String PROP_AFTER_CREATE   = "afterCreate";
-	public static final String PROP_BEFORE_READ    = "beforeRead";
-	public static final String PROP_AFTER_READ     = "afterRead";
-	public static final String PROP_BEFORE_UPDATE  = "beforeUpdate";
-	public static final String PROP_AFTER_UPDATE   = "afterUpdate";
-	public static final String PROP_BEFORE_DELETE  = "beforeDelete";
-	public static final String PROP_AFTER_DELETE   = "afterDelete";
 	
 	//Class Level Trigger (class custom attribute)
 	public static final String ONBEFORE_CREATED    = "onBeforeCreated";
@@ -61,81 +54,96 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	public static final String ONBEFORE_DELETE     = "onBeforeDelete";
 	public static final String ONAFTER_DELETE      = "onAfterDelete";
 	
+	//Record Level Trigger (property name)
+	public static final String PROP_BEFORE_CREATE  = ONBEFORE_CREATED; 
+	public static final String PROP_AFTER_CREATE   = ONAFTER_CREATED;
+	public static final String PROP_BEFORE_READ    = ONBEFORE_READ;
+	public static final String PROP_AFTER_READ     = ONAFTER_READ;
+	public static final String PROP_BEFORE_UPDATE  = ONBEFORE_UPDATED;
+	public static final String PROP_AFTER_UPDATE   = ONAFTER_UPDATED;
+	public static final String PROP_BEFORE_DELETE  = ONBEFORE_DELETE;
+	public static final String PROP_AFTER_DELETE   = ONAFTER_DELETE;
+	
 	public OClassTrigger() {
 	}
 
 	@Override
 	public RESULT onRecordBeforeCreate(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_BEFORE_CREATE);
-		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_CREATED, PROP_BEFORE_CREATE);
+		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_CREATED);
 		return this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public void onRecordAfterCreate(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_AFTER_CREATE);
-		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_CREATED, PROP_AFTER_CREATE);
+		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_CREATED);
 		this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public RESULT onRecordBeforeRead(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_BEFORE_READ);
-		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_READ, PROP_BEFORE_READ);
+		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_READ);
 		return this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public void onRecordAfterRead(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_AFTER_READ);
-		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_READ, PROP_AFTER_READ);
+		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_READ);
 		this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_BEFORE_UPDATE);
-		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_UPDATED, PROP_BEFORE_UPDATE);
+		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_UPDATED);
 		return this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public void onRecordAfterUpdate(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_AFTER_UPDATE);
-		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_UPDATED, PROP_AFTER_UPDATE);
+		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_UPDATED);
 		this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public RESULT onRecordBeforeDelete(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_BEFORE_DELETE);
-		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_DELETE, PROP_BEFORE_DELETE);
+		OFunction func = this.checkClzAttribute(iDocument, ONBEFORE_DELETE);
 		return this.executeFunction(iDocument, func);
 	}
 
 	@Override
 	public void onRecordAfterDelete(final ODocument iDocument) {
 		//ODocument funcDoc = iDocument.field(PROP_AFTER_DELETE);
-		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_DELETE, PROP_AFTER_DELETE);
+		OFunction func = this.checkClzAttribute(iDocument, ONAFTER_DELETE);
 		this.executeFunction(iDocument, func);
 	}
 	
-	private OFunction checkClzAttribute(final ODocument iDocument, String attr, String prop) {
+	private OFunction checkClzAttribute(final ODocument iDocument, String attr) {
 		OClass clz = iDocument.getSchemaClass();
 		if(clz != null && clz.isSubClassOf(CLASSNAME)) {
 			OFunction func = null;
-			//OClass superClz = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(CLASSNAME);
 			String fieldName = ((OClassImpl) clz).getCustom(attr);
 			if(fieldName != null && fieldName.length() > 0) {
 				func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(fieldName);
-				if(func == null) { //check rid
-					ODocument funcDoc = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldName));
-					if(funcDoc != null) {
-						func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction((String)funcDoc.field("name"));
+				if(func == null) { //check if it is rid	
+					if (OStringSerializerHelper.contains(fieldName, ORID.SEPARATOR)) {
+						try{
+							ODocument funcDoc = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldName));
+							if(funcDoc != null) {
+								func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction((String)funcDoc.field("name"));
+							}
+						}catch(Exception ex) {
+							OLogManager.instance().error(this, "illegal record id : ", ex.getMessage());
+						}
 					}
 				}
 			} else{
-				ODocument funcDoc = iDocument.field(prop);
+				ODocument funcDoc = iDocument.field(attr);
 				if(funcDoc != null) {
 					func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction((String)funcDoc.field("name"));
 				}
