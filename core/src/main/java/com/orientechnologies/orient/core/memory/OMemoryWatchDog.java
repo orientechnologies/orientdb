@@ -17,7 +17,10 @@ package com.orientechnologies.orient.core.memory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -32,32 +35,35 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public class OMemoryWatchDog extends Thread {
   private final Map<ListenerWrapper, Object> listeners    = new WeakHashMap<ListenerWrapper, Object>(128);
-  private int                         alertTimes   = 0;
-  protected ReferenceQueue<Object>    monitorQueue = new ReferenceQueue<Object>();
-  protected SoftReference<Object>     monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
+  private static long                        lastGC       = 0;
+  private int                                alertTimes   = 0;
+  protected ReferenceQueue<Object>           monitorQueue = new ReferenceQueue<Object>();
+  protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
 
-    /**
-     * we want properties of both IdentityHashMap and WeakHashMap
-     */
+  /**
+   * we want properties of both IdentityHashMap and WeakHashMap
+   */
   private static class ListenerWrapper {
-      final Listener listener;
+    final Listener listener;
 
-      private ListenerWrapper(Listener listener) {
-          this.listener = listener;
-      }
+    private ListenerWrapper(Listener listener) {
+      this.listener = listener;
+    }
 
-      @Override
-      public boolean equals(Object o) {
-          if (this == o) return true;
-          if (o == null || getClass() != o.getClass()) return false;
-          ListenerWrapper that = (ListenerWrapper) o;
-          return listener == that.listener;
-      }
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+      final ListenerWrapper that = (ListenerWrapper) o;
+      return listener == that.listener;
+    }
 
-      @Override
-      public int hashCode() {
-          return listener != null ? System.identityHashCode(listener) : 0;
-      }
+    @Override
+    public int hashCode() {
+      return listener != null ? System.identityHashCode(listener) : 0;
+    }
   }
 
   public static interface Listener {
@@ -96,15 +102,15 @@ public class OMemoryWatchDog extends Thread {
                 return alertTimes;
               }
             });
-      Orient
-          .instance()
-          .getProfiler()
-          .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation",
-                  METRIC_TYPE.STAT, new OProfilerHookValue() {
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT,
+            new OProfilerHookValue() {
               public Object getValue() {
-                  return lastGC;
+                return lastGC;
               }
-          });
+            });
 
     while (true) {
       try {
@@ -157,37 +163,36 @@ public class OMemoryWatchDog extends Thread {
   }
 
   public List<Listener> getListeners() {
-      synchronized (listeners) {
-          List<Listener> listenerList = new ArrayList<Listener>();
-          for (ListenerWrapper wrapper : listeners.keySet()) {
-              listenerList.add(wrapper.listener);
-          }
-          return listenerList;
+    synchronized (listeners) {
+      List<Listener> listenerList = new ArrayList<Listener>();
+      for (ListenerWrapper wrapper : listeners.keySet()) {
+        listenerList.add(wrapper.listener);
       }
+      return listenerList;
+    }
   }
 
-  private static long lastGC = 0;
-
   public static void freeMemoryForOptimization(final long iDelayTime) {
-      freeMemory(iDelayTime, OGlobalConfiguration.GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
+    freeMemory(iDelayTime, OGlobalConfiguration.JVM_GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
   }
 
   public static void freeMemoryForResourceCleanup(final long iDelayTime) {
-      freeMemory(iDelayTime, 0);
+    freeMemory(iDelayTime, 0);
   }
 
-  private static void freeMemory(final long iDelayTime, long minimalTimeAmount) {
-      long dateFromLastGC = new Date().getTime() - lastGC;
-      if (dateFromLastGC > minimalTimeAmount) {
-          System.gc();
-          lastGC = new Date().getTime();
-          if (iDelayTime > 0)
-            try {
-              Thread.sleep(iDelayTime);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-            }
-      }
+  private static void freeMemory(final long iDelayTime, final long minimalTimeAmount) {
+    final long dateLastGC = System.currentTimeMillis();
+    if (dateLastGC - lastGC > minimalTimeAmount * 1000) {
+      lastGC = dateLastGC;
+      System.gc();
+
+      if (iDelayTime > 0)
+        try {
+          Thread.sleep(iDelayTime);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+    }
   }
 
 }

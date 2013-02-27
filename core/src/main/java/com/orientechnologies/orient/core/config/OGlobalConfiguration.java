@@ -50,7 +50,7 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
-  GC_DELAY_FOR_OPTIMIZE("gc.delay.forOptimize", "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 3600),
+  JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize", "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
