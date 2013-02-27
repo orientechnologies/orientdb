@@ -312,7 +312,7 @@ public class Orient extends OSharedResourceAbstract {
         // CLOSE ALL THE STORAGES
         final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
         for (OStorage stg : storagesCopy) {
-          OLogManager.instance().debug(this, "Shutting down storage: " + stg.getName() + "...");
+          OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
           stg.close(true);
         }
       }
@@ -327,7 +327,7 @@ public class Orient extends OSharedResourceAbstract {
       if (listeners != null)
         listeners.clear();
 
-      OLogManager.instance().debug(this, "Orient Engine shutdown complete");
+      OLogManager.instance().info(this, "Orient Engine shutdown complete");
 
     } finally {
       releaseExclusiveLock();
