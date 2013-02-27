@@ -52,8 +52,6 @@ public enum OGlobalConfiguration {
 
   GC_DELAY_FOR_OPTIMIZE("gc.delay.forOptimize", "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 3600),
 
-  GC_DELAY_FOR_RESOURCE_CLEANUP("gc.delay.forResourceCleanup", "Minimal amount of time (seconds) since last System.gc() when called to cleanup resources", Long.class, 60),
-
   // STORAGE
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
