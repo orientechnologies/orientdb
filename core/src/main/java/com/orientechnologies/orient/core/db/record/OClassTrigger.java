@@ -128,6 +128,13 @@ public class OClassTrigger extends ODocumentHookAbstract {
 		if(clz != null && clz.isSubClassOf(CLASSNAME)) {
 			OFunction func = null;
 			String fieldName = ((OClassImpl) clz).getCustom(attr);
+			OClass superClz = clz.getSuperClass();
+			while(fieldName == null || fieldName.length() == 0 ) {
+				if(superClz == null || superClz.getName().equals(CLASSNAME))
+					break;
+				fieldName = ((OClassImpl) superClz).getCustom(attr);
+				superClz = superClz.getSuperClass();
+			}
 			if(fieldName != null && fieldName.length() > 0) {
 				func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(fieldName);
 				if(func == null) { //check if it is rid	
