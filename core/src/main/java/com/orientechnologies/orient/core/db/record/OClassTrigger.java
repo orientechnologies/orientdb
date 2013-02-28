@@ -197,7 +197,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    	binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
 	    //scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
-	    RESULT result = null;
+	    String result = null;
 	    try {
 	    	if(func.getLanguage() == null)
 	    		throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
@@ -212,7 +212,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    	if (scriptEngine instanceof Invocable) {
 	    		final Invocable invocableEngine = (Invocable) scriptEngine;
 	    		Object[] EMPTY = new Object[0];
-	    		result = (RESULT)invocableEngine.invokeFunction(func.getName(), EMPTY);
+	    		result = (String)invocableEngine.invokeFunction(func.getName(), EMPTY);
 	    		//invocableEngine.invokeFunction(funcName, pargs);
 	    	}
 	    }  catch (ScriptException e) {
@@ -229,6 +229,6 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    if(result == null) {
 	    	return RESULT.RECORD_NOT_CHANGED;
 	    }
-	    return result;
+	    return RESULT.valueOf(result);//result;
 	} 
 }
