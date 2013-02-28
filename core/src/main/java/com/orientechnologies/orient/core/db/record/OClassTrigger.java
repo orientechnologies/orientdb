@@ -45,12 +45,12 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	public static final String CLASSNAME = "OTriggered";
 	
 	//Class Level Trigger (class custom attribute)
-	public static final String ONBEFORE_CREATED    = "onBeforeCreated";
-	public static final String ONAFTER_CREATED     = "onAfterCreated";
+	public static final String ONBEFORE_CREATED    = "onBeforeCreate";
+	public static final String ONAFTER_CREATED     = "onAfterCreate";
 	public static final String ONBEFORE_READ       = "onBeforeRead";
 	public static final String ONAFTER_READ        = "onAfterRead";
-	public static final String ONBEFORE_UPDATED    = "onBeforeUpdated";
-	public static final String ONAFTER_UPDATED     = "onAfterUpdated";
+	public static final String ONBEFORE_UPDATED    = "onBeforeUpdate";
+	public static final String ONAFTER_UPDATED     = "onAfterUpdate";
 	public static final String ONBEFORE_DELETE     = "onBeforeDelete";
 	public static final String ONAFTER_DELETE      = "onAfterDelete";
 	
@@ -197,7 +197,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    	binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
 	    //scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
-	    boolean isSuccess = false;
+	    RESULT result = null;
 	    try {
 	    	if(func.getLanguage() == null)
 	    		throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
@@ -212,7 +212,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    	if (scriptEngine instanceof Invocable) {
 	    		final Invocable invocableEngine = (Invocable) scriptEngine;
 	    		Object[] EMPTY = new Object[0];
-	    		isSuccess = (Boolean)invocableEngine.invokeFunction(func.getName(), EMPTY);
+	    		result = (RESULT)invocableEngine.invokeFunction(func.getName(), EMPTY);
 	    		//invocableEngine.invokeFunction(funcName, pargs);
 	    	}
 	    }  catch (ScriptException e) {
@@ -226,9 +226,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
 	    } finally {
 	      scriptManager.unbind(binding);
 	    }
-	    if(isSuccess) {
-	    	return RESULT.RECORD_CHANGED;
+	    if(result == null) {
+	    	return RESULT.RECORD_NOT_CHANGED;
 	    }
-	    return RESULT.RECORD_NOT_CHANGED;
+	    return result;
 	} 
 }
