@@ -303,19 +303,16 @@
             <!--
                          | Stop the JAVA_1_n_HOME variables from being treated as headers by Bnd
                         -->
-            <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME
+            <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
+                Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
+                Ignore-Package,Private-Package,Bundle-DocURL
             </_removeheaders>
-            <Bundle-Name>${project.name}</Bundle-Name>
-            <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-            <Bundle-Description>${project.description}</Bundle-Description>
-            <Bundle-Version>1.4.0.qualifier</Bundle-Version>
             <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
             <Export-Package>${osgi.export}</Export-Package>
             <Private-Package>${osgi.private}</Private-Package>
-            <Import-Package>${osgi.import}</Import-Package>
+            <Import-Package>${project.groupId}.*;provide:=true,${osgi.import}</Import-Package>
             <DynamicImport-Package>${osgi.dynamicImport}</DynamicImport-Package>
-            <Bundle-DocURL>${project.url}</Bundle-DocURL>
-            <Bundle-RequiredExecutionEnvironment>J2SE-1.6</Bundle-RequiredExecutionEnvironment>
+            <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
           </instructions>
         </configuration>
         <executions>
