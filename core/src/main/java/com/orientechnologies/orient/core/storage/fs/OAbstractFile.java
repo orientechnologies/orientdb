@@ -207,7 +207,7 @@ public abstract class OAbstractFile implements OFile {
     if (osFile != null) {
       boolean deleted = osFile.delete();
       while (!deleted) {
-        OMemoryWatchDog.freeMemory(100);
+        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
         deleted = osFile.delete();
       }
     }
@@ -249,7 +249,7 @@ public abstract class OAbstractFile implements OFile {
             LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
 
         // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-        OMemoryWatchDog.freeMemory(LOCK_WAIT_TIME);
+        OMemoryWatchDog.freeMemoryForResourceCleanup(LOCK_WAIT_TIME);
       }
     }
 
@@ -453,7 +453,9 @@ public abstract class OAbstractFile implements OFile {
     if (accessFile == null)
       throw new FileNotFoundException(osFile.getAbsolutePath());
 
-    accessFile.setLength(iNewSize);
+    if (accessFile.length() != iNewSize)
+      accessFile.setLength(iNewSize);
+
     accessFile.seek(0);
     channel = accessFile.getChannel();
 

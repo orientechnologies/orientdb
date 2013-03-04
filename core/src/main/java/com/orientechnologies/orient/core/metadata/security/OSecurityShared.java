@@ -482,9 +482,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
-  
+
   public void createClassTrigger() {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+<<<<<<< HEAD
 	  OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
 	  if(classTrigger == null)
 		  classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
@@ -505,5 +506,34 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_DELETE))    //after delete
 		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
 	  classTrigger.setSuperClass(db.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME));
+=======
+    OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
+    if (classTrigger == null)
+      classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
+    if (!classTrigger.existsProperty(OClassTrigger.ONBEFORE_CREATED)) // before create
+      classTrigger.createProperty(OClassTrigger.ONBEFORE_CREATED, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONAFTER_CREATED)) // after create
+      classTrigger.createProperty(OClassTrigger.ONAFTER_CREATED, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONBEFORE_READ)) // before read
+      classTrigger.createProperty(OClassTrigger.ONBEFORE_READ, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONAFTER_READ)) // after read
+      classTrigger.createProperty(OClassTrigger.ONAFTER_READ, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONBEFORE_UPDATED)) // before update
+      classTrigger.createProperty(OClassTrigger.ONBEFORE_UPDATED, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONAFTER_UPDATED)) // after update
+      classTrigger.createProperty(OClassTrigger.ONAFTER_UPDATED, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONBEFORE_DELETE)) // before delete
+      classTrigger.createProperty(OClassTrigger.ONBEFORE_DELETE, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+    if (!classTrigger.existsProperty(OClassTrigger.ONAFTER_DELETE)) // after delete
+      classTrigger.createProperty(OClassTrigger.ONAFTER_DELETE, OType.LINK,
+          db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+>>>>>>> 6287ad2f830d41ef739ded6b1a7129f349df8c21
   }
 }

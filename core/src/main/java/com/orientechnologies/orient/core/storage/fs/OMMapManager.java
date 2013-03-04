@@ -69,7 +69,7 @@ public interface OMMapManager {
   void release(OMMapBufferEntry[] entries, OPERATION_TYPE operationType);
 
   /**
-   * This method should flush all the records in all files on disk.
+   * This method flushes all the records in all files on disk.
    */
   void flush();
 

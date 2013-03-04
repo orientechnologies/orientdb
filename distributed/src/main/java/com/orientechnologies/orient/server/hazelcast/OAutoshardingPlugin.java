@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -79,7 +78,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   public void onOpen(ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex<?>) {
       iDatabase.replaceStorage(new OAutoshardedStorageImpl(serverInstance, (OStorageEmbedded) iDatabase.getStorage(),
-							dhtConfiguration));
+          dhtConfiguration));
     }
   }
 
@@ -89,22 +88,21 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
 
   public static class DHTConfiguration implements ODHTConfiguration {
 
-    private final HashSet<String> clusters;
+    private final HashSet<String> undistributableClusters;
 
     public DHTConfiguration() {
-      clusters = new HashSet<String>();
+      undistributableClusters = new HashSet<String>();
 
-      clusters.add(OStorage.CLUSTER_DEFAULT_NAME.toLowerCase());
-      clusters.add(OMetadata.CLUSTER_INTERNAL_NAME.toLowerCase());
-      clusters.add(OMetadata.CLUSTER_INDEX_NAME.toLowerCase());
-      clusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME.toLowerCase());
-      clusters.add(ORole.CLASS_NAME.toLowerCase());
-      clusters.add(OUser.CLASS_NAME.toLowerCase());
-      clusters.add(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase());
-      clusters.add(OSecurityShared.RESTRICTED_CLASSNAME.toLowerCase());
-      clusters.add(OSecurityShared.IDENTITY_CLASSNAME.toLowerCase());
-      clusters.add(OFunction.CLASS_NAME.toLowerCase());
-      clusters.add(OClassTrigger.CLASSNAME.toLowerCase());
+      undistributableClusters.add(OStorage.CLUSTER_DEFAULT_NAME.toLowerCase());
+      undistributableClusters.add(OMetadata.CLUSTER_INTERNAL_NAME.toLowerCase());
+      undistributableClusters.add(OMetadata.CLUSTER_INDEX_NAME.toLowerCase());
+      undistributableClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME.toLowerCase());
+      undistributableClusters.add(ORole.CLASS_NAME.toLowerCase());
+      undistributableClusters.add(OUser.CLASS_NAME.toLowerCase());
+      undistributableClusters.add(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase());
+      undistributableClusters.add(OSecurityShared.RESTRICTED_CLASSNAME.toLowerCase());
+      undistributableClusters.add(OSecurityShared.IDENTITY_CLASSNAME.toLowerCase());
+      undistributableClusters.add(OFunction.CLASS_NAME.toLowerCase());
     }
 
     @Override
@@ -114,7 +112,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
 
     @Override
     public Set<String> getUndistributableClusters() {
-      return clusters;
+      return undistributableClusters;
     }
   }
 

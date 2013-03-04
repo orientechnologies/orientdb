@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -108,6 +111,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    */
   public ODocument(final byte[] iSource) {
     _source = iSource;
+    setup();
+  }
+
+  /**
+   * Creates a new instance by the raw stream usually read from the database. New instances are not persistent until {@link #save()}
+   * is called.
+   * 
+   * @param iSource
+   *          Raw stream as InputStream
+   */
+  public ODocument(final InputStream iSource) throws IOException {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OIOUtils.copyStream(iSource, out, -1);
+    _source = out.toByteArray();
     setup();
   }
 
@@ -1559,6 +1576,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     final byte[] content = toStream();
     stream.writeInt(content.length);
     stream.write(content);
+
+		stream.writeBoolean(_dirty);
   }
 
   @Override
@@ -1574,5 +1593,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     stream.readFully(content);
 
     fromStream(content);
-  }
+
+		_dirty = stream.readBoolean();
+	}
 }

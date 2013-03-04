@@ -53,15 +53,15 @@ public class Orient extends OSharedResourceAbstract {
   public static final String                            ORIENTDB_HOME        = "ORIENTDB_HOME";
   public static final String                            URL_SYNTAX           = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected Map<String, OEngine>                        engines              = new HashMap<String, OEngine>();
-  protected Map<String, OStorage>                       storages             = new HashMap<String, OStorage>();
-  protected Set<ODatabaseLifecycleListener>             dbLifecycleListeners = new HashSet<ODatabaseLifecycleListener>();
+  protected final Map<String, OEngine>                  engines              = new HashMap<String, OEngine>();
+  protected final Map<String, OStorage>                 storages             = new HashMap<String, OStorage>();
+  protected final Set<ODatabaseLifecycleListener>       dbLifecycleListeners = new HashSet<ODatabaseLifecycleListener>();
   protected final List<OOrientListener>                 listeners            = new ArrayList<OOrientListener>();
-  protected ORecordFactoryManager                       recordFactoryManager = new ORecordFactoryManager();
-  protected ODatabaseFactory                            databaseFactory      = new ODatabaseFactory();
-  protected OClusterFactory                             clusterFactory       = new ODefaultClusterFactory();
-  protected OScriptManager                              scriptManager        = new OScriptManager();
+  protected final ODatabaseFactory                      databaseFactory      = new ODatabaseFactory();
+  protected final OScriptManager                        scriptManager        = new OScriptManager();
   protected volatile boolean                            active               = false;
+  protected OClusterFactory                             clusterFactory       = new ODefaultClusterFactory();
+  protected ORecordFactoryManager                       recordFactoryManager = new ORecordFactoryManager();
 
   protected static final OrientShutdownHook             shutdownHook         = new OrientShutdownHook();
   protected static final Timer                          timer                = new Timer(true);
@@ -70,7 +70,7 @@ public class Orient extends OSharedResourceAbstract {
 
   private final OMemoryWatchDog                         memoryWatchDog;
   private final OJVMProfiler                            profiler;
-  private static AtomicInteger                          serialId             = new AtomicInteger();
+  private static final AtomicInteger                    serialId             = new AtomicInteger();
 
   public ODatabaseThreadLocalFactory                    databaseThreadFactory;
 
@@ -312,7 +312,7 @@ public class Orient extends OSharedResourceAbstract {
         // CLOSE ALL THE STORAGES
         final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
         for (OStorage stg : storagesCopy) {
-          OLogManager.instance().debug(this, "Shutting down storage: " + stg.getName() + "...");
+          OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
           stg.close(true);
         }
       }
@@ -327,7 +327,7 @@ public class Orient extends OSharedResourceAbstract {
       if (listeners != null)
         listeners.clear();
 
-      OLogManager.instance().debug(this, "Orient Engine shutdown complete");
+      OLogManager.instance().info(this, "Orient Engine shutdown complete");
 
     } finally {
       releaseExclusiveLock();

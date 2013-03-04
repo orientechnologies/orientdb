@@ -26,12 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -49,6 +43,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -922,7 +922,7 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationAndRidInWhere() {
-    if (database.getStorage().isLHClustersAreUsed())
+    if (database.getStorage().isHashClustersAreUsed())
       return;
 
     int clusterId = database.getClusterIdByName("profile");
@@ -1414,11 +1414,7 @@ public class SQLSelectTest {
 
   @Test
   public void testSelectFromListParameter() {
-
-    OGraphDatabase db = new OGraphDatabase("memory:test");
-    db.create();
-
-    OClass placeClass = db.createVertexType("Place");
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
     placeClass.createProperty("id", OType.STRING);
     placeClass.createProperty("descr", OType.STRING);
     placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
@@ -1426,12 +1422,12 @@ public class SQLSelectTest {
     ODocument odoc = new ODocument("Place");
     odoc.field("id", "adda");
     odoc.field("descr", "Adda");
-    db.save(odoc);
+    database.save(odoc);
 
     odoc = new ODocument("Place");
     odoc.field("id", "lago_di_como");
     odoc.field("descr", "Lago di Como");
-    db.save(odoc);
+    database.save(odoc);
 
     Map<String, Object> params = new HashMap<String, Object>();
     List<String> inputValues = new ArrayList<String>();
@@ -1442,6 +1438,36 @@ public class SQLSelectTest {
     List<ODocument> result = new OSQLSynchQuery<ODocument>("select from place where id in :place").execute(params);
     Assert.assertEquals(1, result.size());
 
-    db.close();
+    database.getMetadata().getSchema().dropClass("Place");
+  }
+
+  @Test
+  public void testSelectRidFromListParameter() {
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
+    placeClass.createProperty("id", OType.STRING);
+    placeClass.createProperty("descr", OType.STRING);
+    placeClass.createIndex("place_id_index", INDEX_TYPE.UNIQUE, "id");
+
+    List<ORID> inputValues = new ArrayList<ORID>();
+
+    ODocument odoc = new ODocument("Place");
+    odoc.field("id", "adda");
+    odoc.field("descr", "Adda");
+    database.save(odoc);
+    inputValues.add(odoc.getIdentity());
+
+    odoc = new ODocument("Place");
+    odoc.field("id", "lago_di_como");
+    odoc.field("descr", "Lago di Como");
+    database.save(odoc);
+    inputValues.add(odoc.getIdentity());
+
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("place", inputValues);
+
+    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from place where @rid in :place").execute(params);
+    Assert.assertEquals(2, result.size());
+
+    database.getMetadata().getSchema().dropClass("Place");
   }
 }

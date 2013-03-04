@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIterateBlock extends OAbstractBlock {
+  public static final String NAME = "iterate";
+
   @Override
   public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -36,6 +38,9 @@ public class OIterateBlock extends OAbstractBlock {
 
     if (range != null) {
       final String[] fromTo = range.split("-");
+      if (fromTo.length < 2)
+        throw new IllegalArgumentException("Invalid range for: " + range);
+
       final int from = Integer.parseInt(fromTo[0]);
       final int to = Integer.parseInt(fromTo[1]);
 
@@ -60,7 +65,7 @@ public class OIterateBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "iterate";
+    return NAME;
   }
 
   protected class OIterateBlockIterable implements Iterable<Object> {

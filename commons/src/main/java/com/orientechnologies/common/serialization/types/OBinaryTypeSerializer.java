@@ -18,6 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.util.Arrays;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -71,6 +72,28 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     int len = CONVERTER.getInt(stream, startPosition);
     return Arrays.copyOfRange(stream, startPosition + OIntegerSerializer.INT_SIZE, startPosition + OIntegerSerializer.INT_SIZE
         + len);
+  }
+
+  @Override
+  public void serializeInDirectMemory(byte[] object, ODirectMemory memory, long pointer) {
+    int len = object.length;
+    memory.setInt(pointer, len);
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    memory.set(pointer, object, len);
+  }
+
+  @Override
+  public byte[] deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    int len = memory.getInt(pointer);
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    return memory.get(pointer, len);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getInt(pointer);
   }
 
   public byte getId() {

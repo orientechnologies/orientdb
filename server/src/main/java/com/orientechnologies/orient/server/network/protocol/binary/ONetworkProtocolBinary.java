@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -102,6 +103,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+
     channel.flush();
     start();
 
@@ -634,7 +636,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkDatabase();
 
-    final boolean isLHClustersAreUsed = connection.database.getStorage().isLHClustersAreUsed();
+    final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
 
     beginResponse();
     try {
@@ -722,6 +724,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
+        if (connection.data.protocolVersion >= 14)
+          channel.writeString(OConstants.getVersion());
       } finally {
         endResponse();
       }
@@ -975,8 +979,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeShort((short) OGlobalConfiguration.values().length);
       for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-        channel.writeString(cfg.getKey());
-        channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+
+        String key;
+        try {
+          key = cfg.getKey();
+        } catch (Exception e) {
+          key = "?";
+        }
+
+        String value;
+        try {
+          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+        } catch (Exception e) {
+          value = "";
+        }
+
+        channel.writeString(key);
+        channel.writeString(value);
       }
     } finally {
       endResponse();

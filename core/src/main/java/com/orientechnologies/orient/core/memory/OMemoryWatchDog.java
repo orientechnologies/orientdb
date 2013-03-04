@@ -17,25 +17,54 @@ package com.orientechnologies.orient.core.memory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-  private final Map<Listener, Object> listeners    = new IdentityHashMap<Listener, Object>(128);
-  private int                         alertTimes   = 0;
-  protected ReferenceQueue<Object>    monitorQueue = new ReferenceQueue<Object>();
-  protected SoftReference<Object>     monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
+  private final Map<ListenerWrapper, Object> listeners    = new WeakHashMap<ListenerWrapper, Object>(128);
+  private static long                        lastGC       = 0;
+  private int                                alertTimes   = 0;
+  protected ReferenceQueue<Object>           monitorQueue = new ReferenceQueue<Object>();
+  protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
+
+  /**
+   * we want properties of both IdentityHashMap and WeakHashMap
+   */
+  private static class ListenerWrapper {
+    final Listener listener;
+
+    private ListenerWrapper(Listener listener) {
+      this.listener = listener;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+      final ListenerWrapper that = (ListenerWrapper) o;
+      return listener == that.listener;
+    }
+
+    @Override
+    public int hashCode() {
+      return listener != null ? System.identityHashCode(listener) : 0;
+    }
+  }
 
   public static interface Listener {
     /**
@@ -73,6 +102,15 @@ public class OMemoryWatchDog extends Thread {
                 return alertTimes;
               }
             });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return lastGC;
+              }
+            });
 
     while (true) {
       try {
@@ -92,9 +130,9 @@ public class OMemoryWatchDog extends Thread {
         final long timer = Orient.instance().getProfiler().startChrono();
 
         synchronized (listeners) {
-          for (Listener listener : listeners.keySet()) {
+          for (ListenerWrapper listener : listeners.keySet()) {
             try {
-              listener.memoryUsageLow(freeMemory, freeMemoryPer);
+              listener.listener.memoryUsageLow(freeMemory, freeMemoryPer);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -111,33 +149,50 @@ public class OMemoryWatchDog extends Thread {
     }
   }
 
-  public Collection<Listener> getListeners() {
-    synchronized (listeners) {
-      return listeners.keySet();
-    }
-  }
-
   public Listener addListener(final Listener listener) {
     synchronized (listeners) {
-      listeners.put(listener, listener);
+      listeners.put(new ListenerWrapper(listener), listener);
     }
     return listener;
   }
 
   public boolean removeListener(final Listener listener) {
     synchronized (listeners) {
-      return listeners.remove(listener) != null;
+      return listeners.remove(new ListenerWrapper(listener)) != null;
     }
   }
 
-  public static void freeMemory(final long iDelayTime) {
-    // INVOKE GC AND WAIT A BIT
-    System.gc();
-    if (iDelayTime > 0)
-      try {
-        Thread.sleep(iDelayTime);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+  public List<Listener> getListeners() {
+    synchronized (listeners) {
+      List<Listener> listenerList = new ArrayList<Listener>();
+      for (ListenerWrapper wrapper : listeners.keySet()) {
+        listenerList.add(wrapper.listener);
       }
+      return listenerList;
+    }
   }
+
+  public static void freeMemoryForOptimization(final long iDelayTime) {
+    freeMemory(iDelayTime, OGlobalConfiguration.JVM_GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
+  }
+
+  public static void freeMemoryForResourceCleanup(final long iDelayTime) {
+    freeMemory(iDelayTime, 0);
+  }
+
+  private static void freeMemory(final long iDelayTime, final long minimalTimeAmount) {
+    final long dateLastGC = System.currentTimeMillis();
+    if (dateLastGC - lastGC > minimalTimeAmount * 1000) {
+      lastGC = dateLastGC;
+      System.gc();
+
+      if (iDelayTime > 0)
+        try {
+          Thread.sleep(iDelayTime);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+    }
+  }
+
 }

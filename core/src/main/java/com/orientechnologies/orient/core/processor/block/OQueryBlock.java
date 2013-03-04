@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OQueryBlock extends OAbstractBlock {
+  public static final String NAME = "query";
+
   @Override
   public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -58,7 +60,7 @@ public class OQueryBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "query";
+    return NAME;
   }
 
   protected String parse(final OCommandContext iContext, final ODocument iContent) {

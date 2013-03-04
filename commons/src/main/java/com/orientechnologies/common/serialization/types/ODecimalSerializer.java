@@ -19,6 +19,7 @@ package com.orientechnologies.common.serialization.types;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 
 /**
  * Serializer for {@link BigDecimal} type.
@@ -79,6 +80,30 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
     final byte[] unscaledValue = OBinaryTypeSerializer.INSTANCE.deserializeNative(stream, startPosition);
 
     return new BigDecimal(new BigInteger(unscaledValue), scale);
+  }
+
+  @Override
+  public void serializeInDirectMemory(BigDecimal object, ODirectMemory memory, long pointer) {
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.scale(), memory, pointer);
+    pointer += OIntegerSerializer.INT_SIZE;
+    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(object.unscaledValue().toByteArray(), memory, pointer);
+  }
+
+  @Override
+  public BigDecimal deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    final int scale = memory.getInt(pointer);
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    final byte[] unscaledValue = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
+
+    return new BigDecimal(new BigInteger(unscaledValue), scale);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    final int size = OIntegerSerializer.INT_SIZE
+        + OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(memory, pointer + OIntegerSerializer.INT_SIZE);
+    return size;
   }
 
   public boolean isFixedLength() {

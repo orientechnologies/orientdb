@@ -87,7 +87,11 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.getUser(iUserName);
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
+  public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
+    return delegate.createUser(iUserName, iUserPassword, iRoles);
+  }
+
+  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
     return delegate.createUser(iUserName, iUserPassword, iRoles);
   }
 

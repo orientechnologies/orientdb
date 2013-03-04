@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.processor.block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -24,6 +25,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OOutputBlock extends OAbstractBlock {
+  public static final String NAME = "output";
+
   @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
@@ -38,14 +41,13 @@ public class OOutputBlock extends OAbstractBlock {
     else
       result = value;
 
-    final Object source = getField(iContext, iConfig, "source");
+    Object source = getField(iContext, iConfig, "source");
+
+    if (source instanceof Map<?, ?>)
+      source = new ODocument((Map<String, Object>) source);
+
     if (source instanceof ODocument && result instanceof List<?>) {
-      final List<Object> list = new ArrayList<Object>();
-      for (Object o : (List<Object>) result) {
-        if (o != null)
-          list.add(((ODocument) source).field(o.toString()));
-      }
-      result = list;
+      result = addDocumentFields((ODocument) source, (List<Object>) result);
     } else if (OMultiValue.isMultiValue(result) && flatMultivalues != null && flatMultivalues) {
       result = flatMultivalues(iContext, false, flatMultivalues, result);
     }
@@ -61,8 +63,17 @@ public class OOutputBlock extends OAbstractBlock {
     return result;
   }
 
+  public static Object addDocumentFields(final ODocument source, List<Object> result) {
+    final List<Object> list = new ArrayList<Object>();
+    for (Object o : result) {
+      if (o != null)
+        list.add(source.field(o.toString()));
+    }
+    return list;
+  }
+
   @Override
   public String getName() {
-    return "output";
+    return NAME;
   }
 }

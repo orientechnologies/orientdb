@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.util;
 
+import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -16,6 +17,14 @@ public class ODateHelper {
 
   public static TimeZone getDatabaseTimeZone() {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getTimeZone();
+  }
+
+  public static DateFormat getDateFormatInstance() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance();
+  }
+
+  public static DateFormat getDateTimeFormatInstance() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
   }
 
   public static Date now() {

@@ -44,6 +44,9 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
 
     try {
       return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, iCurrentResult, iContext);
+    } catch (ArithmeticException e) {
+      // DIVISION BY 0
+      return 0;
     } catch (Exception e) {
       return null;
     }

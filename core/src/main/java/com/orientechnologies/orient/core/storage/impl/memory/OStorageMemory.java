@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -89,16 +88,16 @@ public class OStorageMemory extends OStorageEmbedded {
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
       // ADD THE DEFAULT CLUSTER
-      defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null);
+      defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
 
       configuration.create();
 
@@ -180,7 +179,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
+      boolean forceListBased, final Object... iParameters) {
     iClusterName = iClusterName.toLowerCase();
     lock.acquireExclusiveLock();
     try {
@@ -192,7 +191,8 @@ public class OStorageMemory extends OStorageEmbedded {
         }
       }
 
-      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory().createCluster(OClusterMemory.TYPE);
+      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory()
+          .createCluster(OClusterMemory.TYPE, forceListBased);
       cluster.configure(this, clusterId, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
 
       if (clusterId == clusters.size())
@@ -304,7 +304,7 @@ public class OStorageMemory extends OStorageEmbedded {
 
       // ASSIGN THE POSITION IN THE CLUSTER
       final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, offset, iRecordType);
-      if (cluster.isLHBased()) {
+      if (cluster.isHashBased()) {
         if (iRid.isNew()) {
           if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
             ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
@@ -353,7 +353,7 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
         final OClusterPosition lastPos = iClusterSegment.getLastPosition();
 
-        if (!iClusterSegment.isLHBased()) {
+        if (!iClusterSegment.isHashBased()) {
           if (iRid.clusterPosition.compareTo(lastPos) > 0)
             return null;
         }
@@ -456,7 +456,7 @@ public class OStorageMemory extends OStorageEmbedded {
       try {
         OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
         if (ppos == null) {
-          if (!cluster.isLHBased())
+          if (!cluster.isHashBased())
             throw new OStorageException("Cluster with LH support is required.");
 
           ppos = new OPhysicalPosition(rid.clusterPosition, recordVersion);
@@ -611,6 +611,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
       return new OClusterPosition[] { cluster.getFirstPosition(), cluster.getLastPosition() };
 
+    } catch (IOException ioe) {
+      throw new OStorageException("Can not retrieve information about data range", ioe);
     } finally {
       lock.releaseSharedLock();
     }
@@ -952,7 +954,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public boolean isLHClustersAreUsed() {
+  public boolean isHashClustersAreUsed() {
     return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean();
   }
 

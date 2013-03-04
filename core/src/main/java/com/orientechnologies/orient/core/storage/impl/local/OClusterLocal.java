@@ -75,6 +75,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   private OStoragePhysicalClusterConfigurationLocal config;
   private OStorageLocal                             storage;
   private String                                    name;
+  private long                                      version;
 
   public OClusterLocal() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -109,7 +110,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
       fileSegment.files[0].writeHeaderLong(0, beginOffsetData);
       fileSegment.files[0].writeHeaderLong(OBinaryProtocol.SIZE_LONG, beginOffsetData);
-      fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 1);
+      fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 2);
     } finally {
       releaseExclusiveLock();
     }
@@ -125,10 +126,32 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       beginOffsetData = fileSegment.files[0].readHeaderLong(0);
       endOffsetData = fileSegment.files[0].readHeaderLong(OBinaryProtocol.SIZE_LONG);
 
-      final long version = fileSegment.files[0].readHeaderLong(2 * OBinaryProtocol.SIZE_LONG);
+      version = fileSegment.files[0].readHeaderLong(2 * OBinaryProtocol.SIZE_LONG);
       if (version < 1) {
         convertDeletedRecords();
-        fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 1);
+      }
+
+      if (version < 2) {
+        if (endOffsetData < 0) {
+          endOffsetData = fileSegment.getFilledUpTo() / RECORD_SIZE - 1;
+
+          if (endOffsetData >= 0) {
+            long[] fetchPos;
+            for (long currentPos = endOffsetData * RECORD_SIZE; currentPos >= beginOffsetData; currentPos -= RECORD_SIZE) {
+
+              fetchPos = fileSegment.getRelativePosition(currentPos);
+
+              if (fileSegment.files[(int) fetchPos[0]].readByte(fetchPos[1] + RECORD_TYPE_OFFSET) != RECORD_WAS_DELETED)
+                // GOOD RECORD: SET IT AS BEGIN
+                break;
+              endOffsetData--;
+            }
+          }
+
+          fileSegment.files[0].writeHeaderLong(OBinaryProtocol.SIZE_LONG, endOffsetData);
+        }
+
+        fileSegment.files[0].writeHeaderLong(2 * OBinaryProtocol.SIZE_LONG, 2);
       }
 
     } finally {
@@ -209,6 +232,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       fileSegment.truncate();
       holeSegment.truncate();
 
+      beginOffsetData = -1;
+      endOffsetData = -1;
     } finally {
       releaseExclusiveLock();
     }
@@ -459,8 +484,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     acquireSharedLock();
     try {
 
-      return OClusterPositionFactory.INSTANCE.valueOf(endOffsetData > -1 ? endOffsetData : fileSegment.getFilledUpTo()
-          / RECORD_SIZE - 1);
+      return OClusterPositionFactory.INSTANCE.valueOf(endOffsetData);
 
     } finally {
       releaseSharedLock();
@@ -540,7 +564,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return TYPE;
   }
 
-  public boolean isLHBased() {
+  public boolean isHashBased() {
     return false;
   }
 
@@ -616,7 +640,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         }
         boolean renamed = fileSegment.files[i].renameTo(newFile);
         while (!renamed) {
-          OMemoryWatchDog.freeMemory(100);
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           renamed = fileSegment.files[i].renameTo(newFile);
         }
       }
@@ -647,7 +671,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       fileSegment.files[0].writeHeaderLong(0, beginOffsetData);
     }
 
-    if (endOffsetData > -1 && iPosition > endOffsetData) {
+    if (iPosition > endOffsetData) {
       // UPDATE END OF DATA
       endOffsetData = iPosition;
       fileSegment.files[0].writeHeaderLong(OBinaryProtocol.SIZE_LONG, endOffsetData);

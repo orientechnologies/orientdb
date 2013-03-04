@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -23,6 +24,7 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 
@@ -121,6 +123,10 @@ public class OMultiFileSegment extends OSegment {
     }
   }
 
+  public OFile getFile(int i) {
+    return files[i];
+  }
+
   public void truncate() throws IOException {
     // SHRINK TO 0
     files[0].shrink(0);
@@ -186,7 +192,7 @@ public class OMultiFileSegment extends OSegment {
    * @return a pair file-id/file-pos
    * @throws IOException
    */
-  protected long[] allocateSpace(final int iRecordSize) throws IOException {
+  public long[] allocateSpace(final int iRecordSize) throws IOException {
     // IT'S PREFEREABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
     OFile file;
     for (int i = 0; i < files.length; ++i) {
@@ -215,8 +221,7 @@ public class OMultiFileSegment extends OSegment {
 
     // COPY THE OLD ARRAY TO THE NEW ONE
     OFile[] newFiles = new OFile[files.length + 1];
-    for (int i = 0; i < files.length; ++i)
-      newFiles[i] = files[i];
+    System.arraycopy(files, 0, newFiles, 0, files.length);
     files = newFiles;
 
     // CREATE THE NEW FILE AND PUT IT AS LAST OF THE ARRAY
@@ -235,7 +240,7 @@ public class OMultiFileSegment extends OSegment {
    *          as pair file-id/file-pos
    * @return
    */
-  protected long getAbsolutePosition(final long[] iFilePosition) {
+  public long getAbsolutePosition(final long[] iFilePosition) {
     long position = 0;
     for (int i = 0; i < iFilePosition[0]; ++i) {
       position += fileMaxSize;
@@ -243,7 +248,7 @@ public class OMultiFileSegment extends OSegment {
     return position + iFilePosition[1];
   }
 
-  protected long[] getRelativePosition(final long iPosition) {
+  public long[] getRelativePosition(final long iPosition) {
     if (iPosition < fileMaxSize)
       return new long[] { 0l, iPosition };
 
@@ -417,6 +422,27 @@ public class OMultiFileSegment extends OSegment {
         remainingSize = 0;
       }
       offset = 0;
+    }
+  }
+
+  public void rename(String iOldName, String iNewName) {
+    for (OFile file : files) {
+      final String osFileName = file.getName();
+      if (osFileName.startsWith(name)) {
+        final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+            + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
+        for (OStorageFileConfiguration conf : config.infoFiles) {
+          if (conf.parent.name.equals(name))
+            conf.parent.name = iNewName;
+          if (conf.path.endsWith(osFileName))
+            conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
+        }
+        boolean renamed = file.renameTo(newFile);
+        while (!renamed) {
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+          renamed = file.renameTo(newFile);
+        }
+      }
     }
   }
 

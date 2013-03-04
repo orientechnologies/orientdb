@@ -70,14 +70,16 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  private Map<OPropertyImpl, String> linkedClasses     = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, String>        superClasses      = new HashMap<OClass, String>();
+  private Map<OPropertyImpl, String> linkedClasses       = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, String>        superClasses        = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
   private ORecordInternal<?>         record;
-  private List<String>               recordToDelete    = new ArrayList<String>();
-  private boolean                    schemaImported    = false;
-  private int                        exporterVersion   = -1;
-  private boolean                    lhClustersAreUsed = false;
+  private List<String>               recordToDelete      = new ArrayList<String>();
+  private boolean                    schemaImported      = false;
+  private int                        exporterVersion     = -1;
+  private boolean                    hashClustersAreUsed = false;
+  private ORID                       schemaRecordId;
+  private ORID                       indexMgrRecordId;
 
   public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -124,7 +126,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.setMVCC(false);
       database.setValidationEnabled(false);
 
-      lhClustersAreUsed = database.getStorage().isLHClustersAreUsed();
+      hashClustersAreUsed = database.getStorage().isHashClustersAreUsed();
 
       database.setStatus(STATUS.IMPORTING);
 
@@ -188,11 +190,21 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
       if (fieldName.equals("exporter-version"))
         exporterVersion = jsonReader.readInteger(OJSONReader.NEXT_IN_OBJECT);
+      else if (fieldName.equals("schemaRecordId"))
+        schemaRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
+      else if (fieldName.equals("indexMgrRecordId"))
+        indexMgrRecordId = new ORecordId(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
       else
         jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
     }
-
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+
+    if (schemaRecordId == null)
+      schemaRecordId = new ORecordId(database.getStorage().getConfiguration().schemaRecordId);
+
+    if (indexMgrRecordId == null)
+      indexMgrRecordId = new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId);
+
     listener.onMessage("OK");
   }
 
@@ -530,7 +542,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId != id) {
         if (database.countClusterElements(clusterId - 1) == 0) {
           listener.onMessage("Found previous version: migrating old clusters...");
-          // removeDefaultClusters();
           database.dropCluster(name);
           clusterId = database.addCluster(type, "temp_" + clusterId, null, null);
           clusterId = database.addCluster(type, name, null, null);
@@ -541,6 +552,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               + database.getClusterNameById(clusterId - 1) + "' that has " + database.countClusterElements(clusterId - 1)
               + " records");
       }
+
+      if (name != null
+          && !(name.equalsIgnoreCase(OMetadata.CLUSTER_MANUAL_INDEX_NAME) || name.equalsIgnoreCase(OMetadata.CLUSTER_INTERNAL_NAME) || name
+              .equalsIgnoreCase(OMetadata.CLUSTER_INDEX_NAME)))
+        database.getStorage().getClusterById(clusterId).truncate();
 
       listener.onMessage("OK, assigned id=" + clusterId);
 
@@ -650,7 +666,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     try {
       record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null);
 
-      if (schemaImported && record.getIdentity().toString().equals(database.getStorage().getConfiguration().schemaRecordId)) {
+      if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
         // JUMP THE SCHEMA
         return null;
       }
@@ -679,20 +695,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           return null;
       }
 
-      if (exporterVersion >= 4) {
-        final int manualIndex = database.getClusterIdByName(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+      final int manualIndexCluster = database.getClusterIdByName(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+      final int internalCluster = database.getClusterIdByName(OMetadata.CLUSTER_INTERNAL_NAME);
+      final int indexCluster = database.getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
 
-        if (record.getIdentity().getClusterId() == manualIndex)
+      if (exporterVersion >= 4) {
+        if (record.getIdentity().getClusterId() == manualIndexCluster)
           // JUMP INDEX RECORDS
           return null;
       }
 
       final String rid = record.getIdentity().toString();
+      final int clusterId = record.getIdentity().getClusterId();
 
-      if (!lhClustersAreUsed)
-        storeLocalClusterRecord();
+      if (hashClustersAreUsed && (clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster))
+        storeHashClusterRecord(new ORecordId(rid));
       else
-        storeLHClusterRecord(new ORecordId(rid));
+        storeLocalClusterRecord();
 
       if (!record.getIdentity().toString().equals(rid))
         throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
@@ -748,28 +767,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  private void storeLHClusterRecord(final ORecordId rid) {
+  private void storeHashClusterRecord(final ORecordId rid) {
     ORecordInternal<?> recordInternal = database.load(rid);
     if (recordInternal != null)
       recordInternal.delete();
 
-    String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
-    record.setIdentity(-1, ORecordId.CLUSTER_POS_INVALID);
-    if (record instanceof ODocument)
-      record.save(clusterName);
-    else
-      ((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
-
-    if (!record.getIdentity().equals(rid))
-      database.getStorage().changeRecordIdentity(record.getIdentity(), rid);
-
     record.setIdentity(rid);
+    record.save(true);
   }
 
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\nImporting indexes ...");
-
-    final String indexMgrRecordId = database.getStorage().getConfiguration().indexMgrRecordId;
     database.load(new ORecordId(indexMgrRecordId)).clear().save();
 
     OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();

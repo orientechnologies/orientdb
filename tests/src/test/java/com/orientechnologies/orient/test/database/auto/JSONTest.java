@@ -581,7 +581,7 @@ public class JSONTest {
     String res = doc.toJSON();
 
     // LOOK FOR "quotes": \"\",\"oops\":\"123\"
-    Assert.assertTrue(res.contains("\"quotes\": \"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
+    Assert.assertTrue(res.contains("\"quotes\":\"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 
   public void testDates() {
@@ -597,7 +597,7 @@ public class JSONTest {
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
-    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:tst").create();
+    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:test").create();
 
     String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     ODocument in = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(json, tx.newInstance(), new String[] {});
@@ -605,6 +605,26 @@ public class JSONTest {
     Assert.assertEquals(in.field("a"), "{dd}");
     Assert.assertTrue(in.field("bl") instanceof Map);
 
-    tx.close();
+    tx.drop();
+  }
+
+  @Test
+  public void mapTest() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    db.create();
+
+    ODocument doc = new ODocument("TestModel");
+    doc.fromJSON("{\"@rid\":\"\",\"knows\":{\"#8:0\":{\"@rid\":\"#8:0\",\"relationship\":\"family\"}}}");
+    doc.save();
+
+    ODocument doc2 = new ODocument("TestModel");
+    doc2.fromJSON("{\"@rid\":\"\",\"knows\":{\"#8:0\":{\"@rid\":\"bush\",\"relationship\":\"family\"}}}");
+    doc2.save();
+
+    for (ODocument o : db.browseClass("TestModel")) {
+      System.out.println(o.toJSON());
+    }
+
+    db.drop();
   }
 }

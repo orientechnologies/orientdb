@@ -95,4 +95,9 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
   public Iterator<OIdentifiable> valuesInverseIterator() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public boolean supportsOrderedIterations() {
+    return false;
+  }
 }

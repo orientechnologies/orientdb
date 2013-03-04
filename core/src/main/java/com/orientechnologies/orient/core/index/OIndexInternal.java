@@ -19,7 +19,6 @@ import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
 
@@ -43,15 +42,6 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * Flushes in-memory changes to disk.
    */
   public void flush();
-
-  /**
-   * Counts the times a value is indexed in all the keys
-   * 
-   * @param iRecord
-   *          Record to search
-   * @return Times the record is found, 0 if not found at all
-   */
-  public int count(final OIdentifiable iRecord);
 
   /**
    * Loads the index giving the configuration.
@@ -94,7 +84,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * @return {@code true} if given index can be used to calculate result of
    *         {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    * 
-   * @see com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals#executeIndexQuery(OCommandContext, OIndex, INDEX_OPERATION_TYPE, java.util.List, int)
+   * @see com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals#executeIndexQuery(OCommandContext, OIndex,
+   *      INDEX_OPERATION_TYPE, java.util.List, int)
    */
   public boolean canBeUsedInEqualityOperators();
 

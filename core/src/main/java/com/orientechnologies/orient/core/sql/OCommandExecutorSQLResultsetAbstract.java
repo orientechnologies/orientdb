@@ -83,7 +83,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected OSQLFilter                             compiledFilter;
   protected Map<String, Object>                    let                = null;
   protected Iterator<? extends OIdentifiable>      target;
-  protected List<OIdentifiable>                    tempResult;
+  protected Iterable<OIdentifiable>                tempResult;
   protected int                                    resultCount;
   protected int                                    skip               = 0;
 
@@ -331,7 +331,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           } else
             varValue = f.execute(iRecord, null, context);
         } else
-          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim());
+          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
 
         context.setVariable(varName, varValue);
       }
@@ -395,13 +395,16 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final List<OIdentifiable> newList = new ArrayList<OIdentifiable>();
 
       // APPLY LIMIT
-      final int start = Math.min(skip, tempResult.size());
-      final int tot = Math.min(limit + start, tempResult.size());
-      for (int i = start; i < tot; ++i)
-        newList.add(tempResult.get(i));
+      if (tempResult instanceof List<?>) {
+        final List<OIdentifiable> t = (List<OIdentifiable>) tempResult;
+        final int start = Math.min(skip, t.size());
+        final int tot = Math.min(limit + start, t.size());
+        for (int i = start; i < tot; ++i)
+          newList.add(t.get(i));
 
-      tempResult.clear();
-      tempResult = newList;
+        t.clear();
+        tempResult = newList;
+      }
     }
   }
 

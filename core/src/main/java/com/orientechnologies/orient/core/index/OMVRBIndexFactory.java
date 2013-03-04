@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 /**
- * Default OrientDB index factory.<br>
+ * Default OrientDB index factory for indexes based on MVRBTree.<br>
  * Supports index types :
  * <ul>
  * <li>UNIQUE</li>

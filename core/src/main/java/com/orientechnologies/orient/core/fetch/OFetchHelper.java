@@ -268,11 +268,17 @@ public class OFetchHelper {
       fieldDepthLevel = iFetchPlan.get(iFieldPathFromRoot);
     }
     if (fetchedLevel == null) {
-      parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
+	  if (!fieldValue.isEmbedded())
+	  {
+	    parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
+	  }
       processRecordRidMap(fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords, iFieldPathFromRoot,
           iContext);
     } else if ((!fieldValue.getIdentity().isValid() && fetchedLevel < iLevelFromRoot) || fetchedLevel > iLevelFromRoot) {
-      parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
+	  if (!fieldValue.isEmbedded())
+	  {
+        parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
+	  }
       processRecordRidMap((ODocument) fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords,
           iFieldPathFromRoot, iContext);
     }
@@ -438,10 +444,14 @@ public class OFetchHelper {
     final Collection<?> linked;
     if (fieldValue instanceof ODocument)
       linked = new OMVRBTreeRIDSet().fromDocument((ODocument) fieldValue);
-    else
+    else if (fieldValue instanceof Collection<?>) {
       linked = (Collection<OIdentifiable>) fieldValue;
-
-    iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, linked);
+      iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, linked);
+    } else if (fieldValue instanceof Map<?, ?>) {
+      linked = (Collection<?>) ((Map<?, ?>) fieldValue).values();
+      iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
+    } else
+      throw new IllegalStateException("Unrecognized type: " + fieldValue.getClass());
 
     final Iterator<?> iter;
     if (linked instanceof ORecordLazyMultiValue)
@@ -486,7 +496,11 @@ public class OFetchHelper {
             parsedRecords, iFieldPathFromRoot, iListener, iContext);
       }
     }
-    iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
+
+    if (fieldValue instanceof Collection<?>)
+      iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
+    else if (fieldValue instanceof Map<?, ?>)
+      iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
   }
 
   private static void fetchDocument(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,

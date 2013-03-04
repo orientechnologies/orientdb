@@ -89,7 +89,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private OLevel1RecordCache                          level1Cache;
   private boolean                                     mvcc;
   private boolean                                     validation;
-  private ODictionary<ORecordInternal<?>>             dictionary;
   private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
@@ -226,7 +225,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     super.close();
 
     hooks.clear();
-    dictionary = null;
 
     user = null;
     level1Cache.shutdown();
@@ -234,9 +232,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
   public ODictionary<ORecordInternal<?>> getDictionary() {
     checkOpeness();
-    if (dictionary == null)
-      dictionary = metadata.getIndexManager().getDictionary();
-    return dictionary;
+    return metadata.getIndexManager().getDictionary();
   }
 
   public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {

@@ -20,6 +20,7 @@ import java.util.Iterator;
 
 import javassist.util.proxy.ProxyObject;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -68,8 +69,15 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
-      TYPE o = database.getUserObjectByRecord(
-          (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
+      ORecordInternal<?> record = (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan);
+      if (record == null) {
+        OLogManager.instance().warn(
+            this,
+            "Record " + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
+        return null;
+      }
+      TYPE o = database.getUserObjectByRecord(record, iFetchPlan);
       ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
       return o;
     } else if (value instanceof ODocument && autoConvert2Object) {

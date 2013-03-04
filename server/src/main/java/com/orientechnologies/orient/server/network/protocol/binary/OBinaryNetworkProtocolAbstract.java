@@ -287,13 +287,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (stg != null)
       path = stg.getURL();
     else if (iStorageType.equals(OEngineLocal.NAME)) {
-    	// if this storage was configured return always path from config file, otherwise return default path
-    	path = server.getConfiguration().getStoragePath(iDbName);
-    	if (path == null)
-    		path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
-    }
-    else if (iStorageType.equals(OEngineMemory.NAME)) {
-        path = iStorageType + ":" + iDbName;
+      // if this storage was configured return always path from config file, otherwise return default path
+      path = server.getConfiguration().getStoragePath(iDbName);
+      if (path == null)
+        path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
+    } else if (iStorageType.equals(OEngineMemory.NAME)) {
+      path = iStorageType + ":" + iDbName;
     } else
       throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageType + "' is not supported.");
 
@@ -301,8 +300,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
-    iDatabase.delete(rid, version);
-    return 1;
+    try {
+      iDatabase.delete(rid, version);
+      return 1;
+    } catch (Exception e) {
+      return 0;
+    }
   }
 
   protected int cleanOutRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {

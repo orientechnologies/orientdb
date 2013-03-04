@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -197,6 +198,65 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     }
 
     return compositeKey;
+  }
+
+  @Override
+  public void serializeInDirectMemory(OCompositeKey compositeKey, ODirectMemory memory, long pointer) {
+    final List<Object> keys = compositeKey.getKeys();
+    final int keysSize = keys.size();
+
+    final long oldStartPointer = pointer;
+
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    memory.setInt(pointer, keysSize);
+
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
+
+    for (final Object key : keys) {
+      final OType type = OType.getTypeByClass(key.getClass());
+      @SuppressWarnings("unchecked")
+      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(type);
+
+      memory.setByte(pointer, binarySerializer.getId());
+      pointer += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+      binarySerializer.serializeInDirectMemory(key, memory, pointer);
+      pointer += binarySerializer.getObjectSize(key);
+    }
+
+    memory.setInt(oldStartPointer, (int) (pointer - oldStartPointer));
+  }
+
+  @Override
+  public OCompositeKey deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    final OCompositeKey compositeKey = new OCompositeKey();
+
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    final int keysSize = memory.getInt(pointer);
+    pointer += OIntegerSerializer.INT_SIZE;
+
+    final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
+    for (int i = 0; i < keysSize; i++) {
+      final byte serializerId = memory.getByte(pointer);
+      pointer += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
+
+      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
+      final Object key = binarySerializer.deserializeFromDirectMemory(memory, pointer);
+      compositeKey.addKey(key);
+
+      pointer += binarySerializer.getObjectSize(key);
+    }
+
+    return compositeKey;
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getInt(pointer);
   }
 
   public boolean isFixedLength() {

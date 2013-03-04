@@ -23,12 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,6 +35,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest {
@@ -218,7 +218,7 @@ public class SQLFunctionsTest {
 
       Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
       Assert.assertTrue(((Number) d.field("average")).longValue() >= ((Number) d.field("min")).longValue());
-      if (!database.getStorage().isLHClustersAreUsed())
+      if (!database.getStorage().isHashClustersAreUsed())
         Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
             "Total " + d.field("total") + " max " + d.field("max"));
     }
@@ -333,8 +333,9 @@ public class SQLFunctionsTest {
 
   @Test
   public void queryAsLong() {
-    long moreThanInteger = 1 + (long)Integer.MAX_VALUE;
-    String sql = "select numberString.asLong() as value from ( select '" + moreThanInteger + "' as numberString from Account ) limit 1";
+    long moreThanInteger = 1 + (long) Integer.MAX_VALUE;
+    String sql = "select numberString.asLong() as value from ( select '" + moreThanInteger
+        + "' as numberString from Account ) limit 1";
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(sql)).execute();
 
     Assert.assertEquals(result.size(), 1);

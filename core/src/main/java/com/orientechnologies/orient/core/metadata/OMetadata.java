@@ -151,8 +151,16 @@ public class OMetadata {
           new Callable<OSecurityShared>() {
             public OSecurityShared call() {
               final OSecurityShared instance = new OSecurityShared();
-              if (iLoad)
+              if (iLoad) {
+                security = instance;
                 instance.load();
+              }
+
+//              if (instance.getAllRoles().isEmpty()) {
+//                OLogManager.instance().error(this, "No security has been installed, create default users and roles");
+//                security.repair();
+//              }
+
               return instance;
             }
           }), database);
@@ -172,10 +180,14 @@ public class OMetadata {
    * Reloads the internal objects.
    */
   public void reload() {
-    schema.reload();
-    indexManager.load();
-    security.load();
-    functionLibrary.load();
+    if (schema != null)
+      schema.reload();
+    if (indexManager != null)
+      indexManager.load();
+    if (security != null)
+      security.load();
+    if (functionLibrary != null)
+      functionLibrary.load();
   }
 
   /**

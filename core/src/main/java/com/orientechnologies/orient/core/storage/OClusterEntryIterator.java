@@ -33,8 +33,12 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
 
   public OClusterEntryIterator(final OCluster iCluster) {
     cluster = iCluster;
-    min = cluster.getFirstPosition();
-    max = cluster.getLastPosition();
+    try {
+      min = cluster.getFirstPosition();
+      max = cluster.getLastPosition();
+    } catch (IOException ioe) {
+      throw new IllegalStateException("Exception during iterator creation", ioe);
+    }
 
     positionsToProcess = null;
     positionsIndex = -1;

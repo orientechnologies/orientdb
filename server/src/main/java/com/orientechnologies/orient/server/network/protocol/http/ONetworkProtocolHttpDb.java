@@ -46,6 +46,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
@@ -87,16 +88,16 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     cmdManager.registerCommand(new OServerCommandGetProfiler());
     cmdManager.registerCommand(new OServerCommandGetGephi());
 
+    cmdManager.registerCommand(new OServerCommandPostBatch());
     cmdManager.registerCommand(new OServerCommandPostClass());
     cmdManager.registerCommand(new OServerCommandPostCommand());
     cmdManager.registerCommand(new OServerCommandPostDatabase());
     cmdManager.registerCommand(new OServerCommandPostDocument());
+    cmdManager.registerCommand(new OServerCommandPostImportDatabase());
+    cmdManager.registerCommand(new OServerCommandPostImportRecords());
     cmdManager.registerCommand(new OServerCommandPostProperty());
     cmdManager.registerCommand(new OServerCommandPostStudio());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
-    cmdManager.registerCommand(new OServerCommandPostDatabase());
-    cmdManager.registerCommand(new OServerCommandPostImportRecords());
-    cmdManager.registerCommand(new OServerCommandPostImportDatabase());
 
     cmdManager.registerCommand(new OServerCommandPutDocument());
     cmdManager.registerCommand(new OServerCommandPutIndex());

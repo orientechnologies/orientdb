@@ -28,11 +28,13 @@ import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OFunctionBlock extends OAbstractBlock {
+  public static final String NAME = "function";
+
   @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    final String function = getRequiredFieldOfClass(iContext, iConfig, "function", String.class);
+    final String function = getRequiredFieldOfClass(iContext, iConfig, NAME, String.class);
 
     final Object[] args;
     final Collection<Object> configuredArgs = getFieldOfClass(iContext, iConfig, "args", Collection.class);
@@ -116,6 +118,6 @@ public class OFunctionBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "function";
+    return NAME;
   }
 }

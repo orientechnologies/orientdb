@@ -20,8 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import com.orientechnologies.common.directmemory.OBuddyMemory;
 import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 import org.testng.Assert;
@@ -39,27 +39,31 @@ public class DirectMemoryHashMapRemoveTest {
 
   @BeforeMethod
   public void setUp() {
-    memory = new OBuddyMemory(16000000, 32);
+    memory = ODirectMemoryFactory.INSTANCE.directMemory();
+    if (memory == null)
+      return;
+
     hashMap = new ODirectMemoryHashMap<Integer, Integer>(memory, OIntegerSerializer.INSTANCE, OIntegerSerializer.INSTANCE, 8, 2);
   }
 
   public void testRemoveOneItem() {
-    final int clusterId = 1;
+    if (memory == null)
+      return;
 
-    final int freeSpaceBefore = memory.freeSpace();
+    final int clusterId = 1;
 
     hashMap.put(clusterId, 10);
     Assert.assertEquals(10, (int) hashMap.remove(clusterId));
 
-    Assert.assertEquals(freeSpaceBefore, memory.freeSpace());
     Assert.assertEquals(0, hashMap.size());
   }
 
   public void testRemoveTwoItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 4;
-
-    final int freeSpaceBefore = memory.freeSpace();
 
     hashMap.put(clusterIdOne, 10);
     hashMap.put(clusterIdTwo, 20);
@@ -67,16 +71,16 @@ public class DirectMemoryHashMapRemoveTest {
     Assert.assertEquals(10, (int) hashMap.remove(clusterIdOne));
     Assert.assertEquals(20, (int) hashMap.remove(clusterIdTwo));
 
-    Assert.assertEquals(freeSpaceBefore, memory.freeSpace());
     Assert.assertEquals(0, hashMap.size());
   }
 
   public void testRemoveThreeItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
-
-    final int freeSpaceBefore = memory.freeSpace();
 
     hashMap.put(clusterIdOne, 10);
     hashMap.put(clusterIdTwo, 20);
@@ -86,17 +90,17 @@ public class DirectMemoryHashMapRemoveTest {
     Assert.assertEquals(20, (int) hashMap.remove(clusterIdTwo));
     Assert.assertEquals(30, (int) hashMap.remove(clusterIdThree));
 
-    Assert.assertEquals(freeSpaceBefore, memory.freeSpace());
     Assert.assertEquals(0, hashMap.size());
   }
 
   public void testRemoveFourItems() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
     final int clusterIdFour = 2;
-
-    final int freeSpaceBefore = memory.freeSpace();
 
     hashMap.put(clusterIdOne, 10);
     hashMap.put(clusterIdTwo, 20);
@@ -108,17 +112,17 @@ public class DirectMemoryHashMapRemoveTest {
     Assert.assertEquals(30, (int) hashMap.remove(clusterIdThree));
     Assert.assertEquals(40, (int) hashMap.remove(clusterIdFour));
 
-    Assert.assertEquals(freeSpaceBefore, memory.freeSpace());
     Assert.assertEquals(0, hashMap.size());
   }
 
   public void testClear() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
     final int clusterIdFour = 2;
-
-    final int freeSpaceBefore = memory.freeSpace();
 
     hashMap.put(clusterIdOne, 10);
     hashMap.put(clusterIdTwo, 20);
@@ -127,11 +131,13 @@ public class DirectMemoryHashMapRemoveTest {
 
     hashMap.clear();
 
-    Assert.assertEquals(freeSpaceBefore, memory.freeSpace());
     Assert.assertEquals(0, hashMap.size());
   }
 
   public void testAddThreeItemsRemoveOne() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -149,6 +155,9 @@ public class DirectMemoryHashMapRemoveTest {
   }
 
   public void testAddFourItemsRemoveTwo() {
+    if (memory == null)
+      return;
+
     final int clusterIdOne = 0;
     final int clusterIdTwo = 1;
     final int clusterIdThree = 4;
@@ -169,13 +178,16 @@ public class DirectMemoryHashMapRemoveTest {
   }
 
   public void testRemove10000RandomItems() {
+    if (memory == null)
+      return;
+
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 1000; i++) {
-      int clusterId = random.nextInt(32767);
+    for (int i = 0; i < 10000; i++) {
+      int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
-        clusterId = random.nextInt(32767);
+        clusterId = random.nextInt();
 
       final int pointer = random.nextInt();
 
@@ -191,13 +203,16 @@ public class DirectMemoryHashMapRemoveTest {
   }
 
   public void testAdd10000RandomItemsRemoveHalf() {
+    if (memory == null)
+      return;
+
     final Map<Integer, Integer> addedItems = new HashMap<Integer, Integer>();
     final Random random = new Random();
 
-    for (int i = 0; i < 1000; i++) {
-      int clusterId = random.nextInt(32767);
+    for (int i = 0; i < 10000; i++) {
+      int clusterId = random.nextInt();
       while (addedItems.containsKey(clusterId))
-        clusterId = random.nextInt(32767);
+        clusterId = random.nextInt();
 
       final int pointer = random.nextInt();
 
@@ -214,5 +229,4 @@ public class DirectMemoryHashMapRemoveTest {
 
     Assert.assertEquals(addedItems.size(), hashMap.size());
   }
-
 }

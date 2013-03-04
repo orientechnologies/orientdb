@@ -16,9 +16,29 @@
     <name>OrientDB Core</name>
 
     <properties>
-        <osgi.import>*</osgi.import>
+        <osgi.import>
+            com.orientechnologies.orient.graph.console;resolution:=optional,
+            com.orientechnologies.orient.graph.gremlin;resolution:=optional,
+            com.orientechnologies.orient.graph.handler;resolution:=optional,
+            *
+        </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*</osgi.export>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -31,6 +51,12 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

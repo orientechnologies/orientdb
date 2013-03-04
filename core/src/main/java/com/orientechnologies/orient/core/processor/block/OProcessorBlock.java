@@ -24,4 +24,8 @@ public interface OProcessorBlock {
       boolean iReadOnly);
 
   public String getName();
+
+  public OProcessorBlock getParentBlock();
+
+  public void setParentBlock(OProcessorBlock parentBlock);
 }

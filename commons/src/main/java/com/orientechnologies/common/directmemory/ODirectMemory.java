@@ -29,7 +29,7 @@ public interface ODirectMemory {
   /**
    * Presentation of null pointer in given memory model.
    */
-  public int NULL_POINTER = -1;
+  public long NULL_POINTER = 0;
 
   /**
    * Allocates amount of memory that is needed to write passed in byte array and writes it.
@@ -38,7 +38,7 @@ public interface ODirectMemory {
    *          Data that is needed to be written.
    * @return Pointer to the allocated piece of memory.
    */
-  int allocate(byte[] bytes);
+  long allocate(byte[] bytes);
 
   /**
    * Allocates given amount of memory (in bytes) from pool and returns pointer on allocated memory or {@link #NULL_POINTER} if there
@@ -48,7 +48,7 @@ public interface ODirectMemory {
    *          Size that is needed to be allocated.
    * @return Pointer to the allocated memory.
    */
-  int allocate(int size);
+  long allocate(long size);
 
   /**
    * Returns allocated memory back to the pool.
@@ -56,171 +56,127 @@ public interface ODirectMemory {
    * @param pointer
    *          Pointer to the allocated piece of memory.
    */
-  void free(int pointer);
-
-  /**
-   * Calculates actual size that has been allocated for this entry.
-   * 
-   * @param pointer
-   *          to allocated entry
-   * @return actual size of this entry in memory
-   */
-  int getActualSpace(int pointer);
+  void free(long pointer);
 
   /**
    * Reads raw data from given piece of memory.
    * 
+   * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @param length
    *          Size of data which should be returned.
    * @return Raw data from given piece of memory.
    */
-  byte[] get(int pointer, int offset, int length);
+  byte[] get(long pointer, int length);
 
   /**
    * Writes data to the given piece of memory.
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
+   * @param content
    * @param length
    *          Size of data which should be written.
-   * @param content
-   *          Raw data is going to be written.
    */
-  void set(int pointer, int offset, int length, byte[] content);
+  void set(long pointer, byte[] content, int length);
 
   /**
-   * Returns converted data from given piece of memory. This operation is much faster than {@link #get(int, int, int)}.
+   * Returns converted data from given piece of memory. This operation is much faster than {@link #get(long, int)}.
+   * 
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @param serializer
    *          Serializer which will be used to convert data from byte array.
-   * @param <T>
-   *          Data type.
    * @return Data instance.
    */
-  <T> T get(int pointer, int offset, OBinarySerializer<T> serializer);
+  <T> T get(long pointer, OBinarySerializer<T> serializer);
 
   /**
-   * Write data to given piece of memory. This operation is much faster than {@link #set(int, int, int, byte[])}.
+   * Write data to given piece of memory. This operation is much faster than {@link #set(long, byte[], int)}.
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @param serializer
    *          Serializer which will be used to convert data to byte array.
-   * @param <T>
-   *          Data type.
    */
-  <T> void set(int pointer, int offset, T data, OBinarySerializer<T> serializer);
+  <T> void set(long pointer, T data, OBinarySerializer<T> serializer);
 
   /**
    * Return <code>int</code> value from given piece of memory.
    * 
+   * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @return Int value.
    */
-  int getInt(int pointer, int offset);
+  int getInt(long pointer);
 
   /**
    * Write <code>int</code> value to given piece of memory.
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
+   * 
    */
-  void setInt(int pointer, int offset, int value);
+  void setInt(long pointer, int value);
+
+  void setShort(long pointer, short value);
+
+  short getShort(long pointer);
 
   /**
    * Return <code>long</code> value from given piece of memory.
    * 
+   * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @return long value.
    */
-  long getLong(int pointer, int offset);
+  long getLong(long pointer);
 
   /**
    * Write <code>long</code> value to given piece of memory.
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
+   * 
    */
-  void setLong(int pointer, int offset, long value);
+  void setLong(long pointer, long value);
 
   /**
    * Return <code>byte</code> value from given piece of memory.
    * 
+   * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * @return byte value.
    */
-  byte getByte(int pointer, int offset);
+  byte getByte(long pointer);
 
   /**
    * Write <code>byte</code> value to given piece of memory.
    * 
    * @param pointer
-   *          Memory pointer, returned by {@link #allocate(int)} method.
-   * @param offset
-   *          Memory offset.
-   */
-  void setByte(int pointer, int offset, byte value);
-
-  /**
-   * The amount whole direct memory (free and used). This method does not take into account amount of memory that will be needed to
-   * perform system operations.
+   *          Memory pointer, returned by {@link #allocate(long)} method.
    * 
-   * @return The amount whole direct memory (free and used).
    */
-  int capacity();
+  void setByte(long pointer, byte value);
+
+  void setChar(long pointer, char value);
+
+  char getChar(long pointer);
 
   /**
-   * The amount available direct memory, that is, how much memory can be potentially used by users. This method does not take into
-   * account amount of memory that will be needed to perform system operations and can be used only for rough estimation of
-   * available memory.
-   * 
-   * @return The amount available direct memory.
-   */
-  int freeSpace();
-
-  /**
-   * Removes all data from the memory.
-   */
-  void clear();
-
-  /**
-   * Performs copying of raw data in memory from one offset to another.
+   * Performs copying of raw data in memory from one position to another.
    * 
    * @param srcPointer
-   *          Memory pointer, returned by {@link #allocate(int)} method, from which data will be copied.
-   * @param fromOffset
-   *          Offset in memory from which data will be copied.
+   *          Memory pointer, returned by {@link #allocate(long)} method, from which data will be copied.
    * @param destPointer
    *          Memory pointer to which data will be copied.
-   * @param toOffset
-   *          Offset in memory to which data will be copied.
    * @param len
    *          Data length.
    */
-  void copyData(int srcPointer, int fromOffset, int destPointer, int toOffset, int len);
+  void copyData(long srcPointer, long destPointer, long len);
 }

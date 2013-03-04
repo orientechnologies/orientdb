@@ -163,29 +163,6 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     }
   }
 
-  public int count(final OIdentifiable iRecord) {
-
-    acquireExclusiveLock();
-    try {
-
-      Set<OIdentifiable> rids;
-      int tot = 0;
-      for (final Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
-        rids = entries.getValue();
-        if (rids != null) {
-          if (rids.contains(iRecord)) {
-            ++tot;
-          }
-        }
-      }
-
-      return tot;
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   public OIndexMultiValues create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
       final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
     return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex,
@@ -599,7 +576,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(map.values().iterator());
+      return new OFlattenIterator(map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
@@ -612,7 +589,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
+      return new OFlattenIterator(((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();
