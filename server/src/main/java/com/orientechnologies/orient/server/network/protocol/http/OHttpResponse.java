@@ -110,7 +110,7 @@ public class OHttpResponse {
 
     byte[] binaryContent = null;
     if(!empty) {
-    	if(contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) 
+    	if(contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) 
     		binaryContent = compress(content);
     	else
     		binaryContent = OBinaryProtocol.string2bytes(content);
