@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.network.protocol;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -30,8 +31,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
     super(group, name);
   }
 
-  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration, Object[] commands)
-      throws IOException;
+  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration, List<?> statelessCommands,
+      List<?> statefulCommands) throws IOException;
 
   public abstract String getType();
 

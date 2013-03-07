@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -94,12 +95,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, final Object[] iCommands)
-      throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(iSocket, this);
 
-    super.config(iServer, iSocket, iConfig, iCommands);
+    super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);

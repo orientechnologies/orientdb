@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.List;
 import java.util.logging.Level;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -97,8 +98,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, Object[] commands)
-      throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
   }
