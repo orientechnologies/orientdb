@@ -232,18 +232,25 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
-	@Override
-	public boolean updatedReplica(ORecordInternal<?> iContent) {
-		return currentTx.updateReplica(iContent);
-	}
+  @Override
+  public boolean updatedReplica(ORecordInternal<?> iContent) {
+    return currentTx.updateReplica(iContent);
+  }
 
-	@SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     currentTx.saveRecord(iContent, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     return (RET) iContent;
+  }
+
+  /**
+   * Deletes the record without checking the version.
+   */
+  public ODatabaseRecord delete(final ORID iRecord) {
+    throw new UnsupportedOperationException("delete(ORID)");
   }
 
   @Override

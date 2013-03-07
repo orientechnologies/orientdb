@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -27,112 +28,115 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class Account {
-	@Id
-	private Object						rid;
+  @Id
+  private Object            rid;
 
-	private int								id;
-	private String						name;
-	private String						surname;
-	private Date							birthDate;
-	private float							salary;
-	private List<Address>			addresses		= new ArrayList<Address>();
-	private byte[]						thumbnail;
-	private transient byte[]	photo;
-	private transient boolean	initialized	= false;
+  private int               id;
+  private String            name;
+  private String            surname;
+  private Date              birthDate;
+  private float             salary;
 
-	public Account() {
-	}
+  @OneToMany(orphanRemoval = true)
+  private List<Address>     addresses   = new ArrayList<Address>();
 
-	public Account(int iId, String iName, String iSurname) {
-		this.id = iId;
-		this.name = iName;
-		this.surname = iSurname;
-	}
+  private byte[]            thumbnail;
+  private transient byte[]  photo;
+  private transient boolean initialized = false;
 
-	public String getName() {
-		return name;
-	}
+  public Account() {
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public Account(int iId, String iName, String iSurname) {
+    this.id = iId;
+    this.name = iName;
+    this.surname = iSurname;
+  }
 
-	public String getSurname() {
-		return surname;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setSurname(String surname) {
-		this.surname = surname;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public List<Address> getAddresses() {
-		return addresses;
-	}
+  public String getSurname() {
+    return surname;
+  }
 
-	public void setAddresses(List<Address> addresses) {
-		this.addresses = addresses;
-	}
+  public void setSurname(String surname) {
+    this.surname = surname;
+  }
 
-	public int getId() {
-		return id;
-	}
+  public List<Address> getAddresses() {
+    return addresses;
+  }
 
-	public Date getBirthDate() {
-		return birthDate;
-	}
+  public void setAddresses(List<Address> addresses) {
+    this.addresses = addresses;
+  }
 
-	public void setBirthDate(Date birthDate) {
-		this.birthDate = birthDate;
-	}
+  public int getId() {
+    return id;
+  }
 
-	public float getSalary() {
-		return salary;
-	}
+  public Date getBirthDate() {
+    return birthDate;
+  }
 
-	public void setSalary(float salary) {
-		this.salary = salary;
-	}
+  public void setBirthDate(Date birthDate) {
+    this.birthDate = birthDate;
+  }
 
-	public boolean isInitialized() {
-		return initialized;
-	}
+  public float getSalary() {
+    return salary;
+  }
 
-	public Object getRid() {
-		return rid;
-	}
+  public void setSalary(float salary) {
+    this.salary = salary;
+  }
 
-	public byte[] getThumbnail() {
-		return thumbnail;
-	}
+  public boolean isInitialized() {
+    return initialized;
+  }
 
-	public void setThumbnail(byte[] iThumbnail) {
-		this.thumbnail = iThumbnail;
-	}
+  public Object getRid() {
+    return rid;
+  }
 
-	public byte[] getPhoto() {
-		return photo;
-	}
+  public byte[] getThumbnail() {
+    return thumbnail;
+  }
 
-	public void setPhoto(byte[] photo) {
-		this.photo = photo;
-	}
+  public void setThumbnail(byte[] iThumbnail) {
+    this.thumbnail = iThumbnail;
+  }
 
-	@OAfterDeserialization
-	public void fromStream(final ODocument iDocument) {
-		initialized = true;
-		if (iDocument.containsField("externalPhoto")) {
-			// READ THE PHOTO FROM AN EXTERNAL RECORD AS PURE BINARY
-			ORecordBytes extRecord = iDocument.field("externalPhoto");
-			photo = extRecord.toStream();
-		}
-	}
+  public byte[] getPhoto() {
+    return photo;
+  }
 
-	@OBeforeSerialization
-	public void toStream(final ODocument iDocument) {
-		if (thumbnail != null) {
-			// WRITE THE PHOTO IN AN EXTERNAL RECORD AS PURE BINARY
-			ORecordBytes externalPhoto = new ORecordBytes(thumbnail);
-			iDocument.field("externalPhoto", externalPhoto);
-		}
-	}
+  public void setPhoto(byte[] photo) {
+    this.photo = photo;
+  }
+
+  @OAfterDeserialization
+  public void fromStream(final ODocument iDocument) {
+    initialized = true;
+    if (iDocument.containsField("externalPhoto")) {
+      // READ THE PHOTO FROM AN EXTERNAL RECORD AS PURE BINARY
+      ORecordBytes extRecord = iDocument.field("externalPhoto");
+      photo = extRecord.toStream();
+    }
+  }
+
+  @OBeforeSerialization
+  public void toStream(final ODocument iDocument) {
+    if (thumbnail != null) {
+      // WRITE THE PHOTO IN AN EXTERNAL RECORD AS PURE BINARY
+      ORecordBytes externalPhoto = new ORecordBytes(thumbnail);
+      iDocument.field("externalPhoto", externalPhoto);
+    }
+  }
 }
