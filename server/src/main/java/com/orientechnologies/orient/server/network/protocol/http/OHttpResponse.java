@@ -108,8 +108,8 @@ public class OHttpResponse {
     writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
     byte[] binaryContent = null;
-    if(!empty) {
-      if(contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED))
+    if (!empty) {
+      if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED))
         binaryContent = compress(content);
       else
         binaryContent = OBinaryProtocol.string2bytes(content);
@@ -140,12 +140,12 @@ public class OHttpResponse {
     writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
     writeLine("Server: " + serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
-    
+
     // SET CONTENT ENCDOING
-    if(contentEncoding != null && contentEncoding.length() > 0) {
+    if (contentEncoding != null && contentEncoding.length() > 0) {
       writeLine("Content-Encoding: " + contentEncoding);
     }
-    
+
     // INCLUDE COMMON CUSTOM HEADERS
     if (additionalHeaders != null)
       for (String h : additionalHeaders)
@@ -300,9 +300,9 @@ public class OHttpResponse {
     out.flush();
   }
 
-  //Compress content string
+  // Compress content string
   public byte[] compress(String jsonStr) {
-    if(jsonStr == null || jsonStr.length() == 0)
+    if (jsonStr == null || jsonStr.length() == 0)
       return null;
     GZIPOutputStream gout = null;
     ByteArrayOutputStream baos = null;
@@ -313,15 +313,15 @@ public class OHttpResponse {
       gout.write(incoming);
       gout.finish();
       return baos.toByteArray();
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
     } finally {
       try {
-        if(gout != null)
+        if (gout != null)
           gout.close();
-        if(baos != null)
+        if (baos != null)
           baos.close();
-      }catch(Exception ex) {
+      } catch (Exception ex) {
         ex.printStackTrace();
       }
     }
@@ -352,11 +352,11 @@ public class OHttpResponse {
   public void setContentType(String contentType) {
     this.contentType = contentType;
   }
-  
+
   public String getContentEncoding() {
     return contentEncoding;
   }
-  
+
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
   }
