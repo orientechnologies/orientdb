@@ -40,10 +40,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OFlattenIterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -939,7 +939,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
-    if (tempResult instanceof OFlattenIterator) {
+    if (tempResult instanceof OMultiCollectionIterator) {
       final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
       for (OIdentifiable o : tempResult)
         list.add(o);
@@ -973,7 +973,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } else {
-      OFlattenIterator finalResult = new OFlattenIterator();
+      OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
       finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
         if (flattenTarget instanceof OSQLFilterItem)
@@ -988,8 +988,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             finalResult.add((Collection<OIdentifiable>) fieldValue);
           } else if (fieldValue instanceof Map<?, ?>) {
             finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
-          } else if (fieldValue instanceof OFlattenIterator) {
-            finalResult = (OFlattenIterator) fieldValue;
+          } else if (fieldValue instanceof OMultiCollectionIterator) {
+            finalResult = (OMultiCollectionIterator<OIdentifiable>) fieldValue;
           } else if (fieldValue instanceof OIdentifiable)
             finalResult.add((OIdentifiable) fieldValue);
       }

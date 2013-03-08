@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.iterator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,24 +28,24 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIdentifiable> {
-  private List<Object>            internalCollections;
-  private Iterator<?>             iteratorOfInternalCollections;
-  private Iterator<OIdentifiable> partialIterator;
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
+  private List<Object> internalCollections;
+  private Iterator<?>  iteratorOfInternalCollections;
+  private Iterator<T>  partialIterator;
 
-  private int                     browsed = 0;
-  private int                     limit   = -1;
+  private int          browsed = 0;
+  private int          limit   = -1;
 
-  public OFlattenIterator() {
+  public OMultiCollectionIterator() {
     internalCollections = new ArrayList<Object>();
   }
 
-  public OFlattenIterator(final Collection<Collection<OIdentifiable>> iterators) {
+  public OMultiCollectionIterator(final Collection<Collection<OIdentifiable>> iterators) {
     iteratorOfInternalCollections = iterators.iterator();
     getNextPartial();
   }
 
-  public OFlattenIterator(final Iterator<? extends Collection<OIdentifiable>> iterator) {
+  public OMultiCollectionIterator(final Iterator<? extends Collection<OIdentifiable>> iterator) {
     iteratorOfInternalCollections = iterator;
     getNextPartial();
   }
@@ -74,7 +74,7 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
   }
 
   @Override
-  public OIdentifiable next() {
+  public T next() {
     if (!hasNext())
       throw new NoSuchElementException();
 
@@ -83,7 +83,7 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
   }
 
   @Override
-  public Iterator<OIdentifiable> iterator() {
+  public Iterator<T> iterator() {
     return this;
   }
 
@@ -115,17 +115,17 @@ public class OFlattenIterator implements Iterator<OIdentifiable>, Iterable<OIden
         if (next != null) {
           if (next instanceof Iterator<?>) {
             if (((Iterator<OIdentifiable>) next).hasNext()) {
-              partialIterator = (Iterator<OIdentifiable>) next;
+              partialIterator = (Iterator<T>) next;
               return true;
             }
           } else if (next instanceof Collection<?>) {
             if (!((Collection<OIdentifiable>) next).isEmpty()) {
-              partialIterator = ((Collection<OIdentifiable>) next).iterator();
+              partialIterator = ((Collection<T>) next).iterator();
               return true;
             }
           } else if (next instanceof OIdentifiable) {
-            final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-            list.add((OIdentifiable) next);
+            final List<T> list = new ArrayList<T>();
+            list.add((T) next);
             partialIterator = list.iterator();
             return true;
           }
