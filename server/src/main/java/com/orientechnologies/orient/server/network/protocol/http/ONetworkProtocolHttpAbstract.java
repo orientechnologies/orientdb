@@ -115,9 +115,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
         connection.data.serverInfo, request.sessionId, callbackF);
-    if(request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-    	response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
-    }
 
     final long begin = System.currentTimeMillis();
 
