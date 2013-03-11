@@ -19,14 +19,15 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-
 import sun.misc.Unsafe;
+
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 2/4/13
  */
+@SuppressWarnings("restriction")
 public class OUnsafeMemory implements ODirectMemory {
   public static final OUnsafeMemory INSTANCE              = new OUnsafeMemory();
 
