@@ -415,8 +415,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               fields[i] = doc.field(groupByFields.get(i));
 
             fieldValue = fields;
-          } else
-            fieldValue = doc.field(groupByFields.get(0));
+          } else {
+            final String field = groupByFields.get(0);
+            if (field != null) {
+              if (field.startsWith("$"))
+                fieldValue = context.getVariable(field);
+              else
+                fieldValue = doc.field(field);
+            }
+          }
         }
 
         getProjectionGroup(fieldValue).applyRecord(iRecord);
