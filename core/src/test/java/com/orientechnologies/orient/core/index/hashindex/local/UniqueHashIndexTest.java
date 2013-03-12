@@ -47,7 +47,7 @@ public class UniqueHashIndexTest {
     OLRUBuffer buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
         OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
-    hashIndex = new OUniqueHashIndex(buffer);
+    hashIndex = new OUniqueHashIndex(buffer, (OStorageLocal) databaseDocumentTx.getStorage());
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.INTEGER), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
   }

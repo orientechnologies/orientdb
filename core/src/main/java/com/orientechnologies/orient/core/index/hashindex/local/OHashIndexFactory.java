@@ -63,7 +63,7 @@ public class OHashIndexFactory implements OIndexFactory {
         BUFFER.compareAndSet(null, buffer);
       }
 
-      return new OUniqueHashIndex(BUFFER.get());
+      return new OUniqueHashIndex(BUFFER.get(), (OStorageLocal) iDatabase.getStorage());
     }
 
     throw new OConfigurationException("Unsupported type : " + iIndexType);

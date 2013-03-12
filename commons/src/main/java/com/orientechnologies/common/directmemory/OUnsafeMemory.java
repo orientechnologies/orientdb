@@ -34,8 +34,6 @@ public class OUnsafeMemory implements ODirectMemory {
   private static final Unsafe       unsafe;
   private static final boolean      unaligned;
 
-  private static final long         arrayBaseOffset;
-
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
   static {
@@ -55,7 +53,6 @@ public class OUnsafeMemory implements ODirectMemory {
 
     String arch = System.getProperty("os.arch");
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
-    arrayBaseOffset = (long) unsafe.arrayBaseOffset(byte[].class);
   }
 
   @Override
@@ -151,7 +148,7 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putChar(pointer, value);
     else {
-      unsafe.putByte(pointer, (byte) (value >>> 8));
+      unsafe.putByte(pointer++, (byte) (value >>> 8));
       unsafe.putByte(pointer, (byte) (value));
     }
   }
