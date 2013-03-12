@@ -399,6 +399,30 @@ public class OMultiFileSegment extends OSegment {
     }
   }
 
+  public void writeContinuously(long iPosition, byte[] iData, int arrayOffset, int length) throws IOException {
+    long[] pos = getRelativePosition(iPosition);
+
+    // IT'S PREFERABLE TO FIND SPACE WITHOUT ENLARGE ANY FILES: FIND THE FIRST FILE WITH FREE SPACE TO USE
+    OFile file;
+    int remainingSize = length;
+    long offset = pos[1];
+
+    for (int i = (int) pos[0]; remainingSize > 0; ++i) {
+      file = files[i];
+      if (remainingSize > file.getFilledUpTo() - offset) {
+        if (file.getFilledUpTo() < offset) {
+          throw new ODatabaseException("range check! " + file.getFilledUpTo() + " " + offset);
+        }
+        file.write(offset, iData, (int) (file.getFilledUpTo() - offset), arrayOffset + iData.length - remainingSize);
+        remainingSize -= (file.getFilledUpTo() - offset);
+      } else {
+        file.write(offset, iData, remainingSize, arrayOffset + iData.length - remainingSize);
+        remainingSize = 0;
+      }
+      offset = 0;
+    }
+  }
+
   public void readContinuously(final long iPosition, byte[] iBuffer, final int iSize) throws IOException {
     long[] pos = getRelativePosition(iPosition);
 

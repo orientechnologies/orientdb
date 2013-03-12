@@ -33,4 +33,5 @@ class LRUEntry {
   LRUEntry before;
 
   boolean  isDirty;
+  boolean  managedExternally;
 }

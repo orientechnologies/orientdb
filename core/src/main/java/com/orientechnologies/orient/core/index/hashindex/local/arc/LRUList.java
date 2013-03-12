@@ -42,28 +42,28 @@ class LRUList implements Iterable<LRUEntry> {
     nextThreshold = (int) (entries.length * 0.75);
   }
 
-  public LRUEntry get(String fileName, long filePosition) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry get(String fileName, long pageIndex) {
+    long hashCode = hashCode(fileName, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != filePosition || !lruEntry.fileName.equals(fileName)))
+        && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != pageIndex || !lruEntry.fileName.equals(fileName)))
       lruEntry = lruEntry.next;
 
     return lruEntry;
   }
 
-  public LRUEntry remove(String fileName, long filePosition) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry remove(String fileName, long pageIndex) {
+    long hashCode = hashCode(fileName, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
+        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -71,6 +71,25 @@ class LRUList implements Iterable<LRUEntry> {
     if (lruEntry == null)
       return null;
 
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
+    removeFromLRUList(lruEntry);
+
+    if (prevEntry == null)
+      entries[index] = lruEntry.next;
+    else
+      prevEntry.next = lruEntry.next;
+
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
+    size--;
+
+    return lruEntry;
+  }
+
+  private void removeFromLRUList(LRUEntry lruEntry) {
     LRUEntry before = lruEntry.before;
     LRUEntry after = lruEntry.after;
 
@@ -83,34 +102,28 @@ class LRUList implements Iterable<LRUEntry> {
       head = lruEntry.after;
     if (lruEntry == tail)
       tail = lruEntry.before;
-
-    if (prevEntry == null)
-      entries[index] = lruEntry.next;
-    else
-      prevEntry.next = lruEntry.next;
-
-    size--;
-
-    return lruEntry;
   }
 
-  public LRUEntry putToMRU(String fileName, long filePosition, long dataPointer, boolean isDirty) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry putToMRU(String fileName, long pageIndex, long dataPointer, boolean isDirty, boolean managedExternally) {
+    long hashCode = hashCode(fileName, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
     while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
+        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
 
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
     if (lruEntry == null) {
       lruEntry = new LRUEntry();
 
-      lruEntry.pageIndex = filePosition;
+      lruEntry.pageIndex = pageIndex;
       lruEntry.fileName = fileName;
       lruEntry.hashCode = hashCode;
 
@@ -124,25 +137,26 @@ class LRUList implements Iterable<LRUEntry> {
 
     lruEntry.dataPointer = dataPointer;
     lruEntry.isDirty = isDirty;
+    lruEntry.managedExternally = managedExternally;
 
-    LRUEntry before = lruEntry.before;
-    LRUEntry after = lruEntry.after;
-
-    if (before != null)
-      before.after = after;
-    if (after != null)
-      after.before = before;
+    removeFromLRUList(lruEntry);
 
     if (head == null) {
       head = lruEntry;
       tail = lruEntry;
+
+      lruEntry.before = null;
+      lruEntry.after = null;
     } else {
-      if (tail != lruEntry) {
-        tail.after = lruEntry;
-        lruEntry.before = tail;
-        tail = lruEntry;
-      }
+      tail.after = lruEntry;
+
+      lruEntry.before = tail;
+      lruEntry.after = null;
+
+      tail = lruEntry;
     }
+    assert tail.before != tail;
+    assert tail.after == null;
 
     if (size >= nextThreshold)
       rehash();

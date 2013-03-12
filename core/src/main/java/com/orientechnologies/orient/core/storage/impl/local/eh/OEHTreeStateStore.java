@@ -39,6 +39,22 @@ public class OEHTreeStateStore extends OSingleFileSegment {
     return file.readHeaderLong(0);
   }
 
+  public void setHashTreeTombstone(long hashTreeTombstone) throws IOException {
+    file.writeHeaderLong(OLongSerializer.LONG_SIZE, hashTreeTombstone);
+  }
+
+  public long getHashTreeTombstone() throws IOException {
+    return file.readHeaderLong(OLongSerializer.LONG_SIZE);
+  }
+
+  public void setBucketTombstonePointer(long bucketTombstonePointer) throws IOException {
+    file.writeHeaderLong(2 * OLongSerializer.LONG_SIZE, bucketTombstonePointer);
+  }
+
+  public long getBucketTombstonePointer() throws IOException {
+    return file.readHeaderLong(2 * OLongSerializer.LONG_SIZE);
+  }
+
   public void storeTreeState(long[][] hashTree, OEHNodeMetadata[] nodesMetadata, int[] bucketsSizes) throws IOException {
     truncate();
 
@@ -75,18 +91,6 @@ public class OEHTreeStateStore extends OSingleFileSegment {
 
   public long getBucketsOffset() throws IOException {
     return file.readInt(0) * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
-  }
-
-  public int[] loadBucketsSizes() throws IOException {
-    int len = file.readInt(0);
-    final int[] bucketsSizes = new int[len];
-
-    long filePosition = OIntegerSerializer.INT_SIZE;
-    for (int i = 0; i < len; i++) {
-      bucketsSizes[i] = file.readInt(filePosition);
-      filePosition += OIntegerSerializer.INT_SIZE;
-    }
-    return bucketsSizes;
   }
 
   public long[] loadTreeNode(int index, long bucketsOffset) throws IOException {

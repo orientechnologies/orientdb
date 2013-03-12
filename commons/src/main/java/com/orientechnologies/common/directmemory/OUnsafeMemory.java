@@ -85,6 +85,13 @@ public class OUnsafeMemory implements ODirectMemory {
   }
 
   @Override
+  public void get(long pointer, byte[] array, int arrayOffset, int length) {
+    pointer += arrayOffset;
+    for (int i = arrayOffset; i < length + arrayOffset; i++)
+      array[i] = unsafe.getByte(pointer++);
+  }
+
+  @Override
   public void set(long pointer, byte[] content, int length) {
     for (int i = 0; i < length; i++)
       unsafe.putByte(pointer++, content[i]);
@@ -133,7 +140,10 @@ public class OUnsafeMemory implements ODirectMemory {
 
   @Override
   public short getShort(long pointer) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    if (unaligned)
+      return unsafe.getShort(pointer);
+
+    return (short) (unsafe.getByte(pointer++) << 8 | (unsafe.getByte(pointer) & 0xff));
   }
 
   @Override

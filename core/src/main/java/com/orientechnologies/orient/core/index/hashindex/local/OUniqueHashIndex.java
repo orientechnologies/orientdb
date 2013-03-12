@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -33,8 +34,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
   public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE_HASH.toString();
 
-  public OUniqueHashIndex() {
-    super(TYPE_ID);
+  public OUniqueHashIndex(OLRUBuffer buffer) {
+    super(TYPE_ID, buffer);
   }
 
   @Override
@@ -59,7 +60,6 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
         ((ORecord<?>) value.getRecord()).save();
 
       super.put(key, value.getIdentity());
-      get(key);
       return this;
 
     } finally {

@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.comparator.OComparatorFactory;
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -35,44 +36,36 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
  * @since 2/17/13
  */
 public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
-  public static final int                        MAX_BUCKET_SIZE            = 256;
+  private static final int                       FREE_POINTER_OFFSET        = 0;
+  private static final int                       DEPTH_OFFSET               = OIntegerSerializer.INT_SIZE;
+  private static final int                       SIZE_OFFSET                = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int                       HISTORY_OFFSET             = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int                       MAX_KEY_SIZE               = 1024;
-
-  private static final int                       DEPTH_OFFSET               = 0;
-  private static final int                       SIZE_OFFSET                = OByteSerializer.BYTE_SIZE;
-
-  private static final int                       POSITIONS_ARRAY_OFFSET     = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int                       NEXT_REMOVED_BUCKET_OFFSET = POSITIONS_ARRAY_OFFSET + OIntegerSerializer.INT_SIZE
-                                                                                * MAX_BUCKET_SIZE;
-
-  private static final int                       ENTRIES_OFFSET             = NEXT_REMOVED_BUCKET_OFFSET
+  private static final int                       NEXT_REMOVED_BUCKET_OFFSET = HISTORY_OFFSET + OLongSerializer.LONG_SIZE * 64;
+  private static final int                       POSITIONS_ARRAY_OFFSET     = NEXT_REMOVED_BUCKET_OFFSET
                                                                                 + OLongSerializer.LONG_SIZE;
 
-  public static final int                        MAX_BUCKET_SIZE_BYTES      = ENTRIES_OFFSET + MAX_BUCKET_SIZE
-                                                                                * (OLinkSerializer.RID_SIZE + MAX_KEY_SIZE);
+  public static final int                        MAX_BUCKET_SIZE_BYTES      = 64 * 1024;
 
-  private byte[]                                 dataBuffer;
-
-  private int                                    size                       = -1;
-  private int                                    dataBufferLength;
+  private final long                             bufferPointer;
+  private final ODirectMemory                    directMemory;
 
   private final Comparator<byte[]>               arrayComparator            = OComparatorFactory.INSTANCE
                                                                                 .getComparator(byte[].class);
   private final OBinarySerializer<OIdentifiable> ridSerializer              = OLinkSerializer.INSTANCE;
   private final OBinaryTypeSerializer            keySerializer              = OBinaryTypeSerializer.INSTANCE;
 
-  public OHashIndexBucket(int depth) {
-    dataBuffer = new byte[ENTRIES_OFFSET];
-    dataBuffer[DEPTH_OFFSET] = (byte) depth;
+  public OHashIndexBucket(int depth, long bufferPointer, ODirectMemory directMemory) {
+    this.bufferPointer = bufferPointer;
+    this.directMemory = directMemory;
 
-    dataBufferLength = dataBuffer.length;
+    directMemory.setByte(bufferPointer + DEPTH_OFFSET, (byte) depth);
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(MAX_BUCKET_SIZE_BYTES, directMemory, bufferPointer + FREE_POINTER_OFFSET);
   }
 
-  public OHashIndexBucket(byte[] dataBuffer) {
-    this.dataBuffer = dataBuffer;
-
-    dataBufferLength = dataBuffer.length;
+  public OHashIndexBucket(long bufferPointer, ODirectMemory directMemory) {
+    this.bufferPointer = bufferPointer;
+    this.directMemory = directMemory;
   }
 
   public Entry find(final byte[] key) {
@@ -103,21 +96,21 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   }
 
   public Entry getEntry(int index) {
-    int entryPosition = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, POSITIONS_ARRAY_OFFSET + index
-        * OIntegerSerializer.INT_SIZE);
+    int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+						+ POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    final byte[] key = keySerializer.deserializeNative(dataBuffer, entryPosition);
-    entryPosition += keySerializer.getObjectSizeNative(dataBuffer, entryPosition);
+    final byte[] key = keySerializer.deserializeFromDirectMemory(directMemory, bufferPointer + entryPosition);
+    entryPosition += keySerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition);
 
-    final ORID rid = ridSerializer.deserializeNative(dataBuffer, entryPosition).getIdentity();
+    final ORID rid = ridSerializer.deserializeFromDirectMemory(directMemory, bufferPointer + entryPosition).getIdentity();
     return new Entry(key, rid);
   }
 
   public byte[] getKey(int index) {
-    int entryPosition = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, POSITIONS_ARRAY_OFFSET + index
-        * OIntegerSerializer.INT_SIZE);
+    int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+						+ POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    return keySerializer.deserializeNative(dataBuffer, entryPosition);
+    return keySerializer.deserializeFromDirectMemory(directMemory, bufferPointer + entryPosition);
   }
 
   public int getIndex(final byte[] key) {
@@ -125,15 +118,7 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
   }
 
   public int size() {
-    if (size > -1)
-      return size;
-
-    size = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, SIZE_OFFSET);
-    return size;
-  }
-
-  public void emptyBucket() {
-    size = 0;
+    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + SIZE_OFFSET);
   }
 
   public Iterator<Entry> iterator() {
@@ -144,122 +129,145 @@ public class OHashIndexBucket implements Iterable<OHashIndexBucket.Entry> {
     return new EntryIterator(index);
   }
 
-  public void deleteEntry(int index) {
-    final int positionOffset = POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE;
-    final int entryPosition = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, positionOffset);
-    final int keySize = keySerializer.getObjectSizeNative(dataBuffer, entryPosition);
+  public int mergedSize(OHashIndexBucket buddyBucket) {
+    return POSITIONS_ARRAY_OFFSET
+        + size()
+        * OIntegerSerializer.INT_SIZE
+        + (MAX_BUCKET_SIZE_BYTES - OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+            + FREE_POINTER_OFFSET))
+        + buddyBucket.size()
+        * OIntegerSerializer.INT_SIZE
+        + (MAX_BUCKET_SIZE_BYTES - OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, buddyBucket.bufferPointer
+            + FREE_POINTER_OFFSET));
+  }
 
-    System.arraycopy(dataBuffer, positionOffset + OIntegerSerializer.INT_SIZE, dataBuffer, positionOffset, size()
+  public int getContentSize() {
+    return POSITIONS_ARRAY_OFFSET
+        + size()
+        * OIntegerSerializer.INT_SIZE
+        + (MAX_BUCKET_SIZE_BYTES - OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+            + FREE_POINTER_OFFSET));
+  }
+
+  public void deleteEntry(int index) {
+    final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+        + FREE_POINTER_OFFSET);
+
+    final int positionOffset = POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE;
+    final int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + positionOffset);
+
+    final int keySize = keySerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition);
+    final int ridSize = ridSerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition + keySize);
+    final int entrySize = keySize + ridSize;
+
+    directMemory.copyData(bufferPointer + positionOffset + OIntegerSerializer.INT_SIZE, bufferPointer + positionOffset, size()
         * OIntegerSerializer.INT_SIZE - (index + 1) * OIntegerSerializer.INT_SIZE);
 
-    int nextEntryPosition = entryPosition + keySize;
-    System.arraycopy(dataBuffer, nextEntryPosition, dataBuffer, entryPosition, dataBufferLength - nextEntryPosition);
+    if (entryPosition > freePointer)
+      directMemory.copyData(bufferPointer + freePointer, bufferPointer + freePointer + entrySize, entryPosition - freePointer);
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
-    for (int i = 0; i < size; i++) {
-      int currentEntryPosition = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, currentPositionOffset);
-      if (currentEntryPosition > entryPosition)
-        OIntegerSerializer.INSTANCE.serializeNative(currentEntryPosition - keySize, dataBuffer, currentPositionOffset);
+    int size = size();
+    for (int i = 0; i < size - 1; i++) {
+      int currentEntryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+          + currentPositionOffset);
+      if (currentEntryPosition < entryPosition)
+        OIntegerSerializer.INSTANCE.serializeInDirectMemory(currentEntryPosition + entrySize, directMemory, bufferPointer
+            + currentPositionOffset);
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
 
-    dataBufferLength -= keySize;
-    size--;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePointer + entrySize, directMemory, bufferPointer + FREE_POINTER_OFFSET);
+
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(size - 1, directMemory, bufferPointer + SIZE_OFFSET);
   }
 
-  public void addEntry(byte[] key, ORID rid) {
-    if (MAX_BUCKET_SIZE - size() <= 0)
-      throw new IllegalArgumentException("There is no enough space in bucket.");
+  public boolean addEntry(byte[] key, ORID rid) {
+    int entreeSize = keySerializer.getObjectSize(key) + ridSerializer.getObjectSize(rid);
+    int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + FREE_POINTER_OFFSET);
 
-    final int serializedSize = keySerializer.getObjectSize(key);
-    if (serializedSize > MAX_KEY_SIZE)
-      throw new OIndexMaximumLimitReachedException("Maximum limit " + MAX_KEY_SIZE + " for key was reached.");
+    int size = size();
+    if (freePointer - entreeSize < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE)
+      return false;
 
     final int index = binarySearch(key);
-
     if (index >= 0)
       throw new IllegalArgumentException("Given value is present in bucket.");
 
     final int insertionPoint = -index - 1;
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
-    System.arraycopy(dataBuffer, positionsOffset, dataBuffer, positionsOffset + OIntegerSerializer.INT_SIZE, size()
+
+    directMemory.copyData(bufferPointer + positionsOffset, bufferPointer + positionsOffset + OIntegerSerializer.INT_SIZE, size()
         * OIntegerSerializer.INT_SIZE - insertionPoint * OIntegerSerializer.INT_SIZE);
 
-    OIntegerSerializer.INSTANCE.serializeNative(dataBufferLength, dataBuffer, positionsOffset);
-    serializeEntry(key, rid, dataBufferLength);
+    final int entreePosition = freePointer - entreeSize;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(entreePosition, directMemory, bufferPointer + positionsOffset);
+    serializeEntry(key, rid, entreePosition);
 
-    int entreeSize = keySerializer.getObjectSize(key) + ridSerializer.getObjectSize(rid);
-    dataBufferLength += entreeSize;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(entreePosition, directMemory, bufferPointer + FREE_POINTER_OFFSET);
 
-    size++;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(size + 1, directMemory, bufferPointer + SIZE_OFFSET);
+
+    return true;
   }
 
   public void appendEntry(byte[] key, ORID rid) {
-    if (MAX_BUCKET_SIZE - size() <= 0)
-      throw new IllegalArgumentException("There is no enough space in bucket.");
-
     final int positionsOffset = size() * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
+    final int entreeSize = keySerializer.getObjectSize(key) + ridSerializer.getObjectSize(rid);
 
-    OIntegerSerializer.INSTANCE.serializeNative(dataBufferLength, dataBuffer, positionsOffset);
-    serializeEntry(key, rid, dataBufferLength);
+    final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+        + FREE_POINTER_OFFSET);
+    final int entreePosition = freePointer - entreeSize;
 
-    int entreeSize = keySerializer.getObjectSize(key) + ridSerializer.getObjectSize(rid);
-    dataBufferLength += entreeSize;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(entreePosition, directMemory, bufferPointer + positionsOffset);
+    serializeEntry(key, rid, entreePosition);
 
-    size++;
+    OIntegerSerializer.INSTANCE
+        .serializeInDirectMemory(freePointer - entreeSize, directMemory, bufferPointer + FREE_POINTER_OFFSET);
+
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(size() + 1, directMemory, bufferPointer + SIZE_OFFSET);
   }
 
   private void serializeEntry(byte[] key, ORID rid, int entryOffset) {
-    int entreeSize = keySerializer.getObjectSize(key) + ridSerializer.getObjectSize(rid);
-    if (entryOffset + entreeSize > dataBuffer.length) {
-      byte[] oldDataBuffer = dataBuffer;
-      dataBuffer = new byte[entryOffset + entreeSize];
-      System.arraycopy(oldDataBuffer, 0, dataBuffer, 0, oldDataBuffer.length);
-    }
-
-    keySerializer.serializeNative(key, dataBuffer, entryOffset);
+    keySerializer.serializeInDirectMemory(key, directMemory, bufferPointer + entryOffset);
     entryOffset += keySerializer.getObjectSize(key);
 
-    ridSerializer.serializeNative(rid, dataBuffer, entryOffset);
+    ridSerializer.serializeInDirectMemory(rid, directMemory, bufferPointer + entryOffset);
   }
 
   public int getDepth() {
-    return dataBuffer[DEPTH_OFFSET];
+    return directMemory.getByte(bufferPointer + DEPTH_OFFSET);
   }
 
   public void setDepth(int depth) {
-    dataBuffer[DEPTH_OFFSET] = (byte) depth;
+    directMemory.setByte(bufferPointer + DEPTH_OFFSET, (byte) depth);
   }
 
   public long getNextRemovedBucketPair() {
-    return OLongSerializer.INSTANCE.deserializeNative(dataBuffer, NEXT_REMOVED_BUCKET_OFFSET);
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + NEXT_REMOVED_BUCKET_OFFSET);
   }
 
   public void setNextRemovedBucketPair(long nextRemovedBucketPair) {
-    OLongSerializer.INSTANCE.serializeNative(nextRemovedBucketPair, dataBuffer, NEXT_REMOVED_BUCKET_OFFSET);
-  }
-
-  public void toStream() {
-    if (size > -1)
-      OIntegerSerializer.INSTANCE.serializeNative(size, dataBuffer, SIZE_OFFSET);
-
-    size = -1;
-  }
-
-  public byte[] getDataBuffer() {
-    return dataBuffer;
-  }
-
-  public int getDataBufferLength() {
-    return dataBufferLength;
+    OLongSerializer.INSTANCE.serializeInDirectMemory(nextRemovedBucketPair, directMemory, bufferPointer
+        + NEXT_REMOVED_BUCKET_OFFSET);
   }
 
   public void updateEntry(int index, ORID rid) {
-    int entryPosition = OIntegerSerializer.INSTANCE.deserializeNative(dataBuffer, POSITIONS_ARRAY_OFFSET + index
-        * OIntegerSerializer.INT_SIZE);
+    int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
+        + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    entryPosition += keySerializer.getObjectSizeNative(dataBuffer, entryPosition);
-    ridSerializer.serializeNative(rid, dataBuffer, entryPosition);
+    entryPosition += keySerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition);
+    ridSerializer.serializeInDirectMemory(rid, directMemory, bufferPointer + entryPosition);
+  }
+
+  public long getSplitHistory(int level) {
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + HISTORY_OFFSET
+        + OLongSerializer.LONG_SIZE * level);
+  }
+
+  public void setSplitHistory(int level, long position) {
+    OLongSerializer.INSTANCE.serializeInDirectMemory(position, directMemory, bufferPointer + HISTORY_OFFSET
+						+ OLongSerializer.LONG_SIZE * level);
   }
 
   public static class Entry {

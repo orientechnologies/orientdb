@@ -93,7 +93,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
 
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getInt(pointer);
+    return memory.getInt(pointer) + OIntegerSerializer.INT_SIZE;
   }
 
   public byte getId() {

@@ -7,13 +7,16 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
  * @author Andrey Lomakin
@@ -21,10 +24,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  */
 @Test
 public class UniqueHashIndexTest {
-  private static final int    KEYS_COUNT = 200000;
+  private static final int    KEYS_COUNT = 1600000;
 
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OUniqueHashIndex    hashIndex  = new OUniqueHashIndex();
+
+  private OUniqueHashIndex    hashIndex;
 
   @BeforeClass
   public void beforeClass() {
@@ -40,13 +44,17 @@ public class UniqueHashIndexTest {
 
     databaseDocumentTx.create();
 
+    OLRUBuffer buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
+        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
+
+    hashIndex = new OUniqueHashIndex(buffer);
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.INTEGER), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
   }
 
   @AfterClass
   public void afterClass() {
-    hashIndex.close();
+    hashIndex.delete();
     databaseDocumentTx.drop();
   }
 
@@ -62,14 +70,12 @@ public class UniqueHashIndexTest {
   public void testKeyPut() {
     for (int i = 0; i < KEYS_COUNT; i++) {
       final ORID rid = new ORecordId(0, new OClusterPositionLong(i));
-
       hashIndex.put(i, rid);
       Assert.assertEquals(hashIndex.get(i), rid);
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       final ORID rid = new ORecordId(0, new OClusterPositionLong(i));
-
       Assert.assertEquals(hashIndex.get(i), rid, i + " key is absent");
     }
 

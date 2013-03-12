@@ -70,6 +70,8 @@ public interface ODirectMemory {
    */
   byte[] get(long pointer, int length);
 
+  void get(long pointer, byte[] array, int arrayOffset, int length);
+
   /**
    * Writes data to the given piece of memory.
    * 
