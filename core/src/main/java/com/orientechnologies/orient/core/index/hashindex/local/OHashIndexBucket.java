@@ -195,6 +195,15 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
       throw new IllegalArgumentException("Given value is present in bucket.");
 
     final int insertionPoint = -index - 1;
+    insertEntry(key, value, insertionPoint);
+
+    return true;
+  }
+
+  private void insertEntry(K key, V value, int insertionPoint) {
+    int entreeSize = keySerializer.getObjectSize(key) + valueSerializer.getObjectSize(value);
+    int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + FREE_POINTER_OFFSET);
+    int size = size();
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
 
     directMemory.copyData(bufferPointer + positionsOffset, bufferPointer + positionsOffset + OIntegerSerializer.INT_SIZE, size()
@@ -207,8 +216,6 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(entreePosition, directMemory, bufferPointer + FREE_POINTER_OFFSET);
 
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(size + 1, directMemory, bufferPointer + SIZE_OFFSET);
-
-    return true;
   }
 
   public void appendEntry(K key, V value) {
@@ -253,12 +260,19 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   public void updateEntry(int index, V value) {
-    // TODO
     int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
         + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
-
     entryPosition += keySerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition);
-    valueSerializer.serializeInDirectMemory(value, directMemory, bufferPointer + entryPosition);
+
+    if (valueSerializer.getObjectSize(value) == valueSerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer
+        + entryPosition))
+      valueSerializer.serializeInDirectMemory(value, directMemory, bufferPointer + entryPosition);
+    else {
+      K key = getKey(index);
+
+      deleteEntry(index);
+      insertEntry(key, value, index);
+    }
   }
 
   public long getSplitHistory(int level) {

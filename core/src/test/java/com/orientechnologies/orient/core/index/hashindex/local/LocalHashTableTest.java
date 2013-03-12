@@ -8,14 +8,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -23,12 +19,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @since 19.02.13
  */
 @Test
-public class UniqueHashIndexTest {
-  private static final int    KEYS_COUNT = 1600000;
+public class LocalHashTableTest {
+  private static final int                 KEYS_COUNT = 1600000;
 
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private ODatabaseDocumentTx              databaseDocumentTx;
 
-  private OUniqueHashIndex    hashIndex;
+  private OLocalHashTable<Integer, String> localHashTable;
 
   @BeforeClass
   public void beforeClass() {
@@ -36,7 +32,7 @@ public class UniqueHashIndexTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/uniqueHashIndexTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localHashTableTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -47,14 +43,19 @@ public class UniqueHashIndexTest {
     OLRUBuffer buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
         OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
-    hashIndex = new OUniqueHashIndex(buffer, (OStorageLocal) databaseDocumentTx.getStorage());
-    hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.INTEGER), databaseDocumentTx,
-        OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
+    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
+    murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
+
+    localHashTable = new OLocalHashTable<Integer, String>(OAbstractLocalHashIndex.METADATA_CONFIGURATION_FILE_EXTENSION,
+        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION,
+        (OStorageLocal) databaseDocumentTx.getStorage(), buffer, murmurHash3HashFunction);
+
+    localHashTable.init("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
   }
 
   @AfterClass
   public void afterClass() {
-    hashIndex.delete();
+    localHashTable.delete();
     databaseDocumentTx.drop();
   }
 
@@ -64,66 +65,62 @@ public class UniqueHashIndexTest {
 
   @AfterMethod
   public void afterMethod() {
-    hashIndex.clear();
+    localHashTable.clear();
   }
 
   public void testKeyPut() {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      final ORID rid = new ORecordId(0, new OClusterPositionLong(i));
-      hashIndex.put(i, rid);
-      Assert.assertEquals(hashIndex.get(i), rid);
+      localHashTable.put(i, i + "");
+      Assert.assertEquals(localHashTable.get(i), i + "");
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      final ORID rid = new ORecordId(0, new OClusterPositionLong(i));
-      Assert.assertEquals(hashIndex.get(i), rid, i + " key is absent");
+      Assert.assertEquals(localHashTable.get(i), i + "", i + " key is absent");
     }
 
     for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
-      Assert.assertFalse(hashIndex.contains(i));
+      Assert.assertNull(localHashTable.get(i));
     }
   }
 
   public void testKeyDelete() {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      hashIndex.put(i, new ORecordId(0, new OClusterPositionLong(i)));
+      localHashTable.put(i, i + "");
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(hashIndex.remove(i));
+        Assert.assertTrue(localHashTable.remove(i));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertFalse(hashIndex.contains(i));
+        Assert.assertNull(localHashTable.get(i));
       else
-        Assert.assertTrue(hashIndex.contains(i));
+        Assert.assertEquals(localHashTable.get(i), i + "");
     }
   }
 
   public void testKeyAddDelete() {
     for (int i = 0; i < KEYS_COUNT; i++)
-      hashIndex.put(i, new ORecordId(0, new OClusterPositionLong(i)));
+      localHashTable.put(i, i + "");
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(hashIndex.remove(i));
+        Assert.assertTrue(localHashTable.remove(i));
 
       if (i % 2 == 0)
-        hashIndex.put(KEYS_COUNT + i, new ORecordId(0, new OClusterPositionLong(KEYS_COUNT + i)));
+        localHashTable.put(KEYS_COUNT + i, (KEYS_COUNT + i) + "");
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertFalse(hashIndex.contains(i));
+        Assert.assertNull(localHashTable.get(i));
       else
-        Assert.assertTrue(hashIndex.contains(i));
+        Assert.assertEquals(localHashTable.get(i), i + "");
 
       if (i % 2 == 0)
-        Assert.assertTrue(hashIndex.contains(KEYS_COUNT + i), "i " + (KEYS_COUNT + i));
-
+        Assert.assertEquals(localHashTable.get(KEYS_COUNT + i), "" + (KEYS_COUNT + i));
     }
   }
-
 }
