@@ -16,11 +16,13 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
@@ -43,44 +45,46 @@ import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
  * @since 12.03.13
  */
 public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
-  private static final double        MERGE_THRESHOLD        = 0.2;
+  private static final double         MERGE_THRESHOLD        = 0.2;
 
-  private long[][]                   hashTree;
-  private OEHNodeMetadata[]          nodesMetadata;
+  private long[][]                    hashTree;
+  private OEHNodeMetadata[]           nodesMetadata;
 
-  private int                        hashTreeSize;
-  private long                       size;
+  private int                         hashTreeSize;
+  private long                        size;
 
-  private int                        hashTreeTombstone      = -1;
-  private long                       bucketTombstonePointer = -1;
+  private int                         hashTreeTombstone      = -1;
+  private long                        bucketTombstonePointer = -1;
 
-  private final String               metadataConfigurationFileExtension;
-  private final String               treeStateFileExtension;
-  private final String               bucketFileExtension;
+  private final String                metadataConfigurationFileExtension;
+  private final String                treeStateFileExtension;
+  private final String                bucketFileExtension;
 
-  public static final int            MAX_LEVEL_DEPTH        = 8;
-  public static final int            MAX_LEVEL_SIZE         = 1 << MAX_LEVEL_DEPTH;
+  public static final int             MAX_LEVEL_DEPTH        = 8;
+  public static final int             MAX_LEVEL_SIZE         = 1 << MAX_LEVEL_DEPTH;
 
-  public static final int            LEVEL_MASK             = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
+  public static final int             LEVEL_MASK             = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private final OStorageLocal        storage;
+  private final OStorageLocal         storage;
 
-  private String                     name;
+  private String                      name;
 
-  private OEHFileMetadataStore       metadataStore;
-  private OEHTreeStateStore          treeStateStore;
+  private OEHFileMetadataStore        metadataStore;
+  private OEHTreeStateStore           treeStateStore;
 
-  private final ODirectMemory        directMemory           = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final ODirectMemory         directMemory           = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private final OLRUBuffer           buffer;
-  private final OHashFunction<K>     keyHashFunction;
+  private final OLRUBuffer            buffer;
+  private final OHashFunction<K>      keyHashFunction;
 
-  private OBinarySerializer<K>       keySerializer;
-  private OBinarySerializer<V>       valueSerializer;
+  private OBinarySerializer<K>        keySerializer;
+  private OBinarySerializer<V>        valueSerializer;
 
-  private OHashIndexBufferMetadata[] filesMetadata          = new OHashIndexBufferMetadata[64];
-  private SortedMap<Long, Long>[]    splitBucketsByLevels   = new TreeMap[64];
-  private int                        splitBucketsSize;
+  private OHashIndexBufferMetadata[]  filesMetadata          = new OHashIndexBufferMetadata[64];
+  private SortedMap<Long, Long>[]     splitBucketsByLevels   = new TreeMap[64];
+  private int                         splitBucketsSize;
+
+  private final Comparator<? super K> comparator             = ODefaultComparator.INSTANCE;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
       OStorageLocal storage, OLRUBuffer buffer, OHashFunction<K> keyHashFunction) {
@@ -264,6 +268,401 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public OHashIndexBucket.Entry<K, V>[] higherEntries(K key) throws IOException {
+    acquireSharedLock();
+    try {
+      final long hashCode = keyHashFunction.hashCode(key);
+      BucketPath bucketPath = getBucket(hashCode);
+      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      int fileLevel = getFileLevel(bucketPointer);
+      long pageIndex = getPageIndex(bucketPointer);
+
+      PageLockResult pageLockResult = lockPageForRead(pageIndex, fileLevel);
+      try {
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer,
+            valueSerializer);
+
+        while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
+          bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
+          if (bucketPath == null)
+            return new OHashIndexBucket.Entry[0];
+
+          releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+
+          final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+          fileLevel = getFileLevel(nextPointer);
+          pageIndex = getPageIndex(nextPointer);
+
+          pageLockResult = lockPageForRead(pageIndex, fileLevel);
+          bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer, valueSerializer);
+        }
+
+        final int index = bucket.getIndex(key);
+        final int startIndex;
+        if (index >= 0)
+          startIndex = index + 1;
+        else
+          startIndex = -index - 1;
+
+        final int endIndex = bucket.size();
+        return convertBucketToEntries(bucket, startIndex, endIndex);
+      } finally {
+        releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  private OHashIndexBucket.Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, int startIndex, int endIndex) {
+    final OHashIndexBucket.Entry<K, V>[] entries = new OHashIndexBucket.Entry[endIndex - startIndex];
+    final Iterator<OHashIndexBucket.Entry<K, V>> iterator = bucket.iterator(startIndex);
+
+    for (int i = 0, k = startIndex; k < endIndex; i++, k++)
+      entries[i] = iterator.next();
+
+    return entries;
+  }
+
+  private BucketPath nextBucketToFind(final BucketPath bucketPath, int bucketDepth) {
+    int offset = bucketPath.nodeGlobalDepth - bucketDepth;
+
+    BucketPath currentNode = bucketPath;
+    int nodeLocalDepth = nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth();
+    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
+
+    while (offset > 0) {
+      offset -= nodeLocalDepth;
+      if (offset > 0) {
+        currentNode = bucketPath.parent;
+        nodeLocalDepth = currentNode.nodeLocalDepth;
+        assert nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth() == currentNode.nodeLocalDepth;
+      }
+    }
+
+    final int diff = bucketDepth - (currentNode.nodeGlobalDepth - nodeLocalDepth);
+    final int interval = (1 << (nodeLocalDepth - diff));
+    final int firstStartIndex = currentNode.itemIndex & ((LEVEL_MASK << (nodeLocalDepth - diff)) & LEVEL_MASK);
+
+    final BucketPath bucketPathToFind;
+    final int globalIndex = firstStartIndex + interval + currentNode.hashMapOffset;
+    if (globalIndex >= MAX_LEVEL_SIZE)
+      bucketPathToFind = nextLevelUp(currentNode);
+    else {
+      final int hashMapSize = 1 << currentNode.nodeLocalDepth;
+      final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
+
+      final int startIndex = globalIndex - hashMapOffset;
+
+      bucketPathToFind = new BucketPath(currentNode.parent, hashMapOffset, startIndex, currentNode.nodeIndex,
+          currentNode.nodeLocalDepth, currentNode.nodeGlobalDepth);
+    }
+
+    return nextNonEmptyNode(bucketPathToFind);
+  }
+
+  private BucketPath nextNonEmptyNode(BucketPath bucketPath) {
+    nextBucketLoop: while (bucketPath != null) {
+      final long[] node = hashTree[bucketPath.nodeIndex];
+      final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
+      final int endIndex = MAX_LEVEL_SIZE;
+
+      for (int i = startIndex; i < endIndex; i++) {
+        final long position = node[i];
+
+        if (position > 0) {
+          final int hashMapSize = 1 << bucketPath.nodeLocalDepth;
+          final int hashMapOffset = (i / hashMapSize) * hashMapSize;
+          final int itemIndex = i - hashMapOffset;
+
+          return new BucketPath(bucketPath.parent, hashMapOffset, itemIndex, bucketPath.nodeIndex, bucketPath.nodeLocalDepth,
+              bucketPath.nodeGlobalDepth);
+        }
+
+        if (position < 0) {
+          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
+          final int childItemOffset = (int) position & 0xFF;
+
+          final BucketPath parent = new BucketPath(bucketPath.parent, 0, i, bucketPath.nodeIndex, bucketPath.nodeLocalDepth,
+              bucketPath.nodeGlobalDepth);
+
+          final int childLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+          bucketPath = new BucketPath(parent, childItemOffset, 0, childNodeIndex, childLocalDepth, bucketPath.nodeGlobalDepth
+              + childLocalDepth);
+
+          continue nextBucketLoop;
+        }
+      }
+
+      bucketPath = nextLevelUp(bucketPath);
+    }
+
+    return null;
+  }
+
+  private BucketPath nextLevelUp(BucketPath bucketPath) {
+    if (bucketPath.parent == null)
+      return null;
+
+    final int nodeLocalDepth = bucketPath.nodeLocalDepth;
+    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
+
+    final BucketPath parent = bucketPath.parent;
+
+    if (parent.itemIndex < MAX_LEVEL_SIZE / 2) {
+      final int nextParentIndex = (parent.itemIndex / pointersSize + 1) * pointersSize;
+      return new BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+    }
+
+    final int nextParentIndex = ((parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize + 1) * pointersSize + MAX_LEVEL_SIZE / 2;
+    if (nextParentIndex < MAX_LEVEL_SIZE)
+      return new BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+
+    return nextLevelUp(new BucketPath(parent.parent, 0, MAX_LEVEL_SIZE - 1, parent.nodeIndex, parent.nodeLocalDepth,
+        parent.nodeGlobalDepth));
+  }
+
+  public OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key) throws IOException {
+    acquireSharedLock();
+    try {
+      final long hashCode = keyHashFunction.hashCode(key);
+      BucketPath bucketPath = getBucket(hashCode);
+
+      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      int fileLevel = getFileLevel(bucketPointer);
+      long pageIndex = getPageIndex(bucketPointer);
+
+      PageLockResult pageLockResult = lockPageForRead(pageIndex, fileLevel);
+      try {
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer,
+            valueSerializer);
+        while (bucket.size() == 0) {
+          bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
+          if (bucketPath == null)
+            return new OHashIndexBucket.Entry[0];
+
+          releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+          final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+          fileLevel = getFileLevel(nextPointer);
+          pageIndex = getPageIndex(nextPointer);
+
+          pageLockResult = lockPageForRead(pageIndex, fileLevel);
+          bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer, valueSerializer);
+        }
+
+        final int index = bucket.getIndex(key);
+        final int startIndex;
+        if (index >= 0)
+          startIndex = index;
+        else
+          startIndex = -index - 1;
+
+        final int endIndex = bucket.size();
+        return convertBucketToEntries(bucket, startIndex, endIndex);
+      } finally {
+        releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+      }
+
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) throws IOException {
+    acquireSharedLock();
+    try {
+      final long hashCode = keyHashFunction.hashCode(key);
+      BucketPath bucketPath = getBucket(hashCode);
+
+      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      int fileLevel = getFileLevel(bucketPointer);
+      long pageIndex = getPageIndex(bucketPointer);
+
+      PageLockResult pageLockResult = lockPageForRead(pageIndex, fileLevel);
+      try {
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer,
+            valueSerializer);
+        while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
+          final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
+          if (prevBucketPath == null)
+            return new OHashIndexBucket.Entry[0];
+          releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+
+          final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+
+          fileLevel = getFileLevel(prevPointer);
+          pageIndex = getPageIndex(prevPointer);
+
+          bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer, valueSerializer);
+
+          bucketPath = prevBucketPath;
+        }
+
+        final int startIndex = 0;
+        final int index = bucket.getIndex(key);
+
+        final int endIndex;
+        if (index >= 0)
+          endIndex = index;
+        else
+          endIndex = -index - 1;
+
+        return convertBucketToEntries(bucket, startIndex, endIndex);
+      } finally {
+        releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) throws IOException {
+    acquireSharedLock();
+    try {
+      final long hashCode = keyHashFunction.hashCode(key);
+      BucketPath bucketPath = getBucket(hashCode);
+
+      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+
+      int fileLevel = getFileLevel(bucketPointer);
+      long pageIndex = getPageIndex(bucketPointer);
+
+      PageLockResult pageLockResult = lockPageForRead(pageIndex, fileLevel);
+      try {
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer,
+            valueSerializer);
+        while (bucket.size() == 0) {
+          final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
+          if (prevBucketPath == null)
+            return new OHashIndexBucket.Entry[0];
+
+          releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+
+          final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+
+          fileLevel = getFileLevel(prevPointer);
+          pageIndex = getPageIndex(prevPointer);
+
+          bucket = new OHashIndexBucket<K, V>(pageLockResult.dataPointer, directMemory, keySerializer, valueSerializer);
+
+          bucketPath = prevBucketPath;
+        }
+
+        final int startIndex = 0;
+        final int index = bucket.getIndex(key);
+
+        final int endIndex;
+        if (index >= 0)
+          endIndex = index + 1;
+        else
+          endIndex = -index - 1;
+
+        return convertBucketToEntries(bucket, startIndex, endIndex);
+      } finally {
+        releasePageReadLock(pageIndex, fileLevel, pageLockResult.cacheLock);
+      }
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  private BucketPath prevBucketToFind(final BucketPath bucketPath, int bucketDepth) {
+    int offset = bucketPath.nodeGlobalDepth - bucketDepth;
+
+    BucketPath currentBucket = bucketPath;
+    int nodeLocalDepth = bucketPath.nodeLocalDepth;
+    while (offset > 0) {
+      offset -= nodeLocalDepth;
+      if (offset > 0) {
+        currentBucket = bucketPath.parent;
+        nodeLocalDepth = currentBucket.nodeLocalDepth;
+      }
+    }
+
+    final int diff = bucketDepth - (currentBucket.nodeGlobalDepth - nodeLocalDepth);
+    final int firstStartIndex = currentBucket.itemIndex & ((LEVEL_MASK << (nodeLocalDepth - diff)) & LEVEL_MASK);
+    final int globalIndex = firstStartIndex + currentBucket.hashMapOffset - 1;
+
+    final BucketPath bucketPathToFind;
+    if (globalIndex < 0)
+      bucketPathToFind = prevLevelUp(bucketPath);
+    else {
+      final int hashMapSize = 1 << currentBucket.nodeLocalDepth;
+      final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
+
+      final int startIndex = globalIndex - hashMapOffset;
+
+      bucketPathToFind = new BucketPath(currentBucket.parent, hashMapOffset, startIndex, currentBucket.nodeIndex,
+          currentBucket.nodeLocalDepth, currentBucket.nodeGlobalDepth);
+    }
+
+    return prevNonEmptyNode(bucketPathToFind);
+  }
+
+  private BucketPath prevNonEmptyNode(BucketPath nodePath) {
+    prevBucketLoop: while (nodePath != null) {
+      final long[] node = hashTree[nodePath.nodeIndex];
+      final int startIndex = 0;
+      final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
+
+      for (int i = endIndex; i >= startIndex; i--) {
+        final long position = node[i];
+        if (position > 0) {
+          final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+          final int hashMapOffset = (i / hashMapSize) * hashMapSize;
+          final int itemIndex = i - hashMapOffset;
+
+          return new BucketPath(nodePath.parent, hashMapOffset, itemIndex, nodePath.nodeIndex, nodePath.nodeLocalDepth,
+              nodePath.nodeGlobalDepth);
+        }
+
+        if (position < 0) {
+          final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
+          final int childItemOffset = (int) position & 0xFF;
+          final int nodeLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+          final int endChildIndex = (1 << nodeLocalDepth) - 1;
+
+          final BucketPath parent = new BucketPath(nodePath.parent, 0, i, nodePath.nodeIndex, nodePath.nodeLocalDepth,
+              nodePath.nodeGlobalDepth);
+          nodePath = new BucketPath(parent, childItemOffset, endChildIndex, childNodeIndex, nodeLocalDepth, parent.nodeGlobalDepth
+              + nodeLocalDepth);
+          continue prevBucketLoop;
+        }
+      }
+
+      nodePath = prevLevelUp(nodePath);
+    }
+
+    return null;
+  }
+
+  private BucketPath prevLevelUp(BucketPath bucketPath) {
+    if (bucketPath.parent == null)
+      return null;
+
+    final int nodeLocalDepth = bucketPath.nodeLocalDepth;
+    final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
+
+    final BucketPath parent = bucketPath.parent;
+
+    if (parent.itemIndex > MAX_LEVEL_SIZE / 2) {
+      final int prevParentIndex = ((parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize + MAX_LEVEL_SIZE / 2 - 1;
+      return new BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+    }
+
+    final int prevParentIndex = (parent.itemIndex / pointersSize) * pointersSize - 1;
+    if (prevParentIndex >= 0)
+      return new BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+
+    return prevLevelUp(new BucketPath(parent.parent, 0, 0, parent.nodeIndex, parent.nodeLocalDepth, -1));
   }
 
   public long size() {
