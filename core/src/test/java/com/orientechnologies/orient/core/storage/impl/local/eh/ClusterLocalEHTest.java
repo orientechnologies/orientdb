@@ -13,6 +13,12 @@ import java.util.List;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -24,13 +30,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -324,13 +323,11 @@ public class ClusterLocalEHTest {
 
     Collections.sort(keys);
 
-    // test finding is unsuccessful
     for (ONodeId key : keys) {
       OClusterPosition lhKey = extendibleHashingCluster.ceilingPositions(new OPhysicalPosition(new OClusterPositionNodeId(key)))[0].clusterPosition;
       Assert.assertEquals(new OClusterPositionNodeId(key), lhKey, "" + key);
     }
 
-    // test finding is successful
     for (int j = 0, keysSize = keys.size() - 1; j < keysSize; j++) {
       ONodeId key = keys.get(j);
       OClusterPosition lhKey = extendibleHashingCluster.higherPositions(new OPhysicalPosition(new OClusterPositionNodeId(key)))[0].clusterPosition;
