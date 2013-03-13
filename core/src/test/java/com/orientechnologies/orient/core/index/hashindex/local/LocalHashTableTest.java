@@ -29,6 +29,7 @@ public class LocalHashTableTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
+  private OLRUBuffer                       buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -44,7 +45,7 @@ public class LocalHashTableTest {
 
     databaseDocumentTx.create();
 
-    OLRUBuffer buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
+    buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
         OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
@@ -58,9 +59,10 @@ public class LocalHashTableTest {
   }
 
   @AfterClass
-  public void afterClass() {
+  public void afterClass() throws Exception {
     localHashTable.delete();
     databaseDocumentTx.drop();
+    buffer.clear();
   }
 
   @BeforeMethod
