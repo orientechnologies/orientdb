@@ -134,10 +134,9 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.createValue(Arrays.asList(1, 2), Arrays.asList(12));
   }
 
-  @Test
+  @Test(expectedExceptions = NumberFormatException.class)
   public void testCreateValueWrongParam() {
-    final Object result = compositeIndex.createValue(Arrays.asList("1t2", "test"));
-    Assert.assertNull(result);
+    compositeIndex.createValue(Arrays.asList("1t2", "test"));
   }
 
   @Test
@@ -147,10 +146,9 @@ public class OCompositeIndexDefinitionTest {
     Assert.assertEquals(result, new OCompositeKey(Arrays.asList(12, "test")));
   }
 
-  @Test
+  @Test(expectedExceptions = NumberFormatException.class)
   public void testCreateValueWrongParamArrayParams() {
-    final Object result = compositeIndex.createValue("1t2", "test");
-    Assert.assertNull(result);
+    compositeIndex.createValue("1t2", "test");
   }
 
   @Test
@@ -292,15 +290,14 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.getDocumentValueToIndex(document);
   }
 
-  @Test
+  @Test(expectedExceptions = NumberFormatException.class)
   public void testDocumentToIndexWrongField() {
     final ODocument document = new ODocument();
 
     document.field("fOne", "1t2");
     document.field("fTwo", "test");
 
-    final Object result = compositeIndex.getDocumentValueToIndex(document);
-    Assert.assertNull(result);
+    compositeIndex.getDocumentValueToIndex(document);
   }
 
   @Test

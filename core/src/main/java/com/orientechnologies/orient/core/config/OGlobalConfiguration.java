@@ -50,6 +50,9 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
+  JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
+      "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
+
   // STORAGE
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
@@ -178,6 +181,8 @@ public enum OGlobalConfiguration {
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 16),
 
+  HASH_INDEX_BUFFER_SIZE("hashIndex.bufferSize", "Size of page buffer in megabytes", Integer.class, 2 * 1024),
+
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
@@ -197,6 +202,12 @@ public enum OGlobalConfiguration {
 
   FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
       "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
+
+  FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
+      int.class, 0),
+
+  FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
+      "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 60),
 
   FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
       "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
@@ -408,8 +419,7 @@ public enum OGlobalConfiguration {
   }
 
   public String getValueAsString() {
-    final Object v = value != null ? value : defValue;
-    return v.toString();
+    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
   }
 
   public int getValueAsInteger() {

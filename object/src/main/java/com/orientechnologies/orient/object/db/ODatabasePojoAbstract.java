@@ -200,6 +200,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.getUser();
   }
 
+  public void setUser(OUser user) {
+    underlying.setUser(user);
+  }
+
   public OMetadata getMetadata() {
     return underlying.getMetadata();
   }

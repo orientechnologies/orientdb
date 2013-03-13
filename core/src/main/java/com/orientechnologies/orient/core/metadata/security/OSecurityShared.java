@@ -20,12 +20,15 @@ import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -52,6 +55,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
   public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   public static final String ONCREATE_FIELD         = "onCreate.fields";
+
+  public OSecurityShared() {
+  }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
@@ -180,7 +186,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
+  public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
     acquireExclusiveLock();
     try {
 
@@ -188,6 +194,24 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (iRoles != null)
         for (String r : iRoles) {
+          user.addRole(r);
+        }
+
+      return user.save();
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
+    acquireExclusiveLock();
+    try {
+
+      final OUser user = new OUser(iUserName, iUserPassword);
+
+      if (iRoles != null)
+        for (ORole r : iRoles) {
           user.addRole(r);
         }
 
@@ -212,6 +236,21 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
+  public ORole getRole(final OIdentifiable iRole) {
+    acquireExclusiveLock();
+    try {
+
+      final ODocument doc = iRole.getRecord();
+      if ("ORole".equals(doc.getClassName()))
+        return new ORole(doc);
+
+      return null;
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public ORole getRole(final String iRoleName) {
     acquireExclusiveLock();
     try {
@@ -225,6 +264,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       return null;
 
+    } catch(Exception ex) {
+    	OLogManager.instance().error(this, "Failed to get role : " + iRoleName + " " + ex.getMessage());
+    	return null;
     } finally {
       releaseExclusiveLock();
     }
@@ -341,7 +383,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  protected OUser createMetadata() {
+  public OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
 
     OClass identityClass = database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME); // SINCE 1.2.0
@@ -387,7 +429,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
     OUser adminUser = getUser(OUser.ADMIN);
     if (adminUser == null)
-      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, new String[] { adminRole.getName() });
+      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
 
     // SINCE 1.2.0
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
@@ -413,11 +455,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public void load() {
-    // @COMPATIBILITY <1.3.0
-
-    // USER
     final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
     if (userClass != null) {
+      // @COMPATIBILITY <1.3.0
       if (!userClass.existsProperty("status")) {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
       }
@@ -446,5 +486,31 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+  
+  public void createClassTrigger() {
+	  final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+	  OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
+	  if(classTrigger == null)
+		  classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
+	  /*No Need to create those properties
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_CREATE))     //before create
+		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_CREATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_CREATE))    //after create
+		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_CREATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_READ))    //before read
+		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_READ, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_READ))    //after read
+		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_READ, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_UPDATE))    //before update
+		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_UPDATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_UPDATE))    //after update
+		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_UPDATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_DELETE))    //before delete
+		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_DELETE))    //after delete
+		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
+	  */
+	  //classTrigger.setSuperClass(db.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME));
   }
 }

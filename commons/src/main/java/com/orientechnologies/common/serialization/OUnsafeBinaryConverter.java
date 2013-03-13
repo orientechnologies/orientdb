@@ -10,6 +10,7 @@ import sun.misc.Unsafe;
  * @author Andrey Lomakin
  * @since 26.07.12
  */
+@SuppressWarnings("restriction")
 public class OUnsafeBinaryConverter implements OBinaryConverter {
   private static final Unsafe theUnsafe;
   private static final long   BYTE_ARRAY_OFFSET;

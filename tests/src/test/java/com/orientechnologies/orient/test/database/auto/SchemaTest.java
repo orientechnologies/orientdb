@@ -182,7 +182,7 @@ public class SchemaTest {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
-    database.getMetadata().getSecurity().createUser("error", null, null);
+    database.getMetadata().getSecurity().createUser("error", null, (String) null);
 
     database.close();
   }

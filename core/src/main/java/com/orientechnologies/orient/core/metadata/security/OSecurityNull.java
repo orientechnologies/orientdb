@@ -46,11 +46,19 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles) {
+  public OUser createUser(String iUserName, String iUserPassword, String... iRoles) {
+    return null;
+  }
+
+  public OUser createUser(String iUserName, String iUserPassword, ORole... iRoles) {
     return null;
   }
 
   public ORole getRole(String iRoleName) {
+    return null;
+  }
+
+  public ORole getRole(OIdentifiable iRole) {
     return null;
   }
 
@@ -117,5 +125,9 @@ public class OSecurityNull implements OSecurity {
   @Override
   public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return null;
+  }
+  
+  @Override
+  public void createClassTrigger() {
   }
 }

@@ -18,9 +18,11 @@ package com.orientechnologies.orient.core.storage.fs;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
@@ -48,6 +50,10 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   private long                                                        metricMappedPages       = 0;
   private long                                                        metricReusedPages       = 0;
 
+  private TimerTask                                                   autoFlushTask;
+
+  private int                                                         autoFlushUnusedTime;
+
   public void init() {
     Orient
         .instance()
@@ -67,6 +73,21 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
                 return metricReusedPages;
               }
             });
+
+    int autoFlushTimer = OGlobalConfiguration.FILE_MMAP_AUTOFLUSH_TIMER.getValueAsInteger();
+    if (autoFlushTimer > 0) {
+      autoFlushTimer *= 1000;
+      autoFlushUnusedTime = OGlobalConfiguration.FILE_MMAP_AUTOFLUSH_UNUSED_TIME.getValueAsInteger() * 1000;
+
+      autoFlushTask = new TimerTask() {
+        @Override
+        public void run() {
+          flush();
+        }
+      };
+
+      Orient.getTimer().schedule(autoFlushTask, autoFlushTimer, autoFlushTimer);
+    }
   }
 
   /**
@@ -142,23 +163,36 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   /**
    * {@inheritDoc}
    * <p/>
-   * Flush all closed files on disk. If some mapped entries not flushed successfully file will be asociated with not flushed
+   * Flush all closed files on disk. If some mapped entries not flushed successfully file will be associated with not flushed
    * entries. When flush will be performed again not flushed records will be flushed again, File information for files which have
    * all records flushed will be removed from mmap manager.
    */
   public void flush() {
+    OLogManager.instance().debug(this, "[OMMapManagerNew] flushing pages in memory...");
+    int flushedBlocks = 0;
+    int totalBlocks = 0;
+
+    final long now = System.currentTimeMillis();
+
     for (Iterator<Map.Entry<OFileMMap, OMMapBufferEntry[]>> it = bufferPoolPerFile.entrySet().iterator(); it.hasNext();) {
       OFileMMap file;
       final Map.Entry<OFileMMap, OMMapBufferEntry[]> mapEntry = it.next();
       file = mapEntry.getKey();
+
+      // FLUSHES ALL THE BLOCK OF THE FILE
       lockManager.acquireLock(Thread.currentThread(), file, OLockManager.LOCK.EXCLUSIVE);
       try {
-        if (file.isClosed()) {
+        if (autoFlushUnusedTime > 0 || file.isClosed()) {
           OMMapBufferEntry[] notFlushed = EMPTY_BUFFER_ENTRIES;
           for (OMMapBufferEntry entry : mapEntry.getValue()) {
-            if (!removeEntry(entry)) {
+            totalBlocks++;
+
+            if ((file.isClosed() || autoFlushUnusedTime == 0 || now - entry.getLastUsed() > autoFlushUnusedTime) && removeEntry(entry))
+              // OK: FLUSHED
+              flushedBlocks++;
+            else
+              // CANNOT FLUSH AWAY
               notFlushed = addEntry(notFlushed, entry);
-            }
           }
 
           if (notFlushed.length == 0) {
@@ -170,7 +204,9 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
       } finally {
         lockManager.releaseLock(Thread.currentThread(), file, OLockManager.LOCK.EXCLUSIVE);
       }
+
     }
+    OLogManager.instance().debug(this, "[OMMapManagerNew] flushed %d/%d blocks", flushedBlocks, totalBlocks);
   }
 
   /**

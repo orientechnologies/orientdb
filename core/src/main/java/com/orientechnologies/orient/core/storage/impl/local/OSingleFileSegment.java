@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
 import java.io.IOException;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 
@@ -107,5 +109,18 @@ public class OSingleFileSegment {
 
   public boolean wasSoftlyClosedAtPreviousTime() {
     return wasSoftlyClosedAtPreviousTime;
+  }
+
+  public void rename(String iOldName, String iNewName) {
+    final String osFileName = file.getName();
+    if (osFileName.startsWith(iOldName)) {
+      final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+          + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
+      boolean renamed = file.renameTo(newFile);
+      while (!renamed) {
+        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+        renamed = file.renameTo(newFile);
+      }
+    }
   }
 }

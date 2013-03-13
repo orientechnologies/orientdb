@@ -50,11 +50,15 @@ public interface OSecurity {
 
   public OUser getUser(String iUserName);
 
-  public OUser createUser(String iUserName, String iUserPassword, String[] iRoles);
+  public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
+
+  public OUser createUser(String iUserName, String iUserPassword, ORole... iRoles);
 
   public boolean dropUser(String iUserName);
 
   public ORole getRole(String iRoleName);
+
+  public ORole getRole(OIdentifiable role);
 
   public ORole createRole(String iRoleName, ORole.ALLOW_MODES iAllowMode);
 
@@ -69,4 +73,6 @@ public interface OSecurity {
   public OUser repair();
 
   public void close();
+  
+  public void createClassTrigger();
 }

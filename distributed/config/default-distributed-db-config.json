@@ -8,7 +8,7 @@
 			'synchronization' : true,
 			'master' : '$auto',
       		'synch-replicas' : 1,
-      		'asynch-replicas' : "100%",
+      		'asynch-replicas' : "100%"
 		}
 	}
 }

@@ -93,14 +93,12 @@ public interface OStorage extends OSharedContainer {
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
 
-	public boolean updateReplica(final int dataSegmentId, final ORecordId rid,
-															 final byte[] content, final ORecordVersion recordVersion,
-															 final byte recordType) throws IOException;
+  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
+      final ORecordVersion recordVersion, final byte recordType) throws IOException;
 
-	public ORecordMetadata getRecordMetadata(final ORID rid);
+  public ORecordMetadata getRecordMetadata(final ORID rid);
 
-	public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode,
-																ORecordCallback<Boolean> callback);
+  public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
   public void commit(OTransaction iTx);
@@ -122,6 +120,7 @@ public interface OStorage extends OSharedContainer {
   /**
    * Add a new cluster into the storage.
    * 
+   * 
    * @param iClusterType
    *          Cluster type. Type depends by the implementation.
    * @param iClusterName
@@ -130,11 +129,11 @@ public interface OStorage extends OSharedContainer {
    *          Location where to store the cluster
    * @param iDataSegmentName
    *          Name of the data-segment to use. null means 'default'
+   * @param forceListBased
    * @param iParameters
-   *          Additional parameters to configure the cluster
-   * @throws IOException
    */
-  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters);
+  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters);
 
   public boolean dropCluster(String iClusterName);
 
@@ -213,7 +212,7 @@ public interface OStorage extends OSharedContainer {
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
-	public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
+  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
 
   public ODataSegment getDataSegmentById(int iDataSegmentId);
 
@@ -253,7 +252,7 @@ public interface OStorage extends OSharedContainer {
   /**
    * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
    */
-  public boolean isLHClustersAreUsed();
+  public boolean isHashClustersAreUsed();
 
   /**
    * Returns the storage's type.

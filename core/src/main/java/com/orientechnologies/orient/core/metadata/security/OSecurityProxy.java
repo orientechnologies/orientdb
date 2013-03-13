@@ -87,12 +87,20 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.getUser(iUserName);
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final String[] iRoles) {
+  public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
+    return delegate.createUser(iUserName, iUserPassword, iRoles);
+  }
+
+  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
     return delegate.createUser(iUserName, iUserPassword, iRoles);
   }
 
   public ORole getRole(final String iRoleName) {
     return delegate.getRole(iRoleName);
+  }
+
+  public ORole getRole(final OIdentifiable iRole) {
+    return delegate.getRole(iRole);
   }
 
   public ORole createRole(final String iRoleName, final ALLOW_MODES iAllowMode) {
@@ -125,5 +133,9 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
 
   public boolean dropRole(final String iRoleName) {
     return delegate.dropRole(iRoleName);
+  }
+  
+  public void createClassTrigger() {
+    delegate.createClassTrigger();
   }
 }

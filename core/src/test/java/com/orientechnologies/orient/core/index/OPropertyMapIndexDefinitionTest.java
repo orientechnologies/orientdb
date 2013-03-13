@@ -238,9 +238,9 @@ public class OPropertyMapIndexDefinitionTest {
     Assert.assertEquals(result, 12);
   }
 
+  @Test(expectedExceptions = NumberFormatException.class)
   public void testCreateWrongSingleValueByValue() {
-    final Object result = propertyIndexByValue.createSingleValue("tt");
-    Assert.assertNull(result);
+    propertyIndexByValue.createSingleValue("tt");
   }
 
   @Test(expectedExceptions = NullPointerException.class)

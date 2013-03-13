@@ -80,6 +80,8 @@ public class ClassIndexManagerTest {
     compositeCollectionClass
         .createIndex("classIndexManagerTestIndexValueAndCollection", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2");
 
+    oClass.createIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE, "prop0", "prop1");
+
     schema.save();
 
     database.close();
@@ -231,11 +233,9 @@ public class ClassIndexManagerTest {
 
   public void testPropertiesCheckUniqueNullKeys() {
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
-    docOne.field("prop3", "a");
     docOne.save();
 
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
-    docTwo.field("prop3", "a");
     docTwo.save();
   }
 
@@ -1302,4 +1302,21 @@ public class ClassIndexManagerTest {
     Assert.assertEquals(index.getSize(), 0);
   }
 
+  public void testIndexOnPropertiesFromClassAndSuperclass() {
+    final ODocument docOne = new ODocument("classIndexManagerTestClass");
+    docOne.field("prop0", "doc1-prop0");
+    docOne.field("prop1", "doc1-prop1");
+    docOne.save();
+
+    final ODocument docTwo = new ODocument("classIndexManagerTestClass");
+    docTwo.field("prop0", "doc2-prop0");
+    docTwo.field("prop1", "doc2-prop1");
+    docTwo.save();
+
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass oClass = schema.getClass("classIndexManagerTestClass");
+    final OIndex<?> oIndex = oClass.getClassIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass");
+
+    Assert.assertEquals(oIndex.getSize(), 2);
+  }
 }

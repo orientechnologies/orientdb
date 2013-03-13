@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -216,7 +217,7 @@ public class OStorageLocalTxExecuter {
       // AVOID TO COMMIT INDEX STUFF
       return;
 
-    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalLHPEPS))
+    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH))
       // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
       return;
 

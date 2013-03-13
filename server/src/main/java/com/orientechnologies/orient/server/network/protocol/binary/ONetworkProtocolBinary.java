@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -62,6 +64,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -93,15 +96,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, final Object[] iCommands)
-      throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(iSocket, this);
 
-    super.config(iServer, iSocket, iConfig, iCommands);
+    super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+
     channel.flush();
     start();
 
@@ -253,6 +257,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
       removeCluster();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+      readRecordMetadata();
       break;
 
     case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
@@ -634,7 +642,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkDatabase();
 
-    final boolean isLHClustersAreUsed = connection.database.getStorage().isLHClustersAreUsed();
+    final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
 
     beginResponse();
     try {
@@ -722,6 +730,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         channel.writeBytes(distributedCfg != null ? distributedCfg.toStream() : null);
 
+        if (connection.data.protocolVersion >= 14)
+          channel.writeString(OConstants.getVersion());
       } finally {
         endResponse();
       }
@@ -975,8 +985,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeShort((short) OGlobalConfiguration.values().length);
       for (OGlobalConfiguration cfg : OGlobalConfiguration.values()) {
-        channel.writeString(cfg.getKey());
-        channel.writeString(cfg.getValueAsString() != null ? cfg.getValueAsString() : "");
+
+        String key;
+        try {
+          key = cfg.getKey();
+        } catch (Exception e) {
+          key = "?";
+        }
+
+        String value;
+        try {
+          value = cfg.getValueAsString() != null ? cfg.getValueAsString() : "";
+        } catch (Exception e) {
+          value = "";
+        }
+
+        channel.writeString(key);
+        channel.writeString(value);
       }
     } finally {
       endResponse();
@@ -1271,6 +1296,22 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  protected void readRecordMetadata() throws IOException {
+    setDataCommandInfo("Record metadata");
+
+    final ORID rid = channel.readRID();
+
+    beginResponse();
+    try {
+      final ORecordMetadata metadata = connection.database.getRecordMetadata(rid);
+      sendOk(clientTxId);
+      channel.writeRID(metadata.getRecordId());
+      channel.writeVersion(metadata.getRecordVersion());
+    } finally {
+      endResponse();
+    }
+  }
+
   protected void readRecord() throws IOException {
     setDataCommandInfo("Load record");
 
@@ -1281,7 +1322,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       ignoreCache = channel.readByte() == 1;
 
     boolean loadTombstones = false;
-    if (connection.data.protocolVersion >= 12)
+    if (connection.data.protocolVersion >= 13)
       loadTombstones = channel.readByte() > 0;
 
     if (rid.clusterId == 0 && rid.clusterPosition.longValue() == 0) {

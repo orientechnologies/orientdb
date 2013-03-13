@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:2,rid,version,attribSameRow,class";
+  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class";
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
@@ -52,6 +52,7 @@ public class OHttpResponse {
   public String              serverInfo;
   public String              sessionId;
   public String              callbackFunction;
+  public boolean             sendStarted   = false;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
@@ -71,6 +72,11 @@ public class OHttpResponse {
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders,
       final boolean iKeepAlive) throws IOException {
+    if (sendStarted)
+      // AVOID TO SEND RESPONSE TWICE
+      return;
+    sendStarted = true;
+
     final String content;
     final String contentType;
 
@@ -213,9 +219,9 @@ public class OHttpResponse {
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
 
     // WRITE RECORDS
-    json.beginCollection(1, true, "result");
+    json.beginCollection(-1, true, "result");
     formatMultiValue(iRecords, buffer, format);
-    json.endCollection(1, true);
+    json.endCollection(-1, true);
 
     json.endObject();
 

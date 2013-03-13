@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -76,6 +77,21 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
 
   public OIdentifiable deserializeNative(byte[] stream, int startPosition) {
     return OLinkSerializer.INSTANCE.deserializeNative(stream, startPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(OIdentifiable object, ODirectMemory memory, long pointer) {
+    OLinkSerializer.INSTANCE.serializeInDirectMemory(object, memory, pointer);
+  }
+
+  @Override
+  public OIdentifiable deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return OLinkSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return OLinkSerializer.INSTANCE.getObjectSizeInDirectMemory(memory, pointer);
   }
 
   public boolean isFixedLength() {

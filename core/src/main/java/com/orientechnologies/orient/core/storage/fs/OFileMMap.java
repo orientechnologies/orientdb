@@ -492,13 +492,13 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   public void close() throws IOException {
-    super.close();
-
-    OMMapManagerLocator.getInstance().flush();
     if (headerBuffer != null) {
       setSoftlyClosed(true);
       headerBuffer = null;
     }
+    OMMapManagerLocator.getInstance().flush();
+
+    super.close();
   }
 
   public boolean isSoftlyClosed() {

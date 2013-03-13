@@ -501,9 +501,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
         final String databaseName = entry.getKey();
         try {
-          final long[] lastOperationId = entry.getValue().getLog().getLastOperationId();
+          final long[] lastOperationId = entry.getValue().getLog().getLastOperationId(true);
 
-          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s", databaseName);
+          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
 
           synchronized (pendingAlignments) {
             for (String node : remoteClusterNodes.keySet()) {
@@ -547,7 +547,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             long[] lastOperationId;
 
             try {
-              lastOperationId = synch.getLog().getLastOperationId();
+              lastOperationId = synch.getLog().getLastOperationId(false);
 
               OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] resend alignment request from %d:%d", node, databaseName,
                   lastOperationId[0], lastOperationId[1]);

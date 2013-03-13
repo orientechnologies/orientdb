@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -118,6 +119,22 @@ public class IndexCustomKeyTest {
 
     public ComparableBinary deserializeNative(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
+    }
+
+    @Override
+    public void serializeInDirectMemory(ComparableBinary object, ODirectMemory memory, long pointer) {
+      final byte[] buffer = object.toByteArray();
+      memory.set(pointer, buffer, buffer.length);
+    }
+
+    @Override
+    public ComparableBinary deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+      return new ComparableBinary(memory.get(pointer, LENGTH));
+    }
+
+    @Override
+    public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+      return LENGTH;
     }
 
     public boolean isFixedLength() {

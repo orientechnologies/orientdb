@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -108,6 +111,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    */
   public ODocument(final byte[] iSource) {
     _source = iSource;
+    setup();
+  }
+
+  /**
+   * Creates a new instance by the raw stream usually read from the database. New instances are not persistent until {@link #save()}
+   * is called.
+   * 
+   * @param iSource
+   *          Raw stream as InputStream
+   */
+  public ODocument(final InputStream iSource) throws IOException {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OIOUtils.copyStream(iSource, out, -1);
+    _source = out.toByteArray();
     setup();
   }
 
@@ -241,40 +258,45 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * instance has the same identity and values but all the internal structure are totally independent by the source.
    */
   public ODocument copy() {
-    return copy((ODocument) copyTo(new ODocument()));
+    return (ODocument) copyTo(new ODocument());
   }
 
   /**
    * Copies all the fields into iDestination document.
    */
-  public ODocument copy(final ODocument iDestination) {
+  @Override
+  public ORecordAbstract<Object> copyTo(final ORecordAbstract<Object> iDestination) {
     // TODO: REMOVE THIS
     checkForFields();
 
-    iDestination._ordered = _ordered;
-    iDestination._clazz = _clazz;
-    iDestination._trackingChanges = _trackingChanges;
+    ODocument destination = (ODocument) iDestination;
+
+    super.copyTo(iDestination);
+
+    destination._ordered = _ordered;
+    destination._clazz = _clazz;
+    destination._trackingChanges = _trackingChanges;
     if (_owners != null)
-      iDestination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
+      destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
     if (_fieldValues != null) {
-      iDestination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
+      destination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
           : new HashMap<String, Object>();
       for (Entry<String, Object> entry : _fieldValues.entrySet())
-        ODocumentHelper.copyFieldValue(iDestination, entry);
+        ODocumentHelper.copyFieldValue(destination, entry);
     }
 
     if (_fieldTypes != null)
-      iDestination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+      destination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
 
-    iDestination._fieldChangeListeners = null;
-    iDestination._fieldCollectionChangeTimeLines = null;
-    iDestination._fieldOriginalValues = null;
-    iDestination.addAllMultiValueChangeListeners();
+    destination._fieldChangeListeners = null;
+    destination._fieldCollectionChangeTimeLines = null;
+    destination._fieldOriginalValues = null;
+    destination.addAllMultiValueChangeListeners();
 
-    iDestination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
+    destination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
 
-    return iDestination;
+    return destination;
   }
 
   @Override
@@ -283,6 +305,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
     final ODocument cloned = new ODocument();
+    cloned.setOrdered(_ordered);
     cloned.fill(_recordId, _recordVersion, _source, false);
     return cloned;
   }
@@ -679,7 +702,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
           return this;
       } else {
         try {
-          if (iPropertyValue == oldValue) {
+          if (iPropertyValue.equals(oldValue)) {
             if (!(iPropertyValue instanceof ORecordElement))
               // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
               setDirty();
@@ -772,20 +795,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iConflictsOtherWins
-   *          if true, the other document wins in case of conflicts, otherwise the current document wins
+   * @param iAddOnlyMode
+   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
+   *          will be removed by original too
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final ODocument iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final ODocument iOther, boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
     iOther.checkForLoading();
     iOther.checkForFields();
 
     if (_clazz == null && iOther.getSchemaClass() != null)
       _clazz = iOther.getSchemaClass();
 
-    return merge(iOther._fieldValues, iConflictsOtherWins, iMergeSingleItemsOfMultiValueFields);
+    return merge(iOther._fieldValues, iAddOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
 
   /**
@@ -1553,6 +1577,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     final byte[] content = toStream();
     stream.writeInt(content.length);
     stream.write(content);
+
+    stream.writeBoolean(_dirty);
   }
 
   @Override
@@ -1568,5 +1594,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     stream.readFully(content);
 
     fromStream(content);
+
+    _dirty = stream.readBoolean();
   }
 }

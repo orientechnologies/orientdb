@@ -37,44 +37,50 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORemoteFetchListener implements OFetchListener {
 
-	final Set<ODocument>	recordsToSend;
+  final Set<ODocument> recordsToSend;
 
-	public ORemoteFetchListener(final Set<ODocument> iRecordsToSend) {
-		recordsToSend = iRecordsToSend;
-	}
+  public ORemoteFetchListener(final Set<ODocument> iRecordsToSend) {
+    recordsToSend = iRecordsToSend;
+  }
 
-	public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
-			final Object iusObject) throws OFetchException {
-	}
+  public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
+      final Object iusObject) throws OFetchException {
+  }
 
-	public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
-			OFetchContext iContext) throws OFetchException {
-	}
+  public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+      OFetchContext iContext) throws OFetchException {
+  }
 
-	public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
-			String iFieldName, OFetchContext iContext) throws OFetchException {
-	}
+  public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+      String iFieldName, OFetchContext iContext) throws OFetchException {
+  }
 
-	public Object fetchLinkedMapEntry(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, String iKey,
-			ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
-		return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-	}
+  public Object fetchLinkedMapEntry(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, String iKey,
+      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+    if (iLinked.getIdentity().isValid())
+      return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+    return null;
+  }
 
-	public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
-			ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
-		return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-	}
+  public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
+      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+    if (iLinked.getIdentity().isValid())
+      return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+    return null;
+  }
 
-	@SuppressWarnings("unchecked")
-	public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
-			OFetchContext iContext) throws OFetchException {
-		if (iLinked instanceof ODocument)
-			return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
-		else if (iLinked instanceof Collection<?>)
-			return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
-		else if (iLinked instanceof Map<?, ?>)
-			return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
-		else
-			throw new OFetchException("Unrecognized type while fetching records: " + iLinked);
-	}
+  @SuppressWarnings("unchecked")
+  public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
+      OFetchContext iContext) throws OFetchException {
+    if (iLinked instanceof ODocument)
+      return recordsToSend.add((ODocument) iLinked) ? iLinked : null;
+    // HOW THIS CODE CAN HAVE SENSE?
+    else if (iLinked instanceof Collection<?>)
+      return recordsToSend.addAll((Collection<? extends ODocument>) iLinked) ? iLinked : null;
+    // HOW THIS CODE CAN HAVE SENSE?
+    else if (iLinked instanceof Map<?, ?>)
+      return recordsToSend.addAll(((Map<String, ? extends ODocument>) iLinked).values()) ? iLinked : null;
+    else
+      throw new OFetchException("Unrecognized type while fetching records: " + iLinked);
+  }
 }

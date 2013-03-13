@@ -118,7 +118,13 @@ public class GEOTest {
 
     // MAKE THE FIRST RECORD DIRTY TO TEST IF DISTANCE JUMP IT
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from MapPoint limit 1")).execute();
-    result.get(0).field("x", "--wrong--");
+    try {
+      result.get(0).field("x", "--wrong--");
+      Assert.assertTrue(false);
+    } catch (NumberFormatException e) {
+      Assert.assertTrue(true);
+    }
+
     result.get(0).save();
 
     result = database.command(

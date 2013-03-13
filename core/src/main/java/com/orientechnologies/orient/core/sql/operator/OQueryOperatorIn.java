@@ -162,14 +162,19 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
+      if (iLeft instanceof OSQLFilterItem)
+        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null);
+
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+      if (iRight instanceof OSQLFilterItem)
+        iRight = ((OSQLFilterItem) iRight).getValue(null, null);
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
     } else
@@ -181,14 +186,20 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public ORID getEndRidRange(final Object iLeft, final Object iRight) {
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
+      if (iLeft instanceof OSQLFilterItem)
+        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null);
+
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+      if (iRight instanceof OSQLFilterItem)
+        iRight = ((OSQLFilterItem) iRight).getValue(null, null);
+
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
     } else
@@ -200,6 +211,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   }
 
   protected List<ORID> addRangeResults(final Iterable<?> ridCollection, final int ridSize) {
+    if (ridCollection == null)
+      return null;
+
     List<ORID> rids = null;
     for (Object rid : ridCollection) {
       if (rid instanceof OSQLFilterItemParameter)

@@ -30,6 +30,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -158,29 +159,6 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
       }
 
       return tot;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public int count(final OIdentifiable iRecord) {
-
-    acquireExclusiveLock();
-    try {
-
-      Set<OIdentifiable> rids;
-      int tot = 0;
-      for (final Entry<Object, Set<OIdentifiable>> entries : map.entrySet()) {
-        rids = entries.getValue();
-        if (rids != null) {
-          if (rids.contains(iRecord)) {
-            ++tot;
-          }
-        }
-      }
-
-      return tot;
-
     } finally {
       releaseExclusiveLock();
     }
@@ -599,7 +577,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(map.values().iterator());
+      return new OMultiCollectionIterator<OIdentifiable>(map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
@@ -612,7 +590,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OFlattenIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
+      return new OMultiCollectionIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();

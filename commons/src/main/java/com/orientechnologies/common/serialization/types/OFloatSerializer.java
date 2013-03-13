@@ -16,6 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -66,6 +67,21 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
 
   public Float deserializeNative(byte[] stream, int startPosition) {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition));
+  }
+
+  @Override
+  public void serializeInDirectMemory(Float object, ODirectMemory memory, long pointer) {
+    memory.setInt(pointer, Float.floatToIntBits(object));
+  }
+
+  @Override
+  public Float deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return Float.intBitsToFloat(memory.getInt(pointer));
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return FLOAT_SIZE;
   }
 
   public boolean isFixedLength() {

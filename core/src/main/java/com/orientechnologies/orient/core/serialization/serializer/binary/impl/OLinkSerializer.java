@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.bytes2short;
 import static com.orientechnologies.orient.core.serialization.OBinaryProtocol.short2bytes;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -82,6 +83,29 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
         + OShortSerializer.SHORT_SIZE);
 
     return new ORecordId(clusterId, clusterPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(OIdentifiable rid, ODirectMemory memory, long pointer) {
+    ORID r = rid.getIdentity();
+
+    OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), memory, pointer);
+
+    memory.set(pointer + OShortSerializer.SHORT_SIZE, r.getClusterPosition().toStream(), CLUSTER_POS_SIZE);
+  }
+
+  @Override
+  public OIdentifiable deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    int clusterId = OShortSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
+    OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(memory.get(
+        pointer + OShortSerializer.SHORT_SIZE, CLUSTER_POS_SIZE));
+
+    return new ORecordId(clusterId, clusterPosition);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return RID_SIZE;
   }
 
   public boolean isFixedLength() {

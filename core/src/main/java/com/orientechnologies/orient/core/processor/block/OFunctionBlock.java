@@ -28,11 +28,13 @@ import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OFunctionBlock extends OAbstractBlock {
+  public static final String NAME = "function";
+
   @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    final String function = getRequiredFieldOfClass(iContext, iConfig, "function", String.class);
+    final String function = getRequiredFieldOfClass(iContext, iConfig, NAME, String.class);
 
     final Object[] args;
     final Collection<Object> configuredArgs = getFieldOfClass(iContext, iConfig, "args", Collection.class);
@@ -40,7 +42,7 @@ public class OFunctionBlock extends OAbstractBlock {
       args = new Object[configuredArgs.size()];
       int argIdx = 0;
       for (Object arg : configuredArgs) {
-        Object value = resolveValue(iContext, arg);
+        Object value = resolveValue(iContext, arg, true);
 
         if (value instanceof List<?>)
           // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
@@ -71,7 +73,7 @@ public class OFunctionBlock extends OAbstractBlock {
 
         Method m = cls.getMethod(methodName, argTypes);
 
-        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
+        debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args).replace("%", "%%") + ")...");
         return m.invoke(null, args);
 
       } catch (NoSuchMethodException e) {
@@ -81,6 +83,8 @@ public class OFunctionBlock extends OAbstractBlock {
             try {
               debug(iContext, "Calling Java function: " + m + "(" + Arrays.toString(args) + ")...");
               return m.invoke(null, args);
+            } catch (IllegalArgumentException e1) {
+              // DO NOTHING, LOOK FOR ANOTHER METHOD
             } catch (Exception e1) {
               e1.printStackTrace();
               throw new OProcessException("Error on call function '" + function + "'", e);
@@ -89,12 +93,17 @@ public class OFunctionBlock extends OAbstractBlock {
         }
 
         // METHOD NOT FOUND!
+        debug(iContext, "Method not found: " + clsName + "." + methodName + "(" + Arrays.toString(args) + ")");
+
         for (Method m : cls.getMethods()) {
-          StringBuilder candidates = new StringBuilder();
+          final StringBuilder candidates = new StringBuilder();
           if (m.getName().equals(methodName)) {
             candidates.append("-" + m + "\n");
           }
-          debug(iContext, "Candidate methods were: \n" + candidates);
+          if (candidates.length() > 0)
+            debug(iContext, "Candidate methods were: \n" + candidates);
+          else
+            debug(iContext, "No candidate methods were found");
         }
 
       } catch (ClassNotFoundException e) {
@@ -109,6 +118,6 @@ public class OFunctionBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "function";
+    return NAME;
   }
 }

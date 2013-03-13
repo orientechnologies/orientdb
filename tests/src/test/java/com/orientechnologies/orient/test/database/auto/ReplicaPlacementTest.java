@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -15,6 +18,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -79,6 +83,22 @@ public class ReplicaPlacementTest {
     Assert.assertTrue(propindex.contains("value"));
   }
 
+  public void testReplicaAdditionRecord() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    final ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    final ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+
+    Assert.assertEquals(recordTwo.toStream(), recordOne.toStream());
+  }
+
   public void testReplicaAdditionTombstone() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
@@ -100,6 +120,25 @@ public class ReplicaPlacementTest {
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(0, propindex.getSize());
+  }
+
+  public void testReplicaAdditionTombstoneRecord() {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+    recordOne.delete();
+
+    recordOne = dbOne.load(recordOne.getIdentity(), "*:0", false, true);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    final ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity(), "*:0", false, true);
+    Assert.assertNotNull(recordTwo);
+
+    Assert.assertEquals(recordOne.getRecordVersion(), recordTwo.getRecordVersion());
   }
 
   public void testReplicaReplacementSuccess() {
@@ -132,6 +171,35 @@ public class ReplicaPlacementTest {
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(1, propindex.getSize());
     Assert.assertTrue(propindex.contains("value2"));
+  }
+
+  public void testReplicaReplacementSuccessRecord() throws Exception {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+
+    Assert.assertEquals(recordTwo.toStream(), recordOne.toStream());
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 22 }));
+    recordOne.save();
+    recordOne = dbOne.load(recordOne.getIdentity());
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+
+    Assert.assertEquals(recordTwo.toStream(), recordOne.toStream());
   }
 
   public void testReplicaReplacementFail() {
@@ -175,7 +243,47 @@ public class ReplicaPlacementTest {
     Assert.assertTrue(propindex.contains("value4"));
   }
 
-  public void testReplicaReplacementTombstoneToRecord() {
+  public void testReplicaReplacementFailRecord() throws Exception {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+
+    Assert.assertEquals(recordTwo.toStream(), recordOne.toStream());
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 22 }));
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    recordTwo.setDirty();
+    recordTwo.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 44 }));
+    recordTwo.save();
+
+    recordTwo.setDirty();
+    recordTwo.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 55 }));
+    recordTwo.save();
+
+    final ORecordVersion oldVersion = recordTwo.getRecordVersion();
+
+    Assert.assertFalse(dbTwo.updatedReplica(recordOne));
+    recordTwo = dbTwo.load(recordOne.getIdentity());
+
+    Assert.assertEquals(0, recordTwo.getRecordVersion().compareTo(oldVersion));
+    Assert.assertEquals(recordTwo.toStream(), new byte[] { 10, 11, 55 });
+
+    Assert.assertFalse(Arrays.equals(recordOne.toStream(), recordTwo.toStream()));
+  }
+
+  public void testReplicaReplacementTombstoneToDocument() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
@@ -207,7 +315,38 @@ public class ReplicaPlacementTest {
     Assert.assertTrue(propindex.contains("value5"));
   }
 
-  public void testReplicaReplacementRecordToTombstone() {
+  public void testReplicaReplacementTombstoneToRecord() throws Exception {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+    recordTwo.delete();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 22 }));
+    recordOne.save();
+
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 44 }));
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    recordTwo = dbTwo.load(recordOne.getIdentity());
+
+    Assert.assertNotNull(recordTwo);
+    Assert.assertEquals(recordTwo.toStream(), recordOne.toStream());
+  }
+
+  public void testReplicaReplacementDocumentToTombstone() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
@@ -237,7 +376,34 @@ public class ReplicaPlacementTest {
     Assert.assertEquals(0, propindex.getSize());
   }
 
-  public void testReplicaReplacementTombstoneToTombstone() {
+  public void testReplicaReplacementRecordToTombstone() throws Exception {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 22 }));
+    recordOne.save();
+    recordOne.delete();
+    recordOne = dbOne.load(recordOne.getIdentity(), "*:0", false, true);
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    recordTwo = dbTwo.load(recordOne.getIdentity());
+
+    Assert.assertNull(recordTwo);
+  }
+
+  public void testReplicaReplacementTombstoneDocumentToTombstone() {
     if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
       return;
 
@@ -268,6 +434,37 @@ public class ReplicaPlacementTest {
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(0, propindex.getSize());
+  }
+
+  public void testReplicaReplacementTombstoneRecordToTombstone() throws Exception {
+    if (!OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean())
+      return;
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    ORecordBytes recordOne = new ORecordBytes(new byte[] { 10, 11, 22, 33, 44, 55, 66, 77 });
+    recordOne.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    ORecordBytes recordTwo = dbTwo.load(recordOne.getIdentity());
+    Assert.assertNotNull(recordTwo);
+    recordTwo.delete();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
+    recordOne.setDirty();
+    recordOne.fromInputStream(new ByteArrayInputStream(new byte[] { 10, 11, 22 }));
+    recordOne.save();
+
+    recordOne.delete();
+    recordOne = dbOne.load(recordOne.getIdentity(), "*:0", false, true);
+
+    ORecordVersion docOneVersion = recordOne.getRecordVersion();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbTwo);
+    dbTwo.updatedReplica(recordOne);
+    recordTwo = dbTwo.load(recordOne.getIdentity(), "*:0", false, true);
+
+    Assert.assertEquals(docOneVersion, recordTwo.getRecordVersion());
   }
 
   private String getDBUrl(String dbName, String url) {

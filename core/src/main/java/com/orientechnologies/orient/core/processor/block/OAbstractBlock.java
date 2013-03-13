@@ -16,11 +16,16 @@
 package com.orientechnologies.orient.core.processor.block;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
@@ -34,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 public abstract class OAbstractBlock implements OProcessorBlock {
-  protected String returnVariable;
+  protected OProcessorBlock parentBlock;
 
   protected abstract Object processBlock(OComposableProcessor iManager, OCommandContext iContext, ODocument iConfig,
       ODocument iOutput, boolean iReadOnly);
@@ -49,7 +54,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (enabled != null && !enabled)
       return null;
 
-    returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
+    String returnVariable = getFieldOfClass(iContext, iConfig, "return", String.class);
 
     debug(iContext, "Executing {%s} block...", iConfig.field("type"));
 
@@ -73,7 +78,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final Object iContent,
       final OCommandContext iContext, ODocument iOutput, final boolean iReadOnly) {
     try {
-      return iManager.process(iContent, iContext, iOutput, iReadOnly);
+      return iManager.process(this, iContent, iContext, iOutput, iReadOnly);
     } catch (Exception e) {
       throw new OProcessException("Error on processing '" + iElementName + "' field of '" + getName() + "' block", e);
     }
@@ -82,16 +87,18 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected Object delegate(final String iElementName, final OComposableProcessor iManager, final String iType,
       final ODocument iContent, final OCommandContext iContext, ODocument iOutput, final boolean iReadOnly) {
     try {
-      return iManager.process(iType, iContent, iContext, iOutput, iReadOnly);
+      return iManager.process(this, iType, iContent, iContext, iOutput, iReadOnly);
     } catch (Exception e) {
       throw new OProcessException("Error on processing '" + iElementName + "' field of '" + getName() + "' block", e);
     }
   }
 
   public boolean checkForCondition(final OCommandContext iContext, final ODocument iConfig) {
-    final String condition = getFieldOfClass(iContext, iConfig, "if", String.class);
-    if (condition != null) {
-      Object result = evaluate(iContext, condition);
+    Object condition = getField(iContext, iConfig, "if");
+    if (condition instanceof Boolean)
+      return (Boolean) condition;
+    else if (condition != null) {
+      Object result = evaluate(iContext, (String) condition);
       return result != null && (Boolean) result;
     }
     return true;
@@ -101,7 +108,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (iExpression == null)
       throw new OProcessException("Null expression");
 
-    final OSQLPredicate predicate = new OSQLPredicate((String) resolveValue(iContext, iExpression));
+    final OSQLPredicate predicate = new OSQLPredicate((String) resolveValue(iContext, iExpression, true));
     final Object result = predicate.evaluate(iContext);
 
     debug(iContext, "Evaluated expression '" + iExpression + "' = " + result);
@@ -138,7 +145,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
 
   @SuppressWarnings("unchecked")
   protected <T> T getField(final OCommandContext iContext, final ODocument iConfig, final String iFieldName) {
-    return (T) resolveValue(iContext, iConfig.field(iFieldName));
+    return (T) resolveValue(iContext, iConfig.field(iFieldName), true);
   }
 
   @SuppressWarnings("unchecked")
@@ -147,13 +154,13 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = iConfig.field(iFieldName);
     if (f == null)
       return iDefaultValue;
-    return (T) resolveValue(iContext, f);
+    return (T) resolveValue(iContext, f, true);
   }
 
   @SuppressWarnings("unchecked")
   protected <T> T getFieldOfClass(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
       Class<? extends T> iExpectedClass) {
-    final Object f = resolveValue(iContext, iConfig.field(iFieldName));
+    final Object f = resolveValue(iContext, iConfig.field(iFieldName), true);
     if (f != null)
       if (!iExpectedClass.isAssignableFrom(f.getClass()))
         throw new OProcessException("Block '" + getName() + "' defines the field '" + iFieldName + "' of type '" + f.getClass()
@@ -167,7 +174,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = iConfig.field(iFieldName);
     if (f == null)
       throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
-    return (T) resolveValue(iContext, f);
+    return (T) resolveValue(iContext, f, true);
   }
 
   @SuppressWarnings("unchecked")
@@ -176,7 +183,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = getFieldOfClass(iContext, iConfig, iFieldName, iExpectedClass);
     if (f == null)
       throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
-    return (T) resolveValue(iContext, f);
+    return (T) resolveValue(iContext, f, true);
   }
 
   public void checkForBlock(final Object iValue) {
@@ -223,12 +230,11 @@ public abstract class OAbstractBlock implements OProcessorBlock {
         }
 
       });
-
     return value;
   }
 
   @SuppressWarnings("unchecked")
-  protected Object resolveValue(final OCommandContext iContext, final Object iValue) {
+  protected Object resolveValue(final OCommandContext iContext, final Object iValue, final boolean iClone) {
     if (iValue == null)
       return null;
 
@@ -238,9 +244,9 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     else if (iValue instanceof ODocument) {
       // DOCUMENT
       final ODocument sourceDoc = ((ODocument) iValue);
-      final ODocument destDoc = new ODocument().setOrdered(true);
+      final ODocument destDoc = iClone ? new ODocument().setOrdered(true) : sourceDoc;
       for (String fieldName : sourceDoc.fieldNames()) {
-        Object fieldValue = resolveValue(iContext, sourceDoc.field(fieldName));
+        Object fieldValue = resolveValue(iContext, sourceDoc.field(fieldName), iClone);
         // PUT IN CONTEXT
         destDoc.field(fieldName, fieldValue);
       }
@@ -249,21 +255,75 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     } else if (iValue instanceof Map<?, ?>) {
       // MAP
       final Map<Object, Object> sourceMap = (Map<Object, Object>) iValue;
-      final Map<Object, Object> destMap = new HashMap<Object, Object>();
+      final Map<Object, Object> destMap = iClone ? new HashMap<Object, Object>() : sourceMap;
       for (Entry<Object, Object> entry : sourceMap.entrySet())
-        destMap.put(entry.getKey(), resolveValue(iContext, entry.getValue()));
+        destMap.put(entry.getKey(), resolveValue(iContext, entry.getValue(), iClone));
       return destMap;
 
     } else if (iValue instanceof List<?>) {
 
       final List<Object> sourceList = (List<Object>) iValue;
-      final List<Object> destList = new ArrayList<Object>();
+      final List<Object> destList = iClone ? new ArrayList<Object>() : sourceList;
       for (int i = 0; i < sourceList.size(); ++i)
-        destList.add(i, resolve(iContext, sourceList.get(i)));
+        if (iClone)
+          destList.add(i, resolve(iContext, sourceList.get(i)));
+        else
+          destList.set(i, resolve(iContext, sourceList.get(i)));
+
       return destList;
     }
 
     // ANY OTHER OBJECT
     return iValue;
   }
+
+  @SuppressWarnings("unchecked")
+  protected Object getValue(final Object iValue, final Boolean iCopy) {
+    if (iValue != null && iCopy != null && iCopy) {
+      // COPY THE VALUE
+      if (iValue instanceof ODocument)
+        return ((ODocument) iValue).copy();
+      else if (iValue instanceof List)
+        return new ArrayList<Object>((Collection<Object>) iValue);
+      else if (iValue instanceof Set)
+        return new HashSet<Object>((Collection<Object>) iValue);
+      else if (iValue instanceof Map)
+        return new LinkedHashMap<Object, Object>((Map<Object, Object>) iValue);
+      else
+        throw new OProcessException("Copy of value '" + iValue + "' of class '" + iValue.getClass() + "' is not supported");
+    }
+    return iValue;
+  }
+
+  protected Object flatMultivalues(final OCommandContext iContext, final Boolean copy, final Boolean flatMultivalues,
+      final Object value) {
+    if (OMultiValue.isMultiValue(value) && flatMultivalues != null && flatMultivalues) {
+      Collection<Object> newColl;
+      if (value instanceof Set<?>)
+        newColl = new HashSet<Object>();
+      else
+        newColl = new ArrayList<Object>();
+
+      for (Object entry : OMultiValue.getMultiValueIterable(value)) {
+        if (entry instanceof ODocument) {
+          // DOCUMENT
+          for (String fieldName : ((ODocument) entry).fieldNames())
+            newColl.add(((ODocument) entry).field(fieldName));
+        } else
+          OMultiValue.add(newColl, resolveValue(iContext, getValue(entry, copy), false));
+      }
+
+      return newColl;
+    }
+    return value;
+  }
+
+  public OProcessorBlock getParentBlock() {
+    return parentBlock;
+  }
+
+  public void setParentBlock(OProcessorBlock parentBlock) {
+    this.parentBlock = parentBlock;
+  }
+
 }

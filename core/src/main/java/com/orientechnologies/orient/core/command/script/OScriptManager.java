@@ -186,6 +186,7 @@ public class OScriptManager {
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
+      binding.put("ctx", iContext);
       for (Entry<String, Object> a : iContext.getVariables().entrySet())
         binding.put(a.getKey(), a.getValue());
     }
@@ -273,6 +274,10 @@ public class OScriptManager {
     injections.remove(iInj);
   }
 
+  public List<OScriptInjection> getInjections() {
+    return injections;
+  }
+  
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
     engines.put(iLanguage, iEngine);
     return this;

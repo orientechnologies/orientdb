@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -108,6 +109,8 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
+    if(version == null)
+        version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
     out.write(recordType);
   }
@@ -119,6 +122,8 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
+    if(version == null)
+        version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
     recordType = in.readByte();
   }

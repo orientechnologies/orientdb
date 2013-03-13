@@ -44,8 +44,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterLHPEPSConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -84,9 +85,10 @@ public class OStorageLocal extends OStorageEmbedded {
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId          = -1;
 
-  private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco", ".ocs" };
+  private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco",
+      ".ocs", ".oef", ".oem", ".oet"                             };
 
-  private long                          positionGenerator         = 0;
+  private long                          positionGenerator         = 1;
 
   private OModificationLock             modificationLock          = new OModificationLock();
 
@@ -110,8 +112,6 @@ public class OStorageLocal extends OStorageEmbedded {
     variableParser = new OStorageVariableParser(storagePath);
     configuration = new OStorageConfigurationSegment(this);
     txManager = new OStorageLocalTxExecuter(this, configuration.txSegment);
-
-    // positionGenerator.setSeed(System.nanoTime());
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
@@ -147,7 +147,7 @@ public class OStorageLocal extends OStorageEmbedded {
       dataSegments[pos].open();
 
       if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
-        addLHPEPSDefaultClusters();
+        addEHDefaultClusters();
       else
         addDefaultClusters();
 
@@ -181,7 +181,8 @@ public class OStorageLocal extends OStorageEmbedded {
               // OPENED
               if (clusters[i] != null)
                 clusters[i].close();
-              clusters[i] = Orient.instance().getClusterFactory().createCluster(OClusterLocal.TYPE);
+              clusters[i] = Orient.instance().getClusterFactory()
+                  .createCluster(OClusterLocal.TYPE, clusters[i] instanceof OClusterLocal);
               clusters[i].configure(this, clusterConfig);
               clusterMap.put(clusters[i].getName(), clusters[i]);
               clusters[i].open();
@@ -233,19 +234,19 @@ public class OStorageLocal extends OStorageEmbedded {
         CLUSTER_DEFAULT_NAME));
   }
 
-  private void addLHPEPSDefaultClusters() throws IOException {
-    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+  private void addEHDefaultClusters() throws IOException {
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         OMetadata.CLUSTER_INTERNAL_NAME));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         OMetadata.CLUSTER_INDEX_NAME));
 
-    createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
+    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         OMetadata.CLUSTER_MANUAL_INDEX_NAME));
 
-    defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterLHPEPSConfiguration(configuration, clusters.length, 0,
-        CLUSTER_DEFAULT_NAME));
+    defaultClusterId = createClusterFromConfig(new OStorageEHClusterConfiguration(configuration, clusters.length,
+        CLUSTER_DEFAULT_NAME, null, 0));
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -271,18 +272,18 @@ public class OStorageLocal extends OStorageEmbedded {
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
       // ADD THE DEFAULT CLUSTER
-      defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null);
+      defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
 
       configuration.create();
 
@@ -422,7 +423,7 @@ public class OStorageLocal extends OStorageEmbedded {
                 DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
 
         // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-        OMemoryWatchDog.freeMemory(DELETE_WAIT_TIME);
+        OMemoryWatchDog.freeMemoryForResourceCleanup(DELETE_WAIT_TIME);
       }
 
       throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
@@ -780,7 +781,7 @@ public class OStorageLocal extends OStorageEmbedded {
    * Add a new cluster into the storage. Type can be: "physical" or "logical".
    */
   public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
+      boolean forceListBased, final Object... iParameters) {
     checkOpeness();
 
     try {
@@ -796,7 +797,7 @@ public class OStorageLocal extends OStorageEmbedded {
             break;
           }
 
-        cluster = Orient.instance().getClusterFactory().createCluster(iClusterType);
+        cluster = Orient.instance().getClusterFactory().createCluster(iClusterType, forceListBased);
         cluster.configure(this, clusterPos, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
       } else
         cluster = null;
@@ -928,6 +929,8 @@ public class OStorageLocal extends OStorageEmbedded {
       return clusters[iClusterId] != null ? new OClusterPosition[] { clusters[iClusterId].getFirstPosition(),
           clusters[iClusterId].getLastPosition() } : new OClusterPosition[0];
 
+    } catch (IOException ioe) {
+      throw new OStorageException("Can not retrieve information about data range", ioe);
     } finally {
       lock.releaseSharedLock();
     }
@@ -1012,7 +1015,7 @@ public class OStorageLocal extends OStorageEmbedded {
         try {
           OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
           if (ppos == null) {
-            if (!cluster.isLHBased())
+            if (!cluster.isHashBased())
               throw new OStorageException("Cluster with LH support is required.");
 
             ppos = new OPhysicalPosition(rid.clusterPosition, recordVersion);
@@ -1469,6 +1472,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
       return size;
 
+    } catch (IOException ioe) {
+      throw new OStorageException("Can not calculate records size");
     } finally {
       lock.releaseSharedLock();
     }
@@ -1570,12 +1575,12 @@ public class OStorageLocal extends OStorageEmbedded {
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
     OCluster cluster = clusterMap.get(iConfig.getName());
 
-    if (cluster instanceof OClusterLocal && iConfig instanceof OStoragePhysicalClusterLHPEPSConfiguration)
+    if (cluster instanceof OClusterLocal && iConfig instanceof OStorageEHClusterConfiguration)
       clusterMap.remove(iConfig.getName());
     else if (cluster != null) {
-      if (cluster instanceof OClusterLocal) {
+      if (cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH) {
         // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
-        ((OClusterLocal) cluster).configure(this, iConfig);
+        cluster.configure(this, iConfig);
       }
       return -1;
     }
@@ -1629,7 +1634,7 @@ public class OStorageLocal extends OStorageEmbedded {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, recordType);
-    if (cluster.isLHBased()) {
+    if (cluster.isHashBased()) {
       if (rid.isNew()) {
         if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean()) {
           ppos.clusterPosition = OClusterPositionFactory.INSTANCE.generateUniqueClusterPosition();
@@ -1643,7 +1648,8 @@ public class OStorageLocal extends OStorageEmbedded {
 
     try {
       if (!cluster.addPhysicalPosition(ppos))
-        throw new OStorageException("Record with given id " + rid + " has already exists.");
+        throw new OStorageException("Record with given id " + new ORecordId(rid.clusterId, ppos.clusterPosition)
+            + " has already exists.");
 
       rid.clusterPosition = ppos.clusterPosition;
 
@@ -1710,7 +1716,7 @@ public class OStorageLocal extends OStorageEmbedded {
   }
 
   @Override
-  public boolean isLHClustersAreUsed() {
+  public boolean isHashClustersAreUsed() {
     return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }
 

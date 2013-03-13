@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIfBlock extends OAbstractBlock {
+  public static final String NAME = "if";
+
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -45,6 +47,6 @@ public class OIfBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "if";
+    return NAME;
   }
 }

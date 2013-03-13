@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+
 /**
  * Serializer for byte type .
  * 
@@ -61,6 +63,21 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
 
   public Byte deserializeNative(byte[] stream, int startPosition) {
     return deserialize(stream, startPosition);
+  }
+
+  @Override
+  public void serializeInDirectMemory(Byte object, ODirectMemory memory, long pointer) {
+    memory.setByte(pointer, object);
+  }
+
+  @Override
+  public Byte deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+    return memory.getByte(pointer);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    return BYTE_SIZE;
   }
 
   public boolean isFixedLength() {

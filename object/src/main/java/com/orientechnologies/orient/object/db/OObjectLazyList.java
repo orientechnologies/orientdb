@@ -25,6 +25,7 @@ import java.util.ListIterator;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
@@ -141,6 +142,13 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     TYPE o = (TYPE) super.get(index);
     if (o == null) {
       OIdentifiable record = (OIdentifiable) recordList.get(index);
+      if (record == null || record.getRecord() == null) {
+        OLogManager.instance().warn(
+            this,
+            "Record " + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
+        return null;
+      }
       o = (TYPE) OObjectEntityEnhancer.getInstance().getProxiedInstance(((ODocument) record.getRecord()).getClassName(),
           getDatabase().getEntityManager(), (ODocument) record.getRecord(), sourceRecord);
       super.set(index, o);
@@ -400,6 +408,13 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
       } else {
         doc = (ODocument) o;
       }
+      if (o == null) {
+        OLogManager.instance().warn(
+            this,
+            "Record " + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
+        return;
+      }
       super.set(
           iIndex,
           (TYPE) OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc,
@@ -436,6 +451,13 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
         doc = database.load((ORID) o, fetchPlan);
       } else {
         doc = (ODocument) o;
+      }
+      if (o == null) {
+        OLogManager.instance().warn(
+            this,
+            "Record " + ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getDoc().getIdentity()
+                + " references a deleted instance");
+        return;
       }
       o = OObjectEntityEnhancer.getInstance().getProxiedInstance(doc.getClassName(), getDatabase().getEntityManager(), doc,
           sourceRecord);

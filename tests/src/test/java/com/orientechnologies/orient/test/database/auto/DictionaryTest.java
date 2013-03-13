@@ -17,6 +17,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -157,5 +159,23 @@ public class DictionaryTest {
     Assert.assertNotNull(database.getDictionary().get("testKey"));
 
     database.close();
+  }
+
+  @Test(dependsOnMethods = "testDictionaryMassiveCreate")
+  public void testIndexManagerReloadReloadsDictionary() throws IOException {
+    ODatabaseDocumentTx database1 = new ODatabaseDocumentTx(url);
+    database1.open("admin", "admin");
+    ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url);
+    database2.open("admin", "admin");
+
+    Assert.assertNull(database1.getDictionary().get("testReloadKey"));
+
+    database2.getMetadata().getIndexManager().reload();
+    database2.getDictionary().put("testReloadKey", new ODocument().field("testField","a"));
+    Assert.assertEquals(database1.getDictionary().<ODocument>get("testReloadKey").field("testField"), "a");
+
+    database1.close();
+    database2.close();
+
   }
 }

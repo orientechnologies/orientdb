@@ -15,26 +15,23 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
-import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLetBlock extends OAbstractBlock {
+  public static final String NAME = "let";
+
   @SuppressWarnings("unchecked")
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
     final Boolean copy = getFieldOfClass(iContext, iConfig, "copy", Boolean.class);
+    final Boolean flatMultivalues = getFieldOfClass(iContext, iConfig, "flatMultivalues", Boolean.class);
+
     Object target = getField(iContext, iConfig, "target");
     if (target != null && target.equals("null"))
       target = new ODocument();
@@ -44,7 +41,7 @@ public class OLetBlock extends OAbstractBlock {
       if (value instanceof ODocument) {
         final ODocument doc = ((ODocument) value);
         for (String fieldName : doc.fieldNames()) {
-          final Object v = resolveValue(iContext, doc.field(fieldName));
+          final Object v = resolveValue(iContext, doc.field(fieldName), true);
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, fieldName);
             ((ODocument) target).field(fieldName, v);
@@ -53,7 +50,7 @@ public class OLetBlock extends OAbstractBlock {
         }
       } else if (value instanceof Map<?, ?>) {
         for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
-          final Object v = resolveValue(iContext, getValue(entry.getValue(), copy));
+          final Object v = resolveValue(iContext, getValue(entry.getValue(), copy), true);
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, entry.getKey());
             ((ODocument) target).field(entry.getKey().toString(), v);
@@ -63,33 +60,19 @@ public class OLetBlock extends OAbstractBlock {
 
       } else {
         final String name = getRequiredFieldOfClass(iContext, iConfig, "name", String.class);
-        assignVariable(iContext, name, getValue(getRequiredField(iContext, iConfig, "value"), copy));
+        Object v = getValue(getRequiredField(iContext, iConfig, "value"), copy);
+
+        v = flatMultivalues(iContext, copy, flatMultivalues, v);
+
+        assignVariable(iContext, name, v);
       }
     }
 
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  private Object getValue(final Object iValue, final Boolean iCopy) {
-    if (iValue != null && iCopy != null && iCopy) {
-      // COPY THE VALUE
-      if (iValue instanceof ODocument)
-        return ((ODocument) iValue).copy();
-      else if (iValue instanceof List)
-        return new ArrayList<Object>((Collection<Object>) iValue);
-      else if (iValue instanceof Set)
-        return new HashSet<Object>((Collection<Object>) iValue);
-      else if (iValue instanceof Map)
-        return new LinkedHashMap<Object, Object>((Map<Object, Object>) iValue);
-      else
-        throw new OProcessException("Copy of value '" + iValue + "' of class '" + iValue.getClass() + "' is not supported");
-    }
-    return iValue;
-  }
-
   @Override
   public String getName() {
-    return "let";
+    return NAME;
   }
 }

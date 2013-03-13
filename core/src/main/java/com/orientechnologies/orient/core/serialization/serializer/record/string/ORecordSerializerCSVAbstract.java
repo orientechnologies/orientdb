@@ -203,7 +203,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
             else
               linkedType = iLinkedType;
 
-            if (linkedType == OType.EMBEDDED)
+            if (linkedType == OType.EMBEDDED && mapValue.length() >= 2)
               mapValue = mapValue.substring(1, mapValue.length() - 1);
 
             mapValueObject = fieldTypeFromStream(iSourceDocument, linkedType, mapValue);

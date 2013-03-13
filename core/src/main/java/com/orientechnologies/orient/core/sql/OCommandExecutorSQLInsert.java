@@ -134,18 +134,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (parserIsEnded() || parserText.charAt(parserGetCurrentPosition()) != '(') {
       throwParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)");
     }
-
-    final int textEnd = parserText.lastIndexOf(')');
-
+        
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
-    while (blockStart < textEnd) {
-      // skip comma between records
-      blockStart = parserText.indexOf('(', blockStart - 1);
-
+    final List<String> records = OStringSerializerHelper.smartSplit(parserText,new char[]{','},blockStart,-1,true, true);
+    for(String record : records){
+      
       final List<String> values = new ArrayList<String>();
-      blockEnd = OStringSerializerHelper.getParameters(parserText, blockStart, -1, values);
+      blockEnd += OStringSerializerHelper.getParameters(record, 0, -1, values);
+    
       if (blockEnd == -1)
         throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
 

@@ -378,7 +378,7 @@ public class SQLCreateIndexTest {
           .assertTrue(e
               .getMessage()
               .contains(
-                  "Error on execution of command: OCommandSQL [text=CREATE INDEX sqlCreateIndexCompositeIndex3 ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE DOUBLE, DOUBLE]"));
+                  "Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
       Assert.assertEquals(e.getCause().getClass(), IllegalArgumentException.class);
     }
 		final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")

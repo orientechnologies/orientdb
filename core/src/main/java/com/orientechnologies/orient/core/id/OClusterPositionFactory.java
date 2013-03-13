@@ -106,7 +106,7 @@ public abstract class OClusterPositionFactory {
 
   public abstract OClusterPosition getMaxValue();
 
-  private static final class OClusterPositionFactoryLong extends OClusterPositionFactory {
+  public static final class OClusterPositionFactoryLong extends OClusterPositionFactory {
     @Override
     public OClusterPosition generateUniqueClusterPosition() {
       throw new UnsupportedOperationException();
@@ -138,7 +138,7 @@ public abstract class OClusterPositionFactory {
     }
   }
 
-  private static final class OClusterPositionFactoryNodeId extends OClusterPositionFactory {
+  public static final class OClusterPositionFactoryNodeId extends OClusterPositionFactory {
     @Override
     public OClusterPosition generateUniqueClusterPosition() {
       return new OClusterPositionNodeId(ONodeId.generateUniqueId());

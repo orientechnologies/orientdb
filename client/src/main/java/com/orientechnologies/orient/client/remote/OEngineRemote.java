@@ -66,6 +66,12 @@ public class OEngineRemote extends OEngineAbstract {
     }
   }
 
+  @Override
+  public void shutdown() {
+    super.shutdown();
+    sharedStorages.clear();
+  }
+
   public String getName() {
     return NAME;
   }

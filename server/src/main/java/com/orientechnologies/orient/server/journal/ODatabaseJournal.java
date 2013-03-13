@@ -109,7 +109,9 @@ public class ODatabaseJournal {
   /**
    * Returns the last operation id.
    */
-  public long[] getLastOperationId() throws IOException {
+  public long[] getLastOperationId(boolean checkUncommited) throws IOException {
+    if(checkUncommited)
+        return getLastUnCommittedOperationId(file.getFilledUpTo());
     return getOperationId(file.getFilledUpTo());
   }
 
@@ -135,6 +137,28 @@ public class ODatabaseJournal {
     }
   }
 
+  /**
+   * Returns the last operation id.
+   */
+  private long[] getLastUnCommittedOperationId(final long iOffset) throws IOException {
+    final int filled = file.getFilledUpTo();
+    if (filled == 0 || iOffset <= 0 || iOffset > filled)
+      return new long[] { -1, -1 };
+
+    lock.acquireExclusiveLock();
+    try {
+      long offset = this.getLongestUncommiteJournal(100, iOffset);//TODO : 100?
+      final long[] ids = new long[2];
+      ids[0] = file.readLong(offset - OFFSET_BACK_RUNID);
+      ids[1] = file.readLong(offset - OFFSET_BACK_OPERATID);
+
+      return ids;
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+   
   /**
    * Moves backward from the end of the file until the record id is major than the remote one collecting the positions
    * 
@@ -259,7 +283,10 @@ public class ODatabaseJournal {
           OLogManager.instance().warn(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
               iOperationId);
 
-        offset = writeOperationLogHeader(iOperationType, varSize);
+        if(needOverWrited(iRunId, iOperationId))
+          offset = getOverWriteStart(iRunId, iOperationId, iOperationType, varSize);
+        else
+          offset = writeOperationLogHeader(iOperationType, varSize);
 
         file.writeShort(offset + OFFSET_VARDATA, (short) rid.clusterId);
         file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, rid.clusterPosition.longValue());
@@ -302,6 +329,77 @@ public class ODatabaseJournal {
     file.writeByte(offset + OFFSET_OPERATION_TYPE, (byte) iOperationType.ordinal());
     file.writeInt(offset + OFFSET_VARDATA + varSize, varSize);
     return offset;
+  }
+
+  /**
+   * When aligning, check <num> previous journals to find out the longest journal which not successfully committed 
+   * @param num : in multi threading case, if 100 parallel thread running, if exception happened to cause server shutdown unexpectedly,
+   * some thread may finished correct, some thread may stop in the middle. The journal of false will be separated in top 100 
+   * journals 
+   * @param offset
+   * @return
+   * @throws IOException
+   */
+  private long getLongestUncommiteJournal(int num, long offset) throws IOException {
+    int index = 0;
+	  long longestOffset = offset;
+	  long temp = offset;
+	  while(temp > 0 && index < num) {
+		  if(!this.getOperationStatus(temp))
+			  longestOffset = this.getPreviousOperation(temp);
+		  temp = this.getPreviousOperation(temp);
+		  index++;
+	  }
+	  return longestOffset;
+  }
+  
+  /**
+   * Check operationId overlapped, if so, then need overwrite
+   * @param runId
+   * @param operationId
+   * @return
+   * @throws IOException
+   */
+  private boolean needOverWrited(final long runId, final long operationId) throws IOException {
+	  long offset = file.getFilledUpTo();
+	  if(offset > 0) {
+		  long localRunId = file.readLong(offset - OFFSET_BACK_RUNID);
+		  long localOperationId = file.readLong(offset - OFFSET_BACK_OPERATID);
+		  if(localRunId == runId && localOperationId >= operationId) {
+			  return true;
+		  }
+	  }
+	  return false;
+  }
+  
+  /**
+   * check all the journal to find the last overwrite start point 
+   * @param runId
+   * @param operationId
+   * @param iOperationType
+   * @param varSize
+   * @return
+   * @throws IOException
+   */
+  private long getOverWriteStart(final long runId, final long operationId, final OPERATION_TYPES iOperationType, final int varSize) throws IOException {
+	  long currentOffset = file.getFilledUpTo();
+	  boolean foundMatch = false;
+	  while(currentOffset > 0) {
+		  long localRunId = file.readLong(currentOffset - OFFSET_BACK_RUNID);
+		  long localOperationId = file.readLong(currentOffset - OFFSET_BACK_OPERATID);
+		  if(localRunId == runId && localOperationId == operationId /*&& !this.getOperationStatus(currentOffset)*/) {
+			  foundMatch = true;
+			  break;
+		  } else if(localOperationId < operationId || localRunId != runId) {
+			  break;
+		  }
+		  currentOffset = getPreviousOperation(currentOffset);
+	  }
+	  if(foundMatch) {
+		  int var = file.readInt(currentOffset - OFFSET_BACK_SIZE);
+		  return (currentOffset - OFFSET_BACK_SIZE - var - OFFSET_VARDATA);
+	  }
+	  return writeOperationLogHeader(iOperationType, varSize);
   }
 
   public OAbstractDistributedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {

@@ -18,11 +18,14 @@ package com.orientechnologies.orient.core.processor.block;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OIterateBlock extends OAbstractBlock {
+  public static final String NAME = "iterate";
+
   @Override
   public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
@@ -31,9 +34,13 @@ public class OIterateBlock extends OAbstractBlock {
 
     final String var = getFieldOfClass(iContext, iConfig, "variable", String.class);
     final String range = getFieldOfClass(iContext, iConfig, "range", String.class);
+    final Object value = getField(iContext, iConfig, "value");
 
     if (range != null) {
       final String[] fromTo = range.split("-");
+      if (fromTo.length < 2)
+        throw new IllegalArgumentException("Invalid range for: " + range);
+
       final int from = Integer.parseInt(fromTo[0]);
       final int to = Integer.parseInt(fromTo[1]);
 
@@ -48,6 +55,9 @@ public class OIterateBlock extends OAbstractBlock {
         }
 
       result = new OIterateBlockIterable(values, iContext, var);
+    } else if (value != null) {
+      if (OMultiValue.isIterable(value))
+        result = OMultiValue.getMultiValueIterable(value);
     }
 
     return result;
@@ -55,7 +65,7 @@ public class OIterateBlock extends OAbstractBlock {
 
   @Override
   public String getName() {
-    return "iterate";
+    return NAME;
   }
 
   protected class OIterateBlockIterable implements Iterable<Object> {

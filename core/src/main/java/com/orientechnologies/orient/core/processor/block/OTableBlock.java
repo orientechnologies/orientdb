@@ -21,27 +21,67 @@ import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTableBlock extends OAbstractBlock {
+  public static final String NAME = "table";
+
+  protected Object           header;
+  protected Object           body;
+  protected Object           footer;
+
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
     if (!(iConfig instanceof ODocument))
       throw new OProcessException("Content in not a JSON");
 
-    final Object header = getRequiredField(iContext, iConfig, "header");
-    final Object body = getRequiredField(iContext, iConfig, "body");
-    final Object footer = getRequiredField(iContext, iConfig, "footer");
-
     final ODocument table = new ODocument();
 
-    table.field("header", isBlock(header) ? delegate("header", iManager, header, iContext, iOutput, iReadOnly) : header);
-    table.field("body", isBlock(body) ? delegate("body", iManager, body, iContext, iOutput, iReadOnly) : body);
-    table.field("footer", isBlock(footer) ? delegate("footer", iManager, footer, iContext, iOutput, iReadOnly) : footer);
+    // HEADER
+    header = getRequiredField(iContext, iConfig, "header");
+    if (isBlock(header))
+      header = delegate("header", iManager, header, iContext, iOutput, iReadOnly);
+    table.field("header", header);
+
+    // BODY
+    body = getRequiredField(iContext, iConfig, "body");
+    if (isBlock(body))
+      body = delegate("body", iManager, body, iContext, iOutput, iReadOnly);
+    table.field("body", body);
+
+    // FOOTER
+    footer = getRequiredField(iContext, iConfig, "footer");
+    if (isBlock(footer))
+      footer = delegate("footer", iManager, footer, iContext, iOutput, iReadOnly);
+    table.field("footer", footer);
 
     return table;
   }
 
   @Override
   public String getName() {
-    return "table";
+    return NAME;
+  }
+
+  public Object getHeader() {
+    return header;
+  }
+
+  public void setHeader(Object header) {
+    this.header = header;
+  }
+
+  public Object getBody() {
+    return body;
+  }
+
+  public void setBody(Object body) {
+    this.body = body;
+  }
+
+  public Object getFooter() {
+    return footer;
+  }
+
+  public void setFooter(Object footer) {
+    this.footer = footer;
   }
 }

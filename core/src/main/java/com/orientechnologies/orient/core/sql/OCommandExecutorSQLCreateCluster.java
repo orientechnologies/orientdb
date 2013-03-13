@@ -56,6 +56,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     parserRequiredKeyword(KEYWORD_CLUSTER);
 
     clusterName = parserRequiredWord(false);
+    if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
+      throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+
     clusterType = parserRequiredWord(false);
 
     String temp = parseOptionalWord(true);

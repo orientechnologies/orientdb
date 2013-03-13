@@ -471,7 +471,7 @@ public class OServer {
       hookManager = new OConfigurableHooksManager(iConfiguration);
 
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class);
+      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
     }
   }
 
@@ -515,7 +515,12 @@ public class OServer {
         if (stg.userPassword == null)
           stg.userPassword = OUser.ADMIN;
 
-        type = stg.path.substring(0, stg.path.indexOf(':'));
+        int idx = stg.path.indexOf(':');
+        if (idx == -1) {
+          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
+          return;
+        }
+        type = stg.path.substring(0, idx);
 
         ODatabaseDocument db = null;
         try {
@@ -582,7 +587,7 @@ public class OServer {
 
   protected void createAdminAndDbListerUsers() throws IOException {
     addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
-    addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases");
+    addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases,server.dblist");
     saveConfiguration();
   }
 

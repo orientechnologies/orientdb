@@ -48,7 +48,8 @@ public class OIndexUnique extends OIndexOneValue {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue))
             throw new ORecordDuplicatedException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
-                + iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity(), value.getIdentity());
+                + iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity(),
+                value.getIdentity());
           else
             return this;
         }
@@ -68,6 +69,11 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   public boolean canBeUsedInEqualityOperators() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsOrderedIterations() {
     return true;
   }
 }

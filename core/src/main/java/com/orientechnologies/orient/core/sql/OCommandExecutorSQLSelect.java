@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -272,6 +273,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         applyFlatten();
         handleNoTarget();
         handleGroupBy();
+        applyOrderBy();
 
         subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
         lastRecord = null;
@@ -413,8 +415,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               fields[i] = doc.field(groupByFields.get(i));
 
             fieldValue = fields;
-          } else
-            fieldValue = doc.field(groupByFields.get(0));
+          } else {
+            final String field = groupByFields.get(0);
+            if (field != null) {
+              if (field.startsWith("$"))
+                fieldValue = context.getVariable(field);
+              else
+                fieldValue = doc.field(field);
+            }
+          }
         }
 
         getProjectionGroup(fieldValue).applyRecord(iRecord);
@@ -432,7 +441,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
       if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
-      tempResult.add(iRecord);
+      ((Collection<OIdentifiable>) tempResult).add(iRecord);
     }
   }
 
@@ -937,7 +946,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
-    ODocumentHelper.sort(tempResult, orderedFields);
+    if (tempResult instanceof OMultiCollectionIterator) {
+      final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+      for (OIdentifiable o : tempResult)
+        list.add(o);
+      tempResult = list;
+    }
+
+    ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
     orderedFields.clear();
   }
 
@@ -956,15 +972,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         Object r = ((OSQLFilterItemVariable) flattenTarget).getValue(null, context);
         if (r != null) {
           if (r instanceof OIdentifiable)
-            tempResult.add((OIdentifiable) r);
+            ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
           else if (OMultiValue.isMultiValue(r)) {
             for (Object o : OMultiValue.getMultiValueIterable(r))
-              tempResult.add((OIdentifiable) o);
+              ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
           }
         }
       }
     } else {
-      final List<OIdentifiable> finalResult = new ArrayList<OIdentifiable>();
+      OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
+      finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
         if (flattenTarget instanceof OSQLFilterItem)
           fieldValue = ((OSQLFilterItem) flattenTarget).getValue(id.getRecord(), context);
@@ -975,28 +992,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (fieldValue != null)
           if (fieldValue instanceof Collection<?>) {
-            for (Object o : ((Collection<?>) fieldValue)) {
-              if (o instanceof OIdentifiable)
-                finalResult.add(((OIdentifiable) o).getRecord());
-              else if (o instanceof List) {
-                List<OIdentifiable> list = (List<OIdentifiable>) o;
-                for (int i = 0; i < list.size(); i++)
-                  finalResult.add(list.get(i).getRecord());
-              }
-            }
+            finalResult.add((Collection<OIdentifiable>) fieldValue);
           } else if (fieldValue instanceof Map<?, ?>) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
-              final Object o = entry.getValue();
-
-              if (o instanceof OIdentifiable)
-                finalResult.add(((OIdentifiable) o).getRecord());
-              else if (o instanceof List) {
-                List<OIdentifiable> list = (List<OIdentifiable>) o;
-                for (int i = 0; i < list.size(); i++)
-                  finalResult.add(list.get(i).getRecord());
-              }
-            }
-          } else
+            finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
+          } else if (fieldValue instanceof OMultiCollectionIterator) {
+            finalResult = (OMultiCollectionIterator<OIdentifiable>) fieldValue;
+          } else if (fieldValue instanceof OIdentifiable)
             finalResult.add((OIdentifiable) fieldValue);
       }
       tempResult = finalResult;
@@ -1222,7 +1223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (g.getKey() != null || groupedResult.size() == 1) {
           final ODocument doc = g.getValue().getResult();
           if (doc != null && !doc.isEmpty())
-            tempResult.add(doc);
+            ((List<OIdentifiable>) tempResult).add(doc);
         }
       }
     }
@@ -1276,7 +1277,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (tempResult == null)
             tempResult = new ArrayList<OIdentifiable>();
-          tempResult.add(new ODocument().field(entry.getKey(), count));
+          ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
           return true;
         }
       }
@@ -1291,7 +1292,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final Set<OIndex<?>> involvedIndexes = cls.getInvolvedIndexes(orderByFirstField.getKey());
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
-              if (idx.getKeyTypes().length == 1) {
+              if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
                 if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
                   target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
                 else

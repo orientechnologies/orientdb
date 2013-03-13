@@ -238,7 +238,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Original and destination clusters use different data segment ids "
           + originalCluster.getDataSegmentId() + "<->" + destinationCluster.getDataSegmentId());
 
-    if (!destinationCluster.isLHBased()) {
+    if (!destinationCluster.isHashBased()) {
       if (originalId.getClusterId() == newId.getClusterId())
         throw new OStorageException("Record identity can not be moved inside of the same non LH based cluster.");
 
@@ -261,7 +261,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OStorageException("Record with id " + originalId + " does not exist");
 
     ppos.clusterPosition = newId.getClusterPosition();
-    if (destinationCluster.isLHBased()) {
+    if (destinationCluster.isHashBased()) {
       if (!destinationCluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with id " + newId + " has already exists in cluster " + destinationCluster.getName());
     } else {

@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -30,19 +43,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Abstract class to manage indexes.
@@ -180,19 +180,33 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public ODictionary<ORecordInternal<?>> getDictionary() {
-    acquireExclusiveLock();
-
     OIndex<?> idx;
+    acquireSharedLock();
     try {
-      idx = getIndex(DICTIONARY_NAME);
-      if (idx == null)
-        idx = createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
-            null, null);
+        idx = getIndex(DICTIONARY_NAME);
     } finally {
-      releaseExclusiveLock();
+        releaseSharedLock();
     }
-
+    //we lock exclusively only when ODictionary not found
+    if (idx == null) {
+        idx = createDictionaryIfNeeded();
+    }
     return new ODictionary<ORecordInternal<?>>((OIndex<OIdentifiable>) idx);
+  }
+
+  private OIndex<?> createDictionaryIfNeeded() {
+      acquireExclusiveLock();
+      try {
+        OIndex<?> idx = getIndex(DICTIONARY_NAME);
+        return idx != null ? idx : createDictionary();
+      } finally {
+        releaseExclusiveLock();
+      }
+  }
+
+  private OIndex<?> createDictionary() {
+      return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
+                    null, null);
   }
 
   public ODocument getConfiguration() {
@@ -214,6 +228,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     acquireExclusiveLock();
     try {
       flush();
+      for (final OIndexInternal<?> idx : indexes.values())
+        if (idx instanceof OCloseable)
+          ((OCloseable) idx).close();
+
       indexes.clear();
       classPropertyIndex.clear();
     } finally {

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -146,6 +147,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
           path = rootPath + url;
       }
 
+      path = URLDecoder.decode(path, "UTF-8");
+
       if (cacheContents != null) {
         synchronized (cacheContents) {
           final OStaticContentCachedEntry cachedEntry = cacheContents.get(path);
@@ -224,6 +227,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         try {
           is.close();
         } catch (IOException e) {
+          OLogManager.instance().warn(this, "Error on closing file", e);
         }
     }
     return false;
