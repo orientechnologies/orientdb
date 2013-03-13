@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -10,6 +13,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -80,6 +84,89 @@ public class LocalHashTableTest {
 
     for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
       Assert.assertNull(localHashTable.get(i));
+    }
+  }
+
+  public void testKeyPutRandomUniform() {
+    final Set<Integer> keys = new HashSet<Integer>();
+    final MersenneTwisterFast random = new MersenneTwisterFast();
+
+    while (keys.size() < KEYS_COUNT) {
+      int key = random.nextInt();
+
+      localHashTable.put(key, key + "");
+      keys.add(key);
+      Assert.assertEquals(localHashTable.get(key), key + "");
+    }
+
+    for (int key : keys)
+      Assert.assertEquals(localHashTable.get(key), "" + key);
+  }
+
+  public void testKeyPutRandomGaussian() {
+    Set<Integer> keys = new HashSet<Integer>();
+    MersenneTwisterFast random = new MersenneTwisterFast();
+    keys.clear();
+
+    while (keys.size() < KEYS_COUNT) {
+      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+      if (key < 0)
+        continue;
+
+      localHashTable.put(key, key + "");
+      keys.add(key);
+      Assert.assertEquals(localHashTable.get(key), "" + key);
+    }
+
+    for (int key : keys)
+      Assert.assertEquals(localHashTable.get(key), "" + key);
+  }
+
+  public void testKeyDeleteRandomUniform() {
+    HashSet<Integer> keys = new HashSet<Integer>();
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      localHashTable.put(i, i + "");
+      keys.add(i);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0)
+        localHashTable.remove(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0) {
+        Assert.assertNull(localHashTable.get(key));
+      } else {
+        Assert.assertEquals(localHashTable.get(key), key + "");
+      }
+    }
+  }
+
+  public void testKeyDeleteRandomGaussian() {
+    HashSet<Integer> keys = new HashSet<Integer>();
+
+    MersenneTwisterFast random = new MersenneTwisterFast();
+    while (keys.size() < KEYS_COUNT) {
+      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+      if (key < 0)
+        continue;
+
+      localHashTable.put(key, key + "");
+      keys.add(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0)
+        localHashTable.remove(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0) {
+        Assert.assertNull(localHashTable.get(key));
+      } else {
+        Assert.assertEquals(localHashTable.get(key), key + "");
+      }
     }
   }
 
