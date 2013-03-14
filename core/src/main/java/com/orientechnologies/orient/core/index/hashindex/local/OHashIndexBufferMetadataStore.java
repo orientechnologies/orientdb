@@ -43,10 +43,10 @@ public class OHashIndexBufferMetadataStore extends OSingleFileSegment {
     return file.readHeaderLong(OLongSerializer.LONG_SIZE);
   }
 
-  public void storeMetadata(OHashIndexBufferMetadata[] filesMetadata) throws IOException {
+  public void storeMetadata(OHashIndexFileLevelMetadata[] filesMetadata) throws IOException {
     int bufferSize = 0;
 
-    for (OHashIndexBufferMetadata metadata : filesMetadata) {
+    for (OHashIndexFileLevelMetadata metadata : filesMetadata) {
       if (metadata == null)
         break;
 
@@ -65,7 +65,7 @@ public class OHashIndexBufferMetadataStore extends OSingleFileSegment {
     byte[] buffer = new byte[bufferSize];
     int offset = 0;
 
-    for (OHashIndexBufferMetadata fileMetadata : filesMetadata) {
+    for (OHashIndexFileLevelMetadata fileMetadata : filesMetadata) {
       if (fileMetadata == null)
         break;
 
@@ -89,9 +89,9 @@ public class OHashIndexBufferMetadataStore extends OSingleFileSegment {
     file.write(2 * OIntegerSerializer.INT_SIZE, buffer);
   }
 
-  public OHashIndexBufferMetadata[] loadMetadata() throws IOException {
+  public OHashIndexFileLevelMetadata[] loadMetadata() throws IOException {
     final int len = file.readInt(0);
-    final OHashIndexBufferMetadata[] metadatas = new OHashIndexBufferMetadata[len];
+    final OHashIndexFileLevelMetadata[] metadatas = new OHashIndexFileLevelMetadata[len];
 
     final int bufferSize = file.readInt(OIntegerSerializer.INT_SIZE);
     final byte[] buffer = new byte[bufferSize];
@@ -114,7 +114,7 @@ public class OHashIndexBufferMetadataStore extends OSingleFileSegment {
 
       final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name, id);
 
-      final OHashIndexBufferMetadata metadata = new OHashIndexBufferMetadata(fileConfiguration, bucketsCount, tombstone);
+      final OHashIndexFileLevelMetadata metadata = new OHashIndexFileLevelMetadata(fileConfiguration, bucketsCount, tombstone);
       metadatas[i] = metadata;
       i++;
     }

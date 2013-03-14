@@ -29,6 +29,8 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
@@ -56,6 +58,8 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -85,14 +89,16 @@ public class OStorageLocal extends OStorageEmbedded {
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId          = -1;
 
-  private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".oco",
-      ".ocs", ".oef", ".oem", ".oet"                             };
+  private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
+      ".oef", ".oem", ".oet"                                     };
 
   private long                          positionGenerator         = 1;
 
   private OModificationLock             modificationLock          = new OModificationLock();
 
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
+
+  private final ODiskCache              diskCache;
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -121,6 +127,14 @@ public class OStorageLocal extends OStorageEmbedded {
     clustersToSyncImmediately.addAll(Arrays.asList(clustersToSync));
 
     installProfilerHooks();
+
+    final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    if (directMemory != null)
+      diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(), this, false);
+    else
+      diskCache = null;
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -217,6 +231,10 @@ public class OStorageLocal extends OStorageEmbedded {
 
       Orient.instance().getProfiler().stopChrono("db." + name + ".open", "Open a local database", timer, "db.*.open");
     }
+  }
+
+  public ODiskCache getDiskCache() {
+    return diskCache;
   }
 
   private void addDefaultClusters() throws IOException {

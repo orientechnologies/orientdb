@@ -89,6 +89,9 @@ public class OBinarySerializerFactory {
   }
 
   public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
+    if (serializerIdMap.containsKey(iInstance.getId()))
+      throw new IllegalArgumentException("Binary serializer with id " + iInstance.getId() + " has been already registered.");
+
     serializerIdMap.put(iInstance.getId(), iInstance);
     if (iType != null)
       serializerTypeMap.put(iType, iInstance);
@@ -96,6 +99,9 @@ public class OBinarySerializerFactory {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer> iClass) {
+    if (serializerClassesIdMap.containsKey(iId))
+      throw new IllegalStateException("Serializer with id " + iId + " has been already registered.");
+
     serializerClassesIdMap.put(iId, (Class<? extends OBinarySerializer<?>>) iClass);
   }
 

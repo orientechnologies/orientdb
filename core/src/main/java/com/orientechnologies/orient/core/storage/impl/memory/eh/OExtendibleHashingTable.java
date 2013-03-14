@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.index.hashindex.local.OEHNodeMetadata;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 
 /**

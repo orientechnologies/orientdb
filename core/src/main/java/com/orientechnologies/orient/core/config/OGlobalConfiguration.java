@@ -54,6 +54,10 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
+
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in bytes", Integer.class, 64 * 1024),
+
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
@@ -180,8 +184,6 @@ public enum OGlobalConfiguration {
 
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 16),
-
-  HASH_INDEX_BUFFER_SIZE("hashIndex.bufferSize", "Size of page buffer in megabytes", Integer.class, 2 * 1024),
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),

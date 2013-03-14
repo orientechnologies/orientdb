@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.eh;
+package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
 
@@ -8,26 +8,23 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.memory.eh.OEHNodeMetadata;
 
 /**
  * @author Andrey Lomakin
  * @since 11.02.13
  */
-public class OEHTreeStateStore extends OSingleFileSegment {
-  private static final int   RECORD_SIZE   = 256 * OLongSerializer.LONG_SIZE + 3 * OByteSerializer.BYTE_SIZE;
+public class OHashIndexTreeStateStore extends OSingleFileSegment {
+  private static final int RECORD_SIZE = 256 * OLongSerializer.LONG_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  public static final String DEF_EXTENSION = ".oet";
-
-  public OEHTreeStateStore(String iPath, String iType) throws IOException {
+  public OHashIndexTreeStateStore(String iPath, String iType) throws IOException {
     super(iPath, iType);
   }
 
-  public OEHTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig) throws IOException {
+  public OHashIndexTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig) throws IOException {
     super(iStorage, iConfig);
   }
 
-  public OEHTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig, String iType) throws IOException {
+  public OHashIndexTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig, String iType) throws IOException {
     super(iStorage, iConfig, iType);
   }
 

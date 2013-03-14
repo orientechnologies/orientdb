@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.memory.eh;
+package com.orientechnologies.orient.core.index.hashindex.local;
 
 /**
  * @author Andrey Lomakin

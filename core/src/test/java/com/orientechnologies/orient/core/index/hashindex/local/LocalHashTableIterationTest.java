@@ -18,7 +18,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -32,7 +32,7 @@ public class LocalHashTableIterationTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
-  private OLRUBuffer                       buffer;
+  private OLRUCache                        buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -48,8 +48,8 @@ public class LocalHashTableIterationTest {
 
     databaseDocumentTx.create();
 
-    buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
-        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    buffer = new OLRUCache(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
+        (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OHashFunction<Integer> hashFunction = new OHashFunction<Integer>() {
       @Override
@@ -62,7 +62,7 @@ public class LocalHashTableIterationTest {
         OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION,
         (OStorageLocal) databaseDocumentTx.getStorage(), buffer, hashFunction);
 
-    localHashTable.init("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
+    localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
   }
 
   @AfterClass
