@@ -134,7 +134,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       text.append(getName());
       text.append("} ");
       text.append(iText);
-      OLogManager.instance().info(this, text.toString().replace("%", "%%"), iArgs);
+      OLogManager.instance().info(this, text.toString(), iArgs);
     }
   }
 

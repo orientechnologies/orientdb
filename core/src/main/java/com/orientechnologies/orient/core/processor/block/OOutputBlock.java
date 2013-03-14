@@ -66,6 +66,10 @@ public class OOutputBlock extends OAbstractBlock {
     return result;
   }
 
+  public static Object addDocumentFields(final ODocument source, List<Object> result) {
+    return addDocumentFields(source, result, true);
+  }
+
   public static Object addDocumentFields(final ODocument source, List<Object> result, boolean nullAsEmpty) {
     final List<Object> list = new ArrayList<Object>();
     for (Object o : result) {
