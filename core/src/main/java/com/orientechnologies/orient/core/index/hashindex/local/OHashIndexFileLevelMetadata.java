@@ -6,12 +6,12 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
  * @author Andrey Lomakin
  * @since 04.03.13
  */
-public class OHashIndexBufferMetadata {
+public class OHashIndexFileLevelMetadata {
   private OStorageSegmentConfiguration fileConfiguration;
   private long                         bucketsCount;
   private long                         tombstoneIndex = -1;
 
-  public OHashIndexBufferMetadata(OStorageSegmentConfiguration fileConfiguration, long bucketsCount, long tombstoneIndex) {
+  public OHashIndexFileLevelMetadata(OStorageSegmentConfiguration fileConfiguration, long bucketsCount, long tombstoneIndex) {
     this.fileConfiguration = fileConfiguration;
     this.bucketsCount = bucketsCount;
     this.tombstoneIndex = tombstoneIndex;

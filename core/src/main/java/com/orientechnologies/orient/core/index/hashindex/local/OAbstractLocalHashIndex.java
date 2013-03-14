@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -77,13 +76,13 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ORID                             identity;
   private OMurmurHash3HashFunction<Object> keyHashFunction;
 
-  public OAbstractLocalHashIndex(String type, OStorageLocal storage, OLRUBuffer buffer) {
+  public OAbstractLocalHashIndex(String type, OStorageLocal storage) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
     this.type = type;
     this.keyHashFunction = new OMurmurHash3HashFunction<Object>();
     this.localHashTable = new OLocalHashTable<Object, T>(METADATA_CONFIGURATION_FILE_EXTENSION, TREE_STATE_FILE_EXTENSION,
-        BUCKET_FILE_EXTENSION, storage, buffer, keyHashFunction);
+        BUCKET_FILE_EXTENSION, storage, storage.getDiskCache(), keyHashFunction);
   }
 
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, ODatabaseRecord database, String clusterIndexName,
@@ -106,7 +105,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           clustersToIndex.add(database.getClusterNameById(id));
 
       keyHashFunction.setValueSerializer(keySerializer);
-      localHashTable.init(name, keySerializer, valueSerializer);
+      localHashTable.create(name, keySerializer, valueSerializer);
 
       updateConfiguration();
       rebuild(progressListener);
