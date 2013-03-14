@@ -414,7 +414,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
               if (field.startsWith("$"))
-                fieldValue = context.getVariable(field);
+                fields[i] = context.getVariable(field);
               else
                 fields[i] = doc.field(field);
             }
