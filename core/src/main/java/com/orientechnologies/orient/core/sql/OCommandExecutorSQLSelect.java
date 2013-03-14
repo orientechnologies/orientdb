@@ -411,9 +411,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (groupByFields.size() > 1) {
             // MULTI-FIELD FROUP BY
             final Object[] fields = new Object[groupByFields.size()];
-            for (int i = 0; i < groupByFields.size(); ++i)
-              fields[i] = doc.field(groupByFields.get(i));
-
+            for (int i = 0; i < groupByFields.size(); ++i) {
+              final String field = groupByFields.get(i);
+              if (field.startsWith("$"))
+                fieldValue = context.getVariable(field);
+              else
+                fields[i] = doc.field(field);
+            }
             fieldValue = fields;
           } else {
             final String field = groupByFields.get(0);
