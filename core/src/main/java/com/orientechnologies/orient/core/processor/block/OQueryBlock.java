@@ -36,7 +36,7 @@ public class OQueryBlock extends OAbstractBlock {
 
     String command = parse(iContext, (ODocument) iConfig);
 
-    command = (String) resolveValue(iContext, command, true);
+    command = (String) resolveValue(iContext, command, false);
 
     debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command.replace("%", "%%") + "...");
 

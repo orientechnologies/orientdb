@@ -41,7 +41,7 @@ public class OLetBlock extends OAbstractBlock {
       if (value instanceof ODocument) {
         final ODocument doc = ((ODocument) value);
         for (String fieldName : doc.fieldNames()) {
-          final Object v = resolveValue(iContext, doc.field(fieldName), true);
+          final Object v = resolveValue(iContext, doc.field(fieldName), false);
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, fieldName);
             ((ODocument) target).field(fieldName, v);
@@ -50,7 +50,7 @@ public class OLetBlock extends OAbstractBlock {
         }
       } else if (value instanceof Map<?, ?>) {
         for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
-          final Object v = resolveValue(iContext, getValue(entry.getValue(), copy), true);
+          final Object v = resolveValue(iContext, getValue(entry.getValue(), copy), false);
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, entry.getKey());
             ((ODocument) target).field(entry.getKey().toString(), v);
@@ -60,7 +60,7 @@ public class OLetBlock extends OAbstractBlock {
 
       } else {
         final String name = getRequiredFieldOfClass(iContext, iConfig, "name", String.class);
-        Object v = getValue(getRequiredField(iContext, iConfig, "value"), copy);
+        Object v = getValue(getRequiredField(iContext, iConfig, "value"), false);
 
         v = flatMultivalues(iContext, copy, flatMultivalues, v);
 

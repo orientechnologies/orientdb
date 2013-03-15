@@ -37,12 +37,13 @@ public class OFunctionBlock extends OAbstractBlock {
     final String function = getRequiredFieldOfClass(iContext, iConfig, NAME, String.class);
 
     final Object[] args;
-    final Collection<Object> configuredArgs = getFieldOfClass(iContext, iConfig, "args", Collection.class);
+    // COPY VALUES FOR PARAMETERS THAT CHANGES A RUN-TIME
+    final Collection<Object> configuredArgs = getFieldOfClass(iContext, iConfig, "args", Collection.class, true);
     if (configuredArgs != null) {
       args = new Object[configuredArgs.size()];
       int argIdx = 0;
       for (Object arg : configuredArgs) {
-        Object value = resolveValue(iContext, arg, true);
+        Object value = resolveValue(iContext, arg, false);
 
         if (value instanceof List<?>)
           // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
