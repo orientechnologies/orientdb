@@ -108,7 +108,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (iExpression == null)
       throw new OProcessException("Null expression");
 
-    final OSQLPredicate predicate = new OSQLPredicate((String) resolveValue(iContext, iExpression, false));
+    final OSQLPredicate predicate = new OSQLPredicate((String) resolveValue(iContext, iExpression, true));
     final Object result = predicate.evaluate(iContext);
 
     debug(iContext, "Evaluated expression '" + iExpression + "' = " + result);
@@ -145,7 +145,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
 
   @SuppressWarnings("unchecked")
   protected <T> T getField(final OCommandContext iContext, final ODocument iConfig, final String iFieldName) {
-    return (T) resolveValue(iContext, iConfig.field(iFieldName), false);
+    return (T) resolveValue(iContext, iConfig.field(iFieldName), true);
   }
 
   @SuppressWarnings("unchecked")
@@ -154,18 +154,13 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = iConfig.field(iFieldName);
     if (f == null)
       return iDefaultValue;
-    return (T) resolveValue(iContext, f, false);
-  }
-
-  protected <T> T getFieldOfClass(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
-      Class<? extends T> iExpectedClass) {
-    return getFieldOfClass(iContext, iConfig, iFieldName, iExpectedClass, false);
+    return (T) resolveValue(iContext, f, true);
   }
 
   @SuppressWarnings("unchecked")
   protected <T> T getFieldOfClass(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
-      Class<? extends T> iExpectedClass, final boolean iCopy) {
-    final Object f = resolveValue(iContext, iConfig.field(iFieldName), iCopy);
+      Class<? extends T> iExpectedClass) {
+    final Object f = resolveValue(iContext, iConfig.field(iFieldName), true);
     if (f != null)
       if (!iExpectedClass.isAssignableFrom(f.getClass()))
         throw new OProcessException("Block '" + getName() + "' defines the field '" + iFieldName + "' of type '" + f.getClass()
@@ -179,7 +174,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = iConfig.field(iFieldName);
     if (f == null)
       throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
-    return (T) resolveValue(iContext, f, false);
+    return (T) resolveValue(iContext, f, true);
   }
 
   @SuppressWarnings("unchecked")
@@ -188,7 +183,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     final Object f = getFieldOfClass(iContext, iConfig, iFieldName, iExpectedClass);
     if (f == null)
       throw new OProcessException("Block '" + getName() + "' must define the field '" + iFieldName + "'");
-    return (T) resolveValue(iContext, f, false);
+    return (T) resolveValue(iContext, f, true);
   }
 
   public void checkForBlock(final Object iValue) {
