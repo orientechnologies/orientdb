@@ -150,7 +150,9 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
             + FREE_POINTER_OFFSET));
   }
 
-  public void deleteEntry(int index) {
+  public Entry<K, V> deleteEntry(int index) {
+    final Entry<K, V> removedEntry = getEntry(index);
+
     final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
         + FREE_POINTER_OFFSET);
 
@@ -181,6 +183,8 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePointer + entrySize, directMemory, bufferPointer + FREE_POINTER_OFFSET);
 
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(size - 1, directMemory, bufferPointer + SIZE_OFFSET);
+
+    return removedEntry;
   }
 
   public boolean addEntry(K key, V value) {

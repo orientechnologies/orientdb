@@ -179,7 +179,7 @@ public class LocalHashTableTest {
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(localHashTable.remove(i));
+        Assert.assertEquals(localHashTable.remove(i), "" + i);
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -196,7 +196,7 @@ public class LocalHashTableTest {
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(localHashTable.remove(i));
+        Assert.assertEquals(localHashTable.remove(i), i + "");
 
       if (i % 2 == 0)
         localHashTable.put(KEYS_COUNT + i, (KEYS_COUNT + i) + "");

@@ -191,8 +191,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   public boolean remove(Object key) {
     acquireExclusiveLock();
     try {
-      localHashTable.remove(key);
-      return true;
+      return localHashTable.remove(key) != null;
     } finally {
       releaseExclusiveLock();
     }
