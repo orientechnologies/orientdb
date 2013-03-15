@@ -331,7 +331,10 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
     acquireExclusiveLock();
     try {
-      localHashTable.remove(iPosition);
+      OPhysicalPosition physicalPosition = localHashTable.remove(iPosition);
+      if (physicalPosition != null && physicalPosition.recordVersion.isTombstone())
+        tombstonesCount--;
+
     } finally {
       releaseExclusiveLock();
     }

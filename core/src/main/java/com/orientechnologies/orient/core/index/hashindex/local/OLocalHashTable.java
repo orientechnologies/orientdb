@@ -203,7 +203,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     doPut(key, value);
   }
 
-  public boolean remove(K key) {
+  public V remove(K key) {
     acquireExclusiveLock();
     try {
       final long hashCode = keyHashFunction.hashCode(key);
@@ -213,6 +213,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       final long pageIndex = getPageIndex(bucketPointer);
       final int fileLevel = getFileLevel(bucketPointer);
+      final V removed;
 
       PageLockResult pageLockResult = lockPageForWrite(pageIndex, fileLevel);
       try {
@@ -220,9 +221,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             valueSerializer);
         final int positionIndex = bucket.getIndex(key);
         if (positionIndex < 0)
-          return false;
+          return null;
 
-        bucket.deleteEntry(positionIndex);
+        removed = bucket.deleteEntry(positionIndex).value;
         size--;
 
         if (mergeBucketsAfterDeletion(nodePath, bucket)) {
@@ -241,7 +242,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           mergeNodeToParent(node, nodePath);
       }
 
-      return true;
+      return removed;
     } catch (IOException e) {
       throw new OIndexException("Error during index removal", e);
     } finally {
