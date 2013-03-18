@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
-import com.orientechnologies.orient.core.storage.impl.memory.lh.OClusterMemoryHashing;
+import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashing;
 
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };

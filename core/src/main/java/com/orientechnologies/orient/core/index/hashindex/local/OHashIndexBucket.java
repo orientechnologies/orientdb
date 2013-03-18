@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * @author Andrey Lomakin
@@ -39,7 +40,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   private static final int            NEXT_REMOVED_BUCKET_OFFSET = HISTORY_OFFSET + OLongSerializer.LONG_SIZE * 64;
   private static final int            POSITIONS_ARRAY_OFFSET     = NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int             MAX_BUCKET_SIZE_BYTES      = 64 * 1024;
+  public static final int             MAX_BUCKET_SIZE_BYTES      = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
 
   private final long                  bufferPointer;
   private final ODirectMemory         directMemory;
@@ -149,7 +150,9 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
             + FREE_POINTER_OFFSET));
   }
 
-  public void deleteEntry(int index) {
+  public Entry<K, V> deleteEntry(int index) {
+    final Entry<K, V> removedEntry = getEntry(index);
+
     final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
         + FREE_POINTER_OFFSET);
 
@@ -180,6 +183,8 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePointer + entrySize, directMemory, bufferPointer + FREE_POINTER_OFFSET);
 
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(size - 1, directMemory, bufferPointer + SIZE_OFFSET);
+
+    return removedEntry;
   }
 
   public boolean addEntry(K key, V value) {

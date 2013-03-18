@@ -15,7 +15,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -29,7 +29,7 @@ public class LocalHashTableTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
-  private OLRUBuffer                       buffer;
+  private OLRUCache                        buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -45,17 +45,17 @@ public class LocalHashTableTest {
 
     databaseDocumentTx.create();
 
-    buffer = new OLRUBuffer(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(),
-        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    buffer = new OLRUCache(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
+        (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     localHashTable = new OLocalHashTable<Integer, String>(OAbstractLocalHashIndex.METADATA_CONFIGURATION_FILE_EXTENSION,
-        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION,
-        (OStorageLocal) databaseDocumentTx.getStorage(), buffer, murmurHash3HashFunction);
+        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION, murmurHash3HashFunction);
 
-    localHashTable.init("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
+    localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE,
+        (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
   @AfterClass
@@ -179,7 +179,7 @@ public class LocalHashTableTest {
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(localHashTable.remove(i));
+        Assert.assertEquals(localHashTable.remove(i), "" + i);
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -196,7 +196,7 @@ public class LocalHashTableTest {
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertTrue(localHashTable.remove(i));
+        Assert.assertEquals(localHashTable.remove(i), i + "");
 
       if (i % 2 == 0)
         localHashTable.put(KEYS_COUNT + i, (KEYS_COUNT + i) + "");

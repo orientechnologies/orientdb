@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
-import com.orientechnologies.orient.core.storage.impl.memory.eh.OExtendibleHashingTable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -31,17 +31,21 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
 
-  public static final String      TYPE            = "MEMORY";
+  public static final String                                TYPE            = "MEMORY";
 
-  private OExtendibleHashingTable content         = new OExtendibleHashingTable();
+  private NavigableMap<OClusterPosition, OPhysicalPosition> content         = new TreeMap<OClusterPosition, OPhysicalPosition>();
 
-  private long                    tombstonesCount = 0;
+  private long                                              tombstonesCount = 0;
 
   @Override
   public boolean addPhysicalPosition(OPhysicalPosition physicalPosition) {
     acquireExclusiveLock();
     try {
-      return content.put(physicalPosition);
+      if (content.containsKey(physicalPosition.clusterPosition))
+        return false;
+
+      content.put(physicalPosition.clusterPosition, physicalPosition);
+      return true;
     } finally {
       releaseExclusiveLock();
     }
@@ -80,7 +84,7 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
     acquireExclusiveLock();
     try {
 
-      final OPhysicalPosition physicalPosition = content.delete(clusterPosition);
+      final OPhysicalPosition physicalPosition = content.remove(clusterPosition);
       if (physicalPosition != null && physicalPosition.recordVersion.isTombstone())
         tombstonesCount--;
 
@@ -151,12 +155,14 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.higherEntries(OClusterPositionFactory.INSTANCE.valueOf(-1));
-
-      if (entries.length == 0)
+      if (content.isEmpty())
         return OClusterPosition.INVALID_POSITION;
-      else
-        return entries[0].key;
+
+      final OClusterPosition clusterPosition = content.firstKey();
+      if (clusterPosition == null)
+        return OClusterPosition.INVALID_POSITION;
+
+      return clusterPosition;
     } finally {
       releaseSharedLock();
     }
@@ -166,11 +172,14 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.floorEntries(OClusterPositionFactory.INSTANCE.getMaxValue());
-      if (entries.length == 0)
+      if (content.isEmpty())
         return OClusterPosition.INVALID_POSITION;
-      else
-        return entries[entries.length - 1].key;
+
+      final OClusterPosition clusterPosition = content.lastKey();
+      if (clusterPosition == null)
+        return OClusterPosition.INVALID_POSITION;
+
+      return clusterPosition;
     } finally {
       releaseSharedLock();
     }
@@ -201,13 +210,9 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OPhysicalPosition[] higherPositions(OPhysicalPosition position) {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.higherEntries(position.clusterPosition);
-      if (entries.length > 0) {
-        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
-        for (int i = 0; i < result.length; i++)
-          result[i] = entries[i].value;
-
-        return result;
+      Map.Entry<OClusterPosition, OPhysicalPosition> entry = content.higherEntry(position.clusterPosition);
+      if (entry != null) {
+        return new OPhysicalPosition[] { entry.getValue() };
       } else {
         return new OPhysicalPosition[0];
       }
@@ -220,13 +225,9 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.ceilingEntries(position.clusterPosition);
-      if (entries.length > 0) {
-        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
-        for (int i = 0; i < result.length; i++)
-          result[i] = entries[i].value;
-
-        return result;
+      Map.Entry<OClusterPosition, OPhysicalPosition> entry = content.ceilingEntry(position.clusterPosition);
+      if (entry != null) {
+        return new OPhysicalPosition[] { entry.getValue() };
       } else {
         return new OPhysicalPosition[0];
       }
@@ -239,14 +240,9 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.lowerEntries(position.clusterPosition);
-
-      if (entries.length > 0) {
-        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
-        for (int i = 0; i < result.length; i++)
-          result[i] = entries[i].value;
-
-        return result;
+      Map.Entry<OClusterPosition, OPhysicalPosition> entry = content.lowerEntry(position.clusterPosition);
+      if (entry != null) {
+        return new OPhysicalPosition[] { entry.getValue() };
       } else {
         return new OPhysicalPosition[0];
       }
@@ -259,14 +255,9 @@ public class OClusterMemoryHashing extends OClusterMemory implements OCluster {
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      OExtendibleHashingTable.Entry[] entries = content.floorEntries(position.clusterPosition);
-
-      if (entries.length > 0) {
-        final OPhysicalPosition[] result = new OPhysicalPosition[entries.length];
-        for (int i = 0; i < result.length; i++)
-          result[i] = entries[i].value;
-
-        return result;
+      Map.Entry<OClusterPosition, OPhysicalPosition> entry = content.floorEntry(position.clusterPosition);
+      if (entry != null) {
+        return new OPhysicalPosition[] { entry.getValue() };
       } else {
         return new OPhysicalPosition[0];
       }

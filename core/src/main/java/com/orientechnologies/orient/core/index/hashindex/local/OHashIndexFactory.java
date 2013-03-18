@@ -17,16 +17,13 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -35,8 +32,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OHashIndexFactory implements OIndexFactory {
-  public static final Set<String>            SUPPORTED_TYPES = Collections.singleton(OUniqueHashIndex.TYPE_ID);
-  private static AtomicReference<OLRUBuffer> BUFFER          = new AtomicReference<OLRUBuffer>();
+  public static final Set<String> SUPPORTED_TYPES = Collections.singleton(OUniqueHashIndex.TYPE_ID);
 
   @Override
   public Set<String> getTypes() {
@@ -45,26 +41,17 @@ public class OHashIndexFactory implements OIndexFactory {
 
   @Override
   public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
-    if (OUniqueHashIndex.TYPE_ID.equals(iIndexType)) {
-      if (BUFFER.get() == null) {
-        final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-        if (directMemory == null)
-          throw new OConfigurationException("There is no suitable direct memory implementation for this platform."
-              + " Index creation was canceled.");
+    if (!(iDatabase.getStorage() instanceof OStorageLocal))
+      throw new OConfigurationException("Given configuration works only for local storage.");
 
-        if (!(iDatabase.getStorage() instanceof OStorageLocal))
-          throw new OConfigurationException("Given configuration works only for local storage.");
+    final OStorageLocal storageLocal = (OStorageLocal) iDatabase.getStorage();
+    final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+    if (directMemory == null)
+      throw new OConfigurationException("There is no suitable direct memory implementation for this platform."
+          + " Index creation was canceled.");
 
-        final long bufferMaxMemory = OGlobalConfiguration.HASH_INDEX_BUFFER_SIZE.getValueAsLong() * 1024 * 1024;
-
-        OLRUBuffer buffer = new OLRUBuffer(bufferMaxMemory, directMemory, OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
-            (OStorageLocal) iDatabase.getStorage(), false);
-
-        BUFFER.compareAndSet(null, buffer);
-      }
-
-      return new OUniqueHashIndex(BUFFER.get(), (OStorageLocal) iDatabase.getStorage());
-    }
+    if (OUniqueHashIndex.TYPE_ID.equals(iIndexType))
+      return new OUniqueHashIndex(storageLocal);
 
     throw new OConfigurationException("Unsupported type : " + iIndexType);
   }

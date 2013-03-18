@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,6 +25,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -52,6 +54,7 @@ public class OHttpResponse {
   public String              serverInfo;
   public String              sessionId;
   public String              callbackFunction;
+  public String              contentEncoding;
   public boolean             sendStarted   = false;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
@@ -104,7 +107,13 @@ public class OHttpResponse {
 
     writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessId + "; Path=/; HttpOnly");
 
-    final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(content);
+    byte[] binaryContent = null;
+    if (!empty) {
+      if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED))
+        binaryContent = compress(content);
+      else
+        binaryContent = OBinaryProtocol.string2bytes(content);
+    }
 
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 
@@ -131,6 +140,11 @@ public class OHttpResponse {
     writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
     writeLine("Server: " + serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+
+    // SET CONTENT ENCDOING
+    if (contentEncoding != null && contentEncoding.length() > 0) {
+      writeLine("Content-Encoding: " + contentEncoding);
+    }
 
     // INCLUDE COMMON CUSTOM HEADERS
     if (additionalHeaders != null)
@@ -286,6 +300,34 @@ public class OHttpResponse {
     out.flush();
   }
 
+  // Compress content string
+  public byte[] compress(String jsonStr) {
+    if (jsonStr == null || jsonStr.length() == 0)
+      return null;
+    GZIPOutputStream gout = null;
+    ByteArrayOutputStream baos = null;
+    try {
+      byte[] incoming = jsonStr.getBytes("UTF-8");
+      baos = new ByteArrayOutputStream();
+      gout = new GZIPOutputStream(baos);
+      gout.write(incoming);
+      gout.finish();
+      return baos.toByteArray();
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    } finally {
+      try {
+        if (gout != null)
+          gout.close();
+        if (baos != null)
+          baos.close();
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+    return null;
+  }
+
   /**
    * Stores additional headers to send
    * 
@@ -309,5 +351,13 @@ public class OHttpResponse {
 
   public void setContentType(String contentType) {
     this.contentType = contentType;
+  }
+
+  public String getContentEncoding() {
+    return contentEncoding;
+  }
+
+  public void setContentEncoding(String contentEncoding) {
+    this.contentEncoding = contentEncoding;
   }
 }

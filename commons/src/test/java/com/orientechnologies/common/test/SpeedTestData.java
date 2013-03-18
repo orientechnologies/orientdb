@@ -3,6 +3,7 @@ package com.orientechnologies.common.test;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
+import java.math.BigDecimal;
 
 public class SpeedTestData {
   protected static final int TIME_WAIT           = 200;
@@ -137,8 +138,9 @@ public class SpeedTestData {
       System.out.println("   Cycles done.......................: " + cyclesDone + "/" + cycles);
       System.out.println("   Cycles Elapsed....................: " + cyclesElapsed + " ms");
       System.out.println("   Elapsed...........................: " + elapsed + " ms");
-      System.out.println("   Medium cycle elapsed:.............: " + (float) elapsed / cyclesDone);
-      System.out.println("   Cycles per second.................: " + (float) cyclesDone / elapsed * 1000);
+      System.out.println("   Medium cycle elapsed:.............: " + new BigDecimal((float) elapsed / cyclesDone).toPlainString());
+      System.out.println("   Cycles per second.................: "
+          + new BigDecimal((float) cyclesDone / elapsed * 1000).toPlainString());
       System.out.println("   Committed heap memory diff........: " + heapCommittedMemory + " (" + currentTestHeapCommittedMemory
           + "->" + nowHeapCommittedMemory + ")");
       System.out.println("   Used heap memory diff.............: " + heapUsedMemory + " (" + currentTestHeapUsedMemory + "->"

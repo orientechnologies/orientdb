@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUBuffer;
+import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUCache;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -24,7 +24,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OUniqueHashIndex    hashIndex;
   private MersenneTwisterFast random = new MersenneTwisterFast();
-  private OLRUBuffer          buffer;
+  private OLRUCache           buffer;
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -47,9 +47,9 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     long maxMemory = 2L * 1024 * 1024 * 1024;
     System.out.println("Max memory :" + maxMemory);
-    buffer = new OLRUBuffer(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
+    buffer = new OLRUCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
         (OStorageLocal) databaseDocumentTx.getStorage(), false);
-    hashIndex = new OUniqueHashIndex(buffer, (OStorageLocal) databaseDocumentTx.getStorage());
+    hashIndex = new OUniqueHashIndex((OStorageLocal) databaseDocumentTx.getStorage());
 
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.STRING), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
