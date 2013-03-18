@@ -20,7 +20,7 @@ import java.io.IOException;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class NewGenSpeedTest extends SpeedTestMonoThread {
 
@@ -31,6 +31,6 @@ public class NewGenSpeedTest extends SpeedTestMonoThread {
   @Override
   @Test(enabled = false)
   public void cycle() throws IOException {
-    Object a = new OrientVertex();
+    Object a = new ODocument();
   }
 }
