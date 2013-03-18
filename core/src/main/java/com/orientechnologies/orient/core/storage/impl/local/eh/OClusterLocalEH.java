@@ -64,7 +64,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public OClusterLocalEH() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     localHashTable = new OLocalHashTable<OClusterPosition, OPhysicalPosition>(METADATA_CONFIGURATION_FILE_EXTENSION,
-        TREE_STATE_FILE_EXTENSION, BUCKET_FILE_EXTENSION, storage, storage.getDiskCache(), new OHashFunction<OClusterPosition>() {
+        TREE_STATE_FILE_EXTENSION, BUCKET_FILE_EXTENSION, new OHashFunction<OClusterPosition>() {
           @Override
           public long hashCode(OClusterPosition value) {
             return value.longValueHigh();
@@ -99,7 +99,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void create(int iStartSize) throws IOException {
     acquireExclusiveLock();
     try {
-      localHashTable.create(name, OClusterPositionSerializer.INSTANCE, OPhysicalPositionSerializer.INSTANCE);
+      localHashTable.create(name, OClusterPositionSerializer.INSTANCE, OPhysicalPositionSerializer.INSTANCE, storage);
       clusterStateHolder.create(-1);
 
       if (config.root.clusters.size() <= config.id)
@@ -115,7 +115,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      localHashTable.load();
+      localHashTable.load(name, storage);
       clusterStateHolder.open();
 
       tombstonesCount = clusterStateHolder.getFile().readLong(0);
@@ -129,7 +129,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     OFileUtils.checkValidName(iClusterName);
 
     OStorageFileConfiguration clusterStateConfiguration = new OStorageFileConfiguration(null,
-        OStorageVariableParser.DB_PATH_VARIABLE + "/" + config.name + CLUSTER_STATE_FILE_EXTENSION, OFileFactory.CLASSIC, null,
+        OStorageVariableParser.DB_PATH_VARIABLE + "/" + config.name + CLUSTER_STATE_FILE_EXTENSION, OFileFactory.CLASSIC, "1024",
         "50%");
 
     config.dataSegmentId = iDataSegmentId;
@@ -267,6 +267,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
           entry = null;
       }
 
+      localHashTable.clear();
       tombstonesCount = 0;
     } finally {
       releaseExclusiveLock();

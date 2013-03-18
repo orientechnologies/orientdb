@@ -82,7 +82,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     this.type = type;
     this.keyHashFunction = new OMurmurHash3HashFunction<Object>();
     this.localHashTable = new OLocalHashTable<Object, T>(METADATA_CONFIGURATION_FILE_EXTENSION, TREE_STATE_FILE_EXTENSION,
-        BUCKET_FILE_EXTENSION, storage, storage.getDiskCache(), keyHashFunction);
+        BUCKET_FILE_EXTENSION, keyHashFunction);
   }
 
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, ODatabaseRecord database, String clusterIndexName,
@@ -105,7 +105,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           clustersToIndex.add(database.getClusterNameById(id));
 
       keyHashFunction.setValueSerializer(keySerializer);
-      localHashTable.create(name, keySerializer, valueSerializer);
+      localHashTable.create(name, keySerializer, valueSerializer, storage);
 
       updateConfiguration();
       rebuild(progressListener);
@@ -397,8 +397,6 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           // END OF CLUSTER REACHED, IGNORE IT
         }
 
-      lazySave();
-
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
 
@@ -523,6 +521,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       this.configuration = configuration;
       name = configuration.field(OIndexInternal.CONFIG_NAME);
       type = configuration.field(OIndexInternal.CONFIG_TYPE);
+      storage = (OStorageLocal) getDatabase().getStorage();
 
       final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
       if (indexDefinitionDoc != null) {
@@ -551,7 +550,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
           clustersToIndex.addAll(clusters);
 
         keyHashFunction.setValueSerializer((OBinarySerializer<Object>) detectKeySerializer(indexDefinition));
-        localHashTable.load();
+        localHashTable.load(name, storage);
       }
       return true;
     } finally {
@@ -665,17 +664,14 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public void onCreate(ODatabase iDatabase) {
-    throw new UnsupportedOperationException("onCreate");
   }
 
   @Override
   public void onDelete(ODatabase iDatabase) {
-    throw new UnsupportedOperationException("onDelete");
   }
 
   @Override
   public void onOpen(ODatabase iDatabase) {
-    throw new UnsupportedOperationException("onOpen");
   }
 
   @Override
@@ -705,12 +701,11 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public void onClose(ODatabase iDatabase) {
-    throw new UnsupportedOperationException("onClose");
   }
 
   @Override
   public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
-    throw new UnsupportedOperationException("onCorruptionRepairDatabase");
+    return true;
   }
 
   @Override

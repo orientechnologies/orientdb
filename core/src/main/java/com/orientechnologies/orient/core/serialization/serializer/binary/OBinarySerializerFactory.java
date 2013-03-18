@@ -40,6 +40,8 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterPositionSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPositionSerializer;
 
 /**
  * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
@@ -83,6 +85,9 @@ public class OBinarySerializerFactory {
     registerSerializer(OStreamSerializerRID.INSTANCE, null);
     registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
     registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
+
+    registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
+    registerSerializer(OClusterPositionSerializer.INSTANCE, null);
 
     // STATEFUL SERIALIER
     registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);

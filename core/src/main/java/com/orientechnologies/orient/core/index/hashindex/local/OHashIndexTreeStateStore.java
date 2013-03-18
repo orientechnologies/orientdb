@@ -2,8 +2,8 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @since 11.02.13
  */
 public class OHashIndexTreeStateStore extends OSingleFileSegment {
-  private static final int RECORD_SIZE = 256 * OLongSerializer.LONG_SIZE + 3 * OByteSerializer.BYTE_SIZE;
+  private static final int RECORD_SIZE = OLocalHashTable.MAX_LEVEL_SIZE * OLongSerializer.LONG_SIZE + 4 * OByteSerializer.BYTE_SIZE;
 
   public OHashIndexTreeStateStore(String iPath, String iType) throws IOException {
     super(iPath, iType);
@@ -52,62 +52,89 @@ public class OHashIndexTreeStateStore extends OSingleFileSegment {
     return file.readHeaderLong(2 * OLongSerializer.LONG_SIZE);
   }
 
-  public void storeTreeState(long[][] hashTree, OEHNodeMetadata[] nodesMetadata, int[] bucketsSizes) throws IOException {
+  public void storeTreeState(long[][] hashTree, OHashTreeNodeMetadata[] nodesMetadata) throws IOException {
     truncate();
 
-    file.allocateSpace(hashTree.length * RECORD_SIZE + bucketsSizes.length * OIntegerSerializer.INT_SIZE
-        + OIntegerSerializer.INT_SIZE);
-
+    file.allocateSpace(hashTree.length * RECORD_SIZE);
     long filePosition = 0;
-    file.writeInt(filePosition, bucketsSizes.length);
-
-    for (int bucketSize : bucketsSizes) {
-      file.writeInt(filePosition, bucketSize);
-      filePosition += OIntegerSerializer.INT_SIZE;
-    }
-
     for (int i = 0; i < hashTree.length; i++) {
       long[] node = hashTree[i];
       byte[] nodeContentBuffer = new byte[RECORD_SIZE];
       int offset = 0;
 
-      for (long position : node) {
-        OLongSerializer.INSTANCE.serializeNative(position, nodeContentBuffer, offset);
-        offset += OLongSerializer.LONG_SIZE;
-      }
+      if (node != null) {
+        OBooleanSerializer.INSTANCE.serializeNative(true, nodeContentBuffer, offset);
+        offset++;
 
-      OEHNodeMetadata nodeMetadata = nodesMetadata[i];
-      nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxLeftChildDepth();
-      nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxRightChildDepth();
-      nodeContentBuffer[offset] = (byte) nodeMetadata.getNodeLocalDepth();
+        for (long position : node) {
+          OLongSerializer.INSTANCE.serializeNative(position, nodeContentBuffer, offset);
+          offset += OLongSerializer.LONG_SIZE;
+        }
+
+        OHashTreeNodeMetadata nodeMetadata = nodesMetadata[i];
+        nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxLeftChildDepth();
+        nodeContentBuffer[offset++] = (byte) nodeMetadata.getMaxRightChildDepth();
+        nodeContentBuffer[offset] = (byte) nodeMetadata.getNodeLocalDepth();
+      } else {
+        OBooleanSerializer.INSTANCE.serializeNative(false, nodeContentBuffer, offset);
+      }
 
       file.write(filePosition, nodeContentBuffer);
       filePosition += nodeContentBuffer.length;
     }
   }
 
-  public long getBucketsOffset() throws IOException {
-    return file.readInt(0) * OIntegerSerializer.INT_SIZE + OIntegerSerializer.INT_SIZE;
+  public TreeState loadTreeState(int hashTreeSize) throws IOException {
+    OHashTreeNodeMetadata[] hashTreeNodeMetadata = new OHashTreeNodeMetadata[hashTreeSize];
+    long[][] hashTree = new long[hashTreeSize][];
+
+    long filePosition = 0;
+    for (int i = 0; i < hashTreeSize; i++) {
+      byte[] contentBuffer = new byte[RECORD_SIZE];
+      file.read(filePosition, contentBuffer, contentBuffer.length);
+
+      int offset = 0;
+      boolean notNullNode = OBooleanSerializer.INSTANCE.deserializeNative(contentBuffer, offset);
+      offset++;
+
+      if (notNullNode) {
+        long[] node = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+        for (int n = 0; n < node.length; n++) {
+          node[n] = OLongSerializer.INSTANCE.deserializeNative(contentBuffer, offset);
+          offset += OLongSerializer.LONG_SIZE;
+        }
+
+        hashTree[i] = node;
+        OHashTreeNodeMetadata nodeMetadata = new OHashTreeNodeMetadata(contentBuffer[offset++], contentBuffer[offset++],
+            contentBuffer[offset]);
+        hashTreeNodeMetadata[i] = nodeMetadata;
+      } else {
+        hashTree[i] = null;
+        hashTreeNodeMetadata[i] = null;
+        hashTreeNodeMetadata[i] = null;
+      }
+
+      filePosition += RECORD_SIZE;
+    }
+
+    return new TreeState(hashTree, hashTreeNodeMetadata);
   }
 
-  public long[] loadTreeNode(int index, long bucketsOffset) throws IOException {
-    long nodePosition = index * RECORD_SIZE + bucketsOffset;
-    byte[] nodeContentBuffer = new byte[256 * OLongSerializer.LONG_SIZE];
-    file.read(nodePosition, nodeContentBuffer, nodeContentBuffer.length);
+  public static class TreeState {
+    private final long[][]                hashTree;
+    private final OHashTreeNodeMetadata[] hashTreeNodeMetadata;
 
-    long[] node = new long[256];
-    for (int i = 0; i < node.length; i++)
-      node[i] = OLongSerializer.INSTANCE.deserializeNative(nodeContentBuffer, i * OLongSerializer.LONG_SIZE);
+    public TreeState(long[][] hashTree, OHashTreeNodeMetadata[] hashTreeNodeMetadata) {
+      this.hashTree = hashTree;
+      this.hashTreeNodeMetadata = hashTreeNodeMetadata;
+    }
 
-    return node;
-  }
+    public long[][] getHashTree() {
+      return hashTree;
+    }
 
-  public OEHNodeMetadata loadMetadata(int index, long bucketsOffset) throws IOException {
-    long nodePosition = index * RECORD_SIZE + 256 * OLongSerializer.LONG_SIZE + bucketsOffset;
-    byte[] nodeContentBuffer = new byte[3];
-
-    file.read(nodePosition, nodeContentBuffer, 3);
-
-    return new OEHNodeMetadata(nodeContentBuffer[0], nodeContentBuffer[1], nodeContentBuffer[2]);
+    public OHashTreeNodeMetadata[] getHashTreeNodeMetadata() {
+      return hashTreeNodeMetadata;
+    }
   }
 }

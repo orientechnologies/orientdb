@@ -193,8 +193,9 @@ public class OStorageLocal extends OStorageEmbedded {
             if (pos == -1) {
               // CLOSE AND REOPEN TO BE SURE ALL THE FILE SEGMENTS ARE
               // OPENED
-              if (clusters[i] != null)
+              if (clusters[i] != null && clusters[i] instanceof OClusterLocal)
                 clusters[i].close();
+
               clusters[i] = Orient.instance().getClusterFactory()
                   .createCluster(OClusterLocal.TYPE, clusters[i] instanceof OClusterLocal);
               clusters[i].configure(this, clusterConfig);
@@ -365,6 +366,9 @@ public class OStorageLocal extends OStorageEmbedded {
 
       super.close(iForce);
       uninstallProfilerHooks();
+
+      if (diskCache != null)
+        diskCache.close();
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;

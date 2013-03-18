@@ -31,6 +31,7 @@
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -207,7 +208,12 @@ public class OLRUCache implements ODiskCache {
 
     synchronized (syncObject) {
       final Set<Long> pageIndexes = filesPages.get(fileId);
-      for (Long pageIndex : pageIndexes) {
+
+      Long[] sortedPageIndexes = new Long[pageIndexes.size()];
+      sortedPageIndexes = pageIndexes.toArray(sortedPageIndexes);
+      Arrays.sort(sortedPageIndexes);
+
+      for (Long pageIndex : sortedPageIndexes) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), lock);
         try {
           LRUEntry lruEntry = lruList.get(fileId, pageIndex);
@@ -248,7 +254,11 @@ public class OLRUCache implements ODiskCache {
         return;
 
       final Set<Long> pageIndexes = filesPages.get(fileId);
-      for (Long pageIndex : pageIndexes) {
+      Long[] sortedPageIndexes = new Long[pageIndexes.size()];
+      sortedPageIndexes = pageIndexes.toArray(sortedPageIndexes);
+      Arrays.sort(sortedPageIndexes);
+
+      for (Long pageIndex : sortedPageIndexes) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
         try {
           LRUEntry lruEntry = lruList.remove(fileId, pageIndex);
@@ -288,8 +298,8 @@ public class OLRUCache implements ODiskCache {
       if (!files.containsKey(fileId))
         return;
 
-      final Set<Long> pageEntries = filesPages.get(fileId);
-      for (Long pageIndex : pageEntries) {
+      final Set<Long> pageIndexes = filesPages.get(fileId);
+      for (Long pageIndex : pageIndexes) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
         try {
           LRUEntry lruEntry = lruList.remove(fileId, pageIndex);
@@ -300,7 +310,7 @@ public class OLRUCache implements ODiskCache {
         }
       }
 
-      pageEntries.clear();
+      pageIndexes.clear();
       files.get(fileId).truncate();
     }
   }
