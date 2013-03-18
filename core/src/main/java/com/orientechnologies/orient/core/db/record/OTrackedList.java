@@ -82,7 +82,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public T set(int index, T element) {
     final T oldValue = super.set(index, element);
 
-    if (!oldValue.equals(element))
+    if (oldValue != null && !oldValue.equals(element))
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element,
           oldValue));
 

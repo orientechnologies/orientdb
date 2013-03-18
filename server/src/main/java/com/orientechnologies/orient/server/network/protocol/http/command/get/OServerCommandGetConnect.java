@@ -125,14 +125,16 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       if (db.getStorage() instanceof OStorageLocal) {
         json.beginCollection("dataSegments");
         for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
-          json.beginObject();
-          json.writeAttribute("id", data.getId());
-          json.writeAttribute("name", data.getName());
-          json.writeAttribute("size", data.getSize());
-          json.writeAttribute("filled", data.getFilledUpTo());
-          json.writeAttribute("maxSize", data.getConfig().maxSize);
-          json.writeAttribute("files", Arrays.toString(data.getConfig().infoFiles));
-          json.endObject();
+          if (data != null) {
+            json.beginObject();
+            json.writeAttribute("id", data.getId());
+            json.writeAttribute("name", data.getName());
+            json.writeAttribute("size", data.getSize());
+            json.writeAttribute("filled", data.getFilledUpTo());
+            json.writeAttribute("maxSize", data.getConfig().maxSize);
+            json.writeAttribute("files", Arrays.toString(data.getConfig().infoFiles));
+            json.endObject();
+          }
         }
         json.endCollection();
       }
