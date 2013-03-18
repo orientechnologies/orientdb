@@ -59,10 +59,10 @@ public class LocalHashTableIterationTest {
     };
 
     localHashTable = new OLocalHashTable<Integer, String>(OAbstractLocalHashIndex.METADATA_CONFIGURATION_FILE_EXTENSION,
-        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION,
-        (OStorageLocal) databaseDocumentTx.getStorage(), buffer, hashFunction);
+        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION, hashFunction);
 
-    localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
+    localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE,
+        (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
   @AfterClass

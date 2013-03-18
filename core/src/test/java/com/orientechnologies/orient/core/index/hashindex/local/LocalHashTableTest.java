@@ -52,10 +52,10 @@ public class LocalHashTableTest {
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     localHashTable = new OLocalHashTable<Integer, String>(OAbstractLocalHashIndex.METADATA_CONFIGURATION_FILE_EXTENSION,
-        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION,
-        (OStorageLocal) databaseDocumentTx.getStorage(), buffer, murmurHash3HashFunction);
+        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION, murmurHash3HashFunction);
 
-    localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE);
+    localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE,
+        (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
   @AfterClass

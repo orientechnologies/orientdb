@@ -77,6 +77,9 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
     physicalPosition.dataSegmentId = OIntegerSerializer.INSTANCE.deserialize(stream, position);
     position += OIntegerSerializer.INT_SIZE;
 
+    physicalPosition.recordSize = OIntegerSerializer.INSTANCE.deserialize(stream, position);
+    position += OIntegerSerializer.INT_SIZE;
+
     physicalPosition.dataSegmentPos = OLongSerializer.INSTANCE.deserialize(stream, position);
     position += OLongSerializer.LONG_SIZE;
 
@@ -139,6 +142,9 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
     physicalPosition.dataSegmentId = OIntegerSerializer.INSTANCE.deserializeNative(stream, position);
     position += OIntegerSerializer.INT_SIZE;
 
+    physicalPosition.recordSize = OIntegerSerializer.INSTANCE.deserializeNative(stream, position);
+    position += OIntegerSerializer.INT_SIZE;
+
     physicalPosition.dataSegmentPos = OLongSerializer.INSTANCE.deserializeNative(stream, position);
     position += OLongSerializer.LONG_SIZE;
 
@@ -185,11 +191,15 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
     currentPointer += OClusterPositionSerializer.INSTANCE.getFixedLength();
 
     final ORecordVersion version = OVersionFactory.instance().createVersion();
-    byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
+    byte[] serializedVersion = memory.get(currentPointer, OVersionFactory.instance().getVersionSize());
     version.getSerializer().fastReadFrom(serializedVersion, 0, version);
+    physicalPosition.recordVersion = version;
     currentPointer += OVersionFactory.instance().getVersionSize();
 
     physicalPosition.dataSegmentId = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    currentPointer += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
     currentPointer += OIntegerSerializer.INT_SIZE;
 
     physicalPosition.dataSegmentPos = OLongSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
