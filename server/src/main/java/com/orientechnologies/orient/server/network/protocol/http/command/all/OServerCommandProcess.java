@@ -15,11 +15,12 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
+import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.processor.OProcessorManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -52,12 +53,13 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
     final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: process/<database>/<template-name>[/param]*");
     iRequest.data.commandInfo = "Processes a transformation returning a JSON";
 
+    final String name = parts[2];
+
     ODatabaseDocumentTx db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      final String name = parts[2];
       final Object[] args = new String[parts.length - 3];
       for (int i = 3; i < parts.length; ++i)
         args[i - 3] = parts[i];
@@ -83,8 +85,9 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
 
       iResponse.writeResult(result, "");
 
-    } catch (OCommandScriptException e) {
+    } catch (OProcessException e) {
       // EXCEPTION
+      OLogManager.instance().error(this, "[process] exception during process of %s", e, name);
 
       final StringBuilder msg = new StringBuilder();
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
