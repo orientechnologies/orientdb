@@ -14,114 +14,114 @@ public class LRUListTest {
   public void testSingleAdd() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
+    lruList.putToMRU(1, 10, 100, false, false);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), "f", 10, 100);
+    assertLRUEntry(entryIterator.next(), 1, 10, 100);
   }
 
   public void testAddTwo() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
-    lruList.putToMRU("f", 20, 200, false);
+    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 20, 200, false, false);
 
     Assert.assertEquals(lruList.size(), 2);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), "f", 20, 200);
-    assertLRUEntry(entryIterator.next(), "f", 10, 100);
+    assertLRUEntry(entryIterator.next(), 1, 20, 200);
+    assertLRUEntry(entryIterator.next(), 1, 10, 100);
 
   }
 
   public void testAddThree() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
-    lruList.putToMRU("f", 20, 200, false);
-    lruList.putToMRU("f3", 30, 300, false);
+    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 20, 200, false, false);
+    lruList.putToMRU(3, 30, 300, false, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), "f3", 30, 300);
-    assertLRUEntry(entryIterator.next(), "f", 20, 200);
-    assertLRUEntry(entryIterator.next(), "f", 10, 100);
+    assertLRUEntry(entryIterator.next(), 3, 30, 300);
+    assertLRUEntry(entryIterator.next(), 1, 20, 200);
+    assertLRUEntry(entryIterator.next(), 1, 10, 100);
   }
 
   public void testAddThreePutMiddleToTop() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
-    lruList.putToMRU("f", 20, 200, false);
-    lruList.putToMRU("f3", 30, 300, false);
+    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 20, 200, false, false);
+    lruList.putToMRU(3, 30, 300, false, false);
 
-    lruList.putToMRU("f", 20, 200, false);
+    lruList.putToMRU(1, 20, 200, false, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), "f", 20, 200);
-    assertLRUEntry(entryIterator.next(), "f3", 30, 300);
-    assertLRUEntry(entryIterator.next(), "f", 10, 100);
+    assertLRUEntry(entryIterator.next(), 1, 20, 200);
+    assertLRUEntry(entryIterator.next(), 3, 30, 300);
+    assertLRUEntry(entryIterator.next(), 1, 10, 100);
   }
 
   public void testAddThreePutMiddleToTopChangePointer() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
-    lruList.putToMRU("f", 20, 200, false);
-    lruList.putToMRU("f3", 30, 300, false);
+    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 20, 200, false, false);
+    lruList.putToMRU(3, 30, 300, false, false);
 
-    lruList.putToMRU("f", 20, 400, false);
+    lruList.putToMRU(1, 20, 400, false, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), "f", 20, 400);
-    assertLRUEntry(entryIterator.next(), "f3", 30, 300);
-    assertLRUEntry(entryIterator.next(), "f", 10, 100);
+    assertLRUEntry(entryIterator.next(), 1, 20, 400);
+    assertLRUEntry(entryIterator.next(), 3, 30, 300);
+    assertLRUEntry(entryIterator.next(), 1, 10, 100);
   }
 
   public void testAddElevenPutMiddleToTopChangePointer() {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
-    lruList.putToMRU("f", 50, 500, false);
+    lruList.putToMRU(1, 50, 500, false, false);
 
     Assert.assertEquals(lruList.size(), 11);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    assertLRUEntry(entryIterator.next(), "f", 50, 500);
+    assertLRUEntry(entryIterator.next(), 1, 50, 500);
 
     for (int i = 10; i >= 0; i--) {
       if (i == 5)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
   public void testAddOneRemoveLRU() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU("f", 10, 100, false);
+    lruList.putToMRU(1, 10, 100, false, false);
     lruList.removeLRU();
 
     Assert.assertEquals(lruList.size(), 0);
@@ -134,7 +134,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
     lruList.removeLRU();
@@ -145,7 +145,7 @@ public class LRUListTest {
 
     for (int i = 10; i > 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -153,11 +153,11 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
-    assertLRUEntry(lruList.remove("f", 50), "f", 50, 500);
-    Assert.assertNull(lruList.remove("f", 500));
+    assertLRUEntry(lruList.remove(1, 50), 1, 50, 500);
+    Assert.assertNull(lruList.remove(1, 500));
 
     Assert.assertEquals(lruList.size(), 10);
 
@@ -167,7 +167,7 @@ public class LRUListTest {
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -175,20 +175,20 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
-    Assert.assertTrue(lruList.contains("f", 50));
-    assertLRUEntry(lruList.get("f", 50), "f", 50, 500);
+    Assert.assertTrue(lruList.contains(1, 50));
+    assertLRUEntry(lruList.get(1, 50), 1, 50, 500);
 
-    Assert.assertFalse(lruList.contains("f2", 50));
+    Assert.assertFalse(lruList.contains(2, 50));
 
     Assert.assertEquals(lruList.size(), 11);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     for (int i = 10; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -196,7 +196,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
     Assert.assertEquals(lruList.size(), 9128);
@@ -204,7 +204,7 @@ public class LRUListTest {
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -212,18 +212,18 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
     Assert.assertEquals(lruList.size(), 9128);
 
     for (int i = 0; i < 9128; i++)
-      assertLRUEntry(lruList.get("f", i * 10), "f", i * 10, i * 100);
+      assertLRUEntry(lruList.get(1, i * 10), 1, i * 10, i * 100);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -231,18 +231,18 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
     for (int i = 4564; i < 9128; i++)
-      assertLRUEntry(lruList.remove("f", i * 10), "f", i * 10, i * 100);
+      assertLRUEntry(lruList.remove(1, i * 10), 1, i * 10, i * 100);
 
     Assert.assertEquals(lruList.size(), 4564);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     for (int i = 4563; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
@@ -250,30 +250,30 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU("f", i * 10, i * 100, false);
+      lruList.putToMRU(1, i * 10, i * 100, false, false);
     }
 
-    lruList.putToMRU("f", 0, 0, false);
-    lruList.putToMRU("f", 4500 * 10, 4500 * 100, false);
+    lruList.putToMRU(1, 0, 0, false, false);
+    lruList.putToMRU(1, 4500 * 10, 4500 * 100, false, false);
 
     Assert.assertEquals(lruList.size(), 9128);
     Iterator<LRUEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    assertLRUEntry(entryIterator.next(), "f", 4500 * 10, 4500 * 100);
-    assertLRUEntry(entryIterator.next(), "f", 0, 0);
+    assertLRUEntry(entryIterator.next(), 1, 4500 * 10, 4500 * 100);
+    assertLRUEntry(entryIterator.next(), 1, 0, 0);
 
     for (int i = 9127; i >= 1; i--) {
       if (i == 4500)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), "f", i * 10, i * 100);
+      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
     }
   }
 
-  private void assertLRUEntry(LRUEntry lruEntry, String fileName, long filePosition, long dataPointer) {
-    Assert.assertEquals(lruEntry.fileName, fileName);
+  private void assertLRUEntry(LRUEntry lruEntry, long fileId, long filePosition, long dataPointer) {
+    Assert.assertEquals(lruEntry.fileId, fileId);
     Assert.assertEquals(lruEntry.pageIndex, filePosition);
     Assert.assertEquals(lruEntry.dataPointer, dataPointer);
   }

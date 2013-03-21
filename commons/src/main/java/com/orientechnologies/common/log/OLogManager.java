@@ -37,11 +37,15 @@ public class OLogManager {
     if (iMessage != null) {
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
       if (log.isLoggable(iLevel)) {
-        final String msg = String.format(iMessage, iAdditionalArgs);
-        if (iException != null)
-          log.log(iLevel, msg, iException);
-        else
-          log.log(iLevel, msg);
+        try {
+          final String msg = String.format(iMessage, iAdditionalArgs);
+          if (iException != null)
+            log.log(iLevel, msg, iException);
+          else
+            log.log(iLevel, msg);
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Error on formatting message", e);
+        }
       }
     }
   }

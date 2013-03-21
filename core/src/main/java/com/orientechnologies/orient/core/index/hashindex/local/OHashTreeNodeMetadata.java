@@ -1,16 +1,16 @@
-package com.orientechnologies.orient.core.storage.impl.memory.eh;
+package com.orientechnologies.orient.core.index.hashindex.local;
 
 /**
  * @author Andrey Lomakin
  * @since 30.01.13
  */
-public class OEHNodeMetadata {
+public class OHashTreeNodeMetadata {
   private byte maxLeftChildDepth;
   private byte maxRightChildDepth;
 
   private byte nodeLocalDepth;
 
-  public OEHNodeMetadata(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth) {
+  public OHashTreeNodeMetadata(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth) {
     this.maxLeftChildDepth = maxLeftChildDepth;
     this.maxRightChildDepth = maxRightChildDepth;
     this.nodeLocalDepth = nodeLocalDepth;

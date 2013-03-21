@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.memory.lh;
+package com.orientechnologies.orient.test.java.lang;
 
-import com.orientechnologies.orient.core.exception.ODatabaseException;
+import java.io.IOException;
 
-/**
- * @author Artem Loginov (logart2007@gmail.com)
- */
-public class OGroupOverflowException extends ODatabaseException {
-  public OGroupOverflowException(String s) {
-    super(s);
+import org.testng.annotations.Test;
+
+import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+public class NewGenSpeedTest extends SpeedTestMonoThread {
+
+  public NewGenSpeedTest() {
+    super(100000000);
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void cycle() throws IOException {
+    Object a = new ODocument();
   }
 }

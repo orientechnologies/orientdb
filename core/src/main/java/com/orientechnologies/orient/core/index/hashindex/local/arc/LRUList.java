@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -42,28 +41,26 @@ class LRUList implements Iterable<LRUEntry> {
     nextThreshold = (int) (entries.length * 0.75);
   }
 
-  public LRUEntry get(String fileName, long filePosition) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry get(long fileId, long pageIndex) {
+    long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
-    while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != filePosition || !lruEntry.fileName.equals(fileName)))
+    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != pageIndex || lruEntry.fileId != fileId))
       lruEntry = lruEntry.next;
 
     return lruEntry;
   }
 
-  public LRUEntry remove(String fileName, long filePosition) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry remove(long fileId, long pageIndex) {
+    long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
-    while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
+    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.fileId != fileId || lruEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -71,6 +68,25 @@ class LRUList implements Iterable<LRUEntry> {
     if (lruEntry == null)
       return null;
 
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
+    removeFromLRUList(lruEntry);
+
+    if (prevEntry == null)
+      entries[index] = lruEntry.next;
+    else
+      prevEntry.next = lruEntry.next;
+
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
+    size--;
+
+    return lruEntry;
+  }
+
+  private void removeFromLRUList(LRUEntry lruEntry) {
     LRUEntry before = lruEntry.before;
     LRUEntry after = lruEntry.after;
 
@@ -83,35 +99,28 @@ class LRUList implements Iterable<LRUEntry> {
       head = lruEntry.after;
     if (lruEntry == tail)
       tail = lruEntry.before;
-
-    if (prevEntry == null)
-      entries[index] = lruEntry.next;
-    else
-      prevEntry.next = lruEntry.next;
-
-    size--;
-
-    return lruEntry;
   }
 
-  public LRUEntry putToMRU(String fileName, long filePosition, long dataPointer, boolean isDirty) {
-    long hashCode = hashCode(fileName, filePosition);
+  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty, boolean managedExternally) {
+    long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
-    while (lruEntry != null
-        && (lruEntry.hashCode != hashCode || !lruEntry.fileName.equals(fileName) || lruEntry.pageIndex != filePosition)) {
+    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.fileId != fileId || lruEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
 
+    assert tail == null || tail.before != tail;
+    assert tail == null || tail.after == null;
+
     if (lruEntry == null) {
       lruEntry = new LRUEntry();
 
-      lruEntry.pageIndex = filePosition;
-      lruEntry.fileName = fileName;
+      lruEntry.pageIndex = pageIndex;
+      lruEntry.fileId = fileId;
       lruEntry.hashCode = hashCode;
 
       if (prevEntry == null)
@@ -124,25 +133,26 @@ class LRUList implements Iterable<LRUEntry> {
 
     lruEntry.dataPointer = dataPointer;
     lruEntry.isDirty = isDirty;
+    lruEntry.managedExternally = managedExternally;
 
-    LRUEntry before = lruEntry.before;
-    LRUEntry after = lruEntry.after;
-
-    if (before != null)
-      before.after = after;
-    if (after != null)
-      after.before = before;
+    removeFromLRUList(lruEntry);
 
     if (head == null) {
       head = lruEntry;
       tail = lruEntry;
+
+      lruEntry.before = null;
+      lruEntry.after = null;
     } else {
-      if (tail != lruEntry) {
-        tail.after = lruEntry;
-        lruEntry.before = tail;
-        tail = lruEntry;
-      }
+      tail.after = lruEntry;
+
+      lruEntry.before = tail;
+      lruEntry.after = null;
+
+      tail = lruEntry;
     }
+    assert tail.before != tail;
+    assert tail.after == null;
 
     if (size >= nextThreshold)
       rehash();
@@ -199,8 +209,8 @@ class LRUList implements Iterable<LRUEntry> {
     entry.next = null;
   }
 
-  public boolean contains(String fileName, long filePosition) {
-    return get(fileName, filePosition) != null;
+  public boolean contains(long fileId, long filePosition) {
+    return get(fileId, filePosition) != null;
   }
 
   public int size() {
@@ -208,7 +218,7 @@ class LRUList implements Iterable<LRUEntry> {
   }
 
   public LRUEntry removeLRU() {
-    return remove(head.fileName, head.pageIndex);
+    return remove(head.fileId, head.pageIndex);
   }
 
   public LRUEntry getLRU() {
@@ -224,18 +234,12 @@ class LRUList implements Iterable<LRUEntry> {
     return (int) ((entries.length - 1) & hashCode);
   }
 
-  private long hashCode(String fileName, long filePosition) {
-    final byte[] stringBytes;
-    try {
-      stringBytes = fileName.getBytes("UTF-8");
-      final byte[] result = new byte[stringBytes.length + OLongSerializer.LONG_SIZE];
-      System.arraycopy(stringBytes, 0, result, 0, stringBytes.length);
-      OLongSerializer.INSTANCE.serialize(filePosition, result, stringBytes.length);
+  private long hashCode(long fileId, long filePosition) {
+    final byte[] result = new byte[2 * OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serialize(fileId, result, OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serialize(filePosition, result, OLongSerializer.LONG_SIZE);
 
-      return OMurmurHash3.murmurHash3_x64_64(result, SEED);
-    } catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("Exception during hash code calculation", e);
-    }
+    return OMurmurHash3.murmurHash3_x64_64(result, SEED);
   }
 
   private final class MRUEntryIterator implements Iterator<LRUEntry> {

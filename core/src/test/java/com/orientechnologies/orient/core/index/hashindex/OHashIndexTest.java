@@ -6,6 +6,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -33,7 +35,8 @@ public class OHashIndexTest {
 
   @AfterClass
   public void tearDown() throws Exception {
-    db.close();
+    if (!db.isClosed())
+      db.close();
   }
 
   @Test(enabled = false)
@@ -54,5 +57,21 @@ public class OHashIndexTest {
             null, null);
 
     Assert.assertNotNull(index);
+  }
+
+  @Test(dependsOnMethods = "testCreateManualHashIndex")
+  public void testStoreDataAfterDBWasClosed() {
+    OIndex<?> index = db.getMetadata().getIndexManager().getIndex("manualHashIndex");
+
+    for (int i = 0; i < 1000000; i++) {
+      index.put(i + "", new ORecordId(0, OClusterPositionFactory.INSTANCE.valueOf(i)));
+    }
+
+    db.close();
+
+    db.open("admin", "admin");
+    index = db.getMetadata().getIndexManager().getIndex("manualHashIndex");
+    for (int i = 0; i < 1000000; i++)
+      Assert.assertEquals(index.get(i + ""), new ORecordId(0, OClusterPositionFactory.INSTANCE.valueOf(i)));
   }
 }

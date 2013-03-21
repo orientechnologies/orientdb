@@ -94,26 +94,27 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           });
         }
 
-        if (indexesToLock != null && !indexesToLock.isEmpty())
+        if (indexesToLock != null && !indexesToLock.isEmpty()) {
           if (lockedIndexes == null)
             lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
 
-        for (OIndex<?> index : indexesToLock) {
-          for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-            final ORecord<?> record = entry.getValue().record.getRecord();
-            if (record instanceof ODocument) {
-              ODocument doc = (ODocument) record;
-              if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
-                  && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                index.getInternal().acquireModificationLock();
-                lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
+          for (OIndex<?> index : indexesToLock) {
+            for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+              final ORecord<?> record = entry.getValue().record.getRecord();
+              if (record instanceof ODocument) {
+                ODocument doc = (ODocument) record;
+                if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
+                    && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
+                  index.getInternal().acquireModificationLock();
+                  lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
+                }
               }
             }
           }
-        }
 
-        for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
-          index.acquireExclusiveLock();
+          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+            index.acquireExclusiveLock();
+        }
 
         database.getStorage().callInLock(new Callable<Void>() {
 

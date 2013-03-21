@@ -21,17 +21,19 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-
 @XmlRootElement(name = "command")
 @XmlType(propOrder = { "parameters", "implementation", "pattern" })
 public class OServerCommandConfiguration {
-	@XmlAttribute(required = true)
-	public String									pattern;
+  @XmlAttribute(required = true)
+  public String                      pattern;
 
-	@XmlAttribute(required = true)
-	public String									implementation;
+  @XmlAttribute(required = true)
+  public String                      implementation;
 
-	@XmlElementWrapper(required = false)
-	@XmlElementRef(type = OServerEntryConfiguration.class)
-	public OServerEntryConfiguration[]	parameters;
+  @XmlAttribute(required = false)
+  public boolean                     stateful;
+
+  @XmlElementWrapper(required = false)
+  @XmlElementRef(type = OServerEntryConfiguration.class)
+  public OServerEntryConfiguration[] parameters;
 }

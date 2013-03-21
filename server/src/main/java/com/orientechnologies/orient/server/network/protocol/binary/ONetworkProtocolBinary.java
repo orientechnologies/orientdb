@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -63,6 +64,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -94,12 +96,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig, final Object[] iCommands)
-      throws IOException {
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(iSocket, this);
 
-    super.config(iServer, iSocket, iConfig, iCommands);
+    super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
@@ -255,6 +257,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
       removeCluster();
+      break;
+
+    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+      readRecordMetadata();
       break;
 
     case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
@@ -1287,6 +1293,22 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       } finally {
         endResponse();
       }
+    }
+  }
+
+  protected void readRecordMetadata() throws IOException {
+    setDataCommandInfo("Record metadata");
+
+    final ORID rid = channel.readRID();
+
+    beginResponse();
+    try {
+      final ORecordMetadata metadata = connection.database.getRecordMetadata(rid);
+      sendOk(clientTxId);
+      channel.writeRID(metadata.getRecordId());
+      channel.writeVersion(metadata.getRecordVersion());
+    } finally {
+      endResponse();
     }
   }
 

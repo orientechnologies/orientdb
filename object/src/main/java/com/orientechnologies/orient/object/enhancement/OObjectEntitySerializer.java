@@ -574,7 +574,7 @@ public class OObjectEntitySerializer {
     }
   }
 
-  protected static boolean checkCascadeDelete(OneToOne oneToOne) {
+  protected static boolean checkCascadeDelete(final OneToOne oneToOne) {
     return oneToOne.orphanRemoval() || checkCascadeAnnotationAttribute(oneToOne.cascade());
   }
 

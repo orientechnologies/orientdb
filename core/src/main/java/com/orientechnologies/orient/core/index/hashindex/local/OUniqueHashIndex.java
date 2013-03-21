@@ -15,14 +15,19 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
@@ -33,8 +38,28 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
   public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE_HASH.toString();
 
-  public OUniqueHashIndex() {
-    super(TYPE_ID);
+  public OUniqueHashIndex(OStorageLocal storageLocal) {
+    super(TYPE_ID, storageLocal);
+  }
+
+  @Override
+  public OIndex<OIdentifiable> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase,
+      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+    create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, OLinkSerializer.INSTANCE);
+    return this;
+  }
+
+  @Override
+  public long count(Object iKey) {
+    if (get(iKey) != null)
+      return 1;
+
+    return 0;
+  }
+
+  @Override
+  public boolean contains(Object iKey) {
+    return get(iKey) != null;
   }
 
   @Override
@@ -59,7 +84,6 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
         ((ORecord<?>) value.getRecord()).save();
 
       super.put(key, value.getIdentity());
-      get(key);
       return this;
 
     } finally {

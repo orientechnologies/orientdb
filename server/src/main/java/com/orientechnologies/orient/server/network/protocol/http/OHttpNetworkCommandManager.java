@@ -10,9 +10,15 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OHttpNetworkCommandManager {
   private final Map<String, OServerCommand> exactCommands    = new HashMap<String, OServerCommand>();
   private final Map<String, OServerCommand> wildcardCommands = new HashMap<String, OServerCommand>();
+  private OHttpNetworkCommandManager        parent;
+
+  public OHttpNetworkCommandManager(final OHttpNetworkCommandManager iParent) {
+    parent = iParent;
+  }
 
   public Object getCommand(String iName) {
     OServerCommand cmd = exactCommands.get(iName);
+
     if (cmd == null) {
       // TRY WITH WILDCARD COMMANDS
       // TODO: OPTIMIZE SEARCH!
@@ -28,6 +34,10 @@ public class OHttpNetworkCommandManager {
         }
       }
     }
+
+    if (cmd == null && parent != null)
+      cmd = (OServerCommand) parent.getCommand(iName);
+
     return cmd;
   }
 
@@ -36,13 +46,11 @@ public class OHttpNetworkCommandManager {
    * 
    * @param iServerCommandInstance
    */
-  public void registerCommand(Object iServerCommandInstance) {
-    OServerCommand cmd = (OServerCommand) iServerCommandInstance;
-
-    for (String name : cmd.getNames())
+  public void registerCommand(OServerCommand iServerCommandInstance) {
+    for (String name : iServerCommandInstance.getNames())
       if (OStringSerializerHelper.contains(name, '*'))
-        wildcardCommands.put(name, cmd);
+        wildcardCommands.put(name, iServerCommandInstance);
       else
-        exactCommands.put(name, cmd);
+        exactCommands.put(name, iServerCommandInstance);
   }
 }

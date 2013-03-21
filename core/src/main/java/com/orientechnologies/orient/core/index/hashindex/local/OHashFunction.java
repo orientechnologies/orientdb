@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index.hashindex.local.arc;
+package com.orientechnologies.orient.core.index.hashindex.local;
 
 /**
  * @author Andrey Lomakin
- * @since 25.02.13
+ * @since 12.03.13
  */
-class LRUEntry {
-  long     fileId;
-  long     pageIndex;
-
-  long     dataPointer;
-
-  long     hashCode;
-
-  LRUEntry next;
-
-  LRUEntry after;
-  LRUEntry before;
-
-  boolean  isDirty;
-  boolean  managedExternally;
+public interface OHashFunction<V> {
+  public long hashCode(V value);
 }

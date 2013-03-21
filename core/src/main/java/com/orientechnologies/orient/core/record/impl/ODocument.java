@@ -795,20 +795,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iConflictsOtherWins
-   *          if true, the other document wins in case of conflicts, otherwise the current document wins
+   * @param iAddOnlyMode
+   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
+   *          will be removed by original too
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final ODocument iOther, boolean iConflictsOtherWins, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final ODocument iOther, boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
     iOther.checkForLoading();
     iOther.checkForFields();
 
     if (_clazz == null && iOther.getSchemaClass() != null)
       _clazz = iOther.getSchemaClass();
 
-    return merge(iOther._fieldValues, iConflictsOtherWins, iMergeSingleItemsOfMultiValueFields);
+    return merge(iOther._fieldValues, iAddOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
 
   /**
@@ -1577,7 +1578,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     stream.writeInt(content.length);
     stream.write(content);
 
-		stream.writeBoolean(_dirty);
+    stream.writeBoolean(_dirty);
   }
 
   @Override
@@ -1594,6 +1595,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     fromStream(content);
 
-		_dirty = stream.readBoolean();
-	}
+    _dirty = stream.readBoolean();
+  }
 }

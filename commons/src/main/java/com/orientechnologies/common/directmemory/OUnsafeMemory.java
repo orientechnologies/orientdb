@@ -19,21 +19,20 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-
 import sun.misc.Unsafe;
+
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 2/4/13
  */
+@SuppressWarnings("restriction")
 public class OUnsafeMemory implements ODirectMemory {
   public static final OUnsafeMemory INSTANCE              = new OUnsafeMemory();
 
   private static final Unsafe       unsafe;
   private static final boolean      unaligned;
-
-  private static final long         arrayBaseOffset;
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
@@ -54,7 +53,6 @@ public class OUnsafeMemory implements ODirectMemory {
 
     String arch = System.getProperty("os.arch");
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
-    arrayBaseOffset = (long) unsafe.arrayBaseOffset(byte[].class);
   }
 
   @Override
@@ -81,6 +79,13 @@ public class OUnsafeMemory implements ODirectMemory {
     for (int i = 0; i < length; i++)
       result[i] = unsafe.getByte(pointer++);
     return result;
+  }
+
+  @Override
+  public void get(long pointer, byte[] array, int arrayOffset, int length) {
+    pointer += arrayOffset;
+    for (int i = arrayOffset; i < length + arrayOffset; i++)
+      array[i] = unsafe.getByte(pointer++);
   }
 
   @Override
@@ -132,7 +137,10 @@ public class OUnsafeMemory implements ODirectMemory {
 
   @Override
   public short getShort(long pointer) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    if (unaligned)
+      return unsafe.getShort(pointer);
+
+    return (short) (unsafe.getByte(pointer++) << 8 | (unsafe.getByte(pointer) & 0xff));
   }
 
   @Override
@@ -140,7 +148,7 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putChar(pointer, value);
     else {
-      unsafe.putByte(pointer, (byte) (value >>> 8));
+      unsafe.putByte(pointer++, (byte) (value >>> 8));
       unsafe.putByte(pointer, (byte) (value));
     }
   }

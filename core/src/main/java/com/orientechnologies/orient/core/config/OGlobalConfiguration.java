@@ -50,9 +50,21 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
-  JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize", "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
+  JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
+      "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
+
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in bytes", Integer.class, 64 * 1024),
+
+  DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
+      + "this queue is used to accumulate all pages that "
+      + "should be written to the disk and then flush them in batch mode to minimize random IO overhead.", Integer.class, 15000),
+
+  DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
+      "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
+
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
@@ -135,6 +147,10 @@ public enum OGlobalConfiguration {
       "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
   // INDEX
+  HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
+      + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
+      Integer.class, 1500),
+
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
