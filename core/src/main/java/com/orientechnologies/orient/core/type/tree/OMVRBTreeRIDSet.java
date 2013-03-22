@@ -61,7 +61,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     this((OMVRBTreeRID) new OMVRBTreeRID().setOwner(iOwner));
   }
 
-  public OMVRBTreeRIDSet(final ORecord<?> iOwner, Collection<OIdentifiable> iInitValues) {
+  public OMVRBTreeRIDSet(final ORecord<?> iOwner, final Collection<OIdentifiable> iInitValues) {
     this((OMVRBTreeRID) new OMVRBTreeRID(iInitValues).setOwner(iOwner));
   }
 
