@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import org.testng.Assert;
@@ -731,8 +732,8 @@ public class TransactionConsistencyTest {
         ODocument edge = new ODocument("TREdge");
         edge.field("in", person.getIdentity());
         edge.field("out", inserted.elementAt(i - 1));
-        ((HashSet<ODocument>) person.field("out")).add(edge);
-        ((HashSet<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
+        ((Set<ODocument>) person.field("out")).add(edge);
+        ((Set<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
         edge.save();
       }
       inserted.add(person);
@@ -763,8 +764,8 @@ public class TransactionConsistencyTest {
           ODocument edge = new ODocument("TREdge");
           edge.field("in", person.getIdentity());
           edge.field("out", inserted2.elementAt(i - 1));
-          ((HashSet<ODocument>) person.field("out")).add(edge);
-          ((HashSet<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
+          ((Set<ODocument>) person.field("out")).add(edge);
+          ((Set<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
           edge.save();
         }
         inserted2.add(person);
