@@ -262,7 +262,8 @@ public class OLRUCache implements ODiskCache {
         try {
           LRUEntry lruEntry = lruList.remove(fileId, pageIndex);
           if (lruEntry != null && !lruEntry.managedExternally) {
-            flushData(fileId, pageIndex, lruEntry.dataPointer);
+            if (lruEntry.isDirty)
+              flushData(fileId, pageIndex, lruEntry.dataPointer);
 
             directMemory.free(lruEntry.dataPointer);
           }
@@ -364,7 +365,7 @@ public class OLRUCache implements ODiskCache {
   @Override
   public void close() throws IOException {
     synchronized (syncObject) {
-      clear();
+      flushBuffer();
       for (OMultiFileSegment multiFileSegment : files.values())
         multiFileSegment.synch();
     }
