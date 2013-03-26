@@ -17,9 +17,9 @@ public interface ODiskCache {
 
   void cacheHit(long fileId, long pageIndex, long dataPointer) throws IOException;
 
-  long getAndLockForWrite(long fileId, long pageIndex);
+  long getAndLockForWrite(long fileId, long pageIndex) throws IOException;
 
-  void clearExternalManagementFlag(long fileId, long pageIndex);
+  void clearExternalManagementFlag(long fileId, long pageIndex) throws IOException;
 
   long loadAndLockForRead(long fileId, long pageIndex) throws IOException;
 
