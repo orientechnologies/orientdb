@@ -35,8 +35,10 @@ public class OLocalPage {
   private static final int    VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
   private static final int    NEXT_PAGE_OFFSET           = 0;
-  private static final int    FREELIST_HEADER            = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int    FREE_POSITION_OFFSET       = FREELIST_HEADER + OIntegerSerializer.INT_SIZE;
+  private static final int    PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+
+  private static final int    FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int    FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    FREE_SPACE_COUNTER_OFFSET  = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    ENTRIES_COUNT_OFFSET       = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -71,7 +73,8 @@ public class OLocalPage {
     int lastEntryIndexPosition = PAGE_INDEXES_OFFSET + indexesLength * INDEX_ITEM_SIZE;
 
     int entrySize = record.length + 2 * OIntegerSerializer.INT_SIZE;
-    int freeListHeader = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + FREELIST_HEADER);
+    int freeListHeader = OIntegerSerializer.INSTANCE
+        .deserializeFromDirectMemory(directMemory, pagePointer + FREELIST_HEADER_OFFSET);
 
     if (!checkSpace(entrySize, freeListHeader))
       return -1;
@@ -96,9 +99,9 @@ public class OLocalPage {
 
       int nextEntryPosition = tombstonePointer & POSITION_MASK;
       if (nextEntryPosition > 0)
-        OIntegerSerializer.INSTANCE.serializeInDirectMemory(nextEntryPosition, directMemory, pagePointer + FREELIST_HEADER);
+        OIntegerSerializer.INSTANCE.serializeInDirectMemory(nextEntryPosition, directMemory, pagePointer + FREELIST_HEADER_OFFSET);
       else
-        OIntegerSerializer.INSTANCE.serializeInDirectMemory(0, directMemory, pagePointer + FREELIST_HEADER);
+        OIntegerSerializer.INSTANCE.serializeInDirectMemory(0, directMemory, pagePointer + FREELIST_HEADER_OFFSET);
 
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(getFreeSpace() - entrySize, directMemory, pagePointer
           + FREE_SPACE_COUNTER_OFFSET);
@@ -169,14 +172,15 @@ public class OLocalPage {
 
     int entryPosition = entryPointer & POSITION_MASK;
 
-    int freeListHeader = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + FREELIST_HEADER);
+    int freeListHeader = OIntegerSerializer.INSTANCE
+        .deserializeFromDirectMemory(directMemory, pagePointer + FREELIST_HEADER_OFFSET);
     if (freeListHeader <= 0)
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(MARKED_AS_DELETED_FLAG, directMemory, pagePointer + entryIndexPosition);
     else
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(freeListHeader | MARKED_AS_DELETED_FLAG, directMemory, pagePointer
           + entryIndexPosition);
 
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(position + 1, directMemory, pagePointer + FREELIST_HEADER);
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(position + 1, directMemory, pagePointer + FREELIST_HEADER_OFFSET);
 
     final int entrySize = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryPosition);
     assert entrySize > 0;
@@ -208,6 +212,17 @@ public class OLocalPage {
     return pagePointer + entryPosition + 2 * OIntegerSerializer.INT_SIZE;
   }
 
+  public int getRecordSize(int position) {
+    int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
+    int entryPointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryIndexPosition);
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
+      return -1;
+
+    int entryPosition = entryPointer & POSITION_MASK;
+    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryPosition) - 2
+        * OIntegerSerializer.INT_SIZE;
+  }
+
   public int findFirstDeletedRecord(int position) {
     int indexesLength = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer
         + PAGE_INDEXES_LENGTH_OFFSET);
@@ -215,6 +230,34 @@ public class OLocalPage {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
       int entryPointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryIndexPosition);
       if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
+        return i;
+    }
+
+    return -1;
+  }
+
+  public int findFirstRecord(int position) {
+    int indexesLength = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer
+        + PAGE_INDEXES_LENGTH_OFFSET);
+    for (int i = position; i < indexesLength; i++) {
+      int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
+      int entryPointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryIndexPosition);
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0)
+        return i;
+    }
+
+    return -1;
+  }
+
+  public int findLastRecord(int position) {
+    int indexesLength = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer
+        + PAGE_INDEXES_LENGTH_OFFSET);
+
+    int endIndex = Math.min(indexesLength - 1, position);
+    for (int i = endIndex; i >= 0; i--) {
+      int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
+      int entryPointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryIndexPosition);
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0)
         return i;
     }
 
@@ -235,6 +278,14 @@ public class OLocalPage {
 
   public void setNextPage(long nextPage) {
     OLongSerializer.INSTANCE.serializeInDirectMemory(nextPage, directMemory, pagePointer + NEXT_PAGE_OFFSET);
+  }
+
+  public long getPrevPage() {
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + PREV_PAGE_OFFSET);
+  }
+
+  public void setPrevPage(long prevPage) {
+    OLongSerializer.INSTANCE.serializeInDirectMemory(prevPage, directMemory, pagePointer + PREV_PAGE_OFFSET);
   }
 
   private void incrementEntriesCount() {
