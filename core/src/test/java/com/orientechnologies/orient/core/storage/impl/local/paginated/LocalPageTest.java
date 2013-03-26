@@ -29,7 +29,6 @@ public class LocalPageTest {
     try {
       OLocalPage localPage = new OLocalPage(pagePointer, true);
       int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -56,7 +55,6 @@ public class LocalPageTest {
       OLocalPage localPage = new OLocalPage(pagePointer, true);
       int freeSpace = localPage.getFreeSpace();
 
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -108,8 +106,6 @@ public class LocalPageTest {
       int lastPosition;
       byte counter = 0;
       int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
-
       do {
         lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
         if (lastPosition >= 0) {
@@ -212,8 +208,6 @@ public class LocalPageTest {
       int lastPosition;
       byte counter = 0;
       int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
-
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
 
@@ -267,14 +261,11 @@ public class LocalPageTest {
     try {
       OLocalPage localPage = new OLocalPage(pagePointer, true);
 
-      int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
-
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
       recordVersion.increment();
 
-      final byte[] bigChunk = new byte[OLocalPage.MAX_RECORD_SIZE / 2];
+      final byte[] bigChunk = new byte[OLocalPage.MAX_ENTRY_SIZE / 2];
       final MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
       mersenneTwisterFast.nextBytes(bigChunk);
 
@@ -284,7 +275,7 @@ public class LocalPageTest {
 
       Assert.assertTrue(localPage.deleteRecord(0));
 
-      freeSpace = localPage.getFreeSpace();
+      int freeSpace = localPage.getFreeSpace();
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       int lastPosition;
       byte counter = 0;
@@ -328,7 +319,6 @@ public class LocalPageTest {
       int lastPosition;
       byte counter = 0;
       int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -391,7 +381,6 @@ public class LocalPageTest {
       int lastPosition;
       byte counter = 0;
       int freeSpace = localPage.getFreeSpace();
-      Assert.assertEquals(freeSpace, OLocalPage.MAX_RECORD_SIZE);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();

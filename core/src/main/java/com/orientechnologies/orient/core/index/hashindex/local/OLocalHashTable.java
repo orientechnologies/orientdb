@@ -1795,7 +1795,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buffer.releaseWriteLock(fileLevelIds[fileLevel], pageIndex);
   }
 
-  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) {
+  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) throws IOException {
     if (cacheLock)
       buffer.freePage(fileLevelIds[fileLevel], pageIndex);
     else {

@@ -47,10 +47,11 @@ public class OLocalPage {
   private static final int    INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
   private static final int    MARKED_AS_DELETED_FLAG     = 1 << 16;
   private static final int    POSITION_MASK              = 0xFFFF;
-
   public static final int     PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
 
-  public static final int     MAX_RECORD_SIZE            = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+  public static final int     MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+
+  public static final int     MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 2 * OIntegerSerializer.INT_SIZE;
 
   private final long          pagePointer;
   private final ODirectMemory directMemory               = ODirectMemoryFactory.INSTANCE.directMemory();
@@ -60,8 +61,11 @@ public class OLocalPage {
 
     if (newPage) {
       OLongSerializer.INSTANCE.serializeInDirectMemory(-1L, directMemory, pagePointer + NEXT_PAGE_OFFSET);
+      OLongSerializer.INSTANCE.serializeInDirectMemory(-1L, directMemory, pagePointer + PREV_PAGE_OFFSET);
+
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(PAGE_SIZE, directMemory, pagePointer + FREE_POSITION_OFFSET);
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(MAX_RECORD_SIZE, directMemory, pagePointer + FREE_SPACE_COUNTER_OFFSET);
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(PAGE_SIZE - PAGE_INDEXES_OFFSET, directMemory, pagePointer
+          + FREE_SPACE_COUNTER_OFFSET);
     }
   }
 
@@ -145,6 +149,10 @@ public class OLocalPage {
     recordVersion.getSerializer().fastReadFrom(serializedVersion, 0, recordVersion);
 
     return recordVersion;
+  }
+
+  public boolean isEmpty() {
+    return getFreeSpace() == PAGE_SIZE - PAGE_INDEXES_OFFSET;
   }
 
   private boolean checkSpace(int entrySize, int freeListHeader) {
