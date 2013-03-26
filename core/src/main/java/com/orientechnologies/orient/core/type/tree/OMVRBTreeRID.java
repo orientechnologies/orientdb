@@ -293,8 +293,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
     if (hasNewItems())
-      return new OLazyRecordMultiIterator(null, new Object[] { keySet().iterator(), newEntries.keySet().iterator() },
-          iAutoConvertToRecord);
+      return new OLazyRecordMultiIterator(null, new Object[] { keySet(), newEntries.keySet() }, iAutoConvertToRecord);
 
     return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
   }

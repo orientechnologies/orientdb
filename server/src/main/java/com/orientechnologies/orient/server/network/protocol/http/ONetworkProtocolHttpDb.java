@@ -17,10 +17,14 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
@@ -64,60 +68,70 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
   @Override
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
-      final Object[] iCommands) throws IOException {
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     server = iServer;
     setName("HTTP-DB");
 
-    init(iCommands);
+    if (sharedCmdManager == null)
+      // FIRST TIME REGISTERS THE STATELESS COMMANDS
+      registerStatelessCommands(iStatelessCommands);
 
-    cmdManager.registerCommand(new OServerCommandGetConnect());
-    cmdManager.registerCommand(new OServerCommandGetDisconnect());
-    cmdManager.registerCommand(new OServerCommandGetClass());
-    cmdManager.registerCommand(new OServerCommandGetCluster());
-    cmdManager.registerCommand(new OServerCommandGetDatabase());
-    cmdManager.registerCommand(new OServerCommandGetDictionary());
-    cmdManager.registerCommand(new OServerCommandGetDocument());
-    cmdManager.registerCommand(new OServerCommandGetDocumentByClass());
-    cmdManager.registerCommand(new OServerCommandGetQuery());
-    cmdManager.registerCommand(new OServerCommandGetServer());
-    cmdManager.registerCommand(new OServerCommandGetStorageAllocation());
-    cmdManager.registerCommand(new OServerCommandGetFileDownload());
-    cmdManager.registerCommand(new OServerCommandGetIndex());
-    cmdManager.registerCommand(new OServerCommandGetListDatabases());
-    cmdManager.registerCommand(new OServerCommandGetExportDatabase());
-    cmdManager.registerCommand(new OServerCommandGetProfiler());
-    cmdManager.registerCommand(new OServerCommandGetGephi());
+    cmdManager = new OHttpNetworkCommandManager(sharedCmdManager);
+    for (Object cmdConfig : iStatefulCommands)
+      cmdManager.registerCommand(OServerNetworkListener.createCommand((OServerCommandConfiguration) cmdConfig));
 
-    cmdManager.registerCommand(new OServerCommandPostBatch());
-    cmdManager.registerCommand(new OServerCommandPostClass());
-    cmdManager.registerCommand(new OServerCommandPostCommand());
-    cmdManager.registerCommand(new OServerCommandPostDatabase());
-    cmdManager.registerCommand(new OServerCommandPostDocument());
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
-    cmdManager.registerCommand(new OServerCommandPostImportRecords());
-    cmdManager.registerCommand(new OServerCommandPostProperty());
-    cmdManager.registerCommand(new OServerCommandPostStudio());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
 
-    cmdManager.registerCommand(new OServerCommandPutDocument());
-    cmdManager.registerCommand(new OServerCommandPutIndex());
-
-    cmdManager.registerCommand(new OServerCommandDeleteClass());
-    cmdManager.registerCommand(new OServerCommandDeleteDatabase());
-    cmdManager.registerCommand(new OServerCommandDeleteDocument());
-    cmdManager.registerCommand(new OServerCommandDeleteProperty());
-    cmdManager.registerCommand(new OServerCommandDeleteIndex());
-
-    cmdManager.registerCommand(new OServerCommandOptions());
-
-    cmdManager.registerCommand(new OServerCommandFunction());
-    cmdManager.registerCommand(new OServerCommandAction());
-
-    super.config(server, iSocket, iConfiguration, iCommands);
+    super.config(server, iSocket, iConfiguration, iStatelessCommands, iStatefulCommands);
     connection.data.serverInfo = ORIENT_SERVER_DB;
   }
 
   public String getType() {
     return "http";
   }
+
+  protected void registerStatelessCommands(final List<?> iStatelessCommands) {
+    sharedCmdManager = new OHttpNetworkCommandManager(null);
+
+    sharedCmdManager.registerCommand(new OServerCommandGetConnect());
+    sharedCmdManager.registerCommand(new OServerCommandGetDisconnect());
+    sharedCmdManager.registerCommand(new OServerCommandGetClass());
+    sharedCmdManager.registerCommand(new OServerCommandGetCluster());
+    sharedCmdManager.registerCommand(new OServerCommandGetDatabase());
+    sharedCmdManager.registerCommand(new OServerCommandGetDictionary());
+    sharedCmdManager.registerCommand(new OServerCommandGetDocument());
+    sharedCmdManager.registerCommand(new OServerCommandGetDocumentByClass());
+    sharedCmdManager.registerCommand(new OServerCommandGetQuery());
+    sharedCmdManager.registerCommand(new OServerCommandGetServer());
+    sharedCmdManager.registerCommand(new OServerCommandGetStorageAllocation());
+    sharedCmdManager.registerCommand(new OServerCommandGetFileDownload());
+    sharedCmdManager.registerCommand(new OServerCommandGetIndex());
+    sharedCmdManager.registerCommand(new OServerCommandGetListDatabases());
+    sharedCmdManager.registerCommand(new OServerCommandGetExportDatabase());
+    sharedCmdManager.registerCommand(new OServerCommandGetProfiler());
+    sharedCmdManager.registerCommand(new OServerCommandGetGephi());
+    sharedCmdManager.registerCommand(new OServerCommandPostBatch());
+    sharedCmdManager.registerCommand(new OServerCommandPostClass());
+    sharedCmdManager.registerCommand(new OServerCommandPostCommand());
+    sharedCmdManager.registerCommand(new OServerCommandPostDatabase());
+    sharedCmdManager.registerCommand(new OServerCommandPostDocument());
+    sharedCmdManager.registerCommand(new OServerCommandPostImportRecords());
+    sharedCmdManager.registerCommand(new OServerCommandPostProperty());
+    sharedCmdManager.registerCommand(new OServerCommandPostStudio());
+    sharedCmdManager.registerCommand(new OServerCommandPutDocument());
+    sharedCmdManager.registerCommand(new OServerCommandPutIndex());
+    sharedCmdManager.registerCommand(new OServerCommandDeleteClass());
+    sharedCmdManager.registerCommand(new OServerCommandDeleteDatabase());
+    sharedCmdManager.registerCommand(new OServerCommandDeleteDocument());
+    sharedCmdManager.registerCommand(new OServerCommandDeleteProperty());
+    sharedCmdManager.registerCommand(new OServerCommandDeleteIndex());
+    sharedCmdManager.registerCommand(new OServerCommandOptions());
+    sharedCmdManager.registerCommand(new OServerCommandFunction());
+    sharedCmdManager.registerCommand(new OServerCommandAction());
+
+    for (Object cmd : iStatelessCommands)
+      sharedCmdManager.registerCommand((OServerCommand) cmd);
+  }
+
 }

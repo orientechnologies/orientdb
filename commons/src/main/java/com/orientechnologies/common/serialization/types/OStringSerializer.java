@@ -119,7 +119,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    return 0; // To change body of implemented methods use File | Settings | File Templates.
+    return memory.getInt(pointer) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
   public boolean isFixedLength() {

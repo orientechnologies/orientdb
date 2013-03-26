@@ -35,7 +35,7 @@ public class OExecuteBlock extends OAbstractBlock {
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
 
-    final Object foreach = getField(iContext, iConfig, "foreach");
+    final Object foreach = getField(iContext, iConfig, "foreach", false);
     String returnType = (String) getFieldOfClass(iContext, iConfig, "returnType", String.class);
 
     returnValue = null;

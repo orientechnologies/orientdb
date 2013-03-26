@@ -24,6 +24,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -40,14 +42,14 @@ public class OServerNetworkListener extends Thread {
   private ServerSocket                      serverSocket;
   private InetSocketAddress                 inboundAddr;
   private Class<? extends ONetworkProtocol> protocolType;
-  private volatile boolean                  active = true;
-  private OServerCommand[]                  commands;
+  private volatile boolean                  active            = true;
+  private List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
+  private List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
   private int                               socketBufferSize;
   private OContextConfiguration             configuration;
   private OServer                           server;
   private ONetworkProtocol                  protocol;
 
-  @SuppressWarnings("unchecked")
   public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
       final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
@@ -60,18 +62,13 @@ public class OServerNetworkListener extends Thread {
     readParameters(iServer.getContextConfiguration(), iParameters);
 
     if (iCommands != null) {
-      // CREATE COMMANDS
-      commands = new OServerCommand[iCommands.length];
-      Constructor<OServerCommand> c;
       for (int i = 0; i < iCommands.length; ++i) {
-        try {
-          c = (Constructor<OServerCommand>) Class.forName(iCommands[i].implementation).getConstructor(
-              OServerCommandConfiguration.class);
-          commands[i] = c.newInstance(new Object[] { iCommands[i] });
-        } catch (Exception e) {
-          throw new IllegalArgumentException("Cannot create custom command invoking the constructor: "
-              + iCommands[i].implementation + "(" + iCommands[i] + ")", e);
-        }
+        if (iCommands[i].stateful)
+          // SAVE STATEFUL COMMAND CFG
+          statefulCommands.add(iCommands[i]);
+        else
+          // EARLY CREATE STATELESS COMMAND
+          statelessCommands.add(createCommand(iCommands[i]));
       }
     }
 
@@ -149,7 +146,7 @@ public class OServerNetworkListener extends Thread {
           protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
-          protocol.config(server, socket, configuration, commands);
+          protocol.config(server, socket, configuration, statelessCommands, statefulCommands);
 
         } catch (Throwable e) {
           if (active)
@@ -237,5 +234,17 @@ public class OServerNetworkListener extends Thread {
 
   public ONetworkProtocol getProtocol() {
     return protocol;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static OServerCommand createCommand(final OServerCommandConfiguration iCommand) {
+    try {
+      final Constructor<OServerCommand> c = (Constructor<OServerCommand>) Class.forName(iCommand.implementation).getConstructor(
+          OServerCommandConfiguration.class);
+      return c.newInstance(new Object[] { iCommand });
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + "("
+          + iCommand + ")", e);
+    }
   }
 }

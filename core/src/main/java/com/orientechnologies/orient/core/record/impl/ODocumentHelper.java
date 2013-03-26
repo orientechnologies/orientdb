@@ -281,21 +281,7 @@ public class ODocumentHelper {
         if (indexPart.length() == 0)
           return null;
 
-        Object index = indexPart;
-        if (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'')
-          index = OStringSerializerHelper.getStringContent(indexPart);
-        else if (indexPart.charAt(0) == '$') {
-          final Object ctxValue = iContext.getVariable(indexPart);
-          if (ctxValue == null)
-            return null;
-          index = ctxValue;
-        } else if (!Character.isDigit(indexPart.charAt(0)))
-          // GET FROM CURRENT VALUE
-          index = indexPart; // getFieldValue(value, indexPart);
-
         nextSeparatorPos = end;
-
-        final String indexAsString = index != null ? index.toString() : null;
 
         if (value instanceof OCommandContext)
           value = ((OCommandContext) value).getVariables();
@@ -303,6 +289,9 @@ public class ODocumentHelper {
         if (value instanceof OIdentifiable) {
           final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
               .getRecord() : null;
+
+          final Object index = getIndexPart(iContext, indexPart);
+          final String indexAsString = index != null ? index.toString() : null;
 
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
@@ -350,20 +339,26 @@ public class ODocumentHelper {
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
-          if (indexParts.size() == 1)
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexPart, ',',
+              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          if (indexParts.size() == 1) {
             // SINGLE VALUE
+            final Object index = getIndexPart(iContext, indexPart);
             value = ((Map<?, ?>) value).get(index);
-          else {
+          } else {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = ((Map<?, ?>) value).get(indexParts.get(i));
+              final Object index = getIndexPart(iContext, indexParts.get(i));
+              values[i] = ((Map<?, ?>) value).get(index);
             }
             value = values;
           }
         } else if (value instanceof Collection<?> || value.getClass().isArray()) {
           // MULTI VALUE
+          final Object index = getIndexPart(iContext, indexPart);
+          final String indexAsString = index != null ? index.toString() : null;
+
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
@@ -496,6 +491,21 @@ public class ODocumentHelper {
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;
+  }
+
+  protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
+    Object index = indexPart;
+    if (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'')
+      index = OStringSerializerHelper.getStringContent(indexPart);
+    else if (indexPart.charAt(0) == '$') {
+      final Object ctxValue = iContext.getVariable(indexPart);
+      if (ctxValue == null)
+        return null;
+      index = ctxValue;
+    } else if (!Character.isDigit(indexPart.charAt(0)))
+      // GET FROM CURRENT VALUE
+      index = indexPart;
+    return index;
   }
 
   @SuppressWarnings("unchecked")

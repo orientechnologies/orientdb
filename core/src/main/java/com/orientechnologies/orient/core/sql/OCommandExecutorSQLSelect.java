@@ -40,10 +40,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OFlattenIterator;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -411,12 +411,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (groupByFields.size() > 1) {
             // MULTI-FIELD FROUP BY
             final Object[] fields = new Object[groupByFields.size()];
-            for (int i = 0; i < groupByFields.size(); ++i)
-              fields[i] = doc.field(groupByFields.get(i));
-
+            for (int i = 0; i < groupByFields.size(); ++i) {
+              final String field = groupByFields.get(i);
+              if (field.startsWith("$"))
+                fields[i] = context.getVariable(field);
+              else
+                fields[i] = doc.field(field);
+            }
             fieldValue = fields;
-          } else
-            fieldValue = doc.field(groupByFields.get(0));
+          } else {
+            final String field = groupByFields.get(0);
+            if (field != null) {
+              if (field.startsWith("$"))
+                fieldValue = context.getVariable(field);
+              else
+                fieldValue = doc.field(field);
+            }
+          }
         }
 
         getProjectionGroup(fieldValue).applyRecord(iRecord);
@@ -939,7 +950,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
-    if (tempResult instanceof OFlattenIterator) {
+    if (tempResult instanceof OMultiCollectionIterator) {
       final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
       for (OIdentifiable o : tempResult)
         list.add(o);
@@ -973,7 +984,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } else {
-      OFlattenIterator finalResult = new OFlattenIterator();
+      OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
       finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
         if (flattenTarget instanceof OSQLFilterItem)
@@ -988,8 +999,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             finalResult.add((Collection<OIdentifiable>) fieldValue);
           } else if (fieldValue instanceof Map<?, ?>) {
             finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
-          } else if (fieldValue instanceof OFlattenIterator) {
-            finalResult = (OFlattenIterator) fieldValue;
+          } else if (fieldValue instanceof OMultiCollectionIterator) {
+            finalResult = (OMultiCollectionIterator<OIdentifiable>) fieldValue;
           } else if (fieldValue instanceof OIdentifiable)
             finalResult.add((OIdentifiable) fieldValue);
       }
@@ -1213,7 +1224,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       tempResult = new ArrayList<OIdentifiable>();
 
       for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
-        if (g.getKey() != null || groupedResult.size() == 1) {
+        if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {
           final ODocument doc = g.getValue().getResult();
           if (doc != null && !doc.isEmpty())
             ((List<OIdentifiable>) tempResult).add(doc);

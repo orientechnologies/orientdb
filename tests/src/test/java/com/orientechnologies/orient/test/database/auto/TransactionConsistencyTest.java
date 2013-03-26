@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import org.testng.Assert;
@@ -41,6 +43,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
 
 @Test
 public class TransactionConsistencyTest {
@@ -727,8 +732,8 @@ public class TransactionConsistencyTest {
         ODocument edge = new ODocument("TREdge");
         edge.field("in", person.getIdentity());
         edge.field("out", inserted.elementAt(i - 1));
-        ((HashSet<ODocument>) person.field("out")).add(edge);
-        ((HashSet<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
+        ((Set<ODocument>) person.field("out")).add(edge);
+        ((Set<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
         edge.save();
       }
       inserted.add(person);
@@ -759,8 +764,8 @@ public class TransactionConsistencyTest {
           ODocument edge = new ODocument("TREdge");
           edge.field("in", person.getIdentity());
           edge.field("out", inserted2.elementAt(i - 1));
-          ((HashSet<ODocument>) person.field("out")).add(edge);
-          ((HashSet<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
+          ((Set<ODocument>) person.field("out")).add(edge);
+          ((Set<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
           edge.save();
         }
         inserted2.add(person);
@@ -821,4 +826,67 @@ public class TransactionConsistencyTest {
       db.close();
     }
   }
+
+  /**
+   * When calling .remove(o) on a collection, the row corresponding to o is deleted and not restored when the transaction is rolled
+   * back.
+   * 
+   * Commented code after data model change to work around this problem.
+   */
+  @SuppressWarnings("unused")
+  @Test
+  public void testRollbackWithRemove() {
+    // check if the database exists and clean before running tests
+    OObjectDatabaseTx database = new OObjectDatabaseTx(url);
+    database.open("admin", "admin");
+
+    try {
+      Account account = new Account();
+      account.setName("John Grisham");
+      account = database.save(account);
+
+      Address address1 = new Address();
+      address1.setStreet("Mulholland drive");
+
+      Address address2 = new Address();
+      address2.setStreet("Via Veneto");
+
+      List<Address> addresses = new ArrayList<Address>();
+      addresses.add(address1);
+      addresses.add(address2);
+      account.setAddresses(addresses);
+
+      account = database.save(account);
+
+      database.commit();
+
+      String originalName = account.getName();
+
+      database.begin(TXTYPE.OPTIMISTIC);
+
+      Assert.assertEquals(account.getAddresses().size(), 2);
+      account.getAddresses().remove(1); // delete one of the objects in the Books collection to see how rollback behaves
+      Assert.assertEquals(account.getAddresses().size(), 1);
+      account.setName("New Name"); // change an attribute to see if the change is rolled back
+      account = database.save(account);
+
+      Assert.assertEquals(account.getAddresses().size(), 1); // before rollback this is fine because one of the books was removed
+
+      database.rollback(); // rollback the transaction
+
+      account = database.reload(account, true); // ignore cache, get a copy of author from the datastore
+      Assert.assertEquals(account.getAddresses().size(), 2); // this is fine, author still linked to 2 books
+      Assert.assertEquals(account.getName(), originalName); // name is restored
+
+      int bookCount = 0;
+      for (Address b : database.browseClass(Address.class)) {
+        if (b.getStreet().equals("Mulholland drive") || b.getStreet().equals("Via Veneto"))
+          bookCount++;
+      }
+      Assert.assertEquals(bookCount, 2); // this fails, only 1 entry in the datastore :(
+    } finally {
+      database.close();
+    }
+  }
+
 }

@@ -1822,13 +1822,12 @@ public class CRUDObjectPhysicalTest {
     List<Profile> result = database.query(query, params);
     Assert.assertTrue(result.size() != 0);
 
-
     result = database.query(new OSQLSynchQuery<Profile>("select from Profile where followings in (:who)"), result);
     Assert.assertTrue(result.size() != 0);
 
     database.close();
   }
-  
+
   @Test
   public void queryConcatAttrib() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
@@ -2007,4 +2006,18 @@ public class CRUDObjectPhysicalTest {
 
     database.close();
   }
+
+  @Test
+  public void queryById() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
+
+    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0).getId());
+
+    Assert.assertTrue(result2.size() != 0);
+
+    database.close();
+  }
+
 }

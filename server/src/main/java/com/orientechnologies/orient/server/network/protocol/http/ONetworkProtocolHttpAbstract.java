@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -23,6 +25,8 @@ import java.net.URLDecoder;
 import java.util.Date;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
@@ -64,7 +68,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private String[]                            additionalResponseHeaders;
   private String                              listeningAddress  = "?";
 
-  protected static OHttpNetworkCommandManager cmdManager;
+  protected static OHttpNetworkCommandManager sharedCmdManager;
+  protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.getThreadGroup(), "IO-HTTP");
@@ -72,7 +77,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
   @Override
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
-      final Object[] commands) throws IOException {
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
     if (addHeaders != null)
       additionalResponseHeaders = addHeaders.split(";");
@@ -110,6 +115,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
         connection.data.serverInfo, request.sessionId, callbackF);
+    if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+      response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
+    }
 
     final long begin = System.currentTimeMillis();
 
@@ -347,7 +355,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Expect: 100-continue"))
             // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY
             sendTextContent(100, null, null, null, null);
-
+          else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_ENCODING))
+            iRequest.contentEncoding = line.substring(OHttpUtils.HEADER_CONTENT_ENCODING.length());
         }
 
         // CONSUME /r or /n
@@ -378,7 +387,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           channel.read(buffer, 1, contentLength - 1);
 
-          iRequest.content = new String(buffer);
+          if (iRequest.contentEncoding != null && iRequest.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+            iRequest.content = this.deCompress(buffer);
+          } else {
+            iRequest.content = new String(buffer);
+          }
           return;
         }
       } else
@@ -498,6 +511,40 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
   }
 
+  protected String deCompress(byte[] zipBytes) {
+    if (zipBytes == null || zipBytes.length == 0)
+      return null;
+    GZIPInputStream gzip = null;
+    ByteArrayInputStream in = null;
+    ByteArrayOutputStream baos = null;
+    try {
+      in = new ByteArrayInputStream(zipBytes);
+      gzip = new GZIPInputStream(in);
+      byte[] buffer = new byte[1024];
+      baos = new ByteArrayOutputStream();
+      int len = -1;
+      while ((len = gzip.read(buffer, 0, buffer.length)) != -1) {
+        baos.write(buffer, 0, len);
+      }
+      String newstr = new String(baos.toByteArray(), "UTF-8");
+      return newstr;
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    } finally {
+      try {
+        if (gzip != null)
+          gzip.close();
+        if (in != null)
+          in.close();
+        if (baos != null)
+          baos.close();
+      } catch (Exception ex) {
+
+      }
+    }
+    return null;
+  }
+
   protected void connectionClosed() {
     Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1);
     sendShutdown();
@@ -575,22 +622,5 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
   public OHttpNetworkCommandManager getCommandManager() {
     return cmdManager;
-  }
-
-  /**
-   * Initializes the protocol ony the first time creating the static commands. This is to avoid a change in the server configuration
-   * file.
-   * 
-   * @param commands
-   */
-  protected void init(final Object[] commands) {
-    if (commands != null && commands.length > 0)
-      synchronized (getClass()) {
-        if (cmdManager == null) {
-          cmdManager = new OHttpNetworkCommandManager();
-          for (Object cmd : commands)
-            cmdManager.registerCommand(cmd);
-        }
-      }
   }
 }

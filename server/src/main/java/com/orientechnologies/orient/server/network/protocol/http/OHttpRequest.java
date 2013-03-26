@@ -38,6 +38,7 @@ public class OHttpRequest {
   public String                             httpMethod;
   public String                             httpVersion;
   public String                             contentType;
+  public String                             contentEncoding;
   public String                             content;
   public OHttpMultipartBaseInputStream      multipartStream;
   public String                             boundary;

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -751,8 +752,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   protected void deleteOrphans(final OObjectProxyMethodHandler handler) {
     for (ORID orphan : handler.getOrphans()) {
-      deleteCascade((ODocument) underlying.load(orphan));
-      underlying.delete(orphan);
+      final ODocument doc = orphan.getRecord();
+      deleteCascade(doc);
+      underlying.delete(doc);
     }
     handler.getOrphans().clear();
   }

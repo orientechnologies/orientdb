@@ -15,11 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
@@ -33,10 +34,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB>, OOrientListener {
 
-  private final ConcurrentHashMap<String, OResourcePool<String, DB>> pools = new ConcurrentHashMap<String, OResourcePool<String, DB>>();
-  private int                                                        maxSize;
-  private int                                                        timeout;
-  protected Object                                                   owner;
+  private final HashMap<String, OResourcePool<String, DB>> pools = new HashMap<String, OResourcePool<String, DB>>();
+  private int                                              maxSize;
+  private int                                              timeout;
+  protected Object                                         owner;
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize) {
     this(iOwner, iMinSize, iMaxSize, OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.getValueAsInteger());
@@ -57,28 +58,31 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
       throws OLockException {
     final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
 
-    OResourcePool<String, DB> pool = pools.get(dbPooledName);
-    if (pool == null)
-      // CREATE A NEW ONE
-      pool = new OResourcePool<String, DB>(maxSize, this);
+    synchronized (pools) {
+      OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        // CREATE A NEW ONE
+        pool = new OResourcePool<String, DB>(maxSize, this);
 
-    final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
+      final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
 
-    // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
-    pools.putIfAbsent(dbPooledName, pool);
-
-    return db;
+      // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
+      pools.put(dbPooledName, pool);
+      return db;
+    }
   }
 
   public void release(final DB iDatabase) {
     final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
         + iDatabase.getURL() : iDatabase.getURL();
 
-    final OResourcePool<String, DB> pool = pools.get(dbPooledName);
-    if (pool == null)
-      throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
+    synchronized (pools) {
+      final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
 
-    pool.returnResource(iDatabase);
+      pool.returnResource(iDatabase);
+    }
   }
 
   public DB reuseResource(final String iKey, final DB iValue) {
@@ -86,22 +90,24 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
   }
 
   public Map<String, OResourcePool<String, DB>> getPools() {
-    return pools;
+    return Collections.unmodifiableMap(pools);
   }
 
   /**
    * Closes all the databases.
    */
   public void close() {
-    for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
-      for (DB db : pool.getValue().getResources()) {
-        pool.getValue().close();
-        try {
-          OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
-          ((ODatabasePooled) db).forceClose();
-          OLogManager.instance().debug(this, "OK", db.getName());
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Error: %d", e.toString());
+    synchronized (pools) {
+      for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
+        for (DB db : pool.getValue().getResources()) {
+          pool.getValue().close();
+          try {
+            OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+            ((ODatabasePooled) db).forceClose();
+            OLogManager.instance().debug(this, "OK", db.getName());
+          } catch (Exception e) {
+            OLogManager.instance().debug(this, "Error: %d", e.toString());
+          }
         }
       }
     }
@@ -112,22 +118,24 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
   }
 
   public void remove(final String iPoolName) {
-    final OResourcePool<String, DB> pool = pools.get(iPoolName);
+    synchronized (pools) {
+      final OResourcePool<String, DB> pool = pools.get(iPoolName);
 
-    if (pool != null) {
-      for (DB db : pool.getResources()) {
-        if (db.getStorage() != null && db.getStorage().getStatus() == OStorage.STATUS.OPEN)
-          try {
-            OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
-            ((ODatabasePooled) db).forceClose();
-            OLogManager.instance().debug(this, "OK", db.getName());
-          } catch (Exception e) {
-            OLogManager.instance().debug(this, "Error: %d", e.toString());
-          }
+      if (pool != null) {
+        for (DB db : pool.getResources()) {
+          if (db.getStorage().getStatus() == OStorage.STATUS.OPEN)
+            try {
+              OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+              ((ODatabasePooled) db).forceClose();
+              OLogManager.instance().debug(this, "OK", db.getName());
+            } catch (Exception e) {
+              OLogManager.instance().debug(this, "Error: %d", e.toString());
+            }
 
+        }
+        pool.close();
+        pools.remove(iPoolName);
       }
-      pool.close();
-      pools.remove(iPoolName);
     }
   }
 
@@ -144,21 +152,23 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements ORe
   public void onStorageUnregistered(final OStorage iStorage) {
     final String storageURL = iStorage.getURL();
 
-    Set<String> poolToClose = null;
+    synchronized (pools) {
+      Set<String> poolToClose = null;
 
-    for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
-      final int pos = e.getKey().indexOf("@");
-      final String dbName = e.getKey().substring(pos + 1);
-      if (storageURL.equals(dbName)) {
-        if (poolToClose == null)
-          poolToClose = new HashSet<String>();
+      for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
+        final int pos = e.getKey().indexOf("@");
+        final String dbName = e.getKey().substring(pos + 1);
+        if (storageURL.equals(dbName)) {
+          if (poolToClose == null)
+            poolToClose = new HashSet<String>();
 
-        poolToClose.add(e.getKey());
+          poolToClose.add(e.getKey());
+        }
       }
-    }
 
-    if (poolToClose != null)
-      for (String pool : poolToClose)
-        remove(pool);
+      if (poolToClose != null)
+        for (String pool : poolToClose)
+          remove(pool);
+    }
   }
 }

@@ -26,6 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -43,12 +49,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -301,6 +301,23 @@ public class SQLSelectTest {
         "select from Profile where customReferences[second]['name'] like 'Ja%'"));
     Assert.assertEquals(resultset.size(), 1);
     Assert.assertEquals(resultset.get(0).getIdentity(), doc.getIdentity());
+
+    resultset = database.query(new OSQLSynchQuery<ODocument>(
+        "select customReferences['second', 'first'] from Profile where customReferences.size() = 2"));
+    Assert.assertEquals(resultset.size(), 1);
+
+    if (resultset.get(0).field("customReferences").getClass().isArray()) {
+      Object[] customReferencesBack = resultset.get(0).field("customReferences");
+      Assert.assertEquals(customReferencesBack.length, 2);
+      Assert.assertTrue(customReferencesBack[0] instanceof ODocument);
+      Assert.assertTrue(customReferencesBack[1] instanceof ODocument);
+    } else if (resultset.get(0).field("customReferences") instanceof List) {
+      List<ODocument> customReferencesBack = resultset.get(0).field("customReferences");
+      Assert.assertEquals(customReferencesBack.size(), 2);
+      Assert.assertTrue(customReferencesBack.get(0) instanceof ODocument);
+      Assert.assertTrue(customReferencesBack.get(1) instanceof ODocument);
+    } else
+      Assert.assertTrue(false, "Wrong type received: " + resultset.get(0).field("customReferences"));
 
     resultset = database.query(new OSQLSynchQuery<ODocument>(
         "select customReferences[second]['name'] from Profile where customReferences[second]['name'] is not null"));
@@ -1470,4 +1487,14 @@ public class SQLSelectTest {
 
     database.getMetadata().getSchema().dropClass("Place");
   }
+
+  @Test
+  public void testMapKeys() {
+    Map<String, Object> params = new HashMap<String, Object>();
+    params.put("id", 4);
+    final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select * from company where id = :id"), params);
+
+    Assert.assertEquals(result.size(), 1);
+  }
+
 }

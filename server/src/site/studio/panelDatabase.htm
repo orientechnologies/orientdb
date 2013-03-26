@@ -17,6 +17,7 @@
 		<div id="tabs-db">
 			<ul>
 				<li><a href="#tab-db-schema"><span>Schema</span> </a></li>
+				<li><a href="#tab-db-uml"><span>UML Class Diagram</span> </a></li>
 				<li><a href="#tab-db-structure"><span>Structure</span> </a></li>
 				<li><a href="#tab-db-allocation"><span>Allocation</span> </a></li>
 				<li><a href="#tab-db-security"><span>Security</span> </a></li>
@@ -179,6 +180,18 @@
 						</td>
 					</tr>
 				</table>
+			</div>
+			<div id="tab-db-uml">
+				<p>This UML class diagram is renderd using <a href="http://yuml.me">YUML Web Service</a> and works only if you're connected to the Internet.</p>
+				<p>Display Class attributes: <input type="checkbox" id="umlDisplayAttributes" checked="true" onClick="displayUML()">&nbsp;
+				Display only connected classes: <input type="checkbox" id="umlDisplayOnlyConnected" checked="true" onClick="displayUML()">&nbsp;
+				Limit classes to: <input type="input" id="umlLimitClasses" value="20" onChange="displayUML()" class="input-mini">&nbsp;
+				Diagram Format: <select id="umlDisplayFormat" onchange="displayUML()">
+					<option value=".svg" selected>SVG</option>
+					<option value="">PNG</option>
+				</select></p>
+				<div id="uml-diagram">
+				</div>
 			</div>
 			<div id="tab-db-structure">
 				<table style="width: 100%;" cellpadding='5'>
@@ -1256,8 +1269,7 @@
 								$
 										.ajax({
 											type : "GET",
-											url : urlPrefix
-													+ 'allocation/'
+											url : '/allocation/'
 													+ $('#header-database')
 															.val(),
 											context : this,
@@ -1307,6 +1319,8 @@
 											}
 										});
 
+							} else if (ui.tab.textContent.indexOf('UML') > -1) {
+								displayUML();
 							}
 						}
 					});
@@ -1349,7 +1363,92 @@
 		}
 	}
 
+	function displayUML(){
+		var umlDisplayAttributes = $("#umlDisplayAttributes").is(':checked');
+		var umlDisplayOnlyConnected = $("#umlDisplayOnlyConnected").is(':checked');
+		var umlLimitClasses = Number($("#umlLimitClasses").val());
+		var umlDisplayFormat = $("#umlDisplayFormat").val();
+
+		var umlURL = "";
+
+		var classIdx = 0;
+		for (cls in databaseInfo['classes']) {
+			var clazz = databaseInfo['classes'][cls];
+
+			if( umlDisplayOnlyConnected ){
+				if( clazz['properties'] == null || clazz['properties'].length == 0 )
+					// SKIPT IT
+					continue;
+
+				var linked = false;
+				for( p in clazz['properties'] )	{
+					if( clazz['properties'][p].type.indexOf('LINK') == 0 ||
+						clazz['properties'][p].type.indexOf('EMBEDDED') == 0 ){
+						linked = true;
+						break;
+					}
+				}
+				if(!linked)
+					// SKIPT IT
+					continue;
+			}
+
+			if( classIdx++ > umlLimitClasses )
+				break;
+
+			var clsName = clazz.name;
+
+			if (umlURL.length > 0)
+				umlURL += ", ";
+
+			umlURL += "[" + clsName;
+			var links = "";
+
+			var propIdx = 0;
+			for( p in clazz['properties'] )	{
+				if( clazz['properties'][p].type.indexOf('LINK') == 0 ) {
+					links += ", [" + clsName + "]-" + clazz['properties'][p].name;
+
+					if( clazz['properties'][p].type == 'LINK' )
+						links += "1>[" + clazz['properties'][p].linkedClass;
+					else 
+						links += "*>[" + clazz['properties'][p].linkedClass;
+					links += "]";
+					
+				} else if( clazz['properties'][p].type.indexOf('EMBEDDED') == 0 ) {
+					links += ", [" + clsName + "]++-" + clazz['properties'][p].name;
+
+					if( clazz['properties'][p].type == 'EMBEDDED' )
+						links += "1>[" + clazz['properties'][p].linkedClass;
+					else 
+						links += "*>[" + clazz['properties'][p].linkedClass;
+					links += "]";
+					
+				} else if( umlDisplayAttributes ) {
+					if( propIdx++ == 0 )
+						umlURL += "|";
+					else
+						umlURL += ";";
+					umlURL += "+"+clazz['properties'][p].name;											
+				}
+			}
+
+			umlURL += "]";
+
+			if( clazz.superClass != "" ) {
+				links += ", [" + clazz.superClass + "]^-[" + clsName + "]";
+			}
+
+			umlURL += links;
+		}
+
+		umlURL += umlDisplayFormat;
+
+		$("#uml-diagram").empty().append("<img src='http://yuml.me/diagram/scruffy/class/" + umlURL + "'>");		
+	}
+
 	showDatabaseInfo();
+	$('#tabs-db').tabs('select', 0);
 
 	$(function() {
 		initTooltips();

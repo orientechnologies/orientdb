@@ -149,6 +149,11 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   }
 
   @SuppressWarnings("unchecked")
+  protected <T> T getField(final OCommandContext iContext, final ODocument iConfig, final String iFieldName, final boolean iCopy) {
+    return (T) resolveValue(iContext, iConfig.field(iFieldName), iCopy);
+  }
+
+  @SuppressWarnings("unchecked")
   protected <T> T getFieldOrDefault(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
       final T iDefaultValue) {
     final Object f = iConfig.field(iFieldName);
@@ -157,10 +162,15 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     return (T) resolveValue(iContext, f, true);
   }
 
-  @SuppressWarnings("unchecked")
   protected <T> T getFieldOfClass(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
       Class<? extends T> iExpectedClass) {
-    final Object f = resolveValue(iContext, iConfig.field(iFieldName), true);
+    return getFieldOfClass(iContext, iConfig, iFieldName, iExpectedClass, true);
+  }
+
+  @SuppressWarnings("unchecked")
+  protected <T> T getFieldOfClass(final OCommandContext iContext, final ODocument iConfig, final String iFieldName,
+      Class<? extends T> iExpectedClass, final boolean iCopy) {
+    final Object f = resolveValue(iContext, iConfig.field(iFieldName), iCopy);
     if (f != null)
       if (!iExpectedClass.isAssignableFrom(f.getClass()))
         throw new OProcessException("Block '" + getName() + "' defines the field '" + iFieldName + "' of type '" + f.getClass()

@@ -1,17 +1,20 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import java.util.Random;
-
-import org.testng.annotations.Test;
-
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -19,8 +22,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  */
 public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
-  private OUniqueHashIndex    hashIndex = new OUniqueHashIndex();
-  private Random              random    = new Random();
+  private OUniqueHashIndex    hashIndex;
+  private MersenneTwisterFast random = new MersenneTwisterFast();
+  private OLRUCache           buffer;
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -41,6 +45,12 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
+    long maxMemory = 2L * 1024 * 1024 * 1024;
+    System.out.println("Max memory :" + maxMemory);
+    buffer = new OLRUCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
+        (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    hashIndex = new OUniqueHashIndex((OStorageLocal) databaseDocumentTx.getStorage());
+
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.STRING), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);
   }
@@ -53,7 +63,9 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   }
 
   @Override
+  @Test(enabled = false)
   public void deinit() throws Exception {
-    hashIndex.close();
+    hashIndex.delete();
+    databaseDocumentTx.drop();
   }
 }

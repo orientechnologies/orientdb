@@ -398,8 +398,31 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public ORecordMetadata getRecordMetadata(ORID rid) {
-    throw new UnsupportedOperationException("getRecordMetadata()");
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
+
+    do {
+      try {
+        OChannelBinaryClient network = null;
+        try {
+          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_METADATA);
+          network.writeRID(rid);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network);
+          final ORID responseRid = network.readRID();
+          final ORecordVersion responseVersion = network.readVersion();
+
+          return new ORecordMetadata(responseRid, responseVersion);
+        } finally {
+          endResponse(network);
+        }
+      } catch (Exception e) {
+        handleException("Error on read record " + rid, e);
+      }
+    } while (true);
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,

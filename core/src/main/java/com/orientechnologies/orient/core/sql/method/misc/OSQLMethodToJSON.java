@@ -30,12 +30,15 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
     public static final String NAME = "tojson";
 
     public OSQLMethodToJSON() {
-        super(NAME);
+        super(NAME,0,1);
     }
 
     @Override
     public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        ioResult = ioResult != null && ioResult instanceof ODocument ? ((ODocument) ioResult).toJSON() : null;
+        ioResult = 
+        		ioResult != null && ioResult instanceof ODocument ? 
+        				iMethodParams.length==1 ? ((ODocument) ioResult).toJSON(((String)iMethodParams[0]).replace("\"","")) : ((ODocument) ioResult).toJSON()  
+        		: null;
         return ioResult;
     }
 }

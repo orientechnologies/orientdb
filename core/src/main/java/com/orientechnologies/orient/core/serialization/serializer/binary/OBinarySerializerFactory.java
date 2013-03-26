@@ -40,6 +40,8 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterPositionSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPositionSerializer;
 
 /**
  * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
@@ -84,11 +86,17 @@ public class OBinarySerializerFactory {
     registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
     registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
+    registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
+    registerSerializer(OClusterPositionSerializer.INSTANCE, null);
+
     // STATEFUL SERIALIER
     registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
   }
 
   public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
+    if (serializerIdMap.containsKey(iInstance.getId()))
+      throw new IllegalArgumentException("Binary serializer with id " + iInstance.getId() + " has been already registered.");
+
     serializerIdMap.put(iInstance.getId(), iInstance);
     if (iType != null)
       serializerTypeMap.put(iType, iInstance);
@@ -96,6 +104,9 @@ public class OBinarySerializerFactory {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer> iClass) {
+    if (serializerClassesIdMap.containsKey(iId))
+      throw new IllegalStateException("Serializer with id " + iId + " has been already registered.");
+
     serializerClassesIdMap.put(iId, (Class<? extends OBinarySerializer<?>>) iClass);
   }
 

@@ -29,80 +29,79 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class ConcurrentQueriesTest {
-	private final static int	THREADS	= 10;
-	protected String					url;
+  private final static int THREADS = 10;
+  protected String         url;
 
-	static class CommandExecutor implements Runnable {
+  static class CommandExecutor implements Runnable {
 
-		String	url;
-		String	threadName;
+    String url;
+    String threadName;
 
-		public CommandExecutor(String url, String iThreadName) {
-			super();
-			this.url = url;
-			threadName = iThreadName;
-		}
+    public CommandExecutor(String url, String iThreadName) {
+      super();
+      this.url = url;
+      threadName = iThreadName;
+    }
 
-		public void run() {
-			try {
-				for (int i = 0; i < 50; i++) {
-					ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
-					try {
-						while (true) {
-							try {
-								List<ODocument> result = db.command(new OCommandSQL("select from Concurrent")).execute();
-								System.out.println("Thread " + threadName + ", step " + i + ", result = " + result.size());
-								break;
-							} catch (ONeedRetryException e) {
-								// e.printStackTrace();
-								System.out.println("Retry...");
-							}
-						}
-					} finally {
-						db.close();
-					}
-				}
+    public void run() {
+      try {
+        for (int i = 0; i < 50; i++) {
+          ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+          try {
+            while (true) {
+              try {
+                List<ODocument> result = db.command(new OCommandSQL("select from Concurrent")).execute();
+                break;
+              } catch (ONeedRetryException e) {
+                // e.printStackTrace();
+                System.out.println("Retry...");
+              }
+            }
+          } finally {
+            db.close();
+          }
+        }
 
-			} catch (Throwable e) {
-				e.printStackTrace();
-			}
-		}
-	}
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }
+  }
 
-	@Parameters(value = "url")
-	public ConcurrentQueriesTest(@Optional(value = "memory:test") String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = "url")
+  public ConcurrentQueriesTest(@Optional(value = "memory:test") String iURL) {
+    url = iURL;
+  }
 
-	@BeforeClass
-	public void init() {
-		if ("memory:test".equals(url))
-			new ODatabaseDocumentTx(url).create().close();
+  @BeforeClass
+  public void init() {
+    if ("memory:test".equals(url))
+      new ODatabaseDocumentTx(url).create().close();
 
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
-		db.getMetadata().getSchema().createClass("Concurrent");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+    db.getMetadata().getSchema().createClass("Concurrent");
 
-		for (int i = 0; i < 1000; ++i) {
-			db.newInstance("Concurrent").field("test", i).save();
-		}
-	}
+    for (int i = 0; i < 1000; ++i) {
+      db.newInstance("Concurrent").field("test", i).save();
+    }
+  }
 
-	@Test
-	public void concurrentCommands() throws Exception {
-		Thread[] threads = new Thread[THREADS];
-		System.out.println("Spanning " + THREADS + " threads...");
-		for (int i = 0; i < THREADS; ++i) {
-			threads[i] = new Thread(new CommandExecutor(url, "thread" + i), "ConcurrentTest1");
-		}
+  @Test
+  public void concurrentCommands() throws Exception {
+    Thread[] threads = new Thread[THREADS];
+    System.out.println("Spanning " + THREADS + " threads...");
+    for (int i = 0; i < THREADS; ++i) {
+      threads[i] = new Thread(new CommandExecutor(url, "thread" + i), "ConcurrentTest1");
+    }
 
-		System.out.println("Starting " + THREADS + " threads...");
-		for (int i = 0; i < THREADS; ++i) {
-			threads[i].start();
-		}
+    System.out.println("Starting " + THREADS + " threads...");
+    for (int i = 0; i < THREADS; ++i) {
+      threads[i].start();
+    }
 
-		System.out.println("Waiting for " + THREADS + " threads...");
-		for (int i = 0; i < THREADS; ++i) {
-			threads[i].join();
-		}
-	}
+    System.out.println("Waiting for " + THREADS + " threads...");
+    for (int i = 0; i < THREADS; ++i) {
+      threads[i].join();
+    }
+  }
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.processor.block;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,7 +65,23 @@ public class OLetBlock extends OAbstractBlock {
 
         v = flatMultivalues(iContext, copy, flatMultivalues, v);
 
-        assignVariable(iContext, name, v);
+        if (target != null) {
+          if (OMultiValue.isMultiValue(v)) {
+            for (int i = 0; i < OMultiValue.getSize(v); ++i) {
+              final Object fieldName = OMultiValue.getValue(v, i);
+
+              if (fieldName != null && !((ODocument) target).containsField(fieldName.toString())) {
+                debug(iContext, "Set value %s in document field '%s'", null, fieldName);
+                ((ODocument) target).field(fieldName.toString(), (Object) null);
+              }
+            }
+          }
+
+          if (name != null)
+            assignVariable(iContext, name, target);
+
+        } else
+          assignVariable(iContext, name, v);
       }
     }
 
