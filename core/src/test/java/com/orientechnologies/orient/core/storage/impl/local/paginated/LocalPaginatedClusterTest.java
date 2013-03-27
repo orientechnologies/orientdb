@@ -7,7 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -56,7 +59,7 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    diskCache = new OLRUCache(200 * 1024 * 1024, directMemory, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(),
+    diskCache = new OLRUCache(2L * 1024 * 1024 * 1024, directMemory, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(),
         storage, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
@@ -123,8 +126,12 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testAddManySmallRecords() throws IOException {
-    final int records = 1000;
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
+    final int records = 10000;
+
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    System.out.println("testAddManySmallRecords seed : " + seed);
+
     Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
 
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -152,8 +159,13 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testAddManyBigRecords() throws IOException {
-    final int records = 1000;
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
+    final int records = 10000;
+
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testAddManyBigRecords seed : " + seed);
+
     Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
 
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -181,8 +193,12 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testAddManyRecords() throws IOException {
-    final int records = 1000;
-    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(0);
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testAddManyRecords seed : " + seed);
+
     Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
 
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -207,5 +223,231 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(rawBuffer.buffer, entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
+  }
+
+  public void testRemoveHalfSmallRecords() throws IOException {
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testRemoveHalfSmallRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(OLocalPage.MAX_RECORD_SIZE - 1) + 1;
+      byte[] smallRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(smallRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, smallRecord);
+    }
+
+    int deletedRecords = 0;
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<OClusterPosition> deletedPositions = new HashSet<OClusterPosition>();
+    Iterator<OClusterPosition> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      OClusterPosition clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        deletedPositions.add(clusterPosition);
+        Assert.assertTrue(paginatedCluster.deleteRecord(clusterPosition));
+        deletedRecords++;
+
+        Assert.assertEquals(records - deletedRecords, paginatedCluster.getEntries());
+
+        positionIterator.remove();
+      }
+    }
+
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+    for (OClusterPosition deletedPosition : deletedPositions) {
+      Assert.assertNull(paginatedCluster.readRecord(deletedPosition));
+      Assert.assertFalse(paginatedCluster.deleteRecord(deletedPosition));
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.version, recordVersion);
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
+  }
+
+  public void testRemoveHalfBigRecords() throws IOException {
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testRemoveHalfBigRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(2 * OLocalPage.MAX_RECORD_SIZE) + OLocalPage.MAX_RECORD_SIZE + 1;
+
+      byte[] bigRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(bigRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, bigRecord);
+    }
+
+    int deletedRecords = 0;
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<OClusterPosition> deletedPositions = new HashSet<OClusterPosition>();
+    Iterator<OClusterPosition> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      OClusterPosition clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        deletedPositions.add(clusterPosition);
+        Assert.assertTrue(paginatedCluster.deleteRecord(clusterPosition));
+        deletedRecords++;
+
+        Assert.assertEquals(records - deletedRecords, paginatedCluster.getEntries());
+
+        positionIterator.remove();
+      }
+    }
+
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+    for (OClusterPosition deletedPosition : deletedPositions) {
+      Assert.assertNull(paginatedCluster.readRecord(deletedPosition));
+      Assert.assertFalse(paginatedCluster.deleteRecord(deletedPosition));
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.version, recordVersion);
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
+  }
+
+  public void testRemoveHalfRecords() throws IOException {
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testRemoveHalfRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(3 * OLocalPage.MAX_RECORD_SIZE) + 1;
+
+      byte[] bigRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(bigRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, bigRecord);
+    }
+
+    int deletedRecords = 0;
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+    Set<OClusterPosition> deletedPositions = new HashSet<OClusterPosition>();
+    Iterator<OClusterPosition> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      OClusterPosition clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        deletedPositions.add(clusterPosition);
+        Assert.assertTrue(paginatedCluster.deleteRecord(clusterPosition));
+        deletedRecords++;
+
+        Assert.assertEquals(records - deletedRecords, paginatedCluster.getEntries());
+
+        positionIterator.remove();
+      }
+    }
+
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+    for (OClusterPosition deletedPosition : deletedPositions) {
+      Assert.assertNull(paginatedCluster.readRecord(deletedPosition));
+      Assert.assertFalse(paginatedCluster.deleteRecord(deletedPosition));
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.version, recordVersion);
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assert.assertEquals(rawBuffer.recordType, 2);
+    }
+  }
+
+  public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
+    final int records = 10000;
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+
+    System.out.println("testRemoveHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(3 * OLocalPage.MAX_RECORD_SIZE) + 1;
+
+      byte[] bigRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(bigRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, bigRecord);
+    }
+
+    int deletedRecords = 0;
+    Assert.assertEquals(records, paginatedCluster.getEntries());
+
+    Iterator<OClusterPosition> positionIterator = positionRecordMap.keySet().iterator();
+    while (positionIterator.hasNext()) {
+      OClusterPosition clusterPosition = positionIterator.next();
+      if (mersenneTwisterFast.nextBoolean()) {
+        Assert.assertTrue(paginatedCluster.deleteRecord(clusterPosition));
+        deletedRecords++;
+
+        Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+
+        positionIterator.remove();
+      }
+    }
+
+    Assert.assertEquals(paginatedCluster.getEntries(), records - deletedRecords);
+
+    for (int i = 0; i < records / 2; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(3 * OLocalPage.MAX_RECORD_SIZE) + 1;
+
+      byte[] bigRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(bigRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, bigRecord);
+    }
+
+    Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - deletedRecords));
   }
 }

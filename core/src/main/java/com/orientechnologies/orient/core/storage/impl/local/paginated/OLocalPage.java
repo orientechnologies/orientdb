@@ -37,7 +37,7 @@ public class OLocalPage {
   private static final int    NEXT_PAGE_OFFSET           = 0;
   private static final int    PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int    FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int    FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int    FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    FREE_SPACE_COUNTER_OFFSET  = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    ENTRIES_COUNT_OFFSET       = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -274,6 +274,19 @@ public class OLocalPage {
 
   public int getFreeSpace() {
     return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + FREE_SPACE_COUNTER_OFFSET);
+  }
+
+  public int getMaxRecordSize() {
+    int freeListHeader = OIntegerSerializer.INSTANCE
+        .deserializeFromDirectMemory(directMemory, pagePointer + FREELIST_HEADER_OFFSET);
+
+    int maxEntrySize;
+    if (freeListHeader > 0)
+      maxEntrySize = getFreeSpace();
+    else
+      maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
+
+    return maxEntrySize - 2 * OIntegerSerializer.INT_SIZE;
   }
 
   public int getRecordsCount() {
