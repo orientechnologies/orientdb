@@ -89,12 +89,12 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private OSingleFileSegment                        clusterStateHolder;
 
-  private long[]                                    freePageIndexes              = new long[48];
+  private long[]                                    freePageLists                = new long[48];
 
   public OLocalPaginatedCluster() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
-    for (int i = 0; i < freePageIndexes.length; i++)
-      freePageIndexes[i] = -1;
+    for (int i = 0; i < freePageLists.length; i++)
+      freePageLists[i] = -1;
   }
 
   @Override
@@ -160,9 +160,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         localPage.setPrevPage(-1);
 
         int freePageIndex = calculateFreePageIndex(localPage);
-        assert freePageIndex == freePageIndexes.length - 1;
+        assert freePageIndex == freePageLists.length - 1;
 
-        freePageIndexes[freePageIndex] = 0;
+        freePageLists[freePageIndex] = 0;
       } finally {
         diskCache.releaseWriteLock(fileId, 0);
       }
@@ -265,6 +265,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryPosition);
 
         size++;
+
         return OClusterPositionFactory.INSTANCE.valueOf(addEntry(recordVersion, entryContent));
       } else {
         int entrySize = content.length + OByteSerializer.BYTE_SIZE;
@@ -325,6 +326,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         } while (from < to);
 
         size++;
+
         return OClusterPositionFactory.INSTANCE.valueOf(firstPagePointer);
       }
     } finally {
@@ -527,17 +529,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         System.arraycopy(content, 0, fullEntry, fullEntryPosition, content.length);
 
-        nextPagePointer = -1;
-        int to = fullEntry.length;
-        int from = to - (OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
-        if (from < 0)
-          from = 0;
+        int from = 0;
+        int to = firstPage.getMaxRecordSize() - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+        if (to > fullEntry.length)
+          to = fullEntry.length;
 
-        byte[] entryContent = new byte[from - to + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
-        System.arraycopy(fullEntry, from, entryContent, 0, from - to);
+        byte[] entryContent = new byte[to - from + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
+        System.arraycopy(fullEntry, from, entryContent, 0, to - from);
 
         entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
-        OLongSerializer.INSTANCE.serializeNative(nextPagePointer, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
+        OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
 
         int initialFreeSpace = firstPage.getFreeSpace();
         nextPagePointer = (firstPageIndex << 16) | firstPage.appendRecord(recordVersion, entryContent);
@@ -545,8 +546,10 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         recordsSize += initialFreeSpace - firstPage.getFreeSpace();
 
-        while (from > to) {
-          entryContent = new byte[from - to + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
+        updateFreePagesIndex(firstPageFreeIndex, firstPageIndex);
+
+        while (to > from) {
+          entryContent = new byte[to - from + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
           System.arraycopy(fullEntry, from, entryContent, 0, from - to);
 
           entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
@@ -554,45 +557,44 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           OLongSerializer.INSTANCE.serializeNative(nextPagePointer, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
           nextPagePointer = addEntry(recordVersion, entryContent);
 
-          to = from;
-          from = from - (OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
-          if (from < 0)
-            from = 0;
+          from = to;
+          to = OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+          if (to > fullEntry.length)
+            to = fullEntry.length;
         }
       } finally {
         diskCache.releaseWriteLock(fileId, firstPageIndex);
       }
-
-      updateFreePagesIndex(firstPageFreeIndex, firstPageIndex);
     } finally {
       releaseExclusiveLock();
     }
   }
 
   private long addEntry(ORecordVersion recordVersion, byte[] entryContent) throws IOException {
-    int freePagePosition = entryContent.length / 1024;
-    freePagePosition -= 16;
-    if (freePagePosition < 0)
-      freePagePosition = 0;
+    int freePageIndex = entryContent.length / 1024;
+    freePageIndex -= 16;
+    if (freePageIndex < 0)
+      freePageIndex = 0;
 
     long pageIndex;
     do {
-      pageIndex = freePageIndexes[freePagePosition];
-      freePagePosition++;
-    } while (pageIndex < 0 && freePagePosition < 48);
+      pageIndex = freePageLists[freePageIndex];
+      freePageIndex++;
+    } while (pageIndex < 0 && freePageIndex < 48);
 
     boolean newRecord = false;
     if (pageIndex < 0) {
       pageIndex = diskCache.getFilledUpTo(fileId);
       newRecord = true;
-    }
+    } else
+      freePageIndex--;
 
     long pagePointer = diskCache.loadAndLockForWrite(fileId, pageIndex);
     int position;
-    int freePageIndex;
     try {
       final OLocalPage localPage = new OLocalPage(pagePointer, newRecord);
-      freePageIndex = calculateFreePageIndex(localPage);
+      assert newRecord || freePageIndex == calculateFreePageIndex(localPage);
+
       int initialFreeSpace = localPage.getFreeSpace();
 
       position = localPage.appendRecord(recordVersion, entryContent);
@@ -616,16 +618,17 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       int newFreePageIndex = calculateFreePageIndex(localPage);
 
-      long nextPageIndex = localPage.getNextPage();
-      long prevPageIndex = localPage.getPrevPage();
-
       if (prevFreePageIndex == newFreePageIndex)
         return;
+
+      long nextPageIndex = localPage.getNextPage();
+      long prevPageIndex = localPage.getPrevPage();
 
       if (prevPageIndex >= 0) {
         long prevPagePointer = diskCache.loadAndLockForWrite(fileId, prevPageIndex);
         try {
           final OLocalPage prevPage = new OLocalPage(prevPagePointer, false);
+          assert calculateFreePageIndex(prevPage) == prevFreePageIndex;
           prevPage.setNextPage(nextPageIndex);
         } finally {
           diskCache.releaseWriteLock(fileId, prevPageIndex);
@@ -636,30 +639,32 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         long nextPagePointer = diskCache.loadAndLockForWrite(fileId, nextPageIndex);
         try {
           final OLocalPage nextPage = new OLocalPage(nextPagePointer, false);
+          assert calculateFreePageIndex(nextPage) == prevFreePageIndex;
           nextPage.setPrevPage(prevPageIndex);
         } finally {
           diskCache.releaseWriteLock(fileId, nextPageIndex);
         }
       }
 
+      localPage.setNextPage(-1);
+      localPage.setPrevPage(-1);
+
       if (prevFreePageIndex < 0 && newFreePageIndex < 0)
         return;
 
-      if (prevFreePageIndex >= 0) {
-        freePageIndexes[prevFreePageIndex] = nextPageIndex;
-
-        // !!!
-
-        localPage.setNextPage(-1);
-        localPage.setPrevPage(-1);
+      if (prevFreePageIndex >= 0 && prevFreePageIndex < freePageLists.length) {
+        if (prevPageIndex < 0)
+          freePageLists[prevFreePageIndex] = nextPageIndex;
       }
 
       if (newFreePageIndex >= 0) {
-        long oldFreePage = freePageIndexes[newFreePageIndex];
+        long oldFreePage = freePageLists[newFreePageIndex];
         if (oldFreePage >= 0) {
           long oldFreePagePointer = diskCache.loadAndLockForWrite(fileId, oldFreePage);
           try {
             final OLocalPage oldFreeLocalPage = new OLocalPage(oldFreePagePointer, false);
+            assert calculateFreePageIndex(oldFreeLocalPage) == newFreePageIndex;
+
             oldFreeLocalPage.setPrevPage(pageIndex);
           } finally {
             diskCache.releaseWriteLock(fileId, oldFreePage);
@@ -669,10 +674,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           localPage.setPrevPage(-1);
         }
 
-        freePageIndexes[newFreePageIndex] = pageIndex;
-      } else {
-        localPage.setNextPage(-1);
-        localPage.setPrevPage(-1);
+        freePageLists[newFreePageIndex] = pageIndex;
       }
     } finally {
       diskCache.releaseWriteLock(fileId, pageIndex);
@@ -682,9 +684,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   private int calculateFreePageIndex(OLocalPage localPage) {
     int newFreePageIndex;
     if (localPage.isEmpty())
-      newFreePageIndex = freePageIndexes.length - 1;
+      newFreePageIndex = freePageLists.length - 1;
     else {
-      newFreePageIndex = (localPage.getFreeSpace() - 1023) / 1024;
+      newFreePageIndex = (localPage.getMaxRecordSize() - 1023) / 1024;
 
       newFreePageIndex -= 16;
     }
@@ -711,8 +713,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       size = 0;
       recordsSize = 0;
 
-      for (int i = 0; i < freePageIndexes.length; i++)
-        freePageIndexes[i] = -1;
+      for (int i = 0; i < freePageLists.length; i++)
+        freePageLists[i] = -1;
     } finally {
       releaseExclusiveLock();
     }
@@ -1094,7 +1096,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private void storeClusterState() throws IOException {
     clusterStateHolder.truncate();
-    final int stateSize = OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE + freePageIndexes.length
+    final int stateSize = OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE + freePageLists.length
         * OLongSerializer.LONG_SIZE;
     OFile file = clusterStateHolder.getFile();
     file.allocateSpace(stateSize);
@@ -1109,7 +1111,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     file.writeInt(fileOffset, OIntegerSerializer.INT_SIZE);
     fileOffset += OIntegerSerializer.INT_SIZE;
 
-    for (long freePageIndex : freePageIndexes) {
+    for (long freePageIndex : freePageLists) {
       file.writeLong(fileOffset, freePageIndex);
       fileOffset += OLongSerializer.LONG_SIZE;
     }
@@ -1129,8 +1131,51 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     fileOffset += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < freePageIndexesSize; i++) {
-      freePageIndexes[i] = file.readLong(fileOffset);
+      freePageLists[i] = file.readLong(fileOffset);
       fileOffset += OLongSerializer.LONG_SIZE;
     }
+  }
+
+  private boolean checkFreePages() throws IOException {
+    long filledUpTo = diskCache.getFilledUpTo(fileId);
+    for (long i = 0; i < filledUpTo; i++) {
+      long pointer = diskCache.loadAndLockForRead(fileId, i);
+      int freePageIndex;
+      try {
+        final OLocalPage page = new OLocalPage(pointer, false);
+        freePageIndex = calculateFreePageIndex(page);
+        if (freePageIndex < 0)
+          continue;
+      } finally {
+        diskCache.releaseReadLock(fileId, i);
+      }
+
+      if (!findInFreeList(freePageIndex, i))
+        return false;
+    }
+
+    return true;
+  }
+
+  private boolean findInFreeList(int freePageIndex, long testPageIndex) throws IOException {
+    long pageIndex = freePageLists[freePageIndex];
+    long prevPageIndex = -1;
+    while (pageIndex != testPageIndex && pageIndex >= 0) {
+      long nextPageIndex;
+      long pointer = diskCache.loadAndLockForRead(fileId, pageIndex);
+      try {
+        final OLocalPage localPage = new OLocalPage(pointer, false);
+        assert prevPageIndex == localPage.getPrevPage();
+
+        prevPageIndex = pageIndex;
+        nextPageIndex = localPage.getNextPage();
+      } finally {
+        diskCache.releaseReadLock(fileId, pageIndex);
+      }
+
+      pageIndex = nextPageIndex;
+    }
+
+    return pageIndex == testPageIndex;
   }
 }
