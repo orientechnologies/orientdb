@@ -751,7 +751,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       long pointer = diskCache.loadAndLockForRead(fileId, pageIndex);
       try {
-        final OLocalPage localPage = new OLocalPage(pagePointer, false);
+        final OLocalPage localPage = new OLocalPage(pointer, false);
         long recordPointer = localPage.getRecordPointer(recordPosition);
 
         if (recordPointer == ODirectMemory.NULL_POINTER)
