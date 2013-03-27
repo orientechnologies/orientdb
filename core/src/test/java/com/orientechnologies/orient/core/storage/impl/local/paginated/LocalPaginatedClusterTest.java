@@ -450,4 +450,221 @@ public class LocalPaginatedClusterTest {
 
     Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - deletedRecords));
   }
+
+  public void testUpdateOneSmallRecord() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OClusterPosition clusterPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+
+    recordVersion.increment();
+    smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
+    paginatedCluster.updateRecord(clusterPosition, smallRecord, recordVersion, (byte) 2);
+
+    ORawBuffer rawBuffer = paginatedCluster.readRecord(clusterPosition);
+    Assert.assertNotNull(rawBuffer);
+
+    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    Assert.assertEquals(rawBuffer.recordType, 2);
+  }
+
+  public void testUpdateOneBigRecord() throws IOException {
+    byte[] bigRecord = new byte[2 * 65536 + 100];
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast();
+    mersenneTwisterFast.nextBytes(bigRecord);
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+
+    recordVersion.increment();
+    bigRecord = new byte[2 * 65536 + 20];
+    mersenneTwisterFast.nextBytes(bigRecord);
+
+    paginatedCluster.updateRecord(clusterPosition, bigRecord, recordVersion, (byte) 2);
+
+    ORawBuffer rawBuffer = paginatedCluster.readRecord(clusterPosition);
+    Assert.assertNotNull(rawBuffer);
+
+    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.buffer, bigRecord);
+    Assert.assertEquals(rawBuffer.recordType, 2);
+  }
+
+  public void testUpdateManySmallRecords() throws IOException {
+    final int records = 10000;
+
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    System.out.println("testUpdateManySmallRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+    Set<OClusterPosition> updatedPositions = new HashSet<OClusterPosition>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(OLocalPage.MAX_RECORD_SIZE - 1) + 1;
+      byte[] smallRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(smallRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 2);
+
+      positionRecordMap.put(clusterPosition, smallRecord);
+    }
+
+    ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+    newRecordVersion.copyFrom(recordVersion);
+    newRecordVersion.increment();
+
+    for (OClusterPosition clusterPosition : positionRecordMap.keySet()) {
+      if (mersenneTwisterFast.nextBoolean()) {
+        int recordSize = mersenneTwisterFast.nextInt(OLocalPage.MAX_RECORD_SIZE - 1) + 1;
+        byte[] smallRecord = new byte[recordSize];
+        mersenneTwisterFast.nextBytes(smallRecord);
+
+        paginatedCluster.updateRecord(clusterPosition, smallRecord, newRecordVersion, (byte) 3);
+
+        positionRecordMap.put(clusterPosition, smallRecord);
+        updatedPositions.add(clusterPosition);
+      }
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      if (updatedPositions.contains(entry.getKey())) {
+        Assert.assertEquals(rawBuffer.version, newRecordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 3);
+      } else {
+        Assert.assertEquals(rawBuffer.version, recordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 2);
+      }
+    }
+  }
+
+  public void testUpdateManyBigRecords() throws IOException {
+    final int records = 10000;
+
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    System.out.println("testUpdateManyBigRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+    Set<OClusterPosition> updatedPositions = new HashSet<OClusterPosition>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(2 * OLocalPage.MAX_RECORD_SIZE) + OLocalPage.MAX_RECORD_SIZE + 1;
+      byte[] bigRecord = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(bigRecord);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(bigRecord, recordVersion, (byte) 2);
+      positionRecordMap.put(clusterPosition, bigRecord);
+    }
+
+    ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+    newRecordVersion.copyFrom(recordVersion);
+    newRecordVersion.increment();
+
+    for (OClusterPosition clusterPosition : positionRecordMap.keySet()) {
+      if (mersenneTwisterFast.nextBoolean()) {
+        int recordSize = mersenneTwisterFast.nextInt(2 * OLocalPage.MAX_RECORD_SIZE) + OLocalPage.MAX_RECORD_SIZE + 1;
+        byte[] bigRecord = new byte[recordSize];
+        mersenneTwisterFast.nextBytes(bigRecord);
+
+        paginatedCluster.updateRecord(clusterPosition, bigRecord, newRecordVersion, (byte) 3);
+
+        positionRecordMap.put(clusterPosition, bigRecord);
+        updatedPositions.add(clusterPosition);
+      }
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      if (updatedPositions.contains(entry.getKey())) {
+        Assert.assertEquals(rawBuffer.version, newRecordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 3);
+      } else {
+        Assert.assertEquals(rawBuffer.version, recordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 2);
+      }
+    }
+  }
+
+  public void testUpdateManyRecords() throws IOException {
+    final int records = 10000;
+
+    long seed = System.currentTimeMillis();
+    MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
+    System.out.println("testUpdateManyRecords seed : " + seed);
+
+    Map<OClusterPosition, byte[]> positionRecordMap = new HashMap<OClusterPosition, byte[]>();
+    Set<OClusterPosition> updatedPositions = new HashSet<OClusterPosition>();
+
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    for (int i = 0; i < records; i++) {
+      int recordSize = mersenneTwisterFast.nextInt(2 * OLocalPage.MAX_RECORD_SIZE) + 1;
+      byte[] record = new byte[recordSize];
+      mersenneTwisterFast.nextBytes(record);
+
+      final OClusterPosition clusterPosition = paginatedCluster.createRecord(record, recordVersion, (byte) 2);
+      positionRecordMap.put(clusterPosition, record);
+    }
+
+    ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+    newRecordVersion.copyFrom(recordVersion);
+    newRecordVersion.increment();
+
+    for (OClusterPosition clusterPosition : positionRecordMap.keySet()) {
+      if (mersenneTwisterFast.nextBoolean()) {
+        int recordSize = mersenneTwisterFast.nextInt(2 * OLocalPage.MAX_RECORD_SIZE) + 1;
+        byte[] record = new byte[recordSize];
+        mersenneTwisterFast.nextBytes(record);
+
+        paginatedCluster.updateRecord(clusterPosition, record, newRecordVersion, (byte) 3);
+
+        positionRecordMap.put(clusterPosition, record);
+        updatedPositions.add(clusterPosition);
+      }
+    }
+
+    for (Map.Entry<OClusterPosition, byte[]> entry : positionRecordMap.entrySet()) {
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
+      Assert.assertNotNull(rawBuffer);
+
+      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      if (updatedPositions.contains(entry.getKey())) {
+        Assert.assertEquals(rawBuffer.version, newRecordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 3);
+      } else {
+        Assert.assertEquals(rawBuffer.version, recordVersion);
+        Assert.assertEquals(rawBuffer.recordType, 2);
+      }
+    }
+  }
+
 }

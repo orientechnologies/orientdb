@@ -465,19 +465,21 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       final byte recordType) throws IOException {
     acquireExclusiveLock();
     try {
-      long pagePointer = clusterPosition.longValue();
-      int recordPosition = (int) (pagePointer & 0xFFFF);
+      long firstPagePointer = clusterPosition.longValue();
+      if (firstPagePointer == 89980928)
+        System.out.println("");
+      int recordPosition = (int) (firstPagePointer & 0xFFFF);
 
-      long firstPageIndex = pagePointer >>> 16;
+      long firstPageIndex = firstPagePointer >>> 16;
 
       if (diskCache.getFilledUpTo(fileId) < firstPageIndex)
         return;
 
       int deleteContentSize;
-      long firstPagePointer = diskCache.loadAndLockForWrite(fileId, firstPageIndex);
+      long firstPageMemoryPointer = diskCache.loadAndLockForWrite(fileId, firstPageIndex);
       int firstPageFreeIndex;
       try {
-        final OLocalPage firstPage = new OLocalPage(firstPagePointer, false);
+        final OLocalPage firstPage = new OLocalPage(firstPageMemoryPointer, false);
         firstPageFreeIndex = calculateFreePageIndex(firstPage);
 
         long oldRecordChunkPointer = firstPage.getRecordPointer(recordPosition);
@@ -505,7 +507,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
               throw new OStorageException("Data for record with id " + new ORecordId(id, clusterPosition) + " are broken.");
 
             nextPagePointer = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory,
-                oldRecordChunkPointer + localPage.getRecordSize(recordPosition) - OLongSerializer.LONG_SIZE);
+                oldRecordChunkPointer + localPage.getRecordSize(secondaryRecordPosition) - OLongSerializer.LONG_SIZE);
 
             freeSpace = localPage.getFreeSpace();
             localPage.deleteRecord(secondaryRecordPosition);
@@ -548,17 +550,41 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         updateFreePagesIndex(firstPageFreeIndex, firstPageIndex);
 
+        from = to;
+        to = from + (OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
+        if (to > fullEntry.length)
+          to = fullEntry.length;
+
+        long prevPagePointer = firstPagePointer;
         while (to > from) {
           entryContent = new byte[to - from + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
-          System.arraycopy(fullEntry, from, entryContent, 0, from - to);
+          System.arraycopy(fullEntry, from, entryContent, 0, to - from);
 
           entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
 
-          OLongSerializer.INSTANCE.serializeNative(nextPagePointer, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
+          OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
           nextPagePointer = addEntry(recordVersion, entryContent);
 
+          long prevPageIndex = prevPagePointer >>> 16;
+          int prevPageRecordPosition = (int) (prevPagePointer & 0xFFFF);
+
+          long prevPageMemoryPointer = diskCache.loadAndLockForWrite(fileId, prevPageIndex);
+          try {
+            final OLocalPage prevPage = new OLocalPage(prevPageMemoryPointer, false);
+
+            final int recordSize = prevPage.getRecordSize(prevPageRecordPosition);
+            final long recordPointer = prevPage.getRecordPointer(prevPageRecordPosition);
+
+            OLongSerializer.INSTANCE.serializeInDirectMemory(nextPagePointer, directMemory, recordPointer + recordSize
+                - OLongSerializer.LONG_SIZE);
+          } finally {
+            diskCache.releaseWriteLock(fileId, prevPageIndex);
+          }
+
+          prevPagePointer = nextPagePointer;
+
           from = to;
-          to = OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+          to = from + (OLocalPage.MAX_RECORD_SIZE - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
           if (to > fullEntry.length)
             to = fullEntry.length;
         }
