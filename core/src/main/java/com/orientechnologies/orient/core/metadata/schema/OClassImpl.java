@@ -779,11 +779,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    OClassImpl other = (OClassImpl) obj;
-    if (owner == null) {
-      if (other.owner != null)
+    final OClassImpl other = (OClassImpl) obj;
+    if (name == null) {
+      if (other.name != null)
         return false;
-    } else if (!owner.equals(other.owner))
+    } else if (!name.equals(other.name))
       return false;
     return true;
   }
@@ -843,6 +843,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
+    if (name.equals(iClassName))
+      // SPEEDUP CHECK IF CLASS NAME ARE THE SAME
+      return true;
+
     return isSubClassOf(owner.getClass(iClassName));
   }
 
@@ -856,6 +860,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public boolean isSubClassOf(final OClass iClass) {
     if (iClass == null)
       return false;
+
+    if (equals(iClass))
+      return true;
 
     OClass cls = this;
     while (cls != null) {

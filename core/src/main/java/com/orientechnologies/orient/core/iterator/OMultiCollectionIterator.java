@@ -34,6 +34,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   private List<Object> internalCollections;
   private Iterator<?>  iteratorOfInternalCollections;
   private Iterator<T>  partialIterator;
+  private List<T>      temp    = null;
 
   private int          browsed = 0;
   private int          limit   = -1;
@@ -55,6 +56,9 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   @Override
   public boolean hasNext() {
     if (iteratorOfInternalCollections == null) {
+      if (internalCollections.isEmpty())
+        return false;
+
       // THE FIRST TIME CREATE THE ITERATOR
       iteratorOfInternalCollections = internalCollections.iterator();
       getNextPartial();
@@ -151,9 +155,13 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
               return true;
             }
           } else if (next instanceof OIdentifiable) {
-            final List<T> list = new ArrayList<T>();
-            list.add((T) next);
-            partialIterator = list.iterator();
+            if (temp == null)
+              temp = new ArrayList<T>(1);
+            else
+              temp.clear();
+            
+            temp.add((T) next);
+            partialIterator = temp.iterator();
             return true;
           }
         }
