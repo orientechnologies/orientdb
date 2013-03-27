@@ -629,7 +629,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final OClassImpl cls = (OClassImpl) createClass(javaClass.getSimpleName());
 
     final Class<?> javaSuperClass = javaClass.getSuperclass();
-    if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")) {
+    if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")
+        && !javaSuperClass.getName().startsWith("com.orientechnologies")) {
       OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
       if (superClass == null)
         superClass = cascadeCreate(javaSuperClass);

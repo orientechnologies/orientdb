@@ -351,12 +351,14 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   protected boolean filterBySchemaClass(final ODocument iDocument) {
+    if (includeClasses == null && excludeClasses == null)
+      return true;
+
     final String clazz = iDocument.getClassName();
+    if (clazz == null)
+      return false;
 
     if (includeClasses != null) {
-      if (clazz == null)
-        return false;
-
       // FILTER BY CLASSES
       for (String cls : includeClasses)
         if (cls.equals(clazz))
@@ -365,14 +367,12 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     }
 
     if (excludeClasses != null) {
-      if (clazz == null)
-        return false;
-
       // FILTER BY CLASSES
       for (String cls : excludeClasses)
         if (cls.equals(clazz))
           return false;
     }
+
     return true;
   }
 }
