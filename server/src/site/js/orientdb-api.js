@@ -173,12 +173,15 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			beforeSend: function(xhr){
-      				return xhr.setRequestHeader('Authorization', 'BASIC ' + btoa(userName+':'+userPass));
+					if( userName != '' && userPass != '' )
+      					return xhr.setRequestHeader('Authorization', 'BASIC ' + btoa(userName+':'+userPass));
     			},
 			type : type,
 			url : this.urlPrefix + 'connect/' + this.encodedDatabaseName
 					+ this.urlSuffix,
 			context : this,
+			username : userName,
+			password : userPass,
 			contentType : "application/json; charset=utf-8",
 			processData : false,
 			async : false,

@@ -149,7 +149,7 @@
 		var savedQueries = controller.parameter('savedQueries');
 		var options = '';
 		for (q in savedQueries) {
-			options += '<option value="' + savedQueries[q] + '">'
+			options += '<option value="' + escape( savedQueries[q] ) + '">'
 					+ savedQueries[q] + '</option>';
 		}
 		$("#savedQueries").html(options);
@@ -162,7 +162,9 @@
 	}
 
 	$("#savedQueries").change(function() {
-		queryEditor.setCode($(this).val());
+		var q = unescape( $(this).val() );
+		console.log("Saved query: " + q );
+		queryEditor.setCode(q);
 	});
 
 	var currentQuery = $.trim($("#queryText").val());
