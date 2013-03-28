@@ -196,7 +196,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     try {
       final char firstChar = buffer.charAt(0);
 
-      String value = firstChar == OStringSerializerHelper.SET_BEGIN ? buffer.substring(1, buffer.length() - 1) : buffer.toString();
+      String value = firstChar == OStringSerializerHelper.SET_BEGIN || firstChar == OStringSerializerHelper.LIST_BEGIN ? buffer
+          .substring(1, buffer.length() - 1) : buffer.toString();
 
       if (firstChar == OStringSerializerHelper.SET_BEGIN || firstChar == OStringSerializerHelper.LIST_BEGIN
           || firstChar == OStringSerializerHelper.LINK) {
