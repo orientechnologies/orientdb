@@ -1354,7 +1354,7 @@ public class OStorageLocal extends OStorageEmbedded {
 
   /**
    * Returns the list of holes as pair of position & ODataHoleInfo
-   *
+   * 
    */
   public List<ODataHoleInfo> getHolesList() {
     final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();

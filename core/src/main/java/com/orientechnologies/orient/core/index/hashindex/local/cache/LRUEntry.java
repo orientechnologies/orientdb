@@ -35,24 +35,31 @@ class LRUEntry {
   boolean  isDirty;
   boolean  managedExternally;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
 
-        LRUEntry lruEntry = (LRUEntry) o;
+    LRUEntry lruEntry = (LRUEntry) o;
 
-        if (dataPointer != lruEntry.dataPointer) return false;
-        if (fileId != lruEntry.fileId) return false;
-        if (isDirty != lruEntry.isDirty) return false;
-        if (managedExternally != lruEntry.managedExternally) return false;
-        if (pageIndex != lruEntry.pageIndex) return false;
+    if (dataPointer != lruEntry.dataPointer)
+      return false;
+    if (fileId != lruEntry.fileId)
+      return false;
+    if (isDirty != lruEntry.isDirty)
+      return false;
+    if (managedExternally != lruEntry.managedExternally)
+      return false;
+    if (pageIndex != lruEntry.pageIndex)
+      return false;
 
-        return true;
-    }
+    return true;
+  }
 
-    @Override
-    public int hashCode() {
-        return (int) (hashCode ^ (hashCode >>> 32));
-    }
+  @Override
+  public int hashCode() {
+    return (int) (hashCode ^ (hashCode >>> 32));
+  }
 }
