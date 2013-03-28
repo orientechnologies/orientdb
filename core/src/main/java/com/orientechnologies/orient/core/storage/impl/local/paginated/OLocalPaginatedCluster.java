@@ -466,8 +466,6 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     acquireExclusiveLock();
     try {
       long firstPagePointer = clusterPosition.longValue();
-      if (firstPagePointer == 89980928)
-        System.out.println("");
       int recordPosition = (int) (firstPagePointer & 0xFFFF);
 
       long firstPageIndex = firstPagePointer >>> 16;
