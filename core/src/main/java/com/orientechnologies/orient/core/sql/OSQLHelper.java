@@ -27,7 +27,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -114,6 +113,7 @@ public class OSQLHelper {
         && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.EMBEDDED_END) {
       // SUB-COMMAND
       fieldValue = new OCommandSQL(iValue.substring(1, iValue.length() - 1));
+      ((OCommandSQL) fieldValue).getContext().setParent(iContext);
 
     } else if (iValue.charAt(0) == ORID.PREFIX)
       // RID
@@ -271,7 +271,7 @@ public class OSQLHelper {
   }
 
   public static void bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
-      final OCommandParameters iArguments) {
+      final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFields == null)
       return;
 
@@ -282,7 +282,8 @@ public class OSQLHelper {
 
       if (fieldValue != null) {
         if (fieldValue instanceof OCommandSQL) {
-          final OCommandRequest cmd = (OCommandRequest) fieldValue;
+          final OCommandSQL cmd = (OCommandSQL) fieldValue;
+          cmd.getContext().setParent(iContext);
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS

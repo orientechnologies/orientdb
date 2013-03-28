@@ -98,7 +98,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     final ODocument vertex = ((OGraphDatabase) database).createVertex(clazz.getName());
 
-    OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs));
+    OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs), context);
 
     if (content != null)
       vertex.merge(content, false, false);

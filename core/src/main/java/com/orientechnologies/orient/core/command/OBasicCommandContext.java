@@ -56,7 +56,7 @@ public class OBasicCommandContext implements OCommandContext {
           return parent.getVariable(lastPart.substring(1));
         else
           return ODocumentHelper.getFieldValue(parent, lastPart);
-      } else if (firstPart.equalsIgnoreCase("ROOT") ) {
+      } else if (firstPart.equalsIgnoreCase("ROOT")) {
         OCommandContext p = this;
         while (p.getParent() != null)
           p = p.getParent();
@@ -147,9 +147,11 @@ public class OBasicCommandContext implements OCommandContext {
    */
   public OCommandContext setChild(final OCommandContext iContext) {
     if (iContext == null) {
-      // REMOVE IT
-      child.setParent(null);
-      child = null;
+      if (child != null) {
+        // REMOVE IT
+        child.setParent(null);
+        child = null;
+      }
 
     } else if (child != iContext) {
       // ADD IT

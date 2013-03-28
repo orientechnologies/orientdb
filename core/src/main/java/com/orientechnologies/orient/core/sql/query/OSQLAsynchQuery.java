@@ -74,15 +74,4 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     execute(1);
     return null;
   }
-
-  public OCommandContext getContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
-    return context;
-  }
-
-  public OCommandRequestText setContext(OCommandContext iContext) {
-    context = iContext;
-    return this;
-  }
 }

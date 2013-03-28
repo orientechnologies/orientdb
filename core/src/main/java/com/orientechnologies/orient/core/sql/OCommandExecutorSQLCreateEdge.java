@@ -117,7 +117,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     for (ORecordId from : fromIds) {
       for (ORecordId to : toIds) {
         final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
-        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
+        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs), context);
         if (content != null)
           edge.merge(content, false, false);
 
