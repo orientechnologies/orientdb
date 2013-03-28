@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.O2QCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;

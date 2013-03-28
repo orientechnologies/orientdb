@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index.hashindex.local.arc;
+package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +27,6 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
@@ -45,9 +41,9 @@ public class O2QCache implements ODiskCache {
 
   private final int                                 pageSize;
 
-  private Deque<OCacheEntry>                        am;
-  private Deque<OCacheEntry>                        a1out;
-  private Deque<OCacheEntry>                        a1in;
+  private LRUList                                   am;
+  private LRUList                                   a1out;
+  private LRUList                                   a1in;
 
   private final ODirectMemory                       directMemory;
 
@@ -78,7 +74,6 @@ public class O2QCache implements ODiskCache {
     long tmpMaxSize = maxMemory / pageSize;
     if (tmpMaxSize >= Integer.MAX_VALUE) {
       maxSize = Integer.MAX_VALUE;
-
     } else {
       maxSize = (int) tmpMaxSize;
     }
@@ -86,22 +81,22 @@ public class O2QCache implements ODiskCache {
     K_IN = maxSize >> 2;
     K_OUT = maxSize >> 1;
 
-    am = new LinkedList<OCacheEntry>();
-    a1out = new LinkedList<OCacheEntry>();
-    a1in = new LinkedList<OCacheEntry>();
+    am = new LRUList();
+    a1out = new LRUList();
+    a1in = new LRUList();
 
     syncObject = new Object();
   }
 
-  Deque<OCacheEntry> getAm() {
+  LRUList getAm() {
     return am;
   }
 
-  Deque<OCacheEntry> getA1out() {
+  LRUList getA1out() {
     return a1out;
   }
 
-  Deque<OCacheEntry> getA1in() {
+  LRUList getA1in() {
     return a1in;
   }
 
@@ -131,7 +126,7 @@ public class O2QCache implements ODiskCache {
   @Override
   public long loadAndLockForWrite(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
-      final OCacheEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
+      final LRUEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
       lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
       lruEntry.isDirty = true;
 
@@ -166,20 +161,21 @@ public class O2QCache implements ODiskCache {
   }
 
   /**
-   * This method doesnot affect cache statistic.
+   * This method does not affect cache statistic.
    * 
    * @param fileId
+   *          identity of file. File marked by this identity will be used to find page in cache.
    * @param pageIndex
-   * @return
-   * @throws IOException
+   *          index of page to search it in cache
+   * @return address of page if it is already in cache. <code>ODirectMemory.NULL_POINTER</code> if page is absent in cache.
    */
   @Override
-  public long getAndLockForWrite(long fileId, long pageIndex) throws IOException {
+  public long getAndLockForWrite(long fileId, long pageIndex) {
     synchronized (syncObject) {
       lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
 
-      OCacheEntry lruEntry = get(fileId, pageIndex);
-      if (lruEntry != null && lruEntry.isLoaded)
+      LRUEntry lruEntry = get(fileId, pageIndex);
+      if (lruEntry != null)
         return lruEntry.dataPointer;
 
       return ODirectMemory.NULL_POINTER;
@@ -189,16 +185,30 @@ public class O2QCache implements ODiskCache {
   @Override
   public void clearExternalManagementFlag(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
-      OCacheEntry lruEntry = get(fileId, pageIndex);
-      if (lruEntry != null)
+      LRUEntry lruEntry = am.get(fileId, pageIndex);
+
+      if (lruEntry != null) {
         lruEntry.managedExternally = false;
+        return;
+      }
+
+      lruEntry = a1out.get(fileId, pageIndex);
+      if (lruEntry != null) {
+        lruEntry.managedExternally = false;
+        return;
+      }
+
+      lruEntry = a1in.get(fileId, pageIndex);
+      if (lruEntry != null) {
+        lruEntry.managedExternally = false;
+      }
     }
   }
 
   @Override
   public long loadAndLockForRead(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
-      final OCacheEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
+      final LRUEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
 
       lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.SHARED);
       return lruEntry.dataPointer;
@@ -241,7 +251,7 @@ public class O2QCache implements ODiskCache {
       for (Long pageIndex : sortedPageIndexes) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), lock);
         try {
-          OCacheEntry lruEntry = get(fileId, pageIndex);
+          LRUEntry lruEntry = get(fileId, pageIndex);
           if (lruEntry.isDirty) {
             flushData(fileId, lruEntry.pageIndex, lruEntry.dataPointer);
             lruEntry.isDirty = false;
@@ -265,7 +275,7 @@ public class O2QCache implements ODiskCache {
         return;
       }
 
-      OCacheEntry lruEntry = remove(fileId, pageIndex);
+      LRUEntry lruEntry = remove(fileId, pageIndex);
       if (lruEntry != null)
         directMemory.free(lruEntry.dataPointer);
       filesPages.get(fileId).remove(pageIndex);
@@ -286,7 +296,7 @@ public class O2QCache implements ODiskCache {
       for (Long pageIndex : sortedPageIndexes) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
         try {
-          OCacheEntry lruEntry = remove(fileId, pageIndex);
+          LRUEntry lruEntry = remove(fileId, pageIndex);
           if (lruEntry != null && !lruEntry.managedExternally) {
             flushData(fileId, pageIndex, lruEntry.dataPointer);
 
@@ -327,8 +337,8 @@ public class O2QCache implements ODiskCache {
       for (Long pageIndex : pageEntries) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
         try {
-          OCacheEntry lruEntry = remove(fileId, pageIndex);
-          if (lruEntry != null && !lruEntry.managedExternally && lruEntry.isLoaded)
+          LRUEntry lruEntry = remove(fileId, pageIndex);
+          if (lruEntry != null && !lruEntry.managedExternally && lruEntry.dataPointer != ODirectMemory.NULL_POINTER)
             directMemory.free(lruEntry.dataPointer);
         } finally {
           lockManager.releaseLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
@@ -360,7 +370,7 @@ public class O2QCache implements ODiskCache {
     OLockManager.LOCK lock = writeLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED;
 
     synchronized (syncObject) {
-      for (OCacheEntry entry : am) {
+      for (LRUEntry entry : am) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(entry.fileId, entry.pageIndex), lock);
         try {
           if (entry.isDirty) {
@@ -372,7 +382,7 @@ public class O2QCache implements ODiskCache {
         }
       }
 
-      for (OCacheEntry entry : a1in) {
+      for (LRUEntry entry : a1in) {
         lockManager.acquireLock(Thread.currentThread(), new FileLockKey(entry.fileId, entry.pageIndex), lock);
         try {
           if (entry.isDirty) {
@@ -435,85 +445,84 @@ public class O2QCache implements ODiskCache {
     }
   }
 
-  private OCacheEntry updateCache(long fileId, long pageIndex, long dataPointer) throws IOException {
-    for (Iterator<OCacheEntry> iterator = am.iterator(); iterator.hasNext();) {
-      OCacheEntry cacheEntry = iterator.next();
-      if (cacheEntry.fileId == fileId && cacheEntry.pageIndex == pageIndex) {
-        assert dataPointer == ODirectMemory.NULL_POINTER || cacheEntry.dataPointer == dataPointer;
-        assert cacheEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
-        iterator.remove();
-        am.addFirst(cacheEntry);
-        return cacheEntry;
-      }
+  private LRUEntry updateCache(long fileId, long pageIndex, long dataPointer) throws IOException {
+    LRUEntry lruEntry = am.get(fileId, pageIndex);
+    if (lruEntry != null) {
+      assert dataPointer == ODirectMemory.NULL_POINTER || lruEntry.dataPointer == dataPointer;
+      assert lruEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
+
+      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty, lruEntry.managedExternally);
+
+      return lruEntry;
     }
 
-    for (Iterator<OCacheEntry> iterator = a1out.iterator(); iterator.hasNext();) {
-      OCacheEntry cacheEntry = iterator.next();
-      if (cacheEntry.fileId == fileId && cacheEntry.pageIndex == pageIndex) {
-        assert dataPointer == ODirectMemory.NULL_POINTER || cacheEntry.dataPointer == dataPointer;
-        assert cacheEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
-        iterator.remove();
-        removeColdestPageIfNeeded();
+    lruEntry = a1out.get(fileId, pageIndex);
+    if (lruEntry != null) {
+      assert dataPointer == ODirectMemory.NULL_POINTER || lruEntry.dataPointer == dataPointer;
+      assert lruEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
+      removeColdestPageIfNeeded();
 
-        CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
-        cacheEntry.dataPointer = cacheResult.dataPointer;
-        cacheEntry.isDirty = cacheResult.isDirty;
+      CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
+      lruEntry.dataPointer = cacheResult.dataPointer;
+      lruEntry.isDirty = cacheResult.isDirty;
 
-        am.addFirst(cacheEntry);
-        return cacheEntry;
-      }
+      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty, lruEntry.managedExternally);
+      return lruEntry;
     }
 
-    for (OCacheEntry cacheEntry : a1in) {
-      if (cacheEntry.fileId == fileId && cacheEntry.pageIndex == pageIndex) {
-        assert dataPointer == ODirectMemory.NULL_POINTER || cacheEntry.dataPointer == dataPointer;
-        assert cacheEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
-        return cacheEntry;
-      }
+    lruEntry = a1in.get(fileId, pageIndex);
+    if (lruEntry != null) {
+      assert dataPointer == ODirectMemory.NULL_POINTER || lruEntry.dataPointer == dataPointer;
+      assert lruEntry.managedExternally == (dataPointer != ODirectMemory.NULL_POINTER);
+      return lruEntry;
     }
 
     removeColdestPageIfNeeded();
-    OCacheEntry entry = new OCacheEntry();
-
-    entry.fileId = fileId;
-    entry.pageIndex = pageIndex;
 
     if (dataPointer == ODirectMemory.NULL_POINTER) {
       CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
-      entry.dataPointer = cacheResult.dataPointer;
-      entry.isDirty = cacheResult.isDirty;
+      lruEntry = a1in.putToMRU(fileId, pageIndex, cacheResult.dataPointer, cacheResult.isDirty, false);
     } else {
-      entry.dataPointer = dataPointer;
-      entry.isDirty = false;
-      entry.managedExternally = true;
-
+      lruEntry = a1in.putToMRU(fileId, pageIndex, dataPointer, false, true);
     }
 
     filesPages.get(fileId).add(pageIndex);
 
-    a1in.addFirst(entry);
-    return entry;
+    return lruEntry;
   }
 
   private void removeColdestPageIfNeeded() throws IOException {
     if (am.size() + a1in.size() >= maxSize) {
       if (a1in.size() > K_IN) {
-        OCacheEntry removedFromAInEntry = a1in.removeLast();
-        evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
-            removedFromAInEntry.isDirty, removedFromAInEntry.managedExternally);
-        removedFromAInEntry.dataPointer = ODirectMemory.NULL_POINTER;
-        a1out.addFirst(removedFromAInEntry);
+        LRUEntry removedFromAInEntry = a1in.removeLRU();
+
+        FileLockKey fileLockKey = new FileLockKey(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex);
+        lockManager.acquireLock(Thread.currentThread(), fileLockKey, OLockManager.LOCK.EXCLUSIVE);
+        try {
+          evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
+              removedFromAInEntry.isDirty, removedFromAInEntry.managedExternally);
+          a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false,
+              removedFromAInEntry.managedExternally);
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), fileLockKey, OLockManager.LOCK.EXCLUSIVE);
+        }
         if (a1out.size() > K_OUT) {
-          OCacheEntry removedEntry = a1out.removeLast();
+          LRUEntry removedEntry = a1out.removeLRU();
           Set<Long> pageEntries = filesPages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
         }
       } else {
-        OCacheEntry removedEntry = am.removeLast();
-        evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty,
-            removedEntry.managedExternally);
-        Set<Long> pageEntries = filesPages.get(removedEntry.fileId);
-        pageEntries.remove(removedEntry.pageIndex);
+        LRUEntry removedEntry = am.removeLRU();
+        FileLockKey fileLockKey = new FileLockKey(removedEntry.fileId, removedEntry.pageIndex);
+        lockManager.acquireLock(Thread.currentThread(), fileLockKey, OLockManager.LOCK.EXCLUSIVE);
+        try {
+          evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty,
+              removedEntry.managedExternally);
+          Set<Long> pageEntries = filesPages.get(removedEntry.fileId);
+          pageEntries.remove(removedEntry.pageIndex);
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), fileLockKey, OLockManager.LOCK.EXCLUSIVE);
+        }
       }
     }
   }
@@ -557,7 +566,6 @@ public class O2QCache implements ODiskCache {
       directMemory.free(dataPointer);
     }
 
-    filesPages.get(fileId).remove(pageIndex);
   }
 
   @Override
@@ -573,7 +581,7 @@ public class O2QCache implements ODiskCache {
   }
 
   private void flushEvictedPages() throws IOException {
-    Map.Entry[] sortedPages = evictedPages.entrySet().toArray(new Map.Entry[evictedPages.size()]);
+    Map.Entry<FileLockKey, Long>[] sortedPages = evictedPages.entrySet().toArray(new Map.Entry[evictedPages.size()]);
     Arrays.sort(sortedPages, new Comparator<Map.Entry>() {
       @Override
       public int compare(Map.Entry entryOne, Map.Entry entryTwo) {
@@ -605,54 +613,28 @@ public class O2QCache implements ODiskCache {
     }
   }
 
-  private OCacheEntry get(long fileId, long pageIndex) throws IOException {
-    OCacheEntry result = null;
-    for (OCacheEntry cacheEntry : am) {
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId)
-        result = cacheEntry;
+  private LRUEntry get(long fileId, long pageIndex) {
+    LRUEntry lruEntry = am.get(fileId, pageIndex);
+
+    if (lruEntry != null) {
+      return lruEntry;
     }
 
-    for (OCacheEntry cacheEntry : a1out) {
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId)
-        assert !cacheEntry.isDirty;
-      result = cacheEntry;
-    }
-
-    for (OCacheEntry cacheEntry : a1in) {
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId)
-        result = cacheEntry;
-    }
-
-    return result;
+    lruEntry = a1in.get(fileId, pageIndex);
+    return lruEntry;
   }
 
-  private OCacheEntry remove(long fileId, long pageIndex) {
-    OCacheEntry result = null;
-    for (Iterator<OCacheEntry> iterator = am.iterator(); iterator.hasNext();) {
-      OCacheEntry cacheEntry = iterator.next();
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId) {
-        result = cacheEntry;
-        iterator.remove();
-      }
+  private LRUEntry remove(long fileId, long pageIndex) {
+    LRUEntry lruEntry = am.remove(fileId, pageIndex);
+    if (lruEntry != null) {
+      return lruEntry;
     }
-
-    for (Iterator<OCacheEntry> iterator = a1out.iterator(); iterator.hasNext();) {
-      OCacheEntry cacheEntry = iterator.next();
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId) {
-        result = cacheEntry;
-        iterator.remove();
-      }
+    lruEntry = a1out.remove(fileId, pageIndex);
+    if (lruEntry != null) {
+      return lruEntry;
     }
-
-    for (Iterator<OCacheEntry> iterator = a1in.iterator(); iterator.hasNext();) {
-      OCacheEntry cacheEntry = iterator.next();
-      if (cacheEntry.pageIndex == pageIndex && cacheEntry.fileId == fileId) {
-        result = cacheEntry;
-        iterator.remove();
-      }
-    }
-
-    return result;
+    lruEntry = a1in.remove(fileId, pageIndex);
+    return lruEntry;
   }
 
   private final class FileLockKey implements Comparable<FileLockKey> {

@@ -8,7 +8,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.O2QCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 import org.testng.Assert;

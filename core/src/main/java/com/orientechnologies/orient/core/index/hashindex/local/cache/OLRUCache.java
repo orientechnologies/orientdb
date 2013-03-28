@@ -38,7 +38,7 @@ public class OLRUCache implements ODiskCache {
   private final int                                 maxSize;
   private final int                                 pageSize;
 
-  private final LRUList                             lruList;
+  private final LRUList lruList;
   private final ODirectMemory                       directMemory;
 
   private final Map<Long, OMultiFileSegment>        files;

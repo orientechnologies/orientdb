@@ -1,8 +1,7 @@
-package com.orientechnologies.orient.core.index.hashindex.local.arc;
+package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Deque;
 import java.util.Map;
 import java.util.Random;
 
@@ -15,6 +14,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
@@ -91,16 +91,16 @@ public class O2QCacheTest {
       buffer.releaseWriteLock(fileId, i);
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i]);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i]);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
@@ -124,16 +124,16 @@ public class O2QCacheTest {
       buffer.releaseWriteLock(fileId, i);
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, true);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i], false, true);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
@@ -153,14 +153,14 @@ public class O2QCacheTest {
     directMemory.set(pointer, new byte[] { (byte) 0, 1, 2, seed, 4, 5, 6, (byte) 0 }, 8);
     buffer.releaseWriteLock(fileId, 100);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
-    Assert.assertTrue(a1in.contains(generateEntry(fileId, 100, pointer, false, true)));
+    Assert.assertEquals(a1in.get(fileId, 100), generateEntry(fileId, 100, pointer, false, true));
 
     assertFile(100, new byte[] { (byte) 0, 1, 2, seed, 4, 5, 6, (byte) 0 });
   }
@@ -169,18 +169,18 @@ public class O2QCacheTest {
   public void testCacheHitNotExistedPage() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    buffer.cacheHit(fileId, 0, 0);
+    buffer.cacheHit(fileId, 0, 1234567);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
-    OCacheEntry entry = generateEntry(fileId, 0, a1in.getFirst().dataPointer, false);
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
+    LRUEntry entry = generateEntry(fileId, 0, 1234567, false, true);
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertTrue(a1in.contains(entry));
+    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
   @Test
@@ -203,16 +203,16 @@ public class O2QCacheTest {
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
-    OCacheEntry entry = generateEntry(fileId, 0, pointer);
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
+    LRUEntry entry = generateEntry(fileId, 0, pointer);
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertTrue(a1in.contains(entry));
+    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
 
     long pointerFromCache = buffer.getAndLockForWrite(fileId, 0);
     Assert.assertEquals(pointerFromCache, pointer);
@@ -234,16 +234,16 @@ public class O2QCacheTest {
 
     buffer.clearExternalManagementFlag(fileId, 0);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
-    OCacheEntry entry = generateEntry(fileId, 0, pointer, false);
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
+    LRUEntry entry = generateEntry(fileId, 0, pointer, false);
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertTrue(a1in.contains(entry));
+    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
   @Test
@@ -253,16 +253,16 @@ public class O2QCacheTest {
     long pointer = buffer.loadAndLockForRead(fileId, 0);
     buffer.releaseReadLock(fileId, 0);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
-    OCacheEntry entry = generateEntry(fileId, 0, pointer, false);
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
+    LRUEntry entry = generateEntry(fileId, 0, pointer, false);
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertTrue(a1in.contains(entry));
+    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
   @Test
@@ -276,19 +276,19 @@ public class O2QCacheTest {
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     buffer.flushFile(fileId);
 
-    OCacheEntry entry = generateEntry(fileId, 0, pointer, false);
+    LRUEntry entry = generateEntry(fileId, 0, pointer, false);
 
     Assert.assertEquals(a1in.size(), 1);
-    Assert.assertTrue(a1in.contains(entry));
+    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
   @Test
@@ -297,7 +297,7 @@ public class O2QCacheTest {
 
     buffer.loadAndLockForWrite(fileId, 0);
 
-    Deque<OCacheEntry> a1in = buffer.getA1in();
+    LRUList a1in = buffer.getA1in();
 
     int size = a1in.size();
 
@@ -310,42 +310,48 @@ public class O2QCacheTest {
   public void testFreePageShouldRemoveEvictedPage() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    long[] pointers;
-    pointers = new long[16];
-    byte[][] content = new byte[2][];
+    Object value = OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValue();
+    try {
+      OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.setValue(16);
+      long[] pointers;
+      pointers = new long[16];
+      byte[][] content = new byte[2][];
 
-    for (int i = 0; i < 2; i++) {
-      pointers[i] = buffer.loadAndLockForRead(fileId, i);
-      content[i] = directMemory.get(pointers[i], 8);
-      buffer.releaseReadLock(fileId, i);
-    }
+      for (int i = 0; i < 2; i++) {
+        pointers[i] = buffer.loadAndLockForRead(fileId, i);
+        content[i] = directMemory.get(pointers[i], 8);
+        buffer.releaseReadLock(fileId, i);
+      }
 
-    for (int i = 0; i < 16; i++) {
-      pointers[i] = buffer.loadAndLockForWrite(fileId, i);
-      directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
-      buffer.releaseWriteLock(fileId, i);
-    }
+      for (int i = 0; i < 16; i++) {
+        pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+        directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+        buffer.releaseWriteLock(fileId, i);
+      }
 
-    Map evictedPages = buffer.getEvictedPages();
+      Map evictedPages = buffer.getEvictedPages();
 
-    int size = evictedPages.size();
+      int size = evictedPages.size();
 
-    buffer.freePage(fileId, 0);
+      buffer.freePage(fileId, 0);
 
-    Assert.assertEquals(evictedPages.size(), size - 1);
+      Assert.assertEquals(evictedPages.size(), size - 1);
 
-    buffer.freePage(fileId, 1);
+      buffer.freePage(fileId, 1);
 
-    Assert.assertEquals(evictedPages.size(), size - 2);
+      Assert.assertEquals(evictedPages.size(), size - 2);
 
-    buffer.flushBuffer();
+      buffer.flushBuffer();
 
-    for (int i = 0; i < 2; i++) {
-      assertFile(i, content[i]);
-    }
+      for (int i = 0; i < 2; i++) {
+        assertFile(i, content[i]);
+      }
 
-    for (int i = 2; i < 16; i++) {
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
+      for (int i = 2; i < 16; i++) {
+        assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
+      }
+    } finally {
+      OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.setValue(value);
     }
   }
 
@@ -362,16 +368,16 @@ public class O2QCacheTest {
       buffer.releaseWriteLock(fileId, i);
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i]);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i]);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
@@ -395,24 +401,24 @@ public class O2QCacheTest {
       buffer.releaseWriteLock(fileId, i);
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i]);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i]);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
     buffer.closeFile(fileId);
 
-    Assert.assertTrue(buffer.getA1out().isEmpty());
-    Assert.assertTrue(buffer.getA1in().isEmpty());
-    Assert.assertTrue(buffer.getAm().isEmpty());
+    Assert.assertEquals(buffer.getA1out().size(), 0);
+    Assert.assertEquals(buffer.getA1in().size(), 0);
+    Assert.assertEquals(buffer.getAm().size(), 0);
   }
 
   @Test
@@ -454,17 +460,16 @@ public class O2QCacheTest {
       }
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
-
-    Assert.assertTrue(am.isEmpty());
-    Assert.assertTrue(a1out.isEmpty());
+    Assert.assertEquals(am.size(), 0);
+    Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i]);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i]);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
@@ -492,20 +497,20 @@ public class O2QCacheTest {
       buffer.releaseWriteLock(fileId, i);
     }
 
-    Deque<OCacheEntry> am = buffer.getAm();
-    Deque<OCacheEntry> a1in = buffer.getA1in();
-    Deque<OCacheEntry> a1out = buffer.getA1out();
+    LRUList am = buffer.getAm();
+    LRUList a1in = buffer.getA1in();
+    LRUList a1out = buffer.getA1out();
 
-    Assert.assertTrue(am.isEmpty());
+    Assert.assertEquals(am.size(), 0);
 
     for (int i = 0; i < 2; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER);
-      Assert.assertTrue(a1out.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false);
+      Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
     }
 
     for (int i = 2; i < 6; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i]);
-      Assert.assertTrue(a1in.contains(entry));
+      LRUEntry entry = generateEntry(fileId, i, pointers[i]);
+      Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 6);
@@ -529,16 +534,16 @@ public class O2QCacheTest {
     fileClassic.close();
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer) {
+  private LRUEntry generateEntry(long fileId, long pageIndex, long pointer) {
     return generateEntry(fileId, pageIndex, pointer, true);
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty) {
+  private LRUEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty) {
     return generateEntry(fileId, pageIndex, pointer, dirty, false);
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean isDirty, boolean isExternallyManaged) {
-    OCacheEntry entry = new OCacheEntry();
+  private LRUEntry generateEntry(long fileId, long pageIndex, long pointer, boolean isDirty, boolean isExternallyManaged) {
+    LRUEntry entry = new LRUEntry();
     entry.fileId = fileId;
     entry.pageIndex = pageIndex;
     entry.dataPointer = pointer;
