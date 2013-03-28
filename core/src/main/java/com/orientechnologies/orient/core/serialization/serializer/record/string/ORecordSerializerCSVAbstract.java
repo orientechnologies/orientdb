@@ -80,7 +80,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         return null;
 
       // REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-      final String value = iValue.startsWith("[") ? iValue.substring(1, iValue.length() - 1) : iValue;
+      final String value = iValue.startsWith("[") || iValue.startsWith("<") ? iValue.substring(1, iValue.length() - 1) : iValue;
 
       return iType == OType.LINKLIST ? new ORecordLazyList((ODocument) iSourceRecord).setStreamedContent(new StringBuilder(value))
           : new OMVRBTreeRIDSet(iSourceRecord).fromStream(new StringBuilder(iValue));
@@ -99,7 +99,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (value.length() == 0)
         return map;
 
-      final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+      final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
 
       // EMBEDDED LITERALS
       for (String item : items) {
@@ -172,7 +172,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     if (value.length() == 0)
       return map;
 
-    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
 
     // EMBEDDED LITERALS
 
@@ -181,7 +181,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     for (String item : items) {
       if (item != null && !item.isEmpty()) {
-        final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR);
+        final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR, true);
         if (!entries.isEmpty()) {
           final Object mapValueObject;
           if (entries.size() > 1) {
@@ -266,7 +266,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case LINKLIST: {
-      iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
+      iOutput.append(OStringSerializerHelper.LIST_BEGIN);
 
       if (iValue instanceof ORecordLazyList && ((ORecordLazyList) iValue).getStreamedContent() != null) {
         iOutput.append(((ORecordLazyList) iValue).getStreamedContent());
@@ -328,7 +328,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         }
       }
 
-      iOutput.append(OStringSerializerHelper.COLLECTION_END);
+      iOutput.append(OStringSerializerHelper.LIST_END);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkList2string"), "Serialize linklist to string",
           timer);
       break;
@@ -412,13 +412,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       break;
 
     case EMBEDDEDLIST:
-      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
+      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty,
+          false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
 
     case EMBEDDEDSET:
-      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty);
+      embeddedCollectionToStream(null, iObjHandler, iOutput, iLinkedClass, iLinkedType, iValue, iMarshalledRecords, iSaveOnlyDirty,
+          true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
@@ -524,7 +526,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       return null;
 
     // REMOVE BEGIN & END COLLECTIONS CHARACTERS IF IT'S A COLLECTION
-    final String value = iValue.charAt(0) == '[' ? iValue.substring(1, iValue.length() - 1) : iValue;
+    final String value = iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
+        || iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN ? iValue.substring(1, iValue.length() - 1) : iValue;
 
     Collection<?> coll;
     if (iLinkedType == OType.LINK) {
@@ -535,7 +538,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         if (iType == OType.EMBEDDEDLIST)
           coll = (Collection<?>) new ORecordLazyList().setStreamedContent(new StringBuilder(value));
         else {
-          return new OMVRBTreeRIDSet().setAutoConvert(false).fromStream(new StringBuilder(value));
+          final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet();
+          set.setAutoConvertToRecord(false);
+          set.fromStream(new StringBuilder(value));
+          return set;
         }
       }
     } else
@@ -549,7 +555,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     if (coll instanceof ORecordElement)
       ((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
 
-    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR);
+    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
     for (String item : items) {
       Object objectToAdd = null;
       linkedType = null;
@@ -604,8 +610,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public StringBuilder embeddedCollectionToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
-    iOutput.append(OStringSerializerHelper.COLLECTION_BEGIN);
+      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
+    iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
     final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
     final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
@@ -709,7 +715,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
     }
 
-    iOutput.append(OStringSerializerHelper.COLLECTION_END);
+    iOutput.append(iSet ? OStringSerializerHelper.SET_END : OStringSerializerHelper.LIST_END);
     return iOutput;
   }
 

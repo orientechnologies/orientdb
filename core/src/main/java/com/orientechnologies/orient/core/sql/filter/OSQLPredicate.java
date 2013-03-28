@@ -269,26 +269,12 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         }
 
         result[i] = subCondition;
-      } else if (word.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
+      } else if (word.charAt(0) == OStringSerializerHelper.LIST_BEGIN) {
         // COLLECTION OF ELEMENTS
         parserSetCurrentPosition(lastPosition - word.length());
 
         final List<String> stringItems = new ArrayList<String>();
         parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), stringItems));
-
-        // if (stringItems.get(0).charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN) {
-        // // TODO: is this needed anymore?
-        // final List<List<Object>> coll = new ArrayList<List<Object>>();
-        // for (String stringItem : stringItems) {
-        // final List<String> stringSubItems = new ArrayList<String>();
-        // OStringSerializerHelper.getCollection(stringItem, 0, stringSubItems);
-        //
-        // coll.add(convertCollectionItems(stringSubItems));
-        // }
-        //
-        // result[i] = coll;
-        //
-        // } else
         result[i] = convertCollectionItems(stringItems);
 
         parserMoveCurrentPosition(+1);

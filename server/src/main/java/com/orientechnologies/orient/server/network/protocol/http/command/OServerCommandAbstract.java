@@ -40,7 +40,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
   }
 
   protected String[] checkSyntax(final String iURL, final int iArgumentCount, final String iSyntax) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true);
+    final List<String> parts = OStringSerializerHelper.smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false);
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);
 
