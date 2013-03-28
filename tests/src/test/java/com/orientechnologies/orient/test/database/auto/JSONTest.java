@@ -341,7 +341,7 @@ public class JSONTest {
       doc.reload("*:0");
       database.close();
       String jsonLoaded = doc.toJSON();
-      Assert.assertEquals(jsonFull, jsonLoaded);
+      Assert.assertEquals(jsonLoaded, jsonFull);
       database.open("admin", "admin");
       doc = database.load(rid);
       doc.setLazyLoad(false);
@@ -349,7 +349,7 @@ public class JSONTest {
       database.close();
       jsonLoaded = doc.toJSON();
 
-      Assert.assertEquals(jsonFull, jsonLoaded);
+      Assert.assertEquals(jsonLoaded, jsonFull);
     }
 
     database.open("admin", "admin");

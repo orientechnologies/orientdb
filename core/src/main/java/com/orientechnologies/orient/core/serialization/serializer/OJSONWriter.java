@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 public class OJSONWriter {
   private static final String           DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2";
   private Writer                        out;
-  private boolean                       prettyPrint    = true;
+  private boolean                       prettyPrint    = false;
   private boolean                       firstAttribute = true;
   private final String                  format;
   private static final SimpleDateFormat dateFormat;
@@ -282,6 +282,8 @@ public class OJSONWriter {
     } else if (iValue instanceof BigDecimal)
       buffer.append(((BigDecimal) iValue).toPlainString());
 
+    else if (iValue instanceof ORecordLazyMultiValue)
+      iteratorToJSON(((ORecordLazyMultiValue) iValue).rawIterator(), iFormat, buffer);
     else if (iValue instanceof Iterable<?>)
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
@@ -407,7 +409,8 @@ public class OJSONWriter {
   }
 
   public void newline() throws IOException {
-    out.append("\r\n");
+    if (prettyPrint)
+      out.append("\r\n");
   }
 
   public void resetAttributes() {
