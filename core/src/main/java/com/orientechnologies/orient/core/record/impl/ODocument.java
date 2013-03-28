@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
@@ -1406,8 +1407,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     }
 
     if (fieldType == null
-        || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType) || (OType.LINKLIST
-            .equals(fieldType) || OType.LINKMAP.equals(fieldType))))
+        || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
+            || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
       return;
 
     if (!(fieldValue instanceof OTrackedMultiValue))
@@ -1474,7 +1475,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Converts all non-tracked collections implementations contained in document fields to tracked once.
+   * Converts all non-tracked collections implementations contained in document fields to tracked ones.
    * 
    * @see OTrackedMultiValue
    */
@@ -1494,7 +1495,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       if (fieldType == null
           || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-              || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
+              || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
         continue;
 
       if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST) && !(fieldValue instanceof OTrackedMultiValue))
@@ -1504,6 +1505,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       else if (fieldValue instanceof Map && fieldType.equals(OType.EMBEDDEDMAP) && !(fieldValue instanceof OTrackedMultiValue))
         fieldsToUpdate
             .put(fieldEntry.getKey(), new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null));
+      else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST) && !(fieldValue instanceof OTrackedMultiValue))
         fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyList(this, (List<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP) && !(fieldValue instanceof OTrackedMultiValue))

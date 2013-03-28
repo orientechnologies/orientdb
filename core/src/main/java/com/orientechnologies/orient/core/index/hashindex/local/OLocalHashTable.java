@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -1795,7 +1795,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buffer.releaseWriteLock(fileLevelIds[fileLevel], pageIndex);
   }
 
-  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) {
+  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) throws IOException {
     if (cacheLock)
       buffer.freePage(fileLevelIds[fileLevel], pageIndex);
     else {

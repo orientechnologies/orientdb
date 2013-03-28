@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   private static final long                            serialVersionUID    = 1L;
@@ -228,7 +229,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   }
 
                   if (type == null)
-                    if (fieldValue instanceof Set<?>)
+                    if (fieldValue instanceof OMVRBTreeRIDSet)
+                      type = OType.LINKSET;
+                    else if (fieldValue instanceof Set<?>)
                       type = OType.EMBEDDEDSET;
                     else
                       type = OType.EMBEDDEDLIST;

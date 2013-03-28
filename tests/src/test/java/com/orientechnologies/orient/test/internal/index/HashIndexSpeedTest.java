@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.common.util.MersenneTwisterFast;
@@ -11,10 +9,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.OLRUCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin

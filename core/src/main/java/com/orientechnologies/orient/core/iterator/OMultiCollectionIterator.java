@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -28,10 +30,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
   private List<Object> internalCollections;
   private Iterator<?>  iteratorOfInternalCollections;
   private Iterator<T>  partialIterator;
+  private List<T>      temp    = null;
 
   private int          browsed = 0;
   private int          limit   = -1;
@@ -52,10 +55,12 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
 
   @Override
   public boolean hasNext() {
-    if (internalCollections != null) {
+    if (iteratorOfInternalCollections == null) {
+      if (internalCollections.isEmpty())
+        return false;
+
       // THE FIRST TIME CREATE THE ITERATOR
       iteratorOfInternalCollections = internalCollections.iterator();
-      internalCollections = null;
       getNextPartial();
     }
 
@@ -84,14 +89,37 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
 
   @Override
   public Iterator<T> iterator() {
+    reset();
     return this;
   }
 
+  @Override
+  public void reset() {
+    iteratorOfInternalCollections = null;
+    partialIterator = null;
+    browsed = 0;
+  }
+
   public void add(final Object iValue) {
-    if (internalCollections == null)
+    if (iteratorOfInternalCollections != null)
       throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
 
     internalCollections.add(iValue);
+  }
+
+  public int size() {
+    // SUM ALL THE COLLECTION SIZES
+    int size = 0;
+    for (Object o : internalCollections) {
+      if (o != null)
+        if (o instanceof Collection<?>)
+          size += ((Collection<?>) o).size();
+        else if (o instanceof Map<?, ?>)
+          size += ((Map<?, ?>) o).size();
+        else
+          size++;
+    }
+    return size;
   }
 
   @Override
@@ -114,6 +142,9 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
         final Object next = iteratorOfInternalCollections.next();
         if (next != null) {
           if (next instanceof Iterator<?>) {
+            if (next instanceof OResettable)
+              ((OResettable) next).reset();
+
             if (((Iterator<OIdentifiable>) next).hasNext()) {
               partialIterator = (Iterator<T>) next;
               return true;
@@ -124,9 +155,13 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T> {
               return true;
             }
           } else if (next instanceof OIdentifiable) {
-            final List<T> list = new ArrayList<T>();
-            list.add((T) next);
-            partialIterator = list.iterator();
+            if (temp == null)
+              temp = new ArrayList<T>(1);
+            else
+              temp.clear();
+            
+            temp.add((T) next);
+            partialIterator = temp.iterator();
             return true;
           }
         }

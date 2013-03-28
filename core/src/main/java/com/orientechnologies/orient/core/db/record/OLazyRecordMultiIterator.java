@@ -15,10 +15,12 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -31,73 +33,104 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable> {
-	final private ORecord<?>	sourceRecord;
-	final private Object[]		underlyingIterators;
-	final private boolean			convertToRecord;
-	private int								iteratorIndex	= 0;
+public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, OResettable {
+  final private ORecord<?> sourceRecord;
+  final private Object[]   underlyingSources;
+  final private Object[]   underlyingIterators;
+  final private boolean    convertToRecord;
+  private int              iteratorIndex = 0;
 
-	public OLazyRecordMultiIterator(final ORecord<?> iSourceRecord, final Object[] iIterators, final boolean iConvertToRecord) {
-		this.sourceRecord = iSourceRecord;
-		this.underlyingIterators = iIterators;
-		this.convertToRecord = iConvertToRecord;
-	}
+  public OLazyRecordMultiIterator(final ORecord<?> iSourceRecord, final Object[] iIterators, final boolean iConvertToRecord) {
+    this.sourceRecord = iSourceRecord;
+    this.underlyingSources = iIterators;
+    this.underlyingIterators = new Object[iIterators.length];
+    this.convertToRecord = iConvertToRecord;
+  }
 
-	public OIdentifiable next() {
-		if (!hasNext())
-			throw new NoSuchElementException();
+  @Override
+  public void reset() {
+    iteratorIndex = 0;
+    for (int i = 0; i < underlyingIterators.length; ++i)
+      underlyingIterators[i] = null;
+  }
 
-		final Iterator<OIdentifiable> underlying = getCurrentIterator();
-		OIdentifiable value = underlying.next();
+  public OIdentifiable next() {
+    if (!hasNext())
+      throw new NoSuchElementException();
 
-		if (value == null)
-			return null;
+    final Iterator<OIdentifiable> underlying = getCurrentIterator();
+    OIdentifiable value = underlying.next();
 
-		if (value instanceof ORecordId && convertToRecord) {
-			value = ((ORecordId) value).getRecord();
+    if (value == null)
+      return null;
 
-			if (underlying instanceof OLazyIterator<?>)
-				((OLazyIterator<OIdentifiable>) underlying).update(value);
-		}
+    if (value instanceof ORecordId && convertToRecord) {
+      value = ((ORecordId) value).getRecord();
 
-		return value;
-	}
+      if (underlying instanceof OLazyIterator<?>)
+        ((OLazyIterator<OIdentifiable>) underlying).update(value);
+    }
 
-	public boolean hasNext() {
-		final Iterator<OIdentifiable> underlying = getCurrentIterator();
-		boolean again = underlying.hasNext();
+    return value;
+  }
 
-		while (!again && iteratorIndex < underlyingIterators.length - 1) {
-			iteratorIndex++;
-			again = getCurrentIterator().hasNext();
-		}
+  public boolean hasNext() {
+    final Iterator<OIdentifiable> underlying = getCurrentIterator();
+    boolean again = underlying.hasNext();
 
-		return again;
-	}
+    while (!again && iteratorIndex < underlyingIterators.length - 1) {
+      iteratorIndex++;
+      again = getCurrentIterator().hasNext();
+    }
 
-	public OIdentifiable update(final OIdentifiable iValue) {
-		final Iterator<OIdentifiable> underlying = getCurrentIterator();
-		if (underlying instanceof OLazyIterator) {
-			final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
-			if (sourceRecord != null && !old.equals(iValue))
-				sourceRecord.setDirty();
-			return old;
-		} else
-			throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
-	}
+    return again;
+  }
 
-	public void remove() {
-		final Iterator<OIdentifiable> underlying = getCurrentIterator();
-		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public OIdentifiable update(final OIdentifiable iValue) {
+    final Iterator<OIdentifiable> underlying = getCurrentIterator();
+    if (underlying instanceof OLazyIterator) {
+      final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
+      if (sourceRecord != null && !old.equals(iValue))
+        sourceRecord.setDirty();
+      return old;
+    } else
+      throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+  }
 
-	@SuppressWarnings("unchecked")
-	private Iterator<OIdentifiable> getCurrentIterator() {
-		if (iteratorIndex > underlyingIterators.length)
-			throw new NoSuchElementException();
+  public void remove() {
+    final Iterator<OIdentifiable> underlying = getCurrentIterator();
+    underlying.remove();
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 
-		return (Iterator<OIdentifiable>) underlyingIterators[iteratorIndex];
-	}
+  @SuppressWarnings("unchecked")
+  private Iterator<OIdentifiable> getCurrentIterator() {
+    if (iteratorIndex > underlyingIterators.length)
+      throw new NoSuchElementException();
+
+    Object next = underlyingIterators[iteratorIndex];
+    if (next == null) {
+      // GET THE ITERATOR
+      if (underlyingSources[iteratorIndex] instanceof OResettable) {
+        // REUSE IT
+        ((OResettable) underlyingSources[iteratorIndex]).reset();
+        underlyingIterators[iteratorIndex] = underlyingSources[iteratorIndex];
+      } else if (underlyingSources[iteratorIndex] instanceof Iterable<?>) {
+        // CREATE A NEW ONE FROM THE COLLECTION
+        underlyingIterators[iteratorIndex] = ((Iterable<?>) underlyingSources[iteratorIndex]).iterator();
+      } else if (underlyingSources[iteratorIndex] instanceof Iterator<?>) {
+        // COPY IT
+        underlyingIterators[iteratorIndex] = underlyingSources[iteratorIndex];
+      } else
+        throw new IllegalStateException("Unsupported iteration source: " + underlyingSources[iteratorIndex]);
+      
+      next = underlyingIterators[iteratorIndex];
+    }
+
+    if (next instanceof Iterator<?>)
+      return (Iterator<OIdentifiable>) next;
+
+    return ((Collection<OIdentifiable>) next).iterator();
+  }
 }

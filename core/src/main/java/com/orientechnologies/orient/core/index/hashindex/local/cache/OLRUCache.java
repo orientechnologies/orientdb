@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.orientechnologies.orient.core.index.hashindex.local.arc;
+package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -57,7 +43,8 @@ public class OLRUCache implements ODiskCache {
   private final ODirectMemory                       directMemory;
 
   private final Map<Long, OMultiFileSegment>        files;
-  private final Map<FileLockKey, Long>              evictedPages;
+  private final NavigableMap<FileLockKey, Long>     evictedPages;
+
   private final Map<Long, Set<Long>>                filesPages;
 
   private final OLockManager<FileLockKey, Runnable> lockManager;
@@ -75,7 +62,7 @@ public class OLRUCache implements ODiskCache {
     this.files = new HashMap<Long, OMultiFileSegment>();
     this.filesPages = new HashMap<Long, Set<Long>>();
 
-    this.evictedPages = new HashMap<FileLockKey, Long>();
+    this.evictedPages = new TreeMap<FileLockKey, Long>();
 
     this.lockManager = new OLockManager<FileLockKey, Runnable>(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.DISK_PAGE_CACHE_LOCK_TIMEOUT.getValueAsInteger());
@@ -262,7 +249,8 @@ public class OLRUCache implements ODiskCache {
         try {
           LRUEntry lruEntry = lruList.remove(fileId, pageIndex);
           if (lruEntry != null && !lruEntry.managedExternally) {
-            flushData(fileId, pageIndex, lruEntry.dataPointer);
+            if (lruEntry.isDirty)
+              flushData(fileId, pageIndex, lruEntry.dataPointer);
 
             directMemory.free(lruEntry.dataPointer);
           }
@@ -309,6 +297,12 @@ public class OLRUCache implements ODiskCache {
         }
       }
 
+      NavigableMap<FileLockKey, Long> fileEvictedPages = evictedPages.subMap(new FileLockKey(fileId, 0), true, new FileLockKey(
+          fileId, Integer.MAX_VALUE), true);
+      for (long pointer : fileEvictedPages.values())
+        directMemory.free(pointer);
+
+      fileEvictedPages.clear();
       pageIndexes.clear();
       files.get(fileId).truncate();
     }
@@ -364,7 +358,7 @@ public class OLRUCache implements ODiskCache {
   @Override
   public void close() throws IOException {
     synchronized (syncObject) {
-      clear();
+      flushBuffer();
       for (OMultiFileSegment multiFileSegment : files.values())
         multiFileSegment.synch();
     }
@@ -457,17 +451,7 @@ public class OLRUCache implements ODiskCache {
 
     if (isDirty) {
       if (evictedPages.size() >= OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger()) {
-        Map.Entry[] sortedPages = evictedPages.entrySet().toArray(new Map.Entry[evictedPages.size()]);
-        Arrays.sort(sortedPages, new Comparator<Map.Entry>() {
-          @Override
-          public int compare(Map.Entry entryOne, Map.Entry entryTwo) {
-            FileLockKey fileLockKeyOne = (FileLockKey) entryOne.getKey();
-            FileLockKey fileLockKeyTwo = (FileLockKey) entryTwo.getKey();
-            return fileLockKeyOne.compareTo(fileLockKeyTwo);
-          }
-        });
-
-        for (Map.Entry<FileLockKey, Long> entry : sortedPages) {
+        for (Map.Entry<FileLockKey, Long> entry : evictedPages.entrySet()) {
           long evictedDataPointer = entry.getValue();
           FileLockKey fileLockKey = entry.getKey();
 
