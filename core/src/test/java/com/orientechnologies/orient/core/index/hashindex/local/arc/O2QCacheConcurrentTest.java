@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -32,8 +33,7 @@ import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
- * Created with IntelliJ IDEA. User: ALoginov Date: 3/26/13 Time: 1:21 PM To change this template use File | Settings | File
- * Templates.
+ * @author Artem Loginov
  */
 public class O2QCacheConcurrentTest {
 
@@ -64,13 +64,17 @@ public class O2QCacheConcurrentTest {
 
     storageLocal = (OStorageLocal) Orient.instance().loadStorage("local:" + buildDirectory + "/O2QCacheTest");
 
-    fileConfigurations = new OStorageSegmentConfiguration[FILE_COUNT];
+    prepareFilesForTest(FILE_COUNT);
+
+  }
+
+  private void prepareFilesForTest(int filesCount) {
+    fileConfigurations = new OStorageSegmentConfiguration[filesCount];
     for (int i = 0; i < fileConfigurations.length; i++) {
       fileConfigurations[i] = new OStorageSegmentConfiguration(storageLocal.getConfiguration(), "o2QCacheTest" + i, 0);
       fileConfigurations[i].fileType = OFileFactory.CLASSIC;
       fileConfigurations[i].fileMaxSize = "10000Mb";
     }
-
   }
 
   @BeforeMethod
@@ -91,30 +95,73 @@ public class O2QCacheConcurrentTest {
     seed = (byte) (random.nextInt() & 0xFF);
   }
 
+  private void initBuffer() throws IOException {
+    buffer = new O2QCache(32, directMemory, 8, storageLocal, true);
+  }
+
   @AfterClass
   public void afterClass() throws IOException {
     buffer.close();
     storageLocal.delete();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
-    if (file.exists())
-      Assert.assertTrue(file.delete());
+    deleteUsedFiles(FILE_COUNT);
   }
 
-  private void initBuffer() throws IOException {
-    buffer = new O2QCache(32, directMemory, 8, storageLocal, true);
-
-    final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
-    segmentConfiguration.fileType = OFileFactory.CLASSIC;
+  private void deleteUsedFiles(int filesCount) {
+    for (int k = 0; k < filesCount; k++) {
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest" + k + ".0.tst");
+      if (file.exists())
+        Assert.assertTrue(file.delete());
+    }
   }
 
   @Test
   public void testAdd() throws Exception {
-    for (int i = 0; i < fileIds.length(); i++) {
-      fileIds.set(i, buffer.openFile(fileConfigurations[i], ".tst"));
+    getIdentitiesOfFiles();
+
+    fillFilesWithContent();
+
+    validateFilesContent(version.byteValue());
+
+    version.compareAndSet(1, 2);
+    continuousWrite.compareAndSet(true, false);
+
+    generateRemainingPagesQueueForAllFiles();
+
+    executeConcurrentRandomReadAndWriteOperations();
+
+    buffer.flushBuffer();
+
+    validateFilesContent(version.byteValue());
+  }
+
+  private void executeConcurrentRandomReadAndWriteOperations() throws InterruptedException, ExecutionException {
+    for (int i = 0; i < THREAD_COUNT; i++) {
+      futures.add(executorService.submit(new Writer()));
+    }
+    for (int i = 0; i < THREAD_COUNT; i++) {
+      futures.add(executorService.submit(new Reader()));
     }
 
+    for (Future<Void> future : futures)
+      future.get();
+  }
+
+  private void generateRemainingPagesQueueForAllFiles() {
+    List<Integer>[] array = new ArrayList[FILE_COUNT];
+    for (int k = 0; k < FILE_COUNT; ++k) {
+      array[k] = new ArrayList<Integer>(PAGE_COUNT);
+      for (Integer i = 0; i < PAGE_COUNT; ++i) {
+        array[k].add(i);
+      }
+    }
+
+    for (int i = 0; i < FILE_COUNT; ++i) {
+      pagesQueue.set(i, Collections.synchronizedList(array[i]));
+    }
+  }
+
+  private void fillFilesWithContent() throws InterruptedException, ExecutionException, IOException {
     for (int i = 0; i < THREAD_COUNT; i++) {
       futures.add(executorService.submit(new Writer()));
     }
@@ -125,53 +172,33 @@ public class O2QCacheConcurrentTest {
     futures.clear();
 
     buffer.flushBuffer();
-
-    validate(version.byteValue());
-
-    version.compareAndSet(1, 2);
-    continuousWrite.compareAndSet(true, false);
-
-    List<Integer>[] array = new ArrayList[FILE_COUNT];
-    for (int k = 0; k < FILE_COUNT; ++k) {
-      array[k] = new ArrayList<Integer>(PAGE_COUNT);
-      for (Integer i = 0; i < PAGE_COUNT; ++i) {
-        array[k].add(i);
-      }
-    }
-    for (int i = 0; i < FILE_COUNT; ++i) {
-      pagesQueue.set(i, Collections.synchronizedList(array[i]));
-    }
-
-    for (int i = 0; i < THREAD_COUNT; i++) {
-      futures.add(executorService.submit(new Writer()));
-    }
-    for (int i = 0; i < THREAD_COUNT; i++) {
-      futures.add(executorService.submit(new Reader()));
-    }
-
-    for (Future<Void> future : futures)
-      future.get();
-
-    buffer.flushBuffer();
-
-    validate(version.byteValue());
   }
 
-  private void validate(byte version) throws IOException {
-    for (int k = 0; k < FILE_COUNT; ++k) {
-      String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest" + k + ".0.tst";
-
-      OFileClassic fileClassic = new OFileClassic();
-      fileClassic.init(path, "r");
-      fileClassic.open();
-      for (int i = 0; i < PAGE_COUNT; i++) {
-        byte[] content = new byte[8];
-        fileClassic.read(i * 8, content, 8);
-
-        Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) }, " i = " + i);
-      }
-      fileClassic.close();
+  private void getIdentitiesOfFiles() throws IOException {
+    for (int i = 0; i < fileIds.length(); i++) {
+      fileIds.set(i, buffer.openFile(fileConfigurations[i], ".tst"));
     }
+  }
+
+  private void validateFilesContent(byte version) throws IOException {
+    for (int k = 0; k < FILE_COUNT; ++k) {
+      validateFileContent(version, k);
+    }
+  }
+
+  private void validateFileContent(byte version, int k) throws IOException {
+    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest" + k + ".0.tst";
+
+    OFileClassic fileClassic = new OFileClassic();
+    fileClassic.init(path, "r");
+    fileClassic.open();
+    for (int i = 0; i < PAGE_COUNT; i++) {
+      byte[] content = new byte[8];
+      fileClassic.read(i * 8, content, 8);
+
+      Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) }, " i = " + i);
+    }
+    fileClassic.close();
   }
 
   private class Writer implements Callable<Void> {
@@ -179,17 +206,21 @@ public class O2QCacheConcurrentTest {
     public Void call() throws Exception {
       int fileNumber = getNextFileNumber();
       while (shouldContinue(fileNumber)) {
-        final long pageIndex;
-        pageIndex = getNextPageIndex(fileNumber);
-        long pointer = buffer.loadAndLockForWrite(fileIds.get(fileNumber), pageIndex);
-
-        directMemory.set(pointer,
-            new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 8);
-
-        buffer.releaseWriteLock(fileIds.get(fileNumber), pageIndex);
+        final long pageIndex = getNextPageIndex(fileNumber);
+        writeToFile(fileNumber, pageIndex);
         fileNumber = getNextFileNumber();
       }
       return null;
+    }
+
+    private void writeToFile(int fileNumber, long pageIndex) throws IOException {
+
+      long pointer = buffer.loadAndLockForWrite(fileIds.get(fileNumber), pageIndex);
+
+      directMemory.set(pointer, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) },
+          8);
+
+      buffer.releaseWriteLock(fileIds.get(fileNumber), pageIndex);
     }
 
     private long getNextPageIndex(int fileNumber) {
@@ -197,7 +228,9 @@ public class O2QCacheConcurrentTest {
       if (continuousWrite.get()) {
         pageIndex = pageCounters.getAndIncrement(fileNumber);
       } else {
-        pageIndex = pagesQueue.get(fileNumber).remove(new Random().nextInt(pagesQueue.get(fileNumber).size()));
+        int queueSize = pagesQueue.get(fileNumber).size();
+        int randomPageIndexFromQueue = new Random().nextInt(queueSize);
+        pageIndex = pagesQueue.get(fileNumber).remove(randomPageIndexFromQueue);
       }
       return pageIndex;
     }
@@ -207,22 +240,21 @@ public class O2QCacheConcurrentTest {
     }
 
     public int getNextFileNumber() {
-      if (continuousWrite.get()) {
-        int result = new Random().nextInt(FILE_COUNT - 1);
-        for (int i = 0; i < FILE_COUNT; ++i) {
-          if (pageCounters.get((result + i) % FILE_COUNT) < PAGE_COUNT) {
-            return (result + i) % FILE_COUNT;
-          }
-        }
-      } else {
-        int result = new Random().nextInt(FILE_COUNT - 1);
-        for (int i = 0; i < FILE_COUNT; ++i) {
-          if (!pagesQueue.get((result + i) % FILE_COUNT).isEmpty()) {
-            return (result + i) % FILE_COUNT;
-          }
-        }
+      int firstFileNumber = new Random().nextInt(FILE_COUNT - 1);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+        int fileNumber = (firstFileNumber + i) % FILE_COUNT;
+        if (isFileFull(fileNumber))
+          return fileNumber;
       }
       return -1;
+    }
+
+    private boolean isFileFull(int fileNumber) {
+      if (continuousWrite.get()) {
+        return pageCounters.get(fileNumber) < PAGE_COUNT;
+      } else {
+        return !pagesQueue.get(fileNumber).isEmpty();
+      }
     }
   }
 
