@@ -302,6 +302,10 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
   public boolean isEmbeddedStreaming() {
     if (embeddedStreaming && !marshalling) {
+      if (getDatabase().getTransaction().isActive())
+        // FORCE STREAMING BECAUSE TX
+        return true;
+
       final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
       if (binaryThreshold > 0 && getSize() > binaryThreshold && tree != null) {
         // CHANGE TO EXTERNAL BINARY

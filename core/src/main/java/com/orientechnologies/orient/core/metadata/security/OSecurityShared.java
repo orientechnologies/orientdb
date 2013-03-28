@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -264,9 +263,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       return null;
 
-    } catch(Exception ex) {
-    	OLogManager.instance().error(this, "Failed to get role : " + iRoleName + " " + ex.getMessage());
-    	return null;
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "Failed to get role : " + iRoleName + " " + ex.getMessage());
+      return null;
     } finally {
       releaseExclusiveLock();
     }
@@ -487,30 +486,11 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
-  
+
   public void createClassTrigger() {
-	  final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-	  OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
-	  if(classTrigger == null)
-		  classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
-	  /*No Need to create those properties
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_CREATE))     //before create
-		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_CREATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_CREATE))    //after create
-		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_CREATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_READ))    //before read
-		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_READ, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_READ))    //after read
-		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_READ, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_UPDATE))    //before update
-		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_UPDATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_UPDATE))    //after update
-		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_UPDATE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_BEFORE_DELETE))    //before delete
-		  classTrigger.createProperty(OClassTrigger.PROP_BEFORE_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  if(!classTrigger.existsProperty(OClassTrigger.PROP_AFTER_DELETE))    //after delete
-		  classTrigger.createProperty(OClassTrigger.PROP_AFTER_DELETE, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME));
-	  */
-	  //classTrigger.setSuperClass(db.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME));
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
+    if (classTrigger == null)
+      classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
   }
 }

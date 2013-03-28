@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Map;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 /**
  * @author luca.molino
  * 
@@ -25,8 +27,21 @@ import java.util.Map;
 public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbstract {
 
   protected static final String KEYWORD_SET      = "SET";
+  protected static final String KEYWORD_CONTENT  = "CONTENT";
 
+  protected ODocument           content          = null;
   protected int                 parameterCounter = 0;
+
+  protected void parseContent() {
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
+      final String contentAsString = parserRequiredWord(false, "Content expected").trim();
+      content = new ODocument().fromJSON(contentAsString);
+      parserSkipWhiteSpaces();
+    }
+
+    if (content == null)
+      throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
+  }
 
   protected void parseSetFields(final Map<String, Object> fields) {
     String fieldName;

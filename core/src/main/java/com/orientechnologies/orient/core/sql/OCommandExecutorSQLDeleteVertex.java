@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLSetAware implements OCommandResultListener {
+public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandResultListener {
   public static final String NAME    = "DELETE VERTEX";
   private ORecordId          rid;
   private int                removed = 0;

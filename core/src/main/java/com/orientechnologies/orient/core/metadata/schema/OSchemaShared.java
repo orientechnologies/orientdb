@@ -106,7 +106,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType) {
     if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot create a new class inside a transaction");
+      throw new IllegalStateException("Cannot create class " + iClassName + " inside a transaction");
 
     int clusterId = getDatabase().getClusterIdByName(iClassName);
     if (clusterId == -1)
@@ -629,7 +629,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final OClassImpl cls = (OClassImpl) createClass(javaClass.getSimpleName());
 
     final Class<?> javaSuperClass = javaClass.getSuperclass();
-    if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")) {
+    if (javaSuperClass != null && !javaSuperClass.getName().equals("java.lang.Object")
+        && !javaSuperClass.getName().startsWith("com.orientechnologies")) {
       OClass superClass = classes.get(javaSuperClass.getSimpleName().toLowerCase());
       if (superClass == null)
         superClass = cascadeCreate(javaSuperClass);

@@ -775,15 +775,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public boolean equals(final Object obj) {
     if (this == obj)
       return true;
-    if (!super.equals(obj))
-      return false;
     if (getClass() != obj.getClass())
       return false;
-    OClassImpl other = (OClassImpl) obj;
-    if (owner == null) {
-      if (other.owner != null)
+    final OClassImpl other = (OClassImpl) obj;
+    if (name == null) {
+      if (other.name != null)
         return false;
-    } else if (!owner.equals(other.owner))
+    } else if (!name.equals(other.name))
       return false;
     return true;
   }
@@ -843,6 +841,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
+    if (iClassName == null)
+      return false;
+
+    if (iClassName.equals(name) || iClassName.equals(shortName))
+      // SPEEDUP CHECK IF CLASS NAME ARE THE SAME
+      return true;
+
+    if (superClass == null)
+      return false;
+
     return isSubClassOf(owner.getClass(iClassName));
   }
 
@@ -859,7 +867,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     OClass cls = this;
     while (cls != null) {
-      if (cls.getName().equals(iClass.getName()))
+      if (cls.equals(iClass))
         return true;
       cls = cls.getSuperClass();
     }
@@ -874,13 +882,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass iClass) {
-    OClass cls = iClass;
-    while (cls != null) {
-      if (cls.getName().equals(name))
-        return true;
-      cls = cls.getSuperClass();
-    }
-    return false;
+    return iClass.isSubClassOf(this);
   }
 
   public Object get(final ATTRIBUTES iAttribute) {
