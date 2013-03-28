@@ -111,9 +111,11 @@ public class OIndexFullText extends OIndexMultiValues {
           // SEARCH FOR THE WORD
           refs = map.get(word);
 
-          if (refs == null)
+          if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-            refs = new OMVRBTreeRIDSet().setAutoConvert(false);
+            refs = new OMVRBTreeRIDSet();
+            ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+          }
 
           // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
           refs.add(iSingleValue);
