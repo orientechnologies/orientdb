@@ -135,6 +135,94 @@ public class LocalPageTest {
     }
   }
 
+  public void testDeleteAddLowerVersion() {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+      recordVersion.increment();
+
+      int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+
+      Assert.assertTrue(localPage.deleteRecord(position));
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+
+      Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+
+      long recordPointer = localPage.getRecordPointer(position);
+      int recordSize = localPage.getRecordSize(position);
+      Assert.assertEquals(recordSize, 11);
+
+      recordVersion.increment();
+      Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
+      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testDeleteAddBiggerVersion() {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+      recordVersion.increment();
+
+      int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+
+      Assert.assertTrue(localPage.deleteRecord(position));
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.increment();
+      newRecordVersion.increment();
+      newRecordVersion.increment();
+      newRecordVersion.increment();
+
+      Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+
+      long recordPointer = localPage.getRecordPointer(position);
+      int recordSize = localPage.getRecordSize(position);
+      Assert.assertEquals(recordSize, 11);
+
+      Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
+      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testDeleteAddEqualVersion() {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+      recordVersion.increment();
+
+      int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+
+      Assert.assertTrue(localPage.deleteRecord(position));
+
+      Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
+
+      long recordPointer = localPage.getRecordPointer(position);
+      int recordSize = localPage.getRecordSize(position);
+      Assert.assertEquals(recordSize, 11);
+
+      recordVersion.increment();
+      Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
+      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
   public void testDeleteTwoOutOfFour() {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
@@ -204,6 +292,7 @@ public class LocalPageTest {
       OLocalPage localPage = new OLocalPage(pagePointer, true);
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
+      Set<Integer> deletedPositions = new HashSet<Integer>();
 
       int lastPosition;
       byte counter = 0;
@@ -228,6 +317,7 @@ public class LocalPageTest {
 
       for (int i = 0; i < filledRecordsCount; i += 2) {
         localPage.deleteRecord(i);
+        deletedPositions.add(i);
         positionCounter.remove(i);
       }
 
@@ -243,13 +333,23 @@ public class LocalPageTest {
         }
       } while (lastPosition >= 0);
 
+      ORecordVersion deletedVersion = OVersionFactory.instance().createVersion();
+      deletedVersion.copyFrom(recordVersion);
+
+      deletedVersion.increment();
+
       Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
         final long pointer = localPage.getRecordPointer(entry.getKey());
 
         Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
-        Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+
+        if (deletedPositions.contains(entry.getKey()))
+          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
+        else
+          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+
       }
     } finally {
       directMemory.free(pagePointer);
@@ -275,6 +375,7 @@ public class LocalPageTest {
 
       Assert.assertTrue(localPage.deleteRecord(0));
 
+      recordVersion.increment();
       int freeSpace = localPage.getFreeSpace();
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       int lastPosition;

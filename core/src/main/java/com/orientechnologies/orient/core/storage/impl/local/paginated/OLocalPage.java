@@ -109,20 +109,39 @@ public class OLocalPage {
 
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(getFreeSpace() - entrySize, directMemory, pagePointer
           + FREE_SPACE_COUNTER_OFFSET);
+
+      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePosition, directMemory, pagePointer + entryIndexPosition);
+
+      byte[] serializedVersion = directMemory.get(pagePointer + entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory
+          .instance().getVersionSize());
+      ORecordVersion existingRecordVersion = OVersionFactory.instance().createVersion();
+      existingRecordVersion.getSerializer().fastReadFrom(serializedVersion, 0, existingRecordVersion);
+
+      if (existingRecordVersion.compareTo(recordVersion) < 0) {
+        recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
+        directMemory.set(pagePointer + entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion,
+            serializedVersion.length);
+      } else {
+        existingRecordVersion.increment();
+        existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
+        directMemory.set(pagePointer + entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion,
+            serializedVersion.length);
+      }
     } else {
       entryIndex = indexesLength;
       OIntegerSerializer.INSTANCE
           .serializeInDirectMemory(indexesLength + 1, directMemory, pagePointer + PAGE_INDEXES_LENGTH_OFFSET);
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(getFreeSpace() - entrySize - INDEX_ITEM_SIZE, directMemory, pagePointer
           + FREE_SPACE_COUNTER_OFFSET);
+
+      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePosition, directMemory, pagePointer + entryIndexPosition);
+
+      byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
+      recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
+      directMemory.set(pagePointer + entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion, serializedVersion.length);
     }
-
-    int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(freePosition, directMemory, pagePointer + entryIndexPosition);
-
-    byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
-    recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
-    directMemory.set(pagePointer + entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion, serializedVersion.length);
 
     long entryPointer = pagePointer + freePosition;
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(entrySize, directMemory, entryPointer);
