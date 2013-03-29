@@ -617,6 +617,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
+  /***
+   * @author Claudio Tesoriero
+   * @param iCommandText
+   */
+  @ConsoleCommand(splitInWords = false, description = "Create a stored function")
+  public void createFunction(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nFunction created successfully with id=%s\n", true);
+    updateDatabaseInfo();
+  }
+  
+  
   @ConsoleCommand(splitInWords = false, description = "Traverse records and display the results")
   public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
     final List<String> columns = new ArrayList<String>();
