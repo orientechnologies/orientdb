@@ -39,43 +39,43 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters[0] == null)
       return null;
 
-    // calculate max value for current record. 
+    // calculate max value for current record.
     Object max = null;
     if (iParameters[0] instanceof Collection<?>) {
-    	// for a projection with multiple results find out the max value
-    	Object[] array = ((Collection<?>)iParameters[0]).toArray();
-        for (int i = 0; i < array.length; ++i) {
-          if (max == null || array[i] != null && ((Comparable) array[i]).compareTo(max) > 0)
-            max = array[i];
-        }
+      // for a projection with multiple results find out the max value
+      for (Object item : ((Collection<?>) iParameters[0])) {
+        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
+          max = item;
+      }
     } else {
-    	// this is the max as is an unique value
-        max = (Comparable<Object>) iParameters[0];
+      // this is the max as is an unique value
+      max = (Comparable<Object>) iParameters[0];
     }
-    
+
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
     if (aggregateResults()) {
-        if (context == null)
-            // FIRST TIME
-            context = (Comparable)max;
-        else if (context.compareTo((Comparable)max) < 0)
-            // BIGGER
-            context = (Comparable)max;
-        
-        return null;
-    } 
-    
+      if (context == null)
+        // FIRST TIME
+        context = (Comparable) max;
+      else if (context.compareTo((Comparable) max) < 0)
+        // BIGGER
+        context = (Comparable) max;
+
+      return null;
+    }
+
     // for non aggregated results (a result per output record)
     return max;
   }
 
   public boolean aggregateResults() {
-	  // LET definitions (contain $current) does not require results aggregation
+    // LET definitions (contain $current) does not require results aggregation
     return ((configuredParameters.length == 1) && !configuredParameters[0].toString().contains("$current"));
   }
 
