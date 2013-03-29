@@ -55,12 +55,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private static final String                KEYWORD_PUT       = "PUT";
   private static final String                KEYWORD_REMOVE    = "REMOVE";
   private static final String                KEYWORD_INCREMENT = "INCREMENT";
+  private static final String                KEYWORD_MERGE     = "MERGE";
 
   private Map<String, Object>                setEntries        = new LinkedHashMap<String, Object>();
   private List<OPair<String, Object>>        addEntries        = new ArrayList<OPair<String, Object>>();
   private Map<String, OPair<String, Object>> putEntries        = new LinkedHashMap<String, OPair<String, Object>>();
   private List<OPair<String, Object>>        removeEntries     = new ArrayList<OPair<String, Object>>();
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
+  private ODocument                          merge             = null;
 
   private OQuery<?>                          query;
   private OSQLFilter                         compiledFilter;
@@ -81,6 +83,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     putEntries.clear();
     removeEntries.clear();
     incrementEntries.clear();
+    content = null;
+    merge = null;
 
     query = null;
     recordCount = 0;
@@ -95,15 +99,19 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     String word = parserGetLastWord();
 
     if (parserIsEnded()
-        || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE) && !word
-            .equals(KEYWORD_INCREMENT)))
-      throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE
-          + " or " + KEYWORD_INCREMENT);
+        || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
+            && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)))
+      throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + "," + KEYWORD_MERGE
+          + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + " or " + KEYWORD_INCREMENT);
 
     while (!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
       word = parserGetLastWord();
 
-      if (word.equals(KEYWORD_SET))
+      if (word.equals(KEYWORD_CONTENT))
+        parseContent();
+      else if (word.equals(KEYWORD_MERGE))
+        parseMerge();
+      else if (word.equals(KEYWORD_SET))
         parseSetFields(setEntries);
       else if (word.equals(KEYWORD_ADD))
         parseAddFields();
@@ -123,7 +131,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (subjectName.startsWith("(")) {
       subjectName = subjectName.trim();
-      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this)
+          .setContext(context));
 
       if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
@@ -155,6 +164,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     }
 
     query.setUseCache(false);
+    query.setContext(context);
     getDatabase().query(query, queryArgs);
     return recordCount;
   }
@@ -176,9 +186,22 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parameters.reset();
 
+    if (content != null) {
+      // REPLACE ALL THE CONTENT
+      record.clear();
+      record.merge(content, false, false);
+      recordUpdated = true;
+    }
+
+    if (merge != null) {
+      // REPLACE ALL THE CONTENT
+      record.merge(merge, false, false);
+      recordUpdated = true;
+    }
+
     // BIND VALUES TO UPDATE
     if (!setEntries.isEmpty()) {
-      OSQLHelper.bindParameters(record, setEntries, parameters);
+      OSQLHelper.bindParameters(record, setEntries, parameters, context);
       recordUpdated = true;
     }
 
@@ -303,6 +326,17 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     return true;
   }
 
+  protected void parseMerge() {
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
+      final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
+      merge = new ODocument().fromJSON(contentAsString);
+      parserSkipWhiteSpaces();
+    }
+
+    if (merge == null)
+      throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
+  }
+
   private void parseAddFields() {
     String fieldName;
     String fieldValue;
@@ -398,7 +432,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
   @Override
   public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT] [[,] <field-name> = <expression>|<sub-command>]* [WHERE <conditions>]";
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [WHERE <conditions>]";
   }
 
   @Override
@@ -410,7 +444,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;

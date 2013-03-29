@@ -214,6 +214,24 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
+  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord) {
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan) {
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {

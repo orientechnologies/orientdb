@@ -58,9 +58,12 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
       if (temp.equals("CLUSTER")) {
         clusterName = parserRequiredWord(false);
 
-      } else if (temp.equals("SET")) {
+      } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
         parseSetFields(fields);
+
+      } else if (temp.equals(KEYWORD_CONTENT)) {
+        parseContent();
 
       } else if (className == null && temp.length() > 0)
         className = temp;
@@ -95,7 +98,10 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     final ODocument vertex = ((OGraphDatabase) database).createVertex(clazz.getName());
 
-    OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs));
+    OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs), context);
+
+    if (content != null)
+      vertex.merge(content, false, false);
 
     if (clusterName != null)
       vertex.save(clusterName);

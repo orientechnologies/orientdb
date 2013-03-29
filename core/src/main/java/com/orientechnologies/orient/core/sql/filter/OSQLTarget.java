@@ -83,12 +83,12 @@ public class OSQLTarget extends OBaseParser {
     if (c == '$') {
       targetVariable = parserRequiredWord(false, "No valid target");
       targetVariable = targetVariable.substring(1);
-    } else if (c == '#' || Character.isDigit(c)) {
+    } else if (c == OStringSerializerHelper.LINK || Character.isDigit(c)) {
       // UNIQUE RID
       targetRecords = new ArrayList<OIdentifiable>();
       ((List<OIdentifiable>) targetRecords).add(new ORecordId(parserRequiredWord(true, "No valid RID")));
 
-    } else if (c == '(') {
+    } else if (c == OStringSerializerHelper.EMBEDDED_BEGIN) {
       // SUB QUERY
       final StringBuilder subText = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
@@ -105,7 +105,7 @@ public class OSQLTarget extends OBaseParser {
 
       targetRecords = (Iterable<? extends OIdentifiable>) executor;
 
-    } else if (c == OStringSerializerHelper.COLLECTION_BEGIN) {
+    } else if (c == OStringSerializerHelper.LIST_BEGIN) {
       // COLLECTION OF RIDS
       final List<String> rids = new ArrayList<String>();
       parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), rids));

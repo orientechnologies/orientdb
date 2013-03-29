@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -50,7 +51,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements
-    OTrackedMultiValue<OIdentifiable, OIdentifiable> {
+    OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordLazyMultiValue {
   private IdentityHashMap<ORecord<?>, Object>                          newEntries;
   private boolean                                                      autoConvertToRecord = true;
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
@@ -293,8 +294,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
     if (hasNewItems())
-      return new OLazyRecordMultiIterator(null, new Object[] { keySet().iterator(), newEntries.keySet().iterator() },
-          iAutoConvertToRecord);
+      return new OLazyRecordMultiIterator(null, new Object[] { keySet(), newEntries.keySet() }, iAutoConvertToRecord);
 
     return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
   }
@@ -435,15 +435,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     return newEntries != null && !newEntries.isEmpty();
   }
 
-  public boolean isAutoConvert() {
-    return autoConvertToRecord;
-  }
-
-  public OMVRBTreeRID setAutoConvert(boolean autoConvert) {
-    this.autoConvertToRecord = autoConvert;
-    return this;
-  }
-
   @Override
   public String toString() {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
@@ -546,5 +537,29 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   @Override
   public Class<?> getGenericClass() {
     return null;
+  }
+
+  @Override
+  public Iterator<OIdentifiable> rawIterator() {
+    return iterator(false);
+  }
+
+  @Override
+  public void convertLinks2Records() {
+  }
+
+  @Override
+  public boolean convertRecords2Links() {
+    return false;
+  }
+
+  @Override
+  public boolean isAutoConvertToRecord() {
+    return autoConvertToRecord;
+  }
+
+  @Override
+  public void setAutoConvertToRecord(boolean convertToRecord) {
+    autoConvertToRecord = convertToRecord;
   }
 }

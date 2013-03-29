@@ -121,7 +121,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
         if (isEmbeddedStreaming()) {
           marshalling = true;
           // SERIALIZE AS AN EMBEDDED STRING
-          buffer.append(OStringSerializerHelper.COLLECTION_BEGIN);
+          buffer.append(OStringSerializerHelper.SET_BEGIN);
 
           // PERSISTENT RIDS
           boolean first = true;
@@ -152,7 +152,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
               rec.getIdentity().toString(buffer);
             }
 
-          buffer.append(OStringSerializerHelper.COLLECTION_END);
+          buffer.append(OStringSerializerHelper.SET_END);
         } else {
           marshalling = true;
           buffer.append(OStringSerializerHelper.EMBEDDED_BEGIN);
@@ -196,10 +196,11 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     try {
       final char firstChar = buffer.charAt(0);
 
-      String value = firstChar == OStringSerializerHelper.COLLECTION_BEGIN ? buffer.substring(1, buffer.length() - 1) : buffer
-          .toString();
+      String value = firstChar == OStringSerializerHelper.SET_BEGIN || firstChar == OStringSerializerHelper.LIST_BEGIN ? buffer
+          .substring(1, buffer.length() - 1) : buffer.toString();
 
-      if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN || firstChar == OStringSerializerHelper.LINK) {
+      if (firstChar == OStringSerializerHelper.SET_BEGIN || firstChar == OStringSerializerHelper.LIST_BEGIN
+          || firstChar == OStringSerializerHelper.LINK) {
         setEmbeddedStreaming(true);
         final StringTokenizer tokenizer = new StringTokenizer(value, ",");
         while (tokenizer.hasMoreElements()) {
@@ -302,6 +303,10 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
   public boolean isEmbeddedStreaming() {
     if (embeddedStreaming && !marshalling) {
+      if (getDatabase().getTransaction().isActive())
+        // FORCE STREAMING BECAUSE TX
+        return true;
+
       final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
       if (binaryThreshold > 0 && getSize() > binaryThreshold && tree != null) {
         // CHANGE TO EXTERNAL BINARY

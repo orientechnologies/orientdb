@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -96,5 +97,16 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
   @Override
   public void setUseCache(boolean iUseCache) {
     command.setUseCache(iUseCache);
+  }
+
+  @Override
+  public OCommandContext getContext() {
+    return command.getContext();
+  }
+
+  @Override
+  public OCommandRequest setContext(final OCommandContext iContext) {
+    command.setContext(iContext);
+    return this;
   }
 }

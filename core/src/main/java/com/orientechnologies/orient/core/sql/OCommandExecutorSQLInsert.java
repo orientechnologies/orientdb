@@ -58,6 +58,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
     className = null;
     newRecords = null;
+    content = null;
 
     parserRequiredKeyword("INSERT");
     parserRequiredKeyword("INTO");
@@ -99,21 +100,24 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
     newRecords = new ArrayList<Map<String, Object>>();
     if (parserGetCurrentChar() == '(') {
-      parseBracesFields();
+      parseValues();
     } else {
-      final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
-      newRecords.add(fields);
+      parserNextWord(true, " ,\r\n");
 
-      // ADVANCE THE SET KEYWORD
-      parserRequiredWord(false);
-
-      parseSetFields(fields);
+      if (parserGetLastWord().equals(KEYWORD_CONTENT)) {
+        newRecords = null;
+        parseContent();
+      } else if (parserGetLastWord().equals(KEYWORD_SET)) {
+        final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
+        newRecords.add(fields);
+        parseSetFields(fields);
+      }
     }
 
     return this;
   }
 
-  protected void parseBracesFields() {
+  protected void parseValues() {
     final int beginFields = parserGetCurrentPosition();
 
     final int endFields = parserText.indexOf(')', beginFields + 1);
@@ -134,16 +138,17 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (parserIsEnded() || parserText.charAt(parserGetCurrentPosition()) != '(') {
       throwParsingException("Set of values is missed. Example: ('Bill', 'Stuart', 300)");
     }
-        
+
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
-    final List<String> records = OStringSerializerHelper.smartSplit(parserText,new char[]{','},blockStart,-1,true, true);
-    for(String record : records){
-      
+    final List<String> records = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart, -1, true, true,
+        false);
+    for (String record : records) {
+
       final List<String> values = new ArrayList<String>();
       blockEnd += OStringSerializerHelper.getParameters(record, 0, -1, values);
-    
+
       if (blockEnd == -1)
         throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
 
@@ -169,11 +174,14 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
    * Execute the INSERT and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (newRecords == null)
+    if (newRecords == null && content == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final OCommandParameters commandParameters = new OCommandParameters(iArgs);
     if (indexName != null) {
+      if (newRecords == null)
+        throw new OCommandExecutionException("No key/value found");
+
       final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
@@ -192,24 +200,31 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
       // CREATE NEW DOCUMENTS
       final List<ODocument> docs = new ArrayList<ODocument>();
-      for (Map<String, Object> candidate : newRecords) {
-        final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-        OSQLHelper.bindParameters(doc, candidate, commandParameters);
+      if (newRecords != null) {
+        for (Map<String, Object> candidate : newRecords) {
+          final ODocument doc = className != null ? new ODocument(className) : new ODocument();
+          OSQLHelper.bindParameters(doc, candidate, commandParameters, context);
 
-        if (clusterName != null) {
-          doc.save(clusterName);
-        } else {
-          doc.save();
+          if (clusterName != null) {
+            doc.save(clusterName);
+          } else {
+            doc.save();
+          }
+          docs.add(doc);
         }
-        docs.add(doc);
-      }
 
-      if (docs.size() == 1) {
-        return docs.get(0);
-      } else {
-        return docs;
+        if (docs.size() == 1)
+          return docs.get(0);
+        else
+          return docs;
+      } else if (content != null) {
+        final ODocument doc = className != null ? new ODocument(className) : new ODocument();
+        doc.merge(content, false, false);
+        doc.save();
+        return doc;
       }
     }
+    return null;
   }
 
   private Object getIndexKeyValue(OCommandParameters commandParameters, Map<String, Object> candidate) {
@@ -246,6 +261,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>}";
   }
 }

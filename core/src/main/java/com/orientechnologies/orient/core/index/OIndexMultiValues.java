@@ -92,8 +92,10 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
         Set<OIdentifiable> values = map.get(iKey);
 
-        if (values == null)
-          values = new OMVRBTreeRIDSet().setAutoConvert(false);
+        if (values == null) {
+          values = new OMVRBTreeRIDSet();
+          ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
+        }
 
         if (!iSingleValue.getIdentity().isValid())
           ((ORecord<?>) iSingleValue).save();

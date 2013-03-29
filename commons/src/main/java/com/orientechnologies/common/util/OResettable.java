@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.local;
 
-public abstract class OSegment {
-  protected OStorageLocalAbstract storage;
-  protected String                name;
+package com.orientechnologies.common.util;
 
-  public OSegment(final OStorageLocalAbstract iStorage, final String iName) {
-    storage = iStorage;
-    name = iName;
-  }
-
-  public String getName() {
-    return name;
-  }
+/**
+ * Interface that support reset()
+ */
+public interface OResettable {
+  public void reset();
 }

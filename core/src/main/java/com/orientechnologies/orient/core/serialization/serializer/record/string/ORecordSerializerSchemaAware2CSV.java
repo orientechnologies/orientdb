@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   private static final long                            serialVersionUID    = 1L;
@@ -228,7 +229,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   }
 
                   if (type == null)
-                    if (fieldValue instanceof Set<?>)
+                    if (fieldValue instanceof OMVRBTreeRIDSet)
+                      type = OType.LINKSET;
+                    else if (fieldValue instanceof Set<?>)
                       type = OType.EMBEDDEDSET;
                     else
                       type = OType.EMBEDDEDLIST;
@@ -380,7 +383,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD
       return iRecord;
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR);
+    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true);
 
     String field;
     String fieldName = null;
@@ -444,15 +447,18 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             if (fieldValue != null && type == null) {
               if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
                 type = OType.STRING;
-              } else if (fieldValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
-                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
-                type = OType.EMBEDDEDLIST;
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
+                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.LIST_END
+                  || fieldValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
+                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.SET_END) {
+                // EMBEDDED LIST/SET
+                type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.EMBEDDEDLIST : OType.EMBEDDEDSET;
 
                 final String value = fieldValue.substring(1, fieldValue.length() - 1);
 
                 if (!value.isEmpty()) {
                   if (value.charAt(0) == OStringSerializerHelper.LINK) {
-                    type = OType.LINKLIST;
+                    type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
                     linkedType = OType.LINK;
 
                     // GET THE CLASS NAME IF ANY

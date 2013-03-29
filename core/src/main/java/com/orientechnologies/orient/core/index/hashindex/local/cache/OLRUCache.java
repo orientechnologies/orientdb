@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.orientechnologies.orient.core.index.hashindex.local.arc;
+package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
@@ -44,7 +29,7 @@ import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -58,17 +43,19 @@ public class OLRUCache implements ODiskCache {
   private final ODirectMemory                       directMemory;
 
   private final Map<Long, OMultiFileSegment>        files;
-  private final SortedMap<FileLockKey, Long>        evictedPages;
+  private final NavigableMap<FileLockKey, Long>     evictedPages;
+
   private final Map<Long, Set<Long>>                filesPages;
 
   private final OLockManager<FileLockKey, Runnable> lockManager;
   private final Object                              syncObject;
-  private final OStorageLocal                       storageLocal;
+  private final OStorageLocalAbstract               storageLocal;
 
   private final boolean                             syncOnPageFlush;
   private long                                      fileCounter = 1;
 
-  public OLRUCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocal storageLocal, boolean syncOnPageFlush) {
+  public OLRUCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
+      boolean syncOnPageFlush) {
     this.directMemory = directMemory;
     this.pageSize = pageSize;
     this.storageLocal = storageLocal;
@@ -79,7 +66,7 @@ public class OLRUCache implements ODiskCache {
     this.evictedPages = new TreeMap<FileLockKey, Long>();
 
     this.lockManager = new OLockManager<FileLockKey, Runnable>(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-        1000);
+        OGlobalConfiguration.DISK_PAGE_CACHE_LOCK_TIMEOUT.getValueAsInteger());
 
     long tmpMaxSize = maxMemory / pageSize;
     if (tmpMaxSize >= Integer.MAX_VALUE)
@@ -263,7 +250,8 @@ public class OLRUCache implements ODiskCache {
         try {
           LRUEntry lruEntry = lruList.remove(fileId, pageIndex);
           if (lruEntry != null && !lruEntry.managedExternally) {
-            flushData(fileId, pageIndex, lruEntry.dataPointer);
+            if (lruEntry.isDirty)
+              flushData(fileId, pageIndex, lruEntry.dataPointer);
 
             directMemory.free(lruEntry.dataPointer);
           }
@@ -310,6 +298,12 @@ public class OLRUCache implements ODiskCache {
         }
       }
 
+      NavigableMap<FileLockKey, Long> fileEvictedPages = evictedPages.subMap(new FileLockKey(fileId, 0), true, new FileLockKey(
+          fileId, Integer.MAX_VALUE), true);
+      for (long pointer : fileEvictedPages.values())
+        directMemory.free(pointer);
+
+      fileEvictedPages.clear();
       pageIndexes.clear();
       files.get(fileId).truncate();
     }
@@ -365,7 +359,7 @@ public class OLRUCache implements ODiskCache {
   @Override
   public void close() throws IOException {
     synchronized (syncObject) {
-      clear();
+      flushBuffer();
       for (OMultiFileSegment multiFileSegment : files.values())
         multiFileSegment.synch();
     }
@@ -457,10 +451,12 @@ public class OLRUCache implements ODiskCache {
       return;
 
     if (isDirty) {
-      if (evictedPages.size() >= 1500) {
+      if (evictedPages.size() >= OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger()) {
         for (Map.Entry<FileLockKey, Long> entry : evictedPages.entrySet()) {
           long evictedDataPointer = entry.getValue();
-          flushData(fileId, entry.getKey().pageIndex, evictedDataPointer);
+          FileLockKey fileLockKey = entry.getKey();
+
+          flushData(fileLockKey.fileId, fileLockKey.pageIndex, evictedDataPointer);
 
           directMemory.free(evictedDataPointer);
         }

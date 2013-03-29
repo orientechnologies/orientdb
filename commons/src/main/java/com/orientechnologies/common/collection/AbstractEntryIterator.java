@@ -37,7 +37,7 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
     next = start;
     expectedModCount = tree.modCount;
     lastReturned = null;
-    pageIndex = start.getTree().getPageIndex() - 1;
+    pageIndex = start.getTree().getPageIndex() > -1 ? start.getTree().getPageIndex() - 1 : -1;
   }
 
   public boolean hasNext() {

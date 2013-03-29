@@ -68,7 +68,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private TimeZone                          timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
   private String                            charset          = DEFAULT_CHARSET;
 
-  public final OStorageSegmentConfiguration fileTemplate;
+  public OStorageSegmentConfiguration       fileTemplate;
 
   public List<OStorageClusterConfiguration> clusters         = new ArrayList<OStorageClusterConfiguration>();
   public List<OStorageDataConfiguration>    dataSegments     = new ArrayList<OStorageDataConfiguration>();

@@ -16,11 +16,11 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.hashindex.local.arc.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -62,6 +62,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private final String                  treeStateFileExtension;
   private final String                  bucketFileExtension;
 
+  public static final int               HASH_CODE_SIZE         = 64;
   public static final int               MAX_LEVEL_DEPTH        = 8;
   public static final int               MAX_LEVEL_SIZE         = 1 << MAX_LEVEL_DEPTH;
 
@@ -82,11 +83,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private OBinarySerializer<K>          keySerializer;
   private OBinarySerializer<V>          valueSerializer;
 
-  private OHashIndexFileLevelMetadata[] filesMetadata          = new OHashIndexFileLevelMetadata[64];
-  private SortedMap<Long, Long>[]       bucketsToSplitByLevels = new TreeMap[64];
+  private OHashIndexFileLevelMetadata[] filesMetadata          = new OHashIndexFileLevelMetadata[HASH_CODE_SIZE];
+  private Map<Long, Long>[]             bucketsToSplitByLevels = new Map[HASH_CODE_SIZE];
   private int                           bucketsToSplitAmount;
 
-  private final long[]                  fileLevelIds           = new long[64];
+  private final long[]                  fileLevelIds           = new long[HASH_CODE_SIZE];
 
   private final Comparator<? super K>   comparator             = ODefaultComparator.INSTANCE;
 
@@ -264,7 +265,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         if (filesMetadata[i] != null)
           buffer.truncateFile(fileLevelIds[i]);
 
-        final SortedMap<Long, Long> splitBuckets = bucketsToSplitByLevels[i];
+        final Map<Long, Long> splitBuckets = bucketsToSplitByLevels[i];
         if (splitBuckets != null)
           splitBuckets.clear();
       }
@@ -379,9 +380,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       if (bitsCount == 1)
         arraySize = hashTreeSize;
       else
-        arraySize = 1 << (Integer.highestOneBit(hashTreeSize) + 1);
+        arraySize = Integer.highestOneBit(hashTreeSize) << 1;
 
-      OHashIndexTreeStateStore.TreeState treeState = treeStateStore.loadTreeState(hashTreeSize);
+      OHashIndexTreeStateStore.TreeState treeState = treeStateStore.loadTreeState(arraySize);
 
       hashTree = treeState.getHashTree();
       nodesMetadata = treeState.getHashTreeNodeMetadata();
@@ -890,7 +891,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         if (filesMetadata[i] != null)
           buffer.deleteFile(fileLevelIds[i]);
 
-        SortedMap<Long, Long> splitBuckets = bucketsToSplitByLevels[i];
+        Map<Long, Long> splitBuckets = bucketsToSplitByLevels[i];
         if (splitBuckets != null)
           splitBuckets.clear();
       }
@@ -1541,7 +1542,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     assert checkBucketDepth(bucket);
 
     for (OHashIndexBucket.Entry<K, V> entry : bucket) {
-      if (((keyHashFunction.hashCode(entry.key) >>> (64 - newBucketDepth)) & 1) == 0)
+      if (((keyHashFunction.hashCode(entry.key) >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0)
         updatedBucket.appendEntry(entry.key, entry.value);
       else
         newBucket.appendEntry(entry.key, entry.value);
@@ -1611,9 +1612,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         final long updatedBucketPointer = createBucketPointer(updatedBucketIndex, newFileLevel);
         final long newBucketPointer = createBucketPointer(newBucketIndex, newFileLevel);
 
-        SortedMap<Long, Long> splitBuckets = bucketsToSplitByLevels[newFileLevel];
+        Map<Long, Long> splitBuckets = bucketsToSplitByLevels[newFileLevel];
         if (splitBuckets == null) {
-          splitBuckets = new TreeMap<Long, Long>();
+          splitBuckets = new HashMap<Long, Long>();
           bucketsToSplitByLevels[newFileLevel] = splitBuckets;
         }
 
@@ -1639,13 +1640,21 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private void flushSplitBucketsBuffer(boolean force) throws IOException {
-    if (bucketsToSplitAmount > 1500 || force) {
+    if (bucketsToSplitAmount > OGlobalConfiguration.HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH.getValueAsInteger() || force) {
       for (int i = 0; i < bucketsToSplitByLevels.length; i++) {
-        SortedMap<Long, Long> buckets = bucketsToSplitByLevels[i];
+        Map<Long, Long> buckets = bucketsToSplitByLevels[i];
         if (buckets == null)
           continue;
 
-        for (Map.Entry<Long, Long> splitBucketEntry : buckets.entrySet()) {
+        Map.Entry[] sortedBuckets = buckets.entrySet().toArray(new Map.Entry[buckets.size()]);
+        Arrays.sort(sortedBuckets, new Comparator<Map.Entry>() {
+          @Override
+          public int compare(Map.Entry entryOne, Map.Entry entryTwo) {
+            return ((Long) entryOne.getKey()).compareTo((Long) entryTwo.getKey());
+          }
+        });
+
+        for (Map.Entry<Long, Long> splitBucketEntry : sortedBuckets) {
           long bucketPageIndex = splitBucketEntry.getKey();
           long dataPointer = splitBucketEntry.getValue();
 
@@ -1678,9 +1687,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     final Iterator<OHashIndexBucket.Entry<K, V>> positionIterator = bucket.iterator();
 
-    long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (64 - bucketDepth);
+    long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
     while (positionIterator.hasNext()) {
-      final long value = keyHashFunction.hashCode(positionIterator.next().key) >>> (64 - bucketDepth);
+      final long value = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
       if (value != firstValue)
         return false;
     }
@@ -1786,7 +1795,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buffer.releaseWriteLock(fileLevelIds[fileLevel], pageIndex);
   }
 
-  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) {
+  private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) throws IOException {
     if (cacheLock)
       buffer.freePage(fileLevelIds[fileLevel], pageIndex);
     else {
@@ -1812,7 +1821,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     int nodeIndex = 0;
     int offset = 0;
 
-    int index = (int) ((hashCode >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
+    int index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
     BucketPath currentNode = new BucketPath(parentNode, 0, index, 0, localNodeDepth, nodeDepth);
     do {
       final long position = hashTree[nodeIndex][index + offset];
@@ -1825,11 +1834,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       localNodeDepth = nodesMetadata[nodeIndex].getNodeLocalDepth();
       nodeDepth += localNodeDepth;
 
-      index = (int) ((hashCode >>> (64 - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
+      index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
 
       parentNode = currentNode;
       currentNode = new BucketPath(parentNode, offset, index, nodeIndex, localNodeDepth, nodeDepth);
-    } while (nodeDepth <= 64);
+    } while (nodeDepth <= HASH_CODE_SIZE);
 
     throw new IllegalStateException("Extendible hashing tree in corrupted state.");
   }

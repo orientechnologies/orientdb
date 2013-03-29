@@ -65,15 +65,18 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       if (temp.equals("CLUSTER")) {
         clusterName = parserRequiredWord(false);
 
-      } else if (temp.equals("FROM")) {
+      } else if (temp.equals(KEYWORD_FROM)) {
         from = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
       } else if (temp.equals("TO")) {
         to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
-      } else if (temp.equals("SET")) {
+      } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
         parseSetFields(fields);
+
+      } else if (temp.equals(KEYWORD_CONTENT)) {
+        parseContent();
 
       } else if (className == null && temp.length() > 0)
         className = temp;
@@ -114,7 +117,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     for (ORecordId from : fromIds) {
       for (ORecordId to : toIds) {
         final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
-        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs));
+        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs), context);
+        if (content != null)
+          edge.merge(content, false, false);
 
         if (clusterName != null)
           edge.save(clusterName);
@@ -130,7 +135,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]";
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>}";
   }
 
   protected ORecordId[] parseTarget(ODatabaseRecord database, final String iTarget) {

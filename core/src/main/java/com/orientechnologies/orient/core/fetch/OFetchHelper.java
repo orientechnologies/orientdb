@@ -476,8 +476,6 @@ public class OFetchHelper {
     final Iterator<?> iter;
     if (linked instanceof ORecordLazyMultiValue)
       iter = ((ORecordLazyMultiValue) linked).rawIterator();
-    else if (linked instanceof OMVRBTreeRIDSet)
-      iter = ((OMVRBTreeRIDSet) linked).iterator(false);
     else
       iter = linked.iterator();
 
