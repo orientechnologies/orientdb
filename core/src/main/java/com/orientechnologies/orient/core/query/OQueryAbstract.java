@@ -15,17 +15,11 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 
 @SuppressWarnings("serial")
 public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAbstract implements OQuery<T> {
-  protected String          fetchPlan;
-  protected OCommandContext context;
-
   public OQueryAbstract() {
     useCache = true;
   }
@@ -63,18 +57,5 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
 
   public boolean isIdempotent() {
     return true;
-  }
-
-  @Override
-  public OCommandContext getContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
-    return context;
-  }
-
-  @Override
-  public OCommandRequest setContext(OCommandContext context) {
-    this.context = context;
-    return this;
   }
 }

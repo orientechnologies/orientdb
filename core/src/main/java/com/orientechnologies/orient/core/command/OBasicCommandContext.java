@@ -34,6 +34,9 @@ public class OBasicCommandContext implements OCommandContext {
   protected OCommandContext     child;
   protected Map<String, Object> variables;
 
+  public OBasicCommandContext() {
+  }
+
   public Object getVariable(String iName) {
     if (iName == null)
       return null;
@@ -166,9 +169,11 @@ public class OBasicCommandContext implements OCommandContext {
   }
 
   public OCommandContext setParent(final OCommandContext iParentContext) {
-    if (parent != iParentContext)
+    if (parent != iParentContext) {
       parent = iParentContext;
-
+      if (parent != null)
+        parent.setChild(this);
+    }
     return this;
   }
 
