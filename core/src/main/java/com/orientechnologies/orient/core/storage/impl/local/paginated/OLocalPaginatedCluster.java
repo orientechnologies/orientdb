@@ -151,7 +151,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       else
         config.root.clusters.set(config.id, config);
 
-      long pagePointer = diskCache.allocateAndLockForWrite(fileId, 0);
+      long pagePointer = diskCache.loadAndLockForWrite(fileId, 0);
       try {
         OLocalPage localPage = new OLocalPage(pagePointer, true);
 
@@ -558,7 +558,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         byte[] entryContent = new byte[to - from + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
         System.arraycopy(fullEntry, from, entryContent, 0, to - from);
 
-        entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
+        entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 1;
         OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
 
         int initialFreeSpace = firstPage.getFreeSpace();
@@ -753,6 +753,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   @Override
   public void truncate() throws IOException {
+    storageLocal.checkForClusterPermissions(getName());
+
     acquireExclusiveLock();
     try {
       diskCache.truncateFile(fileId);
@@ -1156,7 +1158,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     file.writeLong(fileOffset, recordsSize);
     fileOffset += OLongSerializer.LONG_SIZE;
 
-    file.writeInt(fileOffset, OIntegerSerializer.INT_SIZE);
+    file.writeInt(fileOffset, freePageLists.length);
     fileOffset += OIntegerSerializer.INT_SIZE;
 
     for (long freePageIndex : freePageLists) {
@@ -1177,6 +1179,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     int freePageIndexesSize = file.readInt(fileOffset);
     fileOffset += OIntegerSerializer.INT_SIZE;
+
+    freePageLists = new long[freePageIndexesSize];
 
     for (int i = 0; i < freePageIndexesSize; i++) {
       freePageLists[i] = file.readLong(fileOffset);

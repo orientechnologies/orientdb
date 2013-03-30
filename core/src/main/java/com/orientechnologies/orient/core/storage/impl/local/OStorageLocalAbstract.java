@@ -16,7 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -42,4 +44,14 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded {
 
   protected abstract OPhysicalPosition createRecord(ODataLocal dataSegment, OCluster cluster, byte[] recordContent,
       byte recordType, ORecordId rid, ORecordVersion recordVersion);
+
+  public abstract void freeze(boolean b);
+
+  public abstract void release();
+
+  public abstract ODiskCache getDiskCache();
+
+  public abstract boolean isClusterSoftlyClosed(String clusterIndexName);
+
+  public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 }

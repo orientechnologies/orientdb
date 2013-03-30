@@ -26,12 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
@@ -59,6 +53,12 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "index" })
 public class IndexTest {
@@ -1015,6 +1015,9 @@ public class IndexTest {
 
   @Test(dependsOnMethods = "linkedIndexedProperty")
   public void testLinkedIndexedPropertyInTx() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1060,6 +1063,9 @@ public class IndexTest {
   }
 
   public void testConcurrentRemoveDelete() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1351,6 +1357,9 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTx() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
     database.getMetadata().getSchema().createClass("ManualIndexTxClass");
@@ -1388,6 +1397,9 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTxRecursiveStore() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
     database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass");

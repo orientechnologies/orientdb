@@ -18,10 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -31,6 +27,10 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbDeleteTest {
@@ -58,14 +58,24 @@ public class DbDeleteTest {
 
   @Test(dependsOnMethods = { "testDbDeleteNoCredential" })
   public void testDbDelete() throws IOException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    ODatabaseDocument db;
+    if (url.startsWith("plocal:"))
+      db = new ODatabaseDocumentTx("plocal:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    else
+      db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+
     ODatabaseHelper.dropDatabase(db);
 
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
 
   public void testDbDeleteWithIndex() {
-    final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
+    final ODatabaseDocument db;
+    if (url.startsWith("plocal:"))
+      db = new ODatabaseDocumentTx("plocal:" + testPath + "core/target/testDbDeleteWithIndex");
+    else
+      db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
+
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();

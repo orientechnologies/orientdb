@@ -7,7 +7,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -20,11 +20,12 @@ public class OHashIndexTreeStateStore extends OSingleFileSegment {
     super(iPath, iType);
   }
 
-  public OHashIndexTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig) throws IOException {
+  public OHashIndexTreeStateStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig) throws IOException {
     super(iStorage, iConfig);
   }
 
-  public OHashIndexTreeStateStore(OStorageLocal iStorage, OStorageFileConfiguration iConfig, String iType) throws IOException {
+  public OHashIndexTreeStateStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig, String iType)
+      throws IOException {
     super(iStorage, iConfig, iType);
   }
 

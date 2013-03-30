@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
@@ -138,8 +139,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       // OPEN BASIC SEGMENTS
       int pos;
-      if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
-        addDefaultClusters();
+      addDefaultClusters();
 
       // REGISTER CLUSTER
       for (int i = 0; i < configuration.clusters.size(); ++i) {
@@ -376,6 +376,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       boolean forceListBased, final Object... parameters) {
     checkOpeness();
 
+    lock.acquireExclusiveLock();
     try {
       final OCluster cluster;
       if (clusterName != null) {
@@ -390,7 +391,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           }
 
         cluster = new OLocalPaginatedCluster();
-        cluster.configure(this, clusterPos, clusterName, location, getDataSegmentIdByName(dataSegmentName), parameters);
+        cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
       } else
         cluster = null;
 
@@ -406,6 +407,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
           OStorageException.class);
+    } finally {
+      lock.releaseExclusiveLock();
     }
 
     return -1;
@@ -542,18 +545,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       try {
         lock.acquireSharedLock();
         try {
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
-          try {
-            ppos = cluster.createRecord(content, recordVersion, recordType);
-            rid.clusterPosition = ppos.clusterPosition;
+          ppos = cluster.createRecord(content, recordVersion, recordType);
+          rid.clusterPosition = ppos.clusterPosition;
 
-            if (callback != null)
-              callback.call(rid, ppos.clusterPosition);
+          if (callback != null)
+            callback.call(rid, ppos.clusterPosition);
 
-            return new OStorageOperationResult<OPhysicalPosition>(ppos);
-          } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
-          }
+          return new OStorageOperationResult<OPhysicalPosition>(ppos);
         } finally {
           lock.releaseSharedLock();
         }
@@ -571,6 +569,35 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       modificationLock.releaseModificationLock();
     }
+  }
+
+  @Override
+  public ORecordMetadata getRecordMetadata(ORID rid) {
+    if (rid.isNew())
+      throw new OStorageException("Passed record with id " + rid + " is new and can not be stored.");
+
+    checkOpeness();
+
+    final OCluster cluster = getClusterById(rid.getClusterId());
+    lock.acquireSharedLock();
+    try {
+      lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+      try {
+        final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
+        if (ppos == null)
+          return null;
+
+        return new ORecordMetadata(rid, ppos.recordVersion);
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+      }
+    } catch (IOException ioe) {
+      OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+
+    return null;
   }
 
   public void changeRecordIdentity(ORID originalId, ORID newId) {

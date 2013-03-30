@@ -23,12 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -44,6 +38,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.object.db.graph.OGraphElement;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class GraphDatabaseTest {
@@ -195,6 +195,9 @@ public class GraphDatabaseTest {
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
+    if (url.startsWith("plocal:"))
+      return;
+
     OClass oc = database.getVertexType("vertexA");
     if (oc == null)
       oc = database.createVertexType("vertexA");
@@ -250,6 +253,9 @@ public class GraphDatabaseTest {
   }
 
   public void testEdgesIterationInTX() {
+    if (url.startsWith("plocal:"))
+      return;
+
     database.createVertexType("vertexAA");
     database.createVertexType("vertexBB");
     database.createEdgeType("edgeAB");
@@ -272,34 +278,13 @@ public class GraphDatabaseTest {
     }
   }
 
-  //
-  // @Test
-  // public void testTxDictionary() {
-  // database.open("admin", "admin");
-  //
-  // database.begin();
-  //
-  // try {
-  // ODocument rootNode = database.createVertex().field("id", 54254454);
-  // database.setRoot("test123", rootNode);
-  // rootNode.save();
-  //
-  // database.commit();
-  //
-  // database.close();
-  // database.open("admin", "admin");
-  //
-  // ODocument secroot = database.getRoot("test123");
-  // Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
-  // } finally {
-  // database.close();
-  // }
-  // }
-
   /**
    * @author bill@tobecker.com
    */
   public void testTxField() {
+    if (url.startsWith("plocal:"))
+      return;
+
     if (database.getVertexType("PublicCert") == null)
       database.createVertexType("PublicCert");
 

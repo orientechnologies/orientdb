@@ -17,10 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -29,6 +25,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -108,6 +108,8 @@ public class DbListenerTest {
   @Test
   public void testEmbeddedDbListeners() throws IOException {
     if (database.getURL().startsWith("remote:"))
+      return;
+    if (database.getURL().startsWith("plocal:"))
       return;
 
     if (database.exists())

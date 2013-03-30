@@ -91,6 +91,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -627,8 +628,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     sqlCommand("create", iCommandText, "\nFunction created successfully with id=%s\n", true);
     updateDatabaseInfo();
   }
-  
-  
+
   @ConsoleCommand(splitInWords = false, description = "Traverse records and display the results")
   public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
     final List<String> columns = new ArrayList<String>();
@@ -1358,7 +1358,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
+    if (!(currentDatabase.getStorage() instanceof OStorageLocalAbstract)) {
       out.println("Cannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }
@@ -1366,7 +1366,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     boolean verbose = iOptions != null && iOptions.indexOf("-v") > -1;
 
     try {
-      ((OStorageLocal) currentDatabase.getStorage()).check(verbose, this);
+      ((OStorageLocalAbstract) currentDatabase.getStorage()).check(verbose, this);
     } catch (ODatabaseImportException e) {
       printError(e);
     }

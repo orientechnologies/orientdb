@@ -19,15 +19,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "db", "import-export" })
 public class DbImportExportTest implements OCommandOutputListener {
@@ -66,7 +66,12 @@ public class DbImportExportTest implements OCommandOutputListener {
     else
       importDir.mkdir();
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
+    ODatabaseDocumentTx database;
+    if (url.startsWith("plocal:"))
+      database = new ODatabaseDocumentTx("plocal:" + testPath + "/" + NEW_DB_URL);
+    else
+      database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
+
     database.create();
 
     ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);

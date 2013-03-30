@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
@@ -272,7 +272,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
 
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
+        iDatabase.getStorage() instanceof OStorageLocalAbstract ? "local" : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)
     // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE

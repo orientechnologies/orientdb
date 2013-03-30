@@ -15,19 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class ConcurrentUpdatesTest {
@@ -112,24 +112,11 @@ public class ConcurrentUpdatesTest {
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 
-  // public ConcurrentTest() throws Exception {
-  // url = "local:C:\\tmp\\tests\\concurrAccess";
-  // OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-  // OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-  // OGlobalConfiguration.DB_MVCC.setValue(true);
-  // ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-  // if (db.exists()) {
-  // db.delete();
-  // }
-  // db.create();
-  // db.close();
-  // }
-
-  /**
-	 * 
-	 */
   @Test
   public void concurrentUpdates() throws Exception {
+    if (url.startsWith("plocal:"))
+      return;
+
     ODatabaseDocumentTx database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database3 = new ODatabaseDocumentTx(url).open("admin", "admin");
