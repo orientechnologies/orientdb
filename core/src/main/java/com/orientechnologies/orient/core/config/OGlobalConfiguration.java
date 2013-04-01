@@ -56,7 +56,7 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
-  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in bytes", Integer.class, 64 * 1024),
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
       + "this queue is used to accumulate all pages that "
@@ -64,6 +64,9 @@ public enum OGlobalConfiguration {
 
   DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
       "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
+
+  PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
+      + " in page which is tracked in paginated storage", Integer.class, 16),
 
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),

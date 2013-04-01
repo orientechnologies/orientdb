@@ -131,7 +131,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
     if (directMemory != null)
       diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(), this, false);
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, this, false);
     else
       diskCache = null;
   }

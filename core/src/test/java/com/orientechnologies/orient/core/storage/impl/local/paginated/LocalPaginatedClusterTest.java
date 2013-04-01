@@ -62,8 +62,8 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    diskCache = new OLRUCache(2L * 1024 * 1024 * 1024, directMemory, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(),
-        storage, false);
+    diskCache = new OLRUCache(2L * 1024 * 1024 * 1024, directMemory,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, storage, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
 

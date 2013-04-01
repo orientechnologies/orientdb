@@ -77,6 +77,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
+  private static final int             ONE_KB              = 1024;
   private final int                    DELETE_MAX_RETRIES;
   private final int                    DELETE_WAIT_TIME;
 
@@ -117,8 +118,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-    diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(), this, false);
+    diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -262,8 +263,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       super.close(iForce);
 
-      if (diskCache != null)
-        diskCache.close();
+      diskCache.close();
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
