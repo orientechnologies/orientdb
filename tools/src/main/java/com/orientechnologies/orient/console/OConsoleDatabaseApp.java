@@ -91,6 +91,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -614,6 +615,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void createProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("create", iCommandText, "\nProperty created successfully with id=%d\n", true);
+    updateDatabaseInfo();
+  }
+
+  /***
+   * @author Claudio Tesoriero
+   * @param iCommandText
+   */
+  @ConsoleCommand(splitInWords = false, description = "Create a stored function")
+  public void createFunction(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nFunction created successfully with id=%s\n", true);
     updateDatabaseInfo();
   }
 
@@ -1346,7 +1358,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
+    if (!(currentDatabase.getStorage() instanceof OStorageLocalAbstract)) {
       out.println("Cannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }
@@ -1354,7 +1366,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     boolean verbose = iOptions != null && iOptions.indexOf("-v") > -1;
 
     try {
-      ((OStorageLocal) currentDatabase.getStorage()).check(verbose, this);
+      ((OStorageLocalAbstract) currentDatabase.getStorage()).check(verbose, this);
     } catch (ODatabaseImportException e) {
       printError(e);
     }

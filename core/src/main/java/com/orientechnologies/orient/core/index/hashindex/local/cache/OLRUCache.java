@@ -29,7 +29,7 @@ import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -49,12 +49,13 @@ public class OLRUCache implements ODiskCache {
 
   private final OLockManager<FileLockKey, Runnable> lockManager;
   private final Object                              syncObject;
-  private final OStorageLocal                       storageLocal;
+  private final OStorageLocalAbstract               storageLocal;
 
   private final boolean                             syncOnPageFlush;
   private long                                      fileCounter = 1;
 
-  public OLRUCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocal storageLocal, boolean syncOnPageFlush) {
+  public OLRUCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
+      boolean syncOnPageFlush) {
     this.directMemory = directMemory;
     this.pageSize = pageSize;
     this.storageLocal = storageLocal;

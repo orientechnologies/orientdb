@@ -25,12 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
@@ -63,6 +58,10 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "crud", "object" })
 public class CRUDObjectPhysicalTest {
@@ -181,6 +180,9 @@ public class CRUDObjectPhysicalTest {
 
   @Test(dependsOnMethods = "testSimpleTypes")
   public void testDateInTransaction() {
+    if (url.startsWith("plocal:"))
+      return;
+
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaSimpleTestClass javaObj = new JavaSimpleTestClass();
     Date date = new Date();
@@ -2013,7 +2015,8 @@ public class CRUDObjectPhysicalTest {
 
     List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
 
-    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0).getId());
+    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0)
+        .getId());
 
     Assert.assertTrue(result2.size() != 0);
 

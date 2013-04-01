@@ -58,14 +58,27 @@ public class DbDeleteTest {
 
   @Test(dependsOnMethods = { "testDbDeleteNoCredential" })
   public void testDbDelete() throws IOException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    ODatabaseDocument db;
+    if (url.startsWith("plocal:"))
+      db = new ODatabaseDocumentTx("plocal:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    else
+      db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+
+    if (!db.exists())
+      db.create();
+
     ODatabaseHelper.dropDatabase(db);
 
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
 
   public void testDbDeleteWithIndex() {
-    final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
+    final ODatabaseDocument db;
+    if (url.startsWith("plocal:"))
+      db = new ODatabaseDocumentTx("plocal:" + testPath + "core/target/testDbDeleteWithIndex");
+    else
+      db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
+
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();

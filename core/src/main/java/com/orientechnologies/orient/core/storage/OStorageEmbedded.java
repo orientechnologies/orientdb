@@ -78,6 +78,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   public Object command(final OCommandRequestText iCommand) {
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
+    // COPY THE CONTEXT FROM THE REQUEST
+    executor.setContext(iCommand.getContext());
+
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
@@ -91,9 +94,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     long beginTime = Orient.instance().getProfiler().startChrono();
     try {
 
-      iCommand.getContext().setChild(executor.getContext());
       final Object result = executor.execute(iCommand.getParameters());
-      iCommand.getContext().setChild(null);
       return result;
 
     } catch (OException e) {

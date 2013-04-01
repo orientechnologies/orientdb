@@ -18,10 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -29,6 +25,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class StorageTest {
@@ -42,6 +42,9 @@ public class StorageTest {
 
   @Test
   public void testCreateDataSegment() throws IOException {
+    if (url.startsWith("plocal:"))
+      return;
+
     database = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(database))
       ODatabaseHelper.createDatabase(database, url);
@@ -50,7 +53,7 @@ public class StorageTest {
 
     File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
     tempDir.mkdirs();
-		tempDir.deleteOnExit();
+    tempDir.deleteOnExit();
 
     final int segmentId = database.addDataSegment("binary", tempDir.toString());
     Assert.assertEquals(segmentId, 1);

@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 
 /**
@@ -68,7 +68,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   public static final int               LEVEL_MASK             = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OStorageLocal                 storage;
+  private OStorageLocalAbstract         storage;
 
   private String                        name;
 
@@ -112,7 +112,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OStorageLocal storageLocal) {
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -356,7 +356,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     metadataStore.storeMetadata(filesMetadata);
   }
 
-  public void load(String name, OStorageLocal storageLocal) {
+  public void load(String name, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;

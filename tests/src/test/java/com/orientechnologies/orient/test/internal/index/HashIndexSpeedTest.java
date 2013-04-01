@@ -49,7 +49,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
     System.out.println("Max memory :" + maxMemory);
     buffer = new O2QCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
         (OStorageLocal) databaseDocumentTx.getStorage(), false);
-    hashIndex = new OUniqueHashIndex((OStorageLocal) databaseDocumentTx.getStorage());
+    hashIndex = new OUniqueHashIndex();
 
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.STRING), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);

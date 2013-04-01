@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
@@ -115,7 +115,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OStorageLocal) storage).getStoragePath();
+    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OStorageLocalAbstract) storage).getStoragePath();
   }
 
   public Locale getLocaleInstance() {
@@ -204,8 +204,11 @@ public class OStorageConfiguration implements OSerializableStream {
             clusterId, targetDataSegmentId);
         phyClusterLocal.name = clusterName;
         index = phySegmentFromStream(values, index, phyClusterLocal);
-        phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
-            read(values[index++]), read(values[index++])));
+
+        String holeFlag = read(values[index++]);
+        if (holeFlag.equals("f"))
+          phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
+              read(values[index++]), read(values[index++])));
         currentCluster = phyClusterLocal;
       } else if (clusterType.equals("m"))
         // MEMORY CLUSTER
@@ -290,7 +293,16 @@ public class OStorageConfiguration implements OSerializableStream {
         // PHYSICAL
         write(buffer, "p");
         phySegmentToStream(buffer, (OStoragePhysicalClusterConfigurationLocal) c);
-        fileToStream(buffer, ((OStoragePhysicalClusterConfigurationLocal) c).getHoleFile());
+
+        OStorageFileConfiguration holeFile = ((OStoragePhysicalClusterConfigurationLocal) c).getHoleFile();
+        if (holeFile == null)
+          write(buffer, "e");
+        else
+          write(buffer, "f");
+
+        if (holeFile != null)
+          fileToStream(buffer, holeFile);
+
       } else if (c instanceof OStorageMemoryClusterConfiguration) {
         // MEMORY
         write(buffer, "m");

@@ -9,14 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -28,6 +20,14 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest {
@@ -142,6 +142,9 @@ public class ClassIndexManagerTest {
   }
 
   public void testPropertiesCheckUniqueIndexDubKeyIsNullCreateInTx() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
 
@@ -206,6 +209,9 @@ public class ClassIndexManagerTest {
   }
 
   public void testPropertiesCheckUniqueIndexDubKeyIsNullUpdateInTX() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
 

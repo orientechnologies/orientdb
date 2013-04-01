@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -40,33 +41,42 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
-      // PRECONDITIONS
+    if (iParameters[0] == null)
       return null;
 
-    if (iParameters.length == 1) {
-      final Comparable<Object> value = (Comparable<Object>) iParameters[0];
+    // calculate max value for current record.
+    Object max = null;
+    if (iParameters[0] instanceof Collection<?>) {
+      // for a projection with multiple results find out the max value
+      for (Object item : ((Collection<?>) iParameters[0])) {
+        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
+          max = item;
+      }
+    } else {
+      // this is the max as is an unique value
+      max = (Comparable<Object>) iParameters[0];
+    }
 
+    // what to do with the result, for current record, depends on how this function has been invoked
+    // for an unique result aggregated from all output records
+    if (aggregateResults()) {
       if (context == null)
         // FIRST TIME
-        context = value;
-      else if (context.compareTo(value) < 0)
+        context = (Comparable) max;
+      else if (context.compareTo((Comparable) max) < 0)
         // BIGGER
-        context = value;
+        context = (Comparable) max;
 
       return null;
-    } else {
-      Object max = null;
-      for (int i = 0; i < iParameters.length; ++i) {
-        if (max == null || iParameters[i] != null && ((Comparable) iParameters[i]).compareTo(max) > 0)
-          max = iParameters[i];
-      }
-      return max;
     }
+
+    // for non aggregated results (a result per output record)
+    return max;
   }
 
   public boolean aggregateResults() {
-    return configuredParameters.length == 1;
+    // LET definitions (contain $current) does not require results aggregation
+    return ((configuredParameters.length == 1) && !configuredParameters[0].toString().contains("$current"));
   }
 
   public String getSyntax() {

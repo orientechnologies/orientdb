@@ -35,6 +35,7 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected Map<Object, Object>    parameters;
   protected String                 fetchPlan = null;
   protected boolean                useCache  = false;
+  protected OCommandContext        context;
 
   protected OCommandRequestAbstract() {
   }
@@ -116,4 +117,15 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
     this.useCache = useCache;
   }
 
+  @Override
+  public OCommandContext getContext() {
+    if (context == null)
+      context = new OBasicCommandContext();
+    return context;
+  }
+
+  public OCommandRequestAbstract setContext(final OCommandContext iContext) {
+    context = iContext;
+    return this;
+  }
 }

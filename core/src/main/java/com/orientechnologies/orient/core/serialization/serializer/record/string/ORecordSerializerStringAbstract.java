@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.Orient;
@@ -239,14 +240,14 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     case EMBEDDEDSET:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, null, true);
+          null, iBuffer, null, null, iValue, null, true, true);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedSet2string"), "Serialize embeddedset to string",
           timer);
       break;
 
     case EMBEDDEDLIST:
       ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedCollectionToStream(ODatabaseRecordThreadLocal.INSTANCE.getIfDefined(),
-          null, iBuffer, null, null, iValue, null, true);
+          null, iBuffer, null, null, iValue, null, true, false);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.embedList2string"),
           "Serialize embeddedlist to string", timer);
       break;
@@ -302,8 +303,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.EMBEDDED;
     else if (firstChar == OStringSerializerHelper.LINK)
       return OType.LINK;
-    else if (firstChar == OStringSerializerHelper.COLLECTION_BEGIN)
+    else if (firstChar == OStringSerializerHelper.LIST_BEGIN)
       return OType.EMBEDDEDLIST;
+    else if (firstChar == OStringSerializerHelper.SET_BEGIN)
+      return OType.EMBEDDEDSET;
     else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
       return OType.EMBEDDEDMAP;
     else if (firstChar == OStringSerializerHelper.CUSTOM_TYPE)
@@ -424,11 +427,19 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
           && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND)
         // STRING
         return OStringSerializerHelper.getBinaryContent(iValue);
-      else if (iValue.charAt(0) == OStringSerializerHelper.COLLECTION_BEGIN
-          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.COLLECTION_END) {
-        // COLLECTION
+      else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
+          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
+        // LIST
         final ArrayList<String> coll = new ArrayList<String>();
-        OStringSerializerHelper.getCollection(iValue, 0, coll);
+        OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.LIST_BEGIN,
+            OStringSerializerHelper.LIST_END, OStringSerializerHelper.COLLECTION_SEPARATOR);
+        return coll;
+      } else if (iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
+          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.SET_END) {
+        // SET
+        final Set<String> coll = new HashSet<String>();
+        OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.SET_BEGIN, OStringSerializerHelper.SET_END,
+            OStringSerializerHelper.COLLECTION_SEPARATOR);
         return coll;
       } else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
           && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {

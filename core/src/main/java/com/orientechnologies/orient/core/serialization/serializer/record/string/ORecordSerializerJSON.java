@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -76,7 +77,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     dateFormat = new SimpleDateFormat(DEF_DATE_FORMAT);
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
-  
+
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
   }
@@ -86,7 +87,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return fromString(iSource, iRecord, iFields, null, false);
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions, boolean needReload) {
+  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions,
+      boolean needReload) {
     if (iSource == null)
       throw new OSerializationException("Error on unmarshalling JSON content: content is null");
 
@@ -109,8 +111,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           noMap = true;
     }
 
-    final List<String> fields = OStringSerializerHelper
-        .smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, ' ', '\n', '\r', '\t');
+    final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, ' ',
+        '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
       throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
@@ -140,12 +142,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
             iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
-          } 
-        } else if(needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
-          if(fieldValue != null && fieldValue.length() > 0) {
+          }
+        } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
+          if (fieldValue != null && fieldValue.length() > 0) {
             ORecordInternal<?> localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
-            if(localRecord != null)
-                iRecord = localRecord;
+            if (localRecord != null)
+              iRecord = localRecord;
           }
         }
       }
@@ -210,10 +212,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
               if (v != null)
                 if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
-                  if (v instanceof ORecordLazyList)
-                    ((ORecordLazyList) v).setAutoConvertToRecord(false);
-                  else if (v instanceof OMVRBTreeRIDSet)
-                    ((OMVRBTreeRIDSet) v).setAutoConvert(false);
+                  if (v instanceof ORecordLazyMultiValue)
+                    ((ORecordLazyMultiValue) v).setAutoConvertToRecord(false);
 
                   // CHECK IF THE COLLECTION IS EMBEDDED
                   if (type == null) {

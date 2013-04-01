@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -694,9 +694,9 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void freeze() {
-    final OStorageLocal storage;
-    if (getStorage() instanceof OStorageLocal)
-      storage = ((OStorageLocal) getStorage());
+    final OStorageLocalAbstract storage;
+    if (getStorage() instanceof OStorageLocalAbstract)
+      storage = ((OStorageLocalAbstract) getStorage());
     else {
       OLogManager.instance().error(this, "We can not freeze non local storage.");
       return;
@@ -706,9 +706,9 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void freeze(boolean throwException) {
-    final OStorageLocal storage;
-    if (getStorage() instanceof OStorageLocal)
-      storage = ((OStorageLocal) getStorage());
+    final OStorageLocalAbstract storage;
+    if (getStorage() instanceof OStorageLocalAbstract)
+      storage = ((OStorageLocalAbstract) getStorage());
     else {
       OLogManager.instance().error(this, "We can not freeze non local storage.");
       return;
@@ -718,9 +718,9 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void release() {
-    final OStorageLocal storage;
-    if (getStorage() instanceof OStorageLocal)
-      storage = ((OStorageLocal) getStorage());
+    final OStorageLocalAbstract storage;
+    if (getStorage() instanceof OStorageLocalAbstract)
+      storage = ((OStorageLocalAbstract) getStorage());
     else {
       OLogManager.instance().error(this, "We can not freeze non local storage.");
       return;

@@ -31,10 +31,10 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   private static final int   START_SIZE = 10000;
   private OSingleFileSegment segment;
 
-  public OStorageConfigurationSegment(final OStorageLocal iStorage) throws IOException {
+  public OStorageConfigurationSegment(final OStorageLocalAbstract iStorage) throws IOException {
     super(iStorage);
-    segment = new OSingleFileSegment((OStorageLocal) storage, new OStorageFileConfiguration(null, getDirectory() + "/database.ocf",
-        "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
+    segment = new OSingleFileSegment((OStorageLocalAbstract) storage, new OStorageFileConfiguration(null, getDirectory()
+        + "/database.ocf", "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
   }
 
   public void close() throws IOException {

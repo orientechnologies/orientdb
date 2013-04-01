@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * 
@@ -41,17 +41,17 @@ public class OHashIndexFactory implements OIndexFactory {
 
   @Override
   public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
-    if (!(iDatabase.getStorage() instanceof OStorageLocal))
+    if (!(iDatabase.getStorage() instanceof OStorageLocalAbstract))
       throw new OConfigurationException("Given configuration works only for local storage.");
 
-    final OStorageLocal storageLocal = (OStorageLocal) iDatabase.getStorage();
+    final OStorageLocalAbstract storageLocal = (OStorageLocalAbstract) iDatabase.getStorage();
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
     if (directMemory == null)
       throw new OConfigurationException("There is no suitable direct memory implementation for this platform."
           + " Index creation was canceled.");
 
     if (OUniqueHashIndex.TYPE_ID.equals(iIndexType))
-      return new OUniqueHashIndex(storageLocal);
+      return new OUniqueHashIndex();
 
     throw new OConfigurationException("Unsupported type : " + iIndexType);
   }

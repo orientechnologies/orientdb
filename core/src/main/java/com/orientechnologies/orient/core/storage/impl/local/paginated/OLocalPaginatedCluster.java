@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.iq80.snappy.Snappy;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
@@ -59,7 +61,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -68,7 +69,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @since 22.03.13
  */
 public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements OCluster {
-  private static final String                       DEF_EXTENSION                = ".pcl";
+  public static final String                        DEF_EXTENSION                = ".pcl";
   private static final String                       CLUSTER_STATE_FILE_EXTENSION = ".pls";
 
   public static final String                        TYPE                         = "PHYSICAL";
@@ -76,7 +77,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   private ODiskCache                                diskCache;
 
   private String                                    name;
-  private OStorageLocal                             storageLocal;
+  private OLocalPaginatedStorage                    storageLocal;
   private volatile int                              id;
   private long                                      fileId;
 
@@ -105,7 +106,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       config = new OStoragePhysicalClusterConfigurationLocal(storage.getConfiguration(), id, -1);
       config.name = clusterName;
 
-      init((OStorageLocal) storage, config);
+      init((OLocalPaginatedStorage) storage, config);
     } finally {
       releaseExclusiveLock();
     }
@@ -115,13 +116,13 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   public void configure(OStorage storage, OStorageClusterConfiguration config) throws IOException {
     acquireExclusiveLock();
     try {
-      init((OStorageLocal) storage, config);
+      init((OLocalPaginatedStorage) storage, config);
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  private void init(OStorageLocal storage, OStorageClusterConfiguration config) throws IOException {
+  private void init(OLocalPaginatedStorage storage, OStorageClusterConfiguration config) throws IOException {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePhysicalClusterConfigurationLocal) config;
@@ -236,6 +237,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   private void setNameInternal(String newName) throws IOException {
     diskCache.renameFile(fileId, this.name, newName);
     clusterStateHolder.rename(name, newName);
+
+    config.name = newName;
+    storageLocal.renameCluster(name, newName);
+    name = newName;
+    storageLocal.getConfiguration().update();
   }
 
   @Override
@@ -243,10 +249,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     throw new UnsupportedOperationException("convertToTombstone");
   }
 
-  public OClusterPosition createRecord(final byte[] content, final ORecordVersion recordVersion, final byte recordType)
+  public OPhysicalPosition createRecord(byte[] content, final ORecordVersion recordVersion, final byte recordType)
       throws IOException {
     acquireExclusiveLock();
     try {
+      content = Snappy.compress(content);
       int entryContentLength = content.length + 2 * OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
 
       if (entryContentLength < OLocalPage.MAX_RECORD_SIZE) {
@@ -263,10 +270,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         entryPosition++;
 
         OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryPosition);
+        AddEntryResult addEntryResult = addEntry(recordVersion, entryContent);
 
         size++;
 
-        return OClusterPositionFactory.INSTANCE.valueOf(addEntry(recordVersion, entryContent));
+        return createPhysicalPosition(recordType, addEntryResult.pagePointer, addEntryResult.recordVersion);
       } else {
         int entrySize = content.length + OByteSerializer.BYTE_SIZE;
 
@@ -280,6 +288,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         long prevPageRecordPointer = -1;
         long firstPagePointer = -1;
+        ORecordVersion version = null;
+
         int from = 0;
         int to = from + (OLocalPage.MAX_RECORD_SIZE - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE);
 
@@ -294,10 +304,13 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
           OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
 
-          final long addedPagePointer = addEntry(recordVersion, entryContent);
-          if (firstPagePointer == -1)
-            firstPagePointer = addedPagePointer;
+          final AddEntryResult addEntryResult = addEntry(recordVersion, entryContent);
+          if (firstPagePointer == -1) {
+            firstPagePointer = addEntryResult.pagePointer;
+            version = addEntryResult.recordVersion;
+          }
 
+          long addedPagePointer = addEntryResult.pagePointer;
           if (prevPageRecordPointer >= 0) {
 
             long prevPageIndex = prevPageRecordPointer >>> 16;
@@ -327,11 +340,22 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         size++;
 
-        return OClusterPositionFactory.INSTANCE.valueOf(firstPagePointer);
+        return createPhysicalPosition(recordType, firstPagePointer, version);
       }
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private OPhysicalPosition createPhysicalPosition(byte recordType, long firstPagePointer, ORecordVersion version) {
+    final OPhysicalPosition physicalPosition = new OPhysicalPosition();
+    physicalPosition.recordType = recordType;
+    physicalPosition.recordSize = -1;
+    physicalPosition.dataSegmentId = -1;
+    physicalPosition.dataSegmentPos = -1;
+    physicalPosition.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(firstPagePointer);
+    physicalPosition.recordVersion = version;
+    return physicalPosition;
   }
 
   public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
@@ -401,6 +425,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       byte[] recordContent = new byte[fullContent.length - 2 * OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE];
       System.arraycopy(fullContent, fullContentPosition, recordContent, 0, recordContent.length);
 
+      recordContent = Snappy.uncompress(recordContent, 0, recordContent.length);
       return new ORawBuffer(recordContent, recordVersion, recordType);
     } finally {
       releaseSharedLock();
@@ -461,10 +486,12 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
   }
 
-  public void updateRecord(OClusterPosition clusterPosition, final byte[] content, final ORecordVersion recordVersion,
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, final ORecordVersion recordVersion,
       final byte recordType) throws IOException {
     acquireExclusiveLock();
     try {
+      content = Snappy.compress(content);
+
       long firstPagePointer = clusterPosition.longValue();
       int recordPosition = (int) (firstPagePointer & 0xFFFF);
 
@@ -537,7 +564,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         byte[] entryContent = new byte[to - from + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE];
         System.arraycopy(fullEntry, from, entryContent, 0, to - from);
 
-        entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
+        entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 1;
         OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
 
         int initialFreeSpace = firstPage.getFreeSpace();
@@ -561,7 +588,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           entryContent[entryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE] = 0;
 
           OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
-          nextPagePointer = addEntry(recordVersion, entryContent);
+          nextPagePointer = addEntry(recordVersion, entryContent).pagePointer;
 
           long prevPageIndex = prevPagePointer >>> 16;
           int prevPageRecordPosition = (int) (prevPagePointer & 0xFFFF);
@@ -594,7 +621,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
   }
 
-  private long addEntry(ORecordVersion recordVersion, byte[] entryContent) throws IOException {
+  private AddEntryResult addEntry(ORecordVersion recordVersion, byte[] entryContent) throws IOException {
     int freePageIndex = entryContent.length / 1024;
     freePageIndex -= 16;
     if (freePageIndex < 0)
@@ -615,6 +642,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     long pagePointer = diskCache.loadForWrite(fileId, pageIndex);
     int position;
+    final ORecordVersion finalVersion;
     try {
       final OLocalPage localPage = new OLocalPage(pagePointer, newRecord);
       assert newRecord || freePageIndex == calculateFreePageIndex(localPage);
@@ -624,6 +652,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       position = localPage.appendRecord(recordVersion, entryContent);
       assert position >= 0;
 
+      finalVersion = localPage.getRecordVersion(position);
+
       int freeSpace = localPage.getFreeSpace();
       recordsSize += initialFreeSpace - freeSpace;
     } finally {
@@ -632,7 +662,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     updateFreePagesIndex(freePageIndex, pageIndex);
 
-    return (pageIndex << 16) | position;
+    return new AddEntryResult((pageIndex << 16) | position, finalVersion);
   }
 
   private void updateFreePagesIndex(int prevFreePageIndex, long pageIndex) throws IOException {
@@ -729,6 +759,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   @Override
   public void truncate() throws IOException {
+    storageLocal.checkForClusterPermissions(getName());
+
     acquireExclusiveLock();
     try {
       diskCache.truncateFile(fileId);
@@ -1132,7 +1164,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     file.writeLong(fileOffset, recordsSize);
     fileOffset += OLongSerializer.LONG_SIZE;
 
-    file.writeInt(fileOffset, OIntegerSerializer.INT_SIZE);
+    file.writeInt(fileOffset, freePageLists.length);
     fileOffset += OIntegerSerializer.INT_SIZE;
 
     for (long freePageIndex : freePageLists) {
@@ -1153,6 +1185,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     int freePageIndexesSize = file.readInt(fileOffset);
     fileOffset += OIntegerSerializer.INT_SIZE;
+
+    freePageLists = new long[freePageIndexesSize];
 
     for (int i = 0; i < freePageIndexesSize; i++) {
       freePageLists[i] = file.readLong(fileOffset);
@@ -1201,5 +1235,15 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
 
     return pageIndex == testPageIndex;
+  }
+
+  public static final class AddEntryResult {
+    private final long           pagePointer;
+    private final ORecordVersion recordVersion;
+
+    public AddEntryResult(long pagePointer, ORecordVersion recordVersion) {
+      this.pagePointer = pagePointer;
+      this.recordVersion = recordVersion;
+    }
   }
 }
