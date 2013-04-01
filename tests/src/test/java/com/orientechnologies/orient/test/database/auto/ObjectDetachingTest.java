@@ -24,6 +24,10 @@ import java.util.Map;
 import java.util.Set;
 import javassist.util.proxy.Proxy;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,10 +44,6 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = { "object" })
 public class ObjectDetachingTest {
