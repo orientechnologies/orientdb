@@ -98,7 +98,7 @@ public class OLRUCache implements ODiskCache {
   }
 
   @Override
-  public long loadAndLockForWrite(long fileId, long pageIndex) throws IOException {
+  public long loadForWrite(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
       final LRUEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
       lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
@@ -109,7 +109,7 @@ public class OLRUCache implements ODiskCache {
   }
 
   @Override
-  public long allocateAndLockForWrite(long fileId, long pageIndex) throws IOException {
+  public long allocateForWrite(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
       final OMultiFileSegment multiFileSegment = files.get(fileId);
 
@@ -135,7 +135,7 @@ public class OLRUCache implements ODiskCache {
   }
 
   @Override
-  public long getAndLockForWrite(long fileId, long pageIndex) {
+  public long getForWrite(long fileId, long pageIndex) {
     synchronized (syncObject) {
       lockManager.acquireLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
 
@@ -157,7 +157,7 @@ public class OLRUCache implements ODiskCache {
   }
 
   @Override
-  public long loadAndLockForRead(long fileId, long pageIndex) throws IOException {
+  public long loadForRead(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
       final LRUEntry lruEntry = updateCache(fileId, pageIndex, ODirectMemory.NULL_POINTER);
 
@@ -167,14 +167,14 @@ public class OLRUCache implements ODiskCache {
   }
 
   @Override
-  public void releaseReadLock(long fileId, long pageIndex) {
+  public void release(long fileId, long pageIndex) {
     lockManager.releaseLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.SHARED);
   }
 
-  @Override
-  public void releaseWriteLock(long fileId, long pageIndex) {
-    lockManager.releaseLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
-  }
+  // @Override
+  // public void releaseWriteLock(long fileId, long pageIndex) {
+  // lockManager.releaseLock(Thread.currentThread(), new FileLockKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
+  // }
 
   @Override
   public long getFilledUpTo(long fileId) throws IOException {

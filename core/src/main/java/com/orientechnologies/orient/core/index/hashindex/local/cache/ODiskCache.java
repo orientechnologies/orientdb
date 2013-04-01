@@ -11,21 +11,19 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 public interface ODiskCache {
   long openFile(OStorageSegmentConfiguration fileConfiguration, String fileExtension) throws IOException;
 
-  long loadAndLockForWrite(long fileId, long pageIndex) throws IOException;
+  long loadForWrite(long fileId, long pageIndex) throws IOException;
 
-  long allocateAndLockForWrite(long fileId, long pageIndex) throws IOException;
+  long allocateForWrite(long fileId, long pageIndex) throws IOException;
 
   void cacheHit(long fileId, long pageIndex, long dataPointer) throws IOException;
 
-  long getAndLockForWrite(long fileId, long pageIndex) throws IOException;
+  long getForWrite(long fileId, long pageIndex) throws IOException;
 
   void clearExternalManagementFlag(long fileId, long pageIndex) throws IOException;
 
-  long loadAndLockForRead(long fileId, long pageIndex) throws IOException;
+  long loadForRead(long fileId, long pageIndex) throws IOException;
 
-  void releaseReadLock(long fileId, long pageIndex);
-
-  void releaseWriteLock(long fileId, long pageIndex);
+  void release(long fileId, long pageIndex);
 
   long getFilledUpTo(long fileId) throws IOException;
 

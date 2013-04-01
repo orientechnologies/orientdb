@@ -218,7 +218,11 @@ class LRUList implements Iterable<LRUEntry> {
   }
 
   public LRUEntry removeLRU() {
-    return remove(head.fileId, head.pageIndex);
+    LRUEntry entryToRemove = head;
+    while (entryToRemove.usageCounter.get() != 0) {
+      entryToRemove = entryToRemove.next;
+    }
+    return remove(entryToRemove.fileId, entryToRemove.pageIndex);
   }
 
   public LRUEntry getLRU() {

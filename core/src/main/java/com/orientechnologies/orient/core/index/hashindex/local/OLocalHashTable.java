@@ -1586,9 +1586,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     final long newBucketIndex = updatedBucketIndex + 1;
 
-    final long updatedBucketDataPointer = buffer.allocateAndLockForWrite(fileLevelIds[newFileLevel], updatedBucketIndex);
+    final long updatedBucketDataPointer = buffer.allocateForWrite(fileLevelIds[newFileLevel], updatedBucketIndex);
     try {
-      final long newBucketDataPointer = buffer.allocateAndLockForWrite(fileLevelIds[newFileLevel], newBucketIndex);
+      final long newBucketDataPointer = buffer.allocateForWrite(fileLevelIds[newFileLevel], newBucketIndex);
       try {
         final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth, updatedBucketDataPointer,
             directMemory, keySerializer, valueSerializer);
@@ -1632,10 +1632,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
         return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
       } finally {
-        buffer.releaseWriteLock(fileLevelIds[newFileLevel], newBucketIndex);
+        buffer.release(fileLevelIds[newFileLevel], newBucketIndex);
       }
     } finally {
-      buffer.releaseWriteLock(fileLevelIds[newFileLevel], updatedBucketIndex);
+      buffer.release(fileLevelIds[newFileLevel], updatedBucketIndex);
     }
   }
 
@@ -1658,7 +1658,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           long bucketPageIndex = splitBucketEntry.getKey();
           long dataPointer = splitBucketEntry.getValue();
 
-          long bufferPointer = buffer.getAndLockForWrite(fileLevelIds[i], bucketPageIndex);
+          long bufferPointer = buffer.getForWrite(fileLevelIds[i], bucketPageIndex);
           try {
             assert bufferPointer == ODirectMemory.NULL_POINTER || bufferPointer == dataPointer;
 
@@ -1668,7 +1668,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             else
               directMemory.free(dataPointer);
           } finally {
-            buffer.releaseWriteLock(fileLevelIds[i], bucketPageIndex);
+            buffer.release(fileLevelIds[i], bucketPageIndex);
           }
         }
 
@@ -1762,7 +1762,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         buffer.cacheHit(fileLevelIds[fileLevel], pageIndex, dataPointer);
     }
     if (dataPointer == null) {
-      dataPointer = buffer.loadAndLockForRead(fileLevelIds[fileLevel], pageIndex);
+      dataPointer = buffer.loadForRead(fileLevelIds[fileLevel], pageIndex);
       cacheLock = true;
     }
 
@@ -1771,7 +1771,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private void releasePageReadLock(long pageIndex, int fileLevel, boolean cacheLock) {
     if (cacheLock)
-      buffer.releaseReadLock(fileLevelIds[fileLevel], pageIndex);
+      buffer.release(fileLevelIds[fileLevel], pageIndex);
   }
 
   private PageLockResult lockPageForWrite(long pageIndex, int fileLevel) throws IOException {
@@ -1783,7 +1783,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         buffer.cacheHit(fileLevelIds[fileLevel], pageIndex, dataPointer);
     }
     if (dataPointer == null) {
-      dataPointer = buffer.loadAndLockForWrite(fileLevelIds[fileLevel], pageIndex);
+      dataPointer = buffer.loadForWrite(fileLevelIds[fileLevel], pageIndex);
       cacheLock = true;
     }
 
@@ -1792,7 +1792,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private void releasePageWriteLock(long pageIndex, int fileLevel, boolean cacheLock) {
     if (cacheLock)
-      buffer.releaseWriteLock(fileLevelIds[fileLevel], pageIndex);
+      buffer.release(fileLevelIds[fileLevel], pageIndex);
   }
 
   private void resetPageChanges(long pageIndex, int fileLevel, boolean cacheLock) throws IOException {
@@ -1800,7 +1800,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buffer.freePage(fileLevelIds[fileLevel], pageIndex);
     else {
       Long dataPointer = bucketsToSplitByLevels[fileLevel].remove(pageIndex);
-      long bufferPointer = buffer.getAndLockForWrite(fileLevelIds[fileLevel], pageIndex);
+      long bufferPointer = buffer.getForWrite(fileLevelIds[fileLevel], pageIndex);
       try {
         assert bufferPointer == ODirectMemory.NULL_POINTER || bufferPointer == dataPointer;
 
@@ -1809,7 +1809,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         else
           buffer.clearExternalManagementFlag(fileLevelIds[fileLevel], pageIndex);
       } finally {
-        buffer.releaseWriteLock(fileLevelIds[fileLevel], pageIndex);
+        buffer.release(fileLevelIds[fileLevel], pageIndex);
       }
     }
   }

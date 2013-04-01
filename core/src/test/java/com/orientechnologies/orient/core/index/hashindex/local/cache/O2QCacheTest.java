@@ -86,9 +86,9 @@ public class O2QCacheTest {
     pointers = new long[4];
 
     for (int i = 0; i < 4; i++) {
-      pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+      pointers[i] = buffer.loadForWrite(fileId, i);
       directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
-      buffer.releaseWriteLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     LRUList am = buffer.getAm();
@@ -119,9 +119,9 @@ public class O2QCacheTest {
     pointers = new long[4];
 
     for (int i = 0; i < 4; i++) {
-      pointers[i] = buffer.allocateAndLockForWrite(fileId, i);
+      pointers[i] = buffer.allocateForWrite(fileId, i);
       directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
-      buffer.releaseWriteLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     LRUList am = buffer.getAm();
@@ -149,9 +149,9 @@ public class O2QCacheTest {
   public void testAllocateShouldEnlargeFileIfNotEnoughSpace() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    long pointer = buffer.allocateAndLockForWrite(fileId, 100);
+    long pointer = buffer.allocateForWrite(fileId, 100);
     directMemory.set(pointer, new byte[] { (byte) 0, 1, 2, seed, 4, 5, 6, (byte) 0 }, 8);
-    buffer.releaseWriteLock(fileId, 100);
+    buffer.release(fileId, 100);
 
     LRUList am = buffer.getAm();
     LRUList a1in = buffer.getA1in();
@@ -187,7 +187,7 @@ public class O2QCacheTest {
   public void testGetForWriteReturnNullPointerIfPageDoesNotExists() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    long pointer = buffer.getAndLockForWrite(fileId, 1);
+    long pointer = buffer.getForWrite(fileId, 1);
 
     Assert.assertEquals(pointer, ODirectMemory.NULL_POINTER);
   }
@@ -197,9 +197,9 @@ public class O2QCacheTest {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
     byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
 
-    long pointer = buffer.loadAndLockForWrite(fileId, 0);
+    long pointer = buffer.loadForWrite(fileId, 0);
     directMemory.set(pointer, value, 8);
-    buffer.releaseWriteLock(fileId, 0);
+    buffer.release(fileId, 0);
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
 
@@ -214,11 +214,11 @@ public class O2QCacheTest {
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
 
-    long pointerFromCache = buffer.getAndLockForWrite(fileId, 0);
+    long pointerFromCache = buffer.getForWrite(fileId, 0);
     Assert.assertEquals(pointerFromCache, pointer);
     value[6] = 10;
     directMemory.set(pointerFromCache, value, 8);
-    buffer.releaseWriteLock(fileId, 0);
+    buffer.release(fileId, 0);
 
     buffer.flushBuffer();
 
@@ -229,8 +229,8 @@ public class O2QCacheTest {
   public void testClearExternalManagementFlag() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    long pointer = buffer.allocateAndLockForWrite(fileId, 0);
-    buffer.releaseWriteLock(fileId, 0);
+    long pointer = buffer.allocateForWrite(fileId, 0);
+    buffer.release(fileId, 0);
 
     buffer.clearExternalManagementFlag(fileId, 0);
 
@@ -250,8 +250,8 @@ public class O2QCacheTest {
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    long pointer = buffer.loadAndLockForRead(fileId, 0);
-    buffer.releaseReadLock(fileId, 0);
+    long pointer = buffer.loadForRead(fileId, 0);
+    buffer.release(fileId, 0);
 
     LRUList am = buffer.getAm();
     LRUList a1in = buffer.getA1in();
@@ -270,9 +270,9 @@ public class O2QCacheTest {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
     byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
 
-    long pointer = buffer.loadAndLockForWrite(fileId, 0);
+    long pointer = buffer.loadForWrite(fileId, 0);
     directMemory.set(pointer, value, 8);
-    buffer.releaseWriteLock(fileId, 0);
+    buffer.release(fileId, 0);
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
 
@@ -295,7 +295,7 @@ public class O2QCacheTest {
   public void testFreePageShouldRemoveEntryFromBuffer() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
-    buffer.loadAndLockForWrite(fileId, 0);
+    buffer.loadForWrite(fileId, 0);
 
     LRUList a1in = buffer.getA1in();
 
@@ -318,15 +318,15 @@ public class O2QCacheTest {
       byte[][] content = new byte[2][];
 
       for (int i = 0; i < 2; i++) {
-        pointers[i] = buffer.loadAndLockForRead(fileId, i);
+        pointers[i] = buffer.loadForRead(fileId, i);
         content[i] = directMemory.get(pointers[i], 8);
-        buffer.releaseReadLock(fileId, i);
+        buffer.release(fileId, i);
       }
 
       for (int i = 0; i < 16; i++) {
-        pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+        pointers[i] = buffer.loadForWrite(fileId, i);
         directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
-        buffer.releaseWriteLock(fileId, i);
+        buffer.release(fileId, i);
       }
 
       Map evictedPages = buffer.getEvictedPages();
@@ -363,9 +363,9 @@ public class O2QCacheTest {
     pointers = new long[4];
 
     for (int i = 0; i < 4; i++) {
-      pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+      pointers[i] = buffer.loadForWrite(fileId, i);
       directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
-      buffer.releaseWriteLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     LRUList am = buffer.getAm();
@@ -396,9 +396,9 @@ public class O2QCacheTest {
     pointers = new long[4];
 
     for (int i = 0; i < 4; i++) {
-      pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+      pointers[i] = buffer.loadForWrite(fileId, i);
       directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
-      buffer.releaseWriteLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     LRUList am = buffer.getAm();
@@ -431,9 +431,9 @@ public class O2QCacheTest {
     byte[][] content = new byte[4][];
 
     for (int i = 0; i < 4; i++) {
-      pointers[i] = buffer.loadAndLockForRead(fileId, i);
+      pointers[i] = buffer.loadForRead(fileId, i);
       content[i] = directMemory.get(pointers[i], 8);
-      buffer.releaseReadLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     buffer.deleteFile(fileId);
@@ -454,9 +454,9 @@ public class O2QCacheTest {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; ++j) {
-        pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+        pointers[i] = buffer.loadForWrite(fileId, i);
         directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 8);
-        buffer.releaseWriteLock(fileId, i);
+        buffer.release(fileId, i);
       }
     }
 
@@ -492,9 +492,9 @@ public class O2QCacheTest {
     pointers = new long[6];
 
     for (int i = 0; i < 6; i++) {
-      pointers[i] = buffer.loadAndLockForWrite(fileId, i);
+      pointers[i] = buffer.loadForWrite(fileId, i);
       directMemory.set(pointers[i], new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
-      buffer.releaseWriteLock(fileId, i);
+      buffer.release(fileId, i);
     }
 
     LRUList am = buffer.getAm();

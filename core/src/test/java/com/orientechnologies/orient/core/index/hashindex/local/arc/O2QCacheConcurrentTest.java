@@ -215,12 +215,12 @@ public class O2QCacheConcurrentTest {
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
 
-      long pointer = buffer.loadAndLockForWrite(fileIds.get(fileNumber), pageIndex);
+      long pointer = buffer.loadForWrite(fileIds.get(fileNumber), pageIndex);
 
       directMemory.set(pointer, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) },
           8);
 
-      buffer.releaseWriteLock(fileIds.get(fileNumber), pageIndex);
+      buffer.release(fileIds.get(fileNumber), pageIndex);
     }
 
     private long getNextPageIndex(int fileNumber) {
@@ -264,11 +264,11 @@ public class O2QCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      long pointer = buffer.loadAndLockForRead(fileIds.get(fileNumber), pageIndex);
+      long pointer = buffer.loadForRead(fileIds.get(fileNumber), pageIndex);
 
       byte[] content = directMemory.get(pointer, 8);
 
-      buffer.releaseReadLock(fileIds.get(fileNumber), pageIndex);
+      buffer.release(fileIds.get(fileNumber), pageIndex);
 
       Assert.assertTrue(content[0] == 1 || content[0] == 2);
       Assert.assertEquals(content, new byte[] { content[0], 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
