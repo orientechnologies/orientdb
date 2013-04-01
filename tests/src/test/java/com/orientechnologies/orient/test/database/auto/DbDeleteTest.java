@@ -18,6 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -27,10 +31,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbDeleteTest {
@@ -63,6 +63,9 @@ public class DbDeleteTest {
       db = new ODatabaseDocumentTx("plocal:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
     else
       db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+
+    if (!db.exists())
+      db.create();
 
     ODatabaseHelper.dropDatabase(db);
 

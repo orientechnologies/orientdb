@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.iq80.snappy.Snappy;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
@@ -247,10 +249,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     throw new UnsupportedOperationException("convertToTombstone");
   }
 
-  public OPhysicalPosition createRecord(final byte[] content, final ORecordVersion recordVersion, final byte recordType)
+  public OPhysicalPosition createRecord(byte[] content, final ORecordVersion recordVersion, final byte recordType)
       throws IOException {
     acquireExclusiveLock();
     try {
+      content = Snappy.compress(content);
       int entryContentLength = content.length + 2 * OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
 
       if (entryContentLength < OLocalPage.MAX_RECORD_SIZE) {
@@ -422,6 +425,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       byte[] recordContent = new byte[fullContent.length - 2 * OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE];
       System.arraycopy(fullContent, fullContentPosition, recordContent, 0, recordContent.length);
 
+      recordContent = Snappy.uncompress(recordContent, 0, recordContent.length);
       return new ORawBuffer(recordContent, recordVersion, recordType);
     } finally {
       releaseSharedLock();
@@ -482,10 +486,12 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
   }
 
-  public void updateRecord(OClusterPosition clusterPosition, final byte[] content, final ORecordVersion recordVersion,
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, final ORecordVersion recordVersion,
       final byte recordType) throws IOException {
     acquireExclusiveLock();
     try {
+      content = Snappy.compress(content);
+
       long firstPagePointer = clusterPosition.longValue();
       int recordPosition = (int) (firstPagePointer & 0xFFFF);
 
