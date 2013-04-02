@@ -268,17 +268,15 @@ public class OFetchHelper {
       fieldDepthLevel = iFetchPlan.get(iFieldPathFromRoot);
     }
     if (fetchedLevel == null) {
-	  if (!fieldValue.isEmbedded())
-	  {
-	    parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
-	  }
+      if (!fieldValue.isEmbedded()) {
+        parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
+      }
       processRecordRidMap(fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords, iFieldPathFromRoot,
           iContext);
     } else if ((!fieldValue.getIdentity().isValid() && fetchedLevel < iLevelFromRoot) || fetchedLevel > iLevelFromRoot) {
-	  if (!fieldValue.isEmbedded())
-	  {
+      if (!fieldValue.isEmbedded()) {
         parsedRecords.put(fieldValue.getIdentity(), iLevelFromRoot);
-	  }
+      }
       processRecordRidMap((ODocument) fieldValue, iFetchPlan, currentLevel, iLevelFromRoot, fieldDepthLevel, parsedRecords,
           iFieldPathFromRoot, iContext);
     }

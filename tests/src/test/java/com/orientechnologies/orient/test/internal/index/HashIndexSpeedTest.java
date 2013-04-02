@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.test.internal.index;
 
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.common.util.MersenneTwisterFast;
@@ -9,12 +11,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -24,7 +24,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OUniqueHashIndex    hashIndex;
   private MersenneTwisterFast random = new MersenneTwisterFast();
-  private OLRUCache           buffer;
+  private O2QCache            buffer;
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -47,7 +47,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     long maxMemory = 2L * 1024 * 1024 * 1024;
     System.out.println("Max memory :" + maxMemory);
-    buffer = new OLRUCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
+    buffer = new O2QCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
         (OStorageLocal) databaseDocumentTx.getStorage(), false);
     hashIndex = new OUniqueHashIndex();
 

@@ -27,6 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import javassist.util.proxy.Proxy;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -58,10 +62,6 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = { "crud", "object" })
 public class CRUDObjectPhysicalTest {

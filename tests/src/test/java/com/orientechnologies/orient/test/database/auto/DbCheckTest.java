@@ -17,13 +17,13 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 @Test(groups = "db")
 public class DbCheckTest implements OCommandOutputListener {
