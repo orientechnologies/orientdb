@@ -52,8 +52,8 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -118,7 +118,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-    diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
+    diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
   }
 

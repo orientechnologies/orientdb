@@ -11,27 +11,15 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 public interface ODiskCache {
   long openFile(OStorageSegmentConfiguration fileConfiguration, String fileExtension) throws IOException;
 
-  long loadForWrite(long fileId, long pageIndex) throws IOException;
+  void markDirty(long fileId, long pageIndex);
 
-  long allocateForWrite(long fileId, long pageIndex) throws IOException;
-
-  void cacheHit(long fileId, long pageIndex, long dataPointer) throws IOException;
-
-  long getForWrite(long fileId, long pageIndex) throws IOException;
-
-  void clearExternalManagementFlag(long fileId, long pageIndex) throws IOException;
-
-  long loadForRead(long fileId, long pageIndex) throws IOException;
+  long load(long fileId, long pageIndex) throws IOException;
 
   void release(long fileId, long pageIndex);
 
   long getFilledUpTo(long fileId) throws IOException;
 
   void flushFile(long fileId) throws IOException;
-
-  void flushFile(long fileId, boolean writeLock) throws IOException;
-
-  void freePage(long fileId, long pageIndex);
 
   void closeFile(long fileId) throws IOException;
 
@@ -46,8 +34,6 @@ public interface ODiskCache {
   void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException;
 
   void flushBuffer() throws IOException;
-
-  void flushBuffer(boolean writeLock) throws IOException;
 
   void clear() throws IOException;
 

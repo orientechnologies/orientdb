@@ -215,7 +215,8 @@ public class O2QCacheConcurrentTest {
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
 
-      long pointer = buffer.loadForWrite(fileIds.get(fileNumber), pageIndex);
+      long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
+      buffer.markDirty(fileIds.get(fileNumber), pageIndex);
 
       directMemory.set(pointer, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) },
           8);
@@ -264,7 +265,7 @@ public class O2QCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      long pointer = buffer.loadForRead(fileIds.get(fileNumber), pageIndex);
+      long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
 
       byte[] content = directMemory.get(pointer, 8);
 

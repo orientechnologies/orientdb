@@ -15,29 +15,26 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * @author Andrey Lomakin
  * @since 25.02.13
  */
 class LRUEntry {
-  long          fileId;
-  long          pageIndex;
+  long     fileId;
+  long     pageIndex;
 
-  long          dataPointer;
+  long     dataPointer;
 
-  long          hashCode;
+  long     hashCode;
 
-  AtomicInteger usageCounter = new AtomicInteger(0);
+  int      usageCounter = 0;
 
-  LRUEntry      next;
+  LRUEntry next;
 
-  LRUEntry      after;
-  LRUEntry      before;
+  LRUEntry after;
+  LRUEntry before;
 
-  boolean       isDirty;
-  boolean       managedExternally;
+  boolean  isDirty;
 
   @Override
   public boolean equals(Object o) {
@@ -53,8 +50,6 @@ class LRUEntry {
     if (fileId != lruEntry.fileId)
       return false;
     if (isDirty != lruEntry.isDirty)
-      return false;
-    if (managedExternally != lruEntry.managedExternally)
       return false;
     if (pageIndex != lruEntry.pageIndex)
       return false;

@@ -101,7 +101,7 @@ class LRUList implements Iterable<LRUEntry> {
       tail = lruEntry.before;
   }
 
-  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty, boolean managedExternally) {
+  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
@@ -133,7 +133,6 @@ class LRUList implements Iterable<LRUEntry> {
 
     lruEntry.dataPointer = dataPointer;
     lruEntry.isDirty = isDirty;
-    lruEntry.managedExternally = managedExternally;
 
     removeFromLRUList(lruEntry);
 
@@ -219,8 +218,8 @@ class LRUList implements Iterable<LRUEntry> {
 
   public LRUEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove.usageCounter.get() != 0) {
-      entryToRemove = entryToRemove.next;
+    while (entryToRemove.usageCounter != 0) {
+      entryToRemove = entryToRemove.after;
     }
     return remove(entryToRemove.fileId, entryToRemove.pageIndex);
   }
