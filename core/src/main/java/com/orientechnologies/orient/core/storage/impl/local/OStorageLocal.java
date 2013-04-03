@@ -58,8 +58,8 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -130,8 +130,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (directMemory != null)
-      diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(), this, false);
+      diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, this, false);
     else
       diskCache = null;
   }
@@ -417,15 +417,18 @@ public class OStorageLocal extends OStorageLocalAbstract {
           int notDeletedFiles = 0;
 
           // TRY TO DELETE ALL THE FILES
-          for (File f : dbDir.listFiles()) {
-            // DELETE ONLY THE SUPPORTED FILES
-            for (String ext : ALL_FILE_EXTENSIONS)
-              if (f.getPath().endsWith(ext)) {
-                if (!f.delete()) {
-                  notDeletedFiles++;
+          File[] files = dbDir.listFiles();
+          if (files != null) {
+            for (File f : files) {
+              // DELETE ONLY THE SUPPORTED FILES
+              for (String ext : ALL_FILE_EXTENSIONS)
+                if (f.getPath().endsWith(ext)) {
+                  if (!f.delete()) {
+                    notDeletedFiles++;
+                  }
+                  break;
                 }
-                break;
-              }
+            }
           }
 
           if (notDeletedFiles == 0) {
@@ -587,7 +590,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         // CHECK CHUNKS
         formatMessage(iVerbose, iListener, "\n-- checking chunks:");
 
-        for (int pos = 0; nextPos < d.getFilledUpTo();) {
+        int pos;
+        do {
           try {
             pos = nextPos;
 
@@ -703,7 +707,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
             // totalChunks, pos, e.toString());
             errors++;
           }
-        }
+        } while (nextPos < d.getFilledUpTo());
         formatMessage(iVerbose, iListener, "\n");
       }
 
@@ -1350,7 +1354,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
   /**
    * Returns the list of holes as pair of position & ODataHoleInfo
    * 
-   * @throws IOException
    */
   public List<ODataHoleInfo> getHolesList() {
     final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();
@@ -1372,7 +1375,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
   /**
    * Returns the total number of holes.
    * 
-   * @throws IOException
    */
   public long getHoles() {
     lock.acquireSharedLock();
@@ -1392,7 +1394,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
   /**
    * Returns the total size used by holes
    * 
-   * @throws IOException
    */
   public long getHoleSize() {
     lock.acquireSharedLock();
@@ -1590,7 +1591,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
    * @param iConfig
    *          A OStorageClusterConfiguration implementation, namely physical or logical
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   * @throws IOException
    * @throws IOException
    */
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {

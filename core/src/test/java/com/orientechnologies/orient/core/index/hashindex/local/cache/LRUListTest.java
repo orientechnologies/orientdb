@@ -14,7 +14,7 @@ public class LRUListTest {
   public void testSingleAdd() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 10, 100, false);
 
     Iterator<LRUEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
@@ -25,8 +25,8 @@ public class LRUListTest {
   public void testAddTwo() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
-    lruList.putToMRU(1, 20, 200, false, false);
+    lruList.putToMRU(1, 10, 100, false);
+    lruList.putToMRU(1, 20, 200, false);
 
     Assert.assertEquals(lruList.size(), 2);
 
@@ -41,9 +41,9 @@ public class LRUListTest {
   public void testAddThree() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
-    lruList.putToMRU(1, 20, 200, false, false);
-    lruList.putToMRU(3, 30, 300, false, false);
+    lruList.putToMRU(1, 10, 100, false);
+    lruList.putToMRU(1, 20, 200, false);
+    lruList.putToMRU(3, 30, 300, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
@@ -58,11 +58,11 @@ public class LRUListTest {
   public void testAddThreePutMiddleToTop() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
-    lruList.putToMRU(1, 20, 200, false, false);
-    lruList.putToMRU(3, 30, 300, false, false);
+    lruList.putToMRU(1, 10, 100, false);
+    lruList.putToMRU(1, 20, 200, false);
+    lruList.putToMRU(3, 30, 300, false);
 
-    lruList.putToMRU(1, 20, 200, false, false);
+    lruList.putToMRU(1, 20, 200, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
@@ -77,11 +77,11 @@ public class LRUListTest {
   public void testAddThreePutMiddleToTopChangePointer() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
-    lruList.putToMRU(1, 20, 200, false, false);
-    lruList.putToMRU(3, 30, 300, false, false);
+    lruList.putToMRU(1, 10, 100, false);
+    lruList.putToMRU(1, 20, 200, false);
+    lruList.putToMRU(3, 30, 300, false);
 
-    lruList.putToMRU(1, 20, 400, false, false);
+    lruList.putToMRU(1, 20, 400, false);
 
     Assert.assertEquals(lruList.size(), 3);
 
@@ -97,10 +97,10 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
-    lruList.putToMRU(1, 50, 500, false, false);
+    lruList.putToMRU(1, 50, 500, false);
 
     Assert.assertEquals(lruList.size(), 11);
 
@@ -121,7 +121,7 @@ public class LRUListTest {
   public void testAddOneRemoveLRU() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, false);
+    lruList.putToMRU(1, 10, 100, false);
     lruList.removeLRU();
 
     Assert.assertEquals(lruList.size(), 0);
@@ -134,7 +134,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     lruList.removeLRU();
@@ -153,7 +153,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     assertLRUEntry(lruList.remove(1, 50), 1, 50, 500);
@@ -175,7 +175,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     Assert.assertTrue(lruList.contains(1, 50));
@@ -196,7 +196,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     Assert.assertEquals(lruList.size(), 9128);
@@ -212,7 +212,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     Assert.assertEquals(lruList.size(), 9128);
@@ -231,7 +231,7 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
     for (int i = 4564; i < 9128; i++)
@@ -250,11 +250,11 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, false);
+      lruList.putToMRU(1, i * 10, i * 100, false);
     }
 
-    lruList.putToMRU(1, 0, 0, false, false);
-    lruList.putToMRU(1, 4500 * 10, 4500 * 100, false, false);
+    lruList.putToMRU(1, 0, 0, false);
+    lruList.putToMRU(1, 4500 * 10, 4500 * 100, false);
 
     Assert.assertEquals(lruList.size(), 9128);
     Iterator<LRUEntry> entryIterator = lruList.iterator();
