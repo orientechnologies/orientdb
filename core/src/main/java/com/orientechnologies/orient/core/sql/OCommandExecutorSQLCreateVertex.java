@@ -101,7 +101,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs), context);
 
     if (content != null)
-      vertex.merge(content, false, false);
+      vertex.merge(content, true, false);
 
     if (clusterName != null)
       vertex.save(clusterName);

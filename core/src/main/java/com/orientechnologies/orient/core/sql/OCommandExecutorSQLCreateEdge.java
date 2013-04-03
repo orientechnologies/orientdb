@@ -119,7 +119,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
         final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
         OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs), context);
         if (content != null)
-          edge.merge(content, false, false);
+          edge.merge(content, true, false);
 
         if (clusterName != null)
           edge.save(clusterName);
