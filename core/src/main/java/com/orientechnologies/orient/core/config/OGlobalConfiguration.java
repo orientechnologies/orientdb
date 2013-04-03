@@ -194,7 +194,7 @@ public enum OGlobalConfiguration {
       Integer.class, 8),
 
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 16),
+      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
