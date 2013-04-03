@@ -253,15 +253,15 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public int size() {
-    int tot = hashedSize();
+    int tot = getTreeSize();
     if (newEntries != null)
       tot += newEntries.size();
     return tot;
   }
 
-  public int hashedSize() {
+  public int getTreeSize() {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-    return super.size();
+    return super.getTreeSize();
   }
 
   @Override
@@ -293,8 +293,14 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-    if (hasNewItems())
-      return new OLazyRecordMultiIterator(null, new Object[] { keySet(), newEntries.keySet() }, iAutoConvertToRecord);
+    if (hasNewItems()) {
+      if (super.size() == 0)
+        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
+
+      // MIX PERSISTENT AND NEW TOGETHER
+      return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
+          iAutoConvertToRecord);
+    }
 
     return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
   }
@@ -363,7 +369,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   protected void setSizeDelta(final int iDelta) {
-    setSize(hashedSize() + iDelta);
+    setSize(getTreeSize() + iDelta);
   }
 
   /**
@@ -461,7 +467,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
     int size = 0;
     if (iRoot != null)
-      size = hashedSize();
+      size = getTreeSize();
 
     super.setRoot(iRoot);
 
