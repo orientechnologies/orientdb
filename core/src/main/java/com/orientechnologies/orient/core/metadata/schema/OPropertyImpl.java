@@ -303,9 +303,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     this.mandatory = iMandatory;
   }
-    
-    
-    public boolean isReadonly() {
+
+  public boolean isReadonly() {
     return readonly;
   }
 
@@ -396,10 +395,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public void setCustomInternal(final String iName, final String iValue) {
     if (customFields == null)
       customFields = new HashMap<String, String>();
-    if(iValue==null || "null".equalsIgnoreCase(iValue))
-          customFields.remove(iName);
+    if (iValue == null || "null".equalsIgnoreCase(iValue))
+      customFields.remove(iName);
     else
-        customFields.put(iName, iValue);
+      customFields.put(iName, iValue);
   }
 
   public OPropertyImpl setCustom(final String iName, final String iValue) {
@@ -416,26 +415,26 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return null;
   }
 
-    public void removeCustom(final String iName) {
-        setCustom(iName,null);
-     }
+  public void removeCustom(final String iName) {
+    setCustom(iName, null);
+  }
 
+  public void clearCustom() {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter property %s custom clear", getFullName());
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    clearCustomInternal();
+  }
 
-    public void clearCustom() {
-        getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-        final String cmd = String.format("alter property %s custom clear", getFullName());
-        getDatabase().command(new OCommandSQL(cmd)).execute();
-        clearCustomInternal();
-    }
+  public void clearCustomInternal() {
+    customFields = null;
+  }
 
-    public void clearCustomInternal() {
-        customFields = null;
-    }
-     public Set<String> getCustomKeys() {
-        if (customFields != null)
-           return customFields.keySet();
-        return new HashSet<String>();
-     }
+  public Set<String> getCustomKeys() {
+    if (customFields != null)
+      return customFields.keySet();
+    return new HashSet<String>();
+  }
 
   /**
    * Change the type. It checks for compatibility between the change of type.
@@ -507,7 +506,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setLinkedClassInternal(isNull ? null : getDatabase().getMetadata().getSchema().getClass(stringValue));
       break;
     case LINKEDTYPE:
-      setLinkedTypeInternal(isNull ? null : OType.valueOf(stringValue));
+      setLinkedTypeInternal(isNull ? null : OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case MIN:
       setMinInternal(isNull ? null : stringValue);
@@ -534,12 +533,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setTypeInternal(isNull ? null : OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1){
-          if(iValue.toString().equalsIgnoreCase("clear")){
-                        clearCustomInternal();
-                    }else
-            throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
-      }else{
+      if (iValue.toString().indexOf("=") == -1) {
+        if (iValue.toString().equalsIgnoreCase("clear")) {
+          clearCustomInternal();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
         final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
         setCustomInternal(words.get(0).trim(), words.get(1).trim());
       }
@@ -591,12 +590,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1){
-          if(iValue.toString().equalsIgnoreCase("clear")){
-            clearCustom();
-          }else
-            throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
-      }else{
+      if (iValue.toString().indexOf("=") == -1) {
+        if (iValue.toString().equalsIgnoreCase("clear")) {
+          clearCustom();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
         final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
         setCustom(words.get(0).trim(), words.get(1).trim());
       }
@@ -681,7 +680,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       document.field("min", min);
       document.field("max", max);
       document.field("regexp", regexp);
-
 
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
