@@ -20,12 +20,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
@@ -548,8 +548,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       saveInternal();
     } catch (Exception e) {
-      owner.reload();
     }
+
+    owner.reload();
   }
 
   public void set(final ATTRIBUTES attribute, final Object iValue) {
