@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.type.tree;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -40,7 +42,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  */
 public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<OIdentifiable, OIdentifiable>,
-    OStringBuilderSerializable, OSerializableStream, ODetachable {
+    ORecordLazyMultiValue, OStringBuilderSerializable, OSerializableStream, ODetachable {
   private static final long  serialVersionUID = 1L;
 
   private final OMVRBTreeRID tree;
@@ -109,7 +111,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public boolean add(final OIdentifiable e) {
-    return tree.put(e, null) != null;
+    return tree.put(e, null) == null;
   }
 
   public boolean remove(final Object o) {
@@ -187,11 +189,6 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     return tree.toString();
   }
 
-  public OMVRBTreeRIDSet setAutoConvert(final boolean b) {
-    tree.setAutoConvert(b);
-    return this;
-  }
-
   @Override
   public void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     tree.addChangeListener(changeListener);
@@ -210,5 +207,30 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   @Override
   public Class<?> getGenericClass() {
     return tree.getGenericClass();
+  }
+
+  @Override
+  public Iterator<OIdentifiable> rawIterator() {
+    return tree.rawIterator();
+  }
+
+  @Override
+  public void convertLinks2Records() {
+    tree.convertLinks2Records();
+  }
+
+  @Override
+  public boolean convertRecords2Links() {
+    return tree.convertRecords2Links();
+  }
+
+  @Override
+  public boolean isAutoConvertToRecord() {
+    return tree.isAutoConvertToRecord();
+  }
+
+  @Override
+  public void setAutoConvertToRecord(final boolean convertToRecord) {
+    tree.setAutoConvertToRecord(convertToRecord);
   }
 }

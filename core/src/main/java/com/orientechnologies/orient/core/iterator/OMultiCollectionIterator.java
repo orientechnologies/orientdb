@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
-  private List<Object> internalCollections;
+  private List<Object> sources;
   private Iterator<?>  iteratorOfInternalCollections;
   private Iterator<T>  partialIterator;
   private List<T>      temp    = null;
@@ -40,7 +40,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   private int          limit   = -1;
 
   public OMultiCollectionIterator() {
-    internalCollections = new ArrayList<Object>();
+    sources = new ArrayList<Object>();
   }
 
   public OMultiCollectionIterator(final Collection<Collection<OIdentifiable>> iterators) {
@@ -56,11 +56,11 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   @Override
   public boolean hasNext() {
     if (iteratorOfInternalCollections == null) {
-      if (internalCollections.isEmpty())
+      if (sources.isEmpty())
         return false;
 
       // THE FIRST TIME CREATE THE ITERATOR
-      iteratorOfInternalCollections = internalCollections.iterator();
+      iteratorOfInternalCollections = sources.iterator();
       getNextPartial();
     }
 
@@ -104,13 +104,13 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
     if (iteratorOfInternalCollections != null)
       throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
 
-    internalCollections.add(iValue);
+    sources.add(iValue);
   }
 
   public int size() {
     // SUM ALL THE COLLECTION SIZES
     int size = 0;
-    for (Object o : internalCollections) {
+    for (Object o : sources) {
       if (o != null)
         if (o instanceof Collection<?>)
           size += ((Collection<?>) o).size();
@@ -159,7 +159,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
               temp = new ArrayList<T>(1);
             else
               temp.clear();
-            
+
             temp.add((T) next);
             partialIterator = temp.iterator();
             return true;

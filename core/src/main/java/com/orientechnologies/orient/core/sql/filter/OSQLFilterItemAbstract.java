@@ -20,7 +20,6 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -60,28 +59,29 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
       // GET ALL SPECIAL OPERATIONS
       for (int i = 1; i < parts.size(); ++i) {
         final String part = parts.get(i);
-        
+
         final int pindex = part.indexOf('(');
         if (pindex > -1) {
           final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
-          final OSQLMethod method = getMethod(methodName);          
-          if(method != null){
-              final Object[] arguments;
+          final OSQLMethod method = getMethod(methodName);
+          if (method != null) {
+            final Object[] arguments;
 
-              if (method.getMaxParams() > 0) {
-                arguments = OStringSerializerHelper.getParameters(part).toArray();
-                if (arguments.length < method.getMinParams() || arguments.length > method.getMaxParams())
-                  throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '" + method.getName()
-                      + "' needs "
-                      + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-" + method.getMaxParams())
-                      + " argument(s) while has been received " + arguments.length, 0);
-              } else {
-                arguments = null;
-              }
+            if (method.getMaxParams() > 0) {
+              arguments = OStringSerializerHelper.getParameters(part).toArray();
+              if (arguments.length < method.getMinParams() || arguments.length > method.getMaxParams())
+                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '"
+                    + method.getName()
+                    + "' needs "
+                    + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
+                        + method.getMaxParams()) + " argument(s) while has been received " + arguments.length, 0);
+            } else {
+              arguments = null;
+            }
 
-              // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
-              operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
-          }else{
+            // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
+            operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
+          } else {
             // ERROR: OPERATOR NOT FOUND OR MISPELLED
             throw new OQueryParsingException(iQueryToParse.parserText,
                 "Syntax error: field operator not recognized between the supported ones: " + Arrays.toString(getAllMethodNames()),

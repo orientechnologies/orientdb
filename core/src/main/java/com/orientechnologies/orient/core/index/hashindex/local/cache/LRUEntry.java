@@ -27,11 +27,38 @@ class LRUEntry {
 
   long     hashCode;
 
+  int      usageCounter = 0;
+
   LRUEntry next;
 
   LRUEntry after;
   LRUEntry before;
 
   boolean  isDirty;
-  boolean  managedExternally;
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    LRUEntry lruEntry = (LRUEntry) o;
+
+    if (dataPointer != lruEntry.dataPointer)
+      return false;
+    if (fileId != lruEntry.fileId)
+      return false;
+    if (isDirty != lruEntry.isDirty)
+      return false;
+    if (pageIndex != lruEntry.pageIndex)
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return (int) (hashCode ^ (hashCode >>> 32));
+  }
 }

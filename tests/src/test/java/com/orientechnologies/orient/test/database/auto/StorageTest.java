@@ -42,6 +42,9 @@ public class StorageTest {
 
   @Test
   public void testCreateDataSegment() throws IOException {
+    if (url.startsWith("plocal:"))
+      return;
+
     database = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(database))
       ODatabaseHelper.createDatabase(database, url);
@@ -50,7 +53,7 @@ public class StorageTest {
 
     File tempDir = new File(System.getProperty("java.io.tmpdir") + "/binary-Segment");
     tempDir.mkdirs();
-		tempDir.deleteOnExit();
+    tempDir.deleteOnExit();
 
     final int segmentId = database.addDataSegment("binary", tempDir.toString());
     Assert.assertEquals(segmentId, 1);

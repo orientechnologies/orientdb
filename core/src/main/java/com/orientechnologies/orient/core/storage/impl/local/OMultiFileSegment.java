@@ -41,42 +41,42 @@ public class OMultiFileSegment extends OSegment {
   private final int                      fileIncrementSize;
   private boolean                        wasSoftlyClosedAtPreviousTime = true;
 
-  public OMultiFileSegment(final OStorageLocal iStorage, final OStorageSegmentConfiguration iConfig, final String iFileExtension,
-      final int iRoundMaxSize) throws IOException {
-    super(iStorage, iConfig.name);
+  public OMultiFileSegment(final OStorageLocalAbstract storage, final OStorageSegmentConfiguration config,
+      final String fileExtension, final int roundMaxSize) throws IOException {
+    super(storage, config.name);
 
-    config = iConfig;
-    fileExtension = iFileExtension;
-    type = iConfig.fileType;
-    defrag = iConfig.defrag;
-    maxSize = OFileUtils.getSizeAsNumber(iConfig.maxSize);
-    fileStartSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileStartSize);
-    final int tmpFileMaxSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileMaxSize);
-    fileIncrementSize = (int) OFileUtils.getSizeAsNumber(iConfig.fileIncrementSize);
+    this.config = config;
+    this.fileExtension = fileExtension;
+    type = config.fileType;
+    defrag = config.defrag;
+    maxSize = OFileUtils.getSizeAsNumber(config.maxSize);
+    fileStartSize = (int) OFileUtils.getSizeAsNumber(config.fileStartSize);
+    final int tmpFileMaxSize = (int) OFileUtils.getSizeAsNumber(config.fileMaxSize);
+    fileIncrementSize = (int) OFileUtils.getSizeAsNumber(config.fileIncrementSize);
 
-    if (iRoundMaxSize > 0)
+    if (roundMaxSize > 0)
       // ROUND THE FILE SIZE TO AVOID ERRORS ON ROUNDING BY DIVIDING FOR FIXED RECORD SIZE
-      fileMaxSize = (tmpFileMaxSize / iRoundMaxSize) * iRoundMaxSize;
+      fileMaxSize = (tmpFileMaxSize / roundMaxSize) * roundMaxSize;
     else
       fileMaxSize = tmpFileMaxSize;
     // INSTANTIATE ALL THE FILES
     int perFileMaxSize;
 
-    if (iConfig.infoFiles.length == 0) {
+    if (config.infoFiles.length == 0) {
       // EMPTY FILE: CREATE THE FIRST FILE BY DEFAULT
       files = new OFile[1];
       files[0] = OFileFactory.instance().create(type,
-          iStorage.getVariableParser().resolveVariables(config.getLocation() + "/" + name + "." + 0 + fileExtension),
-          iStorage.getMode());
+          storage.getVariableParser().resolveVariables(this.config.getLocation() + "/" + name + "." + 0 + this.fileExtension),
+          storage.getMode());
       perFileMaxSize = fileMaxSize;
       files[0].setMaxSize(perFileMaxSize);
       files[0].setIncrementSize(fileIncrementSize);
 
     } else {
-      files = new OFile[iConfig.infoFiles.length];
+      files = new OFile[config.infoFiles.length];
       for (int i = 0; i < files.length; ++i) {
-        files[i] = OFileFactory.instance().create(type, iStorage.getVariableParser().resolveVariables(iConfig.infoFiles[i].path),
-            iStorage.getMode());
+        files[i] = OFileFactory.instance().create(type, storage.getVariableParser().resolveVariables(config.infoFiles[i].path),
+            storage.getMode());
         perFileMaxSize = fileMaxSize;
 
         files[i].setMaxSize(perFileMaxSize);

@@ -17,14 +17,14 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
@@ -121,6 +121,9 @@ public class DictionaryTest {
 
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryInTx() throws IOException {
+    if (url.startsWith("plocal:"))
+      return;
+
     ODatabaseFlat database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
@@ -171,8 +174,8 @@ public class DictionaryTest {
     Assert.assertNull(database1.getDictionary().get("testReloadKey"));
 
     database2.getMetadata().getIndexManager().reload();
-    database2.getDictionary().put("testReloadKey", new ODocument().field("testField","a"));
-    Assert.assertEquals(database1.getDictionary().<ODocument>get("testReloadKey").field("testField"), "a");
+    database2.getDictionary().put("testReloadKey", new ODocument().field("testField", "a"));
+    Assert.assertEquals(database1.getDictionary().<ODocument> get("testReloadKey").field("testField"), "a");
 
     database1.close();
     database2.close();

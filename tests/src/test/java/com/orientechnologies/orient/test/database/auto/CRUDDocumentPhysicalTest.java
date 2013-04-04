@@ -846,6 +846,9 @@ public class CRUDDocumentPhysicalTest {
   }
 
   public void testEmbeddeDocumentInTx() {
+    if (url.startsWith("plocal:"))
+      return;
+
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
     ODocument bank = database.newInstance("Account");

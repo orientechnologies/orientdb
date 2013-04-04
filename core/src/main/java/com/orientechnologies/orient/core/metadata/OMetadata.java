@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class OMetadata {
   public static final String          CLUSTER_INTERNAL_NAME     = "internal";
@@ -126,8 +126,8 @@ public class OMetadata {
 
             // rebuild indexes if index cluster wasn't closed properly
             if (iLoad && OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
-                && (database.getStorage() instanceof OStorageLocal)
-                && !((OStorageLocal) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
+                && (database.getStorage() instanceof OStorageLocalAbstract)
+                && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
               for (OIndex<?> idx : instance.getIndexes())
                 if (idx.isAutomatic()) {
                   try {
@@ -156,10 +156,10 @@ public class OMetadata {
                 instance.load();
               }
 
-//              if (instance.getAllRoles().isEmpty()) {
-//                OLogManager.instance().error(this, "No security has been installed, create default users and roles");
-//                security.repair();
-//              }
+              // if (instance.getAllRoles().isEmpty()) {
+              // OLogManager.instance().error(this, "No security has been installed, create default users and roles");
+              // security.repair();
+              // }
 
               return instance;
             }

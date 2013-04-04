@@ -19,6 +19,7 @@ import java.util.Iterator;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -29,15 +30,17 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
+public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
   final private ORecord<?>                        sourceRecord;
-  final private Iterator<? extends OIdentifiable> underlying;
+  final private Iterable<? extends OIdentifiable> source;
+  private Iterator<? extends OIdentifiable>       underlying;
   final private boolean                           autoConvert2Record;
 
   public OLazyRecordIterator(final Iterator<? extends OIdentifiable> iIterator, final boolean iConvertToRecord) {
     this.sourceRecord = null;
     this.underlying = iIterator;
     this.autoConvert2Record = iConvertToRecord;
+    this.source = null;
   }
 
   public OLazyRecordIterator(final ORecord<?> iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
@@ -45,6 +48,14 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
     this.autoConvert2Record = iConvertToRecord;
+    this.source = null;
+  }
+
+  public OLazyRecordIterator(final Iterable<? extends OIdentifiable> iSource, final boolean iConvertToRecord) {
+    this.sourceRecord = null;
+    this.autoConvert2Record = iConvertToRecord;
+    this.source = iSource;
+    this.underlying = iSource.iterator();
   }
 
   @SuppressWarnings("unchecked")
@@ -89,5 +100,14 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable> {
     underlying.remove();
     if (sourceRecord != null)
       sourceRecord.setDirty();
+  }
+
+  @Override
+  public void reset() {
+    if (underlying instanceof OResettable)
+      ((OResettable) underlying).reset();
+    else if (source != null) {
+      underlying = source.iterator();
+    }
   }
 }

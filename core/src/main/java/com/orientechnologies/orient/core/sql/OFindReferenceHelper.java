@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Helper class to find reference in records.
@@ -135,10 +134,8 @@ public class OFindReferenceHelper {
     } else if (values instanceof OLazyObjectSetInterface) {
       ((OLazyObjectSetInterface<?>) values).setConvertToRecord(false);
       it = ((OLazyObjectSetInterface<?>) values).iterator();
-    } else if (values instanceof ORecordLazyList) {
-      it = ((ORecordLazyList) values).rawIterator();
-    } else if (values instanceof OMVRBTreeRIDSet) {
-      it = ((OMVRBTreeRIDSet) values).iterator();
+    } else if (values instanceof ORecordLazyMultiValue) {
+      it = ((ORecordLazyMultiValue) values).rawIterator();
     } else {
       it = values.iterator();
     }

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * SQL CREATE CLUSTER command: Creates a new cluster.
@@ -84,9 +85,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
-    if (dataId == -1)
-      throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");
+    if (!(database.getStorage() instanceof OLocalPaginatedStorage)) {
+      final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
+      if (dataId == -1)
+        throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");
+    }
 
     if (!Orient.instance().getClusterFactory().isSupported(clusterType))
       throw new OCommandSQLParsingException("Cluster type '" + clusterType + "' is not supported");

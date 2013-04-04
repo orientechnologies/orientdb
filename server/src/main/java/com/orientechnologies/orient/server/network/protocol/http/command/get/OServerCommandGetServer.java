@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServerMain;
@@ -129,7 +129,8 @@ public class OServerCommandGetServer extends OServerCommandAuthenticatedServerAb
         json.beginObject(2);
         writeField(json, 2, "name", s.getName());
         writeField(json, 2, "type", s.getClass().getSimpleName());
-        writeField(json, 2, "path", s instanceof OStorageLocal ? ((OStorageLocal) s).getStoragePath().replace('\\', '/') : "");
+        writeField(json, 2, "path",
+            s instanceof OStorageLocalAbstract ? ((OStorageLocalAbstract) s).getStoragePath().replace('\\', '/') : "");
         writeField(json, 2, "activeUsers", s.getUsers());
         json.endObject(2);
       }

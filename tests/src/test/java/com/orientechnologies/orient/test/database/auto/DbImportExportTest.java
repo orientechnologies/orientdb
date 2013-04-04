@@ -66,7 +66,12 @@ public class DbImportExportTest implements OCommandOutputListener {
     else
       importDir.mkdir();
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
+    ODatabaseDocumentTx database;
+    if (url.startsWith("plocal:"))
+      database = new ODatabaseDocumentTx("plocal:" + testPath + "/" + NEW_DB_URL);
+    else
+      database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
+
     database.create();
 
     ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);

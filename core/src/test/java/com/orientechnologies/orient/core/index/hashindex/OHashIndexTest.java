@@ -67,11 +67,20 @@ public class OHashIndexTest {
       index.put(i + "", new ORecordId(0, OClusterPositionFactory.INSTANCE.valueOf(i)));
     }
 
+    for (int i = 0; i < 1000000; i++) {
+      if (i % 2 == 0)
+        index.remove(i + "");
+
+    }
+
     db.close();
 
     db.open("admin", "admin");
     index = db.getMetadata().getIndexManager().getIndex("manualHashIndex");
-    for (int i = 0; i < 1000000; i++)
+    for (int i = 1; i < 1000000; i += 2)
       Assert.assertEquals(index.get(i + ""), new ORecordId(0, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < 1000000; i += 2)
+      Assert.assertNull(index.get(i + ""));
   }
 }

@@ -131,7 +131,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (subjectName.startsWith("(")) {
       subjectName = subjectName.trim();
-      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this)
+          .setContext(context));
 
       if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
@@ -163,6 +164,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     }
 
     query.setUseCache(false);
+    query.setContext(context);
     getDatabase().query(query, queryArgs);
     return recordCount;
   }
@@ -199,7 +201,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     // BIND VALUES TO UPDATE
     if (!setEntries.isEmpty()) {
-      OSQLHelper.bindParameters(record, setEntries, parameters);
+      OSQLHelper.bindParameters(record, setEntries, parameters, context);
       recordUpdated = true;
     }
 
@@ -442,7 +444,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;

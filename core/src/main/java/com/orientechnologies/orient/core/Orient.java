@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -79,6 +80,7 @@ public class Orient extends OSharedResourceAbstract {
   protected Orient() {
     // REGISTER THE EMBEDDED ENGINE
     registerEngine(new OEngineLocal());
+    registerEngine(new OEngineLocalPaginated());
     registerEngine(new OEngineMemory());
     registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 

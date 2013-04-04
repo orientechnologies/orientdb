@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
@@ -181,6 +180,9 @@ public class CRUDObjectPhysicalTest {
 
   @Test(dependsOnMethods = "testSimpleTypes")
   public void testDateInTransaction() {
+    if (url.startsWith("plocal:"))
+      return;
+
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaSimpleTestClass javaObj = new JavaSimpleTestClass();
     Date date = new Date();
@@ -2013,7 +2015,8 @@ public class CRUDObjectPhysicalTest {
 
     List<Profile> result1 = database.query(new OSQLSynchQuery<Profile>("select from Profile limit 1"));
 
-    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0).getId());
+    List<Profile> result2 = database.query(new OSQLSynchQuery<Profile>("select from Profile where @rid = ?"), result1.get(0)
+        .getId());
 
     Assert.assertTrue(result2.size() != 0);
 

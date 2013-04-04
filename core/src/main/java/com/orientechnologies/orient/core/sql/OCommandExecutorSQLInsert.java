@@ -142,7 +142,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     int blockStart = parserGetCurrentPosition();
     int blockEnd = parserGetCurrentPosition();
 
-    final List<String> records = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart, -1, true, true);
+    final List<String> records = OStringSerializerHelper.smartSplit(parserText, new char[] { ',' }, blockStart, -1, true, true,
+        false);
     for (String record : records) {
 
       final List<String> values = new ArrayList<String>();
@@ -202,7 +203,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       if (newRecords != null) {
         for (Map<String, Object> candidate : newRecords) {
           final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-          OSQLHelper.bindParameters(doc, candidate, commandParameters);
+          OSQLHelper.bindParameters(doc, candidate, commandParameters, context);
 
           if (clusterName != null) {
             doc.save(clusterName);
@@ -218,7 +219,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           return docs;
       } else if (content != null) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-        doc.merge(content, false, false);
+        doc.merge(content, true, false);
         doc.save();
         return doc;
       }

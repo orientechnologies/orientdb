@@ -183,7 +183,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     return entry;
   }
 
-  public int size() {
+  @Override
+  protected int getTreeSize() {
     return dataProvider.getSize();
   }
 

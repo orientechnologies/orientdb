@@ -112,24 +112,11 @@ public class ConcurrentUpdatesTest {
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 
-  // public ConcurrentTest() throws Exception {
-  // url = "local:C:\\tmp\\tests\\concurrAccess";
-  // OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-  // OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-  // OGlobalConfiguration.DB_MVCC.setValue(true);
-  // ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-  // if (db.exists()) {
-  // db.delete();
-  // }
-  // db.create();
-  // db.close();
-  // }
-
-  /**
-	 * 
-	 */
   @Test
   public void concurrentUpdates() throws Exception {
+    if (url.startsWith("plocal:"))
+      return;
+
     ODatabaseDocumentTx database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database3 = new ODatabaseDocumentTx(url).open("admin", "admin");

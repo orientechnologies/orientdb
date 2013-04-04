@@ -64,7 +64,8 @@ public class OMVRBTreeTest {
     database.close();
 
     database.open("admin", "admin");
-    OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity()).setAutoConvert(false);
+    OMVRBTreeRIDSet set2 = new OMVRBTreeRIDSet(doc.getIdentity());
+    set2.setAutoConvertToRecord(false);
     Assert.assertEquals(set2.size(), total);
 
     // ITERABLE

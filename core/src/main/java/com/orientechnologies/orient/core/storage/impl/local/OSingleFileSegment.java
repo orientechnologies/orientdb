@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 
 public class OSingleFileSegment {
-  protected OStorageLocal             storage;
+  protected OStorageLocalAbstract     storage;
   protected OFile                     file;
   protected OStorageFileConfiguration config;
   private boolean                     wasSoftlyClosedAtPreviousTime = true;
@@ -36,11 +36,11 @@ public class OSingleFileSegment {
     file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
   }
 
-  public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+  public OSingleFileSegment(final OStorageLocalAbstract iStorage, final OStorageFileConfiguration iConfig) throws IOException {
     this(iStorage, iConfig, iConfig.type);
   }
 
-  public OSingleFileSegment(final OStorageLocal iStorage, final OStorageFileConfiguration iConfig, final String iType)
+  public OSingleFileSegment(final OStorageLocalAbstract iStorage, final OStorageFileConfiguration iConfig, final String iType)
       throws IOException {
     config = iConfig;
     storage = iStorage;

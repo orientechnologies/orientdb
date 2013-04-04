@@ -73,6 +73,10 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return context;
   }
 
+  public void setContext(final OCommandContext iContext) {
+    context = iContext;
+  }
+
   public static ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }

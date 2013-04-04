@@ -163,6 +163,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsInTx")
   public void testInsertCommit() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "insertCommit";
     Country country = new Country(initialCountryName);
 
@@ -183,6 +186,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testInsertCommit")
   public void testInsertRollback() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "insertRollback";
     Country country = new Country(initialCountryName);
 
@@ -199,6 +205,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testInsertRollback")
   public void testUpdateCommit() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "updateCommit";
     Country country = new Country(initialCountryName);
 
@@ -227,6 +236,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testUpdateCommit")
   public void testUpdateRollback() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "updateRollback";
     Country country = new Country(initialCountryName);
 
@@ -254,6 +266,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testUpdateRollback")
   public void testDeleteCommit() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "deleteCommit";
     Country Country = new Country(initialCountryName);
 
@@ -274,6 +289,9 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testDeleteCommit")
   public void testDeleteRollback() {
+    if (url.startsWith("plocal:"))
+      return;
+
     String initialCountryName = "deleteRollback";
     Country country = new Country(initialCountryName);
 

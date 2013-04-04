@@ -79,4 +79,9 @@ public interface OCommandRequest {
   public <RET extends OCommandRequest> RET setFetchPlan(String iFetchPlan);
 
   public void setUseCache(boolean iUseCache);
+
+  public OCommandContext getContext();
+
+  public OCommandRequest setContext(final OCommandContext iContext);
+
 }

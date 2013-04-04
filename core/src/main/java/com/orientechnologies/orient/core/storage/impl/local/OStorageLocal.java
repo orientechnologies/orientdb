@@ -58,8 +58,8 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -68,7 +68,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
@@ -76,7 +75,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-public class OStorageLocal extends OStorageEmbedded {
+public class OStorageLocal extends OStorageLocalAbstract {
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
 
@@ -131,8 +130,8 @@ public class OStorageLocal extends OStorageEmbedded {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (directMemory != null)
-      diskCache = new OLRUCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger(), this, false);
+      diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, this, false);
     else
       diskCache = null;
   }
@@ -418,15 +417,18 @@ public class OStorageLocal extends OStorageEmbedded {
           int notDeletedFiles = 0;
 
           // TRY TO DELETE ALL THE FILES
-          for (File f : dbDir.listFiles()) {
-            // DELETE ONLY THE SUPPORTED FILES
-            for (String ext : ALL_FILE_EXTENSIONS)
-              if (f.getPath().endsWith(ext)) {
-                if (!f.delete()) {
-                  notDeletedFiles++;
+          File[] files = dbDir.listFiles();
+          if (files != null) {
+            for (File f : files) {
+              // DELETE ONLY THE SUPPORTED FILES
+              for (String ext : ALL_FILE_EXTENSIONS)
+                if (f.getPath().endsWith(ext)) {
+                  if (!f.delete()) {
+                    notDeletedFiles++;
+                  }
+                  break;
                 }
-                break;
-              }
+            }
           }
 
           if (notDeletedFiles == 0) {
@@ -588,7 +590,8 @@ public class OStorageLocal extends OStorageEmbedded {
         // CHECK CHUNKS
         formatMessage(iVerbose, iListener, "\n-- checking chunks:");
 
-        for (int pos = 0; nextPos < d.getFilledUpTo();) {
+        int pos;
+        do {
           try {
             pos = nextPos;
 
@@ -704,7 +707,7 @@ public class OStorageLocal extends OStorageEmbedded {
             // totalChunks, pos, e.toString());
             errors++;
           }
-        }
+        } while (nextPos < d.getFilledUpTo());
         formatMessage(iVerbose, iListener, "\n");
       }
 
@@ -1351,7 +1354,6 @@ public class OStorageLocal extends OStorageEmbedded {
   /**
    * Returns the list of holes as pair of position & ODataHoleInfo
    * 
-   * @throws IOException
    */
   public List<ODataHoleInfo> getHolesList() {
     final List<ODataHoleInfo> holes = new ArrayList<ODataHoleInfo>();
@@ -1373,7 +1375,6 @@ public class OStorageLocal extends OStorageEmbedded {
   /**
    * Returns the total number of holes.
    * 
-   * @throws IOException
    */
   public long getHoles() {
     lock.acquireSharedLock();
@@ -1393,7 +1394,6 @@ public class OStorageLocal extends OStorageEmbedded {
   /**
    * Returns the total size used by holes
    * 
-   * @throws IOException
    */
   public long getHoleSize() {
     lock.acquireSharedLock();
@@ -1592,7 +1592,6 @@ public class OStorageLocal extends OStorageEmbedded {
    *          A OStorageClusterConfiguration implementation, namely physical or logical
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    * @throws IOException
-   * @throws IOException
    */
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
     OCluster cluster = clusterMap.get(iConfig.getName());
@@ -1789,10 +1788,10 @@ public class OStorageLocal extends OStorageEmbedded {
     }
   }
 
-  protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType) {
+  protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId rid, final byte[] recordContent,
+      final ORecordVersion recordVersion, final byte iRecordType) {
     if (iClusterSegment == null)
-      throw new OStorageException("Cluster not defined for record: " + iRid);
+      throw new OStorageException("Cluster not defined for record: " + rid);
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -1800,20 +1799,20 @@ public class OStorageLocal extends OStorageEmbedded {
     try {
 
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
       try {
 
         // UPDATE IT
-        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
         if (!checkForRecordValidity(ppos))
           return null;
 
         // VERSION CONTROL CHECK
-        switch (iVersion.getCounter()) {
+        switch (recordVersion.getCounter()) {
         // DOCUMENT UPDATE, NO VERSION CONTROL
         case -1:
           ppos.recordVersion.increment();
-          iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+          iClusterSegment.updateVersion(rid.clusterPosition, ppos.recordVersion);
           break;
 
         // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
@@ -1822,33 +1821,33 @@ public class OStorageLocal extends OStorageEmbedded {
 
         default:
           // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-          if (iVersion.getCounter() > -1) {
+          if (recordVersion.getCounter() > -1) {
             // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (!iVersion.equals(ppos.recordVersion))
+            if (!recordVersion.equals(ppos.recordVersion))
               if (OFastConcurrentModificationException.enabled())
                 throw OFastConcurrentModificationException.instance();
               else
-                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
+                throw new OConcurrentModificationException(rid, ppos.recordVersion, recordVersion, ORecordOperation.UPDATED);
             ppos.recordVersion.increment();
-            iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            iClusterSegment.updateVersion(rid.clusterPosition, ppos.recordVersion);
           } else {
             // DOCUMENT ROLLBACKED
-            iVersion.clearRollbackMode();
-            ppos.recordVersion.copyFrom(iVersion);
-            iClusterSegment.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            recordVersion.clearRollbackMode();
+            ppos.recordVersion.copyFrom(recordVersion);
+            iClusterSegment.updateVersion(rid.clusterPosition, ppos.recordVersion);
           }
         }
 
         if (ppos.recordType != iRecordType)
-          iClusterSegment.updateRecordType(iRid.clusterPosition, iRecordType);
+          iClusterSegment.updateRecordType(rid.clusterPosition, iRecordType);
 
         final long newDataSegmentOffset;
 
         if (ppos.dataSegmentPos == -1)
           // WAS EMPTY FIRST TIME, CREATE IT NOW
-          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(iRid, iContent);
+          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).addRecord(rid, recordContent);
         else
-          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataSegmentPos, iRid, iContent);
+          newDataSegmentOffset = getDataSegmentById(ppos.dataSegmentId).setRecord(ppos.dataSegmentPos, rid, recordContent);
 
         if (newDataSegmentOffset != ppos.dataSegmentPos) {
           // UPDATE DATA SEGMENT OFFSET WITH THE NEW PHYSICAL POSITION
@@ -1859,12 +1858,12 @@ public class OStorageLocal extends OStorageEmbedded {
         return ppos;
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
       }
 
     } catch (IOException e) {
 
-      OLogManager.instance().error(this, "Error on updating record " + iRid + " (cluster: " + iClusterSegment + ")", e);
+      OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + iClusterSegment + ")", e);
 
     } finally {
       lock.releaseExclusiveLock();

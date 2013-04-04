@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -118,6 +119,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
 
     return (T) javaClass.newInstance();
+  }
+
+  @Override
+  public <RET extends ODocumentWrapper> RET reload() {
+    return owner.reload();
   }
 
   public String getCustom(final String iName) {
