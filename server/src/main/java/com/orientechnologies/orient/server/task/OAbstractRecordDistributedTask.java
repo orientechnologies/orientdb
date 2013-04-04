@@ -88,6 +88,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       operationLogOffset = -1;
 
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+    ODistributedThreadLocal.INSTANCE.distributedRequestSource = nodeSource;
     try {
       // EXECUTE IT LOCALLY
       final T localResult = executeOnLocalNode(dbSynchronizer);

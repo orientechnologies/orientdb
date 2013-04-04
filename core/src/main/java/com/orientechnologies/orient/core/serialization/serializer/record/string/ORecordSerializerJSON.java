@@ -235,6 +235,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     doc.field(fieldName, v, OType.EMBEDDEDMAP);
                     continue;
                   }
+                } else if(v instanceof ODocument) {
+                  ((ODocument) v).save();
                 }
 
               if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
