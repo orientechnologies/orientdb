@@ -56,7 +56,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   @Override
   public boolean hasNext() {
     if (iteratorOfInternalCollections == null) {
-      if (sources.isEmpty())
+      if (sources == null || sources.isEmpty())
         return false;
 
       // THE FIRST TIME CREATE THE ITERATOR
