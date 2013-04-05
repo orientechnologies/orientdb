@@ -25,4 +25,5 @@ public class ODistributedThreadLocal extends ThreadLocal<Boolean> {
   public static ODistributedThreadLocal INSTANCE             = new ODistributedThreadLocal();
 
   public boolean                        distributedExecution = false;
+  public String                         distributedRequestSource = null;
 }
