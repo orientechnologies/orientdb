@@ -236,7 +236,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     continue;
                   }
                 } else if(v instanceof ODocument) {
-                  ((ODocument) v).save();
+                  String className = ((ODocument) v).getClassName();
+                	if(className != null && className.length() > 0)
+                		((ODocument) v).save();
                 }
 
               if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
