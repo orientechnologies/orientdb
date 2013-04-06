@@ -6,16 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -207,7 +199,9 @@ public class O2QCacheConcurrentTest {
       int fileNumber = getNextFileNumber();
       while (shouldContinue(fileNumber)) {
         final long pageIndex = getNextPageIndex(fileNumber);
-        writeToFile(fileNumber, pageIndex);
+        if (pageIndex >= 0) {
+          writeToFile(fileNumber, pageIndex);
+        }
         fileNumber = getNextFileNumber();
       }
       return null;
@@ -230,6 +224,9 @@ public class O2QCacheConcurrentTest {
         pageIndex = pageCounters.getAndIncrement(fileNumber);
       } else {
         int queueSize = pagesQueue.get(fileNumber).size();
+        if (queueSize == 0) {
+          return -1;
+        }
         int randomPageIndexFromQueue = new Random().nextInt(queueSize);
         pageIndex = pagesQueue.get(fileNumber).remove(randomPageIndexFromQueue);
       }
