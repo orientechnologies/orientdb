@@ -53,7 +53,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final String                DEFAULT_TIMEZONE = "UTC";
   public static final String                DEFAULT_CHARSET  = "UTF-8";
 
-  public static final int                   CURRENT_VERSION  = 4;
+  public static final int                   CURRENT_VERSION  = 5;
 
   public int                                version          = -1;
   public String                             name;
@@ -205,7 +205,12 @@ public class OStorageConfiguration implements OSerializableStream {
         phyClusterLocal.name = clusterName;
         index = phySegmentFromStream(values, index, phyClusterLocal);
 
-        String holeFlag = read(values[index++]);
+        final String holeFlag;
+        if (version > 4) {
+          holeFlag = read(values[index++]);
+        } else {
+          holeFlag = "f";
+        }
         if (holeFlag.equals("f"))
           phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
               read(values[index++]), read(values[index++])));
