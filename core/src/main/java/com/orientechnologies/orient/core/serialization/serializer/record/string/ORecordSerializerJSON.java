@@ -149,6 +149,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             if (localRecord != null)
               iRecord = localRecord;
           }
+        } else if(fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument) {
+          ((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
         }
       }
 
@@ -179,8 +181,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
           } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
-          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument)
-            ((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
+          } 
           else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
             // JUMP IT
             continue;
@@ -235,6 +236,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     doc.field(fieldName, v, OType.EMBEDDEDMAP);
                     continue;
                   }
+                } else if(v instanceof ODocument && type != null && type.isLink()) {
+                  String className = ((ODocument) v).getClassName();
+                  if(className != null && className.length() > 0)
+                    ((ODocument) v).save();
                 }
 
               if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
