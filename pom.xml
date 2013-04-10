@@ -80,7 +80,7 @@
     <module>distributed</module>
     <!--<module>clustered-client</module>-->
     <!--<module>blueprints</module>-->
-    <module>graphdb</module>
+    <module>graphdb</module> 
   </modules>
 
   <scm>
