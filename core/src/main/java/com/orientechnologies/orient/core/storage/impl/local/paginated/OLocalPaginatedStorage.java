@@ -425,7 +425,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     
   private int addClusterInternal(String clusterName, int clusterPos, String location, Object... parameters) throws IOException {
 
-    final OCluster cluster;
+    final OLocalPaginatedCluster cluster;
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase();
 
@@ -438,7 +438,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final int createdClusterId = registerCluster(cluster);
 
     if (cluster != null) {
-      cluster.create(-1);
+      if (!cluster.exists()) {
+        cluster.create(-1);
+      } else {
+        cluster.open();
+      }
       configuration.update();
     }
 
