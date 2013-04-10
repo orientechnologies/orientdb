@@ -378,31 +378,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     lock.acquireExclusiveLock();
     try {
-      final OCluster cluster;
-      if (clusterName != null) {
-        clusterName = clusterName.toLowerCase();
-
-        // FIND THE FIRST AVAILABLE CLUSTER ID
-        int clusterPos = clusters.length;
-        for (int i = 0; i < clusters.length; ++i)
-          if (clusters[i] == null) {
-            clusterPos = i;
-            break;
-          }
-
-        cluster = new OLocalPaginatedCluster();
-        cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
-      } else
-        cluster = null;
-
-      final int clusterId = registerCluster(cluster);
-
-      if (cluster != null) {
-        cluster.create(-1);
-        configuration.update();
+      // FIND THE FIRST AVAILABLE CLUSTER ID
+      int clusterPos = clusters.length;
+      for (int i = 0; i < clusters.length; ++i) {
+        if (clusters[i] == null) {
+          clusterPos = i;
+          break;
+        }
       }
 
-      return clusterId;
+      return addClusterInternal(clusterName, clusterPos, location, parameters);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
@@ -412,6 +397,52 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
 
     return -1;
+  }
+
+  public int addCluster(String clusterType, String clusterName, int iRequestedId, String location, String dataSegmentName,
+      boolean forceListBased, Object... parameters) {
+
+    lock.acquireExclusiveLock();
+    try {
+      if (iRequestedId < 0) {
+        throw new OConfigurationException("Cluster id must be positive!");
+      }
+      if (iRequestedId < clusters.length && clusters[iRequestedId] != null) {
+        throw new OConfigurationException("Requested cluster ID is occupied!");
+      }
+
+      return addClusterInternal(clusterName, iRequestedId, location, parameters);
+
+    } catch (Exception e) {
+      OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
+          OStorageException.class);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+
+    return -1;
+  }
+    
+  private int addClusterInternal(String clusterName, int clusterPos, String location, Object... parameters) throws IOException {
+
+    final OCluster cluster;
+    if (clusterName != null) {
+      clusterName = clusterName.toLowerCase();
+
+      cluster = new OLocalPaginatedCluster();
+      cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
+    } else {
+      cluster = null;
+    }
+
+    final int createdClusterId = registerCluster(cluster);
+
+    if (cluster != null) {
+      cluster.create(-1);
+      configuration.update();
+    }
+
+    return createdClusterId;
   }
 
   public boolean dropCluster(final int iClusterId) {
@@ -1135,10 +1166,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       // CREATE AND ADD THE NEW REF SEGMENT
       clusterMap.put(iCluster.getName(), iCluster);
       id = iCluster.getId();
-    } else
+    } else {
       id = clusters.length;
-
-    clusters = OArrays.copyOf(clusters, clusters.length + 1);
+    }
+      
+    if (id >= clusters.length) {
+        clusters = OArrays.copyOf(clusters, id + 1);
+    }
     clusters[id] = iCluster;
 
     return id;

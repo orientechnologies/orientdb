@@ -307,6 +307,11 @@ public class ODistributedStorage implements OStorage {
     return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
+  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters) {
+    return wrapped.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+  }
+
   public boolean dropCluster(final String iClusterName) {
     return wrapped.dropCluster(iClusterName);
   }
