@@ -1307,6 +1307,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
+  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters) {
+    throw new UnsupportedOperationException();
+  }
+
   public boolean dropCluster(final int iClusterId) {
     checkConnection();
 

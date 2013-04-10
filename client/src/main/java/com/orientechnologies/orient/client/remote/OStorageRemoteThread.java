@@ -297,6 +297,12 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
   }
 
+  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters) {
+    delegate.setSessionId(sessionId);
+    return delegate.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+  }
+
   public boolean dropCluster(final int iClusterId) {
     delegate.setSessionId(sessionId);
     return delegate.dropCluster(iClusterId);

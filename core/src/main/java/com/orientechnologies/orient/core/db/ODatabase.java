@@ -326,6 +326,24 @@ public interface ODatabase extends Closeable {
    */
   public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
 
+    /**
+     * Adds a new cluster.
+     *
+     * @param iType
+     *          Cluster type between the defined ones
+     * @param iClusterName
+     *          Cluster name
+     * @param iRequestedId
+     *          requested id of the cluster
+     * @param iDataSegmentName
+     *          Data segment where to store record of this cluster. null means 'default'
+     * @param iParameters
+     *          Additional parameters to pass to the factories
+     *
+     * @return Cluster id
+     */
+    public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, final String iDataSegmentName, Object... iParameters);
+
   /**
    * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
    * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
