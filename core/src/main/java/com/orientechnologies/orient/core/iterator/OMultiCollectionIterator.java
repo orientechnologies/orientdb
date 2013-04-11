@@ -31,20 +31,21 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
-  private List<Object> sources;
-  private Iterator<?>  iteratorOfInternalCollections;
-  private Iterator<T>  partialIterator;
-  private List<T>      temp    = null;
+  private Collection<Object> sources;
+  private Iterator<?>        iteratorOfInternalCollections;
+  private Iterator<T>        partialIterator;
+  private List<T>            temp    = null;
 
-  private int          browsed = 0;
-  private int          limit   = -1;
+  private int                browsed = 0;
+  private int                limit   = -1;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
   }
 
-  public OMultiCollectionIterator(final Collection<Collection<OIdentifiable>> iterators) {
-    iteratorOfInternalCollections = iterators.iterator();
+  public OMultiCollectionIterator(final Collection<Object> iSources) {
+    sources = iSources;
+    iteratorOfInternalCollections = iSources.iterator();
     getNextPartial();
   }
 
