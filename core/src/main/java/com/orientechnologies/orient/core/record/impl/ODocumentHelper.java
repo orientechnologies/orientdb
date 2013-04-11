@@ -255,9 +255,9 @@ public class ODocumentHelper {
             value = getIdentifiableValue(currentRecord, fieldName);
           else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
-          else if (value instanceof Collection<?>) {
+          else if (OMultiValue.isMultiValue(value)) {
             final HashSet<Object> temp = new HashSet<Object>();
-            for (Object o : (Collection<?>) value) {
+            for (Object o : OMultiValue.getMultiValueIterable(value)) {
               if (o instanceof OIdentifiable) {
                 Object r = getFieldValue(o, iFieldName);
                 if (r != null)
@@ -454,7 +454,7 @@ public class ODocumentHelper {
               ((ORecord<?>) value).reload();
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
-          else if (value instanceof Collection<?>) {
+          else if (OMultiValue.isMultiValue(value)) {
             final Set<Object> values = new HashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               final Object item;
