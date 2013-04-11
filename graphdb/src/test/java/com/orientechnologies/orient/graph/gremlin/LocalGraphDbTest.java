@@ -20,18 +20,21 @@ public class LocalGraphDbTest {
     new LocalGraphDbTest().multipleDatabasesSameThread();
   }
 
+  private boolean oldStorageOpen;
+
   public LocalGraphDbTest() {
     OGremlinHelper.global().create();
   }
 
   @BeforeClass
   public void before() {
+    oldStorageOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
   }
 
   @AfterClass
   public void after() {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldStorageOpen);
   }
 
   @Test
