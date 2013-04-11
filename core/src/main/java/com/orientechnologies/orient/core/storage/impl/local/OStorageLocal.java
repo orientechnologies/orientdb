@@ -274,7 +274,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     try {
 
       if (status != STATUS.CLOSED)
-        throw new OStorageException("Cannot create new storage '" + name + "' because it is not closed");
+        throw new OStorageException("Cannot create new storage '" + name + "' because it is not closed (status:" + status + ")");
 
       addUser();
 
