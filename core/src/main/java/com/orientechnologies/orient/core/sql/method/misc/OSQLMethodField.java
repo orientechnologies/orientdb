@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,26 +41,26 @@ public class OSQLMethodField extends OAbstractSQLMethod {
     super(NAME, 0, 1);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
 
-    if (ioResult instanceof String)
-      try {
-        ioResult = new ODocument(new ORecordId((String) ioResult));
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
-        ioResult = null;
+    if (ioResult != null)
+      if (ioResult instanceof String)
+        try {
+          ioResult = new ODocument(new ORecordId((String) ioResult));
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
+          ioResult = null;
+        }
+      else if (ioResult instanceof OIdentifiable)
+        ioResult = ((OIdentifiable) ioResult).getRecord();
+      else if (ioResult instanceof Collection<?> || ioResult.getClass().isArray()) {
+        final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
+        for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
+          result.add(ODocumentHelper.getFieldValue(o, iMethodParams[0].toString()));
+        }
+        return result;
       }
-    else if (ioResult instanceof OIdentifiable)
-      ioResult = ((OIdentifiable) ioResult).getRecord();
-    else if (ioResult instanceof Collection<?>) {
-      final List<Object> result = new ArrayList<Object>(((Collection<?>) ioResult).size());
-      for (Object o : (Collection<Object>) ioResult) {
-        result.add(ODocumentHelper.getFieldValue(o, iMethodParams[0].toString()));
-      }
-      return result;
-    }
 
     if (ioResult != null) {
       if (ioResult instanceof OCommandContext) {
