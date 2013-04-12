@@ -314,14 +314,25 @@ public class OMultiValue {
         // COLLECTION - ?
         final Collection<Object> coll = (Collection<Object>) iObject;
 
-        if (iToAdd instanceof Collection<?>)
+        if (iToAdd instanceof Collection<?>) {
           // COLLECTION - COLLECTION
-          coll.addAll((Collection<Object>) iToAdd);
+          for (Object o : (Collection<Object>) iToAdd) {
+            if (isMultiValue(o))
+              add(coll, o);
+            else
+              coll.add(o);
+          }
+        }
 
         else if (iToAdd != null && iToAdd.getClass().isArray()) {
           // ARRAY - COLLECTION
-          for (int i = 0; i < Array.getLength(iToAdd); ++i)
-            coll.add(Array.get(iToAdd, i));
+          for (int i = 0; i < Array.getLength(iToAdd); ++i) {
+            Object o = Array.get(iToAdd, i);
+            if (isMultiValue(o))
+              add(coll, o);
+            else
+              coll.add(o);
+          }
 
         } else if (iObject instanceof Map<?, ?>) {
           // MAP
