@@ -1247,7 +1247,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public void commit(final OTransaction iTx) {
-    modificationLock.requestModificationLock();
+    modificationLock.prohibitModifications();
     try {
       lock.acquireExclusiveLock();
       try {
@@ -1279,7 +1279,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
         lock.releaseExclusiveLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      modificationLock.allowModifications();
     }
   }
 
