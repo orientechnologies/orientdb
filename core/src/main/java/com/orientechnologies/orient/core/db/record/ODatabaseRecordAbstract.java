@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -143,6 +144,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -180,6 +182,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
