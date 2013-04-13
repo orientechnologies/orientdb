@@ -36,6 +36,10 @@ public class OUnsafeMemory implements ODirectMemory {
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
+  private static final int          NATIVE_BYTE_ARRAY_OFFSET;
+
+  private static boolean            copyMemoryAllowed;
+
   static {
     unsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
@@ -50,6 +54,15 @@ public class OUnsafeMemory implements ODirectMemory {
         }
       }
     });
+
+    NATIVE_BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
+
+    try {
+      unsafe.getClass().getDeclaredMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
+      copyMemoryAllowed = true;
+    } catch (NoSuchMethodException e) {
+      copyMemoryAllowed = false;
+    }
 
     String arch = System.getProperty("os.arch");
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
@@ -74,24 +87,36 @@ public class OUnsafeMemory implements ODirectMemory {
   }
 
   @Override
-  public byte[] get(long pointer, int length) {
+  public byte[] get(long pointer, final int length) {
     final byte[] result = new byte[length];
-    for (int i = 0; i < length; i++)
-      result[i] = unsafe.getByte(pointer++);
+    if (copyMemoryAllowed) {
+      unsafe.copyMemory(null, pointer, result, NATIVE_BYTE_ARRAY_OFFSET, length);
+    } else {
+      for (int i = 0; i < length; i++)
+        result[i] = unsafe.getByte(pointer++);
+    }
     return result;
   }
 
   @Override
   public void get(long pointer, byte[] array, int arrayOffset, int length) {
     pointer += arrayOffset;
-    for (int i = arrayOffset; i < length + arrayOffset; i++)
-      array[i] = unsafe.getByte(pointer++);
+    if (copyMemoryAllowed) {
+      unsafe.copyMemory(null, pointer, array, arrayOffset + NATIVE_BYTE_ARRAY_OFFSET, length);
+    } else {
+      for (int i = arrayOffset; i < length + arrayOffset; i++)
+        array[i] = unsafe.getByte(pointer++);
+    }
   }
 
   @Override
   public void set(long pointer, byte[] content, int length) {
-    for (int i = 0; i < length; i++)
-      unsafe.putByte(pointer++, content[i]);
+    if (copyMemoryAllowed) {
+      unsafe.copyMemory(content, NATIVE_BYTE_ARRAY_OFFSET, null, pointer, length);
+    } else {
+      for (int i = 0; i < length; i++)
+        unsafe.putByte(pointer++, content[i]);
+    }
   }
 
   @Override
