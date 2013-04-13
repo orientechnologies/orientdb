@@ -36,8 +36,6 @@ public class OUnsafeMemory implements ODirectMemory {
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
-  private static final int          NATIVE_BYTE_ARRAY_OFFSET;
-
   private static boolean            copyMemoryAllowed;
 
   static {
@@ -54,8 +52,6 @@ public class OUnsafeMemory implements ODirectMemory {
         }
       }
     });
-
-    NATIVE_BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
 
     try {
       unsafe.getClass().getDeclaredMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
@@ -90,7 +86,7 @@ public class OUnsafeMemory implements ODirectMemory {
   public byte[] get(long pointer, final int length) {
     final byte[] result = new byte[length];
     if (copyMemoryAllowed) {
-      unsafe.copyMemory(null, pointer, result, NATIVE_BYTE_ARRAY_OFFSET, length);
+      unsafe.copyMemory(null, pointer, result, unsafe.arrayBaseOffset(byte[].class), length);
     } else {
       for (int i = 0; i < length; i++)
         result[i] = unsafe.getByte(pointer++);
@@ -102,7 +98,7 @@ public class OUnsafeMemory implements ODirectMemory {
   public void get(long pointer, byte[] array, int arrayOffset, int length) {
     pointer += arrayOffset;
     if (copyMemoryAllowed) {
-      unsafe.copyMemory(null, pointer, array, arrayOffset + NATIVE_BYTE_ARRAY_OFFSET, length);
+      unsafe.copyMemory(null, pointer, array, arrayOffset + unsafe.arrayBaseOffset(byte[].class), length);
     } else {
       for (int i = arrayOffset; i < length + arrayOffset; i++)
         array[i] = unsafe.getByte(pointer++);
@@ -112,7 +108,7 @@ public class OUnsafeMemory implements ODirectMemory {
   @Override
   public void set(long pointer, byte[] content, int length) {
     if (copyMemoryAllowed) {
-      unsafe.copyMemory(content, NATIVE_BYTE_ARRAY_OFFSET, null, pointer, length);
+      unsafe.copyMemory(content, unsafe.arrayBaseOffset(byte[].class), null, pointer, length);
     } else {
       for (int i = 0; i < length; i++)
         unsafe.putByte(pointer++, content[i]);
