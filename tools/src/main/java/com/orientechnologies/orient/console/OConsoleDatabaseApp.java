@@ -153,6 +153,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
+    // DISABLE THE NETWORK AND STORAGE TIMEOUTS
+    OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
+
     properties.put("limit", "20");
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");

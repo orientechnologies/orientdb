@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -41,7 +42,7 @@ public class O2QCacheConcurrentTest {
   private final List<Future<Void>>            futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
   private AtomicLongArray                     fileIds         = new AtomicLongArray(FILE_COUNT);
   private AtomicIntegerArray                  pageCounters    = new AtomicIntegerArray(FILE_COUNT);
-  private AtomicReferenceArray<List<Integer>> pagesQueue      = new AtomicReferenceArray<List<Integer>>(FILE_COUNT);
+  private final AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
 
   private AtomicBoolean                       continuousWrite = new AtomicBoolean(true);
   private AtomicInteger                       version         = new AtomicInteger(1);
@@ -149,7 +150,8 @@ public class O2QCacheConcurrentTest {
     }
 
     for (int i = 0; i < FILE_COUNT; ++i) {
-      pagesQueue.set(i, Collections.synchronizedList(array[i]));
+      Collections.shuffle(array[i]);
+      pagesQueue.set(i, new ConcurrentLinkedQueue<Integer>(array[i]));
     }
   }
 
@@ -219,18 +221,17 @@ public class O2QCacheConcurrentTest {
     }
 
     private long getNextPageIndex(int fileNumber) {
-      long pageIndex;
       if (continuousWrite.get()) {
-        pageIndex = pageCounters.getAndIncrement(fileNumber);
+        return pageCounters.getAndIncrement(fileNumber);
       } else {
-        int queueSize = pagesQueue.get(fileNumber).size();
-        if (queueSize == 0) {
+        final Integer pageIndex = pagesQueue.get(fileNumber).poll();
+
+        if (pageIndex == null) {
           return -1;
+        } else {
+          return pageIndex;
         }
-        int randomPageIndexFromQueue = new Random().nextInt(queueSize);
-        pageIndex = pagesQueue.get(fileNumber).remove(randomPageIndexFromQueue);
       }
-      return pageIndex;
     }
 
     private boolean shouldContinue(int fileNumber) {

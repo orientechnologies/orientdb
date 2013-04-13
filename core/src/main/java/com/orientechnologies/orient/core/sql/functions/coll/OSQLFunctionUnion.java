@@ -62,7 +62,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
       return context;
     } else {
       // IN-LINE MODE (STATELESS)
-      final List<Collection<OIdentifiable>> result = new ArrayList<Collection<OIdentifiable>>();
+      final Collection<Object> result = new ArrayList<Object>();
       for (Object value : iParameters) {
         if (value != null) {
           if (value instanceof OSQLFilterItemVariable)

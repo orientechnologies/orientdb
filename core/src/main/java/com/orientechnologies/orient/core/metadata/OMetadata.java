@@ -40,6 +40,9 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
+import com.orientechnologies.orient.core.schedule.OSchedulerListener;
+import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
+import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
@@ -54,6 +57,7 @@ public class OMetadata {
   protected OSecurity                 security;
   protected OIndexManagerProxy        indexManager;
   protected OFunctionLibraryProxy     functionLibrary;
+  protected OSchedulerListenerProxy   scheduler;
   protected static final OJVMProfiler PROFILER                  = Orient.instance().getProfiler();
 
   public OMetadata() {
@@ -81,6 +85,7 @@ public class OMetadata {
     indexManager.create();
     functionLibrary.create();
     security.createClassTrigger();
+    scheduler.create();
   }
 
   public OSchema getSchema() {
@@ -174,6 +179,15 @@ public class OMetadata {
             return instance;
           }
         }), database);
+    scheduler = new OSchedulerListenerProxy(database.getStorage().getResource(OSchedulerListener.class.getSimpleName(), 
+        new Callable<OSchedulerListener>() {
+          public OSchedulerListener call() {
+            final OSchedulerListenerImpl instance = new OSchedulerListenerImpl();
+    	    if (iLoad)
+              instance.load();
+    	    return instance;
+          }
+        }), database);
   }
 
   /**
@@ -210,5 +224,9 @@ public class OMetadata {
 
   public OFunctionLibrary getFunctionLibrary() {
     return functionLibrary;
+  }
+
+  public OSchedulerListener getSchedulerListener() {
+    return scheduler;
   }
 }

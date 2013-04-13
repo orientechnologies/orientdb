@@ -397,18 +397,26 @@ public enum OType {
     return javaTypes;
   }
 
-  public static Number increment(Number a, Number b) {
+  public static Number increment(final Number a, final Number b) {
     if (a == null || b == null)
       throw new IllegalArgumentException("Cannot increment a null value");
 
     if (a instanceof Integer) {
-      if (b instanceof Integer)
-        return new Integer(a.intValue() + b.intValue());
-      else if (b instanceof Long)
+      if (b instanceof Integer) {
+        final int sum = a.intValue() + b.intValue();
+        if (sum < 0 && a.intValue() > 0 && b.intValue() > 0)
+          // SPECIAL CASE: UPGRADE TO LONG
+          return new Long(a.intValue() + b.intValue());
+        return sum;
+      } else if (b instanceof Long)
         return new Long(a.intValue() + b.longValue());
-      else if (b instanceof Short)
-        return new Integer(a.intValue() + b.shortValue());
-      else if (b instanceof Float)
+      else if (b instanceof Short) {
+        final int sum = a.intValue() + b.shortValue();
+        if (sum < 0 && a.intValue() > 0 && b.shortValue() > 0)
+          // SPECIAL CASE: UPGRADE TO LONG
+          return new Long(a.intValue() + b.shortValue());
+        return sum;
+      } else if (b instanceof Float)
         return new Float(a.intValue() + b.floatValue());
       else if (b instanceof Double)
         return new Double(a.intValue() + b.doubleValue());
@@ -430,13 +438,21 @@ public enum OType {
         return new BigDecimal(a.longValue()).add((BigDecimal) b);
 
     } else if (a instanceof Short) {
-      if (b instanceof Integer)
-        return new Integer(a.shortValue() + b.intValue());
-      else if (b instanceof Long)
+      if (b instanceof Integer) {
+        final int sum = a.shortValue() + b.intValue();
+        if (sum < 0 && a.shortValue() > 0 && b.intValue() > 0)
+          // SPECIAL CASE: UPGRADE TO LONG
+          return new Long(a.shortValue() + b.intValue());
+        return sum;
+      } else if (b instanceof Long)
         return new Long(a.shortValue() + b.longValue());
-      else if (b instanceof Short)
-        return new Short((short) (a.shortValue() + b.shortValue()));
-      else if (b instanceof Float)
+      else if (b instanceof Short) {
+        final int sum = a.shortValue() + b.shortValue();
+        if (sum < 0 && a.shortValue() > 0 && b.shortValue() > 0)
+          // SPECIAL CASE: UPGRADE TO INTEGER
+          return new Integer(a.intValue() + b.intValue());
+        return sum;
+      } else if (b instanceof Float)
         return new Float(a.shortValue() + b.floatValue());
       else if (b instanceof Double)
         return new Double(a.shortValue() + b.doubleValue());
