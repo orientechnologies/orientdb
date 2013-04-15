@@ -596,6 +596,54 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println("\nDatabase '" + dbName + "' was released successfully");
   }
 
+  @ConsoleCommand(description = "Freeze clusters and flush on the disk")
+  public void freezeCluster(
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName)
+      throws IOException {
+    checkForDatabase();
+
+    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
+
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
+        return;
+      }
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeCluster(
+          clusterId);
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.freezeCluster(clusterId);
+    }
+
+    out.println("\nCluster '" + iClusterName + "' was frozen successfully");
+  }
+
+  @ConsoleCommand(description = "Release cluster after freeze")
+  public void releaseCluster(
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName)
+      throws IOException {
+    checkForDatabase();
+
+    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
+
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
+        return;
+      }
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
+          clusterId);
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.releaseCluster(clusterId);
+    }
+
+    out.println("\nCluster '" + iClusterName + "' was released successfully");
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
   public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("alter", iCommandText, "\nClass updated successfully\n", false);

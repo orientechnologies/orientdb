@@ -354,4 +354,19 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public void release() {
     underlying.release();
   }
+
+  @Override
+  public void freezeCluster(int iClusterId, boolean throwException) {
+    underlying.freezeCluster(iClusterId, throwException);
+  }
+
+  @Override
+  public void freezeCluster(int iClusterId) {
+    underlying.freezeCluster(iClusterId);
+  }
+
+  @Override
+  public void releaseCluster(int iClusterId) {
+    underlying.releaseCluster(iClusterId);
+  }
 }

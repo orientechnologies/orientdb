@@ -18,7 +18,6 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -342,6 +341,52 @@ public class OServerAdmin {
       storage.getResponse(network);
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot release the remote storage: " + storage.getName(), e, OStorageException.class);
+    }
+
+    return this;
+  }
+
+  public synchronized OServerAdmin freezeCluster(int clusterId) throws IOException {
+    storage.checkConnection();
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
+
+      try {
+        network.writeString(storage.getName());
+        network.writeShort((short) clusterId);
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot freeze the remote cluster " + clusterId + " on storage: " + storage.getName(), e,
+          OStorageException.class);
+    }
+
+    return this;
+  }
+
+  public synchronized OServerAdmin releaseCluster(int clusterId) throws IOException {
+    storage.checkConnection();
+    try {
+      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
+
+      try {
+        network.writeString(storage.getName());
+        network.writeShort((short) clusterId);
+      } finally {
+        storage.endRequest(network);
+      }
+
+      storage.getResponse(network);
+    } catch (IllegalArgumentException e) {
+      throw e;
+    } catch (Exception e) {
+      OLogManager.instance().exception("Cannot release the remote cluster " + clusterId + " on storage: " + storage.getName(), e,
+          OStorageException.class);
     }
 
     return this;
