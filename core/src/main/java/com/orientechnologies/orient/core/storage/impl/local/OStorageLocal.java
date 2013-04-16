@@ -1005,21 +1005,26 @@ public class OStorageLocal extends OStorageLocalAbstract {
     final OPhysicalPosition ppos;
     modificationLock.requestModificationLock();
     try {
-      if (txManager.isCommitting()) {
-        final ORID oldRid = iRid.copy();
+      lock.acquireExclusiveLock();
+      try {
+        if (txManager.isCommitting()) {
+          final ORID oldRid = iRid.copy();
 
-        ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent,
-            iRecordVersion, iRecordType, iDataSegmentId);
-        iRid.clusterPosition = ppos.clusterPosition;
+          ppos = txManager.createRecord(txManager.getCurrentTransaction().getId(), dataSegment, cluster, iRid, iContent,
+              iRecordVersion, iRecordType, iDataSegmentId);
+          iRid.clusterPosition = ppos.clusterPosition;
 
-        txManager.getCurrentTransaction().updateIndexIdentityAfterCommit(oldRid, iRid);
-      } else {
-        ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
-        if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean()
-            || clustersToSyncImmediately.contains(cluster.getName()))
-          synchRecordUpdate(cluster, ppos);
-        if (iCallback != null)
-          iCallback.call(iRid, ppos.clusterPosition);
+          txManager.getCurrentTransaction().updateIndexIdentityAfterCommit(oldRid, iRid);
+        } else {
+          ppos = createRecord(dataSegment, cluster, iContent, iRecordType, iRid, iRecordVersion);
+          if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean()
+              || clustersToSyncImmediately.contains(cluster.getName()))
+            synchRecordUpdate(cluster, ppos);
+          if (iCallback != null)
+            iCallback.call(iRid, ppos.clusterPosition);
+        }
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -1096,29 +1101,48 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   @Override
-  public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
-    if (exclusiveLock) {
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+    if (iExclusiveLock) {
       modificationLock.requestModificationLock();
-      lock.acquireExclusiveLock();
-    } else
-      lock.acquireSharedLock();
-    try {
-      lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
       try {
-        return callable.call();
+        return super.callInLock(iCallable, iExclusiveLock);
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
-      }
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new OException("Error on nested call in lock", e);
-    } finally {
-      if (exclusiveLock) {
         modificationLock.releaseModificationLock();
-        lock.releaseExclusiveLock();
-      } else
-        lock.releaseSharedLock();
+      }
+    } else {
+      return super.callInLock(iCallable, iExclusiveLock);
+    }
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
+    if (exclusiveLock)
+      modificationLock.requestModificationLock();
+    try {
+      if (exclusiveLock)
+        lock.acquireExclusiveLock();
+      else
+        lock.acquireSharedLock();
+      try {
+        lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+        try {
+          return callable.call();
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+        }
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new OException("Error on nested call in lock", e);
+      } finally {
+        if (exclusiveLock)
+          lock.releaseExclusiveLock();
+        else
+          lock.releaseSharedLock();
+      }
+    } finally {
+      if (exclusiveLock)
+        modificationLock.releaseModificationLock();
     }
   }
 
@@ -1132,27 +1156,32 @@ public class OStorageLocal extends OStorageLocalAbstract {
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     checkOpeness();
 
-    final OCluster cluster = getClusterById(iRid.clusterId);
-
     modificationLock.requestModificationLock();
     try {
-      if (txManager.isCommitting()) {
-        return new OStorageOperationResult<ORecordVersion>(txManager.updateRecord(txManager.getCurrentTransaction().getId(),
-            cluster, iRid, iContent, iVersion, iRecordType));
-      } else {
-        final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
+      lock.acquireExclusiveLock();
+      try {
+        final OCluster cluster = getClusterById(iRid.clusterId);
+        if (txManager.isCommitting()) {
+          return new OStorageOperationResult<ORecordVersion>(txManager.updateRecord(txManager.getCurrentTransaction().getId(),
+              cluster, iRid, iContent, iVersion, iRecordType));
+        } else {
+          final OPhysicalPosition ppos = updateRecord(cluster, iRid, iContent, iVersion, iRecordType);
 
-        if (ppos != null
-            && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
-                .getName())))
-          synchRecordUpdate(cluster, ppos);
+          if (ppos != null
+              && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
+                  .getName())))
+            synchRecordUpdate(cluster, ppos);
 
-        final ORecordVersion returnValue = (ppos != null ? ppos.recordVersion : OVersionFactory.instance().createUntrackedVersion());
+          final ORecordVersion returnValue = (ppos != null ? ppos.recordVersion : OVersionFactory.instance()
+              .createUntrackedVersion());
 
-        if (iCallback != null)
-          iCallback.call(iRid, returnValue);
+          if (iCallback != null)
+            iCallback.call(iRid, returnValue);
 
-        return new OStorageOperationResult<ORecordVersion>(returnValue);
+          return new OStorageOperationResult<ORecordVersion>(returnValue);
+        }
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -1167,24 +1196,29 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
     modificationLock.requestModificationLock();
     try {
-      if (txManager.isCommitting()) {
-        return new OStorageOperationResult<Boolean>(txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster,
-            iRid.clusterPosition, iVersion));
-      } else {
-        final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion,
-            OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean());
+      lock.acquireExclusiveLock();
+      try {
+        if (txManager.isCommitting()) {
+          return new OStorageOperationResult<Boolean>(txManager.deleteRecord(txManager.getCurrentTransaction().getId(), cluster,
+              iRid.clusterPosition, iVersion));
+        } else {
+          final OPhysicalPosition ppos = deleteRecord(cluster, iRid, iVersion,
+              OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean());
 
-        if (ppos != null
-            && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
-                .getName())))
-          synchRecordUpdate(cluster, ppos);
+          if (ppos != null
+              && (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() || clustersToSyncImmediately.contains(cluster
+                  .getName())))
+            synchRecordUpdate(cluster, ppos);
 
-        final boolean returnValue = ppos != null;
+          final boolean returnValue = ppos != null;
 
-        if (iCallback != null)
-          iCallback.call(iRid, returnValue);
+          if (iCallback != null)
+            iCallback.call(iRid, returnValue);
 
-        return new OStorageOperationResult<Boolean>(returnValue);
+          return new OStorageOperationResult<Boolean>(returnValue);
+        }
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -1253,7 +1287,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public void commit(final OTransaction iTx) {
-    modificationLock.prohibitModifications();
+    modificationLock.requestModificationLock();
     try {
       lock.acquireExclusiveLock();
       try {
@@ -1285,19 +1319,24 @@ public class OStorageLocal extends OStorageLocalAbstract {
         lock.releaseExclusiveLock();
       }
     } finally {
-      modificationLock.allowModifications();
+      modificationLock.releaseModificationLock();
     }
   }
 
   public void rollback(final OTransaction iTx) {
     modificationLock.requestModificationLock();
     try {
-      txManager.getTxSegment().rollback(iTx);
-      if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
-        synch();
-    } catch (IOException ioe) {
-      OLogManager.instance().error(this,
-          "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
+      lock.acquireExclusiveLock();
+      try {
+        txManager.getTxSegment().rollback(iTx);
+        if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
+          synch();
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this,
+            "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
+      } finally {
+        lock.releaseExclusiveLock();
+      }
     } finally {
       modificationLock.releaseModificationLock();
     }
@@ -1653,6 +1692,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   protected OPhysicalPosition createRecord(final ODataLocal dataSegment, final OCluster cluster, final byte[] content,
       final byte recordType, final ORecordId rid, final ORecordVersion recordVersion) {
+    assert (lock.assertExclusiveLockHold());
     checkOpeness();
 
     if (content == null)
@@ -1680,27 +1720,22 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       rid.clusterPosition = ppos.clusterPosition;
 
-      lock.acquireExclusiveLock();
+      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
       try {
-        lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
-        try {
-          ppos.dataSegmentId = dataSegment.getId();
-          ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
+        ppos.dataSegmentId = dataSegment.getId();
+        ppos.dataSegmentPos = dataSegment.addRecord(rid, content);
 
-          cluster.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
+        cluster.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-          if (recordVersion.getCounter() > -1 && recordVersion.compareTo(ppos.recordVersion) > 0) {
-            // OVERWRITE THE VERSION
-            cluster.updateVersion(rid.clusterPosition, recordVersion);
-            ppos.recordVersion = recordVersion;
-          }
-
-          return ppos;
-        } finally {
-          lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        if (recordVersion.getCounter() > -1 && recordVersion.compareTo(ppos.recordVersion) > 0) {
+          // OVERWRITE THE VERSION
+          cluster.updateVersion(rid.clusterPosition, recordVersion);
+          ppos.recordVersion = recordVersion;
         }
+
+        return ppos;
       } finally {
-        lock.releaseExclusiveLock();
+        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
       }
     } catch (IOException ioe) {
       try {
@@ -1796,12 +1831,12 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   protected OPhysicalPosition updateRecord(final OCluster iClusterSegment, final ORecordId rid, final byte[] recordContent,
       final ORecordVersion recordVersion, final byte iRecordType) {
+    assert (lock.assertExclusiveLockHold());
     if (iClusterSegment == null)
       throw new OStorageException("Cluster not defined for record: " + rid);
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
-    lock.acquireExclusiveLock();
     try {
 
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
@@ -1872,8 +1907,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
       OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + iClusterSegment + ")", e);
 
     } finally {
-      lock.releaseExclusiveLock();
-
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to local database", timer, "db.*.updateRecord");
     }
@@ -1883,9 +1916,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   protected OPhysicalPosition deleteRecord(final OCluster iClusterSegment, final ORecordId iRid, final ORecordVersion iVersion,
       boolean useTombstones) {
+    assert (lock.assertExclusiveLockHold());
     final long timer = Orient.instance().getProfiler().startChrono();
 
-    lock.acquireExclusiveLock();
     try {
       lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
       try {
@@ -1924,7 +1957,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting record " + iRid + "( cluster: " + iClusterSegment + ")", e);
     } finally {
-      lock.releaseExclusiveLock();
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer, "db.*.deleteRecord");
     }

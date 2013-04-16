@@ -16,42 +16,61 @@
 
 package com.orientechnologies.common.concur.lock;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * This lock is intended to be used inside of storage to request lock on any data modifications.
+ * This lock is intended to be used inside of storage to request lock on any data modifications. Writes can be prohibited from one
+ * thread, but then allowed from other thread.
+ * 
+ * IMPORTANT ! Prohibit/allow changes methods are not reentrant.
  * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
- * @author Sylvain Spinelli <a href="mailto:sylvain.spinelli@gmail.com">Sylvain Spinelli</a>
  * @since 15.06.12
  */
-public class OModificationLock extends ReentrantReadWriteLock {
+public class OModificationLock {
+  private volatile boolean                    veto           = false;
+  private volatile boolean                    throwException = false;
 
-  protected volatile boolean throwException;
+  private final ConcurrentLinkedQueue<Thread> waiters        = new ConcurrentLinkedQueue<Thread>();
+  private final ReadWriteLock                 lock           = new ReentrantReadWriteLock();
 
   /**
    * Tells the lock that thread is going to perform data modifications in storage. This method allows to perform several data
    * modifications in parallel.
    */
   public void requestModificationLock() {
-    if (isWriteLockedByCurrentThread())
+    lock.readLock().lock();
+    if (!veto)
       return;
+
     if (throwException) {
-      if (!readLock().tryLock()) {
-        throw new OModificationOperationProhibitedException();
-      }
-    } else {
-      readLock().lock();
+      lock.readLock().unlock();
+      throw new OModificationOperationProhibitedException("Modification requests are prohibited");
     }
+
+    boolean wasInterrupted = false;
+    Thread thread = Thread.currentThread();
+    waiters.add(thread);
+
+    while (veto) {
+      LockSupport.park(this);
+      if (Thread.interrupted())
+        wasInterrupted = true;
+    }
+
+    waiters.remove(thread);
+    if (wasInterrupted)
+      thread.interrupt();
   }
 
   /**
-   * Tells the lock that thread is finished to perform modifications in storage.
+   * Tells the lock that thread is finished to perform to perform modifications in storage.
    */
   public void releaseModificationLock() {
-    if (isWriteLockedByCurrentThread())
-      return;
-    readLock().unlock();
+    lock.readLock().unlock();
   }
 
   /**
@@ -59,21 +78,32 @@ public class OModificationLock extends ReentrantReadWriteLock {
    * {@link #allowModifications()} method will be called. This method will wait till all ongoing modifications will be finished.
    */
   public void prohibitModifications() {
-    writeLock().lock();
+    lock.writeLock().lock();
+    try {
+      throwException = false;
+      veto = true;
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   /**
    * After this method finished it's execution, all threads that are going to perform data modifications in storage should wait till
    * {@link #allowModifications()} method will be called. This method will wait till all ongoing modifications will be finished.
    * 
-   * @param iThrowException
+   * @param throwException
    *          If <code>true</code> {@link OModificationOperationProhibitedException} exception will be thrown on
    *          {@link #requestModificationLock()} call.
    */
 
-  public void prohibitModifications(boolean iThrowException) {
-    throwException = iThrowException;
-    writeLock().lock();
+  public void prohibitModifications(boolean throwException) {
+    lock.writeLock().lock();
+    try {
+      this.throwException = throwException;
+      veto = true;
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   /**
@@ -81,8 +111,10 @@ public class OModificationLock extends ReentrantReadWriteLock {
    * will be allowed to continue their execution.
    */
   public void allowModifications() {
-    throwException = false;
-    writeLock().unlock();
+    veto = false;
+
+    for (Thread thread : waiters)
+      LockSupport.unpark(thread);
   }
 
 }
