@@ -29,14 +29,15 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
  */
 @SuppressWarnings("restriction")
 public class OUnsafeMemory implements ODirectMemory {
-  public static final OUnsafeMemory INSTANCE              = new OUnsafeMemory();
+  public static final OUnsafeMemory INSTANCE;
 
-  private static final Unsafe       unsafe;
+  protected static final Unsafe       unsafe;
   private static final boolean      unaligned;
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
   static {
+    OUnsafeMemory futureInstance;
     unsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
         try {
@@ -51,6 +52,15 @@ public class OUnsafeMemory implements ODirectMemory {
       }
     });
 
+    try {
+      unsafe.getClass().getDeclaredMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
+      Class<?> unsafeMemoryJava7 = OUnsafeMemory.class.getClassLoader().loadClass("com.orientechnologies.common.directmemory.OUnsafeMemoryJava7");
+      futureInstance = (OUnsafeMemory) unsafeMemoryJava7.newInstance();
+    } catch (Exception e) {
+      futureInstance = new OUnsafeMemory();
+    }
+
+    INSTANCE = futureInstance;
     String arch = System.getProperty("os.arch");
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
   }
@@ -74,10 +84,12 @@ public class OUnsafeMemory implements ODirectMemory {
   }
 
   @Override
-  public byte[] get(long pointer, int length) {
+  public byte[] get(long pointer, final int length) {
     final byte[] result = new byte[length];
+
     for (int i = 0; i < length; i++)
       result[i] = unsafe.getByte(pointer++);
+
     return result;
   }
 
@@ -86,6 +98,7 @@ public class OUnsafeMemory implements ODirectMemory {
     pointer += arrayOffset;
     for (int i = arrayOffset; i < length + arrayOffset; i++)
       array[i] = unsafe.getByte(pointer++);
+
   }
 
   @Override
