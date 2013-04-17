@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,7 +64,7 @@ public class ConcurrentStorageTest {
 
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean test = new AtomicBoolean(true);
-    final Deque<ODocument> data = new ConcurrentLinkedDeque<ODocument>();
+    final Deque<ODocument> data = new LinkedBlockingDeque<ODocument>();
 
     final List<Thread> testThreads = new ArrayList<Thread>();
     testThreads.add(new Thread(new Runnable() {
