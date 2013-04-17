@@ -80,6 +80,9 @@
 		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
 	</storages>
 	<users>
+		<!-- Default root password is "root" -->
+        <user resources="*" password="4813494D137E1631BBA301D5ACAB6E7BB7AA74CE1185D456565EF51D737677B2" name="root"/>
+        <user resources="connect,server.listDatabases" password="guest" name="guest"/>
 	</users>
 	<properties>
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->

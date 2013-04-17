@@ -145,7 +145,7 @@ public class OSecurityManager {
     return instance;
   }
 
-  private static String byteArrayToHexStr(final byte[] data) {
+  public static String byteArrayToHexStr(final byte[] data) {
     if (data == null)
       return null;
 

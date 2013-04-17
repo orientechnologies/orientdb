@@ -128,9 +128,11 @@ public class OServerShutdownMain {
     String serverPorts = iArgs.length > 1 ? iArgs[1] : null;
     String rootPassword = iArgs.length > 2 ? iArgs[2] : null;
 
-    System.out.println("Sending shutdown command to remote OrientDB Server instance...");
-
     try {
+        OServerMain.requestRootPassPhrase();
+
+        System.out.println("Sending shutdown command to remote OrientDB Server instance...");
+
       new OServerShutdownMain(serverHost, serverPorts, rootPassword).connect(5000);
       System.out.println("Shutdown executed correctly");
     } catch (Exception e) {

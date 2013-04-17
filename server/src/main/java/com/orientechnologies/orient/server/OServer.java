@@ -362,16 +362,20 @@ public class OServer {
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
     final OServerUserConfiguration user = getUser(iUserName);
 
-    if (user != null && (iPassword == null || user.password.equals(iPassword))) {
-      if (user.resources.equals("*"))
-        // ACCESS TO ALL
-        return true;
+    try
+    {
+        if (user != null && (iPassword == null || OServerMain.grantAuthority(iUserName, iPassword))) {
+          if (user.resources.equals("*"))
+            // ACCESS TO ALL
+            return true;
 
-      String[] resourceParts = user.resources.split(",");
-      for (String r : resourceParts)
-        if (r.equals(iResourceToCheck))
-          return true;
+          String[] resourceParts = user.resources.split(",");
+          for (String r : resourceParts)
+            if (r.equals(iResourceToCheck))
+              return true;
+        }
     }
+    catch (Exception e) {}
 
     // WRONG PASSWORD OR NO AUTHORIZATION
     return false;
