@@ -6,7 +6,7 @@
   <import file="../_base/base-build.xml" />
 
   <target name="compile" depends="init">
-    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
+    <javac excludes="com/orientechnologies/common/directmemory/OUnsafeMemoryJava7.java" destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
       <src path="${project.src}" />
       <classpath refid="project.classpath" />
     </javac>
