@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -534,40 +533,45 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     checkOpeness();
 
     final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(rid.clusterId);
-    modificationLock.requestModificationLock();
+    cluster.getExternalModificationLock().requestModificationLock();
     try {
-      checkOpeness();
-
-      if (content == null)
-        throw new IllegalArgumentException("Record is null");
-
-      OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, recordType);
+      modificationLock.requestModificationLock();
       try {
-        lock.acquireSharedLock();
+        checkOpeness();
+
+        if (content == null)
+          throw new IllegalArgumentException("Record is null");
+
+        OPhysicalPosition ppos = new OPhysicalPosition(-1, -1, recordType);
         try {
-          ppos = cluster.createRecord(content, recordVersion, recordType);
-          rid.clusterPosition = ppos.clusterPosition;
+          lock.acquireSharedLock();
+          try {
+            ppos = cluster.createRecord(content, recordVersion, recordType);
+            rid.clusterPosition = ppos.clusterPosition;
 
-          if (callback != null)
-            callback.call(rid, ppos.clusterPosition);
+            if (callback != null)
+              callback.call(rid, ppos.clusterPosition);
 
-          return new OStorageOperationResult<OPhysicalPosition>(ppos);
-        } finally {
-          lock.releaseSharedLock();
+            return new OStorageOperationResult<OPhysicalPosition>(ppos);
+          } finally {
+            lock.releaseSharedLock();
+          }
+        } catch (IOException ioe) {
+          try {
+            if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
+              cluster.deleteRecord(ppos.clusterPosition);
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, e);
+          }
+
+          OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
+          return null;
         }
-      } catch (IOException ioe) {
-        try {
-          if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
-            cluster.deleteRecord(ppos.clusterPosition);
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, e);
-        }
-
-        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
-        return null;
+      } finally {
+        modificationLock.releaseModificationLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      cluster.getExternalModificationLock().releaseModificationLock();
     }
   }
 
@@ -623,24 +627,29 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!rid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
-    if (atomicLock)
-      lock.acquireSharedLock();
-
     final OLocalPaginatedCluster localPaginatedCluster = (OLocalPaginatedCluster) clusterSegment;
+    localPaginatedCluster.getExternalModificationLock().requestModificationLock();
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
-      try {
-        return localPaginatedCluster.readRecord(rid.clusterPosition);
-      } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
-      }
-
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading record " + rid + " (cluster: " + clusterSegment + ')', e);
-      return null;
-    } finally {
       if (atomicLock)
-        lock.releaseSharedLock();
+        lock.acquireSharedLock();
+
+      try {
+        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+        try {
+          return localPaginatedCluster.readRecord(rid.clusterPosition);
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+        }
+
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on reading record " + rid + " (cluster: " + clusterSegment + ')', e);
+        return null;
+      } finally {
+        if (atomicLock)
+          lock.releaseSharedLock();
+      }
+    } finally {
+      localPaginatedCluster.getExternalModificationLock().releaseModificationLock();
     }
   }
 
@@ -649,73 +658,78 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.clusterId);
+    final OLocalPaginatedCluster localPaginatedCluster = (OLocalPaginatedCluster) cluster;
 
-    modificationLock.requestModificationLock();
+    localPaginatedCluster.getExternalModificationLock().requestModificationLock();
     try {
-      if (cluster == null)
-        throw new OStorageException("Cluster not defined for record: " + rid);
-
-      lock.acquireSharedLock();
+      modificationLock.requestModificationLock();
       try {
-        // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+        if (cluster == null)
+          throw new OStorageException("Cluster not defined for record: " + rid);
+
+        lock.acquireSharedLock();
         try {
-          // UPDATE IT
-          final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
-          if (!checkForRecordValidity(ppos)) {
-            final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
+          // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          try {
+            // UPDATE IT
+            final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
+            if (!checkForRecordValidity(ppos)) {
+              final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
+              if (callback != null)
+                callback.call(rid, recordVersion);
+
+              return new OStorageOperationResult<ORecordVersion>(recordVersion);
+            }
+
+            // VERSION CONTROL CHECK
+            switch (version.getCounter()) {
+              // DOCUMENT UPDATE, NO VERSION CONTROL
+              case -1:
+                ppos.recordVersion.increment();
+                break;
+
+              // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+              case -2:
+                break;
+
+              default:
+                // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+                // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+                if (!version.equals(ppos.recordVersion))
+                  if (OFastConcurrentModificationException.enabled())
+                    throw OFastConcurrentModificationException.instance();
+                  else
+                    throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
+                ppos.recordVersion.increment();
+            }
+
+            localPaginatedCluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+
             if (callback != null)
-              callback.call(rid, recordVersion);
+              callback.call(rid, ppos.recordVersion);
 
-            return new OStorageOperationResult<ORecordVersion>(recordVersion);
+            return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
+
+          } finally {
+            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
           }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
 
-          // VERSION CONTROL CHECK
-          switch (version.getCounter()) {
-          // DOCUMENT UPDATE, NO VERSION CONTROL
-          case -1:
-            ppos.recordVersion.increment();
-            break;
-
-          // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
-          case -2:
-            break;
-
-          default:
-            // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (!version.equals(ppos.recordVersion))
-              if (OFastConcurrentModificationException.enabled())
-                throw OFastConcurrentModificationException.instance();
-              else
-                throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
-            ppos.recordVersion.increment();
-          }
-
-          final OLocalPaginatedCluster localPaginatedCluster = (OLocalPaginatedCluster) cluster;
-          localPaginatedCluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
-
+          final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
           if (callback != null)
-            callback.call(rid, ppos.recordVersion);
+            callback.call(rid, recordVersion);
 
-          return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
-
+          return new OStorageOperationResult<ORecordVersion>(recordVersion);
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          lock.releaseSharedLock();
         }
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
-
-        final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
-        if (callback != null)
-          callback.call(rid, recordVersion);
-
-        return new OStorageOperationResult<ORecordVersion>(recordVersion);
       } finally {
-        lock.releaseSharedLock();
+        modificationLock.releaseModificationLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      localPaginatedCluster.getExternalModificationLock().releaseModificationLock();
     }
   }
 
@@ -725,39 +739,45 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.clusterId);
-    modificationLock.requestModificationLock();
+    final OLocalPaginatedCluster paginatedCluster = (OLocalPaginatedCluster) cluster;
+
+    paginatedCluster.getExternalModificationLock().requestModificationLock();
     try {
-      lock.acquireSharedLock();
+      modificationLock.requestModificationLock();
       try {
-        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+        lock.acquireSharedLock();
         try {
-          final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
+          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          try {
+            final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
-          if (ppos == null)
-            // ALREADY DELETED
-            return new OStorageOperationResult<Boolean>(false);
+            if (ppos == null)
+              // ALREADY DELETED
+              return new OStorageOperationResult<Boolean>(false);
 
-          // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-          if (version.getCounter() > -1 && !ppos.recordVersion.equals(version))
-            if (OFastConcurrentModificationException.enabled())
-              throw OFastConcurrentModificationException.instance();
-            else
-              throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
+            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+            if (version.getCounter() > -1 && !ppos.recordVersion.equals(version))
+              if (OFastConcurrentModificationException.enabled())
+                throw OFastConcurrentModificationException.instance();
+              else
+                throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
-          final OLocalPaginatedCluster paginatedCluster = (OLocalPaginatedCluster) cluster;
-          paginatedCluster.deleteRecord(ppos.clusterPosition);
+            paginatedCluster.deleteRecord(ppos.clusterPosition);
 
-          return new OStorageOperationResult<Boolean>(true);
+            return new OStorageOperationResult<Boolean>(true);
+          } finally {
+            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          }
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          lock.releaseSharedLock();
         }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
       } finally {
-        lock.releaseSharedLock();
+        modificationLock.releaseModificationLock();
       }
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
     } finally {
-      modificationLock.releaseModificationLock();
+      paginatedCluster.getExternalModificationLock().releaseModificationLock();
     }
 
     return new OStorageOperationResult<Boolean>(false);
@@ -1161,5 +1181,43 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public ODiskCache getDiskCache() {
     return diskCache;
+  }
+
+  public void freeze(boolean throwException, int clusterId) {
+    final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(clusterId);
+
+    final String name = cluster.getName();
+    if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
+      throw new IllegalArgumentException("It is impossible to freeze and release index or manual index cluster!");
+    }
+
+    cluster.getExternalModificationLock().prohibitModifications(throwException);
+
+    try {
+      //TODO synchronize shared resources
+      cluster.synch();
+      cluster.setSoftlyClosed(true);
+    } catch (IOException e) {
+      throw new OStorageException("Error on synch storage '" + name + "'", e);
+    }
+  }
+
+  public void release(int clusterId) {
+
+    final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(clusterId);
+
+    final String name = cluster.getName();
+    if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
+      throw new IllegalArgumentException("It is impossible to freeze and release index or manualindex cluster!");
+    }
+
+    try {
+      cluster.setSoftlyClosed(false);
+    } catch (IOException e) {
+      throw new OStorageException("Error on unfreeze storage '" + name + "'", e);
+    }
+
+    cluster.getExternalModificationLock().allowModifications();
+
   }
 }

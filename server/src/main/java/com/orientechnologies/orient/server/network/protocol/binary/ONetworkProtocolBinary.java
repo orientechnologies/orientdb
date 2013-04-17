@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -327,7 +326,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       releaseDatabase();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
+        freezeCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
+        releaseCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
       cleanOutRecord();
       break;
 
@@ -1546,6 +1553,64 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
 
       connection.database.release();
+    } else {
+      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+    }
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void freezeCluster() throws IOException {
+    setDataCommandInfo("Freeze cluster");
+    final String dbName = channel.readString();
+    final int clusterId = channel.readShort();
+
+    checkServerAccess("database.freeze");
+
+    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+
+    if (connection.database.exists()) {
+      OLogManager.instance().info(this, "Freezing database '%s' cluster %d", connection.database.getURL(), clusterId);
+
+      if (connection.database.isClosed()) {
+        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      }
+
+      connection.database.freezeCluster(clusterId);
+    } else {
+      throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
+    }
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+    } finally {
+      endResponse();
+    }
+  }
+
+  protected void releaseCluster() throws IOException {
+    setDataCommandInfo("Release database");
+    final String dbName = channel.readString();
+    final int clusterId = channel.readShort();
+
+    checkServerAccess("database.release");
+
+    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+
+    if (connection.database.exists()) {
+      OLogManager.instance().info(this, "Realising database '%s' cluster %d", connection.database.getURL(), clusterId);
+
+      if (connection.database.isClosed()) {
+        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      }
+
+      connection.database.releaseCluster(clusterId);
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }
