@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -76,23 +77,23 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int             ONE_KB              = 1024;
-  private final int                    DELETE_MAX_RETRIES;
-  private final int                    DELETE_WAIT_TIME;
+  private static final int                          ONE_KB              = 1024;
+  private final int                                 DELETE_MAX_RETRIES;
+  private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OCluster>  clusterMap          = new LinkedHashMap<String, OCluster>();
-  private OCluster[]                   clusters            = new OCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap          = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters            = new OLocalPaginatedCluster[0];
 
-  private String                       storagePath;
-  private final OStorageVariableParser variableParser;
-  private int                          defaultClusterId    = -1;
+  private String                                    storagePath;
+  private final OStorageVariableParser              variableParser;
+  private int                                       defaultClusterId    = -1;
 
-  private static String[]              ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
-      ".oem", ".oet"                                      };
+  private static String[]                           ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
+      ".oef", ".oem", ".oet"                                           };
 
-  private OModificationLock            modificationLock    = new OModificationLock();
+  private OModificationLock                         modificationLock    = new OModificationLock();
 
-  private final ODiskCache             diskCache;
+  private final ODiskCache                          diskCache;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -252,7 +253,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       for (OCluster cluster : clusters)
         if (cluster != null)
           cluster.close();
-      clusters = new OCluster[0];
+      clusters = new OLocalPaginatedCluster[0];
       clusterMap.clear();
 
       if (configuration != null)
@@ -421,7 +422,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     return -1;
   }
-    
+
   private int addClusterInternal(String clusterName, int clusterPos, String location, Object... parameters) throws IOException {
 
     final OLocalPaginatedCluster cluster;
@@ -692,10 +693,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
 
-    final OCluster cluster = getClusterById(rid.clusterId);
-    final OLocalPaginatedCluster localPaginatedCluster = (OLocalPaginatedCluster) cluster;
+    final OLocalPaginatedCluster cluster = getClusterById(rid.clusterId);
 
-    localPaginatedCluster.getExternalModificationLock().requestModificationLock();
+    cluster.getExternalModificationLock().requestModificationLock();
     try {
       modificationLock.requestModificationLock();
       try {
@@ -719,27 +719,27 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             // VERSION CONTROL CHECK
             switch (version.getCounter()) {
-              // DOCUMENT UPDATE, NO VERSION CONTROL
-              case -1:
-                ppos.recordVersion.increment();
-                break;
+            // DOCUMENT UPDATE, NO VERSION CONTROL
+            case -1:
+              ppos.recordVersion.increment();
+              break;
 
-              // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
-              case -2:
-                break;
+            // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+            case -2:
+              break;
 
-              default:
-                // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-                // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-                if (!version.equals(ppos.recordVersion))
-                  if (OFastConcurrentModificationException.enabled())
-                    throw OFastConcurrentModificationException.instance();
-                  else
-                    throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
-                ppos.recordVersion.increment();
+            default:
+              // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+              if (!version.equals(ppos.recordVersion))
+                if (OFastConcurrentModificationException.enabled())
+                  throw OFastConcurrentModificationException.instance();
+                else
+                  throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
+              ppos.recordVersion.increment();
             }
 
-            localPaginatedCluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+            cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
 
             if (callback != null)
               callback.call(rid, ppos.recordVersion);
@@ -764,7 +764,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      localPaginatedCluster.getExternalModificationLock().releaseModificationLock();
+      cluster.getExternalModificationLock().releaseModificationLock();
     }
   }
 
@@ -773,10 +773,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       ORecordCallback<Boolean> callback) {
     checkOpeness();
 
-    final OCluster cluster = getClusterById(rid.clusterId);
-    final OLocalPaginatedCluster paginatedCluster = (OLocalPaginatedCluster) cluster;
+    final OLocalPaginatedCluster cluster = getClusterById(rid.clusterId);
 
-    paginatedCluster.getExternalModificationLock().requestModificationLock();
+    cluster.getExternalModificationLock().requestModificationLock();
     try {
       modificationLock.requestModificationLock();
       try {
@@ -797,7 +796,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
-            paginatedCluster.deleteRecord(ppos.clusterPosition);
+            cluster.deleteRecord(ppos.clusterPosition);
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
@@ -812,7 +811,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      paginatedCluster.getExternalModificationLock().releaseModificationLock();
+      cluster.getExternalModificationLock().releaseModificationLock();
     }
 
     return new OStorageOperationResult<Boolean>(false);
@@ -824,30 +823,51 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
-    if (exclusiveLock) {
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+    if (iExclusiveLock) {
       modificationLock.requestModificationLock();
-      lock.acquireExclusiveLock();
-    } else
-      lock.acquireSharedLock();
-    try {
-      lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
       try {
-        return callable.call();
+        return super.callInLock(iCallable, iExclusiveLock);
       } finally {
-        lockManager
-            .releaseLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
-      }
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new OException("Error on nested call in lock", e);
-    } finally {
-      if (exclusiveLock) {
         modificationLock.releaseModificationLock();
-        lock.releaseExclusiveLock();
+      }
+    } else {
+      return super.callInLock(iCallable, iExclusiveLock);
+    }
+  }
+
+  @Override
+  public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
+    if (exclusiveLock)
+      modificationLock.requestModificationLock();
+
+    try {
+      if (exclusiveLock) {
+        lock.acquireExclusiveLock();
       } else
-        lock.releaseSharedLock();
+        lock.acquireSharedLock();
+      try {
+        lockManager
+            .acquireLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
+        try {
+          return callable.call();
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE
+              : OLockManager.LOCK.SHARED);
+        }
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new OException("Error on nested call in lock", e);
+      } finally {
+        if (exclusiveLock) {
+          lock.releaseExclusiveLock();
+        } else
+          lock.releaseSharedLock();
+      }
+    } finally {
+      if (exclusiveLock)
+        modificationLock.releaseModificationLock();
     }
   }
 
@@ -978,7 +998,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return defaultClusterId;
   }
 
-  public OCluster getClusterById(int iClusterId) {
+  public OLocalPaginatedCluster getClusterById(int iClusterId) {
     lock.acquireSharedLock();
     try {
 
@@ -988,7 +1008,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       checkClusterSegmentIndexRange(iClusterId);
 
-      final OCluster cluster = clusters[iClusterId];
+      final OLocalPaginatedCluster cluster = clusters[iClusterId];
       if (cluster == null)
         throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
@@ -1158,7 +1178,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OCluster cluster = clusterMap.get(iConfig.getName());
+    OLocalPaginatedCluster cluster = clusterMap.get(iConfig.getName());
 
     if (cluster != null) {
       cluster.configure(this, iConfig);
@@ -1179,7 +1199,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    * @throws IOException
    */
-  private int registerCluster(final OCluster iCluster) throws IOException {
+  private int registerCluster(final OLocalPaginatedCluster iCluster) throws IOException {
     final int id;
 
     if (iCluster != null) {
@@ -1193,9 +1213,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } else {
       id = clusters.length;
     }
-      
+
     if (id >= clusters.length) {
-        clusters = OArrays.copyOf(clusters, id + 1);
+      clusters = OArrays.copyOf(clusters, id + 1);
     }
     clusters[id] = iCluster;
 
@@ -1222,7 +1242,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void freeze(boolean throwException, int clusterId) {
-    final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(clusterId);
+    final OLocalPaginatedCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
     if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
@@ -1232,17 +1252,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     cluster.getExternalModificationLock().prohibitModifications(throwException);
 
     try {
-      //TODO synchronize shared resources
       cluster.synch();
       cluster.setSoftlyClosed(true);
     } catch (IOException e) {
-      throw new OStorageException("Error on synch storage '" + name + "'", e);
+      throw new OStorageException("Error on synch cluster '" + name + "'", e);
     }
   }
 
   public void release(int clusterId) {
-
-    final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(clusterId);
+    final OLocalPaginatedCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
     if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
