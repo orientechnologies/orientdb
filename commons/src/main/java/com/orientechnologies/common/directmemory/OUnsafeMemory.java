@@ -29,16 +29,15 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
  */
 @SuppressWarnings("restriction")
 public class OUnsafeMemory implements ODirectMemory {
-  public static final OUnsafeMemory INSTANCE              = new OUnsafeMemory();
+  public static final OUnsafeMemory INSTANCE;
 
-  private static final Unsafe       unsafe;
+  protected static final Unsafe       unsafe;
   private static final boolean      unaligned;
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
 
-  private static boolean            copyMemoryAllowed;
-
   static {
+    OUnsafeMemory futureInstance;
     unsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {
       public Object run() {
         try {
@@ -55,11 +54,13 @@ public class OUnsafeMemory implements ODirectMemory {
 
     try {
       unsafe.getClass().getDeclaredMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
-      copyMemoryAllowed = true;
-    } catch (NoSuchMethodException e) {
-      copyMemoryAllowed = false;
+      Class<?> unsafeMemoryJava7 = OUnsafeMemory.class.getClassLoader().loadClass("com.orientechnologies.common.directmemory.OUnsafeMemoryJava7");
+      futureInstance = (OUnsafeMemory) unsafeMemoryJava7.newInstance();
+    } catch (Exception e) {
+      futureInstance = new OUnsafeMemory();
     }
 
+    INSTANCE = futureInstance;
     String arch = System.getProperty("os.arch");
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
   }
@@ -85,34 +86,25 @@ public class OUnsafeMemory implements ODirectMemory {
   @Override
   public byte[] get(long pointer, final int length) {
     final byte[] result = new byte[length];
-    if (copyMemoryAllowed) {
-      unsafe.copyMemory(null, pointer, result, unsafe.arrayBaseOffset(byte[].class), length);
-    } else {
-      for (int i = 0; i < length; i++)
-        result[i] = unsafe.getByte(pointer++);
-    }
+
+    for (int i = 0; i < length; i++)
+      result[i] = unsafe.getByte(pointer++);
+
     return result;
   }
 
   @Override
   public void get(long pointer, byte[] array, int arrayOffset, int length) {
     pointer += arrayOffset;
-    if (copyMemoryAllowed) {
-      unsafe.copyMemory(null, pointer, array, arrayOffset + unsafe.arrayBaseOffset(byte[].class), length);
-    } else {
-      for (int i = arrayOffset; i < length + arrayOffset; i++)
-        array[i] = unsafe.getByte(pointer++);
-    }
+    for (int i = arrayOffset; i < length + arrayOffset; i++)
+      array[i] = unsafe.getByte(pointer++);
+
   }
 
   @Override
   public void set(long pointer, byte[] content, int length) {
-    if (copyMemoryAllowed) {
-      unsafe.copyMemory(content, unsafe.arrayBaseOffset(byte[].class), null, pointer, length);
-    } else {
-      for (int i = 0; i < length; i++)
-        unsafe.putByte(pointer++, content[i]);
-    }
+    for (int i = 0; i < length; i++)
+      unsafe.putByte(pointer++, content[i]);
   }
 
   @Override
