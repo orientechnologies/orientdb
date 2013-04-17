@@ -33,9 +33,14 @@ public class OServerMain {
 
 	public static void main(final String[] args) throws Exception {
 
+        // It would be cleanest to use args4j for the argument management
+
+        String opt = null;
+        boolean unsecured = false;
+
         if (args.length > 0)
         {
-            String opt = args[0].trim();
+            opt = args[0].trim();
 
             if (opt.startsWith("-p"))
             {
@@ -64,6 +69,7 @@ public class OServerMain {
                     "The hash is       : "
                   + OSecurityManager.instance().digest2String(input1)
                 );
+                System.exit(0);
             }
             else if (opt.startsWith("-s"))
             {
@@ -75,38 +81,53 @@ public class OServerMain {
                     "Random string to paste into salt value of config xml: "
                   + OSecurityManager.instance().byteArrayToHexStr(salt)
                 );
+                System.exit(0);
+            }
+            else if (opt.startsWith("-u"))
+            {
+                unsecured = true;
+                System.out.println("*********************");
+                System.out.println("**  W A R N I N G  **");
+                System.out.println("**                 **");
+                System.out.println("** Running server  **");
+                System.out.println("** unsecured. Omit **");
+                System.out.println("** the -u for      **");
+                System.out.println("** secure version. **");
+                System.out.println("**                 **");
+                System.out.println("*********************");
             }
             else help();
-
-            System.exit(0);
         }
 
 		OServerMain.create().startup();
-
-        String correct = server().getUser("root").password;
-        // Default hash of "root"
-        String defaultPhrase =
-              "4813494D137E1631BBA301D5ACAB6E7B"
-            + "B7AA74CE1185D456565EF51D737677B2";
-
-        if (correct.equals(defaultPhrase))
+        
+        if (!unsecured)
         {
-            String linesep = System.getProperty("line.separator");
-            System.out.println
-            (
-                linesep + linesep
-              + "Passphrase has not been changed from default."
-              + linesep
-              + "Restart server with -p switch to set new passphrase."
-              + linesep
-              + "A longer phrase with alphanumerics enhances security."
-            );
-            System.exit(1);
-        }
+            String correct = server().getUser("root").password;
+            // Default hash of "root"
+            String defaultPhrase =
+                  "4813494D137E1631BBA301D5ACAB6E7B"
+                + "B7AA74CE1185D456565EF51D737677B2";
 
-        requestRootPassPhrase();
-        // The string input could now be retained as a
-        // key for data encryption
+            if (correct.equals(defaultPhrase))
+            {
+                String sep = System.getProperty("line.separator");
+                System.out.println
+                (
+                    sep + sep
+                  + "Passphrase has not been changed from default."
+                  + sep
+                  + "Restart server with -p switch to set new passphrase."
+                  + sep
+                  + "A longer phrase with alphanumerics enhances security."
+                );
+                System.exit(1);
+            }
+
+            requestRootPassPhrase();
+            // The string input could now be retained as a
+            // key for data encryption
+        }
 
 		server().activate();
 	}
@@ -163,10 +184,12 @@ public class OServerMain {
     private static void help()
     {
         System.out.println("OrientDB usage");
-        System.out.println(" orientdb.sh [opt]");
-        System.out.println("-h  Usage guide");
-        System.out.println("-p  Generate passphrase hash");
-        System.out.println("-s  Generate a random crytographic salt");
+        System.out.println(" server.sh [opt]");
+        System.out.println("  -h  Usage guide");
+        System.out.println("  -p  Generate passphrase hash");
+        System.out.println("  -s  Generate a random crytographic salt");
+        System.out.println("  -u  Invoke unsecured server instance");
         System.out.println();
+        System.exit(0);
     }
 }
