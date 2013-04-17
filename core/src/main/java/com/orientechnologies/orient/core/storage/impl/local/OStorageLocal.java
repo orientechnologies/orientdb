@@ -850,6 +850,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return -1;
   }
 
+  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters) {
+    throw new UnsupportedOperationException();
+  }
+
   public ODataLocal[] getDataSegments() {
     return dataSegments;
   }

@@ -159,6 +159,10 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     clusterStateHolder = new OSingleFileSegment(storage, clusterStateConfiguration);
   }
 
+  public boolean exists() {
+    return clusterStateHolder.exists();
+  }
+
   @Override
   public void create(int startSize) throws IOException {
     externalModificationLock.requestModificationLock();

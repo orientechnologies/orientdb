@@ -416,6 +416,11 @@ public class ODatabaseRaw implements ODatabase {
     return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
+  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      Object... iParameters) {
+    return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
+  }
+
   public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iStartSize) {
     return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
