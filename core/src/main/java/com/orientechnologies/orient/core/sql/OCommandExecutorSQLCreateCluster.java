@@ -37,12 +37,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE      = "CREATE";
   public static final String KEYWORD_CLUSTER     = "CLUSTER";
+  public static final String KEYWORD_ID          = "ID";
   public static final String KEYWORD_DATASEGMENT = "DATASEGMENT";
   public static final String KEYWORD_LOCATION    = "LOCATION";
   public static final String KEYWORD_POSITION    = "POSITION";
 
   private String             clusterName;
   private String             clusterType;
+  private int                requestedId         = -1;
   private String             dataSegmentName     = "default";
   private String             location            = "default";
   private String             position            = "append";
@@ -65,7 +67,10 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     String temp = parseOptionalWord(true);
 
     while (temp != null) {
-      if (temp.equals(KEYWORD_DATASEGMENT)) {
+      if (temp.equals(KEYWORD_ID)) {
+        requestedId = Integer.parseInt(parserRequiredWord(false));
+
+      } else if (temp.equals(KEYWORD_DATASEGMENT)) {
         dataSegmentName = parserRequiredWord(false);
 
       } else if (temp.equals(KEYWORD_LOCATION)) {
@@ -106,7 +111,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
 
     final ODatabaseRecord database = getDatabase();
 
-    return database.addCluster(clusterType, clusterName, location, dataSegmentName);
+    if (requestedId == -1) {
+        return database.addCluster(clusterType, clusterName, location, dataSegmentName);
+    } else {
+        return database.addCluster(clusterType, clusterName, requestedId, location, dataSegmentName);
+    }
   }
 
   @Override

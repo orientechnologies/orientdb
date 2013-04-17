@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -88,6 +87,9 @@ public class OChannelBinaryProtocol {
   // Lock + sync
   public static final byte  REQUEST_DB_FREEZE                      = 94; // SINCE 1.1.0
   public static final byte  REQUEST_DB_RELEASE                     = 95; // SINCE 1.1.0
+
+  public static final byte REQUEST_DATACLUSTER_FREEZE = 96;
+  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                     = 0;

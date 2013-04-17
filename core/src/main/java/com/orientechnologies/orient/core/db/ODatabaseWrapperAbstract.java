@@ -201,6 +201,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
   }
 
+  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      Object... iParameters) {
+    return underlying.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, iParameters);
+  }
+
   /**
    * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
    * @param iClusterName
@@ -353,5 +358,20 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
   public void release() {
     underlying.release();
+  }
+
+  @Override
+  public void freezeCluster(int iClusterId, boolean throwException) {
+    underlying.freezeCluster(iClusterId, throwException);
+  }
+
+  @Override
+  public void freezeCluster(int iClusterId) {
+    underlying.freezeCluster(iClusterId);
+  }
+
+  @Override
+  public void releaseCluster(int iClusterId) {
+    underlying.releaseCluster(iClusterId);
   }
 }

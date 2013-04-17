@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -415,6 +416,11 @@ public class ODatabaseRaw implements ODatabase {
     return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
+  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      Object... iParameters) {
+    return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
+  }
+
   public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iStartSize) {
     return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
@@ -727,5 +733,33 @@ public class ODatabaseRaw implements ODatabase {
     }
 
     storage.release();
+  }
+
+  @Override
+  public void freezeCluster(int iClusterId) {
+    freezeCluster(iClusterId, false);
+  }
+
+  @Override
+  public void releaseCluster(int iClusterId) {
+    final OLocalPaginatedStorage storage;
+    if (getStorage() instanceof OLocalPaginatedStorage)
+      storage = ((OLocalPaginatedStorage) getStorage());
+    else {
+      OLogManager.instance().error(this, "We can not freeze non local storage.");
+      return;
+    }
+
+    storage.release(iClusterId);
+  }
+
+  @Override
+  public void freezeCluster(int iClusterId, boolean throwException) {
+    if (getStorage() instanceof OLocalPaginatedStorage) {
+      final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
+      paginatedStorage.freeze(throwException, iClusterId);
+    } else {
+      OLogManager.instance().error(this, "Only local paginated storage supports cluster freeze.");
+    }
   }
 }

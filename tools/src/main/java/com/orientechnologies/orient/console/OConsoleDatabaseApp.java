@@ -312,27 +312,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
-  @ConsoleCommand(description = "Create a new cluster in the current database. The cluster can be physical or memory")
-  public void createCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to create") String iClusterName,
-      @ConsoleParameter(name = "cluster-type", description = "Cluster type: 'physical' or 'memory'") String iClusterType,
-      @ConsoleParameter(name = "data-segment", description = "Data segment to use. 'default' will use the default one") String iDataSegmentName,
-      @ConsoleParameter(name = "location", description = "Location where to place the new cluster files, if appliable. use 'default' to leave into the database directory") String iLocation,
-      @ConsoleParameter(name = "position", description = "cluster id to replace, an empty position or 'append' to append at the end") String iPosition) {
-    checkForDatabase();
-
-    final int position = iPosition.toLowerCase().equals("append") ? -1 : Integer.parseInt(iPosition);
-    if ("default".equalsIgnoreCase(iLocation))
-      iLocation = null;
-
-    out.println("Creating cluster [" + iClusterName + "] of type '" + iClusterType + "' in database " + currentDatabaseName
-        + (position == -1 ? " as last one" : " in place of #" + position) + "...");
-
-    iClusterType = iClusterType.toUpperCase();
-
-    int clusterId = currentDatabase.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName);
-
-    out.println(currentDatabase.getClusterType(iClusterName) + " cluster created correctly with id #" + clusterId);
+  @ConsoleCommand(splitInWords = false, description = "Create a new cluster in the current database. The cluster can be physical or memory")
+  public void createCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("create", iCommandText, "\nCluster created correctly with id #%d\n", true);
     updateDatabaseInfo();
   }
 
@@ -594,6 +576,54 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     out.println("\nDatabase '" + dbName + "' was released successfully");
+  }
+
+  @ConsoleCommand(description = "Freeze clusters and flush on the disk")
+  public void freezeCluster(
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName)
+      throws IOException {
+    checkForDatabase();
+
+    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
+
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
+        return;
+      }
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeCluster(
+          clusterId);
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.freezeCluster(clusterId);
+    }
+
+    out.println("\nCluster '" + iClusterName + "' was frozen successfully");
+  }
+
+  @ConsoleCommand(description = "Release cluster after freeze")
+  public void releaseCluster(
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName)
+      throws IOException {
+    checkForDatabase();
+
+    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
+
+    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
+      if (serverAdmin == null) {
+        out.println("\nCannot freeze a remote database without connecting to the server with a valid server's user");
+        return;
+      }
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
+          clusterId);
+    } else {
+      // LOCAL CONNECTION
+      currentDatabase.releaseCluster(clusterId);
+    }
+
+    out.println("\nCluster '" + iClusterName + "' was released successfully");
   }
 
   @ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
