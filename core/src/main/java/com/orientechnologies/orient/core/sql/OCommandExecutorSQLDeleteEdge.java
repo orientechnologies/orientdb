@@ -56,7 +56,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("EDGE");

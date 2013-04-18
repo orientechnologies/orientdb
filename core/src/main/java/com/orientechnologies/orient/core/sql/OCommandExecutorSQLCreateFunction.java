@@ -47,7 +47,8 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("FUNCTION");

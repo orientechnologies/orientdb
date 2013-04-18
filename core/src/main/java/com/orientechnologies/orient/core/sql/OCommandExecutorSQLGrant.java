@@ -37,7 +37,8 @@ public class OCommandExecutorSQLGrant extends OCommandExecutorSQLPermissionAbstr
   public OCommandExecutorSQLGrant parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     privilege = ORole.PERMISSION_NONE;
     resource = null;

@@ -49,7 +49,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("VERTEX");

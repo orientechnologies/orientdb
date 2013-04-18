@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -326,15 +327,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       releaseDatabase();
       break;
 
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-        freezeCluster();
-        break;
+    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
+      freezeCluster();
+      break;
 
-      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-        releaseCluster();
-        break;
+    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
+      releaseCluster();
+      break;
 
-      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
       cleanOutRecord();
       break;
 
@@ -1124,6 +1125,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         final Map<String, Integer> fetchPlan = command != null ? OFetchHelper.buildFetchPlan(command.getFetchPlan()) : null;
         command.setResultListener(new AsyncResultListener(empty, clientTxId, fetchPlan, recordsToSend));
+
+        final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+
+        if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
+          // FORCE THE SERVER'S TIMEOUT
+          command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();
 

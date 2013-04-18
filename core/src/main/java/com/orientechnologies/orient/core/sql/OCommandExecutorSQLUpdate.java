@@ -76,7 +76,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     setEntries.clear();
     addEntries.clear();

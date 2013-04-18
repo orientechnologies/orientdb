@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -92,6 +93,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 
     long beginTime = Orient.instance().getProfiler().startChrono();
+    executor.getContext().setVariable(OCommandRequestInternal.EXECUTION_BEGUN, System.currentTimeMillis());
+
     try {
 
       final Object result = executor.execute(iCommand.getParameters());
@@ -104,11 +107,12 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
 
     } finally {
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-              "Command executed against the database", beginTime, "db.*.command.*");
+      if (Orient.instance().getProfiler().isRecording())
+        Orient
+            .instance()
+            .getProfiler()
+            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
 

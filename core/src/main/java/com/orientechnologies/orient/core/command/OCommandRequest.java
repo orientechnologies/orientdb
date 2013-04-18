@@ -23,6 +23,10 @@ package com.orientechnologies.orient.core.command;
  * @param <T>
  */
 public interface OCommandRequest {
+  public enum TIMEOUT_STRATEGY {
+    EXCEPTION, RETURN
+  }
+
   public <RET> RET execute(Object... iArgs);
 
   /**
@@ -39,6 +43,27 @@ public interface OCommandRequest {
    * @return
    */
   public OCommandRequest setLimit(int iLimit);
+
+  /**
+   * Returns the command timeout. 0 means no timeout.
+   * 
+   * @return
+   */
+  public long getTimeoutTime();
+
+  /**
+   * Returns the command timeout strategy between the defined ones.
+   * 
+   * @return
+   */
+  public TIMEOUT_STRATEGY getTimeoutStrategy();
+
+  /**
+   * Sets the command timeout. When the command execution time is major than the timeout the command returns
+   * 
+   * @param timeout
+   */
+  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy);
 
   /**
    * Returns true if the command doesn't change the database, otherwise false.

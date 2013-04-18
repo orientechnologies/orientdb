@@ -104,6 +104,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
           parseLimit(w);
         else if (w.equals(KEYWORD_SKIP))
           parseSkip(w);
+        else if (w.equals(KEYWORD_TIMEOUT))
+          parseTimeout(w);
       }
     }
 

@@ -31,10 +31,12 @@ import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -92,7 +94,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_GROUP        = "GROUP";
 
   private Map<String, String>         projectionDefinition = null;
-  private Map<String, Object>         projections          = null;    // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE
+  private Map<String, Object>         projections          = null;    // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S
+                                                                       // USED THE
                                                                        // PROJECTIONS IN GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields;
   private List<String>                groupByFields;
@@ -153,6 +156,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseLimit(w);
           else if (w.equals(KEYWORD_SKIP))
             parseSkip(w);
+          else if (w.equals(KEYWORD_TIMEOUT))
+            parseTimeout(w);
           else
             throwParsingException("Invalid keyword '" + w + "'");
         }
@@ -355,6 +360,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean executeSearchRecord(final OIdentifiable id) {
+
+    if (!checkTimeout())
+      return false;
+
     final ORecordInternal<?> record = id.getRecord();
 
     context.updateMetric("recordReads", +1);
@@ -370,6 +379,24 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // END OF EXECUTION
         return false;
 
+    return true;
+  }
+
+  protected boolean checkTimeout() {
+    if (timeoutMs > 0) {
+      final Long begun = (Long) context.getVariable(OCommandRequestInternal.EXECUTION_BEGUN);
+      if (begun != null) {
+        if (System.currentTimeMillis() - begun.longValue() > timeoutMs) {
+          // TIMEOUT!
+          switch (timeoutStrategy) {
+          case RETURN:
+            return false;
+          case EXCEPTION:
+            throw new OTimeoutException("Command execution timeout exceed (" + timeoutMs + "ms)");
+          }
+        }
+      }
+    }
     return true;
   }
 

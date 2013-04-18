@@ -63,7 +63,8 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     final StringBuilder word = new StringBuilder();
 

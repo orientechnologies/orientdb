@@ -46,7 +46,8 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
   public OCommandExecutorSQLTruncateRecord parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     StringBuilder word = new StringBuilder();
 

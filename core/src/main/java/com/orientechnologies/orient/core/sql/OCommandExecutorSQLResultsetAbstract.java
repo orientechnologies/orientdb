@@ -96,7 +96,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init(textRequest.getText());
+    init(textRequest);
 
     if (iRequest instanceof OSQLSynchQuery) {
       request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;

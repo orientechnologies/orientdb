@@ -109,4 +109,20 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
     command.setContext(iContext);
     return this;
   }
+
+  @Override
+  public long getTimeoutTime() {
+    return command.getTimeoutTime();
+  }
+
+  @Override
+  public TIMEOUT_STRATEGY getTimeoutStrategy() {
+    return command.getTimeoutStrategy();
+  }
+
+  @Override
+  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy) {
+    command.setTimeout(timeout, strategy);
+
+  }
 }
