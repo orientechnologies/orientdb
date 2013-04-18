@@ -195,7 +195,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (merge != null) {
       // REPLACE ALL THE CONTENT
-      record.merge(merge, false, false);
+      record.merge(merge, true, false);
       recordUpdated = true;
     }
 
