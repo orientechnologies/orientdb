@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.graph.sql;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * SQL CREATE VERTEX command.
@@ -45,8 +48,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     String className = null;
 
@@ -93,23 +95,18 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    ODatabaseRecord database = getDatabase();
-    if (!(database instanceof OGraphDatabase))
-      database = new OGraphDatabase((ODatabaseRecordTx) database);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final ODocument vertex = ((OGraphDatabase) database).createVertex(clazz.getName());
+    final OrientVertex vertex = graph.addVertex(clazz.getName(), clusterName);
 
-    OSQLHelper.bindParameters(vertex, fields, new OCommandParameters(iArgs), context);
+    OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
     if (content != null)
-      vertex.merge(content, true, false);
+      vertex.getRecord().merge(content, true, false);
 
-    if (clusterName != null)
-      vertex.save(clusterName);
-    else
-      vertex.save();
+    vertex.save();
 
-    return vertex;
+    return vertex.getRecord();
   }
 
   @Override
