@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.batch.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
