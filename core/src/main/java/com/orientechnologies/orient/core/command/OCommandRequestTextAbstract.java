@@ -126,10 +126,6 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       }
     }
 
-    // TIMEOUT
-    buffer.set(timeoutMs);
-    buffer.set((byte) timeoutStrategy.ordinal());
-
     return buffer.toByteArray();
   }
 
@@ -182,9 +178,6 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
           parameters.put(p.getKey(), value);
       }
     }
-
-    timeoutMs = buffer.getAsLong();
-    timeoutStrategy = TIMEOUT_STRATEGY.values()[buffer.getAsByte()];
   }
 
 }
