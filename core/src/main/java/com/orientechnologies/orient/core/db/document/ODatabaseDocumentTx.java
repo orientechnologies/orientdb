@@ -419,20 +419,20 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ODocument iRecord) {
+  public ODatabaseDocumentTx delete(final ORecordInternal<?> iRecord) {
     if (iRecord == null)
       throw new ODatabaseException("Cannot delete null document");
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-    if (iRecord.getClassName() != null)
-      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, iRecord.getClassName());
+    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null)
+      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) iRecord).getClassName());
 
     try {
       underlying.delete(iRecord);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), iRecord.getClassName());
+          iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
     }
     return this;
   }

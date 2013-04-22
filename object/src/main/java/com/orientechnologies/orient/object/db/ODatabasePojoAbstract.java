@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -246,7 +247,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
-    underlying.delete((ODocument) iRecord);
+    underlying.delete(iRecord);
     return this;
   }
 
