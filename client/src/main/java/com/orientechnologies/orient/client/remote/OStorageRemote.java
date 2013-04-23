@@ -1327,24 +1327,26 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endRequest(network);
         }
 
+        byte result = 0;
         try {
           beginResponse(network);
-
-          if (network.readByte() == 1) {
-            // REMOVE THE CLUSTER LOCALLY
-            final OCluster cluster = clusters[iClusterId];
-            clusters[iClusterId] = null;
-            clusterMap.remove(cluster.getName());
-            if (configuration.clusters.size() > iClusterId)
-              configuration.dropCluster(iClusterId);
-
-            getLevel2Cache().freeCluster(iClusterId);
-            return true;
-          }
-          return false;
+          result = network.readByte();
         } finally {
           endResponse(network);
         }
+
+        if (result == 1) {
+          // REMOVE THE CLUSTER LOCALLY
+          final OCluster cluster = clusters[iClusterId];
+          clusters[iClusterId] = null;
+          clusterMap.remove(cluster.getName());
+          if (configuration.clusters.size() > iClusterId)
+            configuration.dropCluster(iClusterId); //endResponse must be called before this line, which call updateRecord
+
+          getLevel2Cache().freeCluster(iClusterId);
+          return true;
+        }
+        return false;
 
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
