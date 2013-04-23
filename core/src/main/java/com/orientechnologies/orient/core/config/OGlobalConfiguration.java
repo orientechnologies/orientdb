@@ -110,6 +110,11 @@ public enum OGlobalConfiguration {
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
 
+  // DATABASE
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
+
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
   DB_MVCC_THROWFAST(
