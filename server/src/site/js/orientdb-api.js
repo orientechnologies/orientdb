@@ -235,6 +235,29 @@ function ODatabase(databasePath) {
 		return this.getDatabaseInfo();
 	}
 
+
+	ODatabase.prototype.metadata = function(userName, userPass, authProxy, type) {
+		$.ajax({
+			type : 'GET',
+			url : this.urlPrefix + 'database/' + this.encodedDatabaseName
+					+ this.urlSuffix,
+			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.setDatabaseInfo(this.transformResponse(msg));
+			},
+			error : function(msg, textStatus, errorThrown) {
+				this.setErrorMessage('Connect error: ' + msg.responseText);
+				this.setDatabaseInfo(null);
+			}
+		});
+		return this.getDatabaseInfo();
+	}
+
+
 	ODatabase.prototype.query = function(iQuery, iLimit, iFetchPlan,
 			successCallback) {
 		if (this.databaseInfo == null)

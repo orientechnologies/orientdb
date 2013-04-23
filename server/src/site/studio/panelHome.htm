@@ -125,8 +125,13 @@
 			orientServer = new ODatabase($('#server').val() + '/'
 					+ $('#database').val());
 		}
-		databaseInfo = orientServer
-				.open($('#user').val(), $('#password').val());
+		
+		// CONNECT TO THE SERVER
+		orientServer.open($('#user').val(), $('#password').val());
+
+		// LOAD METADATA
+		databaseInfo = orientServer.metadata();
+
 		if (databaseInfo == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 			orientServer = null;

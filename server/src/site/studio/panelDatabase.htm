@@ -1182,7 +1182,7 @@
 	}
 
 	function askDatabaseInfo() {
-		databaseInfo = orientServer.open();
+		databaseInfo = orientServer.metadata();
 		if (databaseInfo == null) {
 			$("#output").text(orientServer.getErrorMessage());
 		} else {

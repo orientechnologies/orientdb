@@ -44,7 +44,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
-      OServerCommandGetConnect.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
+      OServerCommandGetDatabase.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
       if (db != null)
