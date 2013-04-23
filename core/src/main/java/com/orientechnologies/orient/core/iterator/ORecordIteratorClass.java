@@ -15,10 +15,16 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,11 +65,37 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
     polymorphic = iPolymorphic;
     clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
+    clusterIds = readableClusters(iDatabase, clusterIds);
 
     config();
   }
+  
+  
+  private int[] readableClusters(ODatabaseRecord iDatabase,
+		int[] clusterIds) {
+	List<Integer> listOfReadableIds = new ArrayList<Integer>();
+	
+	for (int clusterId : clusterIds) {
+		try {
+			String clusterName = iDatabase.getClusterNameById(clusterId);
+		    iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
+		    listOfReadableIds.add(clusterId);
+		}
+		catch(OSecurityAccessException securityException) {
+			// if the cluster is inaccessible it's simply not processed in the list.add
+		}
+	}
+	
+	int[] readableClusterIds = new int[listOfReadableIds.size()];
+	int index = 0;
+	for (int clusterId : listOfReadableIds) {
+		readableClusterIds[index++] = clusterId;
+	}
+	
+	return readableClusterIds;
+}
 
-  @SuppressWarnings("unchecked")
+@SuppressWarnings("unchecked")
   @Override
   public REC next() {
     final OIdentifiable rec = super.next();

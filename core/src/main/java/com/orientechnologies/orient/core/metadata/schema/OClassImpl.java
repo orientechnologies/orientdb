@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -802,15 +803,40 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public long count(final boolean iPolymorphic) {
     if (iPolymorphic)
-      return getDatabase().countClusterElements(polymorphicClusterIds);
+      return getDatabase().countClusterElements(readableCluster(getDatabase(), polymorphicClusterIds));
 
-    return getDatabase().countClusterElements(clusterIds);
+    return getDatabase().countClusterElements(readableCluster(getDatabase(), clusterIds));
   }
 
-  private ODatabaseRecord getDatabase() {
+  private int[] readableCluster(ODatabaseRecord iDatabase,
+		int[] polymorphicClusterIds2) {
+	  List<Integer> listOfReadableIds = new ArrayList<Integer>();
+		
+		for (int clusterId : clusterIds) {
+			try {
+				String clusterName = iDatabase.getClusterNameById(clusterId);
+			    iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
+			    listOfReadableIds.add(clusterId);
+			}
+			catch(OSecurityAccessException securityException) {
+				// if the cluster is inaccessible it's simply not processed in the list.add
+			}
+		}
+		
+		int[] readableClusterIds = new int[listOfReadableIds.size()];
+		int index = 0;
+		for (int clusterId : listOfReadableIds) {
+			readableClusterIds[index++] = clusterId;
+		}
+		
+		return readableClusterIds;
+	}
+
+private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
-
+  
+  
   /**
    * Truncates all the clusters the class uses.
    * 
