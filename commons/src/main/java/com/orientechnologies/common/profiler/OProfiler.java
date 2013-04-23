@@ -582,9 +582,6 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
   }
 
   public void unregisterHookValue(final String iName) {
-    if (recordingFrom < 0)
-      return;
-
     hooks.remove(iName);
   }
 
