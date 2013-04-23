@@ -82,6 +82,10 @@
 	<users>
 	</users>
 	<properties>
+		<!-- Database pool size min/max -->
+		<entry name="db.pool.min" value="1" />
+		<entry name="db.pool.max" value="20" />
+
 		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />
