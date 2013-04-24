@@ -22,8 +22,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
@@ -34,6 +38,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 14.03.13
  */
 public class O2QCache implements ODiskCache {
+  public static final long                   MAGIC_NUMBER   = 0xFACB03FEL;
+
+  private static final CRC32                 CRC_CALCULATOR = new CRC32();
+
   private final int                          maxSize;
   private final int                          K_IN;
   private final int                          K_OUT;
@@ -54,7 +62,7 @@ public class O2QCache implements ODiskCache {
   private final OStorageLocalAbstract        storageLocal;
 
   private final boolean                      syncOnPageFlush;
-  private long                               fileCounter = 1;
+  private long                               fileCounter    = 1;
 
   public O2QCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
       boolean syncOnPageFlush) {
@@ -149,11 +157,13 @@ public class O2QCache implements ODiskCache {
 
   @Override
   public void release(long fileId, long pageIndex) {
-    LRUEntry lruEntry = get(fileId, pageIndex);
-    if (lruEntry != null)
-      lruEntry.usageCounter--;
-    else
-      throw new IllegalStateException("record should be released is already free!");
+    synchronized (syncObject) {
+      LRUEntry lruEntry = get(fileId, pageIndex);
+      if (lruEntry != null)
+        lruEntry.usageCounter--;
+      else
+        throw new IllegalStateException("record should be released is already free!");
+    }
   }
 
   @Override
@@ -428,9 +438,12 @@ public class O2QCache implements ODiskCache {
 
   }
 
-  @Override
-  public void flushData(final long fileId, final long pageIndex, final long dataPointer) throws IOException {
+  private void flushData(final long fileId, final long pageIndex, final long dataPointer) throws IOException {
     final byte[] content = directMemory.get(dataPointer, pageSize);
+    OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
+
+    final int crc32 = calculatePageCrc(content);
+    OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
 
     final OMultiFileSegment multiFileSegment = files.get(fileId);
 
@@ -438,6 +451,69 @@ public class O2QCache implements ODiskCache {
 
     if (syncOnPageFlush)
       multiFileSegment.synch();
+  }
+
+  @Override
+  public boolean checkStoredPages(OCommandOutputListener commandOutputListener) {
+    synchronized (syncObject) {
+      boolean correct = true;
+      for (long fileId : files.keySet()) {
+
+        OMultiFileSegment multiFileSegment = files.get(fileId);
+        if (commandOutputListener != null)
+          commandOutputListener.onMessage("Start verification of content of " + multiFileSegment.getName() + "file ...");
+
+        boolean fileIsCorrect;
+        try {
+          flushFile(fileId);
+
+          long filledUpTo = multiFileSegment.getFilledUpTo();
+          fileIsCorrect = true;
+          for (long pos = 0; pos < filledUpTo; pos += pageSize) {
+            byte[] data = new byte[pageSize];
+
+            multiFileSegment.readContinuously(pos, data, data.length);
+
+            long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+            if (magicNumber != MAGIC_NUMBER) {
+              if (commandOutputListener != null)
+                commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
+                    + multiFileSegment.getName() + " does not much !!!");
+              fileIsCorrect = false;
+            }
+
+            final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+
+            final int calculatedCRC32 = calculatePageCrc(data);
+            if (storedCRC32 != calculatedCRC32) {
+              if (commandOutputListener != null)
+                commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
+                    + multiFileSegment.getName() + " is incorrect !!!");
+              fileIsCorrect = false;
+
+            }
+          }
+        } catch (IOException ioe) {
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Error: Error during processing of file " + multiFileSegment.getName() + ". "
+                + ioe.getMessage());
+
+          fileIsCorrect = false;
+        }
+
+        if (!fileIsCorrect) {
+          correct = false;
+
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Verification of file " + multiFileSegment.getName() + " is finished with errors.");
+        } else {
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Verification of file " + multiFileSegment.getName() + " is successfully finished.");
+        }
+      }
+
+      return correct;
+    }
   }
 
   private void flushEvictedPages() throws IOException {
@@ -499,6 +575,15 @@ public class O2QCache implements ODiskCache {
     if (lruEntry != null && lruEntry.usageCounter > 1)
       throw new IllegalStateException("Record cannot be removed because it is used!");
     return lruEntry;
+  }
+
+  private int calculatePageCrc(byte[] pageData) {
+    int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+
+    CRC_CALCULATOR.reset();
+    CRC_CALCULATOR.update(pageData, systemSize, pageData.length - systemSize);
+
+    return (int) CRC_CALCULATOR.getValue();
   }
 
   private final class FileLockKey implements Comparable<FileLockKey> {

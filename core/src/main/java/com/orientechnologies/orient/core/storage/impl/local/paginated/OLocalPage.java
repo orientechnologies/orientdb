@@ -34,7 +34,10 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 public class OLocalPage {
   private static final int    VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
-  private static final int    NEXT_PAGE_OFFSET           = 0;
+  private static final int    MAGIC_NUMBER_OFFSET        = 0;
+  private static final int    CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+
+  private static final int    NEXT_PAGE_OFFSET           = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int    PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int    FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;

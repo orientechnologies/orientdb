@@ -69,7 +69,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private String                        name;
 
-  private OHashIndexBufferMetadataStore metadataStore;
+  private OHashIndexBufferStore         metadataStore;
   private OHashIndexTreeStateStore      treeStateStore;
 
   private final ODirectMemory           directMemory           = ODirectMemoryFactory.INSTANCE.directMemory();
@@ -101,7 +101,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
         OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + treeStateFileExtension, OFileFactory.CLASSIC, "0", "50%");
 
-    metadataStore = new OHashIndexBufferMetadataStore(storage, metadataConfiguration);
+    metadataStore = new OHashIndexBufferStore(storage, metadataConfiguration);
     treeStateStore = new OHashIndexTreeStateStore(storage, treeStateConfiguration);
   }
 

@@ -142,6 +142,11 @@
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
         </classes>
     </test>
+    <test name="DbTools">
+        <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCheckTest"/>
+        </classes>
+    </test>
     <test name="DbToolsDelete">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest"/>
