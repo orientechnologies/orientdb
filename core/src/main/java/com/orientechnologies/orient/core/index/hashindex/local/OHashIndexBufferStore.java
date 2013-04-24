@@ -14,17 +14,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author Andrey Lomakin
  * @since 04.03.13
  */
-public class OHashIndexBufferMetadataStore extends OSingleFileSegment {
-  public OHashIndexBufferMetadataStore(String iPath, String iType) throws IOException {
+public class OHashIndexBufferStore extends OSingleFileSegment {
+  public OHashIndexBufferStore(String iPath, String iType) throws IOException {
     super(iPath, iType);
   }
 
-  public OHashIndexBufferMetadataStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig) throws IOException {
+  public OHashIndexBufferStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig) throws IOException {
     super(iStorage, iConfig);
   }
 
-  public OHashIndexBufferMetadataStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig, String iType)
-      throws IOException {
+  public OHashIndexBufferStore(OStorageLocalAbstract iStorage, OStorageFileConfiguration iConfig, String iType) throws IOException {
     super(iStorage, iConfig, iType);
   }
 

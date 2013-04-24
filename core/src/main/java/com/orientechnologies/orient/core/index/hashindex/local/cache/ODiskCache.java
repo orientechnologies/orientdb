@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 
 /**
@@ -39,5 +40,5 @@ public interface ODiskCache {
 
   void close() throws IOException;
 
-  void flushData(long fileId, long pageIndex, long dataPointer) throws IOException;
+  boolean checkStoredPages(OCommandOutputListener commandOutputListener);
 }

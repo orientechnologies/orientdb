@@ -348,9 +348,20 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public boolean check(final boolean iVerbose, final OCommandOutputListener iListener) {
-    // TODO implement when CRC will be ready.
-    return true;
+  public boolean check(final boolean verbose, final OCommandOutputListener listener) {
+    lock.acquireExclusiveLock();
+
+    try {
+      final long start = System.currentTimeMillis();
+
+      boolean result = diskCache.checkStoredPages(verbose ? listener : null);
+      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. "
+          + (!result ? " with errors." : " without errors."));
+
+      return result;
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public ODataLocal getDataSegmentById(final int iDataSegmentId) {

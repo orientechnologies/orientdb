@@ -49,6 +49,14 @@
         </dependency>
 
         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-nativeos</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+
+        <dependency>
             <groupId>org.iq80.snappy</groupId>
             <artifactId>snappy</artifactId>
             <version>0.3</version>

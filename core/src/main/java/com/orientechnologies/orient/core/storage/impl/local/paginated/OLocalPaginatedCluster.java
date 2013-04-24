@@ -30,9 +30,15 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.iq80.snappy.Snappy;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -62,10 +68,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import org.iq80.snappy.Snappy;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin
@@ -101,7 +103,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
                                                                                      - PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
                                                                                          .getValueAsInteger()];
 
-  private final OModificationLock externalModificationLock = new OModificationLock();
+  private final OModificationLock                   externalModificationLock     = new OModificationLock();
 
   public OLocalPaginatedCluster() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -271,9 +273,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       try {
 
         switch (attribute) {
-          case NAME:
-            setNameInternal(stringValue);
-            break;
+        case NAME:
+          setNameInternal(stringValue);
+          break;
         }
 
       } finally {
@@ -428,7 +430,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       long pageIndex = pagePointer >>> PAGE_INDEX_OFFSET;
 
-      if (diskCache.getFilledUpTo(fileId) < pageIndex)
+      if (diskCache.getFilledUpTo(fileId) <= pageIndex)
         return null;
 
       final List<byte[]> recordChunks = new ArrayList<byte[]>();
@@ -504,7 +506,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         long pageIndex = pagePointer >>> PAGE_INDEX_OFFSET;
 
-        if (diskCache.getFilledUpTo(fileId) < pageIndex)
+        if (diskCache.getFilledUpTo(fileId) <= pageIndex)
           return false;
 
         long nextPagePointer = -1;
@@ -567,7 +569,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         long firstPageIndex = firstPagePointer >>> PAGE_INDEX_OFFSET;
 
-        if (diskCache.getFilledUpTo(fileId) < firstPageIndex)
+        if (diskCache.getFilledUpTo(fileId) <= firstPageIndex)
           return;
 
         long firstPageMemoryPointer = diskCache.load(fileId, firstPageIndex);
