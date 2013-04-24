@@ -46,7 +46,12 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
 
     // calculate max value for current record.
     Object min = null;
-    if (iParameters[0] instanceof Collection<?>) {
+    if (iParameters.length > 0) {
+      for (Object item : iParameters) {
+        if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
+          min = item;
+      }
+    } else if (iParameters[0] instanceof Collection<?>) {
       // for a projection with multiple results find out the max value
       for (Object item : ((Collection<?>) iParameters[0])) {
         if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
