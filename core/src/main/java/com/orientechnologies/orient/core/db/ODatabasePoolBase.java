@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db;
 import java.util.Map;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 /**
@@ -43,7 +44,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   }
 
   public ODatabasePoolBase<DB> setup() {
-    setup(1, 20);
+    setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
     return this;
   }
 

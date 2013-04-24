@@ -158,6 +158,7 @@ public class OServerNetworkListener extends Thread {
       try {
         if (serverSocket != null && !serverSocket.isClosed())
           serverSocket.close();
+        protocol = null;
       } catch (IOException ioe) {
       }
     }
