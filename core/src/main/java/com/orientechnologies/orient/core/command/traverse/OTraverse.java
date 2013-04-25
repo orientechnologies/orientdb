@@ -23,6 +23,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Base class for traversing.
@@ -71,6 +72,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OIdentifiable next() {
+    if (Thread.interrupted())
+      throw new OCommandExecutionException("The traverse execution has been interrupted");
+
     if (lastTraversed != null) {
       // RETURN LATEST AND RESET IT
       final OIdentifiable result = lastTraversed;

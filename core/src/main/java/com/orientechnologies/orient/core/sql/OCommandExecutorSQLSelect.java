@@ -360,6 +360,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean executeSearchRecord(final OIdentifiable id) {
+    if (Thread.interrupted())
+      throw new OCommandExecutionException("The select execution has been interrupted");
 
     if (!checkTimeout())
       return false;

@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest  {
+public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_REBUILD = "REBUILD";
   public static final String KEYWORD_INDEX   = "INDEX";
 
@@ -42,8 +42,7 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
   public OCommandExecutorSQLRebuildIndex parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 

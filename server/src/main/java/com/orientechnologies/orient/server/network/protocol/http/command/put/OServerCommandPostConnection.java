@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.network.protocol.http.command.delete;
+package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -21,22 +21,27 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandDeleteConnection extends OServerCommandAuthenticatedServerAbstract {
-  private static final String[] NAMES = { "DELETE|connection/*" };
+public class OServerCommandPostConnection extends OServerCommandAuthenticatedServerAbstract {
+  private static final String[] NAMES = { "POST|connection/*" };
 
-  public OServerCommandDeleteConnection() {
-    super("server.connection.kill");
+  public OServerCommandPostConnection() {
+    super("server.connection");
   }
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connection/<id>");
+    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: connection/<command>/<id>");
 
-    iRequest.data.commandInfo = "Kill connection";
+    iRequest.data.commandInfo = "Interrupt command";
     iRequest.data.commandDetail = urlParts[1];
 
-    OClientConnectionManager.instance().disconnect(Integer.parseInt(urlParts[1]));
-
+    if ("KILL".equalsIgnoreCase(urlParts[1]))
+      OClientConnectionManager.instance().kill(Integer.parseInt(urlParts[2]));
+    else if ("INTERRUPT".equalsIgnoreCase(urlParts[1]))
+      OClientConnectionManager.instance().interrupt(Integer.parseInt(urlParts[2]));
+    else
+      throw new IllegalArgumentException("Connection command '" + urlParts[1] + "' is unknown. Supported are: kill, interrupt");
+    
     iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         null, null);
     return false;

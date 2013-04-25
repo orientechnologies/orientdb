@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
@@ -61,6 +60,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.post.OS
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostUploadSingleFile;
+import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPostConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
@@ -119,12 +119,12 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     sharedCmdManager.registerCommand(new OServerCommandPostDocument());
     sharedCmdManager.registerCommand(new OServerCommandPostImportRecords());
     sharedCmdManager.registerCommand(new OServerCommandPostProperty());
+    sharedCmdManager.registerCommand(new OServerCommandPostConnection());
     sharedCmdManager.registerCommand(new OServerCommandPostStudio());
     sharedCmdManager.registerCommand(new OServerCommandPutDocument());
     sharedCmdManager.registerCommand(new OServerCommandPutIndex());
     sharedCmdManager.registerCommand(new OServerCommandDeleteClass());
     sharedCmdManager.registerCommand(new OServerCommandDeleteDatabase());
-    sharedCmdManager.registerCommand(new OServerCommandDeleteConnection());
     sharedCmdManager.registerCommand(new OServerCommandDeleteDocument());
     sharedCmdManager.registerCommand(new OServerCommandDeleteProperty());
     sharedCmdManager.registerCommand(new OServerCommandDeleteIndex());
