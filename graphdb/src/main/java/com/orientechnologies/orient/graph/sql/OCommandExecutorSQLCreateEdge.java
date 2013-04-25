@@ -116,6 +116,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     final List<Object> edges = new ArrayList<Object>();
     for (ORecordId from : fromIds) {
       final OrientVertex fromVertex = (OrientVertex) graph.getVertex(from);
+      if (fromVertex == null)
+        throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+      
       for (ORecordId to : toIds) {
         final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
 
