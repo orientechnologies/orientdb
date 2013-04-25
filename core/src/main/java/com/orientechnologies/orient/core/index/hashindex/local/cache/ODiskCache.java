@@ -40,5 +40,5 @@ public interface ODiskCache {
 
   void close() throws IOException;
 
-  boolean checkStoredPages(OCommandOutputListener commandOutputListener);
+  OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 }
