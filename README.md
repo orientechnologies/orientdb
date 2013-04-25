@@ -38,7 +38,7 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 
 ## Professional services
 
-OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://www.nuvolabase.com/site/professional.html). For courses and training look at the [on-line course catalog](http://www.nuvolabase.com/site/training.html).
+OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://orientechnologies.com/support.htm). For courses and training look at the [on-line course catalog](http://www.orientechnologies.com/training.htm).
 
 ## Online cloud service
 
