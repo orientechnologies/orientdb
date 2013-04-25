@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
@@ -313,7 +314,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create a new cluster in the current database. The cluster can be physical or memory")
-  public void createCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+  public void createCluster(
+      @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("create", iCommandText, "\nCluster created correctly with id #%d\n", true);
     updateDatabaseInfo();
   }
@@ -731,11 +733,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentResultSet.clear();
 
     final OCommandExecutorScript cmd = new OCommandExecutorScript();
-    cmd.parse(new OCommandScript("javascript", iText));
+    cmd.parse(new OCommandScript("Javascript", iText));
     final Object result = cmd.execute(null);
 
-    if (result instanceof Collection<?>) {
-      currentResultSet = (List<OIdentifiable>) result;
+    if (OMultiValue.isMultiValue(result)) {
+      if (result instanceof List<?>)
+        currentResultSet = (List<OIdentifiable>) result;
+      else if (result instanceof Collection<?>) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
+      } else if (result.getClass().isArray()) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        for (OIdentifiable o : (OIdentifiable[]) result)
+          currentResultSet.add(o);
+      }
       dumpResultSet(-1);
       out.printf("Client side script executed in %f sec(s). Returned %d records",
           (float) (System.currentTimeMillis() - start) / 1000, currentResultSet.size());
@@ -757,10 +768,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     currentResultSet.clear();
 
-    Object result = currentDatabase.command(new OCommandScript("javascript", iText.toString())).execute();
+    Object result = currentDatabase.command(new OCommandScript("Javascript", iText.toString())).execute();
 
-    if (result instanceof Collection<?>) {
-      currentResultSet = (List<OIdentifiable>) result;
+    if (OMultiValue.isMultiValue(result)) {
+      if (result instanceof List<?>)
+        currentResultSet = (List<OIdentifiable>) result;
+      else if (result instanceof Collection<?>) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
+      } else if (result.getClass().isArray()) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        for (OIdentifiable o : (OIdentifiable[]) result)
+          currentResultSet.add(o);
+      }
       dumpResultSet(-1);
       out.printf("Server side script executed in %f sec(s). Returned %d records",
           (float) (System.currentTimeMillis() - start) / 1000, currentResultSet.size());
