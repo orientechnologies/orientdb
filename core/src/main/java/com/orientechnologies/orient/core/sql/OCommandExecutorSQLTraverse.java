@@ -91,14 +91,16 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
         optimize();
         parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
             + parserGetCurrentPosition());
-      }
+      } else
+        parserGoBack();
+
     } else
       parserSetCurrentPosition(-1);
 
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP)) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT)) {
         final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
@@ -141,6 +143,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
 
     context = traverse.getContext();
+    context.beginExecution(timeoutMs, timeoutStrategy);
 
     // BROWSE ALL THE RECORDS AND COLLECTS RESULT
     final List<OIdentifiable> result = (List<OIdentifiable>) traverse.execute();

@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequest.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**

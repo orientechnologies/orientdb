@@ -30,13 +30,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -45,7 +44,6 @@ import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -313,6 +311,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (Entry<Object, Object> arg : iArgs.entrySet())
         context.setVariable(arg.getKey().toString(), arg.getValue());
 
+    if (timeoutMs > 0)
+      getContext().beginExecution(timeoutMs, timeoutStrategy);
+
     if (!optimizeExecution()) {
       fetchLimit = getQueryFetchLimit();
 
@@ -363,7 +364,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (Thread.interrupted())
       throw new OCommandExecutionException("The select execution has been interrupted");
 
-    if (!checkTimeout())
+    if (!context.checkTimeout())
       return false;
 
     final ORecordInternal<?> record = id.getRecord();
@@ -381,24 +382,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // END OF EXECUTION
         return false;
 
-    return true;
-  }
-
-  protected boolean checkTimeout() {
-    if (timeoutMs > 0) {
-      final Long begun = (Long) context.getVariable(OCommandRequestInternal.EXECUTION_BEGUN);
-      if (begun != null) {
-        if (System.currentTimeMillis() - begun.longValue() > timeoutMs) {
-          // TIMEOUT!
-          switch (timeoutStrategy) {
-          case RETURN:
-            return false;
-          case EXCEPTION:
-            throw new OTimeoutException("Command execution timeout exceed (" + timeoutMs + "ms)");
-          }
-        }
-      }
-    }
     return true;
   }
 
