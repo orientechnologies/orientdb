@@ -326,7 +326,7 @@ public class SQLFunctionsTest {
         return "bigger(<first>, <second>)";
       }
 
-      public Object execute(OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+      public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
           OCommandContext iContext) {
         if (iParameters[0] == null || iParameters[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS

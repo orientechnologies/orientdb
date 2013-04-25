@@ -89,12 +89,12 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           configuredParameters[i] = pred;
 
         }
-      } else if (configuredParameters[i] instanceof OSQLPredicate){
+      } else if (configuredParameters[i] instanceof OSQLPredicate) {
         runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate((ORecord<?>) iCurrentRecord, iCurrentResult,
             iContext);
-      }else{
-          //plain value
-          runtimeParameters[i] = configuredParameters[i];
+      } else {
+        // plain value
+        runtimeParameters[i] = configuredParameters[i];
       }
     }
 
@@ -111,8 +111,8 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     function.setResult(iValue);
   }
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
-    return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null, null);
+  public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
+    return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null, iContext);
   }
 
   @Override

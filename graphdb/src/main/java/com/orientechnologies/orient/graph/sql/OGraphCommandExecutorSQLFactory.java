@@ -82,7 +82,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * 
    * @return
    */
-  protected static OrientBaseGraph getGraph() {
+  public static OrientBaseGraph getGraph() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof OGraphDatabase))
       database = new OGraphDatabase((ODatabaseRecordTx) database);

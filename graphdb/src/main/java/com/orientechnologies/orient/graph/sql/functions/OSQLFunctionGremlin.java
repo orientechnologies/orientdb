@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.sql.functions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -48,7 +49,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       final OCommandContext iContext) {
     if (!(iCurrentRecord instanceof ODocument))
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
