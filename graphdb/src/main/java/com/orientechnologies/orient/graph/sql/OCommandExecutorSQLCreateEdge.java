@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -118,11 +120,18 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       final OrientVertex fromVertex = (OrientVertex) graph.getVertex(from);
       if (fromVertex == null)
         throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
-      
+
       for (ORecordId to : toIds) {
         final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
 
         final String clsName = graph.getEdgeBaseType().equals(clazz) ? null : clazz.getName();
+
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
+          }
 
         final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
