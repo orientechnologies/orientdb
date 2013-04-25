@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,12 +41,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest {
@@ -62,6 +62,18 @@ public class SQLFunctionsTest {
   }
 
   @Test
+  public void queryMaxInline() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select max(1,2,7,0,-2,3)")).execute();
+
+    Assert.assertTrue(result.size() == 1);
+    for (ODocument d : result) {
+      Assert.assertNotNull(d.field("max"));
+
+      Assert.assertEquals(((Number) d.field("max")).intValue(), 7);
+    }
+  }
+
+  @Test
   public void queryMin() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(id) as min from Account")).execute();
 
@@ -70,6 +82,18 @@ public class SQLFunctionsTest {
       Assert.assertNotNull(d.field("min"));
 
       Assert.assertEquals(((Number) d.field("min")).longValue(), 0l);
+    }
+  }
+
+  @Test
+  public void queryMinInline() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select min(1,2,7,0,-2,3)")).execute();
+
+    Assert.assertTrue(result.size() == 1);
+    for (ODocument d : result) {
+      Assert.assertNotNull(d.field("min"));
+
+      Assert.assertEquals(((Number) d.field("min")).intValue(), -2);
     }
   }
 
