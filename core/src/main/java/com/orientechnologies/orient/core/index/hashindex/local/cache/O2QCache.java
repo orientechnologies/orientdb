@@ -16,10 +16,12 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.CRC32;
@@ -184,9 +186,15 @@ public class O2QCache implements ODiskCache {
 
       for (Long pageIndex : sortedPageIndexes) {
         LRUEntry lruEntry = get(fileId, pageIndex);
-        if (lruEntry.isDirty && lruEntry.usageCounter == 0) {
-          flushData(fileId, lruEntry.pageIndex, lruEntry.dataPointer);
-          lruEntry.isDirty = false;
+        if (lruEntry != null) {
+          if (lruEntry.isDirty && lruEntry.usageCounter == 0) {
+            flushData(fileId, lruEntry.pageIndex, lruEntry.dataPointer);
+            lruEntry.isDirty = false;
+          }
+        } else {
+          final Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+          if (dataPointer != null)
+            flushData(fileId, pageIndex, dataPointer);
         }
       }
 
@@ -207,21 +215,24 @@ public class O2QCache implements ODiskCache {
 
       for (Long pageIndex : sortedPageIndexes) {
         LRUEntry lruEntry = get(fileId, pageIndex);
-        if (lruEntry == null || lruEntry.usageCounter == 0) {
-          lruEntry = remove(fileId, pageIndex);
-          if (lruEntry != null) {
+        if (lruEntry != null) {
+          if (lruEntry.usageCounter == 0) {
+            lruEntry = remove(fileId, pageIndex);
             flushData(fileId, pageIndex, lruEntry.dataPointer);
-
             directMemory.free(lruEntry.dataPointer);
           }
+        } else {
+          Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+          if (dataPointer != null)
+            flushData(fileId, pageIndex, dataPointer);
         }
+
       }
 
       pageIndexes.clear();
 
       files.get(fileId).close();
     }
-
   }
 
   @Override
@@ -248,10 +259,16 @@ public class O2QCache implements ODiskCache {
       final Set<Long> pageEntries = filesPages.get(fileId);
       for (Long pageIndex : pageEntries) {
         LRUEntry lruEntry = get(fileId, pageIndex);
-        if (lruEntry == null || lruEntry.usageCounter == 0) {
-          lruEntry = remove(fileId, pageIndex);
-          if (lruEntry != null && lruEntry.dataPointer != ODirectMemory.NULL_POINTER)
-            directMemory.free(lruEntry.dataPointer);
+        if (lruEntry != null) {
+          if (lruEntry.usageCounter == 0) {
+            lruEntry = remove(fileId, pageIndex);
+            if (lruEntry.dataPointer != ODirectMemory.NULL_POINTER)
+              directMemory.free(lruEntry.dataPointer);
+          }
+        } else {
+          Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+          if (dataPointer != null)
+            directMemory.free(dataPointer);
         }
       }
 
@@ -454,28 +471,43 @@ public class O2QCache implements ODiskCache {
   }
 
   @Override
-  public boolean checkStoredPages(OCommandOutputListener commandOutputListener) {
+  public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
+    final int notificationTimeOut = 5000;
+    final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
+
     synchronized (syncObject) {
-      boolean correct = true;
       for (long fileId : files.keySet()) {
 
         OMultiFileSegment multiFileSegment = files.get(fileId);
-        if (commandOutputListener != null)
-          commandOutputListener.onMessage("Start verification of content of " + multiFileSegment.getName() + "file ...");
 
         boolean fileIsCorrect;
         try {
+
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Flashing file " + multiFileSegment.getName() + "... ");
+
           flushFile(fileId);
+
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Start verification of content of " + multiFileSegment.getName() + "file ...");
+
+          long time = System.currentTimeMillis();
 
           long filledUpTo = multiFileSegment.getFilledUpTo();
           fileIsCorrect = true;
+
           for (long pos = 0; pos < filledUpTo; pos += pageSize) {
+            boolean checkSumIncorrect = false;
+            boolean magicNumberIncorrect = false;
+
             byte[] data = new byte[pageSize];
 
             multiFileSegment.readContinuously(pos, data, data.length);
 
             long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+
             if (magicNumber != MAGIC_NUMBER) {
+              magicNumberIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
                     + multiFileSegment.getName() + " does not much !!!");
@@ -486,11 +518,20 @@ public class O2QCache implements ODiskCache {
 
             final int calculatedCRC32 = calculatePageCrc(data);
             if (storedCRC32 != calculatedCRC32) {
+              checkSumIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
                     + multiFileSegment.getName() + " is incorrect !!!");
               fileIsCorrect = false;
+            }
 
+            if (magicNumberIncorrect || checkSumIncorrect)
+              errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, multiFileSegment
+                  .getName()));
+
+            if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
+              time = notificationTimeOut;
+              commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
             }
           }
         } catch (IOException ioe) {
@@ -502,8 +543,6 @@ public class O2QCache implements ODiskCache {
         }
 
         if (!fileIsCorrect) {
-          correct = false;
-
           if (commandOutputListener != null)
             commandOutputListener.onMessage("Verification of file " + multiFileSegment.getName() + " is finished with errors.");
         } else {
@@ -512,7 +551,7 @@ public class O2QCache implements ODiskCache {
         }
       }
 
-      return correct;
+      return errors.toArray(new OPageDataVerificationError[errors.size()]);
     }
   }
 

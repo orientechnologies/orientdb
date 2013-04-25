@@ -331,6 +331,104 @@ public class O2QCacheTest {
     }
   }
 
+  public void testDataVerificationOK() throws Exception {
+    long fileId = buffer.openFile(fileConfiguration, ".tst");
+
+    long[] pointers;
+    pointers = new long[6];
+
+    for (int i = 0; i < 6; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      buffer.release(fileId, i);
+    }
+
+    Assert.assertTrue(buffer.checkStoredPages(null).length == 0);
+  }
+
+  public void testMagicNumberIsBroken() throws Exception {
+    long fileId = buffer.openFile(fileConfiguration, ".tst");
+
+    long[] pointers;
+    pointers = new long[6];
+
+    for (int i = 0; i < 6; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      buffer.release(fileId, i);
+    }
+
+    buffer.flushBuffer();
+
+    byte[] brokenMagicNumber = new byte[OIntegerSerializer.INT_SIZE];
+    OIntegerSerializer.INSTANCE.serializeNative(23, brokenMagicNumber, 0);
+
+    updateFilePage(2, 0, brokenMagicNumber);
+    updateFilePage(4, 0, brokenMagicNumber);
+
+    OPageDataVerificationError[] pageErrors = buffer.checkStoredPages(null);
+    Assert.assertEquals(2, pageErrors.length);
+
+    Assert.assertTrue(pageErrors[0].incorrectMagicNumber);
+    Assert.assertFalse(pageErrors[0].incorrectCheckSum);
+    Assert.assertEquals(2, pageErrors[0].pageIndex);
+    Assert.assertEquals("o2QCacheTest", pageErrors[0].fileName);
+
+    Assert.assertTrue(pageErrors[1].incorrectMagicNumber);
+    Assert.assertFalse(pageErrors[1].incorrectCheckSum);
+    Assert.assertEquals(4, pageErrors[1].pageIndex);
+    Assert.assertEquals("o2QCacheTest", pageErrors[1].fileName);
+  }
+
+  public void testCheckSumIsBroken() throws Exception {
+    long fileId = buffer.openFile(fileConfiguration, ".tst");
+
+    long[] pointers;
+    pointers = new long[6];
+
+    for (int i = 0; i < 6; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      buffer.release(fileId, i);
+    }
+
+    buffer.flushBuffer();
+
+    byte[] brokenByte = new byte[1];
+    brokenByte[0] = 13;
+
+    updateFilePage(2, systemOffset + 2, brokenByte);
+    updateFilePage(4, systemOffset + 3, brokenByte);
+
+    OPageDataVerificationError[] pageErrors = buffer.checkStoredPages(null);
+    Assert.assertEquals(2, pageErrors.length);
+
+    Assert.assertFalse(pageErrors[0].incorrectMagicNumber);
+    Assert.assertTrue(pageErrors[0].incorrectCheckSum);
+    Assert.assertEquals(2, pageErrors[0].pageIndex);
+    Assert.assertEquals("o2QCacheTest", pageErrors[0].fileName);
+
+    Assert.assertFalse(pageErrors[1].incorrectMagicNumber);
+    Assert.assertTrue(pageErrors[1].incorrectCheckSum);
+    Assert.assertEquals(4, pageErrors[1].pageIndex);
+    Assert.assertEquals("o2QCacheTest", pageErrors[1].fileName);
+  }
+
+  private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
+    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst";
+
+    OFileClassic fileClassic = new OFileClassic();
+    fileClassic.init(path, "rw");
+    fileClassic.open();
+
+    fileClassic.write(pageIndex * (8 + systemOffset) + offset, value, value.length, 0);
+
+    fileClassic.close();
+  }
+
   private void assertFile(long pageIndex, byte[] value) throws IOException {
     String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst";
 

@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -354,11 +355,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       final long start = System.currentTimeMillis();
 
-      boolean result = diskCache.checkStoredPages(verbose ? listener : null);
-      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. "
-          + (!result ? " with errors." : " without errors."));
+      OPageDataVerificationError[] pageErrors = diskCache.checkStoredPages(verbose ? listener : null);
 
-      return result;
+      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. "
+          + (pageErrors.length > 0 ? pageErrors.length + " with errors." : " without errors."));
+
+      return pageErrors.length == 0;
     } finally {
       lock.releaseExclusiveLock();
     }
