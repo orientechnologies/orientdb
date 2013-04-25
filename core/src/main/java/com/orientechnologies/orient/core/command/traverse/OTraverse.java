@@ -67,6 +67,9 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     if (lastTraversed == null && context.peek() != null)
       throw new IllegalStateException("Traverse ended abnormally");
 
+    if (!context.checkTimeout())
+      return false;
+
     // BROWSE ALL THE RECORDS
     return lastTraversed != null;
   }

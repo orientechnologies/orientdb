@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
+
 /**
  * Generic GOF command pattern implementation. Execute a command passing the optional arguments "iArgs" and returns an Object.
  * 
@@ -23,10 +25,6 @@ package com.orientechnologies.orient.core.command;
  * @param <T>
  */
 public interface OCommandRequest {
-  public enum TIMEOUT_STRATEGY {
-    EXCEPTION, RETURN
-  }
-
   public <RET> RET execute(Object... iArgs);
 
   /**
