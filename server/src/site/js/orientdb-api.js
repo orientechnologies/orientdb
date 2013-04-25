@@ -762,6 +762,26 @@ function ODatabase(databasePath) {
 		return this.getCommandResult();
 	}
 
+	ODatabase.prototype.connection = function(cmd, id) {
+		$.ajax({
+			type : "POST",
+			url : this.urlPrefix + 'connection/' + cmd + '/' + id + this.urlSuffix,
+			context : this,
+			contentType : "application/json; charset=utf-8",
+			processData : false,
+			async : false,
+			success : function(msg) {
+				this.setErrorMessage(null);
+				this.handleResponse(msg);
+			},
+			error : function(msg) {
+				this.handleResponse(null);
+				this.setErrorMessage('Command error: ' + msg.responseText);
+			}
+		});
+		return this.getCommandResult();
+	}
+
 	ODatabase.prototype.profiler = function(type, from, to) {
 		if (!type)
 			type = 'realtime';
