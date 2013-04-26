@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -104,6 +105,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
                                                                                          .getValueAsInteger()];
 
   private final OModificationLock                   externalModificationLock     = new OModificationLock();
+
+  private OWriteAheadLog                            writeAheadLog;
 
   public OLocalPaginatedCluster() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -151,6 +154,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     this.config = (OStoragePhysicalClusterConfigurationLocal) config;
 
     storageLocal = storage;
+    writeAheadLog = storage.getWALInstance();
+
     diskCache = storageLocal.getDiskCache();
     name = config.getName();
     this.id = config.getId();
@@ -184,7 +189,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         long pagePointer = diskCache.load(fileId, 0);
         try {
-          OLocalPage localPage = new OLocalPage(pagePointer, true);
+          OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, 0, name);
 
           localPage.setNextPage(-1);
           localPage.setPrevPage(-1);
@@ -377,7 +382,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
               long prevPageMemoryPointer = diskCache.load(fileId, prevPageIndex);
               try {
-                final OLocalPage prevPage = new OLocalPage(prevPageMemoryPointer, false);
+                final OLocalPage prevPage = new OLocalPage(prevPageMemoryPointer, false, writeAheadLog, prevPageIndex, name);
 
                 long recordPointer = prevPage.getRecordPointer(prevPageRecordPosition);
                 int prevPageRecordSize = prevPage.getRecordSize(prevPageRecordPosition);
@@ -441,7 +446,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       do {
         long pointer = diskCache.load(fileId, pageIndex);
         try {
-          final OLocalPage localPage = new OLocalPage(pointer, false);
+          final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
 
           long recordPointer = localPage.getRecordPointer(recordPosition);
 
@@ -515,7 +520,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           long pointer = diskCache.load(fileId, pageIndex);
           int initialFreePageIndex;
           try {
-            final OLocalPage localPage = new OLocalPage(pointer, false);
+            final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
             initialFreePageIndex = calculateFreePageIndex(localPage);
 
             long recordPointer = localPage.getRecordPointer(recordPosition);
@@ -577,7 +582,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         int recordsSizeDiff;
 
         try {
-          final OLocalPage firstPage = new OLocalPage(firstPageMemoryPointer, false);
+          final OLocalPage firstPage = new OLocalPage(firstPageMemoryPointer, false, writeAheadLog, firstPageIndex, name);
           firstPageFreeIndex = calculateFreePageIndex(firstPage);
 
           long oldRecordChunkPointer = firstPage.getRecordPointer(recordPosition);
@@ -597,7 +602,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
             long pointer = diskCache.load(fileId, secondaryPageIndex);
             try {
-              OLocalPage localPage = new OLocalPage(pointer, false);
+              OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, secondaryPageIndex, name);
               int secondaryFreePageIndex = calculateFreePageIndex(localPage);
               oldRecordChunkPointer = localPage.getRecordPointer(secondaryRecordPosition);
 
@@ -670,7 +675,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
             long prevPageMemoryPointer = diskCache.load(fileId, prevPageIndex);
             try {
-              final OLocalPage prevPage = new OLocalPage(prevPageMemoryPointer, false);
+              final OLocalPage prevPage = new OLocalPage(prevPageMemoryPointer, false, writeAheadLog, prevPageIndex, name);
 
               final int recordSize = prevPage.getRecordSize(prevPageRecordPosition);
               final long recordPointer = prevPage.getRecordPointer(prevPageRecordPosition);
@@ -715,7 +720,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     int position;
     final ORecordVersion finalVersion;
     try {
-      final OLocalPage localPage = new OLocalPage(pagePointer, newRecord);
+      final OLocalPage localPage = new OLocalPage(pagePointer, newRecord, writeAheadLog, pageIndex, name);
       assert newRecord || freePageIndex == calculateFreePageIndex(localPage);
 
       int initialFreeSpace = localPage.getFreeSpace();
@@ -759,7 +764,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         long pointer = diskCache.load(fileId, pageIndex);
         int realFreePageIndex;
         try {
-          OLocalPage localPage = new OLocalPage(pointer, false);
+          OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
           realFreePageIndex = calculateFreePageIndex(localPage);
         } finally {
           diskCache.release(fileId, pageIndex);
@@ -782,7 +787,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   private void updateFreePagesIndex(int prevFreePageIndex, long pageIndex) throws IOException {
     long pointer = diskCache.load(fileId, pageIndex);
     try {
-      final OLocalPage localPage = new OLocalPage(pointer, false);
+      final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
 
       int newFreePageIndex = calculateFreePageIndex(localPage);
 
@@ -795,7 +800,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       if (prevPageIndex >= 0) {
         long prevPagePointer = diskCache.load(fileId, prevPageIndex);
         try {
-          final OLocalPage prevPage = new OLocalPage(prevPagePointer, false);
+          final OLocalPage prevPage = new OLocalPage(prevPagePointer, false, writeAheadLog, prevPageIndex, name);
           assert calculateFreePageIndex(prevPage) == prevFreePageIndex;
           prevPage.setNextPage(nextPageIndex);
         } finally {
@@ -807,7 +812,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       if (nextPageIndex >= 0) {
         long nextPagePointer = diskCache.load(fileId, nextPageIndex);
         try {
-          final OLocalPage nextPage = new OLocalPage(nextPagePointer, false);
+          final OLocalPage nextPage = new OLocalPage(nextPagePointer, false, writeAheadLog, nextPageIndex, name);
           assert calculateFreePageIndex(nextPage) == prevFreePageIndex;
           nextPage.setPrevPage(prevPageIndex);
         } finally {
@@ -832,7 +837,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         if (oldFreePage >= 0) {
           long oldFreePagePointer = diskCache.load(fileId, oldFreePage);
           try {
-            final OLocalPage oldFreeLocalPage = new OLocalPage(oldFreePagePointer, false);
+            final OLocalPage oldFreeLocalPage = new OLocalPage(oldFreePagePointer, false, writeAheadLog, oldFreePage, name);
             assert calculateFreePageIndex(oldFreeLocalPage) == newFreePageIndex;
 
             oldFreeLocalPage.setPrevPage(pageIndex);
@@ -930,7 +935,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       long pointer = diskCache.load(fileId, pageIndex);
       try {
-        final OLocalPage localPage = new OLocalPage(pointer, false);
+        final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
         long recordPointer = localPage.getRecordPointer(recordPosition);
 
         if (recordPointer == ODirectMemory.NULL_POINTER)
@@ -1006,7 +1011,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       for (long i = pagesCount - 1; i >= 0; i--) {
         long pagePointer = diskCache.load(fileId, i);
         try {
-          final OLocalPage localPage = new OLocalPage(pagePointer, false);
+          final OLocalPage localPage = new OLocalPage(pagePointer, false, writeAheadLog, i, name);
           final int recordsCount = localPage.getRecordsCount();
 
           if (recordsCount > 0) {
@@ -1182,7 +1187,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       long pointer = diskCache.load(fileId, i);
 
       try {
-        final OLocalPage localPage = new OLocalPage(pointer, false);
+        final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, i, name);
 
         int recordsCount = localPage.getRecordsCount();
 
@@ -1237,7 +1242,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     pageLoop: for (long i = endPageIndex; i >= 0; i--) {
       long pointer = diskCache.load(fileId, i);
       try {
-        final OLocalPage localPage = new OLocalPage(pointer, false);
+        final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, i, name);
 
         int recordsCount = localPage.getRecordsCount();
 
@@ -1329,7 +1334,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       long pointer = diskCache.load(fileId, i);
       int freePageIndex;
       try {
-        final OLocalPage page = new OLocalPage(pointer, false);
+        final OLocalPage page = new OLocalPage(pointer, false, writeAheadLog, i, name);
         freePageIndex = calculateFreePageIndex(page);
         if (freePageIndex < 0)
           continue;
@@ -1351,7 +1356,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       long nextPageIndex;
       long pointer = diskCache.load(fileId, pageIndex);
       try {
-        final OLocalPage localPage = new OLocalPage(pointer, false);
+        final OLocalPage localPage = new OLocalPage(pointer, false, writeAheadLog, pageIndex, name);
         assert prevPageIndex == localPage.getPrevPage();
 
         prevPageIndex = pageIndex;

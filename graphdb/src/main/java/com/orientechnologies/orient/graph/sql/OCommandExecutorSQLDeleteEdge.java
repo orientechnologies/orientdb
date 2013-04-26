@@ -110,10 +110,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     if (from == null && to == null && rid == null)
       if (clazz == null)
         // DELETE ALL THE EDGES
-        query = graph.command(new OSQLAsynchQuery<ODocument>("select from E", this));
+        query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E", this));
       else
         // DELETE EDGES OF CLASS X
-        query = graph.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
+        query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
 
     return this;
   }

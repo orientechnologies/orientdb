@@ -24,10 +24,10 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 public class LocalPageTest {
   private ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  public void testAddOneRecord() {
+  public void testAddOneRecord() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
       int freeSpace = localPage.getFreeSpace();
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
@@ -49,10 +49,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testAddTreeRecords() {
+  public void testAddTreeRecords() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
       int freeSpace = localPage.getFreeSpace();
 
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -94,10 +94,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testAddFullPage() {
+  public void testAddFullPage() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -135,10 +135,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testDeleteAddLowerVersion() {
+  public void testDeleteAddLowerVersion() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -164,10 +164,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testDeleteAddBiggerVersion() {
+  public void testDeleteAddBiggerVersion() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -196,10 +196,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testDeleteAddEqualVersion() {
+  public void testDeleteAddEqualVersion() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -223,10 +223,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testDeleteTwoOutOfFour() {
+  public void testDeleteTwoOutOfFour() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -286,10 +286,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testAddFullPageDeleteAndAddAgain() {
+  public void testAddFullPageDeleteAndAddAgain() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       Set<Integer> deletedPositions = new HashSet<Integer>();
@@ -356,10 +356,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testAddBigRecordDeleteAndAddSmallRecords() {
+  public void testAddBigRecordDeleteAndAddSmallRecords() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -409,11 +409,11 @@ public class LocalPageTest {
     }
   }
 
-  public void testFindFirstRecord() {
+  public void testFindFirstRecord() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -471,11 +471,11 @@ public class LocalPageTest {
 
   }
 
-  public void testFindLastRecord() {
+  public void testFindLastRecord() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -529,10 +529,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testSetGetNextPage() {
+  public void testSetGetNextPage() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
       localPage.setNextPage(1034);
       Assert.assertEquals(localPage.getNextPage(), 1034);
     } finally {
@@ -540,10 +540,10 @@ public class LocalPageTest {
     }
   }
 
-  public void testSetGetPrevPage() {
+  public void testSetGetPrevPage() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
-      OLocalPage localPage = new OLocalPage(pagePointer, true);
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
       localPage.setPrevPage(1034);
       Assert.assertEquals(localPage.getPrevPage(), 1034);
     } finally {

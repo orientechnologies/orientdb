@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -90,11 +91,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private int                                       defaultClusterId    = -1;
 
   private static String[]                           ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet"                                           };
+      ".oef", ".oem", ".oet", ".wal"                                   };
 
   private OModificationLock                         modificationLock    = new OModificationLock();
 
   private final ODiskCache                          diskCache;
+  private final OWriteAheadLog                      writeAheadLog;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -121,6 +123,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
+    if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
+      writeAheadLog = new OWriteAheadLog(this);
+    else
+      writeAheadLog = null;
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -1029,6 +1035,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseSharedLock();
     }
+  }
+
+  OWriteAheadLog getWALInstance() {
+    return writeAheadLog;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {
