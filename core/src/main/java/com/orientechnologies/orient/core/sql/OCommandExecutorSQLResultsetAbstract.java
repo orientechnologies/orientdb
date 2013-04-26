@@ -157,7 +157,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected Object getResult() {
     if (tempResult != null) {
-      for (OIdentifiable d : tempResult)
+      for (Object d : tempResult)
         if (d != null)
           request.getResultListener().result(d);
     }
