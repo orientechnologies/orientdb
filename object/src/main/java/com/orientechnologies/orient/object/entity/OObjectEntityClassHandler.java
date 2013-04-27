@@ -41,6 +41,14 @@ public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
     }
   }
 
+  @Override
+  public synchronized void deregisterEntityClass(Class<?> iClass) {
+    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum()) {
+      OObjectEntitySerializer.deregisterClass(iClass);
+      super.deregisterEntityClass(iClass);
+    }
+  }
+
   public static synchronized OObjectEntityClassHandler getInstance() {
     return instance;
   }
