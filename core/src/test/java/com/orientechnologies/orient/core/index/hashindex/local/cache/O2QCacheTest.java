@@ -141,7 +141,7 @@ public class O2QCacheTest {
     long pointer = buffer.load(fileId, 0);
     buffer.markDirty(fileId, 0);
 
-    directMemory.set(pointer, value, 8 + systemOffset);
+    directMemory.set(pointer + systemOffset, value, 8);
     buffer.release(fileId, 0);
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);

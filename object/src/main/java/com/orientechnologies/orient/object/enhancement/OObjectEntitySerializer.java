@@ -574,6 +574,10 @@ public class OObjectEntitySerializer {
     }
   }
 
+  public static void deregisterClass(Class<?> iClass) {
+    classes.remove(iClass);
+  }
+
   protected static boolean checkCascadeDelete(final OneToOne oneToOne) {
     return oneToOne.orphanRemoval() || checkCascadeAnnotationAttribute(oneToOne.cascade());
   }
