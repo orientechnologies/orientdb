@@ -287,7 +287,7 @@ public class OWriteAheadLog {
       int order = extractOrder(file.getName());
       int otherOrder = extractOrder(other.file.getName());
 
-      return Integer.compare(order, otherOrder);
+      return Integer.valueOf(order).compareTo(otherOrder);
     }
 
     public long size() throws IOException {
