@@ -319,7 +319,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         final StringBuilder cmd = new StringBuilder("drop class ");
         cmd.append(iClassName);
 
-        getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+        Object result = getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+        if (result instanceof Boolean && (Boolean) result) {
+          classes.remove(key);
+        }
         getDatabase().reload();
         reload();
         return null;
@@ -421,23 +424,31 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     cls = getDatabase().getStorage().callInLock(new Callable<OClass>() {
       @Override
       public OClass call() throws Exception {
-        OClass cls = classes.get(iClassName.toLowerCase());
-
-        if (cls == null) {
-          // CHECK IF CAN AUTO-CREATE IT
-          final ODatabase ownerDb = getDatabase().getDatabaseOwner();
-          if (ownerDb instanceof ODatabaseObject) {
-            final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
-
-            if (javaClass != null) {
-              // AUTO REGISTER THE CLASS AT FIRST USE
-              cls = cascadeCreate(javaClass);
-            }
-          }
-        }
-        return cls;
+        return classes.get(iClassName.toLowerCase());
       }
     }, false);
+
+    if (cls == null) {
+      cls = getDatabase().getStorage().callInLock(new Callable<OClass>() {
+        @Override
+        public OClass call() throws Exception {
+          OClass cls = classes.get(iClassName.toLowerCase());
+          if (cls == null) {
+            // CHECK IF CAN AUTO-CREATE IT
+            final ODatabase ownerDb = getDatabase().getDatabaseOwner();
+            if (ownerDb instanceof ODatabaseObject) {
+              final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
+
+              if (javaClass != null) {
+                // AUTO REGISTER THE CLASS AT FIRST USE
+                cls = cascadeCreate(javaClass);
+              }
+            }
+          }
+          return cls;
+        }
+      }, true);
+    }
     return cls;
   }
 
