@@ -5,10 +5,20 @@
 
   <import file="../_base/base-build.xml" />
 
-  <target name="compile" depends="init">
-    <javac excludes="com/orientechnologies/common/directmemory/OUnsafeMemoryJava7.java" destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
+  <target name="javaCheck" depends="init">
+    <echo message="ant.java.version=${ant.java.version}"/>
+    <condition property="isNotJava7">
+      <not>
+        <equals arg1="${ant.java.version}" arg2="1.7"/>
+      </not>
+    </condition>
+  </target>
+
+  <target name="compile" depends="javaCheck">
+    <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
       <src path="${project.src}" />
       <classpath refid="project.classpath" />
+      <exclude name="com/orientechnologies/common/directmemory/OUnsafeMemoryJava7.java" if="isNotJava7"/>
     </javac>
 
     <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}" target="${project.target-comp}" source="${project.source-comp}">
