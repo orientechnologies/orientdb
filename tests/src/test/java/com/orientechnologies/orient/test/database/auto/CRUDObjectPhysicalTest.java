@@ -128,6 +128,23 @@ public class CRUDObjectPhysicalTest {
   }
 
   @Test
+  public void testDeletionClassFromSchemaShouldNotLockDatabase() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    Assert.assertNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
+
+    database.getEntityManager().registerEntityClass(DummyForTestFreeze.class);
+
+    database.countClass(Dummy.class.getSimpleName());
+
+    database.getMetadata().getSchema().dropClass(DummyForTestFreeze.class.getSimpleName());
+
+    Assert.assertNotNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
+
+    database.close();
+  }
+
+  @Test
   public void testSimpleTypes() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaSimpleTestClass javaObj = database.newInstance(JavaSimpleTestClass.class);
