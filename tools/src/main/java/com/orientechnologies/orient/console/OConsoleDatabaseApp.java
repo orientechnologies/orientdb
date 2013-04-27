@@ -157,6 +157,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
 
     properties.put("limit", "20");
+    properties.put("width", "132");
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");
 
@@ -1796,7 +1797,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
-    final OTableFormatter tableFormatter = new OTableFormatter(out);
+    final OTableFormatter tableFormatter = new OTableFormatter(out).setMaxWidthSize(Integer.parseInt(properties.get("width")));
 
     currentResultSet.clear();
     while (it.hasNext() && currentResultSet.size() <= limit)
@@ -1894,7 +1895,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void dumpResultSet(final int limit) {
-    new OTableFormatter(out).writeRecords(currentResultSet, limit);
+    new OTableFormatter(out).setMaxWidthSize(Integer.parseInt(properties.get("width"))).writeRecords(currentResultSet, limit);
   }
 
   /**
