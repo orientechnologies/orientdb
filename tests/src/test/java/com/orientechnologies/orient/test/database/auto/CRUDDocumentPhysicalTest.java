@@ -836,15 +836,7 @@ public class CRUDDocumentPhysicalTest {
     }
   }
 
-  public void testSerialization() {
-    final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"
-        .getBytes();
-    ODocument doc = new ODocument().fromStream(streamOrigin);
-    doc.field("out");
-    final byte[] streamDest = doc.toStream();
-    Assert.assertEquals(streamOrigin, streamDest);
-  }
-
+  @Test(dependsOnMethods = "cleanAll")
   public void testEmbeddeDocumentInTx() {
     if (url.startsWith("plocal:"))
       return;
@@ -879,5 +871,83 @@ public class CRUDDocumentPhysicalTest {
     } finally {
       database.close();
     }
+  }
+
+  @Test(dependsOnMethods = "cleanAll")
+  public void testUpdateInChain() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+    ODocument bank = database.newInstance("Account");
+    try {
+      bank.field("name", "MyBankChained");
+
+      // EMBEDDED
+      ODocument embedded = database.newInstance("Account").field("name", "embedded1");
+      bank.field("embedded", embedded, OType.EMBEDDED);
+
+      ODocument[] embeddeds = new ODocument[] { database.newInstance("Account").field("name", "embedded2"),
+          database.newInstance("Account").field("name", "embedded3") };
+      bank.field("embeddeds", embeddeds, OType.EMBEDDEDLIST);
+
+      // LINKED
+      ODocument linked = database.newInstance("Account").field("name", "linked1");
+      bank.field("linked", linked);
+
+      ODocument[] linkeds = new ODocument[] { database.newInstance("Account").field("name", "linked2"),
+          database.newInstance("Account").field("name", "linked3") };
+      bank.field("linkeds", linkeds, OType.LINKLIST);
+
+      bank.save();
+
+    } finally {
+      database.close();
+    }
+
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      bank.reload();
+
+      ODocument changedDoc1 = bank.field("embedded.total", 100);
+      // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
+      Assert.assertEquals(changedDoc1.field("name"), "MyBankChained");
+      Assert.assertEquals(changedDoc1.field("embedded.total"), 100);
+
+      ODocument changedDoc2 = bank.field("embeddeds.total", 200);
+      // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
+      Assert.assertEquals(changedDoc2.field("name"), "MyBankChained");
+      Collection<Integer> embeddeds = changedDoc2.field("embeddeds.total");
+      for (Integer e : embeddeds)
+        Assert.assertEquals(e.intValue(), 200);
+
+      ODocument changedDoc3 = bank.field("linked.total", 300);
+      // MUST CHANGE THE LINKED DOCUMENT
+      Assert.assertEquals(changedDoc3.field("name"), "linked1");
+      Assert.assertEquals(changedDoc3.field("total"), 300);
+
+      try {
+        bank.field("linkeds.total", 400);
+        Assert.assertTrue(false);
+      } catch (IllegalArgumentException e) {
+        // MUST THROW AN EXCEPTION
+        Assert.assertTrue(true);
+      }
+
+      ((ODocument) bank.field("linked")).delete();
+      for (ODocument l : (Collection<ODocument>) bank.field("linkeds"))
+        l.delete();
+      bank.delete();
+
+    } finally {
+      database.close();
+    }
+  }
+
+  public void testSerialization() {
+    final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"
+        .getBytes();
+    ODocument doc = new ODocument().fromStream(streamOrigin);
+    doc.field("out");
+    final byte[] streamDest = doc.toStream();
+    Assert.assertEquals(streamOrigin, streamDest);
   }
 }

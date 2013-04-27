@@ -201,10 +201,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
   public ODocument getIndexChanges() {
 
-    final ODocument result = new ODocument();
+    final ODocument result = new ODocument().setAllowChainedAccess(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
       final ODocument indexDoc = new ODocument().addOwner(result);
+
       result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
       if (indexEntry.getValue().cleared)
@@ -352,7 +353,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
       for (OTransactionIndexEntry e : entry.entries) {
-        final ODocument changeDoc = new ODocument().addOwner(indexDoc);
+        final ODocument changeDoc = new ODocument().addOwner(indexDoc).setAllowChainedAccess(false);
 
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
@@ -371,7 +372,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    entries.add(new ODocument().addOwner(indexDoc).field("k", OStringSerializerHelper.encode(key))
+    entries.add(new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", OStringSerializerHelper.encode(key))
         .field("ops", operations, OType.EMBEDDEDLIST));
   }
 }

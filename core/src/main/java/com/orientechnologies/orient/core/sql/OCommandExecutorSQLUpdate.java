@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -76,8 +77,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     setEntries.clear();
     addEntries.clear();
@@ -183,7 +183,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         return false;
     }
 
-    boolean recordUpdated = false;
+    final Set<ODocument> updatedRecords = new HashSet<ODocument>();
 
     parameters.reset();
 
@@ -191,19 +191,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       // REPLACE ALL THE CONTENT
       record.clear();
       record.merge(content, false, false);
-      recordUpdated = true;
+      updatedRecords.add(record);
     }
 
     if (merge != null) {
       // REPLACE ALL THE CONTENT
       record.merge(merge, true, false);
-      recordUpdated = true;
+      updatedRecords.add(record);
     }
 
     // BIND VALUES TO UPDATE
     if (!setEntries.isEmpty()) {
-      OSQLHelper.bindParameters(record, setEntries, parameters, context);
-      recordUpdated = true;
+      Set<ODocument> changedDocuments = OSQLHelper.bindParameters(record, setEntries, parameters, context);
+      if (changedDocuments != null)
+        updatedRecords.addAll(changedDocuments);
     }
 
     // BIND VALUES TO INCREMENT
@@ -217,7 +218,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         // COMPUTING INCREMENT
         record.field(entry.getKey(), OType.increment(prevValue, entry.getValue()));
 
-      recordUpdated = true;
+      updatedRecords.add(record);
     }
 
     Object v;
@@ -258,7 +259,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         v = ((OSQLFunctionRuntime) v).execute(record, null, context);
 
       coll.add(v);
-      recordUpdated = true;
+      updatedRecords.add(record);
     }
 
     // BIND VALUES TO PUT (AS MAP)
@@ -293,7 +294,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
           v = ((OSQLFunctionRuntime) v).execute(record, null, context);
 
         map.put(pair.getKey(), v);
-        recordUpdated = true;
+        updatedRecords.add(record);
       }
     }
 
@@ -302,25 +303,25 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       v = entry.getValue();
       if (v == EMPTY_VALUE) {
         record.removeField(entry.getKey());
-        recordUpdated = true;
+        updatedRecords.add(record);
       } else {
         fieldValue = record.field(entry.getKey());
 
         if (fieldValue instanceof Collection<?>) {
           coll = (Collection<Object>) fieldValue;
           if (coll.remove(v))
-            recordUpdated = true;
+            updatedRecords.add(record);
         } else if (fieldValue instanceof Map<?, ?>) {
           map = (Map<String, Object>) fieldValue;
           if (map.remove(v) != null)
-            recordUpdated = true;
+            updatedRecords.add(record);
         }
       }
     }
 
-    if (recordUpdated) {
-      record.setDirty();
-      record.save();
+    for (ODocument d : updatedRecords) {
+      d.setDirty();
+      d.save();
       recordCount++;
     }
 

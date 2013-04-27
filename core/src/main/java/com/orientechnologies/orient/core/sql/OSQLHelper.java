@@ -18,10 +18,12 @@ package com.orientechnologies.orient.core.sql;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -270,10 +272,12 @@ public class OSQLHelper {
     return OSQLHelper.getValue(iFieldValue, iDocument);
   }
 
-  public static void bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
+  public static Set<ODocument> bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
       final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFields == null)
-      return;
+      return null;
+
+    Set<ODocument> changedDocuments = null;
 
     // BIND VALUES
     for (Entry<String, Object> field : iFields.entrySet()) {
@@ -301,7 +305,13 @@ public class OSQLHelper {
         }
       }
 
-      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments));
+      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments));
+      if (doc != null) {
+        if (changedDocuments == null)
+          changedDocuments = new HashSet<ODocument>();
+        changedDocuments.add(doc);
+      }
     }
+    return changedDocuments;
   }
 }
