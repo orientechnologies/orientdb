@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -1103,7 +1104,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  @SuppressWarnings("unchecked")
   protected void command() throws IOException {
     setDataCommandInfo("Execute remote command");
 
@@ -1162,12 +1162,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           // RECORD
           channel.writeByte((byte) 'r');
           writeIdentifiable((OIdentifiable) result);
-        } else if (result instanceof Collection<?>) {
+        } else if (OMultiValue.isMultiValue(result)) {
           channel.writeByte((byte) 'l');
-          final Collection<OIdentifiable> list = (Collection<OIdentifiable>) result;
-          channel.writeInt(list.size());
-          for (OIdentifiable o : list) {
-            writeIdentifiable(o);
+          channel.writeInt(OMultiValue.getSize(result));
+          for (Object o : OMultiValue.getMultiValueIterable(result)) {
+            writeIdentifiable((OIdentifiable) o);
           }
         } else {
           // ANY OTHER (INCLUDING LITERALS)

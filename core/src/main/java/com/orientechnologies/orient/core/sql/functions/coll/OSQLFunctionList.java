@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * This operator add an item in a list. The list accepts duplicates.
@@ -39,7 +39,7 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters.length > 1)
       // IN LINE MODE
@@ -51,11 +51,7 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
           // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
-        if (value instanceof Collection<?>)
-          // INSERT EVERY SINGLE COLLECTION ITEM
-          context.addAll((Collection<?>) value);
-        else
-          context.add(value);
+        OMultiValue.add(context, value);
       }
     }
     return prepareResult(context);

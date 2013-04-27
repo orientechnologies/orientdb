@@ -37,13 +37,13 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iRecord, final ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (predicate == null)
       predicate = new OSQLPredicate((String) iParameters[0]);
 
     try {
-      return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, iCurrentResult, iContext);
+      return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, (ODocument) iCurrentResult, iContext);
     } catch (ArithmeticException e) {
       // DIVISION BY 0
       return 0;

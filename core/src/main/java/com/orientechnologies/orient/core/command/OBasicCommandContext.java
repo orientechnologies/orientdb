@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.command;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -29,10 +30,19 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-  protected boolean             recordMetrics = false;
-  protected OCommandContext     parent;
-  protected OCommandContext     child;
-  protected Map<String, Object> variables;
+  public static final String                                                         EXECUTION_BEGUN  = "EXECUTION_BEGUN";
+  public static final String                                                         TIMEOUT_MS       = "TIMEOUT_MS";
+  public static final String                                                         TIMEOUT_STRATEGY = "TIMEOUT_STARTEGY";
+
+  protected boolean                                                                  recordMetrics    = false;
+  protected OCommandContext                                                          parent;
+  protected OCommandContext                                                          child;
+  protected Map<String, Object>                                                      variables;
+
+  // MANAGES THE TIMEOUT
+  private long                                                                       executionStartedOn;
+  private long                                                                       timeoutMs;
+  private com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY timeoutStrategy;
 
   public OBasicCommandContext() {
   }
@@ -195,4 +205,30 @@ public class OBasicCommandContext implements OCommandContext {
     this.recordMetrics = recordMetrics;
     return this;
   }
+
+  @Override
+  public void beginExecution(final long iTimeout, final TIMEOUT_STRATEGY iStrategy) {
+    if (iTimeout > 0) {
+      executionStartedOn = System.currentTimeMillis();
+      timeoutMs = iTimeout;
+      timeoutStrategy = iStrategy;
+    }
+  }
+
+  public boolean checkTimeout() {
+    if (timeoutMs > 0) {
+      if (System.currentTimeMillis() - executionStartedOn > timeoutMs) {
+        // TIMEOUT!
+        switch (timeoutStrategy) {
+        case RETURN:
+          return false;
+        case EXCEPTION:
+          throw new OTimeoutException("Command execution timeout exceed (" + timeoutMs + "ms)");
+        }
+      }
+    }
+
+    return true;
+  }
+
 }

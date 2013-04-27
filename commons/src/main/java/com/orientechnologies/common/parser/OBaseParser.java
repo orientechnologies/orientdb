@@ -375,20 +375,11 @@ public abstract class OBaseParser {
 
           if (nextChar == 'u') {
             parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
-          } else if (nextChar == 'n') {
-            parserLastWord.append("\n");
+          } else {
+            parserLastWord.append(c);
+            parserLastWord.append(nextChar);
             parserCurrentPos++;
-          } else if (nextChar == 'r') {
-            parserLastWord.append("\r");
-            parserCurrentPos++;
-          } else if (nextChar == 't') {
-            parserLastWord.append("\t");
-            parserCurrentPos++;
-          } else if (nextChar == 'f') {
-            parserLastWord.append("\f");
-            parserCurrentPos++;
-          } else
-            escape = true;
+          }
 
           continue;
         }

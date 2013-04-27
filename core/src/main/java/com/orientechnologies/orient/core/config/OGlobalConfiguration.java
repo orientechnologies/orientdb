@@ -56,6 +56,20 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
+  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, false),
+
+  WAL_CACHE_SIZE("storage.wal.cacheSize", "Maximum size of WAL cache (in byte) <= 0 means that caching will be switched off.",
+      Integer.class, 100 * 1024 * 1024),
+
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 500),
+
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 10 * 1024),
+
+  WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
+
+  WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
+      + " it is highly recomended to use separate disk to store log operations", String.class, null),
+
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
@@ -109,6 +123,11 @@ public enum OGlobalConfiguration {
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
+
+  // DATABASE
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
+
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 

@@ -29,8 +29,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
 
-  public static final String EXECUTION_BEGUN = "EXECUTION_BEGUN";
-
   public Map<Object, Object> getParameters();
 
   public OCommandResultListener getResultListener();

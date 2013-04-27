@@ -22,29 +22,29 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodSize extends OAbstractSQLMethod {
 
-    public static final String NAME = "size";
+  public static final String NAME = "size";
 
-    public OSQLMethodSize() {
-        super(NAME);
-    }
+  public OSQLMethodSize() {
+    super(NAME);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        if (ioResult != null) {
-            if (ioResult instanceof ORecord<?>) {
-                ioResult = 1;
-            } else {
-                ioResult = OMultiValue.getSize(ioResult);
-            }
-        } else {
-            ioResult = 0;
-        }
-        return ioResult;
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    if (ioResult != null) {
+      if (ioResult instanceof ORecord<?>) {
+        ioResult = 1;
+      } else {
+        ioResult = OMultiValue.getSize(ioResult);
+      }
+    } else {
+      ioResult = 0;
     }
+    return ioResult;
+  }
 }

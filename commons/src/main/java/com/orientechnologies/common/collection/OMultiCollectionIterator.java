@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.iterator;
+package com.orientechnologies.common.collection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.util.OResettable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
@@ -49,7 +48,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
     getNextPartial();
   }
 
-  public OMultiCollectionIterator(final Iterator<? extends Collection<OIdentifiable>> iterator) {
+  public OMultiCollectionIterator(final Iterator<? extends Collection<?>> iterator) {
     iteratorOfInternalCollections = iterator;
     getNextPartial();
   }
@@ -146,16 +145,16 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
             if (next instanceof OResettable)
               ((OResettable) next).reset();
 
-            if (((Iterator<OIdentifiable>) next).hasNext()) {
+            if (((Iterator<T>) next).hasNext()) {
               partialIterator = (Iterator<T>) next;
               return true;
             }
           } else if (next instanceof Collection<?>) {
-            if (!((Collection<OIdentifiable>) next).isEmpty()) {
+            if (!((Collection<T>) next).isEmpty()) {
               partialIterator = ((Collection<T>) next).iterator();
               return true;
             }
-          } else if (next instanceof OIdentifiable) {
+          } else {
             if (temp == null)
               temp = new ArrayList<T>(1);
             else

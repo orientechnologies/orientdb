@@ -20,7 +20,6 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
@@ -39,14 +38,19 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters[0] == null)
       return null;
 
     // calculate max value for current record.
     Object max = null;
-    if (iParameters[0] instanceof Collection<?>) {
+    if (iParameters.length > 0) {
+      for (Object item : iParameters) {
+        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
+          max = item;
+      }
+    } else if (iParameters[0] instanceof Collection<?>) {
       // for a projection with multiple results find out the max value
       for (Object item : ((Collection<?>) iParameters[0])) {
         if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)

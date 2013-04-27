@@ -34,7 +34,7 @@
     <properties>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <jna.version>3.4.0</jna.version>
+        <jna.version>3.5.0</jna.version>
     </properties>
 
     <artifactId>orientdb-nativeos</artifactId>
@@ -54,6 +54,13 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orient-commons</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

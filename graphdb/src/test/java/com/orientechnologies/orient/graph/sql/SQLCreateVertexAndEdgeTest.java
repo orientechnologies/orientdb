@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.test.database.auto;
+package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-@Test
 public class SQLCreateVertexAndEdgeTest {
   private OGraphDatabase database;
   private String         url;
 
-  @Parameters(value = "url")
+  public SQLCreateVertexAndEdgeTest() {
+    this("memory:testgraph");
+  }
+
   public SQLCreateVertexAndEdgeTest(String iURL) {
     url = iURL;
     database = new OGraphDatabase(iURL);
@@ -40,7 +42,10 @@ public class SQLCreateVertexAndEdgeTest {
 
   @BeforeMethod
   public void init() {
-    database.open("admin", "admin");
+    if (url.startsWith("memory"))
+      database.create();
+    else
+      database.open("admin", "admin");
   }
 
   @AfterMethod
@@ -49,7 +54,7 @@ public class SQLCreateVertexAndEdgeTest {
   }
 
   @Test
-  public void createEdgeDefaultClass() {
+  public void testCreateEdgeDefaultClass() {
     database.command(new OCommandSQL("create class V1 extends V")).execute();
     database.command(new OCommandSQL("create class E1 extends E")).execute();
     database.getMetadata().getSchema().reload();
@@ -75,25 +80,17 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(v5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
     // EDGES
-    List<ODocument> edges = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity()))
+    List<Object> edges = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity()))
         .execute();
     Assert.assertFalse(edges.isEmpty());
-    ODocument e1 = edges.get(0);
-    Assert.assertEquals(e1.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
-    Assert.assertEquals(e1.field("out"), v1);
-    Assert.assertEquals(e1.field("in"), v2);
 
     edges = database.command(new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity())).execute();
     Assert.assertFalse(edges.isEmpty());
-    ODocument e2 = edges.get(0);
-    Assert.assertEquals(e2.getClassName(), "E1");
-    Assert.assertEquals(e2.field("out"), v1);
-    Assert.assertEquals(e2.field("in"), v3);
 
     edges = database.command(
         new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
     Assert.assertFalse(edges.isEmpty());
-    ODocument e3 = edges.get(0);
+    ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e3.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
@@ -102,7 +99,7 @@ public class SQLCreateVertexAndEdgeTest {
     edges = database.command(
         new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10")).execute();
     Assert.assertFalse(edges.isEmpty());
-    ODocument e4 = edges.get(0);
+    ODocument e4 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e4.getClassName(), "E1");
     Assert.assertEquals(e4.field("out"), v2);
     Assert.assertEquals(e4.field("in"), v3);
@@ -113,15 +110,15 @@ public class SQLCreateVertexAndEdgeTest {
             new OCommandSQL("create edge e1 cluster default from " + v3.getIdentity() + " to " + v5.getIdentity()
                 + " set weight = 17")).execute();
     Assert.assertFalse(edges.isEmpty());
-    ODocument e5 = edges.get(0);
+    ODocument e5 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e5.getClassName(), "E1");
     Assert.assertEquals(e5.getIdentity().getClusterId(), database.getDefaultClusterId());
 
-//    edges = database.command(new OCommandSQL("create edge cluster default from ? to ? set weight = 30")).execute(v3, v5);
-//    Assert.assertFalse(edges.isEmpty());
-//    ODocument e6 = edges.get(0);
-//    Assert.assertTrue(database.getInVertex(e6).equals(v5));
-//    Assert.assertTrue(database.getOutVertex(e6).equals(v3));
+    // edges = database.command(new OCommandSQL("create edge cluster default from ? to ? set weight = 30")).execute(v3, v5);
+    // Assert.assertFalse(edges.isEmpty());
+    // ODocument e6 = edges.get(0);
+    // Assert.assertTrue(database.getInVertex(e6).equals(v5));
+    // Assert.assertTrue(database.getOutVertex(e6).equals(v3));
 
     // database.command(new OCommandSQL("drop class E1")).execute();
     // database.command(new OCommandSQL("drop class V1")).execute();

@@ -32,9 +32,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 
 /**
  * Represents an object field as value in the query condition.
@@ -63,10 +66,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
         final int pindex = part.indexOf('(');
         if (pindex > -1) {
           final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
-          final OSQLMethod method = getMethod(methodName);
-          if (method != null) {
-            final Object[] arguments;
 
+          OSQLMethod method = getMethod(methodName);
+          final Object[] arguments;
+          if (method != null) {
             if (method.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
               if (arguments.length < method.getMinParams() || arguments.length > method.getMaxParams())
@@ -75,18 +78,34 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
                     + "' needs "
                     + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
                         + method.getMaxParams()) + " argument(s) while has been received " + arguments.length, 0);
-            } else {
+            } else
               arguments = null;
-            }
 
-            // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
-            operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
           } else {
-            // ERROR: OPERATOR NOT FOUND OR MISPELLED
-            throw new OQueryParsingException(iQueryToParse.parserText,
-                "Syntax error: field operator not recognized between the supported ones: " + Arrays.toString(getAllMethodNames()),
-                0);
+            // LOOK FOR FUNCTION
+            final OSQLFunction f = OSQLEngine.getInstance().getFunction(methodName);
+
+            if (f == null)
+              // ERROR: METHOD/FUNCTION NOT FOUND OR MISPELLED
+              throw new OQueryParsingException(iQueryToParse.parserText,
+                  "Syntax error: function or field operator not recognized between the supported ones: "
+                      + Arrays.toString(getAllMethodNames()), 0);
+
+            if (f.getMaxParams() > 0) {
+              arguments = OStringSerializerHelper.getParameters(part).toArray();
+              if (arguments.length < f.getMinParams() || arguments.length > f.getMaxParams())
+                throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
+                    + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
+                    + " argument(s) while has been received " + arguments.length, 0);
+            } else
+              arguments = null;
+
+            method = new OSQLMethodFunctionDelegate(f);
           }
+
+          // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
+
         } else {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(getMethod(OSQLMethodField.NAME), new Object[] { part }));
         }
@@ -106,7 +125,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
       try {
         for (OPair<OSQLMethod, Object[]> op : operationsChain) {
           operator = op.getKey();
-          ioResult = operator.execute(iRecord, null, ioResult, op.getValue());
+
+          // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
+          ioResult = operator.execute(iRecord, iContext, ioResult, op.getValue());
         }
       } catch (ParseException e) {
         OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,

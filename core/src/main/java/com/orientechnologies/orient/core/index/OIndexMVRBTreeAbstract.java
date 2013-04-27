@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -389,6 +390,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       for (final String clusterName : clustersToIndex)
         try {
           for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+            if (Thread.interrupted())
+              throw new OCommandExecutionException("The index rebuild has been interrupted");
+
             if (record instanceof ODocument) {
               final ODocument doc = (ODocument) record;
 

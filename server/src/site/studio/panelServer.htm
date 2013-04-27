@@ -72,17 +72,36 @@
 	}
 
 	function writeServerInfo(server) {
+		for(c in server['connections']){
+			var conn = server['connections'][c];
+			var connId = conn['connectionId'];
+
+			conn['Commands'] = "<a href='#' onclick='interruptConnection(" + connId + ")'><img alt='Interrupt the pending command' src='images/execute.gif'></a>"+
+			"&nbsp;<a href='#' onclick='killConnection(" + connId + ")'><img alt='Kill the connection' src='images/remove.png'></a>";
+		}
+
+
 		fillStaticTable($('#serverConnections'), [ 'Connection Id',
 				'Remote Client', 'Database', 'User', 'Total requests',
 				'Command info', 'Command detail', 'Last command On',
 				'Last command info', 'Last command detail',
 				'Last execution time', 'Total working time', 'Connected since',
-				'Protocol', 'Client Id', 'Driver' ], server['connections']);
+				'Protocol', 'Client Id', 'Driver', 'Commands' ], server['connections']);
 		fillStaticTable($('#serverDbs'), [ 'Database', 'User', 'Status',
 				'Storage type' ], server['dbs']);
 		fillStaticTable($('#serverStorages'), [ 'Name', 'Type', 'Path',
 				'Active users' ], server['storages']);
 		fillStaticTable($('#serverConfigProperties'), [ 'Name', 'Value' ],
 				server['properties']);
+	}
+
+	function interruptConnection(id){
+		orientServer.connection("interrupt", id);
+		askServerInfo();
+	}
+
+	function killConnection(id){
+		orientServer.connection("kill", id);
+		askServerInfo();
 	}
 </script>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.graph.sql;
 
 import java.util.Map;
 
@@ -30,7 +30,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * SQL DELETE VERTEX command.
@@ -49,8 +53,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("VERTEX");
@@ -123,7 +126,10 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
 
-      if (((OGraphDatabase) database).removeVertex(id)) {
+      final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+      final OrientVertex v = graph.getVertex(id);
+      if (v != null) {
+        v.remove();
         removed++;
         return true;
       }

@@ -29,7 +29,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
- * Handles Multi-value types such as Arrays, Collections and Maps
+ * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -76,6 +76,8 @@ public class OMultiValue {
     if (!isMultiValue(iObject))
       return 0;
 
+    if (iObject instanceof OMultiCollectionIterator<?>)
+      return ((OMultiCollectionIterator<?>) iObject).size();
     if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject).size();
     if (iObject instanceof Map<?, ?>)
@@ -208,20 +210,20 @@ public class OMultiValue {
     if (iObject == null)
       return null;
 
-    if (iObject instanceof Collection<?>)
+    if (iObject instanceof Iterable<?>)
+      return (Iterable<Object>) iObject;
+    else if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject);
-    if (iObject instanceof Map<?, ?>)
+    else if (iObject instanceof Map<?, ?>)
       return ((Map<?, Object>) iObject).values();
-    if (iObject.getClass().isArray())
+    else if (iObject.getClass().isArray())
       return new OIterableObjectArray<Object>(iObject);
-
-    if (iObject instanceof Iterator<?>) {
+    else if (iObject instanceof Iterator<?>) {
       final List<Object> temp = new ArrayList<Object>();
       for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();)
         temp.add(it.next());
       return temp;
-    } else if (iObject instanceof Iterable<?>)
-      return (Iterable<Object>) iObject;
+    }
 
     return null;
   }
@@ -237,6 +239,9 @@ public class OMultiValue {
     if (iObject == null)
       return null;
 
+    if (iObject instanceof Iterator<?>)
+      return (Iterator<Object>) iObject;
+
     if (!isMultiValue(iObject))
       return null;
 
@@ -246,6 +251,7 @@ public class OMultiValue {
       return ((Map<?, Object>) iObject).values().iterator();
     if (iObject.getClass().isArray())
       return new OIterableObjectArray<Object>(iObject).iterator();
+
     return null;
   }
 
@@ -334,10 +340,18 @@ public class OMultiValue {
               coll.add(o);
           }
 
-        } else if (iObject instanceof Map<?, ?>) {
+        } else if (iToAdd instanceof Map<?, ?>) {
           // MAP
-          for (Entry<Object, Object> entry : ((Map<Object, Object>) iObject).entrySet())
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet())
             coll.add(entry.getValue());
+        } else if (iToAdd instanceof Iterable<?>) {
+          // ITERABLE
+          for (Object o : (Iterable<?>) iToAdd)
+            coll.add(o);
+        } else if (iToAdd instanceof Iterator<?>) {
+          // ITERATOR
+          for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext();)
+            coll.add(it.next());
         } else
           coll.add(iToAdd);
 
@@ -370,5 +384,41 @@ public class OMultiValue {
     }
 
     return iObject;
+  }
+
+  public static Object[] array(final Object iValue) {
+    return array(iValue, Object.class);
+  }
+
+  public static <T> T[] array(final Object iValue, final Class<? extends T> iClass) {
+    if (iValue == null)
+      return null;
+
+    final T[] result;
+
+    if (isMultiValue(iValue)) {
+      // CREATE STATIC ARRAY AND FILL IT
+      result = (T[]) Array.newInstance(iClass, getSize(iValue));
+      int i = 0;
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext(); ++i)
+        result[i] = it.next();
+    } else if (isIterable(iValue)) {
+      // SIZE UNKNOWN: USE A LIST AS TEMPORARY OBJECT
+      final List<T> temp = new ArrayList<T>();
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext();)
+        temp.add(it.next());
+
+      if (iClass.equals(Object.class))
+        result = (T[]) temp.toArray();
+      else
+        // CONVERT THEM
+        result = temp.toArray((T[]) Array.newInstance(iClass, getSize(iValue)));
+
+    } else {
+      result = (T[]) Array.newInstance(iClass, 1);
+      result[0] = (T) iValue;
+    }
+
+    return result;
   }
 }

@@ -421,28 +421,35 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     cls = getDatabase().getStorage().callInLock(new Callable<OClass>() {
       @Override
       public OClass call() throws Exception {
-        return classes.get(iClassName.toLowerCase());
+        OClass cls = classes.get(iClassName.toLowerCase());
+
+        if (cls == null) {
+          // CHECK IF CAN AUTO-CREATE IT
+          final ODatabase ownerDb = getDatabase().getDatabaseOwner();
+          if (ownerDb instanceof ODatabaseObject) {
+            final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
+
+            if (javaClass != null) {
+              // AUTO REGISTER THE CLASS AT FIRST USE
+              cls = cascadeCreate(javaClass);
+            }
+          }
+        }
+        return cls;
       }
     }, false);
-
-    if (cls == null) {
-      // CHECK IF CAN AUTO-CREATE IT
-      final ODatabase ownerDb = getDatabase().getDatabaseOwner();
-      if (ownerDb instanceof ODatabaseObject) {
-        final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
-
-        if (javaClass != null) {
-          // AUTO REGISTER THE CLASS AT FIRST USE
-          cls = cascadeCreate(javaClass);
-        }
-      }
-    }
     return cls;
   }
 
-  public void changeClassName(String iOldName, String iNewName) {
-    OClass clazz = classes.remove(iOldName.toLowerCase());
-    classes.put(iNewName.toLowerCase(), clazz);
+  public void changeClassName(final String iOldName, final String iNewName) {
+    getDatabase().getStorage().callInLock(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        final OClass clazz = classes.remove(iOldName.toLowerCase());
+        classes.put(iNewName.toLowerCase(), clazz);
+        return null;
+      }
+    }, true);
   }
 
   /**
@@ -450,53 +457,60 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    */
   @Override
   public void fromStream() {
-    // READ CURRENT SCHEMA VERSION
-    final Integer schemaVersion = (Integer) document.field("schemaVersion");
-    if (schemaVersion == null) {
-      OLogManager
-          .instance()
-          .error(
-              this,
-              "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
-      return;
-    } else if (schemaVersion.intValue() != CURRENT_VERSION_NUMBER) {
-      // HANDLE SCHEMA UPGRADE
-      throw new OConfigurationException(
-          "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
-    }
+    final OSchemaShared me = this;
+    getDatabase().getStorage().callInLock(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        // READ CURRENT SCHEMA VERSION
+        final Integer schemaVersion = (Integer) document.field("schemaVersion");
+        if (schemaVersion == null) {
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
+          return null;
+        } else if (schemaVersion.intValue() != CURRENT_VERSION_NUMBER) {
+          // HANDLE SCHEMA UPGRADE
+          throw new OConfigurationException(
+              "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
+        }
 
-    // REGISTER ALL THE CLASSES
-    classes.clear();
-    OClassImpl cls;
-    Collection<ODocument> storedClasses = document.field("classes");
-    for (ODocument c : storedClasses) {
-      cls = new OClassImpl(this, c);
-      cls.fromStream();
-      classes.put(cls.getName().toLowerCase(), cls);
+        // REGISTER ALL THE CLASSES
+        classes.clear();
+        OClassImpl cls;
+        Collection<ODocument> storedClasses = document.field("classes");
+        for (ODocument c : storedClasses) {
+          cls = new OClassImpl(me, c);
+          cls.fromStream();
+          classes.put(cls.getName().toLowerCase(), cls);
 
-      if (cls.getShortName() != null)
-        classes.put(cls.getShortName().toLowerCase(), cls);
-    }
+          if (cls.getShortName() != null)
+            classes.put(cls.getShortName().toLowerCase(), cls);
+        }
 
-    // REBUILD THE INHERITANCE TREE
-    String superClassName;
-    OClass superClass;
-    for (ODocument c : storedClasses) {
-      superClassName = c.field("superClass");
+        // REBUILD THE INHERITANCE TREE
+        String superClassName;
+        OClass superClass;
+        for (ODocument c : storedClasses) {
+          superClassName = c.field("superClass");
 
-      if (superClassName != null) {
-        // HAS A SUPER CLASS
-        cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase());
+          if (superClassName != null) {
+            // HAS A SUPER CLASS
+            cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase());
 
-        superClass = classes.get(superClassName.toLowerCase());
+            superClass = classes.get(superClassName.toLowerCase());
 
-        if (superClass == null)
-          throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
-              + "' but was not found in schema. Remove the dependency or create the class to continue.");
+            if (superClass == null)
+              throw new OConfigurationException("Super class '" + superClassName + "' was declared in class '" + cls.getName()
+                  + "' but was not found in schema. Remove the dependency or create the class to continue.");
 
-        cls.setSuperClassInternal(superClass);
+            cls.setSuperClassInternal(superClass);
+          }
+        }
+        return null;
       }
-    }
+    }, true);
   }
 
   /**
@@ -505,22 +519,28 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   @Override
   @OBeforeSerialization
   public ODocument toStream() {
-    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    return getDatabase().getStorage().callInLock(new Callable<ODocument>() {
+      @Override
+      public ODocument call() throws Exception {
 
-    try {
-      document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+        document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-      Set<ODocument> cc = new HashSet<ODocument>();
-      for (OClass c : classes.values())
-        cc.add(((OClassImpl) c).toStream());
+        try {
+          document.field("schemaVersion", CURRENT_VERSION_NUMBER);
 
-      document.field("classes", cc, OType.EMBEDDEDSET);
+          Set<ODocument> cc = new HashSet<ODocument>();
+          for (OClass c : classes.values())
+            cc.add(((OClassImpl) c).toStream());
 
-    } finally {
-      document.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
+          document.field("classes", cc, OType.EMBEDDEDSET);
 
-    return document;
+        } finally {
+          document.setInternalStatus(ORecordElement.STATUS.LOADED);
+        }
+
+        return document;
+      }
+    }, false);
   }
 
   public Collection<OClass> getClasses() {

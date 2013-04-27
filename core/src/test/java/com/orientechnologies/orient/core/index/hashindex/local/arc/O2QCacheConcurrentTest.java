@@ -7,8 +7,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,6 +27,8 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
@@ -29,23 +40,24 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @author Artem Loginov
  */
 public class O2QCacheConcurrentTest {
+  private final int                                  systemOffset    = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
-  private static final int                    THREAD_COUNT    = 4;
-  private static final int                    PAGE_COUNT      = 20;
-  private static final int                    FILE_COUNT      = 8;
-  private O2QCache                            buffer;
-  private OStorageLocal                       storageLocal;
-  private ODirectMemory                       directMemory;
-  private OStorageSegmentConfiguration[]      fileConfigurations;
-  private byte                                seed;
-  private final ExecutorService               executorService = Executors.newFixedThreadPool(THREAD_COUNT);
-  private final List<Future<Void>>            futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
-  private AtomicLongArray                     fileIds         = new AtomicLongArray(FILE_COUNT);
-  private AtomicIntegerArray                  pageCounters    = new AtomicIntegerArray(FILE_COUNT);
+  private static final int                           THREAD_COUNT    = 4;
+  private static final int                           PAGE_COUNT      = 20;
+  private static final int                           FILE_COUNT      = 8;
+  private O2QCache                                   buffer;
+  private OStorageLocal                              storageLocal;
+  private ODirectMemory                              directMemory;
+  private OStorageSegmentConfiguration[]             fileConfigurations;
+  private byte                                       seed;
+  private final ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
+  private final List<Future<Void>>                   futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
+  private AtomicLongArray                            fileIds         = new AtomicLongArray(FILE_COUNT);
+  private AtomicIntegerArray                         pageCounters    = new AtomicIntegerArray(FILE_COUNT);
   private final AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
 
-  private AtomicBoolean                       continuousWrite = new AtomicBoolean(true);
-  private AtomicInteger                       version         = new AtomicInteger(1);
+  private AtomicBoolean                              continuousWrite = new AtomicBoolean(true);
+  private AtomicInteger                              version         = new AtomicInteger(1);
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -89,7 +101,7 @@ public class O2QCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QCache(32, directMemory, 8, storageLocal, true);
+    buffer = new O2QCache(4 * (8 + systemOffset), directMemory, 8 + systemOffset, storageLocal, true);
   }
 
   @AfterClass
@@ -186,9 +198,10 @@ public class O2QCacheConcurrentTest {
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "r");
     fileClassic.open();
+
     for (int i = 0; i < PAGE_COUNT; i++) {
       byte[] content = new byte[8];
-      fileClassic.read(i * 8, content, 8);
+      fileClassic.read(i * (8 + systemOffset) + systemOffset, content, 8);
 
       Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) }, " i = " + i);
     }
@@ -214,8 +227,8 @@ public class O2QCacheConcurrentTest {
       long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
       buffer.markDirty(fileIds.get(fileNumber), pageIndex);
 
-      directMemory.set(pointer, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) },
-          8);
+      directMemory.set(pointer + systemOffset, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber,
+          (byte) (pageIndex & 0xFF) }, 8);
 
       buffer.release(fileIds.get(fileNumber), pageIndex);
     }
@@ -265,7 +278,7 @@ public class O2QCacheConcurrentTest {
 
       long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
 
-      byte[] content = directMemory.get(pointer, 8);
+      byte[] content = directMemory.get(pointer + systemOffset, 8);
 
       buffer.release(fileIds.get(fileNumber), pageIndex);
 

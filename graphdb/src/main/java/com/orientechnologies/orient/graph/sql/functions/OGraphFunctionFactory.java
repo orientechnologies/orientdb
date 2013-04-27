@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.sql.functions;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -29,11 +29,18 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
  * @author Johann Sorel (Geomatys)
  * @module pending
  */
-public class OGremlinFunctionFactory implements OSQLFunctionFactory {
+public class OGraphFunctionFactory implements OSQLFunctionFactory {
 
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
+    FUNCTIONS.put(OSQLFunctionVertices.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionVertices.class);
+    FUNCTIONS.put(OSQLFunctionEdges.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionEdges.class);
+    FUNCTIONS.put(OSQLFunctionLabel.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionLabel.class);
+    FUNCTIONS.put(OSQLFunctionMove.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMove.class);
+    FUNCTIONS.put(OSQLFunctionOut.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionOut.class);
+    FUNCTIONS.put(OSQLFunctionIn.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIn.class);
+    FUNCTIONS.put(OSQLFunctionBoth.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionBoth.class);
   }
 
   public Set<String> getFunctionNames() {

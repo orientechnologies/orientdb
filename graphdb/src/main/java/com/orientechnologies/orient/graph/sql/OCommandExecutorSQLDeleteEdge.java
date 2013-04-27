@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.graph.sql;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,8 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -33,8 +31,15 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 
 /**
  * SQL DELETE EDGE command.
@@ -47,17 +52,15 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
   private ORecordId          from;
   private ORecordId          to;
   private int                removed = 0;
-  private ODatabaseRecord    database;
   private OCommandRequest    query;
   private OSQLFilter         compiledFilter;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
-    database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    graph.getRawGraph().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("EDGE");
@@ -85,7 +88,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
       } else if (temp.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
-          clazz = database.getMetadata().getSchema().getClass(OGraphDatabase.EDGE_CLASS_NAME);
+          clazz = graph.getEdgeType(OGraphDatabase.EDGE_CLASS_NAME);
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
 
@@ -94,7 +97,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
       } else if (temp.length() > 0) {
         // GET/CHECK CLASS NAME
-        clazz = database.getMetadata().getSchema().getClass(temp);
+        clazz = graph.getEdgeType(temp);
         if (clazz == null)
           throw new OCommandSQLParsingException("Class '" + temp + " was not found");
       }
@@ -107,10 +110,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     if (from == null && to == null && rid == null)
       if (clazz == null)
         // DELETE ALL THE EDGES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from E", this));
+        query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E", this));
       else
         // DELETE EDGES OF CLASS X
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
+        query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
 
     return this;
   }
@@ -122,36 +125,39 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     if (from == null && to == null && rid == null && query == null && compiledFilter == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    database = getDatabase();
-    if (!(database instanceof OGraphDatabase))
-      database = new OGraphDatabase((ODatabaseRecordTx) database);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      if (((OGraphDatabase) database).removeEdge(rid))
+      final OrientEdge e = graph.getEdge(rid);
+      if (e != null) {
+        e.remove();
         removed = 1;
+      }
     } else {
       // MULTIPLE EDGES
-      final Set<OIdentifiable> edges;
+      final Set<OrientEdge> edges = new HashSet<OrientEdge>();
 
       if (query == null) {
         // SELECTIVE TARGET
-        if (from != null && to != null)
+        if (from != null && to != null) {
           // REMOVE ALL THE EDGES BETWEEN VERTICES
-          edges = ((OGraphDatabase) database).getEdgesBetweenVertexes(from, to);
-        else if (from != null)
+          for (Edge e : graph.getVertex(from).query().direction(Direction.OUT).edges())
+            if (to.equals(((OrientEdge) e).getInVertex()))
+              edges.add((OrientEdge) e);
+        } else if (from != null)
           // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
-          edges = new HashSet<OIdentifiable>(((OGraphDatabase) database).getOutEdges(from));
+          edges.add((OrientEdge) graph.getVertex(from).getEdges(Direction.OUT));
         else if (to != null)
           // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-          edges = new HashSet<OIdentifiable>(((OGraphDatabase) database).getInEdges(to));
+          edges.add((OrientEdge) graph.getVertex(to).getEdges(Direction.IN));
         else
           throw new OCommandExecutionException("Invalid target");
 
         if (compiledFilter != null) {
           // ADDITIONAL FILTERING
-          for (Iterator<OIdentifiable> it = edges.iterator(); it.hasNext();) {
-            final OIdentifiable edge = it.next();
+          for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext();) {
+            final OrientEdge edge = it.next();
             if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context))
               it.remove();
           }
@@ -159,8 +165,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
         // DELETE THE FOUND EDGES
         removed = edges.size();
-        for (OIdentifiable edge : edges)
-          ((OGraphDatabase) database).removeEdge(edge);
+        for (OrientEdge edge : edges)
+          edge.remove();
       } else if (query != null)
         // TARGET IS A CLASS + OPTIONAL CONDITION
         query.execute(iArgs);
@@ -184,8 +190,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     }
 
     if (id.getIdentity().isValid()) {
+      final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+      final OrientEdge e = graph.getEdge(id);
 
-      if (((OGraphDatabase) database).removeEdge(id)) {
+      if (e != null) {
+        e.remove();
         removed++;
         return true;
       }

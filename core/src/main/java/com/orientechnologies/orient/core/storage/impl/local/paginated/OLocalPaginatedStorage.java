@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -68,6 +69,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -89,11 +91,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private int                                       defaultClusterId    = -1;
 
   private static String[]                           ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet"                                           };
+      ".oef", ".oem", ".oet", ".wal"                                   };
 
   private OModificationLock                         modificationLock    = new OModificationLock();
 
   private final ODiskCache                          diskCache;
+  private final OWriteAheadLog                      writeAheadLog;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -120,6 +123,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
+    if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
+      writeAheadLog = new OWriteAheadLog(this);
+    else
+      writeAheadLog = null;
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -348,9 +355,21 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public boolean check(final boolean iVerbose, final OCommandOutputListener iListener) {
-    // TODO implement when CRC will be ready.
-    return true;
+  public boolean check(final boolean verbose, final OCommandOutputListener listener) {
+    lock.acquireExclusiveLock();
+
+    try {
+      final long start = System.currentTimeMillis();
+
+      OPageDataVerificationError[] pageErrors = diskCache.checkStoredPages(verbose ? listener : null);
+
+      listener.onMessage("Check of storage completed in " + (System.currentTimeMillis() - start) + "ms. "
+          + (pageErrors.length > 0 ? pageErrors.length + " with errors." : " without errors."));
+
+      return pageErrors.length == 0;
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public ODataLocal getDataSegmentById(final int iDataSegmentId) {
@@ -1016,6 +1035,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseSharedLock();
     }
+  }
+
+  OWriteAheadLog getWALInstance() {
+    return writeAheadLog;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

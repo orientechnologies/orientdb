@@ -994,8 +994,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   public void checkForGraphSchema() {
     getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_CLASS_NAME);
-    edgeBaseClass = getMetadata().getSchema().getClass(EDGE_CLASS_NAME);
+    vertexBaseClass = getMetadata().getSchema().getClass("V");
+    edgeBaseClass = getMetadata().getSchema().getClass("E");
 
     if (vertexBaseClass == null) {
       // CREATE THE META MODEL USING THE ORIENT SCHEMA

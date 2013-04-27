@@ -32,8 +32,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @since 2/17/13
  */
 public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K, V>> {
-  private static final int            FREE_POINTER_OFFSET        = 0;
-  private static final int            DEPTH_OFFSET               = OIntegerSerializer.INT_SIZE;
+  private static final int            MAGIC_NUMBER_OFFSET        = 0;
+  private static final int            CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+
+  private static final int            FREE_POINTER_OFFSET        = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int            DEPTH_OFFSET               = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            SIZE_OFFSET                = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int            HISTORY_OFFSET             = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 

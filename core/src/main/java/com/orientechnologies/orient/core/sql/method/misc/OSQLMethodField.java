@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -42,7 +43,8 @@ public class OSQLMethodField extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+      final Object[] iMethodParams) {
 
     if (ioResult != null)
       if (ioResult instanceof String)
@@ -52,9 +54,12 @@ public class OSQLMethodField extends OAbstractSQLMethod {
           OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
           ioResult = null;
         }
+
       else if (ioResult instanceof OIdentifiable)
         ioResult = ((OIdentifiable) ioResult).getRecord();
-      else if (ioResult instanceof Collection<?> || ioResult.getClass().isArray()) {
+
+      else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
+          || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
           result.add(ODocumentHelper.getFieldValue(o, iMethodParams[0].toString()));

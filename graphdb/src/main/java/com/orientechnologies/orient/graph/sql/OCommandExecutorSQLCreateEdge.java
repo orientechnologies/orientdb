@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql;
+package com.orientechnologies.orient.graph.sql;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * SQL CREATE EDGE command.
@@ -52,8 +56,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("EDGE");
@@ -106,28 +109,38 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    ODatabaseRecord database = getDatabase();
-    if (!(database instanceof OGraphDatabase))
-      database = new OGraphDatabase((ODatabaseRecordTx) database);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final ORecordId[] fromIds = parseTarget(database, from);
-    final ORecordId[] toIds = parseTarget(database, to);
+    final ORecordId[] fromIds = parseTarget(graph.getRawGraph(), from);
+    final ORecordId[] toIds = parseTarget(graph.getRawGraph(), to);
 
     // CREATE EDGES
-    List<ODocument> edges = new ArrayList<ODocument>();
+    final List<Object> edges = new ArrayList<Object>();
     for (ORecordId from : fromIds) {
+      final OrientVertex fromVertex = (OrientVertex) graph.getVertex(from);
+      if (fromVertex == null)
+        throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+
       for (ORecordId to : toIds) {
-        final ODocument edge = ((OGraphDatabase) database).createEdge(from, to, clazz.getName());
-        OSQLHelper.bindParameters(edge, fields, new OCommandParameters(iArgs), context);
+        final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
+
+        final String clsName = graph.getEdgeBaseType().equals(clazz) ? null : clazz.getName();
+
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
+          }
+
+        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+
         if (content != null)
-          edge.merge(content, true, false);
+          edge.getRecord().merge(content, true, false);
 
-        if (clusterName != null)
-          edge.save(clusterName);
-        else
-          edge.save();
+        edge.save(clusterName);
 
-        edges.add(edge);
+        edges.add(edge.getId());
       }
     }
 
@@ -139,7 +152,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>}";
   }
 
-  protected ORecordId[] parseTarget(ODatabaseRecord database, final String iTarget) {
+  protected ORecordId[] parseTarget(final ODatabaseRecord database, final String iTarget) {
     final ORecordId[] ids;
     if (iTarget.startsWith("(")) {
       // SUB-QUERY
