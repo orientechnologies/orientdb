@@ -120,8 +120,8 @@
 
 		controller.parameter('queryResponse', commandResponse);
 		controller.parameter('commandResponse', commandResult);
-
 		controller.parameter('queryLimit', limit);
+		controller.parameter('queryLanguage', language);
 
 		var savedQueries = controller.parameter('savedQueries');
 		if (savedQueries == null) {
@@ -141,7 +141,7 @@
 			commandOutputEditor.setCode('');
 		} else {
 			queryResponse(commandResponse);
-			commandOutputEditor.setCode(commandResult);
+			commandOutputEditor.setCode( unescape( commandResult ) );
 		}
 	}
 
@@ -184,6 +184,10 @@
 	previous = controller.parameter('queryLimit');
 	if (previous != null)
 		$("#limit").val(previous);
+
+	previous = controller.parameter('queryLanguage');
+	if (previous != null)
+		$("#language").val(previous);
 
 	queryEditor = CodeMirror.fromTextArea('queryText', {
 		width : "auto",
