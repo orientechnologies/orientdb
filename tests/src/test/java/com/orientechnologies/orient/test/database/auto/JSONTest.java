@@ -627,4 +627,59 @@ public class JSONTest {
 
     db.drop();
   }
+
+  @Test
+  public void nestedJsonTest() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    db.create();
+
+    ODocument rdoc = new ODocument("TestModel");
+    rdoc.fromJSON("{\"@rid\":\"\",\"name\":\"Fox Trot\",\"knowledge\":[]}");
+    rdoc.save();
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    ODocument jdoc = new ODocument("TestModel");
+    jdoc.fromJSON("{\"name\":\"Jane Doe\",\"knowledge\":[{\"endNode\":\"#9:0\",\"relationship\":\"friend\",\"since\":\"2013-04-27T05:09:07.440Z\"}]}");
+    jdoc.save();
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    db.command(
+        new OCommandSQL(
+            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27T16:07:15.094Z\"}]}"))
+        .execute();
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    db.command(
+        new OCommandSQL(
+            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27T16:07:15.094Z\"}]}"))
+        .execute();
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    db.command(
+        new OCommandSQL(
+            "Insert into TestModel content {\"name\":\"Theon Greyjoy\",\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"since\":\"2013-04-27T05:09:07.440Z\"}]}"))
+        .execute();
+
+    for (ODocument o : db.browseClass("TestModel"))
+      System.out.println(o.toJSON());
+    System.out.println("--------------------");
+
+    db.close();
+  }
 }

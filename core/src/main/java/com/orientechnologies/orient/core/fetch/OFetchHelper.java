@@ -396,13 +396,14 @@ public class OFetchHelper {
                 iFieldPathFromRoot, iListener, iContext);
             iContext.onAfterDocument(iRootRecord, d, key.toString(), iUserObject);
           } else {
-            iListener.parseLinkedCollectionValue(iRootRecord, d, iUserObject, key.toString(), iContext);
+            iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
           }
         }
       } else if (OMultiValue.isMultiValue(o)) {
         fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot,
             iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iListener, iContext);
-      }
+      } else
+        iListener.processStandardField(iRootRecord, o, key.toString(), iContext, iUserObject);
     }
     iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
   }
