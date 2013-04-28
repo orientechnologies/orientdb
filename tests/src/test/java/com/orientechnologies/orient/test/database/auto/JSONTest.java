@@ -667,10 +667,6 @@ public class JSONTest {
       System.out.println(o.toJSON());
     System.out.println("--------------------");
 
-    for (ODocument o : db.browseClass("TestModel"))
-      System.out.println(o.toJSON());
-    System.out.println("--------------------");
-
     db.command(
         new OCommandSQL(
             "Insert into TestModel content {\"name\":\"Theon Greyjoy\",\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"since\":\"2013-04-27T05:09:07.440Z\"}]}"))
