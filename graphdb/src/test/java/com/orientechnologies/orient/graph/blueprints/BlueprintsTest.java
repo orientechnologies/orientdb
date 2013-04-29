@@ -67,13 +67,13 @@ public class BlueprintsTest {
     OrientEdge e = graph.addEdge(null, v1, v2, null);
     e.setProperty("key", "forceCreationOfDocument");
 
-    Iterable<ODocument> result = graph.command(new OSQLSynchQuery<>("select from e where key = 'forceCreationOfDocument'"))
+    Iterable<ODocument> result = graph.command(new OSQLSynchQuery<ODocument>("select from e where key = 'forceCreationOfDocument'"))
         .execute();
     Assert.assertTrue(result.iterator().hasNext());
 
     e.remove();
 
-    result = graph.command(new OSQLSynchQuery<>("select from e where key = 'forceCreationOfDocument'")).execute();
+    result = graph.command(new OSQLSynchQuery<ODocument>("select from e where key = 'forceCreationOfDocument'")).execute();
 
     Assert.assertFalse(result.iterator().hasNext());
   }
