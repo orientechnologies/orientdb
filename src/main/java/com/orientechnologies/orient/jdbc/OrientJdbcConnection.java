@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 
@@ -47,258 +48,260 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
  */
 public class OrientJdbcConnection implements Connection {
 
-	private final String dbUrl;
-	private final Properties info;
-	private OGraphDatabase database;
-	private boolean readOnly = false;
-	private boolean autoCommit;
+  private final String     dbUrl;
+  private final Properties info;
+  private OGraphDatabase   database;
+  private boolean          readOnly = false;
+  private boolean          autoCommit;
 
-	public OrientJdbcConnection(String iUrl, Properties iInfo) {
-		dbUrl = iUrl.replace("jdbc:orient:", "");
+  public OrientJdbcConnection(String iUrl, Properties iInfo) {
+    dbUrl = iUrl.replace("jdbc:orient:", "");
 
-		info = iInfo;
+    info = iInfo;
 
-		String username = iInfo.getProperty("user", "admin");
-		String password = iInfo.getProperty("password", "admin");
+    String username = iInfo.getProperty("user", "admin");
+    String password = iInfo.getProperty("password", "admin");
 
-		database = OGraphDatabasePool.global().acquire(dbUrl, username, password);
+    database = OGraphDatabasePool.global().acquire(dbUrl, username, password);
 
-	}
+  }
 
-	public void clearWarnings() throws SQLException {
+  public void clearWarnings() throws SQLException {
+  }
 
-	}
+  public void close() throws SQLException {
+    database.close();
+  }
 
-	public void close() throws SQLException {
-		database.close();
-	}
+  public void commit() throws SQLException {
+    database.commit();
+  }
 
-	public void commit() throws SQLException {
-		database.commit();
-	}
+  public void rollback() throws SQLException {
+    database.rollback();
+  }
 
-	public void rollback() throws SQLException {
-		database.rollback();
-	}
+  public boolean isClosed() throws SQLException {
+    return database.isClosed();
+  }
 
-	public boolean isClosed() throws SQLException {
-		return database.isClosed();
-	}
+  public boolean isReadOnly() throws SQLException {
+    return readOnly;
+  }
 
-	public boolean isReadOnly() throws SQLException {
-		return readOnly;
-	}
+  public void setReadOnly(boolean iReadOnly) throws SQLException {
+    readOnly = iReadOnly;
+  }
 
-	public void setReadOnly(boolean iReadOnly) throws SQLException {
-		readOnly = iReadOnly;
-	}
+  public boolean isValid(int timeout) throws SQLException {
+    return true;
+  }
 
-	public boolean isValid(int timeout) throws SQLException {
-		return true;
-	}
+  public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
 
-	public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public Blob createBlob() throws SQLException {
 
-	public Blob createBlob() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public Clob createClob() throws SQLException {
 
-	public Clob createClob() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public NClob createNClob() throws SQLException {
 
-	public NClob createNClob() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public SQLXML createSQLXML() throws SQLException {
 
-	public SQLXML createSQLXML() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public Statement createStatement() throws SQLException {
+    return new OrientJdbcStatement(this);
+  }
 
-	public Statement createStatement() throws SQLException {
-		return new OrientJdbcStatement(this);
-	}
+  public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    return new OrientJdbcStatement(this);
+  }
 
-	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-		return new OrientJdbcStatement(this);
-	}
+  public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    return new OrientJdbcStatement(this);
+  }
 
-	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		return new OrientJdbcStatement(this);
-	}
+  public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
 
-	public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public boolean getAutoCommit() throws SQLException {
 
-	public boolean getAutoCommit() throws SQLException {
+    return autoCommit;
+  }
 
-		return autoCommit;
-	}
+  public String getCatalog() throws SQLException {
+    return database.getName();
+  }
 
-	public String getCatalog() throws SQLException {
-		return database.getName();
-	}
+  public Properties getClientInfo() throws SQLException {
 
-	public Properties getClientInfo() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public String getClientInfo(String name) throws SQLException {
+    return null;
+  }
 
-	public String getClientInfo(String name) throws SQLException {
-		return null;
-	}
+  public int getHoldability() throws SQLException {
+    return ResultSet.CLOSE_CURSORS_AT_COMMIT;
+  }
 
-	public int getHoldability() throws SQLException {
-		return ResultSet.CLOSE_CURSORS_AT_COMMIT;
-	}
+  public DatabaseMetaData getMetaData() throws SQLException {
+    return new OrientJdbcDatabaseMetaData(this, getDatabase());
+  }
 
-	public DatabaseMetaData getMetaData() throws SQLException {
-		return new OrientJdbcDatabaseMetaData(this, getDatabase());
-	}
+  public int getTransactionIsolation() throws SQLException {
+    return Connection.TRANSACTION_SERIALIZABLE;
+  }
 
-	public int getTransactionIsolation() throws SQLException {
-		return Connection.TRANSACTION_SERIALIZABLE;
-	}
+  public Map<String, Class<?>> getTypeMap() throws SQLException {
+    return null;
+  }
 
-	public Map<String, Class<?>> getTypeMap() throws SQLException {
-		return null;
-	}
+  public SQLWarning getWarnings() throws SQLException {
+    return null;
+  }
 
-	public SQLWarning getWarnings() throws SQLException {
-		return null;
-	}
+  public String nativeSQL(String sql) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public String nativeSQL(String sql) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public CallableStatement prepareCall(String sql) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public CallableStatement prepareCall(String sql) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+      throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public PreparedStatement prepareStatement(String sql) throws SQLException {
+    return new OrientJdbcPreparedStatement(this, sql);
+  }
 
-	public PreparedStatement prepareStatement(String sql) throws SQLException {
-		return new OrientJdbcPreparedStatement(this, sql);
-	}
+  public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+      throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public void rollback(Savepoint savepoint) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-	public void rollback(Savepoint savepoint) throws SQLException {
-		throw new SQLFeatureNotSupportedException();
-	}
+  public void setAutoCommit(boolean autoCommit) throws SQLException {
+    this.autoCommit = autoCommit;
+  }
 
-	public void setAutoCommit(boolean autoCommit) throws SQLException {
-		this.autoCommit = autoCommit;
-	}
+  public void setCatalog(String catalog) throws SQLException {
 
-	public void setCatalog(String catalog) throws SQLException {
+  }
 
-	}
+  public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    // noop
+  }
 
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
-		// noop
-	}
+  public void setClientInfo(String name, String value) throws SQLClientInfoException {
+    // noop
+  }
 
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
-		// noop
-	}
+  public void setHoldability(int holdability) throws SQLException {
 
-	public void setHoldability(int holdability) throws SQLException {
+  }
 
-	}
+  public Savepoint setSavepoint() throws SQLException {
 
-	public Savepoint setSavepoint() throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public Savepoint setSavepoint(String name) throws SQLException {
 
-	public Savepoint setSavepoint(String name) throws SQLException {
+    return null;
+  }
 
-		return null;
-	}
+  public void setTransactionIsolation(int level) throws SQLException {
 
-	public void setTransactionIsolation(int level) throws SQLException {
+  }
 
-	}
+  public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
 
-	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+  }
 
-	}
+  public boolean isWrapperFor(Class<?> iface) throws SQLException {
 
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-		throw new SQLFeatureNotSupportedException();
-	}
+  public <T> T unwrap(Class<T> iface) throws SQLException {
 
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+    throw new SQLFeatureNotSupportedException();
+  }
 
-		throw new SQLFeatureNotSupportedException();
-	}
+  public String getUrl() {
+    return dbUrl;
+  }
 
-	public String getUrl() {
-		return dbUrl;
-	}
+  public OGraphDatabase getDatabase() {
+    return database;
+  }
 
-	public OGraphDatabase getDatabase() {
-		return database;
-	}
+  public void abort(Executor arg0) throws SQLException {
 
-	public void abort(Executor arg0) throws SQLException {
+  }
 
-	}
+  public int getNetworkTimeout() throws SQLException {
+    return OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.getValueAsInteger();
+  }
 
-	public int getNetworkTimeout() throws SQLException {
-		return 0;
-	}
+  /**
+   * No schema is supported.
+   */
+  public String getSchema() throws SQLException {
+    return null;
+  }
 
-	public String getSchema() throws SQLException {
-		return null;
-	}
+  public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
+    OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
+  }
 
-	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
-
-	}
-
-	public void setSchema(String arg0) throws SQLException {
-
-	}
-
+  public void setSchema(String arg0) throws SQLException {
+  }
 }

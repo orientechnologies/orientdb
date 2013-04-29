@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +32,9 @@ import java.util.Set;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -41,11 +44,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
+ * @author Luca Garulli (Orient Technologies - l.garulli--at--orientechnologies.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   private final OrientJdbcConnection connection;
   private final ODatabaseRecord      database;
   private final OMetadata            metadata;
+  private final static Set<String>   SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
+      "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
 
   public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {
     connection = iConnection;
@@ -54,32 +60,26 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public boolean allProceduresAreCallable() throws SQLException {
-
-    return false;
+    return true;
   }
 
   public boolean allTablesAreSelectable() throws SQLException {
-
-    return false;
+    return true;
   }
 
   public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
-
     return false;
   }
 
   public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
-
     return false;
   }
 
   public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
-
-    return false;
+    return true;
   }
 
   public boolean deletesAreDetected(int type) throws SQLException {
-
     return false;
   }
 
@@ -128,23 +128,20 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
       final String columnNamePattern) throws SQLException {
 
-    final OrientJdbcStatement stmt = new OrientJdbcStatement(connection);
-
     final List<ODocument> records = new ArrayList<ODocument>();
 
     final OClass clazz = database.getMetadata().getSchema().getClass(tableNamePattern);
     if (clazz != null) {
       final OProperty prop = clazz.getProperty(columnNamePattern);
       if (prop != null) {
-        records.add((ODocument) new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_SCHEM", database.getName())
-            .field("TABLE_NAME", clazz.getName()).field("COLUMN_NAME", prop.getName())
-            .field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(prop.getType())).field("COLUMN_SIZE", 1)
-            .field("NULLABLE", !prop.isNotNull()).field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES"));
+        records.add((ODocument) new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_NAME", clazz.getName())
+            .field("COLUMN_NAME", prop.getName()).field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(prop.getType()))
+            .field("COLUMN_SIZE", 1).field("NULLABLE", !prop.isNotNull()).field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES"));
       }
     }
 
-    return new OrientJdbcResultSet(stmt, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
-        ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public Connection getConnection() throws SQLException {
@@ -158,37 +155,30 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getDatabaseMajorVersion() throws SQLException {
-
     return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[0]);
   }
 
   public int getDatabaseMinorVersion() throws SQLException {
-
     return Integer.valueOf(OConstants.ORIENT_VERSION.split("\\.")[1].substring(0, 1));
   }
 
   public String getDatabaseProductName() throws SQLException {
-
     return "OrientDB";
   }
 
   public String getDatabaseProductVersion() throws SQLException {
-
     return OConstants.getVersion();
   }
 
   public int getDefaultTransactionIsolation() throws SQLException {
-
-    return 0;
+    return java.sql.Connection.TRANSACTION_NONE;
   }
 
   public int getDriverMajorVersion() {
-
     return OrientJdbcDriver.MAJOR_VERSION;
   }
 
   public int getDriverMinorVersion() {
-
     return OrientJdbcDriver.MINOR_VERSION;
   }
 
@@ -198,45 +188,111 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public String getDriverVersion() throws SQLException {
-
     return OrientJdbcDriver.getVersion();
   }
 
   public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
-
     return null;
   }
 
   public String getExtraNameCharacters() throws SQLException {
-
     return null;
   }
 
   public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern)
       throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    final OFunction f = metadata.getFunctionLibrary().getFunction(functionNamePattern);
+
+    for (String p : f.getParameters()) {
+      final ODocument doc = new ODocument();
+      doc.field("FUNCTION_CAT", (Object) null);
+      doc.field("FUNCTION_SCHEM", (Object) null);
+      doc.field("FUNCTION_NAME", f.getName());
+      doc.field("COLUMN_NAME", p);
+      doc.field("COLUMN_TYPE", procedureColumnIn);
+      doc.field("DATA_TYPE", java.sql.Types.OTHER);
+      doc.field("SPECIFIC_NAME", f.getName());
+
+      records.add(doc);
+    }
+
+    final ODocument doc = new ODocument();
+    doc.field("FUNCTION_CAT", (Object) null);
+    doc.field("FUNCTION_SCHEM", (Object) null);
+    doc.field("FUNCTION_NAME", f.getName());
+    doc.field("COLUMN_NAME", "return");
+    doc.field("COLUMN_TYPE", procedureColumnReturn);
+    doc.field("DATA_TYPE", java.sql.Types.OTHER);
+    doc.field("SPECIFIC_NAME", f.getName());
+
+    records.add(doc);
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    for (String fName : metadata.getFunctionLibrary().getFunctionNames()) {
+      final ODocument doc = new ODocument();
+      doc.field("FUNCTION_CAT", (Object) null);
+      doc.field("FUNCTION_SCHEM", (Object) null);
+      doc.field("FUNCTION_NAME", fName);
+      doc.field("REMARKS", "");
+      doc.field("FUNCTION_TYPE", procedureResultUnknown);
+      doc.field("SPECIFIC_NAME", fName);
+
+      records.add(doc);
+    }
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public String getIdentifierQuoteString() throws SQLException {
-
     return " ";
   }
 
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-
     return null;
   }
 
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate)
       throws SQLException {
+    if (!approximate)
+      metadata.getIndexManager().reload();
 
-    return null;
+    final Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
+
+    final Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
+
+    for (OIndex<?> oIndex : classIndexes) {
+      if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
+        indexes.add(oIndex);
+    }
+
+    final List<ODocument> records = new ArrayList<ODocument>();
+
+    for (OIndex<?> idx : indexes) {
+      ODocument doc = new ODocument();
+      doc.field("TABLE_NAME", table);
+      final String fieldNames = idx.getDefinition().getFields().toString();
+      doc.field("COLUMN_NAME", fieldNames.substring(1, fieldNames.length() - 2));
+      doc.field("NON_UNIQUE", idx instanceof OIndexUnique);
+      doc.field("INDEX_NAME", idx.getName());
+      doc.field("ASC_OR_DESC", "ASC");
+
+      records.add(doc);
+    }
+
+    final OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
+
+    final ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return result;
   }
 
   public int getJDBCMajorVersion() throws SQLException {
@@ -355,54 +411,95 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
-    Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
+    final Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
 
-    Set<OIndex<?>> uniqueIndexes = new HashSet<OIndex<?>>();
+    final Set<OIndex<?>> uniqueIndexes = new HashSet<OIndex<?>>();
 
     for (OIndex<?> oIndex : classIndexes) {
       if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name()))
         uniqueIndexes.add(oIndex);
     }
 
-    List<ODocument> iRecords = new ArrayList<ODocument>();
+    final List<ODocument> records = new ArrayList<ODocument>();
 
     for (OIndex<?> unique : uniqueIndexes) {
       int keyFiledSeq = 1;
       for (String keyFieldName : unique.getDefinition().getFields()) {
         ODocument doc = new ODocument();
-        doc.field("TABLE_CAT", catalog);
-        doc.field("TABLE_SCHEM", schema);
+        doc.field("TABLE_CAT", (Object) null);
+        doc.field("TABLE_SCHEM", (Object) null);
         doc.field("TABLE_NAME", table);
         doc.field("COLUMN_NAME", keyFieldName);
         doc.field("KEY_SEQ", Integer.valueOf(keyFiledSeq), OType.INTEGER);
         doc.field("PK_NAME", unique.getName());
         keyFiledSeq++;
 
-        iRecords.add(doc);
+        records.add(doc);
       }
-
     }
-    OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
 
-    ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, iRecords, ResultSet.TYPE_FORWARD_ONLY,
+    final OrientJdbcStatement iOrientJdbcStatement = new OrientJdbcStatement(connection);
+
+    final ResultSet result = new OrientJdbcResultSet(iOrientJdbcStatement, records, ResultSet.TYPE_FORWARD_ONLY,
         ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
     return result;
   }
 
   public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern)
       throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    final OFunction f = metadata.getFunctionLibrary().getFunction(procedureNamePattern);
+
+    for (String p : f.getParameters()) {
+      final ODocument doc = new ODocument();
+      doc.field("PROCEDURE_CAT", (Object) null);
+      doc.field("PROCEDURE_SCHEM", (Object) null);
+      doc.field("PROCEDURE_NAME", f.getName());
+      doc.field("COLUMN_NAME", p);
+      doc.field("COLUMN_TYPE", procedureColumnIn);
+      doc.field("DATA_TYPE", java.sql.Types.OTHER);
+      doc.field("SPECIFIC_NAME", f.getName());
+
+      records.add(doc);
+    }
+
+    final ODocument doc = new ODocument();
+    doc.field("PROCEDURE_CAT", (Object) null);
+    doc.field("PROCEDURE_SCHEM", (Object) null);
+    doc.field("PROCEDURE_NAME", f.getName());
+    doc.field("COLUMN_NAME", "return");
+    doc.field("COLUMN_TYPE", procedureColumnReturn);
+    doc.field("DATA_TYPE", java.sql.Types.OTHER);
+    doc.field("SPECIFIC_NAME", f.getName());
+
+    records.add(doc);
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public String getProcedureTerm() throws SQLException {
-
-    return null;
+    return "Function";
   }
 
   public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    for (String fName : metadata.getFunctionLibrary().getFunctionNames()) {
+      final ODocument doc = new ODocument();
+      doc.field("PROCEDURE_CAT", (Object) null);
+      doc.field("PROCEDURE_SCHEM", (Object) null);
+      doc.field("PROCEDURE_NAME", fName);
+      doc.field("REMARKS", "");
+      doc.field("PROCEDURE_TYPE", procedureResultUnknown);
+      doc.field("SPECIFIC_NAME", fName);
+
+      records.add(doc);
+    }
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public int getResultSetHoldability() throws SQLException {
@@ -451,13 +548,41 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
+    final OClass cls = database.getMetadata().getSchema().getClass(tableNamePattern);
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    if (cls != null && cls.getSuperClass() != null) {
+      final ODocument doc = new ODocument();
+      doc.field("TABLE_CAT", (Object) null);
+      doc.field("TABLE_SCHEM", (Object) null);
+      doc.field("TABLE_NAME", cls.getName());
+      doc.field("SUPERTABLE_CAT", (Object) null);
+      doc.field("SUPERTABLE_SCHEM", (Object) null);
+      doc.field("SUPERTABLE_NAME", cls.getSuperClass().getName());
+      records.add(doc);
+    }
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
+    final OClass cls = database.getMetadata().getSchema().getClass(typeNamePattern);
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    if (cls != null && cls.getSuperClass() != null) {
+      final ODocument doc = new ODocument();
+      doc.field("TABLE_CAT", (Object) null);
+      doc.field("TABLE_SCHEM", (Object) null);
+      doc.field("TABLE_NAME", cls.getName());
+      doc.field("SUPERTYPE_CAT", (Object) null);
+      doc.field("SUPERTYPE_SCHEM", (Object) null);
+      doc.field("SUPERTYPE_NAME", cls.getSuperClass().getName());
+      records.add(doc);
+    }
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public String getSystemFunctions() throws SQLException {
@@ -484,34 +609,61 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
-    OrientJdbcStatement stmt = new OrientJdbcStatement(connection);
-    Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
-    List<ODocument> records = new ArrayList<ODocument>();
+    final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    for (OClass oClass : classes) {
-      records.add(new ODocument().field("TABLE_TYPE", "TABLE").field("TABLE_CAT", database.getName())
-          .field("TABLE_SCHEM", database.getName()).field("TABLE_NAME", oClass.getName()).field("REMARKS", "null")
-          .field("TYPE_CAT", "null").field("TYPE_SCHEM", "null").field("TYPE_NAME", "null").field("REF_GENERATION", "null"));
+    for (OClass cls : classes) {
+      final ODocument doc = new ODocument();
+      doc.field("TABLE_CAT", (Object) null);
+      doc.field("TABLE_SCHEM", (Object) null);
+
+      String type;
+      if (SYSTEM_TABLES.contains(cls.getName()))
+        type = "SYSTEM TABLE";
+      else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
+        type = "VIEW";
+      else
+        type = "TABLE";
+
+      doc.field("TABLE_TYPE", type);
+      doc.field("TABLE_NAME", cls.getName());
+      doc.field("REMARKS", (Object) null);
+      doc.field("TYPE_NAME", (Object) null);
+      doc.field("REF_GENERATION", (Object) null);
+      records.add(doc);
 
     }
 
-    return new OrientJdbcResultSet(stmt, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
-        ResultSet.HOLD_CURSORS_OVER_COMMIT);
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public String getTimeDateFunctions() throws SQLException {
-
-    return "";
+    return "date,sysdate";
   }
 
   public ResultSet getTypeInfo() throws SQLException {
-
     return null;
   }
 
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
+    final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
+    final List<ODocument> records = new ArrayList<ODocument>();
 
-    return null;
+    for (OClass cls : classes) {
+      final ODocument doc = new ODocument();
+      doc.field("TYPE_CAT", (Object) null);
+      doc.field("TYPE_SCHEM", (Object) null);
+      doc.field("TYPE_NAME", cls.getName());
+      doc.field("CLASS_NAME", cls.getName());
+      doc.field("DATA_TYPE", java.sql.Types.STRUCT);
+      doc.field("REMARKS", (Object) null);
+      records.add(doc);
+
+    }
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public String getURL() throws SQLException {
@@ -751,7 +903,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public boolean supportsGroupBy() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsGroupByBeyondSelect() throws SQLException {
@@ -806,17 +958,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public boolean supportsMultipleTransactions() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsNamedParameters() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsNonNullableColumns() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
@@ -916,12 +1068,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsStoredProcedures() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsSubqueriesInComparisons() throws SQLException {
@@ -936,7 +1088,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public boolean supportsSubqueriesInIns() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsSubqueriesInQuantifieds() throws SQLException {
@@ -956,12 +1108,12 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public boolean supportsTransactions() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsUnion() throws SQLException {
 
-    return false;
+    return true;
   }
 
   public boolean supportsUnionAll() throws SQLException {
