@@ -1,4 +1,6 @@
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.blueprints;
+
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 
 
 /**

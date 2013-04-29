@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.blueprints;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 
 public class LocalGraphDbTest {
   private static String DB_URL = "local:target/databases/tinkerpop";
