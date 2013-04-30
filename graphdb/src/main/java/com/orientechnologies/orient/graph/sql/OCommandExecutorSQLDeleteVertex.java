@@ -20,9 +20,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -69,7 +67,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       } else if (temp.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
-          clazz = database.getMetadata().getSchema().getClass(OGraphDatabase.VERTEX_CLASS_NAME);
+          clazz = database.getMetadata().getSchema().getClass(OrientVertex.CLASS_NAME);
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));
@@ -102,14 +100,15 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (rid == null && query == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    database = getDatabase();
-    if (!(database instanceof OGraphDatabase))
-      database = new OGraphDatabase((ODatabaseRecordTx) database);
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      if (((OGraphDatabase) database).removeVertex(rid))
+      final OrientVertex v = graph.getVertex(rid);
+      if (v != null) {
+        v.remove();
         removed = 1;
+      }
     } else if (query != null)
       // TARGET IS A CLASS + OPTIONAL CONDITION
       query.execute(iArgs);
