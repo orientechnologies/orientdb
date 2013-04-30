@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
@@ -275,7 +276,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       } else {
         final ORecordLazyList coll;
         final Iterator<OIdentifiable> it;
-        if (!(iValue instanceof ORecordLazyList)) {
+        if (iValue instanceof OMultiCollectionIterator<?>) {
+          it = (Iterator<OIdentifiable>) iValue;
+          coll = null;
+        } else if (!(iValue instanceof ORecordLazyList)) {
           // FIRST TIME: CONVERT THE ENTIRE COLLECTION
           coll = new ORecordLazyList(iRecord);
 
@@ -317,14 +321,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
               ((OLazyIterator<OIdentifiable>) it).update(newRid);
           }
 
-          coll.convertRecords2Links();
-          // if (!coll.convertRecords2Links())
-          // throw new OSerializationException("Cannot convert record to links because some entries is not persistent");
+          if (coll != null)
+            coll.convertRecords2Links();
 
           iOutput.append(buffer);
 
           // UPDATE THE STREAM
-          coll.setStreamedContent(buffer);
+          if (coll != null)
+            coll.setStreamedContent(buffer);
         }
       }
 

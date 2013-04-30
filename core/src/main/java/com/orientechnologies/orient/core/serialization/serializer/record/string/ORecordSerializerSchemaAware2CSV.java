@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -171,7 +172,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             type = OType.DECIMAL;
         }
 
-        if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+        if (fieldValue instanceof OMultiCollectionIterator<?>) {
+          type = OType.LINKLIST;
+        } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
           final int size = OMultiValue.getSize(fieldValue);
 
           Boolean autoConvertLinks = null;
@@ -519,7 +522,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
-    byte[] result = super.toStream(iRecord, iOnlyDelta);
+    final byte[] result = super.toStream(iRecord, iOnlyDelta);
     if (result == null || result.length > 0)
       return result;
 

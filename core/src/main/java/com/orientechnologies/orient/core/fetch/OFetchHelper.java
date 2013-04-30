@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -169,6 +170,7 @@ public class OFetchHelper {
               .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
+          && (!(fieldValue instanceof OMultiCollectionIterator<?>))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
               .iterator().next() instanceof OIdentifiable))) {
         continue;
@@ -199,7 +201,7 @@ public class OFetchHelper {
     } else if (fieldValue instanceof ODocument) {
       fetchDocumentRidMap(iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
           iFieldPathFromRoot, iContext);
-    } else if (fieldValue instanceof Collection<?>) {
+    } else if (fieldValue instanceof Iterable<?>) {
       fetchCollectionRidMap(iRootRecord.getDatabase(), iFetchPlan, fieldValue, fieldName, iCurrentLevel, iLevelFromRoot,
           iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iContext);
     } else if (fieldValue.getClass().isArray()) {
@@ -223,11 +225,10 @@ public class OFetchHelper {
       final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
       final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
       final OFetchContext iContext) throws IOException {
-    final Collection<OIdentifiable> linked = (Collection<OIdentifiable>) fieldValue;
+    final Iterable<OIdentifiable> linked = (Iterable<OIdentifiable>) fieldValue;
     for (OIdentifiable d : linked) {
       // GO RECURSIVELY
-      if (d instanceof ORecordId)
-        d = iDatabase.load((ORecordId) d);
+      d = d.getRecord();
 
       updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
           iContext);
