@@ -94,6 +94,7 @@ public class OScheduleHandler extends OServerHandlerAbstract {
 		while(sKeys.hasNext()) {
 			String key = sKeys.next();
 			OScheduler scheduler = schedulers.get(key);
+			scheduler.setDatabase(db);
 			if(OLogManager.instance().isDebugEnabled()) {
 			    OLogManager.instance().debug(this, "check : " + scheduler.toString());
 			}
