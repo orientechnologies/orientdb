@@ -63,6 +63,14 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.codehaus</groupId>
+			<artifactId>groovy</artifactId>
+			<version>1.8.9</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
+		</dependency>
+
 		<!-- TINKERPOP STACK -->
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
@@ -100,14 +108,6 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/gremlin-groovy-${blueprints.version}.jar</systemPath>
 		</dependency>
-		<dependency>
-			<groupId>org.codehaus</groupId>
-			<artifactId>groovy</artifactId>
-			<version>1.8.9</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
-		</dependency>
-
 		<!-- <dependency> <groupId>com.tinkerpop.blueprints</groupId> <artifactId>blueprints-core</artifactId> 
 			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.blueprints</groupId> 
 			<artifactId>blueprints-orient-graph</artifactId> <version>${blueprints.version}</version> 
@@ -117,6 +117,18 @@
 			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> 
 			<artifactId>gremlin-groovy</artifactId> <version>${blueprints.version}</version> 
 			</dependency> -->
+		<dependency>
+			<groupId>asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>3.2</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>antlr</groupId>
+			<artifactId>antlr</artifactId>
+			<version>2.7.7</version>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>

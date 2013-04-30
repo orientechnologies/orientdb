@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.blueprints;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

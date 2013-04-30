@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.blueprints;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +19,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;

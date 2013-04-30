@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.graph.gremlin;
+package com.orientechnologies.orient.graph.blueprints;
 
 import java.util.Random;
 import java.util.logging.Logger;
@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 
 public class GremlinTest {
   static Logger logger   = Logger.getLogger(GremlinTest.class.getName());
