@@ -29,10 +29,6 @@ public interface OWALRecord {
 
   boolean isUpdateMasterRecord();
 
-  long getPageIndex();
-
-  String getFileName();
-
   OLogSequenceNumber getLsn();
 
   void setLsn(OLogSequenceNumber lsn);

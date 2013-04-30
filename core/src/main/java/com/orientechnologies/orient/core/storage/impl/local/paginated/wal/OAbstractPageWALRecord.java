@@ -1,3 +1,19 @@
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -7,16 +23,16 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
  * @author Andrey Lomakin
  * @since 29.04.13
  */
-public abstract class OAbstractWALRecord implements OWALRecord {
+public abstract class OAbstractPageWALRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
 
   private long               pageIndex;
   private String             fileName;
 
-  protected OAbstractWALRecord() {
+  protected OAbstractPageWALRecord() {
   }
 
-  protected OAbstractWALRecord(long pageIndex, String fileName) {
+  protected OAbstractPageWALRecord(long pageIndex, String fileName) {
     this.pageIndex = pageIndex;
     this.fileName = fileName;
   }
@@ -48,12 +64,10 @@ public abstract class OAbstractWALRecord implements OWALRecord {
     return OLongSerializer.LONG_SIZE + OStringSerializer.INSTANCE.getObjectSize(fileName);
   }
 
-  @Override
   public long getPageIndex() {
     return pageIndex;
   }
 
-  @Override
   public String getFileName() {
     return fileName;
   }
@@ -75,7 +89,7 @@ public abstract class OAbstractWALRecord implements OWALRecord {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OAbstractWALRecord that = (OAbstractWALRecord) o;
+    OAbstractPageWALRecord that = (OAbstractPageWALRecord) o;
 
     if (pageIndex != that.pageIndex)
       return false;

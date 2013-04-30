@@ -90,6 +90,18 @@ public class OLocalPage {
     }
   }
 
+  public long getPageIndex() {
+    return pageIndex;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public long getPagePointer() {
+    return pagePointer;
+  }
+
   public int appendRecord(ORecordVersion recordVersion, byte[] record) throws IOException {
     startAtomicUpdate();
     try {

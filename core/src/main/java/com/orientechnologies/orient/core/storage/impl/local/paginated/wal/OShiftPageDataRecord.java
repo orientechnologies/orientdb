@@ -22,7 +22,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OShiftPageDataRecord extends OAbstractWALRecord {
+public class OShiftPageDataRecord extends OAbstractPageWALRecord {
   private int from;
   private int to;
   private int len;
