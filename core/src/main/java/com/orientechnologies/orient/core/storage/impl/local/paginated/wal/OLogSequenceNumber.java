@@ -57,6 +57,11 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
     if (segment < otherNumber.segment)
       return -1;
 
-    return Long.compare(position, otherNumber.position);
+    if (position > otherNumber.position)
+      return 1;
+    else if (position < otherNumber.position)
+      return -1;
+
+    return 0;
   }
 }

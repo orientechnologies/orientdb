@@ -20,13 +20,27 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OPageId {
-  public final String fileName;
-  public final long   pageIndex;
+public class ODirtyPageId {
+  public final String              fileName;
+  public final long                pageIndex;
+  private final OLogSequenceNumber lsn;
 
-  public OPageId(String fileName, long pageIndex) {
+  public ODirtyPageId(String fileName, long pageIndex, OLogSequenceNumber lsn) {
     this.fileName = fileName;
     this.pageIndex = pageIndex;
+    this.lsn = lsn;
+  }
+
+  public String getFileName() {
+    return fileName;
+  }
+
+  public long getPageIndex() {
+    return pageIndex;
+  }
+
+  public OLogSequenceNumber getLsn() {
+    return lsn;
   }
 
   @Override
@@ -36,11 +50,13 @@ public class OPageId {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OPageId oPageId = (OPageId) o;
+    ODirtyPageId that = (ODirtyPageId) o;
 
-    if (pageIndex != oPageId.pageIndex)
+    if (pageIndex != that.pageIndex)
       return false;
-    if (!fileName.equals(oPageId.fileName))
+    if (!fileName.equals(that.fileName))
+      return false;
+    if (!lsn.equals(that.lsn))
       return false;
 
     return true;
@@ -50,6 +66,7 @@ public class OPageId {
   public int hashCode() {
     int result = fileName.hashCode();
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
+    result = 31 * result + lsn.hashCode();
     return result;
   }
 }

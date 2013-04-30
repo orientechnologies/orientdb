@@ -31,6 +31,7 @@ import java.util.zip.CRC32;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -40,12 +41,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * @since 25.04.13
  */
 public class OWriteAheadLog {
-  private static final long      ONE_KB      = 1024L;
+  private static final long      ONE_KB               = 1024L;
   private OLogSequenceNumber     masterRecord;
 
-  private final Object           syncObject  = new Object();
+  private final Object           syncObject           = new Object();
 
-  private final List<LogSegment> logSegments = new ArrayList<LogSegment>();
+  private final List<LogSegment> logSegments          = new ArrayList<LogSegment>();
+  private final RandomAccessFile masterRecordLSNHolder;
+  private boolean                useFirstMasterRecord = true;
 
   private final int              maxRecordsCacheSize;
   private final int              commitDelay;
@@ -93,7 +96,6 @@ public class OWriteAheadLog {
       if (walFiles.length == 0) {
         logSegments.add(new LogSegment(new File(this.walLocation, getSegmentName(0)), maxRecordsCacheSize));
 
-        masterRecord = null;
         logSize = 0;
       } else {
         for (File walFile : walFiles) {
@@ -105,11 +107,75 @@ public class OWriteAheadLog {
         Collections.sort(logSegments);
       }
 
+      File masterRecordFile = new File(walLocation, storageName + ".wmr");
+      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rwd");
+
+      if (masterRecordLSNHolder.length() > 0) {
+        OLogSequenceNumber firstMasterRecord = readMasterRecord(storageName, 0);
+        OLogSequenceNumber secondMasterRecord = readMasterRecord(storageName, 1);
+
+        if (firstMasterRecord == null) {
+          useFirstMasterRecord = true;
+          masterRecord = secondMasterRecord;
+        } else if (secondMasterRecord == null) {
+          useFirstMasterRecord = false;
+          masterRecord = firstMasterRecord;
+        } else {
+          if (firstMasterRecord.compareTo(secondMasterRecord) >= 0) {
+            masterRecord = firstMasterRecord;
+            useFirstMasterRecord = false;
+          } else {
+            masterRecord = firstMasterRecord;
+            useFirstMasterRecord = false;
+          }
+        }
+      }
     } catch (FileNotFoundException e) {
       // never happened
       OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storageName);
       throw new IllegalStateException("Error during file initialization for storage " + storageName, e);
     }
+  }
+
+  private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
+    CRC32 crc32 = new CRC32();
+    try {
+      masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+
+      int firstCRC = masterRecordLSNHolder.readInt();
+      int segment = masterRecordLSNHolder.readInt();
+      long position = masterRecordLSNHolder.readLong();
+
+      byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
+      OIntegerSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OIntegerSerializer.INT_SIZE);
+      crc32.update(serializedLSN);
+
+      if (firstCRC != ((int) crc32.getValue())) {
+        OLogManager.instance().error(this, "Can not restore %d WAL master record for storage %s crc check is failed", index,
+            storageName);
+        return null;
+      }
+
+      return new OLogSequenceNumber(segment, position);
+    } catch (EOFException eofException) {
+      OLogManager.instance().error(this, "Can not restore %d WAL master record for storage %s", eofException, index, storageName);
+      return null;
+    }
+  }
+
+  private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
+    masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+    CRC32 crc32 = new CRC32();
+
+    byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
+    OIntegerSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OIntegerSerializer.INT_SIZE);
+    crc32.update(serializedLSN);
+
+    masterRecordLSNHolder.writeInt((int) crc32.getValue());
+    masterRecordLSNHolder.writeInt(masterRecord.getSegment());
+    masterRecordLSNHolder.writeLong(masterRecord.getPosition());
   }
 
   private String getSegmentName(int order) {
@@ -152,11 +218,21 @@ public class OWriteAheadLog {
         logSegments.add(last);
       }
 
-      final OLogSequenceNumber lsn = last.logRecord(serializedForm);
+      final OLogSequenceNumber lsn = last.logRecord(serializedForm, record.isUpdateMasterRecord());
       record.setLsn(lsn);
 
-      if (record.isUpdateMasterRecord())
+      if (record.isUpdateMasterRecord()) {
+        if (useFirstMasterRecord) {
+          writeMasterRecord(0, lsn);
+          useFirstMasterRecord = false;
+        } else {
+          writeMasterRecord(1, lsn);
+          useFirstMasterRecord = true;
+        }
+
         masterRecord = lsn;
+      }
+
     }
   }
 
@@ -175,7 +251,7 @@ public class OWriteAheadLog {
     }
   }
 
-  public void logDirtyPages(Set<Long> dirtyPages) {
+  public void logDirtyPages(Set<ODirtyPageId> dirtyPages) {
     synchronized (syncObject) {
 
     }
@@ -297,7 +373,12 @@ public class OWriteAheadLog {
     public int compareTo(LogSegment other) {
       final int otherOrder = other.order;
 
-      return Integer.compare(order, otherOrder);
+      if (order > otherOrder)
+        return 1;
+      else if (order < otherOrder)
+        return -1;
+
+      return 0;
     }
 
     public long size() throws IOException {
@@ -313,11 +394,11 @@ public class OWriteAheadLog {
       return file.getAbsolutePath();
     }
 
-    public OLogSequenceNumber logRecord(byte[] record) throws IOException {
+    public OLogSequenceNumber logRecord(byte[] record, boolean updateMasterRecord) throws IOException {
       final OLogSequenceNumber lsn = new OLogSequenceNumber(order, size);
       final int entrySize = calculateEntrySize(record);
 
-      records.add(new CacheEntry(record, lsn));
+      records.add(new CacheEntry(record, lsn, updateMasterRecord));
 
       size += entrySize;
       recordsCacheSize += entrySize;
@@ -430,10 +511,12 @@ public class OWriteAheadLog {
   private static final class CacheEntry {
     private final byte[]             record;
     private final OLogSequenceNumber lsn;
+    private final boolean            updateMasterRecord;
 
-    private CacheEntry(byte[] record, OLogSequenceNumber lsn) {
+    private CacheEntry(byte[] record, OLogSequenceNumber lsn, boolean updateMasterRecord) {
       this.record = record;
       this.lsn = lsn;
+      this.updateMasterRecord = updateMasterRecord;
     }
 
     @Override
@@ -445,6 +528,8 @@ public class OWriteAheadLog {
 
       CacheEntry that = (CacheEntry) o;
 
+      if (updateMasterRecord != that.updateMasterRecord)
+        return false;
       if (!lsn.equals(that.lsn))
         return false;
       if (!Arrays.equals(record, that.record))
@@ -457,6 +542,7 @@ public class OWriteAheadLog {
     public int hashCode() {
       int result = Arrays.hashCode(record);
       result = 31 * result + lsn.hashCode();
+      result = 31 * result + (updateMasterRecord ? 1 : 0);
       return result;
     }
   }
