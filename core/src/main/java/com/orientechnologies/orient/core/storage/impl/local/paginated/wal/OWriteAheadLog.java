@@ -158,7 +158,7 @@ public class OWriteAheadLog {
   private void fixMasterRecords() throws IOException {
     if (firstMasterRecord != null) {
       int index = firstMasterRecord.getSegment() - logSegments.get(0).getOrder();
-      if (logSegments.size() <= index) {
+      if (logSegments.size() <= index || index < 0) {
         firstMasterRecord = null;
       } else {
         LogSegment firstMasterRecordSegment = logSegments.get(index);
@@ -169,7 +169,7 @@ public class OWriteAheadLog {
 
     if (secondMasterRecord != null) {
       int index = secondMasterRecord.getSegment() - logSegments.get(0).getOrder();
-      if (logSegments.size() <= index) {
+      if (logSegments.size() <= index || index < 0) {
         secondMasterRecord = null;
       } else {
         LogSegment secondMasterRecordSegment = logSegments.get(index);

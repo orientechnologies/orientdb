@@ -55,4 +55,24 @@ public class OCheckpointEndRecord implements OWALRecord {
   public void setLsn(OLogSequenceNumber lsn) {
     this.lsn = lsn;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCheckpointEndRecord that = (OCheckpointEndRecord) o;
+
+    if (!lsn.equals(that.lsn))
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return lsn.hashCode();
+  }
 }

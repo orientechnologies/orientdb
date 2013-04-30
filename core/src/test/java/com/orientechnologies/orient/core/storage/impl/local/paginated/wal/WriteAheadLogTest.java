@@ -8,15 +8,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
  * @author Andrey Lomakin
@@ -523,8 +523,213 @@ public class WriteAheadLogTest {
     assertLogContent(writeAheadLog, writtenRecords.subList(writtenRecords.size() / 2, writtenRecords.size()));
   }
 
-  private void assertLogContent(OWriteAheadLog writeAheadLog, List<OSetPageDataRecord> writtenRecords) throws Exception {
-    Iterator<OSetPageDataRecord> iterator = writtenRecords.iterator();
+  public void testLogTruncation() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OSetPageDataRecord> writtenRecords = new ArrayList<OSetPageDataRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 220;
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    assertLogContent(writeAheadLog, writtenRecords.subList(43, writtenRecords.size()));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(42).getLsn()));
+  }
+
+  public void testLogOneCheckPointTruncation() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 219;
+    OWALRecord walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+
+    writtenRecords.add(walRecord);
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    assertLogContent(writeAheadLog, writtenRecords.subList(44, writtenRecords.size()));
+    Assert.assertNull(writeAheadLog.getLastCheckpoint());
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(43).getLsn()));
+  }
+
+  public void testLogTwoCheckPointTruncationAllDropped() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 218;
+    OWALRecord walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    assertLogContent(writeAheadLog, writtenRecords.subList(45, writtenRecords.size()));
+    Assert.assertNull(writeAheadLog.getLastCheckpoint());
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(44).getLsn()));
+  }
+
+  public void testLogTwoCheckPointTruncationOneLeft() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 219;
+    OWALRecord walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    for (int i = 0; i < recordsToWrite; i++) {
+      if (i == 50) {
+        walRecord = new OCheckpointStartRecord();
+        writeAheadLog.logRecord(walRecord);
+        writtenRecords.add(walRecord);
+      } else {
+        byte[] data = new byte[10];
+        rnd.nextBytes(data);
+
+        int pageOffset = rnd.nextInt(65536);
+        long pageIndex = rnd.nextLong();
+        OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+        writtenRecords.add(setPageDataRecord);
+
+        writeAheadLog.logRecord(setPageDataRecord);
+      }
+    }
+
+    assertLogContent(writeAheadLog, writtenRecords.subList(44, writtenRecords.size()));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(43).getLsn()));
+
+    Assert.assertEquals(writeAheadLog.getLastCheckpoint(), walRecord.getLsn());
+
+  }
+
+  public void testLogThreeCheckPointTruncationAllDropped() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 217;
+    OWALRecord walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    assertLogContent(writeAheadLog, writtenRecords.subList(46, writtenRecords.size()));
+    Assert.assertNull(writeAheadLog.getLastCheckpoint());
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(45).getLsn()));
+  }
+
+  public void testLogThreeCheckPointTruncationOneLeft() throws Exception {
+    writeAheadLog.close();
+
+    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 217;
+    OWALRecord walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new OCheckpointStartRecord();
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    for (int i = 0; i < recordsToWrite; i++) {
+      if (i == 50) {
+        walRecord = new OCheckpointStartRecord();
+        writeAheadLog.logRecord(walRecord);
+        writtenRecords.add(walRecord);
+      } else {
+        byte[] data = new byte[10];
+        rnd.nextBytes(data);
+
+        int pageOffset = rnd.nextInt(65536);
+        long pageIndex = rnd.nextLong();
+        OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+        writtenRecords.add(setPageDataRecord);
+
+        writeAheadLog.logRecord(setPageDataRecord);
+      }
+    }
+    assertLogContent(writeAheadLog, writtenRecords.subList(45, writtenRecords.size()));
+    Assert.assertEquals(walRecord.getLsn(), writeAheadLog.getLastCheckpoint());
+
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(44).getLsn()));
+  }
+
+  private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
+    Iterator<? extends OWALRecord> iterator = writtenRecords.iterator();
 
     OWALRecord writtenRecord = iterator.next();
     OWALRecord readRecord = writeAheadLog.read(writtenRecord.getLsn());
