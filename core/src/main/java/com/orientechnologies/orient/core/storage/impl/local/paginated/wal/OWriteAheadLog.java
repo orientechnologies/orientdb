@@ -150,39 +150,55 @@ public class OWriteAheadLog {
         logSegment.restore();
       }
 
-      logSize = 0;
-      for (LogSegment logSegment : logSegments) {
-        logSize += logSegment.size();
-      }
+      fixSize();
+      fixMasterRecords();
+    }
+  }
 
-      if (firstMasterRecord != null) {
-        LogSegment firstMasterRecordSegment = logSegments.get(firstMasterRecord.getSegment());
+  private void fixMasterRecords() throws IOException {
+    if (firstMasterRecord != null) {
+      int index = firstMasterRecord.getSegment() - logSegments.get(0).getOrder();
+      if (logSegments.size() <= index) {
+        firstMasterRecord = null;
+      } else {
+        LogSegment firstMasterRecordSegment = logSegments.get(index);
         if (firstMasterRecordSegment.size() <= firstMasterRecord.getPosition())
           firstMasterRecord = null;
-
       }
+    }
 
-      if (secondMasterRecord != null) {
-        LogSegment secondMasterRecordSegment = logSegments.get(secondMasterRecord.getSegment());
+    if (secondMasterRecord != null) {
+      int index = secondMasterRecord.getSegment() - logSegments.get(0).getOrder();
+      if (logSegments.size() <= index) {
+        secondMasterRecord = null;
+      } else {
+        LogSegment secondMasterRecordSegment = logSegments.get(index);
         if (secondMasterRecordSegment.size() <= secondMasterRecord.getPosition())
           secondMasterRecord = null;
       }
+    }
 
-      if (firstMasterRecord == null && secondMasterRecord == null) {
-        masterRecordLSNHolder.setLength(0);
-        masterRecordLSNHolder.getFD().sync();
-        lastCheckpoint = null;
-      } else {
-        if (secondMasterRecord == null)
-          secondMasterRecord = firstMasterRecord;
-        else
-          firstMasterRecord = secondMasterRecord;
+    if (firstMasterRecord == null && secondMasterRecord == null) {
+      masterRecordLSNHolder.setLength(0);
+      masterRecordLSNHolder.getFD().sync();
+      lastCheckpoint = null;
+    } else {
+      if (secondMasterRecord == null)
+        secondMasterRecord = firstMasterRecord;
+      else
+        firstMasterRecord = secondMasterRecord;
 
-        lastCheckpoint = firstMasterRecord;
+      lastCheckpoint = firstMasterRecord;
 
-        writeMasterRecord(0, firstMasterRecord);
-        writeMasterRecord(1, secondMasterRecord);
-      }
+      writeMasterRecord(0, firstMasterRecord);
+      writeMasterRecord(1, secondMasterRecord);
+    }
+  }
+
+  private void fixSize() throws IOException {
+    logSize = 0;
+    for (LogSegment logSegment : logSegments) {
+      logSize += logSegment.size();
     }
   }
 
@@ -260,6 +276,8 @@ public class OWriteAheadLog {
           OLogManager.instance().error(this, "Log segment %s can not be removed from WAL", first.getPath());
 
         logSegments.remove(0);
+
+        fixMasterRecords();
       }
 
       LogSegment last = logSegments.get(logSegments.size() - 1);
