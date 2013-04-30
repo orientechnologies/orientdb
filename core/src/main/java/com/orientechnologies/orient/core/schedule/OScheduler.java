@@ -125,6 +125,13 @@ public class OScheduler implements Runnable {
 		return this.isRunning;
 	}
 	
+	public void setDatabase(ODatabaseRecord database) {
+	    if(this.db.isClosed()) {
+	    	OLogManager.instance().warn(this, "database closed reset required");
+	    	this.db = database;
+	    }
+	}
+	
 	public void resetDocument(ODocument doc) {
 		this.document = doc;
 		this.name = doc.field(PROP_NAME);
@@ -152,6 +159,10 @@ public class OScheduler implements Runnable {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
 		Date date = new Date(System.currentTimeMillis());
 		OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
+		if(db == null || db.isClosed()) {
+		    OLogManager.instance().warn(this, "database closed, skip execute");
+		    return;
+		}
 		ODatabaseRecordThreadLocal.INSTANCE.set(db);
 		this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
 		this.document.field(PROP_STARTTIME, System.currentTimeMillis());
