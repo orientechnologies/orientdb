@@ -25,7 +25,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OSetPageDataRecord extends OAbstractWALRecord {
+public class OSetPageDataRecord extends OAbstractPageWALRecord {
   private byte[] data;
   private int    pageOffset;
 

@@ -18,19 +18,41 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
  * @author Andrey Lomakin
- * @since 26.04.13
+ * @since 30.04.13
  */
-public class OEndAtomicPageUpdateRecord extends OAbstractPageWALRecord {
+public class OCheckpointEndRecord implements OWALRecord {
+  private OLogSequenceNumber lsn;
 
-  public OEndAtomicPageUpdateRecord() {
+  public OCheckpointEndRecord() {
   }
 
-  public OEndAtomicPageUpdateRecord(long pageIndex, String fileName) {
-    super(pageIndex, fileName);
+  @Override
+  public int toStream(byte[] content, int offset) {
+    return offset;
+  }
+
+  @Override
+  public int fromStream(byte[] content, int offset) {
+    return offset;
+  }
+
+  @Override
+  public int serializedSize() {
+    return 0;
   }
 
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public OLogSequenceNumber getLsn() {
+    return lsn;
+  }
+
+  @Override
+  public void setLsn(OLogSequenceNumber lsn) {
+    this.lsn = lsn;
   }
 }

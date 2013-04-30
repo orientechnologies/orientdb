@@ -20,7 +20,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OStartAtomicPageUpdateRecord extends OAbstractWALRecord {
+public class OStartAtomicPageUpdateRecord extends OAbstractPageWALRecord {
   public OStartAtomicPageUpdateRecord() {
   }
 
