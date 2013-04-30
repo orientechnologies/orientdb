@@ -16,78 +16,96 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.util.Arrays;
+
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OSetPageDataRecord implements OWALRecord {
+public class OSetPageDataRecord extends OAbstractWALRecord {
   private byte[] data;
   private int    pageOffset;
-  private long   pageIndex;
-
-  private String fileName;
 
   public OSetPageDataRecord() {
   }
 
   public OSetPageDataRecord(byte[] data, int pageOffset, long pageIndex, String fileName) {
+    super(pageIndex, fileName);
     this.data = data;
     this.pageOffset = pageOffset;
-    this.pageIndex = pageIndex;
-    this.fileName = fileName;
+  }
+
+  public byte[] getData() {
+    return data;
+  }
+
+  public int getPageOffset() {
+    return pageOffset;
   }
 
   @Override
   public int serializedSize() {
-    return OIntegerSerializer.INT_SIZE + OStringSerializer.INSTANCE.getObjectSize(fileName)
-        + OBinaryTypeSerializer.INSTANCE.getObjectSize(data) + OLongSerializer.LONG_SIZE;
+    return super.serializedSize() + OIntegerSerializer.INT_SIZE + OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
   }
 
   @Override
-  public void toStream(byte[] content, int offset) {
+  public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
     OBinaryTypeSerializer.INSTANCE.serializeNative(data, content, offset);
     offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
 
     OIntegerSerializer.INSTANCE.serializeNative(pageOffset, content, offset);
-    pageOffset += OIntegerSerializer.INT_SIZE;
+    offset += OIntegerSerializer.INT_SIZE;
 
-    OLongSerializer.INSTANCE.serializeNative(pageIndex, content, offset);
-    pageOffset += OLongSerializer.LONG_SIZE;
-
-    OStringSerializer.INSTANCE.serializeNative(fileName, content, offset);
+    return offset;
   }
 
   @Override
-  public void fromStream(byte[] content, int offset) {
+  public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
     data = OBinaryTypeSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
 
     pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    pageOffset += OIntegerSerializer.INT_SIZE;
+    offset += OIntegerSerializer.INT_SIZE;
 
-    pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
-  }
-
-  @Override
-  public long getPageIndex() {
-    return pageIndex;
-  }
-
-  @Override
-  public String getFileName() {
-    return fileName;
+    return offset;
   }
 
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+
+    OSetPageDataRecord that = (OSetPageDataRecord) o;
+
+    if (pageOffset != that.pageOffset)
+      return false;
+    if (!Arrays.equals(data, that.data))
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + Arrays.hashCode(data);
+    result = 31 * result + pageOffset;
+    return result;
   }
 }

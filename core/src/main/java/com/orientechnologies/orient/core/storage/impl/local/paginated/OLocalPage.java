@@ -25,10 +25,10 @@ import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OEndAtomicPageUpdate;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OEndAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OShiftPageDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OStartAtomicPageUpdate;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OStartAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -445,11 +445,11 @@ public class OLocalPage {
 
   private void startAtomicUpdate() throws IOException {
     if (walLog != null)
-      walLog.logRecord(new OStartAtomicPageUpdate(pageIndex, fileName));
+      walLog.logRecord(new OStartAtomicPageUpdateRecord(pageIndex, fileName));
   }
 
   private void endAtomicUpdate() throws IOException {
     if (walLog != null)
-      walLog.logRecord(new OEndAtomicPageUpdate(pageIndex, fileName));
+      walLog.logRecord(new OEndAtomicPageUpdateRecord(pageIndex, fileName));
   }
 }

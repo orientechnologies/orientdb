@@ -20,36 +20,17 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OPageId {
-  public final String fileName;
-  public final long   pageIndex;
+public class OEndAtomicPageUpdateRecord extends OAbstractWALRecord {
 
-  public OPageId(String fileName, long pageIndex) {
-    this.fileName = fileName;
-    this.pageIndex = pageIndex;
+  public OEndAtomicPageUpdateRecord() {
+  }
+
+  public OEndAtomicPageUpdateRecord(long pageIndex, String fileName) {
+    super(pageIndex, fileName);
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
-    OPageId oPageId = (OPageId) o;
-
-    if (pageIndex != oPageId.pageIndex)
-      return false;
-    if (!fileName.equals(oPageId.fileName))
-      return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = fileName.hashCode();
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    return result;
+  public boolean isUpdateMasterRecord() {
+    return false;
   }
 }

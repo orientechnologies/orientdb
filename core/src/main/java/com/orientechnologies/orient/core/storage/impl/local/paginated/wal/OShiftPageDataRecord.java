@@ -17,34 +17,42 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OShiftPageDataRecord implements OWALRecord {
-  private int    from;
-  private int    to;
-  private int    len;
-
-  private String fileName;
-  private long   pageIndex;
+public class OShiftPageDataRecord extends OAbstractWALRecord {
+  private int from;
+  private int to;
+  private int len;
 
   public OShiftPageDataRecord() {
   }
 
   public OShiftPageDataRecord(int from, int to, int len, String fileName, long pageIndex) {
+    super(pageIndex, fileName);
     this.from = from;
     this.to = to;
     this.len = len;
-    this.fileName = fileName;
-    this.pageIndex = pageIndex;
+  }
+
+  public int getFrom() {
+    return from;
+  }
+
+  public int getTo() {
+    return to;
+  }
+
+  public int getLen() {
+    return len;
   }
 
   @Override
-  public void toStream(byte[] content, int offset) {
+  public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
     OIntegerSerializer.INSTANCE.serializeNative(from, content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -54,14 +62,13 @@ public class OShiftPageDataRecord implements OWALRecord {
     OIntegerSerializer.INSTANCE.serializeNative(len, content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    OLongSerializer.INSTANCE.serializeNative(pageIndex, content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    OStringSerializer.INSTANCE.serializeNative(fileName, content, offset);
+    return offset;
   }
 
   @Override
-  public void fromStream(byte[] content, int offset) {
+  public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
     from = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -71,15 +78,12 @@ public class OShiftPageDataRecord implements OWALRecord {
     len = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
+    return offset;
   }
 
   @Override
   public int serializedSize() {
-    return 3 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE + OStringSerializer.INSTANCE.getObjectSize(fileName);
+    return super.serializedSize() + 3 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -88,12 +92,32 @@ public class OShiftPageDataRecord implements OWALRecord {
   }
 
   @Override
-  public String getFileName() {
-    return fileName;
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+
+    OShiftPageDataRecord that = (OShiftPageDataRecord) o;
+
+    if (from != that.from)
+      return false;
+    if (len != that.len)
+      return false;
+    if (to != that.to)
+      return false;
+
+    return true;
   }
 
   @Override
-  public long getPageIndex() {
-    return pageIndex;
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + from;
+    result = 31 * result + to;
+    result = 31 * result + len;
+    return result;
   }
 }

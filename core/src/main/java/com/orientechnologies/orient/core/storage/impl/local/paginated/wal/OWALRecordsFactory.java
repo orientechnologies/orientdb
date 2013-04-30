@@ -31,9 +31,9 @@ public class OWALRecordsFactory {
       content[0] = 0;
     else if (walRecord instanceof OShiftPageDataRecord)
       content[0] = 1;
-    else if (walRecord instanceof OStartAtomicPageUpdate)
+    else if (walRecord instanceof OStartAtomicPageUpdateRecord)
       content[0] = 2;
-    else if (walRecord instanceof OEndAtomicPageUpdate)
+    else if (walRecord instanceof OEndAtomicPageUpdateRecord)
       content[0] = 3;
     else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
@@ -53,10 +53,10 @@ public class OWALRecordsFactory {
       walRecord = new OShiftPageDataRecord();
       break;
     case 2:
-      walRecord = new OStartAtomicPageUpdate();
+      walRecord = new OStartAtomicPageUpdateRecord();
       break;
     case 3:
-      walRecord = new OEndAtomicPageUpdate();
+      walRecord = new OEndAtomicPageUpdateRecord();
       break;
 
     default:

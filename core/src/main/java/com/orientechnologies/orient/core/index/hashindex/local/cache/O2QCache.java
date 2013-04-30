@@ -40,9 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 14.03.13
  */
 public class O2QCache implements ODiskCache {
-  public static final long                   MAGIC_NUMBER   = 0xFACB03FEL;
-
-  private static final CRC32                 CRC_CALCULATOR = new CRC32();
+  public static final long                   MAGIC_NUMBER = 0xFACB03FEL;
 
   private final int                          maxSize;
   private final int                          K_IN;
@@ -64,7 +62,7 @@ public class O2QCache implements ODiskCache {
   private final OStorageLocalAbstract        storageLocal;
 
   private final boolean                      syncOnPageFlush;
-  private long                               fileCounter    = 1;
+  private long                               fileCounter  = 1;
 
   public O2QCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
       boolean syncOnPageFlush) {
@@ -619,10 +617,10 @@ public class O2QCache implements ODiskCache {
   private int calculatePageCrc(byte[] pageData) {
     int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
-    CRC_CALCULATOR.reset();
-    CRC_CALCULATOR.update(pageData, systemSize, pageData.length - systemSize);
+    final CRC32 crc32 = new CRC32();
+    crc32.update(pageData, systemSize, pageData.length - systemSize);
 
-    return (int) CRC_CALCULATOR.getValue();
+    return (int) crc32.getValue();
   }
 
   private final class FileLockKey implements Comparable<FileLockKey> {

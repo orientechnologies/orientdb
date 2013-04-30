@@ -16,16 +16,18 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.zip.CRC32;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -39,41 +41,52 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * @since 25.04.13
  */
 public class OWriteAheadLog {
-  private final OLocalPaginatedStorage  storage;
+  private static final long      ONE_KB               = 1024L;
+  private OLogSequenceNumber     masterRecord;
 
-  private long                          lastLsn;
-  private long                          nextLsn;
+  private final Object           syncObject           = new Object();
 
-  private long                          masterRecord;
+  private final List<LogSegment> logSegments          = new ArrayList<LogSegment>();
+  private final RandomAccessFile masterRecordLSNHolder;
+  private boolean                useFirstMasterRecord = true;
 
-  private final Object                  syncObject  = new Object();
+  private final int              maxRecordsCacheSize;
+  private final int              commitDelay;
 
-  private int                           recordsCacheSize;
-  private final Queue<RecordCacheEntry> records     = new LinkedList<RecordCacheEntry>();
+  private final long             maxSegmentSize;
+  private final long             maxLogSize;
 
-  private final SortedSet<LogSegment>   logSegments = new TreeSet<LogSegment>();
+  private long                   logSize;
 
-  private final int                     maxRecordsCacheSize;
-  private final int                     commitDelay;
+  private final File             walLocation;
+  private final String           storageName;
 
-  private final long                    maxSegmentSize;
-  private final long                    maxLogSize;
+  private static String calculateWalPath(OLocalPaginatedStorage storage) {
+    String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+    if (walPath == null)
+      walPath = storage.getStoragePath();
 
-  private long                          logSize;
-
-  private final File                    walLocation;
+    return walPath;
+  }
 
   public OWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
+    this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
+        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
+            .getValueAsInteger() * ONE_KB * ONE_KB, storage.getName(), calculateWalPath(storage));
+  }
+
+  public OWriteAheadLog(int maxRecordsCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, String storageName,
+      String walPath) throws IOException {
+    this.maxRecordsCacheSize = maxRecordsCacheSize;
+    this.commitDelay = commitDelay;
+    this.maxSegmentSize = maxSegmentSize;
+    this.maxLogSize = maxLogSize;
+    this.storageName = storageName;
+
     try {
-      this.storage = storage;
+      this.walLocation = new File(walPath);
 
-      String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
-      if (walPath == null)
-        walPath = storage.getStoragePath();
-
-      walLocation = new File(walPath);
-
-      File[] walFiles = walLocation.listFiles(new FilenameFilter() {
+      File[] walFiles = this.walLocation.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
           return LogSegment.validateName(name);
@@ -81,36 +94,92 @@ public class OWriteAheadLog {
       });
 
       if (walFiles.length == 0) {
-        logSegments.add(new LogSegment(new File(walLocation, getSegmentName(0)), 0));
-
-        lastLsn = -1;
-        masterRecord = -1;
+        logSegments.add(new LogSegment(new File(this.walLocation, getSegmentName(0)), maxRecordsCacheSize));
 
         logSize = 0;
       } else {
         for (File walFile : walFiles) {
-          LogSegment logSegment = new LogSegment(walFile);
+          LogSegment logSegment = new LogSegment(walFile, maxRecordsCacheSize);
           logSegments.add(logSegment);
           logSize += logSegment.size();
         }
 
-        readLastLSNAndMasterRecord();
+        Collections.sort(logSegments);
       }
 
-      maxRecordsCacheSize = OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger();
-      commitDelay = OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger();
-      maxSegmentSize = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * 1024L * 1024L;
-      maxLogSize = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsInteger() * 1024L * 1024L;
+      File masterRecordFile = new File(walLocation, storageName + ".wmr");
+      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rwd");
 
+      if (masterRecordLSNHolder.length() > 0) {
+        OLogSequenceNumber firstMasterRecord = readMasterRecord(storageName, 0);
+        OLogSequenceNumber secondMasterRecord = readMasterRecord(storageName, 1);
+
+        if (firstMasterRecord == null) {
+          useFirstMasterRecord = true;
+          masterRecord = secondMasterRecord;
+        } else if (secondMasterRecord == null) {
+          useFirstMasterRecord = false;
+          masterRecord = firstMasterRecord;
+        } else {
+          if (firstMasterRecord.compareTo(secondMasterRecord) >= 0) {
+            masterRecord = firstMasterRecord;
+            useFirstMasterRecord = false;
+          } else {
+            masterRecord = firstMasterRecord;
+            useFirstMasterRecord = false;
+          }
+        }
+      }
     } catch (FileNotFoundException e) {
       // never happened
-      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storage.getName());
-      throw new IllegalStateException("Error during file initialization for storage" + storage.getName(), e);
+      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storageName);
+      throw new IllegalStateException("Error during file initialization for storage " + storageName, e);
     }
   }
 
+  private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
+    CRC32 crc32 = new CRC32();
+    try {
+      masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+
+      int firstCRC = masterRecordLSNHolder.readInt();
+      int segment = masterRecordLSNHolder.readInt();
+      long position = masterRecordLSNHolder.readLong();
+
+      byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
+      OIntegerSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OIntegerSerializer.INT_SIZE);
+      crc32.update(serializedLSN);
+
+      if (firstCRC != ((int) crc32.getValue())) {
+        OLogManager.instance().error(this, "Can not restore %d WAL master record for storage %s crc check is failed", index,
+            storageName);
+        return null;
+      }
+
+      return new OLogSequenceNumber(segment, position);
+    } catch (EOFException eofException) {
+      OLogManager.instance().error(this, "Can not restore %d WAL master record for storage %s", eofException, index, storageName);
+      return null;
+    }
+  }
+
+  private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
+    masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+    CRC32 crc32 = new CRC32();
+
+    byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
+    OIntegerSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OIntegerSerializer.INT_SIZE);
+    crc32.update(serializedLSN);
+
+    masterRecordLSNHolder.writeInt((int) crc32.getValue());
+    masterRecordLSNHolder.writeInt(masterRecord.getSegment());
+    masterRecordLSNHolder.writeLong(masterRecord.getPosition());
+  }
+
   private String getSegmentName(int order) {
-    return this.storage.getName() + "." + order + ".wal";
+    return storageName + "." + order + ".wal";
   }
 
   public void logCheckPointStart() {
@@ -125,36 +194,64 @@ public class OWriteAheadLog {
     }
   }
 
-  public void logRecord(OWALRecord operation) throws IOException {
+  public void logRecord(OWALRecord record) throws IOException {
     synchronized (syncObject) {
-      byte[] serializedForm = OWALRecordsFactory.INSTANCE.toStream(operation);
-      final int serializedSize = calculateSerializedSize(serializedForm);
+      final byte[] serializedForm = OWALRecordsFactory.INSTANCE.toStream(record);
+      final int entrySize = LogSegment.calculateEntrySize(serializedForm);
 
-      if (lastLsn < 0) {
-        lastLsn = 0;
-        nextLsn = serializedSize;
-      } else {
-        lastLsn = nextLsn;
-        nextLsn = lastLsn + serializedSize;
+      if (logSize + entrySize > maxLogSize) {
+        LogSegment first = logSegments.get(0);
+        logSize -= first.size();
+
+        if (!first.delete())
+          OLogManager.instance().error(this, "Log segment %s can not be removed from WAL", first.getPath());
+
+        logSegments.remove(0);
       }
 
-      if (operation.isUpdateMasterRecord())
-        masterRecord = lastLsn;
+      LogSegment last = logSegments.get(logSegments.size() - 1);
 
-      records.add(new RecordCacheEntry(serializedForm, lastLsn, masterRecord));
+      if (last.size() + entrySize > maxSegmentSize) {
+        last.flush();
 
-      recordsCacheSize += serializedSize;
+        last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxRecordsCacheSize);
+        logSegments.add(last);
+      }
 
-      if (recordsCacheSize >= maxRecordsCacheSize)
-        flushWALCache();
+      final OLogSequenceNumber lsn = last.logRecord(serializedForm, record.isUpdateMasterRecord());
+      record.setLsn(lsn);
+
+      if (record.isUpdateMasterRecord()) {
+        if (useFirstMasterRecord) {
+          writeMasterRecord(0, lsn);
+          useFirstMasterRecord = false;
+        } else {
+          writeMasterRecord(1, lsn);
+          useFirstMasterRecord = true;
+        }
+
+        masterRecord = lsn;
+      }
+
     }
   }
 
-  private int calculateSerializedSize(byte[] serializedForm) {
-    return 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE + serializedForm.length;
+  public void close() throws IOException {
+    synchronized (syncObject) {
+      for (LogSegment logSegment : logSegments)
+        logSegment.close();
+    }
   }
 
-  public void logDirtyPages(Set<Long> dirtyPages) {
+  public void delete() throws IOException {
+    synchronized (syncObject) {
+      close();
+      for (LogSegment logSegment : logSegments)
+        logSegment.delete();
+    }
+  }
+
+  public void logDirtyPages(Set<ODirtyPageId> dirtyPages) {
     synchronized (syncObject) {
 
     }
@@ -166,90 +263,80 @@ public class OWriteAheadLog {
     }
   }
 
-  public long getLastLsn() {
-    synchronized (syncObject) {
-      return lastLsn;
-    }
-  }
-
-  public long getMasterRecord() {
+  public OLogSequenceNumber getMasterRecord() {
     synchronized (syncObject) {
       return masterRecord;
     }
   }
 
-  private void flushWALCache() throws IOException {
+  public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
     synchronized (syncObject) {
-      LogSegment logSegment = logSegments.last();
-      for (RecordCacheEntry logEntry : records) {
-        final int serializedSize = calculateSerializedSize(logEntry.record);
+      long segment = lsn.getSegment();
+      int index = (int) (segment - logSegments.get(0).getOrder());
+      if (index < 0 || index >= logSegments.size())
+        return null;
 
-        if (logSegment.size() + serializedSize > maxSegmentSize)
-          logSegment = new LogSegment(new File(walLocation, getSegmentName(logSegment.getOrder() + 1)), nextLsn);
+      LogSegment logSegment = logSegments.get(index);
+      byte[] recordEntry = logSegment.readRecord(lsn);
+      if (recordEntry == null)
+        return null;
 
-        if (logSize + serializedSize > maxLogSize) {
-          LogSegment firstSegment = logSegments.first();
-          long segmentSize = firstSegment.size();
-          if (!firstSegment.delete())
-            OLogManager.instance().error(this, "File %s can to be deleted. Please check access rights.", firstSegment.getPath());
+      final OWALRecord record = OWALRecordsFactory.INSTANCE.fromStream(recordEntry);
+      record.setLsn(lsn);
 
-          logSize -= segmentSize;
-          logSegments.remove(logSegment);
-        }
-
-        logSegment.logRecord(logEntry);
-
-        logSize += serializedSize;
-      }
+      return record;
     }
   }
 
-  private void readLastLSNAndMasterRecord() throws IOException {
-    LogSegment logSegment = logSegments.last();
+  public OWALRecord readNext(OLogSequenceNumber lsn) throws IOException {
+    synchronized (syncObject) {
+      long order = lsn.getSegment();
+      int index = (int) (order - logSegments.get(0).getOrder());
+      if (index < 0 || index >= logSegments.size())
+        return null;
 
-    lastLsn = logSegment.readLastLsn();
-    masterRecord = logSegment.readLastMasterRecord();
-  }
+      LogSegment logSegment = logSegments.get(index);
+      OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn);
 
-  private final class RecordCacheEntry {
-    private final byte[] record;
+      if (nextLSN == null) {
+        index++;
+        if (index >= logSegments.size())
+          return null;
 
-    private final long   lsn;
-    private final long   masterRecord;
+        nextLSN = new OLogSequenceNumber(index, 0);
+      }
 
-    private RecordCacheEntry(byte[] record, long lsn, long masterRecord) {
-      this.record = record;
-      this.lsn = lsn;
-      this.masterRecord = masterRecord;
+      return read(nextLSN);
     }
   }
 
   private static final class LogSegment implements Comparable<LogSegment> {
-    private static final int       START_LSN_OFFSET = OLongSerializer.LONG_SIZE;
-
     private final RandomAccessFile rndFile;
     private final File             file;
-    private final long             startLSN;
+    private long                   size;
 
-    private LogSegment(File file, long startLSN) throws IOException {
+    private final int              order;
+    private final int              maxRecordsCacheSize;
+    private boolean                closed;
+
+    private final List<CacheEntry> records = new ArrayList<CacheEntry>();
+    private int                    recordsCacheSize;
+
+    private LogSegment(File file, int maxRecordsCacheSize) throws IOException {
       this.file = file;
-      rndFile = new RandomAccessFile(file, "rws");
-      rndFile.writeLong(startLSN);
-      this.startLSN = startLSN;
+      this.maxRecordsCacheSize = maxRecordsCacheSize;
+
+      rndFile = new RandomAccessFile(file, "rw");
+      size = rndFile.length();
+      order = extractOrder(file.getName());
+      closed = false;
     }
 
-    private LogSegment(File file) throws IOException {
-      this.file = file;
-      rndFile = new RandomAccessFile(file, "rws");
-      rndFile.seek(0);
-      startLSN = rndFile.readLong();
+    public int getOrder() {
+      return order;
     }
 
-    private int getOrder() {
-      return extractOrder(file.getName());
-    }
-
-    private static boolean validateName(String name) {
+    public static boolean validateName(String name) {
       if (!name.toLowerCase().endsWith(".wal"))
         return false;
 
@@ -258,7 +345,7 @@ public class OWriteAheadLog {
       if (walOrderStartIndex == name.length() - 4)
         return false;
 
-      int walOrderEndIndex = name.indexOf(walOrderStartIndex + 1, '.');
+      int walOrderEndIndex = name.indexOf('.', walOrderStartIndex + 1);
       String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
       try {
         Integer.parseInt(walOrder);
@@ -272,7 +359,7 @@ public class OWriteAheadLog {
     private int extractOrder(String name) {
       int walOrderStartIndex = name.indexOf('.') + 1;
 
-      int walOrderEndIndex = name.indexOf(walOrderStartIndex, '.');
+      int walOrderEndIndex = name.indexOf('.', walOrderStartIndex);
       String walOrder = name.substring(walOrderStartIndex, walOrderEndIndex);
       try {
         return Integer.parseInt(walOrder);
@@ -284,10 +371,14 @@ public class OWriteAheadLog {
 
     @Override
     public int compareTo(LogSegment other) {
-      int order = extractOrder(file.getName());
-      int otherOrder = extractOrder(other.file.getName());
+      final int otherOrder = other.order;
 
-      return Integer.valueOf(order).compareTo(otherOrder);
+      if (order > otherOrder)
+        return 1;
+      else if (order < otherOrder)
+        return -1;
+
+      return 0;
     }
 
     public long size() throws IOException {
@@ -295,7 +386,7 @@ public class OWriteAheadLog {
     }
 
     public boolean delete() throws IOException {
-      rndFile.close();
+      close();
       return file.delete();
     }
 
@@ -303,26 +394,156 @@ public class OWriteAheadLog {
       return file.getAbsolutePath();
     }
 
-    public void logRecord(RecordCacheEntry logEntry) throws IOException {
-      long pos = rndFile.length();
-      assert pos == logEntry.lsn - startLSN - START_LSN_OFFSET;
+    public OLogSequenceNumber logRecord(byte[] record, boolean updateMasterRecord) throws IOException {
+      final OLogSequenceNumber lsn = new OLogSequenceNumber(order, size);
+      final int entrySize = calculateEntrySize(record);
 
-      rndFile.seek(pos);
+      records.add(new CacheEntry(record, lsn, updateMasterRecord));
 
-      rndFile.write(logEntry.record);
-      rndFile.writeLong(logEntry.lsn);
-      rndFile.writeLong(logEntry.masterRecord);
+      size += entrySize;
+      recordsCacheSize += entrySize;
+
+      if (recordsCacheSize >= maxRecordsCacheSize)
+        flushWALCache();
+
+      return lsn;
     }
 
-    public long readLastMasterRecord() throws IOException {
-      rndFile.seek(rndFile.length() - OLongSerializer.LONG_SIZE);
-      return rndFile.readLong();
+    private static int calculateEntrySize(byte[] logEntry) {
+      return logEntry.length + 2 * OIntegerSerializer.INT_SIZE;
     }
 
-    public long readLastLsn() throws IOException {
-      rndFile.seek(rndFile.length() - 2 * OLongSerializer.LONG_SIZE);
-      return rndFile.readLong();
+    private void flushWALCache() throws IOException {
+      if (records.isEmpty()) {
+        assert rndFile.length() == size;
+        return;
+      }
+
+      rndFile.seek(rndFile.length());
+      final CRC32 crc32 = new CRC32();
+
+      for (CacheEntry cacheEntry : records) {
+        crc32.reset();
+        crc32.update(cacheEntry.record);
+
+        long crc = crc32.getValue();
+
+        rndFile.writeInt((int) crc);
+        rndFile.writeInt(cacheEntry.record.length);
+        rndFile.write(cacheEntry.record);
+      }
+
+      rndFile.getFD().sync();
+
+      records.clear();
+      recordsCacheSize = 0;
+
+      assert rndFile.length() == size;
     }
 
+    public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
+      assert lsn.getSegment() == order;
+
+      if (!records.isEmpty() && records.get(0).lsn.compareTo(lsn) <= 0) {
+        for (CacheEntry cacheEntry : records) {
+          if (cacheEntry.lsn.equals(lsn))
+            return cacheEntry.record;
+        }
+
+        return null;
+      }
+
+      final long pos = lsn.getPosition();
+      if (rndFile.length() <= pos)
+        return null;
+
+      byte[] record;
+      try {
+        rndFile.seek(pos);
+        final int crc = rndFile.readInt();
+        final int entrySize = rndFile.readInt();
+
+        record = new byte[entrySize];
+        rndFile.readFully(record);
+
+        CRC32 crc32 = new CRC32();
+        crc32.update(record);
+
+        if (crc != ((int) crc32.getValue())) {
+          OLogManager.instance().error(this, "WAL record with LSN %d is broken.", lsn);
+          throw new OWriteAheadLogRecordIsBrokenException("WAL record with LSN " + lsn + " is broken.");
+        }
+      } catch (EOFException eofException) {
+        OLogManager.instance().error(this, "WAL record with LSN %d is broken.", lsn, eofException);
+        throw new OWriteAheadLogRecordIsBrokenException("WAL record with LSN " + lsn + " is broken.", eofException);
+      }
+
+      return record;
+    }
+
+    public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn) throws IOException {
+      final byte[] record = readRecord(lsn);
+      if (record == null)
+        return null;
+
+      long pos = lsn.getPosition();
+      pos += calculateEntrySize(record);
+
+      if (pos >= size)
+        return null;
+
+      return new OLogSequenceNumber(order, pos);
+    }
+
+    public void close() throws IOException {
+      if (!closed) {
+        flush();
+        rndFile.close();
+        closed = true;
+      }
+    }
+
+    public void flush() throws IOException {
+      flushWALCache();
+    }
+  }
+
+  private static final class CacheEntry {
+    private final byte[]             record;
+    private final OLogSequenceNumber lsn;
+    private final boolean            updateMasterRecord;
+
+    private CacheEntry(byte[] record, OLogSequenceNumber lsn, boolean updateMasterRecord) {
+      this.record = record;
+      this.lsn = lsn;
+      this.updateMasterRecord = updateMasterRecord;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      CacheEntry that = (CacheEntry) o;
+
+      if (updateMasterRecord != that.updateMasterRecord)
+        return false;
+      if (!lsn.equals(that.lsn))
+        return false;
+      if (!Arrays.equals(record, that.record))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Arrays.hashCode(record);
+      result = 31 * result + lsn.hashCode();
+      result = 31 * result + (updateMasterRecord ? 1 : 0);
+      return result;
+    }
   }
 }
