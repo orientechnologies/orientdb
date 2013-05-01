@@ -259,7 +259,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
-    return load(iPojo, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iPojo, iFetchPlan, iIgnoreCache, false);
   }
 
   @Override
