@@ -1758,7 +1758,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     } else if (currentRecord instanceof ORecordBytes) {
       ORecordBytes rec = (ORecordBytes) currentRecord;
       out.println("--------------------------------------------------");
-      out.printf("Flat - record id: %s   v.%s\n", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      out.printf("Bytes - record id: %s   v.%s\n", rec.getIdentity().toString(), rec.getRecordVersion().toString());
       out.println("--------------------------------------------------");
 
       final byte[] value = rec.toStream();
