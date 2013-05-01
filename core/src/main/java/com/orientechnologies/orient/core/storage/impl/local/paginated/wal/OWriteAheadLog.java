@@ -27,6 +27,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -41,28 +45,37 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * @since 25.04.13
  */
 public class OWriteAheadLog {
-  private static final long      ONE_KB               = 1024L;
-  private OLogSequenceNumber     lastCheckpoint;
+  private static final long              ONE_KB               = 1024L;
+  private OLogSequenceNumber             lastCheckpoint;
 
-  private final Object           syncObject           = new Object();
+  private final Object                   syncObject           = new Object();
 
-  private final List<LogSegment> logSegments          = new ArrayList<LogSegment>();
-  private final RandomAccessFile masterRecordLSNHolder;
-  private boolean                useFirstMasterRecord = true;
+  private final List<LogSegment>         logSegments          = new ArrayList<LogSegment>();
+  private final RandomAccessFile         masterRecordLSNHolder;
+  private boolean                        useFirstMasterRecord = true;
 
-  private final int              maxRecordsCacheSize;
-  private final int              commitDelay;
+  private final int                      maxRecordsCacheSize;
+  private final int                      commitDelay;
 
-  private final long             maxSegmentSize;
-  private final long             maxLogSize;
+  private final long                     maxSegmentSize;
+  private final long                     maxLogSize;
 
-  private long                   logSize;
+  private long                           logSize;
 
-  private final File             walLocation;
-  private final String           storageName;
-  private File                   masterRecordFile;
-  private OLogSequenceNumber     firstMasterRecord;
-  private OLogSequenceNumber     secondMasterRecord;
+  private final File                     walLocation;
+  private final String                   storageName;
+  private File                           masterRecordFile;
+  private OLogSequenceNumber             firstMasterRecord;
+  private OLogSequenceNumber             secondMasterRecord;
+
+  private final ScheduledExecutorService commitExecutor       = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+                                                                @Override
+                                                                public Thread newThread(Runnable r) {
+                                                                  Thread thread = new Thread(r);
+                                                                  thread.setDaemon(true);
+                                                                  return thread;
+                                                                }
+                                                              });
 
   private static String calculateWalPath(OLocalPaginatedStorage storage) {
     String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
@@ -133,6 +146,19 @@ public class OWriteAheadLog {
           }
         }
       }
+
+      if (commitDelay > 0)
+        commitExecutor.scheduleWithFixedDelay(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              flush();
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "Error during WAL background flush", e);
+            }
+          }
+        }, commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+
     } catch (FileNotFoundException e) {
       // never happened
       OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storageName);
@@ -309,8 +335,18 @@ public class OWriteAheadLog {
 
   public void close() throws IOException {
     synchronized (syncObject) {
+      if (commitDelay > 0 && !commitExecutor.isShutdown()) {
+        commitExecutor.shutdown();
+        try {
+          commitExecutor.awaitTermination(commitDelay * 100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Can not shutdown background WAL commit thread.");
+        }
+      }
+
       for (LogSegment logSegment : logSegments)
         logSegment.close();
+
       masterRecordLSNHolder.close();
     }
   }
@@ -328,15 +364,15 @@ public class OWriteAheadLog {
     }
   }
 
-  public void logDirtyPages(Set<ODirtyPageId> dirtyPages) {
+  public void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException {
     synchronized (syncObject) {
-
+      logRecord(new ODirtyPagesRecord(dirtyPages));
     }
   }
 
-  public void logPage(OLocalPage localPage) {
+  public void logPage(OLocalPage localPage) throws IOException {
     synchronized (syncObject) {
-
+      logRecord(new OWholePageRecord(localPage.getPageIndex(), localPage.getFileName(), localPage.getPagePointer()));
     }
   }
 
@@ -387,6 +423,13 @@ public class OWriteAheadLog {
       }
 
       return read(nextLSN);
+    }
+  }
+
+  public void flush() throws IOException {
+    synchronized (syncObject) {
+      for (LogSegment logSegment : logSegments)
+        logSegment.flush();
     }
   }
 

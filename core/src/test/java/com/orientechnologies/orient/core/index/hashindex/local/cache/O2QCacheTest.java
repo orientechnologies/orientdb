@@ -4,12 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -19,6 +13,12 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -90,7 +90,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -141,7 +141,7 @@ public class O2QCacheTest {
     long pointer = buffer.load(fileId, 0);
     buffer.markDirty(fileId, 0);
 
-    directMemory.set(pointer + systemOffset, value, 8);
+    directMemory.set(pointer + systemOffset, value, 0, 8);
     buffer.release(fileId, 0);
 
     Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
@@ -171,7 +171,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -206,7 +206,7 @@ public class O2QCacheTest {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
 
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -266,7 +266,7 @@ public class O2QCacheTest {
         pointers[i] = buffer.load(fileId, i);
         buffer.markDirty(fileId, i);
 
-        directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 8);
+        directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 0, 8);
         buffer.release(fileId, i);
       }
     }
@@ -303,7 +303,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -340,7 +340,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -356,7 +356,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       buffer.release(fileId, i);
     }
 
@@ -391,7 +391,7 @@ public class O2QCacheTest {
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 8);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       buffer.release(fileId, i);
     }
 

@@ -80,7 +80,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     memory.setInt(pointer, len);
     pointer += OIntegerSerializer.INT_SIZE;
 
-    memory.set(pointer, object, len);
+    memory.set(pointer, object, 0, len);
   }
 
   @Override

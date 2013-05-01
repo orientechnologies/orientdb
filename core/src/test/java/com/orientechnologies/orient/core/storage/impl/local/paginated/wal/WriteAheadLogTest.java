@@ -44,12 +44,13 @@ public class WriteAheadLogTest {
   }
 
   private OWriteAheadLog createWAL() throws IOException {
-    return new OWriteAheadLog(1024, 1000, 2048, 100L * 1024L * 1024L * 1024L, "WriteAheadLogTest", testDir.getAbsolutePath());
+    return new OWriteAheadLog(1024, -1, 2048, 100L * 1024L * 1024L * 1024L, "WriteAheadLogTest", testDir.getAbsolutePath());
   }
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    writeAheadLog.delete();
+    if (writeAheadLog != null)
+      writeAheadLog.delete();
   }
 
   @AfterClass
@@ -526,7 +527,7 @@ public class WriteAheadLogTest {
   public void testLogTruncation() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OSetPageDataRecord> writtenRecords = new ArrayList<OSetPageDataRecord>();
     Random rnd = new Random();
@@ -551,7 +552,7 @@ public class WriteAheadLogTest {
   public void testLogOneCheckPointTruncation() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -581,7 +582,7 @@ public class WriteAheadLogTest {
   public void testLogTwoCheckPointTruncationAllDropped() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -615,7 +616,7 @@ public class WriteAheadLogTest {
   public void testLogTwoCheckPointTruncationOneLeft() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -653,7 +654,7 @@ public class WriteAheadLogTest {
   public void testLogThreeCheckPointTruncationAllDropped() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -691,7 +692,7 @@ public class WriteAheadLogTest {
   public void testLogThreeCheckPointTruncationOneLeft() throws Exception {
     writeAheadLog.close();
 
-    writeAheadLog = new OWriteAheadLog(1024, 1000, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
+    writeAheadLog = new OWriteAheadLog(1024, -1, 2048, 10105, "WriteAheadLogTest", testDir.getAbsolutePath());
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();

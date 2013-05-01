@@ -20,12 +20,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class ODirtyPageId {
+public class ODirtyPage {
   public final String              fileName;
   public final long                pageIndex;
   private final OLogSequenceNumber lsn;
 
-  public ODirtyPageId(String fileName, long pageIndex, OLogSequenceNumber lsn) {
+  public ODirtyPage(String fileName, long pageIndex, OLogSequenceNumber lsn) {
     this.fileName = fileName;
     this.pageIndex = pageIndex;
     this.lsn = lsn;
@@ -50,7 +50,7 @@ public class ODirtyPageId {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    ODirtyPageId that = (ODirtyPageId) o;
+    ODirtyPage that = (ODirtyPage) o;
 
     if (pageIndex != that.pageIndex)
       return false;
@@ -68,5 +68,10 @@ public class ODirtyPageId {
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + lsn.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "ODirtyPage{" + "fileName='" + fileName + '\'' + ", pageIndex=" + pageIndex + ", lsn=" + lsn + '}';
   }
 }
