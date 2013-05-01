@@ -214,7 +214,7 @@ public class ODocumentHelper {
   }
 
   public static <RET> RET getFieldValue(Object value, final String iFieldName) {
-    return getFieldValue(value, iFieldName, null);
+    return (RET) getFieldValue(value, iFieldName, null);
   }
 
   @SuppressWarnings("unchecked")

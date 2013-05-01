@@ -123,7 +123,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public <RET extends ODocumentWrapper> RET reload() {
-    return owner.reload();
+    return (RET) owner.reload();
   }
 
   public String getCustom(final String iName) {

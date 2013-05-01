@@ -957,7 +957,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
-    return registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
+    return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
