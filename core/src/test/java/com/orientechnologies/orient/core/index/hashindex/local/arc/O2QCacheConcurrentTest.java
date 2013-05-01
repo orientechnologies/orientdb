@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
  * @author Artem Loginov
  */
 public class O2QCacheConcurrentTest {
-  private final int                                  systemOffset    = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+  private final int                                  systemOffset    = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private static final int                           THREAD_COUNT    = 4;
   private static final int                           PAGE_COUNT      = 20;

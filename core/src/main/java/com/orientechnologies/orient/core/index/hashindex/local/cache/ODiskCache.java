@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
@@ -41,4 +45,12 @@ public interface ODiskCache {
   void close() throws IOException;
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
+
+  Set<ODirtyPage> logDirtyPagesTable(OWriteAheadLog writeAheadLog) throws IOException;
+
+  void logPage(OWriteAheadLog writeAheadLog, long fileId, long pageIndex) throws IOException;
+
+  void forceSyncStoredChanges() throws IOException;
+
+  Map<String, Long> getFileNameIdMap();
 }

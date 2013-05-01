@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OEndAtomicPageUpdateRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OShiftPageDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OStartAtomicPageUpdateRecord;
@@ -43,7 +44,10 @@ public class OLocalPage {
   private static final int     MAGIC_NUMBER_OFFSET        = 0;
   private static final int     CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int     NEXT_PAGE_OFFSET           = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int     WAL_SEGMENT_OFFSET         = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int     WAL_POSITION_OFFSET        = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+
+  private static final int     NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int     PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int     FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
@@ -88,6 +92,18 @@ public class OLocalPage {
         endAtomicUpdate();
       }
     }
+  }
+
+  public OLogSequenceNumber getLsn() {
+    int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + WAL_SEGMENT_OFFSET);
+    long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + WAL_POSITION_OFFSET);
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
+  private void setLsn(OLogSequenceNumber lsn) {
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
+    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
 
   public long getPageIndex() {
@@ -462,6 +478,6 @@ public class OLocalPage {
 
   private void endAtomicUpdate() throws IOException {
     if (walLog != null)
-      walLog.logRecord(new OEndAtomicPageUpdateRecord(pageIndex, fileName));
+      setLsn(walLog.logRecord(new OEndAtomicPageUpdateRecord(pageIndex, fileName)));
   }
 }
