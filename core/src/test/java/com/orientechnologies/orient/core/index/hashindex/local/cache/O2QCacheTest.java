@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
-  private int                          systemOffset = OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+  private int                          systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private O2QCache                     buffer;
   private OStorageLocal                storageLocal;

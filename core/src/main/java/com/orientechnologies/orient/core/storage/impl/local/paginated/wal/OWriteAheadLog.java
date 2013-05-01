@@ -37,7 +37,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
@@ -370,9 +369,9 @@ public class OWriteAheadLog {
     }
   }
 
-  public void logPage(OLocalPage localPage) throws IOException {
+  public void logPage(long pagePointer, long pageIndex, String fileName) throws IOException {
     synchronized (syncObject) {
-      logRecord(new OWholePageRecord(localPage.getPageIndex(), localPage.getFileName(), localPage.getPagePointer()));
+      logRecord(new OWholePageRecord(pageIndex, fileName, pagePointer));
     }
   }
 
@@ -666,7 +665,7 @@ public class OWriteAheadLog {
             size = startPos;
 
             OLogManager.instance().warn(this,
-                "In WAL segment %s broken record with LSN %s was detected, segment is size truncated to %d bytes", file.getPath(),
+                "In WAL segment %s broken record with LSN %s was detected, segment size is truncated to %d bytes", file.getPath(),
                 new OLogSequenceNumber(order, startPos), startPos);
 
             break;
@@ -676,7 +675,7 @@ public class OWriteAheadLog {
           size = startPos;
 
           OLogManager.instance().warn(this,
-              "In WAL segment %s broken record with LSN %s was detected, segment is size truncated to %d bytes", file.getPath(),
+              "In WAL segment %s broken record with LSN %s was detected, segment size is truncated to %d bytes", file.getPath(),
               new OLogSequenceNumber(order, startPos), startPos);
 
           break;

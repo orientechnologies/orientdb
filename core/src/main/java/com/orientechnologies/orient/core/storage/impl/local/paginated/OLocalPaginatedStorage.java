@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -1192,6 +1193,57 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
     } finally {
       lock.releaseSharedLock();
+    }
+  }
+
+  public void makeCheckpoint() {
+    if (writeAheadLog == null)
+      return;
+
+    try {
+      Set<ODirtyPage> dirtyPages;
+      lock.acquireExclusiveLock();
+      boolean exclusiveLock = true;
+      boolean sharedLock = false;
+
+      try {
+        diskCache.forceSyncStoredChanges();
+        writeAheadLog.logCheckPointStart();
+
+        for (OLocalPaginatedCluster cluster : clusters)
+          cluster.prohibitPageDefragmentation();
+
+        for (OLocalPaginatedCluster cluster : clusters)
+          cluster.logClusterState();
+
+        dirtyPages = diskCache.logDirtyPagesTable(writeAheadLog);
+
+        // LOCK DOWNGRADE....
+        lock.acquireSharedLock();
+        sharedLock = true;
+
+        lock.releaseExclusiveLock();
+        exclusiveLock = false;
+        // ....................
+
+        final Map<String, Long> fileNameIdMap = diskCache.getFileNameIdMap();
+
+        for (ODirtyPage dirtyPage : dirtyPages)
+          diskCache.logPage(writeAheadLog, fileNameIdMap.get(dirtyPage.getFileName()), dirtyPage.getPageIndex());
+
+        writeAheadLog.logCheckPointEnd();
+
+        for (OLocalPaginatedCluster cluster : clusters)
+          cluster.allowPageDefragmentation();
+      } finally {
+        if (sharedLock)
+          lock.releaseSharedLock();
+
+        if (exclusiveLock)
+          lock.releaseExclusiveLock();
+      }
+    } catch (IOException ioe) {
+      throw new OStorageException("Error during snapshot creation for storage " + name, ioe);
     }
   }
 

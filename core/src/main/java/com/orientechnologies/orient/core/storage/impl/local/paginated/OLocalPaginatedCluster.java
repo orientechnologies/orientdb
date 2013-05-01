@@ -1371,6 +1371,18 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     return pageIndex == testPageIndex;
   }
 
+  public void prohibitPageDefragmentation() {
+    // TODO
+  }
+
+  public void allowPageDefragmentation() {
+    // TODO
+  }
+
+  public void logClusterState() {
+    // TODO
+  }
+
   private static final class AddEntryResult {
     private final long           pagePointer;
     private final ORecordVersion recordVersion;
