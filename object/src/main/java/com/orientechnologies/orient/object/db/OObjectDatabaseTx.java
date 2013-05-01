@@ -290,7 +290,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return load(iRecordId, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iRecordId, iFetchPlan, iIgnoreCache, false);
   }
 
   @Override
