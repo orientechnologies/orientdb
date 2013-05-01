@@ -21,9 +21,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -40,7 +43,11 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 14.03.13
  */
 public class O2QCache implements ODiskCache {
-  public static final long                   MAGIC_NUMBER = 0xFACB03FEL;
+  public static final long                   MAGIC_NUMBER       = 0xFACB03FEL;
+
+  private static final CRC32                 CRC_CALCULATOR     = new CRC32();
+  public static final int                    WRITE_QUEUE_LENGTH = OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH
+                                                                    .getValueAsInteger();
 
   private final int                          maxSize;
   private final int                          K_IN;
@@ -58,11 +65,16 @@ public class O2QCache implements ODiskCache {
   private final Map<FileLockKey, Long>       evictedPages;
   private final Map<Long, Set<Long>>         filesPages;
 
+  /**
+   * Keys is a file id. Values is a sorted set of dirty pages.
+   */
+  private final Map<Long, SortedSet<Long>>   dirtyPages;
+
   private final Object                       syncObject;
   private final OStorageLocalAbstract        storageLocal;
 
   private final boolean                      syncOnPageFlush;
-  private long                               fileCounter  = 1;
+  private long                               fileCounter        = 1;
 
   public O2QCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
       boolean syncOnPageFlush) {
@@ -72,6 +84,7 @@ public class O2QCache implements ODiskCache {
     this.syncOnPageFlush = syncOnPageFlush;
     this.files = new HashMap<Long, OMultiFileSegment>();
     this.filesPages = new HashMap<Long, Set<Long>>();
+    this.dirtyPages = new HashMap<Long, SortedSet<Long>>();
 
     this.evictedPages = new HashMap<FileLockKey, Long>();
 
@@ -122,6 +135,7 @@ public class O2QCache implements ODiskCache {
       files.put(fileId, multiFileSegment);
 
       filesPages.put(fileId, new HashSet<Long>());
+      dirtyPages.put(fileId, new TreeSet<Long>());
 
       return fileId;
     }
@@ -133,14 +147,16 @@ public class O2QCache implements ODiskCache {
       LRUEntry lruEntry = a1in.get(fileId, pageIndex);
 
       if (lruEntry != null) {
+        dirtyPages.get(fileId).add(pageIndex);
         lruEntry.isDirty = true;
         return;
       }
 
       lruEntry = am.get(fileId, pageIndex);
-      if (lruEntry != null)
+      if (lruEntry != null) {
+        dirtyPages.get(fileId).add(pageIndex);
         lruEntry.isDirty = true;
-      else
+      } else
         throw new IllegalStateException("Requested page number " + pageIndex + " for file " + files.get(fileId).getName()
             + " is not in cache");
     }
@@ -176,23 +192,27 @@ public class O2QCache implements ODiskCache {
   @Override
   public void flushFile(long fileId) throws IOException {
     synchronized (syncObject) {
-      final Set<Long> pageIndexes = filesPages.get(fileId);
 
-      Long[] sortedPageIndexes = new Long[pageIndexes.size()];
-      sortedPageIndexes = pageIndexes.toArray(sortedPageIndexes);
-      Arrays.sort(sortedPageIndexes);
+      final SortedSet<Long> dirtyPages = this.dirtyPages.get(fileId);
 
-      for (Long pageIndex : sortedPageIndexes) {
+      for (Iterator<Long> iterator = dirtyPages.iterator(); iterator.hasNext();) {
+        Long pageIndex = iterator.next();
         LRUEntry lruEntry = get(fileId, pageIndex);
-        if (lruEntry != null) {
-          if (lruEntry.isDirty && lruEntry.usageCounter == 0) {
-            flushData(fileId, lruEntry.pageIndex, lruEntry.dataPointer);
-            lruEntry.isDirty = false;
+
+        if (lruEntry == null) {
+          final Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+          if (dataPointer != null) {
+            flushData(fileId, pageIndex, dataPointer);
+            iterator.remove();
           }
         } else {
-          final Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
-          if (dataPointer != null)
-            flushData(fileId, pageIndex, dataPointer);
+          if (lruEntry.usageCounter == 0) {
+            flushData(fileId, lruEntry.pageIndex, lruEntry.dataPointer);
+            iterator.remove();
+            lruEntry.isDirty = false;
+          } else {
+            throw new OBlockedPageException("Unable to perform flush file because some pages is in use.");
+          }
         }
       }
 
@@ -216,15 +236,19 @@ public class O2QCache implements ODiskCache {
         if (lruEntry != null) {
           if (lruEntry.usageCounter == 0) {
             lruEntry = remove(fileId, pageIndex);
+
             flushData(fileId, pageIndex, lruEntry.dataPointer);
+            dirtyPages.get(fileId).remove(pageIndex);
+
             directMemory.free(lruEntry.dataPointer);
           }
         } else {
           Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
-          if (dataPointer != null)
+          if (dataPointer != null) {
             flushData(fileId, pageIndex, dataPointer);
+            dirtyPages.get(fileId).remove(pageIndex);
+          }
         }
-
       }
 
       pageIndexes.clear();
@@ -244,6 +268,7 @@ public class O2QCache implements ODiskCache {
 
       files.remove(fileId);
       filesPages.remove(fileId);
+      dirtyPages.remove(fileId);
     }
 
   }
@@ -293,6 +318,7 @@ public class O2QCache implements ODiskCache {
         if (entry.isDirty && entry.usageCounter == 0) {
           flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
           entry.isDirty = false;
+          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
         }
       }
 
@@ -300,6 +326,7 @@ public class O2QCache implements ODiskCache {
         if (entry.isDirty && entry.usageCounter == 0) {
           flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
           entry.isDirty = false;
+          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
         }
       }
 
@@ -320,6 +347,8 @@ public class O2QCache implements ODiskCache {
       a1out.clear();
       for (Set<Long> fileEntries : filesPages.values())
         fileEntries.clear();
+      for (SortedSet<Long> fileDirtyPages : dirtyPages.values())
+        fileDirtyPages.clear();
     }
   }
 
@@ -439,10 +468,11 @@ public class O2QCache implements ODiskCache {
 
   private void evictFileContent(long fileId, long pageIndex, long dataPointer, boolean isDirty) throws IOException {
     if (isDirty) {
-      if (evictedPages.size() >= OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger()) {
+      if (evictedPages.size() >= WRITE_QUEUE_LENGTH) {
         flushEvictedPages();
 
         flushData(fileId, pageIndex, dataPointer);
+        dirtyPages.get(fileId).remove(pageIndex);
         directMemory.free(dataPointer);
       } else {
         evictedPages.put(new FileLockKey(fileId, pageIndex), dataPointer);
@@ -554,6 +584,7 @@ public class O2QCache implements ODiskCache {
   }
 
   private void flushEvictedPages() throws IOException {
+    @SuppressWarnings("unchecked")
     Map.Entry<FileLockKey, Long>[] sortedPages = evictedPages.entrySet().toArray(new Map.Entry[evictedPages.size()]);
     Arrays.sort(sortedPages, new Comparator<Map.Entry>() {
       @Override
@@ -569,6 +600,7 @@ public class O2QCache implements ODiskCache {
       FileLockKey fileLockKey = entry.getKey();
 
       flushData(fileLockKey.fileId, fileLockKey.pageIndex, evictedDataPointer);
+      dirtyPages.get(fileLockKey.fileId).remove(fileLockKey.pageIndex);
 
       directMemory.free(evictedDataPointer);
     }
@@ -623,7 +655,7 @@ public class O2QCache implements ODiskCache {
     return (int) crc32.getValue();
   }
 
-  private final class FileLockKey implements Comparable<FileLockKey> {
+  private static final class FileLockKey implements Comparable<FileLockKey> {
     private final long fileId;
     private final long pageIndex;
 
