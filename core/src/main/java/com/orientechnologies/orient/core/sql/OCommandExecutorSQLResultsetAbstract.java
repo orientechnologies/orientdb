@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -158,8 +159,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Object getResult() {
     if (tempResult != null) {
       for (Object d : tempResult)
-        if (d != null)
+        if (d != null) {
+          if (!(d instanceof OIdentifiable))
+            // NON-DOCUMENT AS RESULT, COMES FROM FLATTEN? CREATE A DOCUMENT AT THE FLY
+            d = new ODocument().field("value", d);
+
           request.getResultListener().result(d);
+        }
     }
 
     if (request instanceof OSQLSynchQuery)
