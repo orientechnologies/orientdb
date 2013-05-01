@@ -69,4 +69,9 @@ public class ODirtyPageId {
     result = 31 * result + lsn.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "ODirtyPageId{" + "fileName='" + fileName + '\'' + ", pageIndex=" + pageIndex + ", lsn=" + lsn + '}';
+  }
 }
