@@ -39,6 +39,10 @@ public class OWALRecordsFactory {
       content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
       content[0] = 5;
+    else if (walRecord instanceof OWholePageRecord)
+      content[0] = 6;
+    else if (walRecord instanceof ODirtyPagesRecord)
+      content[0] = 7;
     else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
@@ -67,6 +71,12 @@ public class OWALRecordsFactory {
       break;
     case 5:
       walRecord = new OCheckpointEndRecord();
+      break;
+    case 6:
+      walRecord = new OWholePageRecord();
+      break;
+    case 7:
+      walRecord = new ODirtyPagesRecord();
       break;
     default:
       throw new IllegalStateException("Can not deserialize passed in wal record.");

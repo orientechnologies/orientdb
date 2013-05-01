@@ -95,16 +95,13 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
       return false;
     if (!fileName.equals(that.fileName))
       return false;
-    if (!lsn.equals(that.lsn))
-      return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = lsn.hashCode();
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
+    int result = (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + fileName.hashCode();
     return result;
   }

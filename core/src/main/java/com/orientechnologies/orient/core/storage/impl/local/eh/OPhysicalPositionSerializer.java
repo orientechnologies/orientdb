@@ -167,7 +167,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
 
     byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
     object.recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, object.recordVersion);
-    memory.set(currentPointer, serializedVersion, serializedVersion.length);
+    memory.set(currentPointer, serializedVersion, 0, serializedVersion.length);
     currentPointer += OVersionFactory.instance().getVersionSize();
 
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.dataSegmentId, memory, currentPointer);

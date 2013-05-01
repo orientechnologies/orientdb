@@ -364,15 +364,15 @@ public class OWriteAheadLog {
     }
   }
 
-  public void logDirtyPages(Set<ODirtyPageId> dirtyPages) {
+  public void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException {
     synchronized (syncObject) {
-
+      logRecord(new ODirtyPagesRecord(dirtyPages));
     }
   }
 
-  public void logPage(OLocalPage localPage) {
+  public void logPage(OLocalPage localPage) throws IOException {
     synchronized (syncObject) {
-
+      logRecord(new OWholePageRecord(localPage.getPageIndex(), localPage.getFileName(), localPage.getPagePointer()));
     }
   }
 

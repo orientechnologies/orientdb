@@ -35,7 +35,8 @@ public class OUnsafeMemoryJava7 extends OUnsafeMemory {
   }
 
   @Override
-  public void set(long pointer, byte[] content, int length) {
-    unsafe.copyMemory(content, unsafe.arrayBaseOffset(byte[].class), null, pointer, length);
+  public void set(long pointer, byte[] content, int arrayOffset, int length) {
+    unsafe.copyMemory(content, unsafe.arrayBaseOffset(byte[].class) + arrayOffset, null, pointer, length);
+
   }
 }

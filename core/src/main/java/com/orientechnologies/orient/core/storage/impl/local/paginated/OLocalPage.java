@@ -418,7 +418,7 @@ public class OLocalPage {
       final byte[] content = new byte[OIntegerSerializer.INT_SIZE];
       OIntegerSerializer.INSTANCE.serializeNative(value, content, 0);
       walLog.logRecord(new OSetPageDataRecord(content, pageOffset, pageIndex, fileName));
-      directMemory.set(pagePointer + pageOffset, content, content.length);
+      directMemory.set(pagePointer + pageOffset, content, 0, content.length);
     }
 
   }
@@ -430,17 +430,17 @@ public class OLocalPage {
       final byte[] content = new byte[OIntegerSerializer.INT_SIZE];
       OLongSerializer.INSTANCE.serializeNative(value, content, 0);
       walLog.logRecord(new OSetPageDataRecord(content, pageOffset, pageIndex, fileName));
-      directMemory.set(pageOffset + pagePointer, content, content.length);
+      directMemory.set(pageOffset + pagePointer, content, 0, content.length);
     }
 
   }
 
   private void setBinaryValue(int pageOffset, byte[] value) throws IOException {
     if (walLog == null) {
-      directMemory.set(pagePointer + pageOffset, value, value.length);
+      directMemory.set(pagePointer + pageOffset, value, 0, value.length);
     } else {
       walLog.logRecord(new OSetPageDataRecord(value, pageOffset, pageIndex, fileName));
-      directMemory.set(pagePointer + pageOffset, value, value.length);
+      directMemory.set(pagePointer + pageOffset, value, 0, value.length);
     }
 
   }
