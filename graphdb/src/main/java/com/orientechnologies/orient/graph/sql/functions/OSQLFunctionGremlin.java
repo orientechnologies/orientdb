@@ -72,12 +72,14 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
               OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
 
             } else if (db.isEdge(document)) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
             } else
 
               // UNKNOWN CLASS: IGNORE IT
