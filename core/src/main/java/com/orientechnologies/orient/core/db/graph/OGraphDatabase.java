@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -58,12 +59,14 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   public static final String TYPE                   = "graph";
 
   public static final String VERTEX_CLASS_NAME      = "OGraphVertex";
+  public static final String VERTEX_ALIAS           = "V";
   public static final String VERTEX_FIELD_IN        = "in";
   public static final String VERTEX_FIELD_IN_EDGES  = "inEdges";
   public static final String VERTEX_FIELD_OUT       = "out";
   public static final String VERTEX_FIELD_OUT_EDGES = "outEdges";
 
   public static final String EDGE_CLASS_NAME        = "OGraphEdge";
+  public static final String EDGE_ALIAS             = "E";
   public static final String EDGE_FIELD_IN          = "in";
   public static final String EDGE_FIELD_OUT         = "out";
   public static final String LABEL                  = "label";
@@ -107,27 +110,27 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public long countVertexes() {
-    return countClass(VERTEX_CLASS_NAME);
+    return countClass(VERTEX_ALIAS);
   }
 
   public long countEdges() {
-    return countClass(EDGE_CLASS_NAME);
+    return countClass(EDGE_ALIAS);
   }
 
   public Iterable<ODocument> browseVertices() {
-    return browseElements(VERTEX_CLASS_NAME, true);
+    return browseElements(VERTEX_ALIAS, true);
   }
 
   public Iterable<ODocument> browseVertices(final boolean iPolymorphic) {
-    return browseElements(VERTEX_CLASS_NAME, iPolymorphic);
+    return browseElements(VERTEX_ALIAS, iPolymorphic);
   }
 
   public Iterable<ODocument> browseEdges() {
-    return browseElements(EDGE_CLASS_NAME, true);
+    return browseElements(EDGE_ALIAS, true);
   }
 
   public Iterable<ODocument> browseEdges(final boolean iPolymorphic) {
-    return browseElements(EDGE_CLASS_NAME, iPolymorphic);
+    return browseElements(EDGE_ALIAS, iPolymorphic);
   }
 
   public Iterable<ODocument> browseElements(final String iClass, final boolean iPolymorphic) {
@@ -235,6 +238,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           out = new OMVRBTreeRIDSet(iOutVertex);
           iOutVertex.field(VERTEX_FIELD_OUT, out);
         }
+
         out.add(edge);
       } finally {
         releaseWriteLock(iOutVertex);
@@ -294,7 +298,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       try {
 
         if (outVertex != null) {
-          final Set<ODocument> out = ((Set<ODocument>) outVertex.field(VERTEX_FIELD_OUT));
+          final Set<OIdentifiable> out = getEdgeSet(outVertex, VERTEX_FIELD_OUT);
           if (out != null)
             out.remove(edge);
           save(outVertex);
@@ -311,7 +315,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       try {
 
         if (inVertex != null) {
-          final Set<ODocument> in = ((Set<ODocument>) inVertex.field(VERTEX_FIELD_IN));
+          final Set<OIdentifiable> in = getEdgeSet(inVertex, VERTEX_FIELD_IN);
           if (in != null)
             in.remove(edge);
           save(inVertex);
@@ -344,39 +348,45 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     try {
 
       ODocument otherVertex;
-      Set<ODocument> otherEdges;
+      Set<OIdentifiable> otherEdges;
 
       // REMOVE OUT EDGES
       acquireWriteLock(vertex);
       try {
 
-        Set<ODocument> edges = vertex.field(VERTEX_FIELD_OUT);
+        Set<OIdentifiable> edges = getEdgeSet(vertex, VERTEX_FIELD_OUT);
         if (edges != null) {
-          for (ODocument edge : edges) {
-            if (edge != null) {
-              otherVertex = edge.field(EDGE_FIELD_IN);
-              if (otherVertex != null) {
-                otherEdges = otherVertex.field(VERTEX_FIELD_IN);
-                if (otherEdges != null && otherEdges.remove(edge))
-                  save(otherVertex);
+          for (OIdentifiable e : edges) {
+            if (e != null) {
+              final ODocument edge = e.getRecord();
+              if (edge != null) {
+                otherVertex = edge.field(EDGE_FIELD_IN);
+                if (otherVertex != null) {
+                  otherEdges = getEdgeSet(otherVertex, VERTEX_FIELD_IN);
+                  if (otherEdges != null && otherEdges.remove(edge))
+                    save(otherVertex);
+                }
+                delete(edge);
               }
-              delete(edge);
             }
           }
         }
 
         // REMOVE IN EDGES
-        edges = vertex.field(VERTEX_FIELD_IN);
+        edges = getEdgeSet(vertex, VERTEX_FIELD_IN);
         if (edges != null) {
-          for (ODocument edge : edges) {
-            if (edge != null) {
-              otherVertex = edge.field(EDGE_FIELD_OUT);
-              if (otherVertex != null) {
-                otherEdges = otherVertex.field(VERTEX_FIELD_OUT);
-                if (otherEdges != null && otherEdges.remove(edge))
-                  save(otherVertex);
+          for (OIdentifiable e : edges) {
+            if (e != null) {
+              if (e != null) {
+                final ODocument edge = e.getRecord();
+                otherVertex = edge.field(EDGE_FIELD_OUT);
+                if (otherVertex != null) {
+                  otherEdges = getEdgeSet(otherVertex, VERTEX_FIELD_OUT);
+                  if (otherEdges != null && otherEdges.remove(edge))
+                    save(otherVertex);
+                }
+                delete(edge);
               }
-              delete(edge);
             }
           }
         }
@@ -505,7 +515,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     acquireReadLock(iVertex);
     try {
 
-      final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_OUT);
+      final OMVRBTreeRIDSet set = getEdgeSet(vertex, VERTEX_FIELD_OUT);
 
       if (iLabel == null)
         // RETURN THE ENTIRE COLLECTION
@@ -529,6 +539,22 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     return result;
   }
 
+  @SuppressWarnings("unchecked")
+  protected OMVRBTreeRIDSet getEdgeSet(final ODocument iVertex, final String iFieldName) {
+    final Object value = iVertex.field(iFieldName);
+    if (value != null && value instanceof OMVRBTreeRIDSet)
+      return (OMVRBTreeRIDSet) value;
+
+    final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet();
+    if (OMultiValue.isMultiValue(value))
+      // AUTOCONVERT FROM COLLECTION
+      set.addAll((Collection<? extends OIdentifiable>) value);
+    else
+      // AUTOCONVERT FROM SINGLE VALUE
+      set.add((OIdentifiable) value);
+    return set;
+  }
+
   /**
    * Retrieves the outgoing edges of vertex iVertex having the requested properties iProperties set to the passed values
    * 
@@ -545,7 +571,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_OUT), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_OUT), iProperties);
   }
 
   /**
@@ -564,7 +590,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_OUT), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_OUT), iProperties);
   }
 
   public Set<OIdentifiable> getInEdges(final OIdentifiable iVertex) {
@@ -583,7 +609,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     acquireReadLock(iVertex);
     try {
 
-      final OMVRBTreeRIDSet set = vertex.field(VERTEX_FIELD_IN);
+      final OMVRBTreeRIDSet set = getEdgeSet(vertex, VERTEX_FIELD_IN);
 
       if (iLabel == null)
         // RETURN THE ENTIRE COLLECTION
@@ -622,7 +648,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties((OMVRBTreeRIDSet) vertex.field(VERTEX_FIELD_IN), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_IN), iProperties);
   }
 
   /**
@@ -639,7 +665,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       return null;
 
     checkVertexClass(iVertex);
-    return filterEdgesByProperties((OMVRBTreeRIDSet) iVertex.field(VERTEX_FIELD_IN), iProperties);
+    return filterEdgesByProperties(getEdgeSet(iVertex, VERTEX_FIELD_IN), iProperties);
   }
 
   public ODocument getInVertex(final OIdentifiable iEdge) {
@@ -993,18 +1019,18 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   public void checkForGraphSchema() {
     getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    vertexBaseClass = getMetadata().getSchema().getClass("V");
-    edgeBaseClass = getMetadata().getSchema().getClass("E");
+    vertexBaseClass = getMetadata().getSchema().getClass(VERTEX_ALIAS);
+    edgeBaseClass = getMetadata().getSchema().getClass(EDGE_ALIAS);
 
     if (vertexBaseClass == null) {
       // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      vertexBaseClass = getMetadata().getSchema().createClass("V");
+      vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_ALIAS);
       vertexBaseClass.setOverSize(2);
     }
-    
+
     if (edgeBaseClass == null) {
-      edgeBaseClass = getMetadata().getSchema().createClass("E");
-      edgeBaseClass.setShortName("E");
+      edgeBaseClass = getMetadata().getSchema().createClass(EDGE_ALIAS);
+      edgeBaseClass.setShortName(EDGE_ALIAS);
     }
   }
 

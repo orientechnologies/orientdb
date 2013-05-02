@@ -570,7 +570,7 @@ public class ODatabaseRaw implements ODatabase {
       else
         db = new OGraphDatabase(url);
 
-      return db.getMetadata().getSchema().existsClass("OGraphVertex");
+      return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
       return storage.getConfiguration().dateFormat;
 

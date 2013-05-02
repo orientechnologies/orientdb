@@ -38,12 +38,12 @@ import com.orientechnologies.common.log.OLogManager;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
-  private long                        recordingFrom = 0;
-  private long                        recordingTo   = Long.MAX_VALUE;
-  private Map<String, Long>           counters;
-  private Map<String, OProfilerEntry> chronos;
-  private Map<String, OProfilerEntry> stats;
-  private Map<String, Object>         hooks;
+  private long                              recordingFrom = 0;
+  private long                              recordingTo   = Long.MAX_VALUE;
+  private final Map<String, Long>           counters;
+  private final Map<String, OProfilerEntry> chronos;
+  private final Map<String, OProfilerEntry> stats;
+  private final Map<String, Object>         hooks;
 
   public class OProfilerEntry {
     public String name    = null;

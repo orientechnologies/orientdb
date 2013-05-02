@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.graph;
+package com.orientechnologies.orient.graph.sql.functions;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase.DIRECTION;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -40,17 +40,30 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
     super(NAME, 2, 3);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, final OCommandContext iContext) {
-    final ODatabaseRecord currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
-    db = (OGraphDatabase) (currentDatabase instanceof OGraphDatabase ? currentDatabase : new OGraphDatabase(
-        (ODatabaseRecordTx) currentDatabase));
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+      final OCommandContext iContext) {
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iContext);
-    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iContext);
+    Object source = iParameters[0];
+    if (OMultiValue.isMultiValue(source)) {
+      if (OMultiValue.getSize(source) > 1)
+        throw new IllegalArgumentException("Only one sourceVertex is allowed");
+      source = OMultiValue.getFirstValue(source);
+    }
+    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+
+    Object dest = iParameters[1];
+    if (OMultiValue.isMultiValue(dest)) {
+      if (OMultiValue.getSize(dest) > 1)
+        throw new IllegalArgumentException("Only one destinationVertex is allowed");
+      dest = OMultiValue.getFirstValue(dest);
+    }
+    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+
     if (iParameters.length > 2)
-      paramDirection = DIRECTION.valueOf(iParameters[2].toString().toUpperCase());
+      paramDirection = Direction.valueOf(iParameters[2].toString().toUpperCase());
 
     return super.execute(iParameters, iContext);
   }
@@ -60,7 +73,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
   }
 
   @Override
-  protected Integer getShortestDistance(final OIdentifiable destination) {
+  protected Integer getShortestDistance(final Vertex destination) {
     if (destination == null)
       return Integer.MAX_VALUE;
 
@@ -73,7 +86,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
     return MIN;
   }
 
-  protected Integer getDistance(final OIdentifiable node, final OIdentifiable target) {
+  protected Integer getDistance(final Vertex node, final Vertex target) {
     return DISTANCE;
   }
 

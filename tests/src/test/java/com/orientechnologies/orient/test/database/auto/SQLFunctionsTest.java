@@ -216,7 +216,7 @@ public class SQLFunctionsTest {
 
   @Test
   public void queryUnionAsInline() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from OGraphVertex"))
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from V"))
         .execute();
 
     Assert.assertTrue(result.size() > 1);

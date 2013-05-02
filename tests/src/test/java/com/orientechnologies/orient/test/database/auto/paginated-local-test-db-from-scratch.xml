@@ -90,9 +90,7 @@
 
     <test name="Graph">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity"/>
             <!-- <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexAndEdgeTest"/> -->
         </classes>
     </test>

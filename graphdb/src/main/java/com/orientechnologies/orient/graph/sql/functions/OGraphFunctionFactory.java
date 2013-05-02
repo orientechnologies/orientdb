@@ -41,6 +41,8 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
     FUNCTIONS.put(OSQLFunctionOut.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionOut.class);
     FUNCTIONS.put(OSQLFunctionIn.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIn.class);
     FUNCTIONS.put(OSQLFunctionBoth.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionBoth.class);
+    FUNCTIONS.put(OSQLFunctionDijkstra.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstra());
+    FUNCTIONS.put(OSQLFunctionShortestPath.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionShortestPath());
   }
 
   public Set<String> getFunctionNames() {

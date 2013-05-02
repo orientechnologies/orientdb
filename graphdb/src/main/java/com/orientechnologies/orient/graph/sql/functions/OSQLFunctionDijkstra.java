@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.graph;
+package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.Set;
+import java.util.Iterator;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase.DIRECTION;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
@@ -45,17 +46,29 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    final ODatabaseRecord currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
-    db = (OGraphDatabase) (currentDatabase instanceof OGraphDatabase ? currentDatabase : new OGraphDatabase(
-        (ODatabaseRecordTx) currentDatabase));
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    paramSourceVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[0], record, iContext);
-    paramDestinationVertex = (OIdentifiable) OSQLHelper.getValue(iParameters[1], record, iContext);
+    Object source = iParameters[0];
+    if (OMultiValue.isMultiValue(source)) {
+      if (OMultiValue.getSize(source) > 1)
+        throw new IllegalArgumentException("Only one sourceVertex is allowed");
+      source = OMultiValue.getFirstValue(source);
+    }
+    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+
+    Object dest = iParameters[1];
+    if (OMultiValue.isMultiValue(dest)) {
+      if (OMultiValue.getSize(dest) > 1)
+        throw new IllegalArgumentException("Only one destinationVertex is allowed");
+      dest = OMultiValue.getFirstValue(dest);
+    }
+    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+
     paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iContext);
     if (iParameters.length > 3)
-      paramDirection = DIRECTION.valueOf(iParameters[3].toString().toUpperCase());
+      paramDirection = Direction.valueOf(iParameters[3].toString().toUpperCase());
 
     return super.execute(iParameters, iContext);
   }
@@ -65,7 +78,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
   }
 
   @Override
-  protected Float getShortestDistance(final OIdentifiable destination) {
+  protected Float getShortestDistance(final Vertex destination) {
     if (destination == null)
       return Float.MAX_VALUE;
 
@@ -78,12 +91,12 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
     return MIN;
   }
 
-  protected Float getDistance(final OIdentifiable node, final OIdentifiable target) {
-    final Set<OIdentifiable> edges = db.getEdgesBetweenVertexes(node, target);
-    if (!edges.isEmpty()) {
-      final ODocument e = edges.iterator().next().getRecord();
+  protected Float getDistance(final Vertex node, final Vertex target) {
+    final Iterator<Edge> edges = ((OrientVertex) node).getEdges(target, paramDirection).iterator();
+    if (edges.hasNext()) {
+      final Edge e = edges.next();
       if (e != null) {
-        final Object fieldValue = e.field(paramWeightFieldName);
+        final Object fieldValue = e.getProperty(paramWeightFieldName);
         if (fieldValue != null)
           if (fieldValue instanceof Float)
             return (Float) fieldValue;
