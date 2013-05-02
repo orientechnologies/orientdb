@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
  * @author Andrey Lomakin
- * @since 5/2/13
+ * @since 30.04.13
  */
-public class OCheckpointEndRecord implements OWALRecord {
+public class OFuzzyCheckpointEndRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
 
-  public OCheckpointEndRecord() {
+  public OFuzzyCheckpointEndRecord() {
   }
 
   @Override

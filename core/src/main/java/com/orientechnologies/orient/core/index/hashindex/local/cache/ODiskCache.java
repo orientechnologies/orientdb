@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -48,9 +47,5 @@ public interface ODiskCache {
 
   Set<ODirtyPage> logDirtyPagesTable(OWriteAheadLog writeAheadLog) throws IOException;
 
-  void logPage(OWriteAheadLog writeAheadLog, long fileId, long pageIndex) throws IOException;
-
   void forceSyncStoredChanges() throws IOException;
-
-  Map<String, Long> getFileNameIdMap();
 }

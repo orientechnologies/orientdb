@@ -334,6 +334,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           size++;
           recordsSize += addEntryResult.recordsSizeDiff;
 
+          logClusterState();
           return createPhysicalPosition(recordType, addEntryResult.pagePointer, addEntryResult.recordVersion);
         } else {
           int entrySize = content.length + OByteSerializer.BYTE_SIZE;
@@ -406,6 +407,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           size++;
           recordsSize += recordsSizeDiff;
 
+          logClusterState();
           return createPhysicalPosition(recordType, firstPagePointer, version);
         }
       } finally {
@@ -552,6 +554,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         size--;
         recordsSize -= removedContentSize;
 
+        logClusterState();
         return true;
       } finally {
         releaseExclusiveLock();
@@ -894,6 +897,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         size = 0;
         recordsSize = 0;
 
+        logClusterState();
+
         for (int i = 0; i < freePageLists.length; i++)
           freePageLists[i] = -1;
       } finally {
@@ -986,7 +991,12 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   @Override
   public long getEntries() {
-    return size;
+    acquireSharedLock();
+    try {
+      return size;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   @Override
@@ -1371,16 +1381,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     return pageIndex == testPageIndex;
   }
 
-  public void prohibitPageDefragmentation() {
-    // TODO
-  }
+  public void logClusterState() throws IOException {
+    acquireSharedLock();
+    try {
+      if (writeAheadLog == null)
+        return;
 
-  public void allowPageDefragmentation() {
-    // TODO
-  }
-
-  public void logClusterState() {
-    // TODO
+      writeAheadLog.logRecord(new OClusterStateRecord(size, recordsSize, name));
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   private static final class AddEntryResult {
