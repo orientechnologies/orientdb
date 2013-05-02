@@ -79,10 +79,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
-    // UNAUTHORIZED
-    iRequest.sessionId = SESSIONID_UNAUTHORIZED;
-    iResponse.send(OHttpUtils.STATUS_FORBIDDEN_CODE, OHttpUtils.STATUS_FORBIDDEN_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "403 Forbidden.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"", false);
+    sendAuthorizationRequest(iRequest, iResponse);
   }
 
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
