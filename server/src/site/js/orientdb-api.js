@@ -236,7 +236,7 @@ function ODatabase(databasePath) {
 	}
 
 
-	ODatabase.prototype.metadata = function(userName, userPass, authProxy, type) {
+	ODatabase.prototype.metadata = function() {
 		$.ajax({
 			type : 'GET',
 			url : this.urlPrefix + 'database/' + this.encodedDatabaseName
