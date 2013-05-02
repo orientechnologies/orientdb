@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -999,24 +998,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
     if (vertexBaseClass == null) {
       // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      vertexBaseClass = getMetadata().getSchema().createClass(VERTEX_CLASS_NAME);
-      vertexBaseClass.setShortName("V");
+      vertexBaseClass = getMetadata().getSchema().createClass("V");
       vertexBaseClass.setOverSize(2);
-
-      if (edgeBaseClass == null) {
-        edgeBaseClass = getMetadata().getSchema().createClass(EDGE_CLASS_NAME);
-        edgeBaseClass.setShortName("E");
-      }
-
-      vertexBaseClass.createProperty(VERTEX_FIELD_IN, OType.LINKSET, edgeBaseClass);
-      vertexBaseClass.createProperty(VERTEX_FIELD_OUT, OType.LINKSET, edgeBaseClass);
-      edgeBaseClass.createProperty(EDGE_FIELD_IN, OType.LINK, vertexBaseClass);
-      edgeBaseClass.createProperty(EDGE_FIELD_OUT, OType.LINK, vertexBaseClass);
-    } else {
-      // @COMPATIBILITY <= 1.0rc4: CHANGE FROM outEdges -> out and inEdges -> in
-      if (vertexBaseClass.existsProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES)) {
-        OGraphDatabaseMigration.migrate(this);
-      }
+    }
+    
+    if (edgeBaseClass == null) {
+      edgeBaseClass = getMetadata().getSchema().createClass("E");
+      edgeBaseClass.setShortName("E");
     }
   }
 
