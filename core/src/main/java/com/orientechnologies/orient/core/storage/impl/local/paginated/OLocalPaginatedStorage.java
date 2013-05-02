@@ -25,6 +25,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -69,7 +74,6 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -80,24 +84,43 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                          ONE_KB              = 1024;
+  private static final int                          ONE_KB                  = 1024;
   private final int                                 DELETE_MAX_RETRIES;
   private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OLocalPaginatedCluster> clusterMap          = new LinkedHashMap<String, OLocalPaginatedCluster>();
-  private OLocalPaginatedCluster[]                  clusters            = new OLocalPaginatedCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap              = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters                = new OLocalPaginatedCluster[0];
 
   private String                                    storagePath;
   private final OStorageVariableParser              variableParser;
-  private int                                       defaultClusterId    = -1;
+  private int                                       defaultClusterId        = -1;
 
-  private static String[]                           ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet", ".wal"                                   };
+  private static String[]                           ALL_FILE_EXTENSIONS     = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
+      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                       };
 
-  private OModificationLock                         modificationLock    = new OModificationLock();
+  private OModificationLock                         modificationLock        = new OModificationLock();
 
   private final ODiskCache                          diskCache;
   private final OWriteAheadLog                      writeAheadLog;
+
+  private final ScheduledExecutorService            fuzzyCheckpointExecutor = Executors
+                                                                                .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                  @Override
+                                                                                  public Thread newThread(Runnable r) {
+                                                                                    Thread thread = new Thread(r);
+                                                                                    thread.setDaemon(true);
+                                                                                    return thread;
+                                                                                  }
+                                                                                });
+  private final ExecutorService                     checkpointExecutor      = Executors
+                                                                                .newSingleThreadExecutor(new ThreadFactory() {
+                                                                                  @Override
+                                                                                  public Thread newThread(Runnable r) {
+                                                                                    Thread thread = new Thread(r);
+                                                                                    thread.setDaemon(true);
+                                                                                    return thread;
+                                                                                  }
+                                                                                });
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -124,10 +147,24 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
-    if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
+    if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
       writeAheadLog = new OWriteAheadLog(this);
-    else
+
+      final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
+      fuzzyCheckpointExecutor.scheduleWithFixedDelay(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            makeFuzzyCheckpoint();
+          } catch (Throwable e) {
+            OLogManager.instance().error(this, "Error during background fuzzy checkpoint creation for storage " + name, e);
+          }
+
+        }
+      }, fuzzyCheckpointDelay, fuzzyCheckpointDelay, TimeUnit.SECONDS);
+    } else
       writeAheadLog = null;
+
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -223,6 +260,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       configuration.create();
 
+      makeCheckpoint();
     } catch (OStorageException e) {
       close();
       throw e;
@@ -267,6 +305,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (configuration != null)
         configuration.close();
 
+      makeCheckpoint();
+      fuzzyCheckpointExecutor.shutdown();
+      final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
+      fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS);
+
+      checkpointExecutor.shutdown();
+      checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
+          TimeUnit.SECONDS);
+
       level2Cache.shutdown();
 
       super.close(iForce);
@@ -275,9 +322,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
+    } catch (InterruptedException ie) {
+      OLogManager.instance().error(this, "Error on closing of storage '" + name, ie, OStorageException.class);
+      Thread.interrupted();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on closing of storage '" + name, e, OStorageException.class);
-
     } finally {
       lock.releaseExclusiveLock();
 
@@ -464,6 +513,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         cluster.open();
       }
       configuration.update();
+
+      makeCheckpoint();
     }
 
     return createdClusterId;
@@ -491,6 +542,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       // UPDATE CONFIGURATION
       configuration.dropCluster(iClusterId);
 
+      makeCheckpoint();
       return true;
     } catch (Exception e) {
       OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
@@ -588,7 +640,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordCallback<OClusterPosition> callback) {
     checkOpeness();
 
-    final OLocalPaginatedCluster cluster = (OLocalPaginatedCluster) getClusterById(rid.clusterId);
+    final OLocalPaginatedCluster cluster = getClusterById(rid.clusterId);
     cluster.getExternalModificationLock().requestModificationLock();
     try {
       modificationLock.requestModificationLock();
@@ -1196,55 +1248,61 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public void makeCheckpoint() {
+  public void makeFuzzyCheckpoint() {
     if (writeAheadLog == null)
       return;
 
     try {
-      Set<ODirtyPage> dirtyPages;
       lock.acquireExclusiveLock();
-      boolean exclusiveLock = true;
-      boolean sharedLock = false;
-
       try {
         diskCache.forceSyncStoredChanges();
-        writeAheadLog.logCheckPointStart();
-
-        for (OLocalPaginatedCluster cluster : clusters)
-          cluster.prohibitPageDefragmentation();
+        writeAheadLog.logFuzzyCheckPointStart();
 
         for (OLocalPaginatedCluster cluster : clusters)
           cluster.logClusterState();
 
-        dirtyPages = diskCache.logDirtyPagesTable(writeAheadLog);
-
-        // LOCK DOWNGRADE....
-        lock.acquireSharedLock();
-        sharedLock = true;
-
-        lock.releaseExclusiveLock();
-        exclusiveLock = false;
-        // ....................
-
-        final Map<String, Long> fileNameIdMap = diskCache.getFileNameIdMap();
-
-        for (ODirtyPage dirtyPage : dirtyPages)
-          diskCache.logPage(writeAheadLog, fileNameIdMap.get(dirtyPage.getFileName()), dirtyPage.getPageIndex());
-
-        writeAheadLog.logCheckPointEnd();
-
-        for (OLocalPaginatedCluster cluster : clusters)
-          cluster.allowPageDefragmentation();
+        diskCache.logDirtyPagesTable(writeAheadLog);
+        writeAheadLog.logFuzzyCheckPointEnd();
       } finally {
-        if (sharedLock)
-          lock.releaseSharedLock();
-
-        if (exclusiveLock)
-          lock.releaseExclusiveLock();
+        lock.releaseExclusiveLock();
       }
     } catch (IOException ioe) {
-      throw new OStorageException("Error during snapshot creation for storage " + name, ioe);
+      throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
     }
+  }
+
+  public void makeCheckpoint() {
+    if (writeAheadLog == null)
+      return;
+
+    lock.acquireExclusiveLock();
+    try {
+      writeAheadLog.logCheckpointStart();
+
+      for (OLocalPaginatedCluster cluster : clusters)
+        cluster.logClusterState();
+
+      diskCache.flushBuffer();
+
+      writeAheadLog.logCheckpointEnd();
+    } catch (IOException ioe) {
+      throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  public void scheduleCheckpoint() {
+    checkpointExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          makeCheckpoint();
+        } catch (Throwable t) {
+          OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+        }
+      }
+    });
   }
 
   @Override

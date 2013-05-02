@@ -29,20 +29,22 @@ public class OWALRecordsFactory {
 
     if (walRecord instanceof OSetPageDataRecord)
       content[0] = 0;
-    else if (walRecord instanceof OShiftPageDataRecord)
-      content[0] = 1;
     else if (walRecord instanceof OStartAtomicPageUpdateRecord)
-      content[0] = 2;
+      content[0] = 1;
     else if (walRecord instanceof OEndAtomicPageUpdateRecord)
+      content[0] = 2;
+    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
       content[0] = 3;
-    else if (walRecord instanceof OCheckpointStartRecord)
+    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
       content[0] = 4;
-    else if (walRecord instanceof OCheckpointEndRecord)
-      content[0] = 5;
-    else if (walRecord instanceof OWholePageRecord)
-      content[0] = 6;
     else if (walRecord instanceof ODirtyPagesRecord)
+      content[0] = 5;
+    else if (walRecord instanceof OCheckpointStartRecord)
+      content[0] = 6;
+    else if (walRecord instanceof OCheckpointEndRecord)
       content[0] = 7;
+    else if (walRecord instanceof OAddNewPageRecord)
+      content[0] = 8;
     else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
@@ -58,25 +60,28 @@ public class OWALRecordsFactory {
       walRecord = new OSetPageDataRecord();
       break;
     case 1:
-      walRecord = new OShiftPageDataRecord();
-      break;
-    case 2:
       walRecord = new OStartAtomicPageUpdateRecord();
       break;
-    case 3:
+    case 2:
       walRecord = new OEndAtomicPageUpdateRecord();
       break;
+    case 3:
+      walRecord = new OFuzzyCheckpointStartRecord();
+      break;
     case 4:
-      walRecord = new OCheckpointStartRecord();
+      walRecord = new OFuzzyCheckpointEndRecord();
       break;
     case 5:
-      walRecord = new OCheckpointEndRecord();
+      walRecord = new ODirtyPagesRecord();
       break;
     case 6:
-      walRecord = new OWholePageRecord();
+      walRecord = new OCheckpointStartRecord();
       break;
     case 7:
-      walRecord = new ODirtyPagesRecord();
+      walRecord = new OCheckpointEndRecord();
+      break;
+    case 8:
+      walRecord = new OAddNewPageRecord();
       break;
     default:
       throw new IllegalStateException("Can not deserialize passed in wal record.");

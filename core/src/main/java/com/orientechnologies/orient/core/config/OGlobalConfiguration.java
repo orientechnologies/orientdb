@@ -67,6 +67,12 @@ public enum OGlobalConfiguration {
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
+  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
+      Integer.class, 36000),
+
+  WAL_CHECKPOINT_INTERVAL_TIMEOUT("storage.wal.checkpointIntervalTimeout",
+      "Timeout till DB will wait checkpoint is finished during DB close (in seconds))", Integer.class, 300),
+
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
 

@@ -13,36 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
  * @author Andrey Lomakin
- * @since 5/2/13
+ * @since 30.04.13
  */
-public class OCheckpointEndRecord implements OWALRecord {
+public class OFuzzyCheckpointStartRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
 
-  public OCheckpointEndRecord() {
+  public OFuzzyCheckpointStartRecord() {
+  }
+
+  @Override
+  public boolean isUpdateMasterRecord() {
+    return true;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
-    return offset;
+    return 0;
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
-    return offset;
+    return 0;
   }
 
   @Override
   public int serializedSize() {
     return 0;
-  }
-
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
   }
 
   @Override
@@ -61,7 +62,6 @@ public class OCheckpointEndRecord implements OWALRecord {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
-
     return true;
   }
 }

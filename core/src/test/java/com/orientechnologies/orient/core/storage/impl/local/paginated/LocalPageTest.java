@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -287,6 +287,76 @@ public class LocalPageTest {
   }
 
   public void testAddFullPageDeleteAndAddAgain() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);
+
+      Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
+      Set<Integer> deletedPositions = new HashSet<Integer>();
+
+      int lastPosition;
+      byte counter = 0;
+      int freeSpace = localPage.getFreeSpace();
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      do {
+        lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+        if (lastPosition >= 0) {
+          Assert.assertEquals(lastPosition, positionCounter.size());
+          positionCounter.put(lastPosition, counter);
+          counter++;
+
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          freeSpace = localPage.getFreeSpace();
+        }
+      } while (lastPosition >= 0);
+
+      int filledRecordsCount = positionCounter.size();
+      Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
+
+      for (int i = 0; i < filledRecordsCount; i += 2) {
+        localPage.deleteRecord(i);
+        deletedPositions.add(i);
+        positionCounter.remove(i);
+      }
+
+      freeSpace = localPage.getFreeSpace();
+      do {
+        lastPosition = localPage.appendRecord(recordVersion, new byte[] { counter, counter, counter });
+        if (lastPosition >= 0) {
+          positionCounter.put(lastPosition, counter);
+          counter++;
+
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+          freeSpace = localPage.getFreeSpace();
+        }
+      } while (lastPosition >= 0);
+
+      ORecordVersion deletedVersion = OVersionFactory.instance().createVersion();
+      deletedVersion.copyFrom(recordVersion);
+
+      deletedVersion.increment();
+
+      Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
+      for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
+        final long pointer = localPage.getRecordPointer(entry.getKey());
+
+        Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
+
+        if (deletedPositions.contains(entry.getKey()))
+          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
+        else
+          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+
+      }
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testAddFullPageDeleteAndAddAgainWithoutDefragMentation() throws Exception {
     long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
       OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, null);

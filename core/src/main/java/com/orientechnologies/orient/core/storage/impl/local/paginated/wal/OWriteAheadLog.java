@@ -51,6 +51,7 @@ public class OWriteAheadLog {
 
   private final List<LogSegment>         logSegments          = new ArrayList<LogSegment>();
   private final RandomAccessFile         masterRecordLSNHolder;
+
   private boolean                        useFirstMasterRecord = true;
 
   private final int                      maxRecordsCacheSize;
@@ -62,10 +63,11 @@ public class OWriteAheadLog {
   private long                           logSize;
 
   private final File                     walLocation;
-  private final String                   storageName;
   private File                           masterRecordFile;
   private OLogSequenceNumber             firstMasterRecord;
   private OLogSequenceNumber             secondMasterRecord;
+
+  private final OLocalPaginatedStorage   paginatedStorage;
 
   private final ScheduledExecutorService commitExecutor       = Executors.newScheduledThreadPool(1, new ThreadFactory() {
                                                                 @Override
@@ -87,19 +89,19 @@ public class OWriteAheadLog {
   public OWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
-            .getValueAsInteger() * ONE_KB * ONE_KB, storage.getName(), calculateWalPath(storage));
+            .getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
-  public OWriteAheadLog(int maxRecordsCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, String storageName,
-      String walPath) throws IOException {
+  public OWriteAheadLog(int maxRecordsCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize,
+      OLocalPaginatedStorage storage) throws IOException {
     this.maxRecordsCacheSize = maxRecordsCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
     this.maxLogSize = maxLogSize;
-    this.storageName = storageName;
+    this.paginatedStorage = storage;
 
     try {
-      this.walLocation = new File(walPath);
+      this.walLocation = new File(calculateWalPath(paginatedStorage));
 
       File[] walFiles = this.walLocation.listFiles(new FilenameFilter() {
         @Override
@@ -122,12 +124,12 @@ public class OWriteAheadLog {
         Collections.sort(logSegments);
       }
 
-      masterRecordFile = new File(walLocation, storageName + ".wmr");
+      masterRecordFile = new File(walLocation, paginatedStorage.getName() + ".wmr");
       masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rwd");
 
       if (masterRecordLSNHolder.length() > 0) {
-        firstMasterRecord = readMasterRecord(storageName, 0);
-        secondMasterRecord = readMasterRecord(storageName, 1);
+        firstMasterRecord = readMasterRecord(paginatedStorage.getName(), 0);
+        secondMasterRecord = readMasterRecord(paginatedStorage.getName(), 1);
 
         if (firstMasterRecord == null) {
           useFirstMasterRecord = true;
@@ -160,8 +162,8 @@ public class OWriteAheadLog {
 
     } catch (FileNotFoundException e) {
       // never happened
-      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storageName);
-      throw new IllegalStateException("Error during file initialization for storage " + storageName, e);
+      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, paginatedStorage.getName());
+      throw new IllegalStateException("Error during file initialization for storage " + paginatedStorage.getName(), e);
     }
   }
 
@@ -177,6 +179,13 @@ public class OWriteAheadLog {
 
       fixSize();
       fixMasterRecords();
+    }
+  }
+
+  public OLogSequenceNumber begin() {
+    synchronized (syncObject) {
+      LogSegment first = logSegments.get(0);
+      return new OLogSequenceNumber(first.getOrder(), 0);
     }
   }
 
@@ -269,20 +278,20 @@ public class OWriteAheadLog {
   }
 
   private String getSegmentName(int order) {
-    return storageName + "." + order + ".wal";
+    return paginatedStorage.getName() + "." + order + ".wal";
   }
 
-  public OLogSequenceNumber logCheckPointStart() throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart() throws IOException {
     synchronized (syncObject) {
-      OCheckpointStartRecord record = new OCheckpointStartRecord();
+      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord();
       logRecord(record);
       return record.getLsn();
     }
   }
 
-  public OLogSequenceNumber logCheckPointEnd() throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException {
     synchronized (syncObject) {
-      OCheckpointEndRecord record = new OCheckpointEndRecord();
+      OFuzzyCheckpointEndRecord record = new OFuzzyCheckpointEndRecord();
       logRecord(record);
       return record.getLsn();
     }
@@ -303,6 +312,8 @@ public class OWriteAheadLog {
         logSegments.remove(0);
 
         fixMasterRecords();
+
+        paginatedStorage.scheduleCheckpoint();
       }
 
       LogSegment last = logSegments.get(logSegments.size() - 1);
@@ -356,22 +367,17 @@ public class OWriteAheadLog {
 
       for (LogSegment logSegment : logSegments)
         if (!logSegment.delete())
-          OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(), storageName);
+          OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(),
+              paginatedStorage.getName());
 
       if (!masterRecordFile.delete())
-        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", storageName);
+        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", paginatedStorage.getName());
     }
   }
 
   public void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException {
     synchronized (syncObject) {
       logRecord(new ODirtyPagesRecord(dirtyPages));
-    }
-  }
-
-  public void logPage(long pagePointer, long pageIndex, String fileName) throws IOException {
-    synchronized (syncObject) {
-      logRecord(new OWholePageRecord(pageIndex, fileName, pagePointer));
     }
   }
 
@@ -454,6 +460,17 @@ public class OWriteAheadLog {
 
   private static int calculateEntrySize(byte[] logEntry) {
     return logEntry.length + 2 * OIntegerSerializer.INT_SIZE;
+  }
+
+  public void logCheckpointStart() throws IOException {
+    logRecord(new OCheckpointStartRecord());
+  }
+
+  public void logCheckpointEnd() throws IOException {
+    synchronized (syncObject) {
+      logRecord(new OCheckpointEndRecord());
+      flush();
+    }
   }
 
   private final class LogSegment implements Comparable<LogSegment> {

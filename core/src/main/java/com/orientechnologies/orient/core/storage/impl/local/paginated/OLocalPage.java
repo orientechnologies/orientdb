@@ -25,10 +25,10 @@ import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAddNewPageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OEndAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OShiftPageDataRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OStartAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -82,12 +82,13 @@ public class OLocalPage {
     if (newPage) {
       startAtomicUpdate();
       try {
+        logAddNewPage();
+
         setLongValue(NEXT_PAGE_OFFSET, -1);
         setLongValue(PREV_PAGE_OFFSET, -1);
 
         setIntValue(FREE_POSITION_OFFSET, PAGE_SIZE);
         setIntValue(FREE_SPACE_COUNTER_OFFSET, PAGE_SIZE - PAGE_INDEXES_OFFSET);
-
       } finally {
         endAtomicUpdate();
       }
@@ -104,18 +105,6 @@ public class OLocalPage {
   private void setLsn(OLogSequenceNumber lsn) {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
-  }
-
-  public long getPageIndex() {
-    return pageIndex;
-  }
-
-  public String getFileName() {
-    return fileName;
-  }
-
-  public long getPagePointer() {
-    return pagePointer;
   }
 
   public int appendRecord(ORecordVersion recordVersion, byte[] record) throws IOException {
@@ -465,7 +454,8 @@ public class OLocalPage {
     if (walLog == null) {
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
     } else {
-      walLog.logRecord(new OShiftPageDataRecord(from, to, len, fileName, pageIndex));
+      byte[] content = directMemory.get(pagePointer + from, len);
+      walLog.logRecord(new OSetPageDataRecord(content, to, pageIndex, fileName));
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
     }
 
@@ -479,5 +469,10 @@ public class OLocalPage {
   private void endAtomicUpdate() throws IOException {
     if (walLog != null)
       setLsn(walLog.logRecord(new OEndAtomicPageUpdateRecord(pageIndex, fileName)));
+  }
+
+  private void logAddNewPage() throws IOException {
+    if (walLog != null)
+      walLog.logRecord(new OAddNewPageRecord(pageIndex, fileName));
   }
 }

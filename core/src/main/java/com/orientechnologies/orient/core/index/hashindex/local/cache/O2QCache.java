@@ -621,26 +621,6 @@ public class O2QCache implements ODiskCache {
   }
 
   @Override
-  public Map<String, Long> getFileNameIdMap() {
-    synchronized (syncObject) {
-      Map<String, Long> fileNameIdMap = new HashMap<String, Long>();
-
-      for (Map.Entry<Long, OMultiFileSegment> fileSegmentEntry : files.entrySet())
-        fileNameIdMap.put(fileSegmentEntry.getValue().getName(), fileSegmentEntry.getKey());
-
-      return fileNameIdMap;
-    }
-  }
-
-  @Override
-  public void logPage(OWriteAheadLog writeAheadLog, long fileId, long pageIndex) throws IOException {
-    synchronized (syncObject) {
-      final long dataPointer = load(fileId, pageIndex);
-      writeAheadLog.logPage(dataPointer, pageIndex, files.get(fileId).getName());
-    }
-  }
-
-  @Override
   public void forceSyncStoredChanges() throws IOException {
     synchronized (syncObject) {
       for (OMultiFileSegment multiFileSegment : files.values())
