@@ -364,11 +364,7 @@ function ODatabase(databasePath) {
 			}
 		});
 
-		if (methodType == 'PUT') {
-			return rid;
-		} else {
-			return this.getCommandResult();
-		}
+		return this.getCommandResult();
 	}
 
 	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {
