@@ -20,20 +20,20 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
- * Gets the incoming and outgoing Vertices of current Vertex.
+ * Gets the incoming and outgoing Edges of current Vertex.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionBoth extends OSQLFunctionMove {
-  public static final String NAME = "both";
+public class OSQLFunctionBothE extends OSQLFunctionMove {
+  public static final String NAME = "bothE";
 
-  public OSQLFunctionBoth() {
+  public OSQLFunctionBothE() {
     super(NAME, 0, 1);
   }
 
   @Override
   protected Object move(final OrientBaseGraph graph, final OIdentifiable iRecord, final String[] iLabels) {
-    return v2v(graph, iRecord, Direction.BOTH, iLabels);
+    return v2e(graph, iRecord, Direction.BOTH, iLabels);
   }
 }

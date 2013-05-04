@@ -34,13 +34,18 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
-    FUNCTIONS.put(OSQLFunctionVertices.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionVertices.class);
-    FUNCTIONS.put(OSQLFunctionEdges.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionEdges.class);
-    FUNCTIONS.put(OSQLFunctionLabel.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionLabel.class);
-    FUNCTIONS.put(OSQLFunctionMove.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMove.class);
-    FUNCTIONS.put(OSQLFunctionOut.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionOut.class);
-    FUNCTIONS.put(OSQLFunctionIn.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIn.class);
-    FUNCTIONS.put(OSQLFunctionBoth.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionBoth.class);
+
+    FUNCTIONS.put(OSQLFunctionLabel.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionLabel());
+    FUNCTIONS.put(OSQLFunctionOut.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOut());
+    FUNCTIONS.put(OSQLFunctionIn.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIn());
+    FUNCTIONS.put(OSQLFunctionBoth.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBoth());
+    FUNCTIONS.put(OSQLFunctionOutE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOutE());
+    FUNCTIONS.put(OSQLFunctionInE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInE());
+    FUNCTIONS.put(OSQLFunctionBothE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBothE());
+    FUNCTIONS.put(OSQLFunctionOutV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOutV());
+    FUNCTIONS.put(OSQLFunctionInV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInV());
+    FUNCTIONS.put(OSQLFunctionBothV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBothV());
+
     FUNCTIONS.put(OSQLFunctionDijkstra.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstra());
     FUNCTIONS.put(OSQLFunctionShortestPath.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionShortestPath());
   }
