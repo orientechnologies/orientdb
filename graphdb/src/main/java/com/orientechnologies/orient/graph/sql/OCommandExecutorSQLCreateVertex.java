@@ -99,7 +99,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final OrientVertex vertex = graph.addVertex(clazz.getName(), clusterName);
+    final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
     if (fields != null)
       // EVALUATE FIELDS
@@ -113,7 +113,10 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (content != null)
       vertex.getRecord().merge(content, true, false);
 
-    vertex.save();
+    if (clusterName != null)
+      vertex.save(clusterName);
+    else
+      vertex.save();
 
     return vertex.getRecord();
   }

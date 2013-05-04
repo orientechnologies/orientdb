@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.graph.sql;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -58,8 +57,8 @@ public class SQLGraphFunctions {
 
   public void checkDijkstra() {
     String subquery = "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let $target = ( select from V where name = \'C\' ) where 1 > 0";
-    List<ODocument> result = graph.command(new OSQLSynchQuery<ODocument>(subquery)).execute();
-    Assert.assertFalse(result.isEmpty());
+    Iterable<ODocument> result = graph.command(new OSQLSynchQuery<ODocument>(subquery)).execute();
+    Assert.assertTrue(result.iterator().hasNext());
 
     for (ODocument d : result) {
       System.out.println("Shortest path from " + ((ODocument) d.field("$current")).field("name") + " and "

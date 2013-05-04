@@ -92,7 +92,7 @@ public class SQLCreateVertexAndEdgeTest {
         new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
-    Assert.assertEquals(e3.getClassName(), OGraphDatabase.EDGE_CLASS_NAME);
+    Assert.assertEquals(e3.getClassName(), OGraphDatabase.EDGE_ALIAS);
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.field("weight"), 3);
