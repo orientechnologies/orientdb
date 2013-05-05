@@ -136,7 +136,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (directMemory != null)
-      diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, directMemory,
+      diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024,
+          OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger(), directMemory, null,
           OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, this, false);
     else
       diskCache = null;

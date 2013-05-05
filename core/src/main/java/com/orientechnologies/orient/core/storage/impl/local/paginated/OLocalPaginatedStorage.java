@@ -145,8 +145,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-    diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB, directMemory,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
       writeAheadLog = new OWriteAheadLog(this);
 
@@ -164,6 +162,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }, fuzzyCheckpointDelay, fuzzyCheckpointDelay, TimeUnit.SECONDS);
     } else
       writeAheadLog = null;
+
+    diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB,
+        OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger(), directMemory, writeAheadLog,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
 
   }
 
@@ -1090,7 +1092,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  OWriteAheadLog getWALInstance() {
+  public OWriteAheadLog getWALInstance() {
     return writeAheadLog;
   }
 
@@ -1261,7 +1263,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         for (OLocalPaginatedCluster cluster : clusters)
           cluster.logClusterState();
 
-        diskCache.logDirtyPagesTable(writeAheadLog);
+        diskCache.logDirtyPagesTable();
         writeAheadLog.logFuzzyCheckPointEnd();
       } finally {
         lock.releaseExclusiveLock();

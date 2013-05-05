@@ -11,7 +11,6 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
   private final long                     position;
 
   public OLogSequenceNumber(int segment, long position) {
-    assert segment >= 0;
     assert position >= 0;
 
     this.segment = segment;

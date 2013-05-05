@@ -15,26 +15,29 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
 /**
  * @author Andrey Lomakin
  * @since 25.02.13
  */
 class LRUEntry {
-  long     fileId;
-  long     pageIndex;
+  long               fileId;
+  long               pageIndex;
 
-  long     dataPointer;
+  OLogSequenceNumber loadedLSN;
 
-  long     hashCode;
+  long               dataPointer;
+  boolean            isDirty;
 
-  int      usageCounter = 0;
+  long               hashCode;
 
-  LRUEntry next;
+  int                usageCounter = 0;
 
-  LRUEntry after;
-  LRUEntry before;
+  LRUEntry           next;
 
-  boolean  isDirty;
+  LRUEntry           after;
+  LRUEntry           before;
 
   @Override
   public boolean equals(Object o) {
@@ -53,12 +56,25 @@ class LRUEntry {
       return false;
     if (pageIndex != lruEntry.pageIndex)
       return false;
+    if (loadedLSN != null ? !loadedLSN.equals(lruEntry.loadedLSN) : lruEntry.loadedLSN != null)
+      return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return (int) (hashCode ^ (hashCode >>> 32));
+    int result = (int) (fileId ^ (fileId >>> 32));
+    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
+    result = 31 * result + (loadedLSN != null ? loadedLSN.hashCode() : 0);
+    result = 31 * result + (int) (dataPointer ^ (dataPointer >>> 32));
+    result = 31 * result + (isDirty ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "LRUEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", loadedLSN=" + loadedLSN + ", dataPointer="
+        + dataPointer + ", isDirty=" + isDirty + ", hashCode=" + hashCode + ", usageCounter=" + usageCounter + '}';
   }
 }

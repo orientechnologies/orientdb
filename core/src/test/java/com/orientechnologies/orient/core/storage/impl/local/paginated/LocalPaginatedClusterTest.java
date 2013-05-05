@@ -14,12 +14,6 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
@@ -36,6 +30,12 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -62,9 +62,8 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    diskCache = new O2QCache(2L * 1024 * 1024 * 1024, directMemory,
-						OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        storage, false);
+    diskCache = new O2QCache(2L * 1024 * 1024 * 1024, 15000, directMemory, null,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, storage, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
 

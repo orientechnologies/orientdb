@@ -189,6 +189,16 @@ public class OWriteAheadLog {
     }
   }
 
+  public void flushTillLSN(OLogSequenceNumber lsn) throws IOException {
+    synchronized (syncObject) {
+      final LogSegment last = logSegments.get(logSegments.size() - 1);
+      if (last.getOrder() < lsn.getSegment())
+        return;
+
+      last.flushTillLSN(lsn);
+    }
+  }
+
   private void fixMasterRecords() throws IOException {
     if (firstMasterRecord != null) {
       int index = firstMasterRecord.getSegment() - logSegments.get(0).getOrder();
@@ -306,7 +316,7 @@ public class OWriteAheadLog {
         LogSegment first = logSegments.get(0);
         logSize -= first.size();
 
-        if (!first.delete())
+        if (!first.delete(false))
           OLogManager.instance().error(this, "Log segment %s can not be removed from WAL", first.getPath());
 
         logSegments.remove(0);
@@ -344,6 +354,10 @@ public class OWriteAheadLog {
   }
 
   public void close() throws IOException {
+    close(true);
+  }
+
+  public void close(boolean flush) throws IOException {
     synchronized (syncObject) {
       if (commitDelay > 0 && !commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
@@ -355,18 +369,22 @@ public class OWriteAheadLog {
       }
 
       for (LogSegment logSegment : logSegments)
-        logSegment.close();
+        logSegment.close(flush);
 
       masterRecordLSNHolder.close();
     }
   }
 
   public void delete() throws IOException {
+    delete(false);
+  }
+
+  public void delete(boolean flush) throws IOException {
     synchronized (syncObject) {
-      close();
+      close(flush);
 
       for (LogSegment logSegment : logSegments)
-        if (!logSegment.delete())
+        if (!logSegment.delete(false))
           OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(),
               paginatedStorage.getName());
 
@@ -528,8 +546,8 @@ public class OWriteAheadLog {
       return size;
     }
 
-    public boolean delete() throws IOException {
-      close();
+    public boolean delete(boolean flush) throws IOException {
+      close(flush);
       return file.delete();
     }
 
@@ -561,30 +579,8 @@ public class OWriteAheadLog {
       rndFile.seek(rndFile.length());
       final CRC32 crc32 = new CRC32();
 
-      for (CacheEntry cacheEntry : records) {
-        crc32.reset();
-        crc32.update(cacheEntry.record);
-
-        long crc = crc32.getValue();
-
-        long position = rndFile.length();
-
-        rndFile.writeInt((int) crc);
-        rndFile.writeInt(cacheEntry.record.length);
-        rndFile.write(cacheEntry.record);
-
-        if (cacheEntry.updateMasterRecord) {
-          if (useFirstMasterRecord) {
-            firstMasterRecord = new OLogSequenceNumber(order, position);
-            writeMasterRecord(0, firstMasterRecord);
-            useFirstMasterRecord = false;
-          } else {
-            secondMasterRecord = new OLogSequenceNumber(order, position);
-            writeMasterRecord(1, secondMasterRecord);
-            useFirstMasterRecord = true;
-          }
-        }
-      }
+      for (CacheEntry cacheEntry : records)
+        flushEntry(crc32, cacheEntry);
 
       rndFile.getFD().sync();
 
@@ -592,6 +588,31 @@ public class OWriteAheadLog {
       recordsCacheSize = 0;
 
       assert rndFile.length() == size;
+    }
+
+    private void flushEntry(CRC32 crc32, CacheEntry cacheEntry) throws IOException {
+      crc32.reset();
+      crc32.update(cacheEntry.record);
+
+      long crc = crc32.getValue();
+
+      long position = rndFile.length();
+
+      rndFile.writeInt((int) crc);
+      rndFile.writeInt(cacheEntry.record.length);
+      rndFile.write(cacheEntry.record);
+
+      if (cacheEntry.updateMasterRecord) {
+        if (useFirstMasterRecord) {
+          firstMasterRecord = new OLogSequenceNumber(order, position);
+          writeMasterRecord(0, firstMasterRecord);
+          useFirstMasterRecord = false;
+        } else {
+          secondMasterRecord = new OLogSequenceNumber(order, position);
+          writeMasterRecord(1, secondMasterRecord);
+          useFirstMasterRecord = true;
+        }
+      }
     }
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
@@ -648,9 +669,11 @@ public class OWriteAheadLog {
       return new OLogSequenceNumber(order, pos);
     }
 
-    public void close() throws IOException {
+    public void close(boolean flush) throws IOException {
       if (!closed) {
-        flush();
+        if (flush)
+          flush();
+
         rndFile.close();
         closed = true;
       }
@@ -699,6 +722,30 @@ public class OWriteAheadLog {
         }
       }
       rndFile.getFD().sync();
+    }
+
+    public void flushTillLSN(OLogSequenceNumber lsn) throws IOException {
+      if (records.isEmpty() || records.get(0).lsn.compareTo(lsn) > 0)
+        return;
+
+      rndFile.seek(rndFile.length());
+      final CRC32 crc32 = new CRC32();
+
+      int lastIndex = -1;
+
+      for (int i = 0; i < records.size(); i++) {
+        CacheEntry cacheEntry = records.get(i);
+        if (cacheEntry.lsn.compareTo(lsn) <= 0) {
+          flushEntry(crc32, cacheEntry);
+          lastIndex = i;
+        } else
+          break;
+      }
+
+      rndFile.getFD().sync();
+
+      if (lastIndex > -1)
+        records.subList(0, lastIndex + 1).clear();
     }
   }
 

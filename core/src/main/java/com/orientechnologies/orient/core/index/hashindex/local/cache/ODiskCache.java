@@ -6,7 +6,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
@@ -45,7 +44,7 @@ public interface ODiskCache {
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 
-  Set<ODirtyPage> logDirtyPagesTable(OWriteAheadLog writeAheadLog) throws IOException;
+  Set<ODirtyPage> logDirtyPagesTable() throws IOException;
 
   void forceSyncStoredChanges() throws IOException;
 }

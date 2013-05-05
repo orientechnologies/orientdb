@@ -23,6 +23,10 @@ public class ODirtyPagesRecord implements OWALRecord {
     this.dirtyPages = dirtyPages;
   }
 
+  public Set<ODirtyPage> getDirtyPages() {
+    return dirtyPages;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     OIntegerSerializer.INSTANCE.serializeNative(dirtyPages.size(), content, offset);

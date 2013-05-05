@@ -64,7 +64,6 @@ public class WriteAheadLogTest {
 
   @AfterClass
   public void afterClass() {
-    File testDir = new File("writeAheadLogTest");
     if (testDir.exists())
       testDir.delete();
   }
@@ -773,6 +772,55 @@ public class WriteAheadLogTest {
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(44).getLsn()));
     verify(paginatedStorage).scheduleCheckpoint();
     Assert.assertEquals(writeAheadLog.begin(), new OLogSequenceNumber(1, 0));
+  }
+
+  public void flushTillLSN() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 80;
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    writeAheadLog.flushTillLSN(writtenRecords.get(70).getLsn());
+    writeAheadLog.close(false);
+
+    writeAheadLog = createWAL();
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 71));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(71).getLsn()));
+  }
+
+  public void flushTillLSNFullBufferFlush() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+    Random rnd = new Random();
+
+    final int recordsToWrite = 80;
+    for (int i = 0; i < recordsToWrite; i++) {
+      byte[] data = new byte[10];
+      rnd.nextBytes(data);
+
+      int pageOffset = rnd.nextInt(65536);
+      long pageIndex = rnd.nextLong();
+      OSetPageDataRecord setPageDataRecord = new OSetPageDataRecord(data, pageOffset, pageIndex, "test");
+      writtenRecords.add(setPageDataRecord);
+
+      writeAheadLog.logRecord(setPageDataRecord);
+    }
+
+    writeAheadLog.flushTillLSN(writtenRecords.get(70).getLsn());
+    writeAheadLog.close();
+
+    writeAheadLog = createWAL();
+    assertLogContent(writeAheadLog, writtenRecords);
   }
 
   private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {

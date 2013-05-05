@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,15 +26,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -46,55 +46,60 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 14.03.13
  */
 public class O2QCache implements ODiskCache {
-  public static final long                      MAGIC_NUMBER       = 0xFACB03FEL;
+  public static final long                                     MAGIC_NUMBER = 0xFACB03FEL;
 
-  public static final int                       WRITE_QUEUE_LENGTH = OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH
-                                                                       .getValueAsInteger();
+  public final int                                             writeQueueLength;
 
-  private final int                             maxSize;
-  private final int                             K_IN;
-  private final int                             K_OUT;
+  private final int                                            maxSize;
+  private final int                                            K_IN;
+  private final int                                            K_OUT;
 
-  private final int                             pageSize;
+  private final int                                            pageSize;
 
-  private LRUList                               am;
-  private LRUList                               a1out;
-  private LRUList                               a1in;
+  private LRUList                                              am;
+  private LRUList                                              a1out;
+  private LRUList                                              a1in;
 
-  private final ODirectMemory                   directMemory;
+  private final ODirectMemory                                  directMemory;
 
-  private final Map<Long, OMultiFileSegment>    files;
+  private final Map<Long, OMultiFileSegment>                   files;
 
   /**
    * List of pages which were flushed out of the buffer but were not written to the disk.
    */
-  private final Map<FileLockKey, Long>          evictedPages;
+  private final Map<FileLockKey, Long>                         evictedPages;
 
   /**
    * Contains all pages in cache for given file, not only dirty onces.
    */
-  private final Map<Long, Set<Long>>            filePages;
+  private final Map<Long, Set<Long>>                           filePages;
 
   /**
    * Keys is a file id. Values is a sorted set of dirty pages.
    */
-  private final Map<Long, SortedSet<DirtyPage>> dirtyPages;
+  private final Map<Long, SortedMap<Long, OLogSequenceNumber>> dirtyPages;
 
-  private final Object                          syncObject;
-  private final OStorageLocalAbstract           storageLocal;
+  private final Object                                         syncObject;
+  private final OStorageLocalAbstract                          storageLocal;
 
-  private final boolean                         syncOnPageFlush;
-  private long                                  fileCounter        = 1;
+  private final OWriteAheadLog                                 writeAheadLog;
 
-  public O2QCache(long maxMemory, ODirectMemory directMemory, int pageSize, OStorageLocalAbstract storageLocal,
-      boolean syncOnPageFlush) {
+  private final boolean                                        syncOnPageFlush;
+  private long                                                 fileCounter  = 1;
+  private int                                                  crcOffset;
+
+  public O2QCache(long maxMemory, int writeQueueLength, ODirectMemory directMemory, OWriteAheadLog writeAheadLog, int pageSize,
+      OStorageLocalAbstract storageLocal, boolean syncOnPageFlush) {
+
+    this.writeQueueLength = writeQueueLength;
+    this.writeAheadLog = writeAheadLog;
     this.directMemory = directMemory;
     this.pageSize = pageSize;
     this.storageLocal = storageLocal;
     this.syncOnPageFlush = syncOnPageFlush;
     this.files = new HashMap<Long, OMultiFileSegment>();
     this.filePages = new HashMap<Long, Set<Long>>();
-    this.dirtyPages = new HashMap<Long, SortedSet<DirtyPage>>();
+    this.dirtyPages = new HashMap<Long, SortedMap<Long, OLogSequenceNumber>>();
 
     this.evictedPages = new HashMap<FileLockKey, Long>();
 
@@ -127,10 +132,6 @@ public class O2QCache implements ODiskCache {
     return a1in;
   }
 
-  Map<FileLockKey, Long> getEvictedPages() {
-    return evictedPages;
-  }
-
   @Override
   public long openFile(OStorageSegmentConfiguration fileConfiguration, String fileExtension) throws IOException {
     synchronized (syncObject) {
@@ -145,7 +146,7 @@ public class O2QCache implements ODiskCache {
       files.put(fileId, multiFileSegment);
 
       filePages.put(fileId, new HashSet<Long>());
-      dirtyPages.put(fileId, new TreeSet<DirtyPage>());
+      dirtyPages.put(fileId, new TreeMap<Long, OLogSequenceNumber>());
 
       return fileId;
     }
@@ -174,13 +175,23 @@ public class O2QCache implements ODiskCache {
     if (lruEntry.isDirty)
       return;
 
-    final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, lruEntry.dataPointer
-        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
-    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, lruEntry.dataPointer
-        + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
-
-    dirtyPages.get(fileId).add(new DirtyPage(pageIndex, new OLogSequenceNumber(segment, position)));
+    dirtyPages.get(fileId).put(pageIndex, lruEntry.loadedLSN);
     lruEntry.isDirty = true;
+  }
+
+  private OLogSequenceNumber getLogSequenceNumberFromPage(long dataPointer) {
+    final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+    return new OLogSequenceNumber(segment, position);
+  }
+
+  private void initLsn(long dataPointer) {
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(-1, directMemory, dataPointer + OLongSerializer.LONG_SIZE
+        + OIntegerSerializer.INT_SIZE);
+    OLongSerializer.INSTANCE.serializeInDirectMemory(0L, directMemory, dataPointer + OLongSerializer.LONG_SIZE + 2
+        * OIntegerSerializer.INT_SIZE);
   }
 
   @Override
@@ -214,10 +225,10 @@ public class O2QCache implements ODiskCache {
   public void flushFile(long fileId) throws IOException {
     synchronized (syncObject) {
 
-      final SortedSet<DirtyPage> dirtyPages = this.dirtyPages.get(fileId);
+      final SortedMap<Long, OLogSequenceNumber> dirtyPages = this.dirtyPages.get(fileId);
 
-      for (Iterator<DirtyPage> iterator = dirtyPages.iterator(); iterator.hasNext();) {
-        Long pageIndex = iterator.next().pageIndex;
+      for (Iterator<Long> iterator = dirtyPages.keySet().iterator(); iterator.hasNext();) {
+        Long pageIndex = iterator.next();
         LRUEntry lruEntry = get(fileId, pageIndex);
 
         if (lruEntry == null) {
@@ -259,7 +270,7 @@ public class O2QCache implements ODiskCache {
             lruEntry = remove(fileId, pageIndex);
 
             flushData(fileId, pageIndex, lruEntry.dataPointer);
-            dirtyPages.get(fileId).remove(new DirtyPage(pageIndex, null));
+            dirtyPages.get(fileId).remove(pageIndex);
 
             directMemory.free(lruEntry.dataPointer);
           }
@@ -267,7 +278,7 @@ public class O2QCache implements ODiskCache {
           Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
           if (dataPointer != null) {
             flushData(fileId, pageIndex, dataPointer);
-            dirtyPages.get(fileId).remove(new DirtyPage(pageIndex, null));
+            dirtyPages.get(fileId).remove(pageIndex);
           }
         }
       }
@@ -339,7 +350,7 @@ public class O2QCache implements ODiskCache {
         if (entry.isDirty && entry.usageCounter == 0) {
           flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
           entry.isDirty = false;
-          dirtyPages.get(entry.fileId).remove(new DirtyPage(entry.pageIndex, null));
+          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
         }
       }
 
@@ -347,7 +358,7 @@ public class O2QCache implements ODiskCache {
         if (entry.isDirty && entry.usageCounter == 0) {
           flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
           entry.isDirty = false;
-          dirtyPages.get(entry.fileId).remove(new DirtyPage(entry.pageIndex, null));
+          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
         }
       }
 
@@ -368,7 +379,7 @@ public class O2QCache implements ODiskCache {
       a1out.clear();
       for (Set<Long> fileEntries : filePages.values())
         fileEntries.clear();
-      for (SortedSet<DirtyPage> fileDirtyPages : dirtyPages.values())
+      for (SortedMap<Long, OLogSequenceNumber> fileDirtyPages : dirtyPages.values())
         fileDirtyPages.clear();
     }
   }
@@ -409,12 +420,12 @@ public class O2QCache implements ODiskCache {
   private LRUEntry updateCache(long fileId, long pageIndex) throws IOException {
     LRUEntry lruEntry = am.get(fileId, pageIndex);
     if (lruEntry != null) {
-      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty);
+      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty, lruEntry.loadedLSN);
 
       return lruEntry;
     }
 
-    lruEntry = a1out.get(fileId, pageIndex);
+    lruEntry = a1out.remove(fileId, pageIndex);
     if (lruEntry != null) {
       removeColdestPageIfNeeded();
 
@@ -422,7 +433,13 @@ public class O2QCache implements ODiskCache {
       lruEntry.dataPointer = cacheResult.dataPointer;
       lruEntry.isDirty = cacheResult.isDirty;
 
-      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty);
+      OLogSequenceNumber lsn;
+      if (cacheResult.isDirty)
+        lsn = dirtyPages.get(fileId).get(pageIndex);
+      else
+        lsn = getLogSequenceNumberFromPage(cacheResult.dataPointer);
+
+      lruEntry = am.putToMRU(fileId, pageIndex, lruEntry.dataPointer, lruEntry.isDirty, lsn);
       return lruEntry;
     }
 
@@ -433,7 +450,13 @@ public class O2QCache implements ODiskCache {
     removeColdestPageIfNeeded();
 
     CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
-    lruEntry = a1in.putToMRU(fileId, pageIndex, cacheResult.dataPointer, cacheResult.isDirty);
+    OLogSequenceNumber lsn;
+    if (cacheResult.isDirty)
+      lsn = dirtyPages.get(fileId).get(pageIndex);
+    else
+      lsn = getLogSequenceNumberFromPage(cacheResult.dataPointer);
+
+    lruEntry = a1in.putToMRU(fileId, pageIndex, cacheResult.dataPointer, cacheResult.isDirty, lsn);
 
     filePages.get(fileId).add(pageIndex);
 
@@ -448,7 +471,7 @@ public class O2QCache implements ODiskCache {
         evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
             removedFromAInEntry.isDirty);
 
-        a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false);
+        a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false, null);
         if (a1out.size() > K_OUT) {
           LRUEntry removedEntry = a1out.removeLRU();
           assert removedEntry.usageCounter == 0;
@@ -475,36 +498,36 @@ public class O2QCache implements ODiskCache {
     final long endPosition = startPosition + pageSize;
 
     byte[] content = new byte[pageSize];
+    long dataPointer;
     if (multiFileSegment.getFilledUpTo() >= endPosition) {
       multiFileSegment.readContinuously(startPosition, content, content.length);
+      dataPointer = directMemory.allocate(content);
     } else {
       multiFileSegment.allocateSpaceContinuously((int) (endPosition - multiFileSegment.getFilledUpTo()));
+      dataPointer = directMemory.allocate(content);
+      initLsn(dataPointer);
     }
-
-    long dataPointer;
-    dataPointer = directMemory.allocate(content);
 
     return new CacheResult(false, dataPointer);
   }
 
   private void evictFileContent(long fileId, long pageIndex, long dataPointer, boolean isDirty) throws IOException {
     if (isDirty) {
-      if (evictedPages.size() >= WRITE_QUEUE_LENGTH) {
+      if (evictedPages.size() >= writeQueueLength)
         flushEvictedPages();
 
-        flushData(fileId, pageIndex, dataPointer);
-        dirtyPages.get(fileId).remove(new DirtyPage(pageIndex, null));
-        directMemory.free(dataPointer);
-      } else {
-        evictedPages.put(new FileLockKey(fileId, pageIndex), dataPointer);
-      }
+      evictedPages.put(new FileLockKey(fileId, pageIndex), dataPointer);
     } else {
       directMemory.free(dataPointer);
     }
-
   }
 
   private void flushData(final long fileId, final long pageIndex, final long dataPointer) throws IOException {
+    if (writeAheadLog != null) {
+      OLogSequenceNumber lsn = getLogSequenceNumberFromPage(dataPointer);
+      writeAheadLog.flushTillLSN(lsn);
+    }
+
     final byte[] content = directMemory.get(dataPointer, pageSize);
     OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
 
@@ -605,12 +628,16 @@ public class O2QCache implements ODiskCache {
   }
 
   @Override
-  public Set<ODirtyPage> logDirtyPagesTable(OWriteAheadLog writeAheadLog) throws IOException {
+  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
     synchronized (syncObject) {
+      if (writeAheadLog == null)
+        return Collections.emptySet();
+
       Set<ODirtyPage> logDirtyPages = new HashSet<ODirtyPage>(dirtyPages.size());
       for (long fileId : dirtyPages.keySet()) {
-        for (DirtyPage dirtyPage : dirtyPages.get(fileId)) {
-          final ODirtyPage logDirtyPage = new ODirtyPage(files.get(fileId).getName(), dirtyPage.pageIndex, dirtyPage.lsn);
+        SortedMap<Long, OLogSequenceNumber> pages = dirtyPages.get(fileId);
+        for (Map.Entry<Long, OLogSequenceNumber> pageEntry : pages.entrySet()) {
+          final ODirtyPage logDirtyPage = new ODirtyPage(files.get(fileId).getName(), pageEntry.getKey(), pageEntry.getValue());
           logDirtyPages.add(logDirtyPage);
         }
       }
@@ -645,7 +672,7 @@ public class O2QCache implements ODiskCache {
       FileLockKey fileLockKey = entry.getKey();
 
       flushData(fileLockKey.fileId, fileLockKey.pageIndex, evictedDataPointer);
-      dirtyPages.get(fileLockKey.fileId).remove(new DirtyPage(fileLockKey.pageIndex, null));
+      dirtyPages.get(fileLockKey.fileId).remove(fileLockKey.pageIndex);
 
       directMemory.free(evictedDataPointer);
     }
@@ -698,25 +725,6 @@ public class O2QCache implements ODiskCache {
     crc32.update(pageData, systemSize, pageData.length - systemSize);
 
     return (int) crc32.getValue();
-  }
-
-  private static final class DirtyPage implements Comparable<DirtyPage> {
-    private final long               pageIndex;
-    private final OLogSequenceNumber lsn;
-
-    private DirtyPage(long pageIndex, OLogSequenceNumber lsn) {
-      this.pageIndex = pageIndex;
-      this.lsn = lsn;
-    }
-
-    @Override
-    public int compareTo(DirtyPage otherPage) {
-      if (pageIndex > otherPage.pageIndex)
-        return 1;
-      if (pageIndex < otherPage.pageIndex)
-        return -1;
-      return 0;
-    }
   }
 
   private static final class FileLockKey implements Comparable<FileLockKey> {

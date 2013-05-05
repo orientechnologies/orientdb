@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 /**
  * @author Artem Loginov
  */
+@Test
 public class O2QCacheConcurrentTest {
   private final int                                  systemOffset    = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
@@ -46,7 +47,7 @@ public class O2QCacheConcurrentTest {
   private static final int                           PAGE_COUNT      = 20;
   private static final int                           FILE_COUNT      = 8;
   private O2QCache                                   buffer;
-  private OStorageLocal                              storageLocal;
+  private OLocalPaginatedStorage                     storageLocal;
   private ODirectMemory                              directMemory;
   private OStorageSegmentConfiguration[]             fileConfigurations;
   private byte                                       seed;
@@ -67,7 +68,7 @@ public class O2QCacheConcurrentTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OStorageLocal) Orient.instance().loadStorage("local:" + buildDirectory + "/O2QCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QCacheConcurrentTest");
 
     prepareFilesForTest(FILE_COUNT);
 
@@ -101,7 +102,7 @@ public class O2QCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QCache(4 * (8 + systemOffset), directMemory, 8 + systemOffset, storageLocal, true);
+    buffer = new O2QCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
   }
 
   @AfterClass
@@ -120,7 +121,6 @@ public class O2QCacheConcurrentTest {
     }
   }
 
-  @Test
   public void testAdd() throws Exception {
     getIdentitiesOfFiles();
 
