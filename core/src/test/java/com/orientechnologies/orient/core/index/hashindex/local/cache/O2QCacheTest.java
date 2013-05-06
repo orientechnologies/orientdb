@@ -307,7 +307,6 @@ public class O2QCacheTest {
     Assert.assertEquals(buffer.getFilledUpTo(fileId), 4);
   }
 
-  @Test
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
@@ -326,7 +325,6 @@ public class O2QCacheTest {
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
-  @Test
   public void testFlushFileShouldClearDirtyPagesFlag() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
     byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
@@ -354,7 +352,6 @@ public class O2QCacheTest {
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
   }
 
-  @Test
   public void testCloseFileShouldFlushData() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
@@ -388,7 +385,6 @@ public class O2QCacheTest {
     }
   }
 
-  @Test
   public void testCloseFileShouldRemoveFilePagesFromBuffer() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
@@ -423,7 +419,6 @@ public class O2QCacheTest {
     Assert.assertEquals(buffer.getAm().size(), 0);
   }
 
-  @Test
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
@@ -447,7 +442,6 @@ public class O2QCacheTest {
     }
   }
 
-  @Test
   public void testFlushData() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 
@@ -486,7 +480,6 @@ public class O2QCacheTest {
 
   }
 
-  @Test
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
     long fileId = buffer.openFile(fileConfiguration, ".tst");
 

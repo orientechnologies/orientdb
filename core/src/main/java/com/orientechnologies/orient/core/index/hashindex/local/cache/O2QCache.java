@@ -180,16 +180,18 @@ public class O2QCache implements ODiskCache {
   }
 
   private OLogSequenceNumber getLogSequenceNumberFromPage(long dataPointer) {
+    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + (2 * OIntegerSerializer.INT_SIZE));
     final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
         + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
-    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+
     return new OLogSequenceNumber(segment, position);
   }
 
   private void initLsn(long dataPointer) {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(-1, directMemory, dataPointer + OLongSerializer.LONG_SIZE
         + OIntegerSerializer.INT_SIZE);
+
     OLongSerializer.INSTANCE.serializeInDirectMemory(0L, directMemory, dataPointer + OLongSerializer.LONG_SIZE + 2
         * OIntegerSerializer.INT_SIZE);
   }

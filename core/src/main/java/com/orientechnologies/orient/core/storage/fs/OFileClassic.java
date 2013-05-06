@@ -17,56 +17,28 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
-/**
- * Need to be synchronized by the external. Multiple Reader, Single Writer.<br/>
- * Header structure:<br/>
- * <br/>
- * +-----------+--------------+---------------+---------------+<br/>
- * | | | SOFTLY CLOSED | SECURITY CODE |<br/>
- * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... |<br/>
- * +-----------+--------------+---------------+---------------+<br/>
- * = 1024 bytes<br/>
- * <br/>
- */
 public class OFileClassic extends OAbstractFile {
   public final static String NAME                = "classic";
   protected ByteBuffer       internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
-  private AtomicBoolean      initCompleted       = new AtomicBoolean(false);
-
-  public OFileClassic init(String iFileName, String iMode) {
-    if (initCompleted.compareAndSet(false, true)) {
-      super.init(iFileName, iMode);
-    }
-    return this;
-  }
 
   @Override
-  public void close() throws IOException {
+  public int allocateSpace(int size) throws IOException {
     acquireWriteLock();
     try {
-      if (channel != null)
-        setSoftlyClosed(true);
+      final int currentSize = getFilledUpTo();
+      if (maxSize > 0 && currentSize + size > maxSize)
+        throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
+            + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
 
-      super.close();
+      this.size += size;
+      return currentSize;
     } finally {
       releaseWriteLock();
     }
-  }
-
-  @Override
-  public int allocateSpace(int iSize) throws IOException {
-    final int currentSize = getFilledUpTo();
-    if (maxSize > 0 && currentSize + iSize > maxSize)
-      throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
-          + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
-
-    size += iSize;
-    return currentSize;
   }
 
   @Override
@@ -256,9 +228,14 @@ public class OFileClassic extends OAbstractFile {
   }
 
   protected void flushHeader() throws IOException {
-    if (headerDirty || dirty) {
-      headerDirty = dirty = false;
-      channel.force(false);
+    acquireWriteLock();
+    try {
+      if (headerDirty || dirty) {
+        headerDirty = dirty = false;
+        channel.force(false);
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
@@ -274,12 +251,24 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   protected void init() throws IOException {
-    size = (int) (osFile.length() - HEADER_SIZE);
+    acquireWriteLock();
+    try {
+      size = (int) (osFile.length() - HEADER_SIZE);
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   @Override
-  protected void setFilledUpTo(final int iValue) throws IOException {
-    size = iValue;
+  protected void setFilledUpTo(final int value) throws IOException {
+    acquireWriteLock();
+    try {
+      size = value;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   @Override
@@ -309,11 +298,32 @@ public class OFileClassic extends OAbstractFile {
     }
   }
 
+  @Override
   public boolean isSoftlyClosed() throws IOException {
-    return true;
+    acquireReadLock();
+    try {
+      final ByteBuffer buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+      return buffer.get(0) > 0;
+    } finally {
+      releaseReadLock();
+    }
   }
 
-  public void setSoftlyClosed(final boolean iValue) throws IOException {
+  public void setSoftlyClosed(final boolean value) throws IOException {
+    acquireWriteLock();
+    try {
+      if (channel == null || mode.indexOf('w') < 0)
+        return;
+
+      final ByteBuffer buffer = getBuffer(1);
+      buffer.put(0, (byte) (value ? 1 : 0));
+
+      writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
+
+      channel.force(true);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /**
@@ -321,7 +331,13 @@ public class OFileClassic extends OAbstractFile {
    */
   @Override
   protected long checkRegions(final long iOffset, final int iLength) {
-    return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
+    acquireReadLock();
+    try {
+      return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {

@@ -23,7 +23,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -79,7 +78,7 @@ public abstract class OAbstractFile implements OFile {
   protected static final int  SOFTLY_CLOSED_OFFSET   = 8;
 
   private final ReadWriteLock lock                   = new ReentrantReadWriteLock();
-  private AtomicBoolean       initCompleted          = new AtomicBoolean(false);
+  private boolean             wasSoftlyClosed        = true;
 
   public abstract int getFileSize();
 
@@ -156,16 +155,25 @@ public abstract class OAbstractFile implements OFile {
             OStorageException.class);
 
       if (failCheck) {
-        boolean softlyClosed = isSoftlyClosed();
+        wasSoftlyClosed = isSoftlyClosed();
 
-        if (softlyClosed)
+        if (wasSoftlyClosed)
           setSoftlyClosed(false);
 
-        return softlyClosed;
+        return wasSoftlyClosed;
       }
       return true;
     } finally {
       releaseWriteLock();
+    }
+  }
+
+  public boolean wasSoftlyClosed() {
+    acquireReadLock();
+    try {
+      return wasSoftlyClosed;
+    } finally {
+      releaseReadLock();
     }
   }
 
@@ -199,8 +207,11 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       try {
+        setSoftlyClosed(true);
+
         if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
           unlock();
+
         if (channel != null && channel.isOpen()) {
           channel.close();
           channel = null;
@@ -323,15 +334,20 @@ public abstract class OAbstractFile implements OFile {
   }
 
   protected void checkSize(final int iSize) throws IOException {
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
+    acquireReadLock();
+    try {
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
 
-    final int filledUpTo = getFilledUpTo();
-    if (iSize < filledUpTo)
-      OLogManager.instance().error(
-          this,
-          "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
-              + " bytes", OIOException.class);
+      final int filledUpTo = getFilledUpTo();
+      if (iSize < filledUpTo)
+        OLogManager.instance().error(
+            this,
+            "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
+                + " bytes", OIOException.class);
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -423,11 +439,16 @@ public abstract class OAbstractFile implements OFile {
   }
 
   protected long checkRegions(final long iOffset, final int iLength) {
-    if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
-      throw new OIOException("You cannot access outside the file size (" + getFilledUpTo() + " bytes). You have requested portion "
-          + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
+    acquireReadLock();
+    try {
+      if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
+        throw new OIOException("You cannot access outside the file size (" + getFilledUpTo()
+            + " bytes). You have requested portion " + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
 
-    return iOffset;
+      return iOffset;
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -492,15 +513,25 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getOsFile()
    */
   public File getOsFile() {
-    return osFile;
+    acquireReadLock();
+    try {
+      return osFile;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   public OAbstractFile init(final String iFileName, final String iMode) {
-    if (initCompleted.compareAndSet(false, true)) {
+    acquireWriteLock();
+    try {
       mode = iMode;
       osFile = new File(iFileName);
+
+      return this;
+    } finally {
+      releaseWriteLock();
     }
-    return this;
   }
 
   protected void openChannel(final int iNewSize) throws IOException {
@@ -548,7 +579,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getMaxSize()
    */
   public int getMaxSize() {
-    return maxSize;
+    acquireReadLock();
+    try {
+      return maxSize;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -557,7 +594,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setMaxSize(int)
    */
   public void setMaxSize(int maxSize) {
-    this.maxSize = maxSize;
+    acquireWriteLock();
+    try {
+      this.maxSize = maxSize;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   /*
@@ -566,7 +609,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getIncrementSize()
    */
   public int getIncrementSize() {
-    return incrementSize;
+    acquireReadLock();
+    try {
+      return incrementSize;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -575,7 +624,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setIncrementSize(int)
    */
   public void setIncrementSize(int incrementSize) {
-    this.incrementSize = incrementSize;
+    acquireWriteLock();
+    try {
+      this.incrementSize = incrementSize;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   /*
@@ -584,7 +639,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
   public boolean isOpen() {
-    return accessFile != null;
+    acquireReadLock();
+    try {
+      return accessFile != null;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -607,7 +668,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isFailCheck()
    */
   public boolean isFailCheck() {
-    return failCheck;
+    acquireReadLock();
+    try {
+      return failCheck;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -616,17 +683,33 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setFailCheck(boolean)
    */
   public void setFailCheck(boolean failCheck) {
-    this.failCheck = failCheck;
+    acquireWriteLock();
+    try {
+      this.failCheck = failCheck;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   protected void setDirty() {
-    if (!dirty)
-      dirty = true;
+    acquireWriteLock();
+    try {
+      if (!dirty)
+        dirty = true;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   protected void setHeaderDirty() {
-    if (!headerDirty)
-      headerDirty = true;
+    acquireWriteLock();
+    try {
+      if (!headerDirty)
+        headerDirty = true;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   public String getName() {

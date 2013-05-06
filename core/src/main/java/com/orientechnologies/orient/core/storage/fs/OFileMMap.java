@@ -22,7 +22,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
@@ -62,7 +61,6 @@ public class OFileMMap extends OAbstractFile {
   private static long                        metricPooledBufferCreated = 0;
   private static long                        metricPooledBufferUsed    = 0;
   private static long                        metricNonPooledBufferUsed = 0;
-  private AtomicBoolean                      initCompleted             = new AtomicBoolean(false);
 
   static {
     Orient
@@ -92,6 +90,9 @@ public class OFileMMap extends OAbstractFile {
                 return metricNonPooledBufferUsed;
               }
             });
+
+    BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
+    strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
   }
 
   @Override
@@ -103,17 +104,6 @@ public class OFileMMap extends OAbstractFile {
     } finally {
       releaseWriteLock();
     }
-  }
-
-  @Override
-  public OFileMMap init(String iFileName, String iMode) {
-    if (initCompleted.compareAndSet(false, true)) {
-      super.init(iFileName, iMode);
-      BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
-      strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
-    }
-    return this;
-
   }
 
   public int getFileSize() {
@@ -593,38 +583,36 @@ public class OFileMMap extends OAbstractFile {
   public void close() throws IOException {
     acquireWriteLock();
     try {
-      if (headerBuffer != null) {
-        setSoftlyClosed(true);
-        headerBuffer = null;
-      }
       OMMapManagerLocator.getInstance().flush();
 
       super.close();
+      headerBuffer = null;
     } finally {
       releaseWriteLock();
     }
   }
 
-  public boolean isSoftlyClosed() {
-    acquireReadLock();
-    try {
-      return headerBuffer.get(SOFTLY_CLOSED_OFFSET) == 1;
-    } finally {
-      releaseReadLock();
-    }
-  }
-
-  public void setSoftlyClosed(final boolean iValue) {
+  public void setSoftlyClosed(final boolean value) {
     acquireWriteLock();
     try {
       if (headerBuffer == null)
         return;
 
-      headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (iValue ? 1 : 0));
+      headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (value ? 1 : 0));
       setHeaderDirty();
       flushHeader();
     } finally {
       releaseWriteLock();
+    }
+  }
+
+  @Override
+  public boolean isSoftlyClosed() throws IOException {
+    acquireReadLock();
+    try {
+      return headerBuffer.get(SOFTLY_CLOSED_OFFSET) > 0;
+    } finally {
+      releaseReadLock();
     }
   }
 
@@ -691,8 +679,13 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   protected void init() {
-    size = headerBuffer.getInt(SIZE_OFFSET);
-    filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+    acquireWriteLock();
+    try {
+      size = headerBuffer.getInt(SIZE_OFFSET);
+      filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
