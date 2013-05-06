@@ -76,12 +76,12 @@ public class OReflectionHelper {
         File[] files = directory.listFiles();
         for (File file : files) {
           if (file.isDirectory()) {
-            classes.addAll(findClasses(file, iPackageName));
+            classes.addAll(findClasses(file, iPackageName, iClassLoader));
           } else {
             String className;
             if (file.getName().endsWith(CLASS_EXTENSION)) {
               className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
-              classes.add(Class.forName(iPackageName + '.' + className));
+              classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
             }
           }
         }
@@ -102,7 +102,7 @@ public class OReflectionHelper {
    * @return The classes
    * @throws ClassNotFoundException
    */
-  private static List<Class<?>> findClasses(final File iDirectory, String iPackageName) throws ClassNotFoundException {
+  private static List<Class<?>> findClasses(final File iDirectory, String iPackageName, ClassLoader iClassLoader) throws ClassNotFoundException {
     final List<Class<?>> classes = new ArrayList<Class<?>>();
     if (!iDirectory.exists())
       return classes;
@@ -115,10 +115,10 @@ public class OReflectionHelper {
       if (file.isDirectory()) {
         if (file.getName().contains("."))
           continue;
-        classes.addAll(findClasses(file, iPackageName));
+        classes.addAll(findClasses(file, iPackageName, iClassLoader));
       } else if (file.getName().endsWith(CLASS_EXTENSION)) {
         className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
-        classes.add(Class.forName(iPackageName + '.' + className));
+        classes.add(Class.forName(iPackageName + '.' + className, true, iClassLoader));
       }
     }
     return classes;
