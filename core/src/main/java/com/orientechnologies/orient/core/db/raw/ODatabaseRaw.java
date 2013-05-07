@@ -31,6 +31,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -588,6 +590,9 @@ public class ODatabaseRaw implements ODatabase {
 
     case CHARSET:
       return storage.getConfiguration().getCharset();
+      
+    case CUSTOM:
+      return storage.getConfiguration().properties;
     }
 
     return null;
@@ -655,12 +660,73 @@ public class ODatabaseRaw implements ODatabase {
       storage.getConfiguration().update();
       break;
 
+    case CUSTOM:
+      if (iValue.toString().indexOf("=") == -1) {
+        if (iValue.toString().equalsIgnoreCase("clear")) {
+          clearCustomInternal();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
+        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+        setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      }
+      break;
+
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
 
     }
 
     return (DB) this;
+  }
+
+  public String getCustom(final String iName) {
+    if (storage.getConfiguration().properties == null)
+      return null;
+
+    for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
+      if (e.name.equals(iName))
+        return e.value;
+    }
+    return null;
+  }
+
+  public void setCustomInternal(final String iName, final String iValue) {
+    if (iValue == null || "null".equalsIgnoreCase(iValue)) {
+      // REMOVE
+      if (storage.getConfiguration().properties != null) {
+        for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
+          final OStorageEntryConfiguration e = it.next();
+          if (e.name.equals(iName)) {
+            it.remove();
+            break;
+          }
+        }
+      }
+
+    } else
+    // SET
+    if (storage.getConfiguration().properties == null)
+      storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
+
+    boolean found = false;
+    for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
+      if (e.name.equals(iName)) {
+        e.value = iValue;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      // CREATE A NEW ONE
+      storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
+
+    storage.getConfiguration().update();
+  }
+
+  public void clearCustomInternal() {
+    storage.getConfiguration().properties = null;
   }
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
