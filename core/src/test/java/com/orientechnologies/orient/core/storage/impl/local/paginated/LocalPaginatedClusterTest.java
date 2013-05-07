@@ -93,6 +93,23 @@ public class LocalPaginatedClusterTest {
     paginatedCluster.truncate();
   }
 
+  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+    paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
+
+    physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+
+    recordVersion.increment();
+    Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
+  }
+
   public void testAddOneSmallRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -468,6 +485,53 @@ public class LocalPaginatedClusterTest {
     recordVersion.increment();
     smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+
+    ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
+    Assert.assertNotNull(rawBuffer);
+
+    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    Assert.assertEquals(rawBuffer.recordType, 2);
+  }
+
+  public void testUpdateOneSmallRecordVersionIsLowerCurrentOne() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+
+    ORecordVersion updateRecordVersion = OVersionFactory.instance().createVersion();
+    updateRecordVersion.increment();
+
+    smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
+    paginatedCluster.updateRecord(physicalPosition.clusterPosition, smallRecord, updateRecordVersion, (byte) 2);
+
+    recordVersion.increment();
+    ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
+    Assert.assertNotNull(rawBuffer);
+
+    Assert.assertEquals(rawBuffer.version, recordVersion);
+    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    Assert.assertEquals(rawBuffer.recordType, 2);
+  }
+
+  public void testUpdateOneSmallRecordVersionIsMinusTwo() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.increment();
+    recordVersion.increment();
+
+    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1);
+    Assert.assertEquals(physicalPosition.clusterPosition, OClusterPositionFactory.INSTANCE.valueOf(0));
+
+    ORecordVersion updateRecordVersion = OVersionFactory.instance().createVersion();
+    updateRecordVersion.setCounter(-2);
+
+    smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
+    paginatedCluster.updateRecord(physicalPosition.clusterPosition, smallRecord, updateRecordVersion, (byte) 2);
 
     ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
     Assert.assertNotNull(rawBuffer);

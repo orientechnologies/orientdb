@@ -107,7 +107,7 @@ public class OLocalPage {
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
 
-  public int appendRecord(ORecordVersion recordVersion, byte[] record) throws IOException {
+  public int appendRecord(ORecordVersion recordVersion, byte[] record, boolean keepTombstoneVersion) throws IOException {
     startAtomicUpdate();
     try {
       int freePosition = getIntValue(FREE_POSITION_OFFSET);
@@ -159,8 +159,11 @@ public class OLocalPage {
           recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
           setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
         } else {
-          existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
-          setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
+          if (!keepTombstoneVersion) {
+            existingRecordVersion.increment();
+            existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
+            setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
+          }
         }
 
       } else {
