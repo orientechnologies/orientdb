@@ -159,7 +159,6 @@ public class OLocalPage {
           recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, recordVersion);
           setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
         } else {
-          existingRecordVersion.increment();
           existingRecordVersion.getSerializer().fastWriteTo(serializedVersion, 0, existingRecordVersion);
           setBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, serializedVersion);
         }

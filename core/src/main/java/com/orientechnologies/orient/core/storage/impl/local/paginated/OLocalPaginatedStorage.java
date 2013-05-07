@@ -773,9 +773,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       modificationLock.requestModificationLock();
       try {
-        if (cluster == null)
-          throw new OStorageException("Cluster not defined for record: " + rid);
-
         lock.acquireSharedLock();
         try {
           // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD

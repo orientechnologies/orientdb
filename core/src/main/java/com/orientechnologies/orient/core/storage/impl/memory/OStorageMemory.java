@@ -409,18 +409,41 @@ public class OStorageMemory extends OStorageEmbedded {
         }
 
         if (!iVersion.isUntracked()) {
-          if (iVersion.getCounter() > -1) {
-            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (!iVersion.equals(ppos.recordVersion))
-              if (OFastConcurrentModificationException.enabled())
-                throw OFastConcurrentModificationException.instance();
-              else
-                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
-
+          // VERSION CONTROL CHECK
+          switch (iVersion.getCounter()) {
+          // DOCUMENT UPDATE, NO VERSION CONTROL
+          case -1:
             ppos.recordVersion.increment();
-          } else
-            ppos.recordVersion.decrement();
+            cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            break;
+
+          // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+          case -2:
+            break;
+
+          default:
+            // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+            if (iVersion.getCounter() > -1) {
+              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+              if (!iVersion.equals(ppos.recordVersion))
+                if (OFastConcurrentModificationException.enabled())
+                  throw OFastConcurrentModificationException.instance();
+                else
+                  throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
+              ppos.recordVersion.increment();
+              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            } else {
+              // DOCUMENT ROLLBACKED
+              iVersion.clearRollbackMode();
+              ppos.recordVersion.copyFrom(iVersion);
+              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            }
+          }
         }
+
+        if (ppos.recordType != iRecordType)
+          cluster.updateRecordType(iRid.clusterPosition, iRecordType);
 
         final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
         dataSegment.updateRecord(ppos.dataSegmentPos, iContent);

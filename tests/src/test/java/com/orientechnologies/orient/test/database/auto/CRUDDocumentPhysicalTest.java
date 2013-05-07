@@ -950,4 +950,23 @@ public class CRUDDocumentPhysicalTest {
     final byte[] streamDest = doc.toStream();
     Assert.assertEquals(streamOrigin, streamDest);
   }
+
+  public void testUpdateNoVersionCheck() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+    try {
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+      ODocument doc = result.get(0);
+      doc.field("name", "modified");
+      int oldVersion = doc.getVersion();
+      doc.setVersion(-2);
+      doc.save();
+
+      doc.reload();
+      Assert.assertEquals(doc.getVersion(), oldVersion);
+      Assert.assertEquals(doc.field("name"), "modified");
+    } finally {
+      database.close();
+    }
+  }
 }
