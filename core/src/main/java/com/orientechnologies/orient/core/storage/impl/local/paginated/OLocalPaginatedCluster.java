@@ -648,7 +648,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryContent.length - OLongSerializer.LONG_SIZE);
 
           int initialFreeSpace = firstPage.getFreeSpace();
-          nextPagePointer = (firstPageIndex << PAGE_INDEX_OFFSET) | firstPage.appendRecord(recordVersion, entryContent);
+
+          boolean keepTombstoneVersion = recordVersion.getCounter() == -2;
+
+          nextPagePointer = (firstPageIndex << PAGE_INDEX_OFFSET)
+              | firstPage.appendRecord(recordVersion, entryContent, keepTombstoneVersion);
           assert nextPagePointer == firstPagePointer;
 
           recordsSizeDiff += initialFreeSpace - firstPage.getFreeSpace();
@@ -728,7 +732,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       int initialFreeSpace = localPage.getFreeSpace();
 
-      position = localPage.appendRecord(recordVersion, entryContent);
+      position = localPage.appendRecord(recordVersion, entryContent, false);
       assert position >= 0;
 
       finalVersion = localPage.getRecordVersion(position);

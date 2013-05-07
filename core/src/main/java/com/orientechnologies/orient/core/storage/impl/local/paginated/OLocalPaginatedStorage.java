@@ -797,6 +797,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
             case -2:
+              ppos.recordVersion.setCounter(-2);
               break;
 
             default:

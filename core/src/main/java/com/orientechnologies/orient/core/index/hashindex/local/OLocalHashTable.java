@@ -1766,14 +1766,4 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       this.allRightHashMapsEqual = allRightHashMapsEqual;
     }
   }
-
-  private static final class PageLockResult {
-    private final long    dataPointer;
-    private final boolean cacheLock;
-
-    private PageLockResult(long dataPointer, boolean cacheLock) {
-      this.dataPointer = dataPointer;
-      this.cacheLock = cacheLock;
-    }
-  }
 }
