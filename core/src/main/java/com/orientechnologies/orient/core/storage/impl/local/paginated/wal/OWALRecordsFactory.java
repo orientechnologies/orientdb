@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterStateRecord;
+
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
@@ -45,6 +47,8 @@ public class OWALRecordsFactory {
       content[0] = 7;
     else if (walRecord instanceof OAddNewPageRecord)
       content[0] = 8;
+    else if (walRecord instanceof OClusterStateRecord)
+      content[0] = 9;
     else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
@@ -82,6 +86,9 @@ public class OWALRecordsFactory {
       break;
     case 8:
       walRecord = new OAddNewPageRecord();
+      break;
+    case 9:
+      walRecord = new OClusterStateRecord();
       break;
     default:
       throw new IllegalStateException("Can not deserialize passed in wal record.");

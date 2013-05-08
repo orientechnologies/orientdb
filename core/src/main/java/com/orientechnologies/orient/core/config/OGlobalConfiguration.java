@@ -56,7 +56,7 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
-  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, false),
+  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize", "Maximum size of WAL cache (in byte) <= 0 means that caching will be switched off.",
       Integer.class, 100 * 1024 * 1024),

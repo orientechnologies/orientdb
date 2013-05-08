@@ -45,9 +45,9 @@ public class OLocalPage {
   private static final int     CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int     WAL_SEGMENT_OFFSET         = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int     WAL_POSITION_OFFSET        = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int     WAL_POSITION_OFFSET        = WAL_SEGMENT_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int     NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int     NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int     PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int     FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
@@ -340,7 +340,11 @@ public class OLocalPage {
     else
       maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
 
-    return maxEntrySize - 2 * OIntegerSerializer.INT_SIZE;
+    int result = maxEntrySize - 2 * OIntegerSerializer.INT_SIZE;
+    if (result < 0)
+      return 0;
+
+    return result;
   }
 
   public int getRecordsCount() {
@@ -434,7 +438,7 @@ public class OLocalPage {
     if (walLog == null) {
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
     } else {
-      final byte[] content = new byte[OIntegerSerializer.INT_SIZE];
+      final byte[] content = new byte[OLongSerializer.LONG_SIZE];
       OLongSerializer.INSTANCE.serializeNative(value, content, 0);
       walLog.logRecord(new OSetPageDataRecord(content, pageOffset, pageIndex, fileName));
       directMemory.set(pageOffset + pagePointer, content, 0, content.length);

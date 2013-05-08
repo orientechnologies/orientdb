@@ -100,8 +100,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private OModificationLock                         modificationLock        = new OModificationLock();
 
-  private final ODiskCache                          diskCache;
-  private final OWriteAheadLog                      writeAheadLog;
+  private ODiskCache                                diskCache;
+  private OWriteAheadLog                            writeAheadLog;
 
   private final ScheduledExecutorService            fuzzyCheckpointExecutor = Executors
                                                                                 .newSingleThreadScheduledExecutor(new ThreadFactory() {
@@ -142,7 +142,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
+  }
 
+  private void initWal() throws IOException {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
@@ -166,7 +168,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB,
         OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger(), directMemory, writeAheadLog,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
-
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -182,6 +183,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
+
+      initWal();
 
       status = STATUS.OPEN;
 
@@ -239,10 +242,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       final File storageFolder = new File(storagePath);
       if (!storageFolder.exists())
-        storageFolder.mkdir();
+        storageFolder.mkdirs();
 
       if (exists())
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
+
+      initWal();
 
       status = STATUS.OPEN;
 
@@ -298,15 +303,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       status = STATUS.CLOSING;
 
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.close();
-      clusters = new OLocalPaginatedCluster[0];
-      clusterMap.clear();
-
-      if (configuration != null)
-        configuration.close();
-
       makeCheckpoint();
       fuzzyCheckpointExecutor.shutdown();
       final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
@@ -316,9 +312,21 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
           TimeUnit.SECONDS);
 
+      for (OCluster cluster : clusters)
+        if (cluster != null)
+          cluster.close();
+      clusters = new OLocalPaginatedCluster[0];
+      clusterMap.clear();
+
+      if (configuration != null)
+        configuration.close();
+
       level2Cache.shutdown();
 
       super.close(iForce);
+
+      if (writeAheadLog != null)
+        writeAheadLog.close();
 
       diskCache.close();
 
@@ -362,6 +370,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     lock.acquireExclusiveLock();
     try {
 
+      if (writeAheadLog != null)
+        writeAheadLog.delete();
+
       // RETRIES
       for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
         if (dbDir.exists() && dbDir.isDirectory()) {
@@ -400,6 +411,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
 
+    } catch (IOException e) {
+      throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ".", e);
     } finally {
       lock.releaseExclusiveLock();
 
@@ -1280,7 +1293,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       writeAheadLog.logCheckpointStart();
 
       for (OLocalPaginatedCluster cluster : clusters)
-        cluster.logClusterState();
+        if (cluster != null)
+          cluster.logClusterState();
 
       diskCache.flushBuffer();
 

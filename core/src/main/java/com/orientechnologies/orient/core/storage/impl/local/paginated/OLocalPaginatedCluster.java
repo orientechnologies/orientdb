@@ -820,6 +820,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         long nextPagePointer = diskCache.load(fileId, nextPageIndex);
         try {
           final OLocalPage nextPage = new OLocalPage(nextPagePointer, false, writeAheadLog, nextPageIndex, name);
+          if (calculateFreePageIndex(nextPage) != prevFreePageIndex)
+            calculateFreePageIndex(nextPage);
+
           assert calculateFreePageIndex(nextPage) == prevFreePageIndex;
           nextPage.setPrevPage(prevPageIndex);
         } finally {

@@ -44,8 +44,8 @@ import org.testng.annotations.Test;
 @Test
 public class LocalPaginatedClusterTest {
   public OLocalPaginatedCluster paginatedCluster = new OLocalPaginatedCluster();
-  private String                buildDirectory;
-  private ODiskCache            diskCache;
+  protected String              buildDirectory;
+  protected ODiskCache          diskCache;
 
   @BeforeClass
   public void beforeClass() throws IOException {

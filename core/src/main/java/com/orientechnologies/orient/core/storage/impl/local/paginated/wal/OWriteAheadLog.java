@@ -154,7 +154,7 @@ public class OWriteAheadLog {
           public void run() {
             try {
               flush();
-            } catch (IOException e) {
+            } catch (Throwable e) {
               OLogManager.instance().error(this, "Error during WAL background flush", e);
             }
           }
