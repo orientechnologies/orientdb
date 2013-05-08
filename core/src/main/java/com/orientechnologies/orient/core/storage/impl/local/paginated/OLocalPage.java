@@ -25,11 +25,10 @@ import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAddNewPageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OEndAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OStartAtomicPageUpdateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -68,6 +67,8 @@ public class OLocalPage {
 
   private final long           pagePointer;
   private final ODirectMemory  directMemory               = ODirectMemoryFactory.INSTANCE.directMemory();
+
+  private OSetPageDataRecord   currentPageDiff;
 
   private final OWriteAheadLog walLog;
   private final long           pageIndex;
@@ -356,7 +357,13 @@ public class OLocalPage {
   }
 
   public void setNextPage(long nextPage) throws IOException {
-    setLongValue(NEXT_PAGE_OFFSET, nextPage);
+    startAtomicUpdate();
+    try {
+      setLongValue(NEXT_PAGE_OFFSET, nextPage);
+    } finally {
+      endAtomicUpdate();
+    }
+
   }
 
   public long getPrevPage() {
@@ -364,7 +371,32 @@ public class OLocalPage {
   }
 
   public void setPrevPage(long prevPage) throws IOException {
-    setLongValue(PREV_PAGE_OFFSET, prevPage);
+    startAtomicUpdate();
+    try {
+      setLongValue(PREV_PAGE_OFFSET, prevPage);
+    } finally {
+      endAtomicUpdate();
+    }
+  }
+
+  public void restore(OAbstractPageWALRecord walRecord) {
+    // will be handled on higher level
+    if (walRecord instanceof OAddNewPageRecord)
+      return;
+
+    if (walRecord instanceof OSetPageDataRecord)
+      restoreFromSetDataRecord((OSetPageDataRecord) walRecord);
+    else
+      throw new IllegalStateException("Invalid WAL record type : " + walRecord);
+  }
+
+  private void restoreFromSetDataRecord(OSetPageDataRecord walRecord) {
+    for (OSetPageDataRecord.Diff diff : walRecord.getDiffs()) {
+      final byte[] data = diff.getData();
+      final int pageOffset = diff.getPageOffset();
+
+      directMemory.set(pagePointer + pageOffset, data, 0, data.length);
+    }
   }
 
   private void incrementEntriesCount() throws IOException {
@@ -428,7 +460,7 @@ public class OLocalPage {
     } else {
       final byte[] content = new byte[OIntegerSerializer.INT_SIZE];
       OIntegerSerializer.INSTANCE.serializeNative(value, content, 0);
-      walLog.logRecord(new OSetPageDataRecord(content, pageOffset, pageIndex, fileName));
+      currentPageDiff.addDiff(pageOffset, content);
       directMemory.set(pagePointer + pageOffset, content, 0, content.length);
     }
 
@@ -440,7 +472,7 @@ public class OLocalPage {
     } else {
       final byte[] content = new byte[OLongSerializer.LONG_SIZE];
       OLongSerializer.INSTANCE.serializeNative(value, content, 0);
-      walLog.logRecord(new OSetPageDataRecord(content, pageOffset, pageIndex, fileName));
+      currentPageDiff.addDiff(pageOffset, content);
       directMemory.set(pageOffset + pagePointer, content, 0, content.length);
     }
 
@@ -450,7 +482,7 @@ public class OLocalPage {
     if (walLog == null) {
       directMemory.set(pagePointer + pageOffset, value, 0, value.length);
     } else {
-      walLog.logRecord(new OSetPageDataRecord(value, pageOffset, pageIndex, fileName));
+      currentPageDiff.addDiff(pageOffset, value);
       directMemory.set(pagePointer + pageOffset, value, 0, value.length);
     }
 
@@ -461,7 +493,7 @@ public class OLocalPage {
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
     } else {
       byte[] content = directMemory.get(pagePointer + from, len);
-      walLog.logRecord(new OSetPageDataRecord(content, to, pageIndex, fileName));
+      currentPageDiff.addDiff(to, content);
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
     }
 
@@ -469,12 +501,14 @@ public class OLocalPage {
 
   private void startAtomicUpdate() throws IOException {
     if (walLog != null)
-      walLog.logRecord(new OStartAtomicPageUpdateRecord(pageIndex, fileName));
+      currentPageDiff = new OSetPageDataRecord(pageIndex, fileName);
   }
 
   private void endAtomicUpdate() throws IOException {
-    if (walLog != null)
-      setLsn(walLog.logRecord(new OEndAtomicPageUpdateRecord(pageIndex, fileName)));
+    if (walLog != null) {
+      setLsn(walLog.logRecord(currentPageDiff));
+      currentPageDiff = null;
+    }
   }
 
   private void logAddNewPage() throws IOException {

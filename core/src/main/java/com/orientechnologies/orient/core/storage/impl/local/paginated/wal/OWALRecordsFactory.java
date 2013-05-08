@@ -31,24 +31,20 @@ public class OWALRecordsFactory {
 
     if (walRecord instanceof OSetPageDataRecord)
       content[0] = 0;
-    else if (walRecord instanceof OStartAtomicPageUpdateRecord)
-      content[0] = 1;
-    else if (walRecord instanceof OEndAtomicPageUpdateRecord)
-      content[0] = 2;
     else if (walRecord instanceof OFuzzyCheckpointStartRecord)
-      content[0] = 3;
+      content[0] = 1;
     else if (walRecord instanceof OFuzzyCheckpointEndRecord)
-      content[0] = 4;
+      content[0] = 2;
     else if (walRecord instanceof ODirtyPagesRecord)
-      content[0] = 5;
+      content[0] = 3;
     else if (walRecord instanceof OCheckpointStartRecord)
-      content[0] = 6;
+      content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
-      content[0] = 7;
+      content[0] = 5;
     else if (walRecord instanceof OAddNewPageRecord)
-      content[0] = 8;
+      content[0] = 6;
     else if (walRecord instanceof OClusterStateRecord)
-      content[0] = 9;
+      content[0] = 7;
     else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
@@ -64,30 +60,24 @@ public class OWALRecordsFactory {
       walRecord = new OSetPageDataRecord();
       break;
     case 1:
-      walRecord = new OStartAtomicPageUpdateRecord();
-      break;
-    case 2:
-      walRecord = new OEndAtomicPageUpdateRecord();
-      break;
-    case 3:
       walRecord = new OFuzzyCheckpointStartRecord();
       break;
-    case 4:
+    case 2:
       walRecord = new OFuzzyCheckpointEndRecord();
       break;
-    case 5:
+    case 3:
       walRecord = new ODirtyPagesRecord();
       break;
-    case 6:
+    case 4:
       walRecord = new OCheckpointStartRecord();
       break;
-    case 7:
+    case 5:
       walRecord = new OCheckpointEndRecord();
       break;
-    case 8:
+    case 6:
       walRecord = new OAddNewPageRecord();
       break;
-    case 9:
+    case 7:
       walRecord = new OClusterStateRecord();
       break;
     default:

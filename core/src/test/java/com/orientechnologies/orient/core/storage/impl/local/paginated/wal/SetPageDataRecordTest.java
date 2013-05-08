@@ -10,7 +10,12 @@ import org.testng.annotations.Test;
 @Test
 public class SetPageDataRecordTest {
   public void testSerialization() {
-    OSetPageDataRecord serializedSetPageDataRecord = new OSetPageDataRecord(new byte[] { 0, 1, 2, 3, 4, 5 }, 10, 12, "test");
+    OSetPageDataRecord serializedSetPageDataRecord = new OSetPageDataRecord(12, "test");
+
+    byte[] dataOne = new byte[] { 1, 2, 3 };
+    byte[] dataTwo = new byte[] { 4, 5, 6 };
+    serializedSetPageDataRecord.addDiff(34, dataOne);
+    serializedSetPageDataRecord.addDiff(43, dataTwo);
 
     byte[] content = new byte[serializedSetPageDataRecord.serializedSize() + 1];
 
@@ -23,7 +28,7 @@ public class SetPageDataRecordTest {
 
     Assert.assertEquals(restoredSetPageDataRecord.getFileName(), "test");
     Assert.assertEquals(restoredSetPageDataRecord.getPageIndex(), 12);
-    Assert.assertEquals(restoredSetPageDataRecord.getData(), new byte[] { 0, 1, 2, 3, 4, 5 });
-    Assert.assertEquals(restoredSetPageDataRecord.getPageOffset(), 10);
+
+    Assert.assertEquals(restoredSetPageDataRecord.getDiffs(), serializedSetPageDataRecord.getDiffs());
   }
 }

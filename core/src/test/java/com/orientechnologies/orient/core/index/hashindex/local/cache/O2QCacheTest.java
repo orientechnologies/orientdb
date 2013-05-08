@@ -667,13 +667,13 @@ public class O2QCacheTest {
 
     buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 1, 2 }, 1, 1, "test"));
-    OLogSequenceNumber lsnToFlush = writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 2, 3 }, 2, 2, "test1"));
+    writeAheadLog.logRecord(new OSetPageDataRecord(1, "test"));
+    OLogSequenceNumber lsnToFlush = writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 3, 4 }, 2, 2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 4, 5 }, 2, 2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 5, 6 }, 2, 2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(new byte[] { 7, 8 }, 2, 2, "test1"));
+    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
 
     long fileId = buffer.openFile(fileConfiguration, ".tst");
     for (int i = 0; i < 8; i++) {
@@ -690,12 +690,13 @@ public class O2QCacheTest {
 
     OWALRecord recordOne = writeAheadLog.read(writeAheadLog.begin());
 
-    Assert.assertEquals(recordOne, new OSetPageDataRecord(new byte[] { 1, 2 }, 1, 1, "test"));
+    Assert.assertEquals(recordOne, new OSetPageDataRecord(1, "test"));
 
-    OWALRecord recordTwo = writeAheadLog.readNext(recordOne.getLsn());
-    Assert.assertEquals(recordTwo, new OSetPageDataRecord(new byte[] { 2, 3 }, 2, 2, "test1"));
+    OLogSequenceNumber lsn = writeAheadLog.next(recordOne.getLsn());
+    OWALRecord recordTwo = writeAheadLog.read(lsn);
+    Assert.assertEquals(recordTwo, new OSetPageDataRecord(2, "test1"));
 
-    Assert.assertNull(writeAheadLog.readNext(recordTwo.getLsn()));
+    Assert.assertNull(writeAheadLog.next(recordTwo.getLsn()));
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {

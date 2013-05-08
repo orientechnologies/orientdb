@@ -182,9 +182,12 @@ public class OWriteAheadLog {
     }
   }
 
-  public OLogSequenceNumber begin() {
+  public OLogSequenceNumber begin() throws IOException {
     synchronized (syncObject) {
       LogSegment first = logSegments.get(0);
+      if (first.size() == 0)
+        return null;
+
       return new OLogSequenceNumber(first.getOrder(), 0);
     }
   }
@@ -425,7 +428,7 @@ public class OWriteAheadLog {
     }
   }
 
-  public OWALRecord readNext(OLogSequenceNumber lsn) throws IOException {
+  public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
     synchronized (syncObject) {
       int order = lsn.getSegment();
       int index = order - logSegments.get(0).getOrder();
@@ -445,7 +448,7 @@ public class OWriteAheadLog {
         nextLSN = new OLogSequenceNumber(order, 0);
       }
 
-      return read(nextLSN);
+      return nextLSN;
     }
   }
 

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,9 @@ import java.util.Set;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -30,15 +34,16 @@ import org.testng.annotations.Test;
  */
 @Test
 public class LocalPageTest {
-  private ODirectMemory  directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+  private static final int SYSTEM_OFFSET = 24;
+  private ODirectMemory    directMemory  = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private OWriteAheadLog writeAheadLog;
-  private File           buildDir;
+  private OWriteAheadLog   writeAheadLog;
+  private File             buildDir;
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "localPageTest";
+    buildDirectory += "/localPageTest";
 
     buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -106,8 +111,11 @@ public class LocalPageTest {
 
       long pointer = localPage.getRecordPointer(0);
       Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
+
     }
   }
 
@@ -196,6 +204,7 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -278,6 +287,7 @@ public class LocalPageTest {
         counter++;
       }
 
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -338,6 +348,8 @@ public class LocalPageTest {
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
       Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -394,6 +406,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
       Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -452,7 +466,7 @@ public class LocalPageTest {
       newRecordVersion.increment();
 
       Assert
-          .assertEquals(localPage.appendRecord(newRecordVersion, new byte[]{2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2}, false), position);
+          .assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
       long recordPointer = localPage.getRecordPointer(position);
       int recordSize = localPage.getRecordSize(position);
@@ -460,6 +474,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
       Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -514,6 +530,8 @@ public class LocalPageTest {
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
       Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -566,6 +584,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
       Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -692,6 +712,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), 2);
       Assert.assertEquals(localPage.getFreeSpace(), freeSpace + 19 * 2);
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -832,6 +854,8 @@ public class LocalPageTest {
           Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
 
       }
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -972,6 +996,8 @@ public class LocalPageTest {
           Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
 
       }
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -1078,6 +1104,8 @@ public class LocalPageTest {
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
         Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
       }
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -1201,6 +1229,8 @@ public class LocalPageTest {
       } while (recordPosition >= 0);
 
       Assert.assertEquals(recordsIterated, positions.size());
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -1318,6 +1348,7 @@ public class LocalPageTest {
       } while (recordPosition >= 0);
 
       Assert.assertEquals(recordsIterated, positions.size());
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -1340,6 +1371,8 @@ public class LocalPageTest {
       OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, "test");
       localPage.setNextPage(1034);
       Assert.assertEquals(localPage.getNextPage(), 1034);
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -1362,8 +1395,32 @@ public class LocalPageTest {
       OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, "test");
       localPage.setPrevPage(1034);
       Assert.assertEquals(localPage.getPrevPage(), 1034);
+
+      assertWALRestore(pagePointer);
     } finally {
       directMemory.free(pagePointer);
+    }
+  }
+
+  private void assertWALRestore(long pagePointer) throws IOException {
+    writeAheadLog.flush();
+    long restoredPagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage restoredPage = new OLocalPage(restoredPagePointer, false, writeAheadLog, -1, "test");
+
+      OLogSequenceNumber lsn = writeAheadLog.begin();
+      while (lsn != null) {
+        OWALRecord walRecord = writeAheadLog.read(lsn);
+        if (walRecord instanceof OAbstractPageWALRecord)
+          restoredPage.restore((OAbstractPageWALRecord) walRecord);
+
+        lsn = writeAheadLog.next(lsn);
+      }
+
+      Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET),
+          directMemory.get(pagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET));
+    } finally {
+      directMemory.free(restoredPagePointer);
     }
   }
 }

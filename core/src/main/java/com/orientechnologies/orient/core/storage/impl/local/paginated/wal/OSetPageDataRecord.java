@@ -16,7 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -26,40 +28,50 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
  * @since 26.04.13
  */
 public class OSetPageDataRecord extends OAbstractPageWALRecord {
-  private byte[] data;
-  private int    pageOffset;
+  private List<Diff> diffs = new ArrayList<Diff>();
 
   public OSetPageDataRecord() {
   }
 
-  public OSetPageDataRecord(byte[] data, int pageOffset, long pageIndex, String fileName) {
+  public OSetPageDataRecord(long pageIndex, String fileName) {
     super(pageIndex, fileName);
-    this.data = data;
-    this.pageOffset = pageOffset;
   }
 
-  public byte[] getData() {
-    return data;
+  public List<Diff> getDiffs() {
+    return diffs;
   }
 
-  public int getPageOffset() {
-    return pageOffset;
+  public void addDiff(int pageOffset, byte[] data) {
+    diffs.add(new Diff(data, pageOffset));
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OIntegerSerializer.INT_SIZE + OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
+    int serializedSize = super.serializedSize();
+    serializedSize += OIntegerSerializer.INT_SIZE;
+
+    for (Diff diff : diffs) {
+      serializedSize += OIntegerSerializer.INT_SIZE;
+      serializedSize += OBinaryTypeSerializer.INSTANCE.getObjectSize(diff.data);
+    }
+
+    return serializedSize;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OBinaryTypeSerializer.INSTANCE.serializeNative(data, content, offset);
-    offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
-
-    OIntegerSerializer.INSTANCE.serializeNative(pageOffset, content, offset);
+    OIntegerSerializer.INSTANCE.serializeNative(diffs.size(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
+
+    for (Diff diff : diffs) {
+      OIntegerSerializer.INSTANCE.serializeNative(diff.pageOffset, content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      OBinaryTypeSerializer.INSTANCE.serializeNative(diff.data, content, offset);
+      offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(diff.data);
+    }
 
     return offset;
   }
@@ -68,11 +80,19 @@ public class OSetPageDataRecord extends OAbstractPageWALRecord {
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    data = OBinaryTypeSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
-
-    pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
+
+    diffs = new ArrayList<Diff>(size);
+    for (int i = 0; i < size; i++) {
+      int pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      byte[] data = OBinaryTypeSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
+
+      diffs.add(new Diff(data, pageOffset));
+    }
 
     return offset;
   }
@@ -93,9 +113,7 @@ public class OSetPageDataRecord extends OAbstractPageWALRecord {
 
     OSetPageDataRecord that = (OSetPageDataRecord) o;
 
-    if (pageOffset != that.pageOffset)
-      return false;
-    if (!Arrays.equals(data, that.data))
+    if (!diffs.equals(that.diffs))
       return false;
 
     return true;
@@ -104,8 +122,49 @@ public class OSetPageDataRecord extends OAbstractPageWALRecord {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + Arrays.hashCode(data);
-    result = 31 * result + pageOffset;
+    result = 31 * result + diffs.hashCode();
     return result;
+  }
+
+  public static final class Diff {
+    private final byte[] data;
+    private final int    pageOffset;
+
+    public Diff(byte[] data, int pageOffset) {
+      this.data = data;
+      this.pageOffset = pageOffset;
+    }
+
+    public byte[] getData() {
+      return data;
+    }
+
+    public int getPageOffset() {
+      return pageOffset;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      Diff diff = (Diff) o;
+
+      if (pageOffset != diff.pageOffset)
+        return false;
+      if (!Arrays.equals(data, diff.data))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Arrays.hashCode(data);
+      result = 31 * result + pageOffset;
+      return result;
+    }
   }
 }
