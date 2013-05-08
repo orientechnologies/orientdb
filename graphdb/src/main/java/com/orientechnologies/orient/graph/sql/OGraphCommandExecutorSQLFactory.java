@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -84,11 +84,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    */
   public static OrientBaseGraph getGraph() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!(database instanceof OGraphDatabase))
-      database = new OGraphDatabase((ODatabaseRecordTx) database);
+    if (!(database instanceof ODatabaseDocumentTx))
+      database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
 
-    final OrientGraphNoTx g = new OrientGraphNoTx((OGraphDatabase) database);
-    g.setUseClassForEdgeLabel(true);
-    return g;
+    return new OrientGraphNoTx((ODatabaseDocumentTx) database);
   }
 }

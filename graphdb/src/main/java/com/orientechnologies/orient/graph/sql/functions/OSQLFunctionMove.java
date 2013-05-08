@@ -20,6 +20,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
@@ -58,7 +59,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
     final String[] labels;
     if (iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters[0], String.class);
+      labels = OMultiValue.array(OStringSerializerHelper.getStringContent(iParameters[0]), String.class);
     else
       labels = null;
 

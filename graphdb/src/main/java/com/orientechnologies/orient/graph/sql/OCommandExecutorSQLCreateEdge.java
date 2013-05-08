@@ -140,7 +140,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
         edge.save(clusterName);
 
-        edges.add(edge.getId());
+        edges.add(edge);
       }
     }
 
