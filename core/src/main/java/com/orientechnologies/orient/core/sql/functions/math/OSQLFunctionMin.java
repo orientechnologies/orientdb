@@ -40,26 +40,21 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null)
-      return null;
 
-    // calculate max value for current record.
-    Object min = null;
-    if (iParameters.length > 0) {
-      for (Object item : iParameters) {
-        if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
-          min = item;
-      }
-    } else if (iParameters[0] instanceof Collection<?>) {
-      // for a projection with multiple results find out the max value
-      for (Object item : ((Collection<?>) iParameters[0])) {
-        if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
-          min = item;
-      }
-    } else {
-      // this is the max as is an unique value
-      min = (Comparable<Object>) iParameters[0];
-    }
+	// calculate min value for current record 
+	// consider both collection of parameters and collection in each parameter
+	Object min = null;
+	for (Object item : iParameters) {
+		if (item instanceof Collection<?>) {
+			for (Object subitem : ((Collection<?>) item)) {
+				if (min == null || subitem != null && ((Comparable) subitem).compareTo(min) < 0)
+					min = subitem;
+			}
+		} else {
+			if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
+				min = item;    		
+		}
+	}
 
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
