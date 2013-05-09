@@ -214,7 +214,13 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           } else
             mapValueObject = null;
 
-          map.put(fieldTypeFromStream(iSourceDocument, OType.STRING, entries.get(0)), mapValueObject);
+          final Object key = fieldTypeFromStream(iSourceDocument, OType.STRING, entries.get(0));
+          try {
+            map.put(key, mapValueObject);
+          } catch (ClassCastException e) {
+            throw new OSerializationException("Cannot load map because the type was not the expected: key=" + key + "(type "
+                + key.getClass().toString() + "), value=" + mapValueObject + "(type " + key.getClass() + ")", e);
+          }
         }
 
       }
