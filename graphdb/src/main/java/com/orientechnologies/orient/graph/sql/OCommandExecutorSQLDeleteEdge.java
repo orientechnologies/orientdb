@@ -142,7 +142,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         // SELECTIVE TARGET
         if (from != null && to != null) {
           // REMOVE ALL THE EDGES BETWEEN VERTICES
-          for (Edge e : graph.getVertex(from).query().direction(Direction.OUT).edges())
+          for (Edge e : graph.getVertex(from).getEdges(Direction.OUT))
             if (to.equals(((OrientEdge) e).getInVertex()))
               edges.add((OrientEdge) e);
         } else if (from != null)
