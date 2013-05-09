@@ -590,7 +590,7 @@ public class ODatabaseRaw implements ODatabase {
 
     case CHARSET:
       return storage.getConfiguration().getCharset();
-      
+
     case CUSTOM:
       return storage.getConfiguration().properties;
     }
@@ -704,24 +704,25 @@ public class ODatabaseRaw implements ODatabase {
         }
       }
 
-    } else
-    // SET
-    if (storage.getConfiguration().properties == null)
-      storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
+    } else {
+      // SET
+      if (storage.getConfiguration().properties == null)
+        storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
 
-    boolean found = false;
-    for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
-      if (e.name.equals(iName)) {
-        e.value = iValue;
-        found = true;
-        break;
+      boolean found = false;
+      for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
+        if (e.name.equals(iName)) {
+          e.value = iValue;
+          found = true;
+          break;
+        }
       }
+
+      if (!found)
+        // CREATE A NEW ONE
+        storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
     }
-
-    if (!found)
-      // CREATE A NEW ONE
-      storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
-
+    
     storage.getConfiguration().update();
   }
 
