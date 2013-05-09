@@ -337,7 +337,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     }
 
     writer.endCollection(1, true);
-    listener.onMessage("OK (" + indexes.size() + " indexes)");
+    listener.onMessage("\nOK (" + indexes.size() + " indexes)");
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
