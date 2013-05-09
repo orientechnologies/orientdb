@@ -1338,7 +1338,7 @@ public class SQLSelectTest {
   public void subQueryNoFrom() {
     List<ODocument> result2 = database.command(
         new OSQLSynchQuery<ODocument>(
-            "select $names let $names = (select flatten( addresses.city ) as city from Account where addresses.size() > 0 )"))
+            "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )"))
         .execute();
 
     Assert.assertTrue(result2.size() != 0);

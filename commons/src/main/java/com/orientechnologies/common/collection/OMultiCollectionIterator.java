@@ -102,7 +102,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public void add(final Object iValue) {
     if (iteratorOfInternalCollections != null)
-      throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
+      throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
 
     sources.add(iValue);
   }
@@ -124,7 +124,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("OFlattenIterator.remove()");
+    throw new UnsupportedOperationException("OMultiCollectionIterator.remove()");
   }
 
   public int getLimit() {

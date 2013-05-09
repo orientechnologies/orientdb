@@ -54,18 +54,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   private final static String   QUERY_GET_MAJOR                                   = "select from index:%s where key > ?";
   private final static String   QUERY_GET_MAJOR_EQUALS                            = "select from index:%s where key >= ?";
-  private final static String   QUERY_GET_VALUE_MAJOR                             = "select FLATTEN( rid ) from index:%s where key > ?";
-  private final static String   QUERY_GET_VALUE_MAJOR_EQUALS                      = "select FLATTEN( rid ) from index:%s where key >= ?";
+  private final static String   QUERY_GET_VALUE_MAJOR                             = "select EXPAND( rid ) from index:%s where key > ?";
+  private final static String   QUERY_GET_VALUE_MAJOR_EQUALS                      = "select EXPAND( rid ) from index:%s where key >= ?";
   private final static String   QUERY_GET_MINOR                                   = "select from index:%s where key < ?";
   private final static String   QUERY_GET_MINOR_EQUALS                            = "select from index:%s where key <= ?";
-  private final static String   QUERY_GET_VALUE_MINOR                             = "select FLATTEN( rid ) from index:%s where key < ?";
-  private final static String   QUERY_GET_VALUE_MINOR_EQUALS                      = "select FLATTEN( rid ) from index:%s where key <= ?";
+  private final static String   QUERY_GET_VALUE_MINOR                             = "select EXPAND( rid ) from index:%s where key < ?";
+  private final static String   QUERY_GET_VALUE_MINOR_EQUALS                      = "select EXPAND( rid ) from index:%s where key <= ?";
   private final static String   QUERY_GET_RANGE                                   = "select from index:%s where key between ? and ?";
 
-  private final static String   QUERY_GET_VALUES                                  = "select FLATTEN( rid ) from index:%s where key in [%s]";
+  private final static String   QUERY_GET_VALUES                                  = "select EXPAND( rid ) from index:%s where key in [%s]";
   private final static String   QUERY_GET_ENTRIES                                 = "select from index:%s where key in [%s]";
 
-  private final static String   QUERY_GET_VALUE_RANGE                             = "select FLATTEN( rid ) from index:%s where key between ? and ?";
+  private final static String   QUERY_GET_VALUE_RANGE                             = "select EXPAND( rid ) from index:%s where key between ? and ?";
 
   private final static String   QUERY_PUT                                         = "insert into index:%s (key,rid) values (?,?)";
   private final static String   QUERY_REMOVE                                      = "delete from index:%s where key = ?";

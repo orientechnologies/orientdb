@@ -485,7 +485,7 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((Collection<ODocument>) result.get(0).field("out")).size(), 2);
 
-    subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
+    subquery = "select expand(out[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 2);
@@ -494,7 +494,7 @@ public class GraphDatabaseTest {
       Assert.assertTrue(result.get(i).containsField("lat"));
     }
 
-    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select flatten(out[label='owns'].in) from V where name = 'UK') order by distance";
+    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out[label='owns'].in) from V where name = 'UK') order by distance";
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
@@ -505,15 +505,15 @@ public class GraphDatabaseTest {
     }
   }
 
-  public void testFlattenBlankDatabase() throws IOException {
+  public void testexpandBlankDatabase() throws IOException {
     String iUrl = url;
     iUrl.replace("\\", "/");
     if (iUrl.endsWith("/"))
       iUrl = iUrl.substring(0, iUrl.length() - 1);
     if (iUrl.contains("/")) {
-      iUrl = iUrl.substring(0, iUrl.lastIndexOf("/") + 1) + "flattenTest";
+      iUrl = iUrl.substring(0, iUrl.lastIndexOf("/") + 1) + "expandTest";
     } else {
-      iUrl = iUrl.substring(0, iUrl.indexOf(":") + 1) + "flattenTest";
+      iUrl = iUrl.substring(0, iUrl.indexOf(":") + 1) + "expandTest";
     }
     ODatabaseDocument db = new ODatabaseDocumentTx(iUrl);
 
@@ -526,7 +526,7 @@ public class GraphDatabaseTest {
     ODocument teamDoc = database.createVertex().field("team", "Chelsea").save();
     database.createEdge(playerDoc, teamDoc).field("label", "player").save();
 
-    String query = "select flatten(out[label='player'].in) from V where surname = 'Torres'";
+    String query = "select expand(out[label='player'].in) from V where surname = 'Torres'";
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     for (int i = 0; i < result.size(); i++) {
       Assert.assertTrue(result.get(i).containsField("team"));

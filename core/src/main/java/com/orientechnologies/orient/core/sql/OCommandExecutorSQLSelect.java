@@ -33,6 +33,7 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -98,7 +99,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<OPair<String, String>> orderedFields;
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
-  private Object                      flattenTarget;
+  private Object                      expandTarget;
   private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
   private Iterator<OIdentifiable>     subIterator;
@@ -273,7 +274,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (target == null) {
         // GET THE RESULT
         executeSearch(null);
-        applyFlatten();
+        applyExpand();
         handleNoTarget();
         handleGroupBy();
         applyOrderBy();
@@ -318,7 +319,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       fetchLimit = getQueryFetchLimit();
 
       executeSearch(iArgs);
-      applyFlatten();
+      applyExpand();
       handleNoTarget();
       handleGroupBy();
       applyOrderBy();
@@ -447,7 +448,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    if (orderedFields == null && flattenTarget == null) {
+    if (orderedFields == null && expandTarget == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
         request.getResultListener().result(iRecord);
@@ -846,7 +847,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         projection = projection.trim();
 
         if (projectionDefinition == null)
-          throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() operator");
+          throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
 
         fieldName = null;
         endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
@@ -873,18 +874,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             fieldName += fieldIndex;
         }
 
-        if (projection.toUpperCase(Locale.ENGLISH).startsWith("FLATTEN(")) {
+        String p = projection.toUpperCase(Locale.ENGLISH);
+        if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
+          if (p.startsWith("FLATTEN("))
+            OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
           List<String> pars = OStringSerializerHelper.getParameters(projection);
-          if (pars.size() != 1)
-            throw new OCommandSQLParsingException("FLATTEN operator expects the field name as parameter. Example FLATTEN( out )");
-          flattenTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
+          if (pars.size() != 1) {
+            throw new OCommandSQLParsingException(
+                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
+          }
+          expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
 
           // BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
           projectionDefinition = null;
           projections = null;
 
-          if (groupedResult == null && flattenTarget instanceof OSQLFunctionRuntime
-              && ((OSQLFunctionRuntime) flattenTarget).aggregateResults())
+          if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
+              && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
             getProjectionGroup(null);
 
           continue;
@@ -976,16 +982,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Extract the content of collections and/or links and put it as result
    */
-  private void applyFlatten() {
-    if (flattenTarget == null)
+  private void applyExpand() {
+    if (expandTarget == null)
       return;
 
     Object fieldValue;
 
     if (tempResult == null) {
       tempResult = new ArrayList<OIdentifiable>();
-      if (flattenTarget instanceof OSQLFilterItemVariable) {
-        Object r = ((OSQLFilterItemVariable) flattenTarget).getValue(null, context);
+      if (expandTarget instanceof OSQLFilterItemVariable) {
+        Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, context);
         if (r != null) {
           if (r instanceof OIdentifiable)
             ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
@@ -999,12 +1005,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
       finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
-        if (flattenTarget instanceof OSQLFilterItem)
-          fieldValue = ((OSQLFilterItem) flattenTarget).getValue(id.getRecord(), context);
-        else if (flattenTarget instanceof OSQLFunctionRuntime)
-          fieldValue = ((OSQLFunctionRuntime) flattenTarget).getResult();
+        if (expandTarget instanceof OSQLFilterItem)
+          fieldValue = ((OSQLFilterItem) expandTarget).getValue(id.getRecord(), context);
+        else if (expandTarget instanceof OSQLFunctionRuntime)
+          fieldValue = ((OSQLFunctionRuntime) expandTarget).getResult();
         else
-          fieldValue = flattenTarget.toString();
+          fieldValue = expandTarget.toString();
 
         if (fieldValue != null)
           if (fieldValue instanceof Collection<?>) {
