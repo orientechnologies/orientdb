@@ -84,23 +84,25 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
-  private static final String         KEYWORD_AS           = " AS ";
-  public static final String          KEYWORD_SELECT       = "SELECT";
-  public static final String          KEYWORD_ASC          = "ASC";
-  public static final String          KEYWORD_DESC         = "DESC";
-  public static final String          KEYWORD_ORDER        = "ORDER";
-  public static final String          KEYWORD_BY           = "BY";
-  public static final String          KEYWORD_GROUP        = "GROUP";
+  private static final String         KEYWORD_AS                        = " AS ";
+  public static final String          KEYWORD_SELECT                    = "SELECT";
+  public static final String          KEYWORD_ASC                       = "ASC";
+  public static final String          KEYWORD_DESC                      = "DESC";
+  public static final String          KEYWORD_ORDER                     = "ORDER";
+  public static final String          KEYWORD_BY                        = "BY";
+  public static final String          KEYWORD_GROUP                     = "GROUP";
+  private static final int            MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
 
-  private Map<String, String>         projectionDefinition = null;
-  private Map<String, Object>         projections          = null;    // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S
-                                                                       // USED THE
-                                                                       // PROJECTIONS IN GROUPED-RESULTS
+  private Map<String, String>         projectionDefinition              = null;
+  private Map<String, Object>         projections                       = null;    // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
+                                                                                    // IT'S
+                                                                                    // USED THE
+                                                                                    // PROJECTIONS IN GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields;
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
   private Object                      expandTarget;
-  private int                         fetchLimit           = -1;
+  private int                         fetchLimit                        = -1;
   private OIdentifiable               lastRecord;
   private Iterator<OIdentifiable>     subIterator;
 
@@ -1315,14 +1317,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
               if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
-                if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
-                  target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
-                else
-                  target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
-                orderedFields = null;
+                if (idx.getSize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET || compiledFilter == null) {
 
-                fetchLimit = getQueryFetchLimit();
-                break;
+                  if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
+                    target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
+                  else
+                    target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
+
+                  if (context.isRecordingMetrics()) {
+                    Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+                    if (idxNames == null) {
+                      idxNames = new HashSet<String>();
+                      context.setVariable("involvedIndexes", idxNames);
+                    }
+                    idxNames.add(idx.getName());
+                  }
+
+                  orderedFields = null;
+
+                  fetchLimit = getQueryFetchLimit();
+                  break;
+                }
               }
             }
           }
