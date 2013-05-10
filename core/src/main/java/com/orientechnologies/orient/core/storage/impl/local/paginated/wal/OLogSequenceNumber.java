@@ -5,14 +5,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 29.04.13
  */
 public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
-  public static final OLogSequenceNumber BEGIN = new OLogSequenceNumber(0, 0);
-
-  private final int                      segment;
-  private final long                     position;
+  private final int  segment;
+  private final long position;
 
   public OLogSequenceNumber(int segment, long position) {
-    assert position >= 0;
-
     this.segment = segment;
     this.position = position;
   }

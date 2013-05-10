@@ -8,6 +8,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -20,15 +26,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -667,13 +667,13 @@ public class O2QCacheTest {
 
     buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(1, "test"));
-    OLogSequenceNumber lsnToFlush = writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(1, "test"));
+    OLogSequenceNumber lsnToFlush = writeAheadLog.logRecord(new OUpdatePageRecord(2, "test1"));
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(2, "test1"));
 
     long fileId = buffer.openFile(fileConfiguration, ".tst");
     for (int i = 0; i < 8; i++) {
@@ -690,11 +690,11 @@ public class O2QCacheTest {
 
     OWALRecord recordOne = writeAheadLog.read(writeAheadLog.begin());
 
-    Assert.assertEquals(recordOne, new OSetPageDataRecord(1, "test"));
+    Assert.assertEquals(recordOne, new OUpdatePageRecord(1, "test"));
 
     OLogSequenceNumber lsn = writeAheadLog.next(recordOne.getLsn());
     OWALRecord recordTwo = writeAheadLog.read(lsn);
-    Assert.assertEquals(recordTwo, new OSetPageDataRecord(2, "test1"));
+    Assert.assertEquals(recordTwo, new OUpdatePageRecord(2, "test1"));
 
     Assert.assertNull(writeAheadLog.next(recordTwo.getLsn()));
   }

@@ -189,11 +189,15 @@ public class O2QCache implements ODiskCache {
   }
 
   private void initLsn(long dataPointer) {
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(-1, directMemory, dataPointer + OLongSerializer.LONG_SIZE
-        + OIntegerSerializer.INT_SIZE);
+    OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+    if (flushedLSN == null)
+      flushedLSN = new OLogSequenceNumber(-1, 0);
 
-    OLongSerializer.INSTANCE.serializeInDirectMemory(0L, directMemory, dataPointer + OLongSerializer.LONG_SIZE + 2
-        * OIntegerSerializer.INT_SIZE);
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getSegment(), directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+
+    OLongSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getPosition(), directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
   }
 
   @Override

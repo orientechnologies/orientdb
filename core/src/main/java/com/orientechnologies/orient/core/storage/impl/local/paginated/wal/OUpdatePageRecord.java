@@ -27,13 +27,13 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
  * @author Andrey Lomakin
  * @since 26.04.13
  */
-public class OSetPageDataRecord extends OAbstractPageWALRecord {
+public class OUpdatePageRecord extends OAbstractPageWALRecord {
   private List<Diff> diffs = new ArrayList<Diff>();
 
-  public OSetPageDataRecord() {
+  public OUpdatePageRecord() {
   }
 
-  public OSetPageDataRecord(long pageIndex, String fileName) {
+  public OUpdatePageRecord(long pageIndex, String fileName) {
     super(pageIndex, fileName);
   }
 
@@ -111,7 +111,7 @@ public class OSetPageDataRecord extends OAbstractPageWALRecord {
     if (!super.equals(o))
       return false;
 
-    OSetPageDataRecord that = (OSetPageDataRecord) o;
+    OUpdatePageRecord that = (OUpdatePageRecord) o;
 
     if (!diffs.equals(that.diffs))
       return false;

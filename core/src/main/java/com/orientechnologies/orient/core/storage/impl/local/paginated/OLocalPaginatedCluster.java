@@ -914,6 +914,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     } finally {
       externalModificationLock.releaseModificationLock();
     }
+
+    storageLocal.scheduleCheckpoint();
   }
 
   @Override
