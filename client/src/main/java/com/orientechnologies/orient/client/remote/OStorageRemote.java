@@ -1341,7 +1341,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           clusters[iClusterId] = null;
           clusterMap.remove(cluster.getName());
           if (configuration.clusters.size() > iClusterId)
-            configuration.dropCluster(iClusterId); //endResponse must be called before this line, which call updateRecord
+            configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
 
           getLevel2Cache().freeCluster(iClusterId);
           return true;
@@ -1993,9 +1993,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // CHECK EXISTENT NETWORK CONNECTIONS
         final List<OChannelBinaryClient> editableList = new ArrayList<OChannelBinaryClient>(networkPool);
         for (OChannelBinaryClient net : editableList) {
-          if (!net.isConnected())
+          OLogManager.instance().debug(this, "Checking network connection %s...", net);
+
+          if (net.isConnected())
+            OLogManager.instance().debug(this, "Connection ok");
+          else {
             // CLOSE IT AND REMOVE FROM THE LIST
+            OLogManager.instance().debug(this, "Closed, remove it from the list");
             closeChannel(net);
+          }
         }
       }
 
