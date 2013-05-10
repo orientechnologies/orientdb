@@ -103,6 +103,10 @@ public class OWALPage {
     return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + FREE_SPACE_OFFSET);
   }
 
+  public int gitFilledUpTo() {
+    return OWALPage.PAGE_SIZE - getFreeSpace();
+  }
+
   public static int calculateSerializedSize(int recordSize) {
     return recordSize + OIntegerSerializer.INT_SIZE + 2;
   }

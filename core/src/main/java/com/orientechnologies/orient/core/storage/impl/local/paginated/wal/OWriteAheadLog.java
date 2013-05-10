@@ -326,8 +326,9 @@ public class OWriteAheadLog {
         lastCheckpoint = lsn;
 
       final long sizeDiff = last.filledUpTo() - lastSize;
+      logSize += sizeDiff;
 
-      if (logSize + sizeDiff >= maxLogSize) {
+      if (logSize >= maxLogSize) {
         LogSegment first = logSegments.get(0);
         logSize -= first.filledUpTo();
 
@@ -341,15 +342,13 @@ public class OWriteAheadLog {
         paginatedStorage.scheduleCheckpoint();
       }
 
-      if (last.filledUpTo() + sizeDiff >= maxSegmentSize) {
+      if (last.filledUpTo() >= maxSegmentSize) {
         last.flush();
 
         last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxRecordsCacheSize);
         last.open();
         logSegments.add(last);
       }
-
-      logSize += sizeDiff;
 
       return lsn;
     }
@@ -648,6 +647,22 @@ public class OWriteAheadLog {
       return new OLogSequenceNumber(order, pageOffset);
     }
 
+    private int findLastRecord(OWALPage page) {
+      int prevOffset = OWALPage.RECORDS_OFFSET;
+      int pageOffset = OWALPage.RECORDS_OFFSET;
+      int maxOffset = OWALPage.PAGE_SIZE - page.getFreeSpace();
+
+      while (pageOffset < maxOffset) {
+        prevOffset = pageOffset;
+        pageOffset += page.getSerializedRecordSize(pageOffset);
+      }
+
+      if (page.recordTail(prevOffset))
+        return -1;
+
+      return prevOffset;
+    }
+
     public boolean delete(boolean flush) throws IOException {
       close(flush);
       return file.delete();
@@ -671,13 +686,14 @@ public class OWriteAheadLog {
           long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
           walPage = new OWALPage(pointer, true);
           pages.add(walPage);
+          filledUpTo += OWALPage.RECORDS_OFFSET;
         } else {
           walPage = pages.get(pages.size() - 1);
         }
 
         int freeSpace = walPage.getFreeSpace();
         if (freeSpace < OWALPage.MIN_RECORD_SIZE) {
-          filledUpTo += freeSpace;
+          filledUpTo += freeSpace + OWALPage.RECORDS_OFFSET;
           long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
           walPage = new OWALPage(pointer, true);
           pages.add(walPage);
@@ -729,6 +745,19 @@ public class OWriteAheadLog {
 
       rndFile.seek(lastFlushedPosition);
 
+      OLogSequenceNumber newFlushedLSN = null;
+      int lastPageOffset = -1;
+      int pageIndex = pages.size() - 1;
+      for (; pageIndex >= 0; pageIndex--) {
+        OWALPage page = pages.get(pageIndex);
+        lastPageOffset = findLastRecord(page);
+        if (lastPageOffset > 0)
+          break;
+      }
+
+      if (lastPageOffset > 0)
+        newFlushedLSN = new OLogSequenceNumber(order, lastFlushedPosition / OWALPage.PAGE_SIZE + pageIndex + lastPageOffset);
+
       for (int i = 0; i < pages.size() - 1; i++) {
         final OWALPage page = pages.get(i);
         flushPage(page);
@@ -748,6 +777,9 @@ public class OWriteAheadLog {
         directMemory.free(lastPage.getPagePointer());
         lastFlushedPosition = rndFile.getFilePointer();
       }
+
+      if (newFlushedLSN != null)
+        flushedLsn = newFlushedLSN;
 
       rndFile.getFD().sync();
     }
@@ -958,16 +990,9 @@ public class OWriteAheadLog {
         try {
 
           OWALPage page = new OWALPage(pointer, false);
-          int prevOffset = OWALPage.RECORDS_OFFSET;
-          int pageOffset = OWALPage.RECORDS_OFFSET;
-          int maxOffset = OWALPage.PAGE_SIZE - page.getFreeSpace();
+          int pageOffset = findLastRecord(page);
 
-          while (pageOffset < maxOffset) {
-            prevOffset = pageOffset;
-            pageOffset += page.getSerializedRecordSize(pageOffset);
-          }
-
-          if (page.recordTail(prevOffset)) {
+          if (pageOffset < 0) {
             pageIndex--;
             if (pageIndex < 0)
               return null;
@@ -975,7 +1000,7 @@ public class OWriteAheadLog {
             continue;
           }
 
-          return new OLogSequenceNumber(order, (pages - 1) * OWALPage.PAGE_SIZE + prevOffset);
+          return new OLogSequenceNumber(order, pageIndex * OWALPage.PAGE_SIZE + pageOffset);
         } finally {
           directMemory.free(pointer);
         }
