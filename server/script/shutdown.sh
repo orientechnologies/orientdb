@@ -40,7 +40,7 @@ fi
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_LEVEL=warning
 WWW_PATH=$ORIENTDB_HOME/www
-#JAVA_OPTS=-Xms1024m -Xmx1024m
+JAVA_OPTS=-Djava.awt.headless=true
 
 java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
