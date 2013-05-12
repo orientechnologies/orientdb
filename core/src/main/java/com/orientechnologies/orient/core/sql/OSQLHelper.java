@@ -190,10 +190,12 @@ public class OSQLHelper {
     if (v != VALUE_NOT_PARSED)
       return v;
 
-    // TRY TO PARSE AS FUNCTION
-    final Object func = OSQLHelper.getFunction(iCommand, iWord);
-    if (func != null)
-      return func;
+    if (!iWord.equalsIgnoreCase("any()") && !iWord.equalsIgnoreCase("all()")) {
+      // TRY TO PARSE AS FUNCTION
+      final Object func = OSQLHelper.getFunction(iCommand, iWord);
+      if (func != null)
+        return func;
+    }
 
     if (iWord.startsWith("$"))
       // CONTEXT VARIABLE

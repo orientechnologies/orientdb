@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -192,15 +193,21 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (fromPosition == -1)
       throw new OQueryParsingException("Missed " + KEYWORD_FROM, parserText, currentPos);
 
-    Set<String> fields = new HashSet<String>();
+    Set<Object> fields = new HashSet<Object>();
 
     final String fieldString = parserText.substring(currentPos, fromPosition).trim();
     if (fieldString.length() > 0) {
       // EXTRACT PROJECTIONS
       final List<String> items = OStringSerializerHelper.smartSplit(fieldString, ',');
 
-      for (String field : items)
-        fields.add(field.trim());
+      for (String field : items) {
+        final String fieldName = field.trim();
+
+        if (fieldName.contains("("))
+          fields.add(OSQLHelper.parseValue((OBaseParser) null, fieldName, context));
+        else
+          fields.add(fieldName);
+      }
     } else
       throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), parserText, currentPos);
 
