@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -623,16 +622,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
-    final Iterator<Object> iterator = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).iterator() : null;
-    final int size = iValue instanceof Collection<?> ? ((Collection<Object>) iValue).size() : Array.getLength(iValue);
+    final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue);
+
     OType linkedType = iLinkedType;
 
-    for (int i = 0; i < size; ++i) {
-      final Object o;
-      if (iValue instanceof Collection<?>)
-        o = iterator.next();
-      else
-        o = Array.get(iValue, i);
+    for (int i = 0; iterator.hasNext(); ++i) {
+      final Object o = iterator.next();
 
       if (i > 0)
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
@@ -679,7 +674,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (id != null && linkedType != OType.LINK)
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 
-      if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
+      if (linkedType == OType.EMBEDDED && o instanceof OIdentifiable)
+        toString((ORecordInternal<?>) ((OIdentifiable) o).getRecord(), iOutput, null);
+      else if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
         if (id == null) {
           // EMBEDDED OBJECTS
           if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())

@@ -173,7 +173,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         }
 
         if (fieldValue instanceof OMultiCollectionIterator<?>) {
-          type = OType.LINKLIST;
+          type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
+          linkedType = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDED : OType.LINK;
         } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
           final int size = OMultiValue.getSize(fieldValue);
 
