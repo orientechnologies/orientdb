@@ -12,6 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
@@ -21,12 +27,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -53,7 +53,7 @@ public class LocalPageTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(buildDirectory);
     when(localPaginatedStorage.getName()).thenReturn("localPageTest");
 
-    writeAheadLog = new OWriteAheadLog(100 * 1024 * 1024, -1, 200 * 1024 * 1024, 100L * 1024 * 1024 * 1024, localPaginatedStorage);
+    writeAheadLog = new OWriteAheadLog(6000, -1, 200 * 1024 * 1024, 100L * 1024 * 1024 * 1024, localPaginatedStorage);
   }
 
   @AfterMethod
