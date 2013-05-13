@@ -95,10 +95,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
       nextPageRID = null;
   }
 
-  private Map<Object, Object> fetchQueryParams(Object... iArgs) {
-    if (iArgs.length > 0) {
+  private Map<Object, Object> fetchQueryParams(final Object... iArgs) {
+    if (iArgs != null && iArgs.length > 0)
       return convertToParameters(iArgs);
-    }
 
     Map<Object, Object> queryParams = getParameters();
     if (queryParams == null)
