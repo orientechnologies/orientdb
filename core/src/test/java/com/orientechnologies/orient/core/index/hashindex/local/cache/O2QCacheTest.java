@@ -8,6 +8,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -20,15 +26,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -652,14 +653,14 @@ public class O2QCacheTest {
     Assert.assertEquals(dirtyPagesRecord.getDirtyPages(), dirtyPages);
   }
 
-  public void testFlushTillLSN() throws Exception {
+  public void testFlushTillLSNOne() throws Exception {
     closeBufferAndDeleteFile();
 
     File file = new File(storageLocal.getConfiguration().getDirectory());
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new OWriteAheadLog(2, -1, 4 * OWALPage.PAGE_SIZE, 2 * 100 * OWALPage.PAGE_SIZE, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "o2QCacheTest", 0);
@@ -667,36 +668,101 @@ public class O2QCacheTest {
 
     buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(1, "test"));
-    OLogSequenceNumber lsnToFlush = writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(1, "test1"));
 
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
-    writeAheadLog.logRecord(new OSetPageDataRecord(2, "test1"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(2, "test2"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(3, "test3"));
+    writeAheadLog.logRecord(new OUpdatePageRecord(4, "test4"));
+    OLogSequenceNumber flushedLSN = writeAheadLog.logRecord(new OUpdatePageRecord(5, "test5"));
+
+    writeAheadLog.flush();
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN(), flushedLSN);
 
     long fileId = buffer.openFile(fileConfiguration, ".tst");
+    OLogSequenceNumber lsnToFlush = null;
     for (int i = 0; i < 8; i++) {
       long dataPointer = buffer.load(fileId, i);
-      setLsn(dataPointer, lsnToFlush);
+      OLogSequenceNumber lsn = writeAheadLog.logRecord(new OUpdatePageRecord(6 + i, "test" + (6 + i)));
+      setLsn(dataPointer, lsn);
+      if (i == 5)
+        lsnToFlush = lsn;
 
       buffer.markDirty(fileId, i);
       buffer.release(fileId, i);
     }
 
+    Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
+    Assert.assertNotNull(flushedLSN);
+
+    Assert.assertEquals(buffer.getAm().size(), 0);
+    Assert.assertEquals(buffer.getA1out().size(), 2);
+    Assert.assertEquals(buffer.getA1in().size(), 4);
+
     writeAheadLog.close(false);
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new OWriteAheadLog(2, -1, 4 * OWALPage.PAGE_SIZE, 2 * 100 * OWALPage.PAGE_SIZE, storageLocal);
 
-    OWALRecord recordOne = writeAheadLog.read(writeAheadLog.begin());
+    OWALRecord record = writeAheadLog.read(writeAheadLog.begin());
+    for (int i = 0; i <= 10; i++) {
+      Assert.assertEquals(record, new OUpdatePageRecord(i + 1, "test" + (i + 1)));
+      OLogSequenceNumber lsn = writeAheadLog.next(record.getLsn());
+      if (lsn != null)
+        record = writeAheadLog.read(lsn);
+    }
 
-    Assert.assertEquals(recordOne, new OSetPageDataRecord(1, "test"));
+    Assert.assertNull(writeAheadLog.next(record.getLsn()));
+  }
 
-    OLogSequenceNumber lsn = writeAheadLog.next(recordOne.getLsn());
-    OWALRecord recordTwo = writeAheadLog.read(lsn);
-    Assert.assertEquals(recordTwo, new OSetPageDataRecord(2, "test1"));
+  public void testFlushTillLSNTwo() throws Exception {
+    closeBufferAndDeleteFile();
 
-    Assert.assertNull(writeAheadLog.next(recordTwo.getLsn()));
+    File file = new File(storageLocal.getConfiguration().getDirectory());
+    if (!file.exists())
+      file.mkdir();
+
+    writeAheadLog = new OWriteAheadLog(2, -1, 4 * OWALPage.PAGE_SIZE, 2 * 100 * OWALPage.PAGE_SIZE, storageLocal);
+
+    final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
+        "o2QCacheTest", 0);
+    segmentConfiguration.fileType = OFileFactory.CLASSIC;
+
+    buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+
+    Assert.assertNull(writeAheadLog.getFlushedLSN());
+
+    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    OLogSequenceNumber lsnToFlush = null;
+    for (int i = 0; i < 8; i++) {
+      long dataPointer = buffer.load(fileId, i);
+      OLogSequenceNumber lsn = writeAheadLog.logRecord(new OUpdatePageRecord(i, "test" + i));
+      setLsn(dataPointer, lsn);
+      if (i == 5)
+        lsnToFlush = lsn;
+
+      buffer.markDirty(fileId, i);
+      buffer.release(fileId, i);
+    }
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
+
+    Assert.assertEquals(buffer.getAm().size(), 0);
+    Assert.assertEquals(buffer.getA1out().size(), 2);
+    Assert.assertEquals(buffer.getA1in().size(), 4);
+
+    writeAheadLog.close(false);
+
+    writeAheadLog = new OWriteAheadLog(2, -1, 4 * OWALPage.PAGE_SIZE, 2 * 100 * OWALPage.PAGE_SIZE, storageLocal);
+
+    OWALRecord record = writeAheadLog.read(writeAheadLog.begin());
+    for (int i = 0; i < 6; i++) {
+      Assert.assertEquals(record, new OUpdatePageRecord(i, "test" + i));
+      OLogSequenceNumber lsn = writeAheadLog.next(record.getLsn());
+      if (lsn != null)
+        record = writeAheadLog.read(lsn);
+    }
+
+    Assert.assertNull(writeAheadLog.next(record.getLsn()));
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {

@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -15,18 +18,14 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
  * @since 5/8/13
  */
-@Test
-public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest {
+public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   private OWriteAheadLog writeAheadLog;
 
   @BeforeClass
@@ -49,7 +48,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     if (!buildDir.exists())
       buildDir.mkdirs();
 
-    writeAheadLog = new OWriteAheadLog(100 * 1024 * 1024, -1, 10L * 1024 * 1024 * 1024, 100L * 1024 * 1024 * 1024, storage);
+    writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
     diskCache = new O2QCache(2L * 1024 * 1024 * 1024, 15000, directMemory, writeAheadLog,

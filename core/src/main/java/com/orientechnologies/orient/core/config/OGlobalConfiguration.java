@@ -58,12 +58,13 @@ public enum OGlobalConfiguration {
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
-  WAL_CACHE_SIZE("storage.wal.cacheSize", "Maximum size of WAL cache (in byte) <= 0 means that caching will be switched off.",
-      Integer.class, 100 * 1024 * 1024),
+  WAL_CACHE_SIZE("storage.wal.cacheSize",
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
+      Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 500),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 10 * 1024),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 10 * 1024),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 30 * 1024),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 

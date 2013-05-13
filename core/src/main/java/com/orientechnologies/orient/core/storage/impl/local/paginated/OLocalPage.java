@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAddNewPageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OSetPageDataRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -68,7 +68,7 @@ public class OLocalPage {
   private final long           pagePointer;
   private final ODirectMemory  directMemory               = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private OSetPageDataRecord   currentPageDiff;
+  private OUpdatePageRecord    currentPageDiff;
 
   private final OWriteAheadLog walLog;
   private final long           pageIndex;
@@ -384,14 +384,14 @@ public class OLocalPage {
     if (walRecord instanceof OAddNewPageRecord)
       return;
 
-    if (walRecord instanceof OSetPageDataRecord)
-      restoreFromSetDataRecord((OSetPageDataRecord) walRecord);
+    if (walRecord instanceof OUpdatePageRecord)
+      restoreFromSetDataRecord((OUpdatePageRecord) walRecord);
     else
       throw new IllegalStateException("Invalid WAL record type : " + walRecord);
   }
 
-  private void restoreFromSetDataRecord(OSetPageDataRecord walRecord) {
-    for (OSetPageDataRecord.Diff diff : walRecord.getDiffs()) {
+  private void restoreFromSetDataRecord(OUpdatePageRecord walRecord) {
+    for (OUpdatePageRecord.Diff diff : walRecord.getDiffs()) {
       final byte[] data = diff.getData();
       final int pageOffset = diff.getPageOffset();
 
@@ -501,7 +501,7 @@ public class OLocalPage {
 
   private void startAtomicUpdate() throws IOException {
     if (walLog != null)
-      currentPageDiff = new OSetPageDataRecord(pageIndex, fileName);
+      currentPageDiff = new OUpdatePageRecord(pageIndex, fileName);
   }
 
   private void endAtomicUpdate() throws IOException {

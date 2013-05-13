@@ -16,6 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterStateRecord;
 
 /**
@@ -23,13 +26,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterSt
  * @since 25.04.13
  */
 public class OWALRecordsFactory {
-  public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
+  private Map<Byte, Class>               idToTypeMap = new HashMap<Byte, Class>();
+  private Map<Class, Byte>               typeToIdMap = new HashMap<Class, Byte>();
+
+  public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
   public byte[] toStream(OWALRecord walRecord) {
     int contentSize = walRecord.serializedSize() + 1;
     byte[] content = new byte[contentSize];
 
-    if (walRecord instanceof OSetPageDataRecord)
+    if (walRecord instanceof OUpdatePageRecord)
       content[0] = 0;
     else if (walRecord instanceof OFuzzyCheckpointStartRecord)
       content[0] = 1;
@@ -45,7 +51,9 @@ public class OWALRecordsFactory {
       content[0] = 6;
     else if (walRecord instanceof OClusterStateRecord)
       content[0] = 7;
-    else
+    else if (typeToIdMap.containsKey(walRecord.getClass())) {
+      content[0] = typeToIdMap.get(walRecord.getClass());
+    } else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
     walRecord.toStream(content, 1);
@@ -57,7 +65,7 @@ public class OWALRecordsFactory {
     OWALRecord walRecord;
     switch (content[0]) {
     case 0:
-      walRecord = new OSetPageDataRecord();
+      walRecord = new OUpdatePageRecord();
       break;
     case 1:
       walRecord = new OFuzzyCheckpointStartRecord();
@@ -81,11 +89,25 @@ public class OWALRecordsFactory {
       walRecord = new OClusterStateRecord();
       break;
     default:
-      throw new IllegalStateException("Can not deserialize passed in wal record.");
+      if (idToTypeMap.containsKey(content[0]))
+        try {
+          walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
+        } catch (InstantiationException e) {
+          throw new IllegalStateException("Can not deserialize passed in record", e);
+        } catch (IllegalAccessException e) {
+          throw new IllegalStateException("Can not deserialize passed in record", e);
+        }
+      else
+        throw new IllegalStateException("Can not deserialize passed in wal record.");
     }
 
     walRecord.fromStream(content, 1);
 
     return walRecord;
+  }
+
+  public void registerNewRecord(byte id, Class<? extends OWALRecord> type) {
+    typeToIdMap.put(type, id);
+    idToTypeMap.put(id, type);
   }
 }
