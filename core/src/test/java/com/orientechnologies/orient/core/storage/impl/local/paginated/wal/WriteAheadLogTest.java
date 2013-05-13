@@ -1066,49 +1066,6 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.begin(), writtenRecords.get(firstSegmentIndex + 1).getLsn());
   }
 
-  @Test(enabled = false)
-  public void flushTillLSN() throws Exception {
-    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
-    Random rnd = new Random();
-
-    final int recordsToWrite = 80;
-    for (int i = 0; i < recordsToWrite; i++) {
-      long pageIndex = rnd.nextLong();
-      OUpdatePageRecord setPageDataRecord = new OUpdatePageRecord(pageIndex, "test");
-      writtenRecords.add(setPageDataRecord);
-
-      writeAheadLog.logRecord(setPageDataRecord);
-    }
-
-    writeAheadLog.flushTillLSN(writtenRecords.get(70).getLsn());
-    writeAheadLog.close(false);
-
-    writeAheadLog = createWAL();
-    assertLogContent(writeAheadLog, writtenRecords.subList(0, 71));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(71).getLsn()));
-  }
-
-  @Test(enabled = false)
-  public void flushTillLSNFullBufferFlush() throws Exception {
-    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
-    Random rnd = new Random();
-
-    final int recordsToWrite = 80;
-    for (int i = 0; i < recordsToWrite; i++) {
-      long pageIndex = rnd.nextLong();
-      OUpdatePageRecord setPageDataRecord = new OUpdatePageRecord(pageIndex, "test");
-      writtenRecords.add(setPageDataRecord);
-
-      writeAheadLog.logRecord(setPageDataRecord);
-    }
-
-    writeAheadLog.flushTillLSN(writtenRecords.get(70).getLsn());
-    writeAheadLog.close();
-
-    writeAheadLog = createWAL();
-    assertLogContent(writeAheadLog, writtenRecords);
-  }
-
   private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
     Iterator<? extends OWALRecord> iterator = writtenRecords.iterator();
 

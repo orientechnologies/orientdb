@@ -189,15 +189,23 @@ public class O2QCache implements ODiskCache {
   }
 
   private void initLsn(long dataPointer) {
-    OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
-    if (flushedLSN == null)
-      flushedLSN = new OLogSequenceNumber(-1, 0);
+    if (writeAheadLog != null) {
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+      if (flushedLSN == null)
+        flushedLSN = new OLogSequenceNumber(-1, 0);
 
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getSegment(), directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getSegment(), directMemory, dataPointer
+          + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
 
-    OLongSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getPosition(), directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+      OLongSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getPosition(), directMemory, dataPointer
+          + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
+    } else {
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(-1, directMemory, dataPointer + OLongSerializer.LONG_SIZE
+          + OIntegerSerializer.INT_SIZE);
+
+      OLongSerializer.INSTANCE.serializeInDirectMemory(0L, directMemory, dataPointer + OLongSerializer.LONG_SIZE + 2
+          * OIntegerSerializer.INT_SIZE);
+    }
   }
 
   @Override
@@ -531,7 +539,8 @@ public class O2QCache implements ODiskCache {
   private void flushData(final long fileId, final long pageIndex, final long dataPointer) throws IOException {
     if (writeAheadLog != null) {
       OLogSequenceNumber lsn = getLogSequenceNumberFromPage(dataPointer);
-      writeAheadLog.flushTillLSN(lsn);
+      if (lsn.compareTo(getFlushedLSN()) > 0)
+        writeAheadLog.flush();
     }
 
     final byte[] content = directMemory.get(dataPointer, pageSize);
@@ -546,6 +555,14 @@ public class O2QCache implements ODiskCache {
 
     if (syncOnPageFlush)
       multiFileSegment.synch();
+  }
+
+  private OLogSequenceNumber getFlushedLSN() {
+    OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+    if (flushedLSN == null)
+      flushedLSN = new OLogSequenceNumber(-1, 0);
+
+    return flushedLSN;
   }
 
   @Override
