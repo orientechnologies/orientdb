@@ -33,10 +33,11 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   private Collection<Object> sources;
   private Iterator<?>        iteratorOfInternalCollections;
   private Iterator<T>        partialIterator;
-  private List<T>            temp    = null;
+  private List<T>            temp     = null;
 
-  private int                browsed = 0;
-  private int                limit   = -1;
+  private int                browsed  = 0;
+  private int                limit    = -1;
+  private boolean            embedded = false;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
@@ -102,7 +103,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public void add(final Object iValue) {
     if (iteratorOfInternalCollections != null)
-      throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
+      throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
 
     sources.add(iValue);
   }
@@ -124,7 +125,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("OFlattenIterator.remove()");
+    throw new UnsupportedOperationException("OMultiCollectionIterator.remove()");
   }
 
   public int getLimit() {
@@ -168,5 +169,14 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       }
 
     return false;
+  }
+
+  public boolean isEmbedded() {
+    return embedded;
+  }
+
+  public OMultiCollectionIterator<T> setEmbedded(final boolean embedded) {
+    this.embedded = embedded;
+    return this;
   }
 }

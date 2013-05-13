@@ -76,7 +76,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   /**
    * Executes the request.
    * 
-   * @return true if the request has been recognized, othereise false
+   * @return true if the request has been recognized, otherwise false
    * @throws IOException
    */
   protected abstract boolean executeRequest() throws IOException;

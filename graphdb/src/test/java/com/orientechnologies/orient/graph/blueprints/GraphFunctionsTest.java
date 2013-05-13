@@ -52,29 +52,29 @@ public class GraphFunctionsTest {
 
     // V1
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( out() ) from " + v1.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( out() ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 2);
 
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( out('SubEdge') ) from " + v1.getId()))
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( out('SubEdge') ) from " + v1.getId()))
         .execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( out('dddd') ) from " + v1.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( out('dddd') ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V2
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( out() ) from " + v2.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( out() ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
     // V3
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( out() ) from " + v3.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( out() ) from " + v3.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
   }
@@ -85,30 +85,30 @@ public class GraphFunctionsTest {
 
     // V1
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( in() ) from " + v1.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( in() ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V2
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( in() ) from " + v2.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( in() ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( in('SubEdge') ) from " + v2.getId()))
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( in('SubEdge') ) from " + v2.getId()))
         .execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( in('dddd') ) from " + v2.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( in('dddd') ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V3
     found = 0;
-    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( in() ) from " + v3.getId())).execute())
+    for (Vertex v : (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( in() ) from " + v3.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
   }
@@ -119,28 +119,28 @@ public class GraphFunctionsTest {
 
     // V1
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( outE() ) from " + v1.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE() ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 2);
 
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( outE('SubEdge') ) from " + v1.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE('SubEdge') ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( outE('dddd') ) from " + v1.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE('dddd') ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V2
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( outE() ) from " + v2.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE() ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
     // V3
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( outE() ) from " + v3.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE() ) from " + v3.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
   }
@@ -151,29 +151,29 @@ public class GraphFunctionsTest {
 
     // V1
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( inE() ) from " + v1.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( inE() ) from " + v1.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V2
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( inE() ) from " + v2.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( inE() ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( inE('SubEdge') ) from " + v2.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( inE('SubEdge') ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
 
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( inE('dddd') ) from " + v2.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( inE('dddd') ) from " + v2.getId())).execute())
       found++;
     Assert.assertEquals(found, 0);
 
     // V3
     found = 0;
-    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select flatten( inE() ) from " + v3.getId())).execute())
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( inE() ) from " + v3.getId())).execute())
       found++;
     Assert.assertEquals(found, 1);
   }
@@ -183,17 +183,17 @@ public class GraphFunctionsTest {
     Iterable<Vertex> vertices;
 
     // V1
-    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( outE().outV() ) from " + v1.getId())).execute();
+    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( outE().outV() ) from " + v1.getId())).execute();
     Assert.assertEquals(vertices.iterator().next(), v1);
 
-    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( outE().inV() ) from " + v1.getId())).execute();
+    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( outE().inV() ) from " + v1.getId())).execute();
     Assert.assertEquals(vertices.iterator().next(), v2);
 
     // V2
-    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( inE().inV() ) from " + v2.getId())).execute();
+    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( inE().inV() ) from " + v2.getId())).execute();
     Assert.assertEquals(vertices.iterator().next(), v2);
 
-    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select flatten( inE().outV() ) from " + v2.getId())).execute();
+    vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( inE().outV() ) from " + v2.getId())).execute();
     Assert.assertEquals(vertices.iterator().next(), v1);
   }
 }

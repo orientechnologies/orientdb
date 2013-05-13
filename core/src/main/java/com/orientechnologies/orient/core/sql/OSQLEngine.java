@@ -137,6 +137,10 @@ public class OSQLEngine {
   public OSQLFunction getFunction(String iFunctionName) {
     iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
 
+    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
+      // SPECIAL FUNCTIONS
+      return null;
+
     final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
     while (ite.hasNext()) {
       final OSQLFunctionFactory factory = ite.next();

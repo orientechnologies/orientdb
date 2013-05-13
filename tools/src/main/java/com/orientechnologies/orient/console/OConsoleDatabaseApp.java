@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -952,7 +953,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentDatabaseName != null) {
       out.println("Current database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 
-      OStorage stg = currentDatabase.getStorage();
+      final OStorage stg = currentDatabase.getStorage();
 
       out.println("\nTotal size: " + OFileUtils.getSizeAsString(stg.getSize()));
 
@@ -971,9 +972,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         out.println(" (" + localStorage.getHoles() + " holes, total size of holes: " + OFileUtils.getSizeAsString(holeSize) + ")");
       }
 
+      listProperties();
       listClusters();
       listClasses();
       listIndexes();
+    }
+  }
+
+  @ConsoleCommand(description = "Display the database properties")
+  public void listProperties() {
+    if (currentDatabase == null)
+      return;
+
+    final OStorage stg = currentDatabase.getStorage();
+
+    if (stg.getConfiguration().properties != null) {
+      out.println("\nDB CUSTOM PROPERTIES:\n");
+      for (OStorageEntryConfiguration cfg : stg.getConfiguration().properties)
+        out.println(String.format("%-30s : %s", cfg.name, cfg.value));
     }
   }
 

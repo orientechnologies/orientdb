@@ -160,6 +160,9 @@
         </copy>
 
         <copy todir="${db.release}/config/" flatten="true">
+            <fileset dir="." includes="tools/config/*"/>
+        </copy>
+        <copy todir="${db.release}/config/" flatten="true">
             <fileset dir="." includes="server/config/*"/>
         </copy>
         <copy todir="${db.release}/config/" flatten="true">

@@ -1546,6 +1546,12 @@ public class IndexTest {
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
 
+  @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
+  public void testRestoreUniqueIndex() {
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 

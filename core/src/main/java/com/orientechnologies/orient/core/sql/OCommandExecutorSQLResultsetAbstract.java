@@ -161,7 +161,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       for (Object d : tempResult)
         if (d != null) {
           if (!(d instanceof OIdentifiable))
-            // NON-DOCUMENT AS RESULT, COMES FROM FLATTEN? CREATE A DOCUMENT AT THE FLY
+            // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
 
           request.getResultListener().result(d);

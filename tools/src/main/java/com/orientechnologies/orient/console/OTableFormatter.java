@@ -163,7 +163,10 @@ public class OTableFormatter {
     for (Entry<String, Integer> column : iColumns.entrySet()) {
       if (i++ > 0)
         out.print('|');
-      out.printf("%-" + column.getValue() + "s", column.getKey());
+      String colName = column.getKey();
+      if( colName.length() > column.getValue())
+        colName = colName.substring(0, column.getValue());
+      out.printf("%-" + column.getValue() + "s", colName);
     }
     out.printf("\n");
     printHeaderLine(iColumns);
@@ -272,13 +275,13 @@ public class OTableFormatter {
     return columns;
   }
 
-  private Integer getColumnSize(final Integer iIndex, final ORecord<?> iRecord, final String fieldName, Integer origSize) {
+  private Integer getColumnSize(final Integer iIndex, final ORecord<?> iRecord, final String fieldName, final Integer origSize) {
     Integer newColumnSize;
     if (origSize == null)
       // START FROM THE FIELD NAME SIZE
       newColumnSize = fieldName.length();
     else
-      newColumnSize = origSize;
+      newColumnSize = Math.max(origSize, fieldName.length());
 
     final Object fieldValue = getFieldValue(iIndex, iRecord, fieldName);
 
