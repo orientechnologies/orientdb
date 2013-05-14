@@ -803,40 +803,42 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public long count(final boolean iPolymorphic) {
     if (iPolymorphic)
-      return getDatabase().countClusterElements(readableCluster(getDatabase(), polymorphicClusterIds));
+      return getDatabase().countClusterElements(readableClusters(getDatabase(), polymorphicClusterIds));
 
-    return getDatabase().countClusterElements(readableCluster(getDatabase(), clusterIds));
+    return getDatabase().countClusterElements(readableClusters(getDatabase(), clusterIds));
   }
 
-  private int[] readableCluster(ODatabaseRecord iDatabase,
-		int[] polymorphicClusterIds2) {
-	  List<Integer> listOfReadableIds = new ArrayList<Integer>();
-		
-		for (int clusterId : clusterIds) {
-			try {
-				String clusterName = iDatabase.getClusterNameById(clusterId);
-			    iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
-			    listOfReadableIds.add(clusterId);
-			}
-			catch(OSecurityAccessException securityException) {
-				// if the cluster is inaccessible it's simply not processed in the list.add
-			}
-		}
-		
-		int[] readableClusterIds = new int[listOfReadableIds.size()];
-		int index = 0;
-		for (int clusterId : listOfReadableIds) {
-			readableClusterIds[index++] = clusterId;
-		}
-		
-		return readableClusterIds;
-	}
+  public static int[] readableClusters(final ODatabaseRecord iDatabase, final int[] iClusterIds) {
+    List<Integer> listOfReadableIds = new ArrayList<Integer>();
 
-private ODatabaseRecord getDatabase() {
+    boolean all = true;
+    for (int clusterId : iClusterIds) {
+      try {
+        String clusterName = iDatabase.getClusterNameById(clusterId);
+        iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
+        listOfReadableIds.add(clusterId);
+      } catch (OSecurityAccessException securityException) {
+        // if the cluster is inaccessible it's simply not processed in the list.add
+      }
+    }
+    
+    if (all)
+      // JUST RETURN INPUT ARRAY (FASTER)
+      return iClusterIds;
+
+    int[] readableClusterIds = new int[listOfReadableIds.size()];
+    int index = 0;
+    for (int clusterId : listOfReadableIds) {
+      readableClusterIds[index++] = clusterId;
+    }
+
+    return readableClusterIds;
+  }
+
+  private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
-  
-  
+
   /**
    * Truncates all the clusters the class uses.
    * 
