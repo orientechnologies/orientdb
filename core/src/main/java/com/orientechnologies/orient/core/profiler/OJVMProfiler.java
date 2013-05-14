@@ -127,6 +127,10 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
   }
 
   public String getSystemMetric(final String iMetricName) {
+    // CHECK IF CHRONOS ARE ACTIVED
+    if (recordingFrom < 0)
+      return null;
+    
     final StringBuilder buffer = new StringBuilder();
     buffer.append("system.");
     buffer.append(iMetricName);
@@ -134,6 +138,10 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
   }
 
   public String getProcessMetric(final String iMetricName) {
+    // CHECK IF CHRONOS ARE ACTIVED
+    if (recordingFrom < 0)
+      return null;
+    
     final StringBuilder buffer = new StringBuilder();
     buffer.append("process.");
     buffer.append(iMetricName);
@@ -141,6 +149,10 @@ public class OJVMProfiler extends OProfiler implements OMemoryWatchDog.Listener 
   }
 
   public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
+    // CHECK IF CHRONOS ARE ACTIVED
+    if (recordingFrom < 0)
+      return null;
+    
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");
     buffer.append(iDatabaseName);
