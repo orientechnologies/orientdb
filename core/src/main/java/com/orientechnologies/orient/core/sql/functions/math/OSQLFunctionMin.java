@@ -58,7 +58,7 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
 
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
-    if (aggregateResults()) {
+    if (aggregateResults() && min != null) {
       if (context == null)
         // FIRST TIME
         context = (Comparable) min;
