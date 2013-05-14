@@ -12,7 +12,8 @@ public class OWALPage {
   public static final int     PAGE_SIZE         = 65536;
   public static final int     MIN_RECORD_SIZE   = OIntegerSerializer.INT_SIZE + 3;
 
-  private static final int    FREE_SPACE_OFFSET = 0;
+  public static final int     CRC_OFFSET        = 0;
+  private static final int    FREE_SPACE_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
   public static final int     RECORDS_OFFSET    = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   private static final int    MAX_ENTRY_SIZE    = PAGE_SIZE - RECORDS_OFFSET;
@@ -41,14 +42,6 @@ public class OWALPage {
 
   public void setLastMasterRecord(OLogSequenceNumber lastMasterRecord) {
     this.lastMasterRecord = lastMasterRecord;
-  }
-
-  public OLogSequenceNumber getFirstLsn() {
-    return firstLsn;
-  }
-
-  public void setFirstLsn(OLogSequenceNumber firstLsn) {
-    this.firstLsn = firstLsn;
   }
 
   public int appendRecord(byte[] content, boolean mergeWithNextPage, boolean recordTail) {
@@ -103,7 +96,7 @@ public class OWALPage {
     return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + FREE_SPACE_OFFSET);
   }
 
-  public int gitFilledUpTo() {
+  public int getFilledUpTo() {
     return OWALPage.PAGE_SIZE - getFreeSpace();
   }
 
@@ -113,5 +106,10 @@ public class OWALPage {
 
   public static int calculateRecordSize(int serializedSize) {
     return serializedSize - OIntegerSerializer.INT_SIZE - 2;
+  }
+
+  public void truncateTill(int pageOffset) {
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(OWALPage.PAGE_SIZE - pageOffset, directMemory, pagePointer
+        + FREE_SPACE_OFFSET);
   }
 }

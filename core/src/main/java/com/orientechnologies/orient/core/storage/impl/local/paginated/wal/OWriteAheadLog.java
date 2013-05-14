@@ -557,8 +557,6 @@ public class OWriteAheadLog {
       if (walPage.getFreeSpace() >= OWALPage.MIN_RECORD_SIZE) {
         pages.add(walPage);
 
-        walPage.setFirstLsn(new OLogSequenceNumber(order, (pagesCount - 1) * OWALPage.PAGE_SIZE + OWALPage.RECORDS_OFFSET));
-
         filledUpTo = (pagesCount - 1) * OWALPage.PAGE_SIZE + (OWALPage.PAGE_SIZE - walPage.getFreeSpace());
         nextPositionToFlush = (pagesCount - 1) * OWALPage.PAGE_SIZE;
       } else {
@@ -622,7 +620,7 @@ public class OWriteAheadLog {
 
     private int findFirstRecord(OWALPage page) {
       int pageOffset = OWALPage.RECORDS_OFFSET;
-      int maxPageOffset = page.gitFilledUpTo();
+      int maxPageOffset = page.getFilledUpTo();
 
       while (pageOffset < maxPageOffset) {
         if (page.recordTail(pageOffset))
@@ -640,7 +638,7 @@ public class OWriteAheadLog {
     private int findLastRecord(OWALPage page) {
       int prevOffset = OWALPage.RECORDS_OFFSET;
       int pageOffset = OWALPage.RECORDS_OFFSET;
-      int maxOffset = OWALPage.PAGE_SIZE - page.getFreeSpace();
+      int maxOffset = page.getFilledUpTo();
 
       while (pageOffset < maxOffset) {
         prevOffset = pageOffset;
@@ -713,8 +711,6 @@ public class OWriteAheadLog {
           if (updateMasterRecord)
             walPage.setLastMasterRecord(lsn);
 
-          if (walPage.getFirstLsn() == null)
-            walPage.setFirstLsn(lsn);
         }
 
         int spaceDiff = freeSpace - walPage.getFreeSpace();
@@ -776,6 +772,11 @@ public class OWriteAheadLog {
 
     private void flushPage(OWALPage page) throws IOException {
       byte[] content = directMemory.get(page.getPagePointer(), OWALPage.PAGE_SIZE);
+
+      CRC32 crc32 = new CRC32();
+      crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
+      OIntegerSerializer.INSTANCE.serializeNative((int) crc32.getValue(), content, 0);
+
       rndFile.write(content);
 
       if (page.getLastMasterRecord() != null) {
@@ -912,18 +913,69 @@ public class OWriteAheadLog {
       if (!pages.isEmpty())
         throw new IllegalStateException("WAL cache is not empty, we can not verify WAL after it was started to be used");
 
+      long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+
+      boolean errorsWereFound = false;
+
       if (rndFile.length() % OWALPage.PAGE_SIZE > 0) {
-        OLogManager.instance().error(this, "Last WAL page was written partially auto fix.");
-        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+        OLogManager.instance().error(this, "Last WAL page was written partially, auto fix.");
+
         rndFile.setLength(OWALPage.PAGE_SIZE * pagesCount);
-        filledUpTo = rndFile.length();
 
-        rndFile.getFD().sync();
-
-        return true;
+        errorsWereFound = true;
       }
 
-      return false;
+      long currentPage = pagesCount - 1;
+      CRC32 crc32 = new CRC32();
+      while (currentPage >= 0) {
+        crc32.reset();
+
+        byte[] content = new byte[OWALPage.PAGE_SIZE];
+        rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+        rndFile.readFully(content);
+
+        int pageCRC = OIntegerSerializer.INSTANCE.deserializeNative(content, 0);
+
+        crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
+        int calculatedCRC = (int) crc32.getValue();
+
+        if (pageCRC != calculatedCRC) {
+          OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+
+          pagesCount--;
+          currentPage--;
+          rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+
+          errorsWereFound = true;
+        } else {
+          long pointer = directMemory.allocate(content);
+          try {
+            OWALPage page = new OWALPage(pointer, false);
+            int pageOffset = findLastRecord(page);
+            if (pageOffset >= 0 && page.mergeWithNextPage(pageOffset)) {
+              page.truncateTill(pageOffset);
+              rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+              content = directMemory.get(pointer, OWALPage.PAGE_SIZE);
+              rndFile.write(content);
+
+              errorsWereFound = true;
+              if (page.isEmpty()) {
+                pagesCount--;
+                currentPage--;
+                rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+              } else
+                break;
+            } else
+              break;
+          } finally {
+            directMemory.free(pointer);
+          }
+        }
+      }
+
+      rndFile.getFD().sync();
+
+      return errorsWereFound;
     }
 
     public OLogSequenceNumber readFlushedLSN() throws IOException {

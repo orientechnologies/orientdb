@@ -360,26 +360,8 @@ public class O2QCache implements ODiskCache {
   @Override
   public void flushBuffer() throws IOException {
     synchronized (syncObject) {
-      for (LRUEntry entry : am) {
-        if (entry.isDirty && entry.usageCounter == 0) {
-          flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
-          entry.isDirty = false;
-          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
-        }
-      }
-
-      for (LRUEntry entry : a1in) {
-        if (entry.isDirty && entry.usageCounter == 0) {
-          flushData(entry.fileId, entry.pageIndex, entry.dataPointer);
-          entry.isDirty = false;
-          dirtyPages.get(entry.fileId).remove(entry.pageIndex);
-        }
-      }
-
-      flushEvictedPages();
-
-      for (OMultiFileSegment multiFileSegment : files.values())
-        multiFileSegment.synch();
+      for (long fileId : files.keySet())
+        flushFile(fileId);
     }
   }
 

@@ -104,6 +104,7 @@ public class OLocalPage {
   }
 
   private void setLsn(OLogSequenceNumber lsn) {
+    System.out.println("Page lsn : " + lsn);
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
