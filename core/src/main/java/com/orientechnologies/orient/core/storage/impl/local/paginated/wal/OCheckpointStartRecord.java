@@ -19,30 +19,14 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 5/2/13
  */
-public class OCheckpointStartRecord implements OWALRecord {
+public class OCheckpointStartRecord extends OAbstractCheckPointStartRecord {
   private OLogSequenceNumber lsn;
 
   public OCheckpointStartRecord() {
   }
 
-  @Override
-  public boolean isUpdateMasterRecord() {
-    return true;
-  }
-
-  @Override
-  public int toStream(byte[] content, int offset) {
-    return 0;
-  }
-
-  @Override
-  public int fromStream(byte[] content, int offset) {
-    return 0;
-  }
-
-  @Override
-  public int serializedSize() {
-    return 0;
+  public OCheckpointStartRecord(OLogSequenceNumber previousCheckpoint) {
+    super(previousCheckpoint);
   }
 
   @Override

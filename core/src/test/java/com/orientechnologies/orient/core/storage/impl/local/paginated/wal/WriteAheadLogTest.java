@@ -72,6 +72,26 @@ public class WriteAheadLogTest {
       testDir.delete();
   }
 
+  public void logCheckpointsTest() throws Exception {
+    OLogSequenceNumber checkPointOneLSN = writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logCheckpointEnd();
+
+    OLogSequenceNumber checkPointTwoLSN = writeAheadLog.logCheckpointStart();
+    writeAheadLog.logCheckpointEnd();
+
+    OLogSequenceNumber checkPointThreeLSN = writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointEnd();
+
+    OFuzzyCheckpointStartRecord fuzzyCheckpointStartRecordOne = (OFuzzyCheckpointStartRecord) writeAheadLog.read(checkPointOneLSN);
+    OCheckpointStartRecord checkpointStartRecordTwo = (OCheckpointStartRecord) writeAheadLog.read(checkPointTwoLSN);
+    OFuzzyCheckpointStartRecord fuzzyCheckpointStartRecordThree = (OFuzzyCheckpointStartRecord) writeAheadLog
+        .read(checkPointThreeLSN);
+
+    Assert.assertNull(fuzzyCheckpointStartRecordOne.getPreviousCheckpoint());
+    Assert.assertEquals(checkpointStartRecordTwo.getPreviousCheckpoint(), checkPointOneLSN);
+    Assert.assertEquals(fuzzyCheckpointStartRecordThree.getPreviousCheckpoint(), checkPointTwoLSN);
+  }
+
   public void testWriteSingleRecord() throws Exception {
 
     writeAheadLog.logRecord(new OUpdatePageRecord(20, "test"));

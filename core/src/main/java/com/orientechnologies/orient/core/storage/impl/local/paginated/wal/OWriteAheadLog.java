@@ -288,7 +288,7 @@ public class OWriteAheadLog {
 
   public OLogSequenceNumber logFuzzyCheckPointStart() throws IOException {
     synchronized (syncObject) {
-      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord();
+      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint);
       logRecord(record);
       return record.getLsn();
     }
@@ -496,8 +496,8 @@ public class OWriteAheadLog {
     return true;
   }
 
-  public void logCheckpointStart() throws IOException {
-    logRecord(new OCheckpointStartRecord());
+  public OLogSequenceNumber logCheckpointStart() throws IOException {
+    return logRecord(new OCheckpointStartRecord(lastCheckpoint));
   }
 
   public void logCheckpointEnd() throws IOException {
