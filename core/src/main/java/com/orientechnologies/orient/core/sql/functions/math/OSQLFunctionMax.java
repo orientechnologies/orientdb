@@ -40,30 +40,25 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null)
-      return null;
 
-    // calculate max value for current record.
+	// calculate max value for current record
+	// consider both collection of parameters and collection in each parameter
     Object max = null;
-    if (iParameters.length > 0) {
-      for (Object item : iParameters) {
-        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
-          max = item;
-      }
-    } else if (iParameters[0] instanceof Collection<?>) {
-      // for a projection with multiple results find out the max value
-      for (Object item : ((Collection<?>) iParameters[0])) {
-        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
-          max = item;
-      }
-    } else {
-      // this is the max as is an unique value
-      max = (Comparable<Object>) iParameters[0];
+    for (Object item : iParameters) {
+    	if (item instanceof Collection<?>) {
+    		for (Object subitem : ((Collection<?>) item)) {
+    			if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0)
+    				max = subitem;
+    		}
+    	} else {
+            if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
+                max = item;    		
+    	}
     }
-
+    
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
-    if (aggregateResults()) {
+    if (aggregateResults() && max != null) {
       if (context == null)
         // FIRST TIME
         context = (Comparable) max;
