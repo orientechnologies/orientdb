@@ -101,8 +101,9 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 
     getLevel1Cache().clear();
 
-    ownerPool.release(this);
+    final ODatabaseObjectPool localCopy = ownerPool;
     ownerPool = null;
+    localCopy.release(this);
   }
 
   public void forceClose() {
