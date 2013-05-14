@@ -941,31 +941,42 @@ public class OWriteAheadLog {
         if (pageCRC != calculatedCRC) {
           OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
 
-          pagesCount--;
           currentPage--;
+          pagesCount = currentPage + 1;
           rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
 
           errorsWereFound = true;
         } else {
+          if (!errorsWereFound)
+            break;
+
           long pointer = directMemory.allocate(content);
           try {
             OWALPage page = new OWALPage(pointer, false);
             int pageOffset = findLastRecord(page);
-            if (pageOffset >= 0 && page.mergeWithNextPage(pageOffset)) {
-              page.truncateTill(pageOffset);
-              rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
-              content = directMemory.get(pointer, OWALPage.PAGE_SIZE);
-              rndFile.write(content);
+            if (pageOffset >= 0) {
+              if (page.mergeWithNextPage(pageOffset)) {
+                page.truncateTill(pageOffset);
+                rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+                content = directMemory.get(pointer, OWALPage.PAGE_SIZE);
+                rndFile.write(content);
 
-              errorsWereFound = true;
-              if (page.isEmpty()) {
-                pagesCount--;
-                currentPage--;
-                rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+                if (page.isEmpty()) {
+                  OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+                  currentPage--;
+
+                  pagesCount = currentPage + 1;
+                  rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+                } else
+                  break;
               } else
                 break;
-            } else
-              break;
+            } else {
+              OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+              currentPage--;
+              pagesCount = currentPage + 1;
+              rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+            }
           } finally {
             directMemory.free(pointer);
           }

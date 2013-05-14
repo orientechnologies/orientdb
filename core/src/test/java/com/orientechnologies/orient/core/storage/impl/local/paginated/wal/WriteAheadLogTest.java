@@ -1144,10 +1144,6 @@ public class WriteAheadLogTest {
   public void testPageIsBrokenOnOtherSegment() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
-    long seed = System.currentTimeMillis();
-    System.out.println("testPageIsBrokenOnOtherSegment seed " + seed);
-    Random random = new Random(seed);
-
     OWALRecord walRecord = new TestRecord(ONE_KB);
     writeAheadLog.logRecord(walRecord);
     writtenRecords.add(walRecord);
@@ -1168,6 +1164,68 @@ public class WriteAheadLogTest {
     rndFile.seek(lsn.getPosition());
     int bt = rndFile.read();
     rndFile.seek(lsn.getPosition());
+    rndFile.write(bt + 1);
+    rndFile.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.size(), logSize);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+  }
+
+  public void testPageIsBrokenThreeSegmentsOneRecordIsTwoPageWide() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+
+    OWALRecord walRecord = new TestRecord(ONE_KB);
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    long logSize = writeAheadLog.size();
+
+    walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE);
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(ONE_KB);
+    OLogSequenceNumber lsn = writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    writeAheadLog.close();
+
+    RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
+    rndFile.seek(lsn.getPosition());
+    int bt = rndFile.read();
+    rndFile.seek(lsn.getPosition());
+    rndFile.write(bt + 1);
+    rndFile.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.size(), logSize);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+  }
+
+  public void testPageIsBrokenAndEmpty() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+
+    OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET);
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    long logSize = writeAheadLog.size();
+
+    walRecord = new TestRecord(3 * OWALPage.PAGE_SIZE);
+    writeAheadLog.logRecord(walRecord);
+    writtenRecords.add(walRecord);
+
+    writeAheadLog.close();
+
+    RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
+    rndFile.seek(writeAheadLog.size() - 1);
+    int bt = rndFile.read();
+    rndFile.seek(writeAheadLog.size() - 1);
     rndFile.write(bt + 1);
     rndFile.close();
 
