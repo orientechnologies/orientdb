@@ -573,6 +573,45 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
   }
 
+  public void testFlushedLSNTwoPagesAndThenTwo() throws Exception {
+    OWALRecord walRecord = null;
+    for (int i = 0; i < 2; i++) {
+      walRecord = new TestRecord(ONE_KB);
+      writeAheadLog.logRecord(walRecord);
+
+      walRecord = new TestRecord(ONE_KB);
+      writeAheadLog.logRecord(walRecord);
+
+      walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET - 2048);
+      writeAheadLog.logRecord(walRecord);
+    }
+
+    Assert.assertNull(writeAheadLog.getFlushedLSN());
+
+    writeAheadLog.flush();
+
+    for (int i = 0; i < 2; i++) {
+      walRecord = new TestRecord(ONE_KB);
+      writeAheadLog.logRecord(walRecord);
+
+      walRecord = new TestRecord(ONE_KB);
+      writeAheadLog.logRecord(walRecord);
+
+      walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET - 2048);
+      writeAheadLog.logRecord(walRecord);
+    }
+
+    writeAheadLog.flush();
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+
+    writeAheadLog.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+  }
+
   public void testFlushedLSNTwoPagesOneWithTrail() throws Exception {
     OWALRecord walRecord = new TestRecord(ONE_KB);
     writeAheadLog.logRecord(walRecord);

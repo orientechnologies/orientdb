@@ -729,8 +729,6 @@ public class OWriteAheadLog {
       if (pages.isEmpty())
         return;
 
-      rndFile.seek(nextPositionToFlush);
-
       OLogSequenceNumber newFlushedLSN = null;
       int lastPageOffset = -1;
       int pageIndex = pages.size() - 1;
@@ -742,8 +740,9 @@ public class OWriteAheadLog {
       }
 
       if (lastPageOffset > 0)
-        newFlushedLSN = new OLogSequenceNumber(order, nextPositionToFlush / OWALPage.PAGE_SIZE + pageIndex + lastPageOffset);
+        newFlushedLSN = new OLogSequenceNumber(order, nextPositionToFlush + pageIndex * OWALPage.PAGE_SIZE + lastPageOffset);
 
+      rndFile.seek(nextPositionToFlush);
       for (int i = 0; i < pages.size() - 1; i++) {
         final OWALPage page = pages.get(i);
         flushPage(page);

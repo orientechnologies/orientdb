@@ -524,12 +524,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (cluster != null) {
       if (!cluster.exists()) {
         cluster.create(-1);
+        makeCheckpoint();
       } else {
         cluster.open();
       }
       configuration.update();
 
-      makeCheckpoint();
     }
 
     return createdClusterId;
