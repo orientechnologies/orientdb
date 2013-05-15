@@ -135,8 +135,12 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
         final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
-        if (content != null)
+        if (content != null) {
+          if (!edge.getRecord().getIdentity().isValid())
+            // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
+            edge.convertToDocument();
           edge.getRecord().merge(content, true, false);
+        }
 
         edge.save(clusterName);
 
