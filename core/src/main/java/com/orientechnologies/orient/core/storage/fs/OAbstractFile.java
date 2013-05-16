@@ -287,6 +287,9 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()
    */
   public void lock() throws IOException {
+    if( channel == null )
+      return;
+    
     acquireWriteLock();
     try {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
