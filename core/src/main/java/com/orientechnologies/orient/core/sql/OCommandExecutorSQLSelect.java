@@ -1004,7 +1004,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
     } else {
-      OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
+      final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
       finalResult.setLimit(limit);
       for (OIdentifiable id : tempResult) {
         if (expandTarget instanceof OSQLFilterItem)
@@ -1020,7 +1020,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           } else if (fieldValue instanceof Map<?, ?>) {
             finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
           } else if (fieldValue instanceof OMultiCollectionIterator) {
-            finalResult = (OMultiCollectionIterator<OIdentifiable>) fieldValue;
+            finalResult.add((OMultiCollectionIterator<OIdentifiable>) fieldValue);
           } else if (fieldValue instanceof OIdentifiable)
             finalResult.add((OIdentifiable) fieldValue);
       }
