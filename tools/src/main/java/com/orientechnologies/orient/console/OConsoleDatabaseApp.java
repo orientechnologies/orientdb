@@ -247,7 +247,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
       @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
       @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
-      @ConsoleParameter(name = "storage-type", description = "The type of the storage. Either 'local' for disk-based database and 'memory' for in-memory database") String iStorageType,
+      @ConsoleParameter(name = "storage-type", description = "The type of the storage. 'local' and 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is document.") String iDatabaseType)
       throws IOException {
 

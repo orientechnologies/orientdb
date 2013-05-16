@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -287,7 +288,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     final OStorage stg = Orient.instance().getStorage(iDbName);
     if (stg != null)
       path = stg.getURL();
-    else if (iStorageType.equals(OEngineLocal.NAME)) {
+    else if (iStorageType.equals(OEngineLocal.NAME) || iStorageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(iDbName);
       if (path == null)
