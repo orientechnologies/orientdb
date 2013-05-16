@@ -292,7 +292,8 @@ public abstract class OAbstractFile implements OFile {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
         try {
           fileLock = channel.tryLock(0, 1, false);
-          break;
+          if (fileLock != null)
+            break;
         } catch (OverlappingFileLockException e) {
           OLogManager.instance().debug(this,
               "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",

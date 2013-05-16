@@ -48,10 +48,8 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  */
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
-  protected volatile int                     filledUpTo;                                                         // PART OF
-                                                                                                                  // HEADER
-  // (4
-  // bytes)
+  // PART OF HEADER (4 bytes)
+  protected volatile int                     filledUpTo;
   protected volatile MappedByteBuffer        headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
