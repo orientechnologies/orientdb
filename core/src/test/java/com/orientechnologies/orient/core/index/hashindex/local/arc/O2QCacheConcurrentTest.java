@@ -24,6 +24,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -62,6 +63,8 @@ public class O2QCacheConcurrentTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
+
+    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     String buildDirectory = System.getProperty("buildDirectory");

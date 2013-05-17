@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.File;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import junit.framework.Assert;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -20,6 +21,7 @@ public class FileClassicTest {
 
   @BeforeClass
   public void beforeClass() {
+    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
       buildDirectory = ".";

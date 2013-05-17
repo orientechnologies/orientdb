@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,6 +45,8 @@ public class O2QCacheTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
+
+    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     String buildDirectory = System.getProperty("buildDirectory");
