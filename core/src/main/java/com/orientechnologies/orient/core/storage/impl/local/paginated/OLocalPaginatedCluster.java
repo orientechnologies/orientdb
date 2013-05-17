@@ -1092,6 +1092,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     acquireExclusiveLock();
     try {
       diskCache.setSoftlyClosed(fileId, softlyClosed);
+      clusterStateHolder.setSoftlyClosed(softlyClosed);
     } finally {
       releaseExclusiveLock();
     }
