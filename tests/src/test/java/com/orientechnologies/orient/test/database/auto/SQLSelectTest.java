@@ -874,16 +874,16 @@ public class SQLSelectTest {
   @SuppressWarnings("unused")
   @Test
   public void testRecordNumbers() {
-    long tot = database.countClass("OGraphVertex");
+    long tot = database.countClass("V");
 
     int count = 0;
-    for (ODocument record : database.browseClass("OGraphVertex")) {
+    for (ODocument record : database.browseClass("V")) {
       count++;
     }
 
     Assert.assertEquals(count, tot);
 
-    Assert.assertTrue(database.query(new OSQLSynchQuery<ODocument>("select from OGraphVertex")).size() >= tot);
+    Assert.assertTrue(database.query(new OSQLSynchQuery<ODocument>("select from V")).size() >= tot);
   }
 
   @Test
@@ -1338,7 +1338,7 @@ public class SQLSelectTest {
   public void subQueryNoFrom() {
     List<ODocument> result2 = database.command(
         new OSQLSynchQuery<ODocument>(
-            "select $names let $names = (select flatten( addresses.city ) as city from Account where addresses.size() > 0 )"))
+            "select $names let $names = (select EXPAND( addresses.city ) as city from Account where addresses.size() > 0 )"))
         .execute();
 
     Assert.assertTrue(result2.size() != 0);

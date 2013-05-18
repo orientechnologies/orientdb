@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.List;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -29,8 +30,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class ConcurrentQueriesTest {
-  private final static int THREADS = 10;
-  protected String         url;
+  private final static int    THREADS = 10;
+  protected String            url;
+  private ODatabaseDocumentTx db;
 
   static class CommandExecutor implements Runnable {
 
@@ -78,12 +80,18 @@ public class ConcurrentQueriesTest {
     if ("memory:test".equals(url))
       new ODatabaseDocumentTx(url).create().close();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+    db = new ODatabaseDocumentTx(url).open("admin", "admin");
     db.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
       db.newInstance("Concurrent").field("test", i).save();
     }
+  }
+
+  @AfterClass
+  public void deinit() {
+    if (!db.isClosed())
+      db.close();
   }
 
   @Test

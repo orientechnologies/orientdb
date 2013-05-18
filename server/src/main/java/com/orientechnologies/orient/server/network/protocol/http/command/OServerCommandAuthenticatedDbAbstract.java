@@ -116,8 +116,12 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     try {
       db = (ODatabaseDocumentTx) server.openDatabase("graph", iDatabaseName, iAuthenticationParts.get(0),
           iAuthenticationParts.get(1));
+      if (db.getUser() == null)
+        // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
+        return false;
+
       // db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
-      iRequest.data.currentUserId = db.getUser().getDocument().getIdentity().toString(); //Set user rid after authentication
+      iRequest.data.currentUserId = db.getUser().getDocument().getIdentity().toString(); // Set user rid after authentication
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
       iResponse.sessionId = iRequest.sessionId;
@@ -159,8 +163,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     String currentUserId = iRequest.data.currentUserId;
-    if(currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-      if(!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+    if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+      if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
         ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
         localDatabase.setUser(new OUser(userDoc));
       }

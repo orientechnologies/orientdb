@@ -105,8 +105,10 @@ public class OServerNetworkListener extends Thread {
         serverSocket = new java.net.ServerSocket(port, 0, InetAddress.getByName(iHostName));
 
         if (serverSocket.isBound()) {
-          OLogManager.instance().info(this,
-              "Listening " + iProtocolName + " connections on " + inboundAddr.getHostName() + ":" + inboundAddr.getPort());
+          OLogManager.instance().info(
+              this,
+              "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ":"
+                  + inboundAddr.getPort());
           return;
         }
       } catch (BindException be) {
@@ -158,6 +160,7 @@ public class OServerNetworkListener extends Thread {
       try {
         if (serverSocket != null && !serverSocket.isClosed())
           serverSocket.close();
+        protocol = null;
       } catch (IOException ioe) {
       }
     }

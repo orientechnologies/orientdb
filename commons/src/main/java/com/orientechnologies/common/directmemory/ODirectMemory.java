@@ -78,10 +78,10 @@ public interface ODirectMemory {
    * @param pointer
    *          Memory pointer, returned by {@link #allocate(long)} method.
    * @param content
+   * @param arrayOffset
    * @param length
-   *          Size of data which should be written.
    */
-  void set(long pointer, byte[] content, int length);
+  void set(long pointer, byte[] content, int arrayOffset, int length);
 
   /**
    * Returns converted data from given piece of memory. This operation is much faster than {@link #get(long, int)}.
@@ -96,7 +96,7 @@ public interface ODirectMemory {
   <T> T get(long pointer, OBinarySerializer<T> serializer);
 
   /**
-   * Write data to given piece of memory. This operation is much faster than {@link #set(long, byte[], int)}.
+   * Write data to given piece of memory. This operation is much faster than {@link #set(long, byte[], int, int)}.
    * 
    * @param pointer
    *          Memory pointer, returned by {@link #allocate(long)} method.

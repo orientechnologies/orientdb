@@ -576,16 +576,16 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
       final OProfilerHookValue iHookValue, final String iMetadataName) {
-    unregisterHookValue(iName);
-    updateMetadata(iMetadataName, iDescription, iType);
-    hooks.put(iName, iHookValue);
+    if (iName != null) {
+      unregisterHookValue(iName);
+      updateMetadata(iMetadataName, iDescription, iType);
+      hooks.put(iName, iHookValue);
+    }
   }
 
   public void unregisterHookValue(final String iName) {
-    if (recordingFrom < 0)
-      return;
-
-    hooks.remove(iName);
+    if (iName != null)
+      hooks.remove(iName);
   }
 
   public void setAutoDump(final int iSeconds) {

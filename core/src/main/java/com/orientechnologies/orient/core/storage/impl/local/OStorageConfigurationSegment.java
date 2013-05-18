@@ -33,8 +33,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   public OStorageConfigurationSegment(final OStorageLocalAbstract iStorage) throws IOException {
     super(iStorage);
-    segment = new OSingleFileSegment((OStorageLocal) storage, new OStorageFileConfiguration(null, getDirectory() + "/database.ocf",
-        "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
+    segment = new OSingleFileSegment((OStorageLocalAbstract) storage, new OStorageFileConfiguration(null, getDirectory()
+        + "/database.ocf", "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
   }
 
   public void close() throws IOException {

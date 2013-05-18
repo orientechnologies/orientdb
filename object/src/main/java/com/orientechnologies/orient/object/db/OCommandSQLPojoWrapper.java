@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -108,5 +109,21 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
   public OCommandRequest setContext(final OCommandContext iContext) {
     command.setContext(iContext);
     return this;
+  }
+
+  @Override
+  public long getTimeoutTime() {
+    return command.getTimeoutTime();
+  }
+
+  @Override
+  public TIMEOUT_STRATEGY getTimeoutStrategy() {
+    return command.getTimeoutStrategy();
+  }
+
+  @Override
+  public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy) {
+    command.setTimeout(timeout, strategy);
+
   }
 }

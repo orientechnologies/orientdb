@@ -47,7 +47,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+    init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 
@@ -65,8 +65,6 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       throw new OCommandSQLParsingException("Expected <class>. Use " + getSyntax(), parserText, pos);
 
     className = word.toString();
-    if (className == null)
-      throw new OCommandSQLParsingException("Class is null. Use " + getSyntax(), parserText, pos);
 
     return this;
   }
@@ -110,7 +108,8 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       for (final String clusterName : clusterNames)
         oIndex.getInternal().removeCluster(clusterName);
 
-      OLogManager.instance().info("Index %s is used in super class of %s and should be rebuilt.", oIndex.getName(), className);
+      OLogManager.instance()
+          .info(this, "Index %s is used in super class of %s and should be rebuilt.", oIndex.getName(), className);
       oIndex.rebuild();
     }
 

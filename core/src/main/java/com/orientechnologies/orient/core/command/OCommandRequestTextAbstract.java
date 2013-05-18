@@ -38,8 +38,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  */
 @SuppressWarnings("serial")
 public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstract implements OCommandRequestText {
-  protected String          text;
-  protected OCommandContext context;
+  protected String text;
 
   protected OCommandRequestTextAbstract() {
   }
@@ -78,17 +77,6 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
   public byte[] toStream() throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream();
     return toStream(buffer);
-  }
-
-  public OCommandContext getContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
-    return context;
-  }
-
-  public OCommandRequestText setContext(final OCommandContext iContext) {
-    context = iContext;
-    return this;
   }
 
   @Override
@@ -137,6 +125,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
         buffer.set(compositeKey.toStream());
       }
     }
+
     return buffer.toByteArray();
   }
 

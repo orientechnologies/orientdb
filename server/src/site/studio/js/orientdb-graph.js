@@ -346,6 +346,15 @@ function OGraph(targetId, config) {
 		return nodeId;
 	}
 
+	OGraph.prototype.getEdgeCount = function(node, direction) {
+		if( node != null ){
+			count = 0;
+			for( prop in node )
+				count += ( prop.indexOf(direction) == 0 && node[prop] && node[prop].constructor == Array ? node[prop].length : 0 );
+		}
+		return count;
+	}
+
 	OGraph.prototype.drawChildVertex = function(name, node, nodeId, child) {
 		if (this.config.bluePrintsGraphModel == "checked") {
 			if (child["out"] && child["out"]["@rid"] == nodeId)
@@ -440,10 +449,7 @@ function OGraph(targetId, config) {
 		if (!config)
 			config = {};
 
-		var totalEdges = node["out"] && node["out"].constructor == Array ? node["out"].length
-				: 0;
-		totalEdges += node["in"] && node["in"].constructor == Array ? node["in"].length
-				: 0;
+		var totalEdges = this.getEdgeCount("out") + this.getEdgeCount("in");
 
 		var size = 0.5 + (totalEdges * 0.1);
 		if (size > 15)

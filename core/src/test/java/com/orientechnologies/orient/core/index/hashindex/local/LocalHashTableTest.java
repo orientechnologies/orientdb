@@ -8,7 +8,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 import org.testng.Assert;
@@ -29,7 +29,7 @@ public class LocalHashTableTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
-  private OLRUCache                        buffer;
+  private O2QCache                         buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -45,8 +45,8 @@ public class LocalHashTableTest {
 
     databaseDocumentTx.create();
 
-    buffer = new OLRUCache(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
-        (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    buffer = new O2QCache(400 * 1024 * 1024, 15000, ODirectMemoryFactory.INSTANCE.directMemory(), null,
+        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
@@ -60,9 +60,11 @@ public class LocalHashTableTest {
 
   @AfterClass
   public void afterClass() throws Exception {
+    localHashTable.clear();
     localHashTable.delete();
-    databaseDocumentTx.drop();
     buffer.clear();
+    buffer.close();
+    databaseDocumentTx.drop();
   }
 
   @BeforeMethod

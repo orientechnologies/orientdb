@@ -48,10 +48,9 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  */
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
-  protected int                              filledUpTo;                                                         // PART OF HEADER
-  // (4
-  // bytes)
-  protected MappedByteBuffer                 headerBuffer;
+  // PART OF HEADER (4 bytes)
+  protected volatile int                     filledUpTo;
+  protected volatile MappedByteBuffer        headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
   private static int                         BYTEBUFFER_POOLABLE_SIZE;
@@ -89,20 +88,20 @@ public class OFileMMap extends OAbstractFile {
                 return metricNonPooledBufferUsed;
               }
             });
+
+    BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
+    strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
   }
 
   @Override
   public void delete() throws IOException {
-    OMMapManagerLocator.getInstance().removeFile(this);
-    super.delete();
-  }
-
-  @Override
-  public OFileMMap init(String iFileName, String iMode) {
-    super.init(iFileName, iMode);
-    BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
-    strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
-    return this;
+    acquireWriteLock();
+    try {
+      OMMapManagerLocator.getInstance().removeFile(this);
+      super.delete();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   public int getFileSize() {
@@ -113,60 +112,165 @@ public class OFileMMap extends OAbstractFile {
     return filledUpTo;
   }
 
+  @Override
   public void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
-    byte[] source = new byte[iLength];
-    read(iOffset, source, iLength);
-    System.arraycopy(source, 0, iData, iArrayOffset, iLength);
-  }
-
-  public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
-    if (iData == null || iData.length == 0 || iSize == 0)
-      return;
-
-    assert iOffset > -1;
-    assert iArrayOffset > -1;
-
-    iOffset = checkRegions(iOffset, iSize);
-
+    acquireReadLock();
     try {
-      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSize,
-          OMMapManager.OPERATION_TYPE.WRITE, strategy);
-      if (entries != null) {
-        // MMAP WRITE
-        try {
-
-          int position = (int) (iOffset - entries[0].beginOffset);
-
-          int remaining;
-          final int iLength = iSize;
-          int remainingLength = iLength;
-          for (OMMapBufferEntry entry : entries) {
-            entry.buffer.position(position);
-            remaining = entry.buffer.remaining();
-            int toWrite = Math.min(remaining, remainingLength);
-            entry.buffer.put(iData, iArrayOffset + iLength - remainingLength, toWrite);
-            position = 0;
-            remainingLength -= toWrite;
-          }
-        } finally {
-          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
-        }
-      } else {
-        // DIRECT WRITE
-        final ByteBuffer buffer = acquireByteBuffer(iSize);
-        buffer.put(iData, iArrayOffset, iSize);
-        buffer.rewind();
-        channel.write(buffer, iOffset + HEADER_SIZE);
-        releaseByteBuffer(buffer);
-      }
-    } catch (BufferOverflowException e) {
-      OLogManager.instance().error(this, "Error on write in the range " + iOffset + "-" + (iOffset + iSize) + "." + toString(), e,
-          OIOException.class);
+      byte[] source = new byte[iLength];
+      readInternal(iOffset, source, iLength);
+      System.arraycopy(source, 0, iData, iArrayOffset, iLength);
+    } finally {
+      releaseReadLock();
     }
   }
 
   @Override
   public void read(long iOffset, final byte[] iDestBuffer, final int iLenght) throws IOException {
+    acquireReadLock();
+    try {
+      readInternal(iOffset, iDestBuffer, iLenght);
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  @Override
+  public int readInt(long iOffset) throws IOException {
+    acquireReadLock();
+    try {
+
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
+          OMMapManager.OPERATION_TYPE.READ, strategy);
+      if (entries != null) {
+        // MMAP READ
+        try {
+
+          if (entries.length == 1)
+            return entries[0].buffer.getInt((int) (iOffset - entries[0].beginOffset));
+          else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
+            return OByteBufferUtils.mergeIntFromBuffers(entries[0].buffer, entries[1].buffer);
+          }
+
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
+        }
+      } else {
+        // DIRECT READ
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
+        channel.read(buffer, iOffset + HEADER_SIZE);
+        buffer.rewind();
+        final int value = buffer.getInt();
+        releaseByteBuffer(buffer);
+        return value;
+      }
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  @Override
+  public long readLong(long iOffset) throws IOException {
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
+          OMMapManager.OPERATION_TYPE.READ, strategy);
+      if (entries != null) {
+        // MMAP READ
+        try {
+          if (entries.length == 1)
+            return entries[0].buffer.getLong((int) (iOffset - entries[0].beginOffset));
+          else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
+            return OByteBufferUtils.mergeLongFromBuffers(entries[0].buffer, entries[1].buffer);
+          }
+
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
+        }
+      } else {
+        // DIRECT READ
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
+        channel.read(buffer, iOffset + HEADER_SIZE);
+        buffer.rewind();
+        final long value = buffer.getLong();
+        releaseByteBuffer(buffer);
+        return value;
+      }
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  @Override
+  public short readShort(long iOffset) throws IOException {
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
+          OMMapManager.OPERATION_TYPE.READ, strategy);
+      if (entries != null) {
+        // MMAP READ
+        try {
+          if (entries.length == 1) {
+            return entries[0].buffer.getShort((int) (iOffset - entries[0].beginOffset));
+          } else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
+
+            return OByteBufferUtils.mergeShortFromBuffers(entries[0].buffer, entries[1].buffer);
+          }
+
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
+        }
+      } else {
+        // DIRECT READ
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
+        channel.read(buffer, iOffset + HEADER_SIZE);
+        buffer.rewind();
+        final short value = buffer.getShort();
+        releaseByteBuffer(buffer);
+        return value;
+      }
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  @Override
+  public byte readByte(long iOffset) throws IOException {
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
+          OMMapManager.OPERATION_TYPE.READ, strategy);
+      if (entries != null) {
+        // MMAP READ
+        try {
+          return entries[0].buffer.get((int) (iOffset - entries[0].beginOffset));
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
+        }
+      } else {
+        // DIRECT READ
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
+        channel.read(buffer, iOffset + HEADER_SIZE);
+        buffer.rewind();
+        final byte value = buffer.get();
+        releaseByteBuffer(buffer);
+        return value;
+      }
+    } finally {
+      releaseReadLock();
+    }
+  }
+
+  private void readInternal(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException {
     iOffset = checkRegions(iOffset, iLenght);
 
     final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iLenght,
@@ -200,271 +304,236 @@ public class OFileMMap extends OAbstractFile {
   }
 
   @Override
-  public int readInt(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
-        OMMapManager.OPERATION_TYPE.READ, strategy);
-    if (entries != null) {
-      // MMAP READ
-      try {
-
-        if (entries.length == 1)
-          return entries[0].buffer.getInt((int) (iOffset - entries[0].beginOffset));
-        else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-          return OByteBufferUtils.mergeIntFromBuffers(entries[0].buffer, entries[1].buffer);
-        }
-
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
-      }
-    } else {
-      // DIRECT READ
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
-      channel.read(buffer, iOffset + HEADER_SIZE);
-      buffer.rewind();
-      final int value = buffer.getInt();
-      releaseByteBuffer(buffer);
-      return value;
-    }
-  }
-
-  @Override
-  public long readLong(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
-        OMMapManager.OPERATION_TYPE.READ, strategy);
-    if (entries != null) {
-      // MMAP READ
-      try {
-        if (entries.length == 1)
-          return entries[0].buffer.getLong((int) (iOffset - entries[0].beginOffset));
-        else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-          return OByteBufferUtils.mergeLongFromBuffers(entries[0].buffer, entries[1].buffer);
-        }
-
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
-      }
-    } else {
-      // DIRECT READ
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
-      channel.read(buffer, iOffset + HEADER_SIZE);
-      buffer.rewind();
-      final long value = buffer.getLong();
-      releaseByteBuffer(buffer);
-      return value;
-    }
-  }
-
-  @Override
-  public short readShort(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
-        OMMapManager.OPERATION_TYPE.READ, strategy);
-    if (entries != null) {
-      // MMAP READ
-      try {
-        if (entries.length == 1) {
-          return entries[0].buffer.getShort((int) (iOffset - entries[0].beginOffset));
-        } else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-
-          return OByteBufferUtils.mergeShortFromBuffers(entries[0].buffer, entries[1].buffer);
-        }
-
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
-      }
-    } else {
-      // DIRECT READ
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
-      channel.read(buffer, iOffset + HEADER_SIZE);
-      buffer.rewind();
-      final short value = buffer.getShort();
-      releaseByteBuffer(buffer);
-      return value;
-    }
-  }
-
-  @Override
-  public byte readByte(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
-        OMMapManager.OPERATION_TYPE.READ, strategy);
-    if (entries != null) {
-      // MMAP READ
-      try {
-        return entries[0].buffer.get((int) (iOffset - entries[0].beginOffset));
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.READ);
-      }
-    } else {
-      // DIRECT READ
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
-      channel.read(buffer, iOffset + HEADER_SIZE);
-      buffer.rewind();
-      final byte value = buffer.get();
-      releaseByteBuffer(buffer);
-      return value;
-    }
-  }
-
-  @Override
   public void writeInt(long iOffset, final int iValue) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
-        OMMapManager.OPERATION_TYPE.WRITE, strategy);
-    if (entries != null) {
-      // MMAP WRITE
-      try {
-        if (entries.length == 1)
-          entries[0].buffer.putInt((int) (iOffset - entries[0].beginOffset), iValue);
-        else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-
-          OByteBufferUtils.splitIntToBuffers(entries[0].buffer, entries[1].buffer, iValue);
-        }
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
-      }
-    } else {
-      // DIRECT WRITE
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
-      buffer.putInt(iValue);
-      buffer.rewind();
-      channel.write(buffer, iOffset + HEADER_SIZE);
-      releaseByteBuffer(buffer);
-    }
-  }
-
-  @Override
-  public void writeLong(long iOffset, final long iValue) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
-        OMMapManager.OPERATION_TYPE.WRITE, strategy);
-    if (entries != null) {
-      // MMAP WRITE
-      try {
-        if (entries.length == 1)
-          entries[0].buffer.putLong((int) (iOffset - entries[0].beginOffset), iValue);
-        else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-
-          OByteBufferUtils.splitLongToBuffers(entries[0].buffer, entries[1].buffer, iValue);
-        }
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
-      }
-    } else {
-      // DIRECT WRITE
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
-      buffer.putLong(iValue);
-      buffer.rewind();
-      channel.write(buffer, iOffset + HEADER_SIZE);
-      releaseByteBuffer(buffer);
-    }
-  }
-
-  @Override
-  public void writeShort(long iOffset, final short iValue) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
-        OMMapManager.OPERATION_TYPE.WRITE, strategy);
-    if (entries != null) {
-      // MMAP WRITE
-      try {
-        if (entries.length == 1)
-          entries[0].buffer.putShort((int) (iOffset - entries[0].beginOffset), iValue);
-        else {
-          entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
-          entries[1].buffer.position(0);
-
-          OByteBufferUtils.splitShortToBuffers(entries[0].buffer, entries[1].buffer, iValue);
-        }
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
-      }
-    } else {
-      // DIRECT WRITE
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
-      buffer.putShort(iValue);
-      buffer.rewind();
-      channel.write(buffer, iOffset + HEADER_SIZE);
-      releaseByteBuffer(buffer);
-    }
-  }
-
-  @Override
-  public void writeByte(long iOffset, final byte iValue) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-    final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
-        OMMapManager.OPERATION_TYPE.WRITE, strategy);
-    if (entries != null) {
-      // MMAP WRITE
-      try {
-        entries[0].buffer.put((int) (iOffset - entries[0].beginOffset), iValue);
-      } finally {
-        OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
-      }
-    } else {
-      // DIRECT WRITE
-      final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
-      buffer.put(iValue);
-      buffer.rewind();
-      channel.write(buffer, iOffset + HEADER_SIZE);
-      releaseByteBuffer(buffer);
-    }
-  }
-
-  @Override
-  public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
-    if (iSourceBuffer == null || iSourceBuffer.length == 0)
-      return;
-
-    iOffset = checkRegions(iOffset, iSourceBuffer.length);
-
+    acquireWriteLock();
     try {
-      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSourceBuffer.length,
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_INT,
           OMMapManager.OPERATION_TYPE.WRITE, strategy);
       if (entries != null) {
         // MMAP WRITE
         try {
+          if (entries.length == 1)
+            entries[0].buffer.putInt((int) (iOffset - entries[0].beginOffset), iValue);
+          else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
 
-          int position = (int) (iOffset - entries[0].beginOffset);
-
-          int remaining;
-          final int iLenght = iSourceBuffer.length;
-          int remainingLength = iLenght;
-          for (OMMapBufferEntry entry : entries) {
-            entry.buffer.position(position);
-            remaining = entry.buffer.remaining();
-            int toWrite = Math.min(remaining, remainingLength);
-            entry.buffer.put(iSourceBuffer, iLenght - remainingLength, toWrite);
-            position = 0;
-            remainingLength -= toWrite;
+            OByteBufferUtils.splitIntToBuffers(entries[0].buffer, entries[1].buffer, iValue);
           }
         } finally {
           OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
         }
       } else {
         // DIRECT WRITE
-        final ByteBuffer buffer = acquireByteBuffer(iSourceBuffer.length);
-        buffer.put(iSourceBuffer);
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_INT);
+        buffer.putInt(iValue);
         buffer.rewind();
         channel.write(buffer, iOffset + HEADER_SIZE);
         releaseByteBuffer(buffer);
       }
-    } catch (BufferOverflowException e) {
-      OLogManager.instance().error(this,
-          "Error on write in the range " + iOffset + "-" + (iOffset + iSourceBuffer.length) + "." + toString(), e,
-          OIOException.class);
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void writeLong(long iOffset, final long iValue) throws IOException {
+    acquireWriteLock();
+    try {
+
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_LONG,
+          OMMapManager.OPERATION_TYPE.WRITE, strategy);
+      if (entries != null) {
+        // MMAP WRITE
+        try {
+          if (entries.length == 1)
+            entries[0].buffer.putLong((int) (iOffset - entries[0].beginOffset), iValue);
+          else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
+
+            OByteBufferUtils.splitLongToBuffers(entries[0].buffer, entries[1].buffer, iValue);
+          }
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+        }
+      } else {
+        // DIRECT WRITE
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_LONG);
+        buffer.putLong(iValue);
+        buffer.rewind();
+        channel.write(buffer, iOffset + HEADER_SIZE);
+        releaseByteBuffer(buffer);
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void writeShort(long iOffset, final short iValue) throws IOException {
+    acquireWriteLock();
+    try {
+
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_SHORT,
+          OMMapManager.OPERATION_TYPE.WRITE, strategy);
+      if (entries != null) {
+        // MMAP WRITE
+        try {
+          if (entries.length == 1)
+            entries[0].buffer.putShort((int) (iOffset - entries[0].beginOffset), iValue);
+          else {
+            entries[0].buffer.position((int) (iOffset - entries[0].beginOffset));
+            entries[1].buffer.position(0);
+
+            OByteBufferUtils.splitShortToBuffers(entries[0].buffer, entries[1].buffer, iValue);
+          }
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+        }
+      } else {
+        // DIRECT WRITE
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_SHORT);
+        buffer.putShort(iValue);
+        buffer.rewind();
+        channel.write(buffer, iOffset + HEADER_SIZE);
+        releaseByteBuffer(buffer);
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void writeByte(long iOffset, final byte iValue) throws IOException {
+    acquireWriteLock();
+    try {
+
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+      final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, OBinaryProtocol.SIZE_BYTE,
+          OMMapManager.OPERATION_TYPE.WRITE, strategy);
+      if (entries != null) {
+        // MMAP WRITE
+        try {
+          entries[0].buffer.put((int) (iOffset - entries[0].beginOffset), iValue);
+        } finally {
+          OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+        }
+      } else {
+        // DIRECT WRITE
+        final ByteBuffer buffer = acquireByteBuffer(OBinaryProtocol.SIZE_BYTE);
+        buffer.put(iValue);
+        buffer.rewind();
+        channel.write(buffer, iOffset + HEADER_SIZE);
+        releaseByteBuffer(buffer);
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
+    acquireWriteLock();
+    try {
+
+      if (iSourceBuffer == null || iSourceBuffer.length == 0)
+        return;
+
+      iOffset = checkRegions(iOffset, iSourceBuffer.length);
+
+      try {
+        final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSourceBuffer.length,
+            OMMapManager.OPERATION_TYPE.WRITE, strategy);
+        if (entries != null) {
+          // MMAP WRITE
+          try {
+
+            int position = (int) (iOffset - entries[0].beginOffset);
+
+            int remaining;
+            final int iLenght = iSourceBuffer.length;
+            int remainingLength = iLenght;
+            for (OMMapBufferEntry entry : entries) {
+              entry.buffer.position(position);
+              remaining = entry.buffer.remaining();
+              int toWrite = Math.min(remaining, remainingLength);
+              entry.buffer.put(iSourceBuffer, iLenght - remainingLength, toWrite);
+              position = 0;
+              remainingLength -= toWrite;
+            }
+          } finally {
+            OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+          }
+        } else {
+          // DIRECT WRITE
+          final ByteBuffer buffer = acquireByteBuffer(iSourceBuffer.length);
+          buffer.put(iSourceBuffer);
+          buffer.rewind();
+          channel.write(buffer, iOffset + HEADER_SIZE);
+          releaseByteBuffer(buffer);
+        }
+      } catch (BufferOverflowException e) {
+        OLogManager.instance().error(this,
+            "Error on write in the range " + iOffset + "-" + (iOffset + iSourceBuffer.length) + "." + toString(), e,
+            OIOException.class);
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
+    acquireWriteLock();
+    try {
+      if (iData == null || iData.length == 0 || iSize == 0)
+        return;
+
+      assert iOffset > -1;
+      assert iArrayOffset > -1;
+
+      iOffset = checkRegions(iOffset, iSize);
+
+      try {
+        final OMMapBufferEntry[] entries = OMMapManagerLocator.getInstance().acquire(this, iOffset, iSize,
+            OMMapManager.OPERATION_TYPE.WRITE, strategy);
+        if (entries != null) {
+          // MMAP WRITE
+          try {
+
+            int position = (int) (iOffset - entries[0].beginOffset);
+
+            int remaining;
+            final int iLength = iSize;
+            int remainingLength = iLength;
+            for (OMMapBufferEntry entry : entries) {
+              entry.buffer.position(position);
+              remaining = entry.buffer.remaining();
+              int toWrite = Math.min(remaining, remainingLength);
+              entry.buffer.put(iData, iArrayOffset + iLength - remainingLength, toWrite);
+              position = 0;
+              remainingLength -= toWrite;
+            }
+          } finally {
+            OMMapManagerLocator.getInstance().release(entries, OMMapManager.OPERATION_TYPE.WRITE);
+          }
+        } else {
+          // DIRECT WRITE
+          final ByteBuffer buffer = acquireByteBuffer(iSize);
+          buffer.put(iData, iArrayOffset, iSize);
+          buffer.rewind();
+          channel.write(buffer, iOffset + HEADER_SIZE);
+          releaseByteBuffer(buffer);
+        }
+      } catch (BufferOverflowException e) {
+        OLogManager.instance().error(this, "Error on write in the range " + iOffset + "-" + (iOffset + iSize) + "." + toString(),
+            e, OIOException.class);
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
@@ -473,45 +542,76 @@ public class OFileMMap extends OAbstractFile {
    */
   @Override
   public void synch() {
-    OMMapManagerLocator.getInstance().flushFile(this);
-    flushHeader();
+    acquireWriteLock();
+    try {
+
+      OMMapManagerLocator.getInstance().flushFile(this);
+      flushHeader();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public void writeHeaderLong(final int iPosition, final long iValue) {
-    if (headerBuffer != null) {
-      headerBuffer.putLong(HEADER_DATA_OFFSET + iPosition, iValue);
-      setHeaderDirty();
+    acquireWriteLock();
+    try {
+
+      if (headerBuffer != null) {
+        headerBuffer.putLong(HEADER_DATA_OFFSET + iPosition, iValue);
+        setHeaderDirty();
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
   @Override
   public long readHeaderLong(final int iPosition) {
-    return headerBuffer.getLong(HEADER_DATA_OFFSET + iPosition);
+    acquireReadLock();
+    try {
+
+      return headerBuffer.getLong(HEADER_DATA_OFFSET + iPosition);
+    } finally {
+      releaseReadLock();
+    }
   }
 
   @Override
   public void close() throws IOException {
-    if (headerBuffer != null) {
-      setSoftlyClosed(true);
+    acquireWriteLock();
+    try {
+      OMMapManagerLocator.getInstance().flush();
+
+      super.close();
       headerBuffer = null;
+    } finally {
+      releaseWriteLock();
     }
-    OMMapManagerLocator.getInstance().flush();
-
-    super.close();
   }
 
-  public boolean isSoftlyClosed() {
-    return headerBuffer.get(SOFTLY_CLOSED_OFFSET) == 1;
+  public void setSoftlyClosed(final boolean value) {
+    acquireWriteLock();
+    try {
+      if (headerBuffer == null)
+        return;
+
+      headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (value ? 1 : 0));
+      setHeaderDirty();
+      flushHeader();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
-  public void setSoftlyClosed(final boolean iValue) {
-    if (headerBuffer == null)
-      return;
-
-    headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (iValue ? 1 : 0));
-    setHeaderDirty();
-    flushHeader();
+  @Override
+  public boolean isSoftlyClosed() throws IOException {
+    acquireReadLock();
+    try {
+      return headerBuffer.get(SOFTLY_CLOSED_OFFSET) > 0;
+    } finally {
+      releaseReadLock();
+    }
   }
 
   MappedByteBuffer map(final long iBeginOffset, final int iSize) throws IOException {
@@ -577,8 +677,13 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   protected void init() {
-    size = headerBuffer.getInt(SIZE_OFFSET);
-    filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+    acquireWriteLock();
+    try {
+      size = headerBuffer.getInt(SIZE_OFFSET);
+      filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
@@ -592,14 +697,19 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   public void setSize(final int iSize) throws IOException {
-    if (maxSize > 0 && iSize > maxSize)
-      throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize) + " because the max is "
-          + OFileUtils.getSizeAsString(maxSize));
-    if (iSize != size) {
-      checkSize(iSize);
-      size = iSize;
-      headerBuffer.putInt(SIZE_OFFSET, size);
-      setHeaderDirty();
+    acquireWriteLock();
+    try {
+      if (maxSize > 0 && iSize > maxSize)
+        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize)
+            + " because the max is " + OFileUtils.getSizeAsString(maxSize));
+      if (iSize != size) {
+        checkSize(iSize);
+        size = iSize;
+        headerBuffer.putInt(SIZE_OFFSET, size);
+        setHeaderDirty();
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 

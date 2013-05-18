@@ -46,24 +46,22 @@ public class OConsoleApplication {
     OK, ERROR, EXIT
   };
 
-  protected InputStream         in               = System.in;                    // System.in;
-  protected PrintStream         out              = System.out;
-  protected PrintStream         err              = System.err;
+  protected InputStream         in             = System.in;                    // System.in;
+  protected PrintStream         out            = System.out;
+  protected PrintStream         err            = System.err;
 
-  protected String              lineSeparator    = "\n";
-  protected String              commandSeparator = ";";
-  protected String              wordSeparator    = " ";
-  protected String[]            helpCommands     = { "help", "?" };
-  protected String[]            exitCommands     = { "exit", "bye", "quit" };
+  protected String              wordSeparator  = " ";
+  protected String[]            helpCommands   = { "help", "?" };
+  protected String[]            exitCommands   = { "exit", "bye", "quit" };
 
-  protected Map<String, String> properties       = new HashMap<String, String>();
+  protected Map<String, String> properties     = new HashMap<String, String>();
 
   // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader      reader           = new DefaultConsoleReader();
+  protected OConsoleReader      reader         = new DefaultConsoleReader();
   protected boolean             interactiveMode;
   protected String[]            args;
 
-  protected static final String COMMENT_PREFIX   = "#";
+  protected static final String COMMENT_PREFIX = "#";
 
   public void setReader(OConsoleReader iReader) {
     this.reader = iReader;
@@ -131,7 +129,7 @@ public class OConsoleApplication {
     try {
       String commandLine = null;
 
-      iScanner.useDelimiter(commandSeparator);
+      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)");
       while (iScanner.hasNext()) {
 
         commandLine = iScanner.next().trim();

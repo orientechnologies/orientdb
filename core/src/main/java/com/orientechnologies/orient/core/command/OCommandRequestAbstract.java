@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -31,10 +33,13 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
   protected OCommandResultListener resultListener;
   protected OProgressListener      progressListener;
-  protected int                    limit     = -1;
+  protected int                    limit           = -1;
+  protected long                   timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
   protected Map<Object, Object>    parameters;
-  protected String                 fetchPlan = null;
-  protected boolean                useCache  = false;
+  protected String                 fetchPlan       = null;
+  protected boolean                useCache        = false;
+  protected OCommandContext        context;
 
   protected OCommandRequestAbstract() {
   }
@@ -116,4 +121,28 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
     this.useCache = useCache;
   }
 
+  @Override
+  public OCommandContext getContext() {
+    if (context == null)
+      context = new OBasicCommandContext();
+    return context;
+  }
+
+  public OCommandRequestAbstract setContext(final OCommandContext iContext) {
+    context = iContext;
+    return this;
+  }
+
+  public long getTimeoutTime() {
+    return timeoutMs;
+  }
+
+  public void setTimeout(final long timeout, TIMEOUT_STRATEGY strategy) {
+    this.timeoutMs = timeout;
+    this.timeoutStrategy = strategy;
+  }
+
+  public TIMEOUT_STRATEGY getTimeoutStrategy() {
+    return timeoutStrategy;
+  }
 }

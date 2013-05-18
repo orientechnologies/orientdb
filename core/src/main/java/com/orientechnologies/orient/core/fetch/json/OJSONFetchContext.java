@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 import java.util.Stack;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -80,24 +81,7 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject) {
-    if (keepTypes) {
-      // StringBuilder buffer = typesStack.pop();
-      if (iFieldValue instanceof Long)
-        appendType(typesStack.peek(), iFieldName, 'l');
-      else if (iFieldValue instanceof Float)
-        appendType(typesStack.peek(), iFieldName, 'f');
-      else if (iFieldValue instanceof Short)
-        appendType(typesStack.peek(), iFieldName, 's');
-      else if (iFieldValue instanceof Double)
-        appendType(typesStack.peek(), iFieldName, 'd');
-      else if (iFieldValue instanceof Date)
-        appendType(typesStack.peek(), iFieldName, 't');
-      else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
-        appendType(typesStack.peek(), iFieldName, 'b');
-      else if (iFieldValue instanceof BigDecimal)
-        appendType(typesStack.peek(), iFieldName, 'c');
-      // typesStack.add(buffer);
-    }
+    manageTypes(iFieldName, iFieldValue);
   }
 
   public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
@@ -116,6 +100,7 @@ public class OJSONFetchContext implements OFetchContext {
       final Collection<?> iCollection) {
     indentLevel++;
     try {
+      manageTypes(iFieldName, iCollection);
       jsonWriter.beginCollection(indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
     } catch (IOException e) {
@@ -246,5 +231,26 @@ public class OJSONFetchContext implements OFetchContext {
 
   public boolean fetchEmbeddedDocuments() {
     return alwaysFetchEmbeddedDocuments;
+  }
+
+  protected void manageTypes(final String iFieldName, final Object iFieldValue) {
+    if (keepTypes) {
+      if (iFieldValue instanceof Long)
+        appendType(typesStack.peek(), iFieldName, 'l');
+      else if (iFieldValue instanceof Float)
+        appendType(typesStack.peek(), iFieldName, 'f');
+      else if (iFieldValue instanceof Short)
+        appendType(typesStack.peek(), iFieldName, 's');
+      else if (iFieldValue instanceof Double)
+        appendType(typesStack.peek(), iFieldName, 'd');
+      else if (iFieldValue instanceof Date)
+        appendType(typesStack.peek(), iFieldName, 't');
+      else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
+        appendType(typesStack.peek(), iFieldName, 'b');
+      else if (iFieldValue instanceof BigDecimal)
+        appendType(typesStack.peek(), iFieldName, 'c');
+      else if (iFieldValue instanceof Set<?>)
+        appendType(typesStack.peek(), iFieldName, 'e');
+    }
   }
 }

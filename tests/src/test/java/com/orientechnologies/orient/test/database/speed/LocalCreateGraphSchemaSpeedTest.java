@@ -53,7 +53,7 @@ public class LocalCreateGraphSchemaSpeedTest extends OrientMonoThreadTest {
 		record = database.newInstance();
 
 		database.declareIntent(new OIntentMassiveInsert());
-		OClass cl = database.createVertexType("Person", "OGraphVertex");
+		OClass cl = database.createVertexType("Person", "V");
 		cl.createProperty("id", OType.LONG);
 		cl.createProperty("name", OType.STRING);
 		cl.createProperty("surname", OType.STRING);

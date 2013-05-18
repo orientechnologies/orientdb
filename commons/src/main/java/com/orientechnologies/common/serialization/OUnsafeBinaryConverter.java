@@ -20,8 +20,14 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
       public Object run() {
         try {
           Field f = Unsafe.class.getDeclaredField("theUnsafe");
+          boolean wasAccessible = f.isAccessible();
           f.setAccessible(true);
-          return f.get(null);
+          try {
+            return f.get(null);
+          } finally {
+            f.setAccessible(wasAccessible);
+          }
+
         } catch (NoSuchFieldException e) {
           throw new Error();
         } catch (IllegalAccessException e) {

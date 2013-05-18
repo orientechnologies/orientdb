@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileLock;
 
-
 /**
  * Interface to represent low-level File access. To use 3rd party implementations register them to the {@link OFileFactory}
  * singleton instance.
@@ -100,7 +99,9 @@ public interface OFile {
 
   public abstract void setSoftlyClosed(boolean b) throws IOException;
 
-  public abstract boolean isSoftlyClosed() throws IOException;
+  public abstract boolean wasSoftlyClosed() throws IOException;
+
+  public boolean isSoftlyClosed() throws IOException;
 
   public abstract void lock() throws IOException;
 

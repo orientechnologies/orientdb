@@ -184,6 +184,8 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   protected abstract OMVRBTreeEntry<K, V> createEntry(final OMVRBTreeEntry<K, V> parent);
 
+  protected abstract int getTreeSize();
+
   public int getNodes() {
     int counter = -1;
 
@@ -235,6 +237,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     return false;
   }
 
+  @Override
+  public int size() {
+    return getTreeSize();
+  }
+
   /**
    * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the key.
    * 
@@ -255,7 +262,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   @Override
   public V get(final Object key) {
-    if (size() == 0)
+    if (getTreeSize() == 0)
       return null;
 
     OMVRBTreeEntry<K, V> entry = null;
@@ -309,7 +316,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   @Override
   public void putAll(final Map<? extends K, ? extends V> map) {
     int mapSize = map.size();
-    if (size() == 0 && mapSize != 0 && map instanceof SortedMap) {
+    if (getTreeSize() == 0 && mapSize != 0 && map instanceof SortedMap) {
       Comparator<?> c = ((SortedMap<? extends K, ? extends V>) map).comparator();
       if (c == comparator || (c != null && c.equals(comparator))) {
         ++modCount;
@@ -350,7 +357,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     pageItemFound = false;
 
-    if (size() == 0) {
+    if (getTreeSize() == 0) {
       pageIndex = 0;
       return iGetContainer ? root : null;
     }
@@ -879,7 +886,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     // Initialize clone with our mappings
     try {
-      clone.buildFromSorted(size(), entrySet().iterator(), null, null);
+      clone.buildFromSorted(getTreeSize(), entrySet().iterator(), null, null);
     } catch (java.io.IOException cannotHappen) {
     } catch (ClassNotFoundException cannotHappen) {
     }
@@ -1394,9 +1401,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   final class InverseEntryIterator extends AbstractEntryIterator<K, V, Map.Entry<K, V>> {
     InverseEntryIterator(final OMVRBTreeEntry<K, V> last) {
       super(last);
-      //we have to set ourselves after current index to make iterator work
+      // we have to set ourselves after current index to make iterator work
       if (last != null) {
-        pageIndex = last.getTree().getPageIndex()+1;
+        pageIndex = last.getTree().getPageIndex() + 1;
       }
     }
 
@@ -1419,9 +1426,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   final class ValueInverseIterator extends AbstractEntryIterator<K, V, V> {
     ValueInverseIterator(final OMVRBTreeEntry<K, V> last) {
       super(last);
-      //we have to set ourselves after current index to make iterator work
+      // we have to set ourselves after current index to make iterator work
       if (last != null) {
-        pageIndex = last.getTree().getPageIndex()+1;
+        pageIndex = last.getTree().getPageIndex() + 1;
       }
     }
 
@@ -2547,7 +2554,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       // Fix replacement
       if (p.getColor() == BLACK)
         fixAfterDeletion(replacement);
-    } else if (p.getParent() == null) { // return if we are the only node.
+    } else if (p.getParent() == null && size() == 0) { // return if we are the only node. Check the size to be sure the map is empty
       clear();
     } else { // No children. Use self as phantom replacement and unlink.
       if (p.getColor() == BLACK)

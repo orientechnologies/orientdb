@@ -16,6 +16,12 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,40 +30,51 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodField extends OAbstractSQLMethod {
 
-    public static final String NAME = "field";
+  public static final String NAME = "field";
 
-    public OSQLMethodField() {
-        super(NAME, 0, 1);
-    }
+  public OSQLMethodField() {
+    super(NAME, 0, 1);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        
-        if(ioResult instanceof String){
-            try {
-                ioResult = new ODocument(new ORecordId((String) ioResult));
-            }catch (Exception e){
-                OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
-                ioResult = null;
-            }
-        }else if(ioResult instanceof OIdentifiable){
-            ioResult = ((OIdentifiable) ioResult).getRecord();
+  @Override
+  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+      final Object[] iMethodParams) {
+
+    if (ioResult != null)
+      if (ioResult instanceof String)
+        try {
+          ioResult = new ODocument(new ORecordId((String) ioResult));
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
+          ioResult = null;
         }
 
-        if(ioResult != null){
-            if(ioResult instanceof OCommandContext){
-                ioResult = ((OCommandContext) ioResult).getVariable(iMethodParams[0].toString());
-            }else{
-                ioResult = ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString());
-            }
+      else if (ioResult instanceof OIdentifiable)
+        ioResult = ((OIdentifiable) ioResult).getRecord();
+
+      else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
+          || ioResult.getClass().isArray()) {
+        final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
+        for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
+          result.add(ODocumentHelper.getFieldValue(o, iMethodParams[0].toString()));
         }
-        
-        return ioResult;
+        return result;
+      }
+
+    if (ioResult != null) {
+      if (ioResult instanceof OCommandContext) {
+        ioResult = ((OCommandContext) ioResult).getVariable(iMethodParams[0].toString());
+      } else {
+        ioResult = ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString());
+      }
     }
+
+    return ioResult;
+  }
 }

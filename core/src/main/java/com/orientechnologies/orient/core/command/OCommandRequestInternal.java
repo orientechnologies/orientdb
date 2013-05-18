@@ -28,15 +28,16 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * @param <T>
  */
 public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
-	public Map<Object, Object> getParameters();
 
-	public OCommandResultListener getResultListener();
+  public Map<Object, Object> getParameters();
 
-	public void setResultListener(OCommandResultListener iListener);
+  public OCommandResultListener getResultListener();
 
-	public OProgressListener getProgressListener();
+  public void setResultListener(OCommandResultListener iListener);
 
-	public OCommandRequestInternal setProgressListener(OProgressListener iProgressListener);
+  public OProgressListener getProgressListener();
 
-	public void reset();
+  public OCommandRequestInternal setProgressListener(OProgressListener iProgressListener);
+
+  public void reset();
 }

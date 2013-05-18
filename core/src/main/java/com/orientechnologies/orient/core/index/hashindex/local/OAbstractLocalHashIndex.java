@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -64,7 +64,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   public static final String               TREE_STATE_FILE_EXTENSION             = ".tsc";
 
   private final OLocalHashTable<Object, T> localHashTable;
-  private OStorageLocal                    storage;
+  private OStorageLocalAbstract            storage;
 
   private String                           name;
   private String                           type;
@@ -76,7 +76,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ORID                             identity;
   private OMurmurHash3HashFunction<Object> keyHashFunction;
 
-  public OAbstractLocalHashIndex(String type, OStorageLocal storage) {
+  public OAbstractLocalHashIndex(String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
 
     this.type = type;
@@ -92,7 +92,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       configuration = new ODocument();
       this.indexDefinition = indexDefinition;
       this.name = name;
-      storage = (OStorageLocal) database.getStorage();
+      storage = (OStorageLocalAbstract) database.getStorage();
 
       final ORecord<?> emptyRecord = new ORecordBytes(new byte[] {});
       emptyRecord.save(clusterIndexName);
@@ -521,7 +521,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       this.configuration = configuration;
       name = configuration.field(OIndexInternal.CONFIG_NAME);
       type = configuration.field(OIndexInternal.CONFIG_TYPE);
-      storage = (OStorageLocal) getDatabase().getStorage();
+      storage = (OStorageLocalAbstract) getDatabase().getStorage();
 
       final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
       if (indexDefinitionDoc != null) {

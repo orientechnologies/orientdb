@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Locale;
-
+import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -32,12 +32,16 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String KEYWORD_WHERE     = "WHERE";
   public static final String KEYWORD_LIMIT     = "LIMIT";
   public static final String KEYWORD_SKIP      = "SKIP";
+  public static final String KEYWORD_TIMEOUT   = "TIMEOUT";
   public static final String KEYWORD_KEY       = "key";
   public static final String KEYWORD_RID       = "rid";
   public static final String CLUSTER_PREFIX    = "CLUSTER:";
   public static final String CLASS_PREFIX      = "CLASS:";
   public static final String INDEX_PREFIX      = "INDEX:";
   public static final String DICTIONARY_PREFIX = "DICTIONARY:";
+
+  protected long             timeoutMs         = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY timeoutStrategy   = TIMEOUT_STRATEGY.EXCEPTION;
 
   protected void throwSyntaxErrorException(final String iText) {
     throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
@@ -47,14 +51,40 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
   }
 
-  @Override
-  public OCommandExecutorSQLAbstract init(String iText) {
-    iText = iText.trim();
-    parserTextUpperCase = iText.toUpperCase(Locale.ENGLISH);
-    return (OCommandExecutorSQLAbstract) super.init(iText);
-  }
-
   public boolean isIdempotent() {
     return false;
+  }
+
+  /**
+   * Parses the timeout keyword if found.
+   */
+  protected boolean parseTimeout(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_TIMEOUT))
+      return false;
+
+    parserNextWord(true);
+    String word = parserGetLastWord();
+
+    try {
+      timeoutMs = Long.parseLong(word);
+    } catch (Exception e) {
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value setted to '" + word
+          + "' but it should be a valid long. Example: " + KEYWORD_TIMEOUT + " 3000");
+    }
+
+    if (timeoutMs < 0)
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value setted to less than ZERO. Example: " + timeoutMs + " 10");
+
+    parserNextWord(true);
+    word = parserGetLastWord();
+
+    if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
+      timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+    else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
+      timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
+    else
+      parserGoBack();
+
+    return true;
   }
 }

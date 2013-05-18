@@ -21,49 +21,35 @@ import java.nio.ByteBuffer;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
-/**
- * Need to be synchronized by the external. Multiple Reader, Single Writer.<br/>
- * Header structure:<br/>
- * <br/>
- * +-----------+--------------+---------------+---------------+<br/>
- * | | | SOFTLY CLOSED | SECURITY CODE |<br/>
- * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... |<br/>
- * +-----------+--------------+---------------+---------------+<br/>
- * = 1024 bytes<br/>
- * <br/>
- */
 public class OFileClassic extends OAbstractFile {
   public final static String NAME                = "classic";
   protected ByteBuffer       internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-  public OFileClassic init(String iFileName, String iMode) {
-    super.init(iFileName, iMode);
-    return this;
-  }
-
   @Override
-  public void close() throws IOException {
-    if (channel != null)
-      setSoftlyClosed(true);
+  public int allocateSpace(int size) throws IOException {
+    acquireWriteLock();
+    try {
+      final int currentSize = getFilledUpTo();
+      if (maxSize > 0 && currentSize + size > maxSize)
+        throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
+            + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
 
-    super.close();
-  }
-
-  @Override
-  public int allocateSpace(int iSize) throws IOException {
-    final int currentSize = getFilledUpTo();
-    if (maxSize > 0 && currentSize + iSize > maxSize)
-      throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
-          + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
-
-    size += iSize;
-    return currentSize;
+      this.size += size;
+      return currentSize;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public void shrink(int iSize) throws IOException {
-    channel.truncate(HEADER_SIZE + iSize);
-    size = iSize;
+    acquireWriteLock();
+    try {
+      channel.truncate(HEADER_SIZE + iSize);
+      size = iSize;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
@@ -77,13 +63,27 @@ public class OFileClassic extends OAbstractFile {
   }
 
   public void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException {
-    iOffset = checkRegions(iOffset, iLength);
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, iLength);
 
-    ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
-    channel.read(buffer, iOffset);
+      ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
+      channel.read(buffer, iOffset);
+    } finally {
+      releaseReadLock();
+    }
   }
 
   public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
+    acquireWriteLock();
+    try {
+      writeInternal(iOffset, iData, iSize, iArrayOffset);
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  private void writeInternal(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
     if (iData != null) {
       iOffset += HEADER_SIZE;
       ByteBuffer byteBuffer = ByteBuffer.wrap(iData, iArrayOffset, iSize);
@@ -99,69 +99,116 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   public int readInt(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
-    return readData(iOffset, OBinaryProtocol.SIZE_INT).getInt();
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_INT);
+      return readData(iOffset, OBinaryProtocol.SIZE_INT).getInt();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   @Override
   public long readLong(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
-    return readData(iOffset, OBinaryProtocol.SIZE_LONG).getLong();
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_LONG);
+      return readData(iOffset, OBinaryProtocol.SIZE_LONG).getLong();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   @Override
   public short readShort(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
-    return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_SHORT);
+      return readData(iOffset, OBinaryProtocol.SIZE_SHORT).getShort();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   @Override
   public byte readByte(long iOffset) throws IOException {
-    iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
-    return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
+    acquireReadLock();
+    try {
+      iOffset = checkRegions(iOffset, OBinaryProtocol.SIZE_BYTE);
+      return readData(iOffset, OBinaryProtocol.SIZE_BYTE).get();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   @Override
   public void writeInt(long iOffset, final int iValue) throws IOException {
-    iOffset += HEADER_SIZE;
-    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
-    buffer.putInt(iValue);
-    writeBuffer(buffer, iOffset);
-    setDirty();
+    acquireWriteLock();
+    try {
+      iOffset += HEADER_SIZE;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_INT);
+      buffer.putInt(iValue);
+      writeBuffer(buffer, iOffset);
+      setDirty();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public void writeLong(long iOffset, final long iValue) throws IOException {
-    iOffset += HEADER_SIZE;
-    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
-    buffer.putLong(iValue);
-    writeBuffer(buffer, iOffset);
-    setDirty();
+    acquireWriteLock();
+    try {
+      iOffset += HEADER_SIZE;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
+      buffer.putLong(iValue);
+      writeBuffer(buffer, iOffset);
+      setDirty();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public void writeShort(long iOffset, final short iValue) throws IOException {
-    iOffset += HEADER_SIZE;
-    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
-    buffer.putShort(iValue);
-    writeBuffer(buffer, iOffset);
-    setDirty();
+    acquireWriteLock();
+    try {
+      iOffset += HEADER_SIZE;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_SHORT);
+      buffer.putShort(iValue);
+      writeBuffer(buffer, iOffset);
+      setDirty();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public void writeByte(long iOffset, final byte iValue) throws IOException {
-    iOffset += HEADER_SIZE;
-    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
-    buffer.put(iValue);
-    writeBuffer(buffer, iOffset);
-    setDirty();
+    acquireWriteLock();
+    try {
+      iOffset += HEADER_SIZE;
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
+      buffer.put(iValue);
+      writeBuffer(buffer, iOffset);
+      setDirty();
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   @Override
   public void write(long iOffset, final byte[] iSourceBuffer) throws IOException {
-    if (iSourceBuffer != null) {
-      write(iOffset, iSourceBuffer, iSourceBuffer.length, 0);
+    acquireWriteLock();
+    try {
+      if (iSourceBuffer != null) {
+        writeInternal(iOffset, iSourceBuffer, iSourceBuffer.length, 0);
+      }
+    } finally {
+      releaseWriteLock();
     }
+
   }
 
   /**
@@ -169,33 +216,59 @@ public class OFileClassic extends OAbstractFile {
    * 
    * @throws IOException
    * 
-   * @see OFileMMapSecure
    */
   @Override
   public void synch() throws IOException {
-    flushHeader();
+    acquireWriteLock();
+    try {
+      flushHeader();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   protected void flushHeader() throws IOException {
-    if (headerDirty || dirty) {
-      headerDirty = dirty = false;
-      channel.force(false);
+    acquireWriteLock();
+    try {
+      if (headerDirty || dirty) {
+        headerDirty = dirty = false;
+        channel.force(false);
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
   @Override
   public void create(int iStartSize) throws IOException {
-    super.create(HEADER_SIZE);
+    acquireWriteLock();
+    try {
+      super.create(HEADER_SIZE);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   protected void init() throws IOException {
-    size = (int) (osFile.length() - HEADER_SIZE);
+    acquireWriteLock();
+    try {
+      size = (int) (osFile.length() - HEADER_SIZE);
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   @Override
-  protected void setFilledUpTo(final int iValue) throws IOException {
-    size = iValue;
+  protected void setFilledUpTo(final int value) throws IOException {
+    acquireWriteLock();
+    try {
+      size = value;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   @Override
@@ -204,22 +277,53 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   public void writeHeaderLong(final int iPosition, final long iValue) throws IOException {
-    final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
-    buffer.putLong(iValue);
-    writeBuffer(buffer, HEADER_DATA_OFFSET + iPosition);
-    setHeaderDirty();
+    acquireWriteLock();
+    try {
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_LONG);
+      buffer.putLong(iValue);
+      writeBuffer(buffer, HEADER_DATA_OFFSET + iPosition);
+      setHeaderDirty();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   @Override
   public long readHeaderLong(final int iPosition) throws IOException {
-    return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
+    acquireReadLock();
+    try {
+      return readData(HEADER_DATA_OFFSET + iPosition, OBinaryProtocol.SIZE_LONG).getLong();
+    } finally {
+      releaseReadLock();
+    }
   }
 
+  @Override
   public boolean isSoftlyClosed() throws IOException {
-    return true;
+    acquireReadLock();
+    try {
+      final ByteBuffer buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+      return buffer.get(0) > 0;
+    } finally {
+      releaseReadLock();
+    }
   }
 
-  public void setSoftlyClosed(final boolean iValue) throws IOException {
+  public void setSoftlyClosed(final boolean value) throws IOException {
+    acquireWriteLock();
+    try {
+      if (channel == null || mode.indexOf('w') < 0)
+        return;
+
+      final ByteBuffer buffer = getBuffer(1);
+      buffer.put(0, (byte) (value ? 1 : 0));
+
+      writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
+
+      channel.force(true);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /**
@@ -227,7 +331,13 @@ public class OFileClassic extends OAbstractFile {
    */
   @Override
   protected long checkRegions(final long iOffset, final int iLength) {
-    return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
+    acquireReadLock();
+    try {
+      return super.checkRegions(iOffset, iLength) + HEADER_SIZE;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {

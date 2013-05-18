@@ -8,7 +8,6 @@ target
 *.patch
 
 # Package Files #
-*.jar
 *.war
 *.ear
 

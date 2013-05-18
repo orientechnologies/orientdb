@@ -34,6 +34,11 @@ public class ODatabaseDocumentPool extends ODatabasePoolBase<ODatabaseDocumentTx
     return globalInstance;
   }
 
+  public static ODatabaseDocumentPool global(final int iPoolMin, final int iPoolMax) {
+    globalInstance.setup(iPoolMin, iPoolMax);
+    return globalInstance;
+  }
+
   @Override
   protected ODatabaseDocumentTx createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs) {
     return new ODatabaseDocumentTxPooled((ODatabaseDocumentPool) owner, iDatabaseName, (String) iAdditionalArgs[0],

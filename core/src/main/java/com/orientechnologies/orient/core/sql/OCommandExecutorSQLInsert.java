@@ -54,7 +54,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     className = null;
     newRecords = null;
@@ -219,7 +220,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           return docs;
       } else if (content != null) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-        doc.merge(content, false, false);
+        doc.merge(content, true, false);
         doc.save();
         return doc;
       }

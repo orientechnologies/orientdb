@@ -141,20 +141,62 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   /**
+   * Disconnects and kill the associated network manager.
+   * 
+   * @param iChannelId
+   */
+  public void kill(final int iChannelId) {
+    acquireExclusiveLock();
+    try {
+      final OClientConnection connection = connections.get(iChannelId);
+      if (connection != null) {
+        final ONetworkProtocol protocol = connection.protocol;
+
+        disconnect(iChannelId);
+
+        // KILL THE NEWTORK MANAGER TOO
+        protocol.sendShutdown();
+      }
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  /**
+   * Interrupt the associated network manager.
+   * 
+   * @param iChannelId
+   */
+  public void interrupt(final int iChannelId) {
+    acquireExclusiveLock();
+    try {
+      final OClientConnection connection = connections.get(iChannelId);
+      if (connection != null) {
+        final ONetworkProtocol protocol = connection.protocol;
+        if (protocol != null)
+          // INTERRUPT THE NEWTORK MANAGER TOO
+          protocol.interrupt();
+      }
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  /**
    * Disconnects a client connections
    * 
    * @param iChannelId
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    metricActiveConnections--;
-
     acquireExclusiveLock();
     try {
       final OClientConnection connection = connections.remove(iChannelId);
 
       if (connection != null) {
+        metricActiveConnections--;
         connection.close();
+
         // CHECK IF THERE ARE OTHER CONNECTIONS
         for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
           if (entry.getValue().getProtocol().equals(connection.getProtocol()))
@@ -171,7 +213,6 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
   public void disconnect(final OClientConnection connection) {
     metricActiveConnections--;
-
     connection.close();
 
     acquireExclusiveLock();

@@ -1,0 +1,95 @@
+/*
+ * Copyright 2010-2012 henryzhao81@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.orientechnologies.orient.core.schedule;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
+
+/**
+ * Author : henryzhao81@gmail.com Mar 28, 2013
+ */
+
+public class OSchedulerTrigger extends ODocumentHookAbstract {
+	public OSchedulerTrigger() {
+		setIncludeClasses(OScheduler.CLASSNAME);
+	}
+
+	@Override
+	public RESULT onRecordBeforeCreate(final ODocument iDocument) {
+        String name = iDocument.field(OScheduler.PROP_NAME);
+        OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(name);
+        if(scheduler != null) {
+        	throw new OException("Duplicate Scheduler");
+        }
+		boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean)iDocument.field(OScheduler.PROP_STARTED));
+		if(start)
+			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITTING.name());
+		else
+			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+		iDocument.field(OScheduler.PROP_STARTED, start);
+		return RESULT.RECORD_CHANGED;
+	}
+	
+	@Override
+	public void onRecordAfterCreate(final ODocument iDocument) {
+		OScheduler scheduler = new OScheduler(iDocument);
+		ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
+	}
+	
+	@Override
+	public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
+		try {
+			boolean isStart = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean)iDocument.field(OScheduler.PROP_STARTED));
+			String schedulerName = iDocument.field(OScheduler.PROP_NAME);
+			OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
+			if(isStart) {
+				if(scheduler == null) {
+					scheduler = new OScheduler(iDocument);
+					ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);				
+				}
+				String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
+				if(currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
+					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITTING.name());
+				}
+			} else {
+				if(scheduler != null) {
+					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+				}
+			}	
+			scheduler.resetDocument(iDocument);
+		} catch(Exception ex) {
+			OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
+			return RESULT.RECORD_NOT_CHANGED;
+		}
+		return RESULT.RECORD_CHANGED;
+	}
+	
+	@Override
+	public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+		String schedulerName = iDocument.field(OScheduler.PROP_NAME);
+		OScheduler scheduler = null;
+		scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
+		if(scheduler != null) {
+			ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().removeScheduler(scheduler);
+		}
+		return RESULT.RECORD_CHANGED;
+	}
+}

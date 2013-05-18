@@ -27,49 +27,49 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateGraphSpeedTest extends OrientMonoThreadTest {
-	private OGraphDatabase	database;
-	private ODocument				record;
-	private Date						date	= new Date();
+  private OGraphDatabase database;
+  private ODocument      record;
+  private Date           date = new Date();
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		LocalCreateGraphSpeedTest test = new LocalCreateGraphSpeedTest();
-		test.data.go(test);
-	}
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateGraphSpeedTest test = new LocalCreateGraphSpeedTest();
+    test.data.go(test);
+  }
 
-	public LocalCreateGraphSpeedTest() throws InstantiationException, IllegalAccessException {
-		super(1000000);
-	}
+  public LocalCreateGraphSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
 
-	@Override
-	public void init() {
-		Orient.instance().getProfiler().startRecording();
+  @Override
+  public void init() {
+    Orient.instance().getProfiler().startRecording();
 
-		database = new OGraphDatabase(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+    database = new OGraphDatabase(System.getProperty("url")).open("admin", "admin");
+    record = database.newInstance();
 
-		database.declareIntent(new OIntentMassiveInsert());
-	}
+    database.declareIntent(new OIntentMassiveInsert());
+  }
 
-	@Override
-	public void cycle() {
-		record.reset();
+  @Override
+  public void cycle() {
+    record.reset();
 
-		record.setClassName("OGraphVertex");
-		record.field("id", data.getCyclesDone());
-		record.field("name", "Luca");
-		record.field("surname", "Garulli");
-		record.field("birthDate", date);
-		record.field("salary", 3000f + data.getCyclesDone());
+    record.setClassName("V");
+    record.field("id", data.getCyclesDone());
+    record.field("name", "Luca");
+    record.field("surname", "Garulli");
+    record.field("birthDate", date);
+    record.field("salary", 3000f + data.getCyclesDone());
 
-		record.save();
-	}
+    record.save();
+  }
 
-	@Override
-	public void deinit() {
-		System.out.println(Orient.instance().getProfiler().dump());
+  @Override
+  public void deinit() {
+    System.out.println(Orient.instance().getProfiler().dump());
 
-		if (database != null)
-			database.close();
-		super.deinit();
-	}
+    if (database != null)
+      database.close();
+    super.deinit();
+  }
 }

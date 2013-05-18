@@ -24,6 +24,10 @@ import java.util.Map;
  * 
  */
 public interface OCommandContext {
+  public enum TIMEOUT_STRATEGY {
+    RETURN, EXCEPTION
+  }
+
   public Object getVariable(final String iName);
 
   public OCommandContext setVariable(final String iName, final Object iValue);
@@ -50,4 +54,8 @@ public interface OCommandContext {
   public boolean isRecordingMetrics();
 
   public OCommandContext setRecordingMetrics(boolean recordMetrics);
+
+  public void beginExecution(long timeoutMs, TIMEOUT_STRATEGY iStrategy);
+
+  public boolean checkTimeout();
 }

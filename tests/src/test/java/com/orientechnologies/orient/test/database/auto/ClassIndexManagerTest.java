@@ -142,6 +142,9 @@ public class ClassIndexManagerTest {
   }
 
   public void testPropertiesCheckUniqueIndexDubKeyIsNullCreateInTx() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
 
@@ -206,6 +209,9 @@ public class ClassIndexManagerTest {
   }
 
   public void testPropertiesCheckUniqueIndexDubKeyIsNullUpdateInTX() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     final ODocument docOne = new ODocument("classIndexManagerTestClass");
     final ODocument docTwo = new ODocument("classIndexManagerTestClass");
 

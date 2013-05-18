@@ -21,7 +21,6 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
 /**
  * This lock is intended to be used inside of storage to request lock on any data modifications. Writes can be prohibited from one
  * thread, but then allowed from other thread.

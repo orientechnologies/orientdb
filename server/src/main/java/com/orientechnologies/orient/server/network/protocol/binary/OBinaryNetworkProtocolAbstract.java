@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -44,7 +45,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
@@ -76,7 +77,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   /**
    * Executes the request.
    * 
-   * @return true if the request has been recognized, othereise false
+   * @return true if the request has been recognized, otherwise false
    * @throws IOException
    */
   protected abstract boolean executeRequest() throws IOException;
@@ -272,7 +273,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
 
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage() instanceof OStorageLocal ? "local" : "memory");
+        iDatabase.getStorage() instanceof OStorageLocalAbstract ? "local" : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)
     // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -287,7 +288,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     final OStorage stg = Orient.instance().getStorage(iDbName);
     if (stg != null)
       path = stg.getURL();
-    else if (iStorageType.equals(OEngineLocal.NAME)) {
+    else if (iStorageType.equals(OEngineLocal.NAME) || iStorageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(iDbName);
       if (path == null)

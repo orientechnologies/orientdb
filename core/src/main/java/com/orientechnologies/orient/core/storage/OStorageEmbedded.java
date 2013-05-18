@@ -78,6 +78,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   public Object command(final OCommandRequestText iCommand) {
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
+    // COPY THE CONTEXT FROM THE REQUEST
+    executor.setContext(iCommand.getContext());
+
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
@@ -89,11 +92,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Cannot execute non idempotent command");
 
     long beginTime = Orient.instance().getProfiler().startChrono();
+
     try {
 
-      iCommand.getContext().setChild(executor.getContext());
       final Object result = executor.execute(iCommand.getParameters());
-      iCommand.getContext().setChild(null);
       return result;
 
     } catch (OException e) {
@@ -103,11 +105,12 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
 
     } finally {
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-              "Command executed against the database", beginTime, "db.*.command.*");
+      if (Orient.instance().getProfiler().isRecording())
+        Orient
+            .instance()
+            .getProfiler()
+            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
 

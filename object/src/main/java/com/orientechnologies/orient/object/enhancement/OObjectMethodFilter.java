@@ -16,6 +16,8 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import javassist.util.proxy.MethodFilter;
@@ -23,11 +25,11 @@ import javassist.util.proxy.MethodFilter;
 import com.orientechnologies.common.log.OLogManager;
 
 /**
- * @author luca.molino
+ * @author luca.molino Original implementation
+ * @author Janos Haber Scala binding
  * 
  */
 public class OObjectMethodFilter implements MethodFilter {
-
   public boolean isHandled(final Method m) {
     final String methodName = m.getName();
     final String fieldName = getFieldName(m);
@@ -51,6 +53,7 @@ public class OObjectMethodFilter implements MethodFilter {
 
   public String getFieldName(final Method m) {
     final String methodName = m.getName();
+    final Class<?> clz = m.getDeclaringClass();
 
     if (methodName.startsWith("get"))
       return getFieldName(methodName, "get");
@@ -58,7 +61,9 @@ public class OObjectMethodFilter implements MethodFilter {
       return getFieldName(methodName, "set");
     else if (methodName.startsWith("is"))
       return getFieldName(methodName, "is");
-
+    else if (isScalaClass(clz)) {
+      return getScalaFieldName(clz, methodName);
+    }
     // NO FIELD
     return null;
   }
@@ -71,7 +76,9 @@ public class OObjectMethodFilter implements MethodFilter {
   }
 
   public boolean isSetterMethod(final String fieldName, final Method m) throws SecurityException, NoSuchFieldException {
-    if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set"))
+    Class<?> clz = m.getDeclaringClass();
+    if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set")
+        || (isScalaClass(clz) && !fieldName.endsWith("_$eq")))
       return false;
     if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
       return false;
@@ -80,10 +87,13 @@ public class OObjectMethodFilter implements MethodFilter {
 
   public boolean isGetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {
     int prefixLength;
+    Class<?> clz = m.getDeclaringClass();
     if (fieldName.startsWith("get") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "get"))
       prefixLength = "get".length();
     else if (fieldName.startsWith("is") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "is"))
       prefixLength = "is".length();
+    else if (isScalaClass(clz) && fieldName.equals(getFieldName(m)))
+      prefixLength = 0;
     else
       return false;
     if (m.getParameterTypes() != null && m.getParameterTypes().length > 0)
@@ -97,4 +107,26 @@ public class OObjectMethodFilter implements MethodFilter {
     return methodName.length() > prefix.length() ? Character.isUpperCase(methodName.charAt(prefix.length())) : false;
   }
 
+  protected boolean isScalaClass(Class<?> clz) {
+    Annotation[] annotations = clz.getDeclaredAnnotations();
+    for (Annotation a : annotations) {
+      if ("scala.reflect.ScalaSignature".contains(a.annotationType().getName())
+          || "scala.reflect.ScalaLongSignature".contains(a.getClass().getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected String getScalaFieldName(Class<?> clz, String name) {
+    Field[] fields = clz.getDeclaredFields();
+    for (Field field : fields) {
+      if (name.equals(field.getName() + "_$eq")) {
+        return field.getName();
+      } else if (name.equals(field.getName())) {
+        return field.getName();
+      }
+    }
+    return null;
+  }
 }

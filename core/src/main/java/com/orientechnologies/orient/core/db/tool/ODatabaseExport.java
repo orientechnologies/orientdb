@@ -337,7 +337,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     }
 
     writer.endCollection(1, true);
-    listener.onMessage("OK (" + indexes.size() + " indexes)");
+    listener.onMessage("\nOK (" + indexes.size() + " indexes)");
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -487,7 +487,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,indent:4,keepTypes"));
+        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes"));
 
         recordExported++;
         recordNum++;

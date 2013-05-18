@@ -18,42 +18,42 @@ package com.orientechnologies.orient.test.internal.io;
 import java.io.File;
 import java.io.IOException;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.storage.fs.OFileMMap;
 
+import org.testng.annotations.Test;
+
 @Test(enabled = false)
 public class OMMapOpenCloseTest extends SpeedTestMonoThread {
-	protected static final String	FILE_NAME		= "C:/temp/orient-test.file";
+  protected static final String FILE_NAME  = "C:/temp/orient-test.file";
 
-	private static final int			NUMS				= 1000000;
+  private static final int      NUMS       = 1000000;
 
-	private static final int			START_SIZE	= 500000000;
+  private static final int      START_SIZE = 500000000;
 
-	private OFileMMap							file;
+  private OFileMMap             file;
 
-	public OMMapOpenCloseTest() {
-		super(NUMS);
-	}
+  public OMMapOpenCloseTest() {
+    super(NUMS);
+  }
 
-	@Override
-	public void init() throws IOException {
-		System.out.println("Testing opening and closing of a " + START_SIZE / 1000000 + "MB files for " + NUMS + " times...");
+  @Override
+  public void init() throws IOException {
+    System.out.println("Testing opening and closing of a " + START_SIZE / 1000000 + "MB files for " + NUMS + " times...");
 
-		file = new OFileMMap().init(FILE_NAME, "rw");
+    file = (OFileMMap) (new OFileMMap().init(FILE_NAME, "rw"));
 
-		// DELETE THE TEST FILE EVERY TIME
-		File f = new File(FILE_NAME);
-		if (!f.exists())
-			file.create(START_SIZE);
-		else
-			file.open();
-	}
+    // DELETE THE TEST FILE EVERY TIME
+    File f = new File(FILE_NAME);
+    if (!f.exists())
+      file.create(START_SIZE);
+    else
+      file.open();
+  }
 
-	@Override
-	public void cycle() throws IOException {
-		// file.tryUnmap();
-		// file.tryMap();
-	}
+  @Override
+  public void cycle() throws IOException {
+    // file.tryUnmap();
+    // file.tryMap();
+  }
 }

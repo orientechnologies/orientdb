@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OUniqueHashIndex;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OLRUCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -24,7 +24,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OUniqueHashIndex    hashIndex;
   private MersenneTwisterFast random = new MersenneTwisterFast();
-  private OLRUCache           buffer;
+  private O2QCache            buffer;
 
   public HashIndexSpeedTest() {
     super(5000000);
@@ -33,7 +33,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   @Override
   @Test(enabled = false)
   public void init() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", "/temp");
+    String buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
       buildDirectory = ".";
 
@@ -47,9 +47,9 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
 
     long maxMemory = 2L * 1024 * 1024 * 1024;
     System.out.println("Max memory :" + maxMemory);
-    buffer = new OLRUCache(maxMemory, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
-        (OStorageLocal) databaseDocumentTx.getStorage(), false);
-    hashIndex = new OUniqueHashIndex((OStorageLocal) databaseDocumentTx.getStorage());
+    buffer = new O2QCache(maxMemory, 15000, ODirectMemoryFactory.INSTANCE.directMemory(), null,
+        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    hashIndex = new OUniqueHashIndex();
 
     hashIndex.create("uhashIndexTest", new OSimpleKeyIndexDefinition(OType.STRING), databaseDocumentTx,
         OMetadata.CLUSTER_INDEX_NAME, new int[0], null);

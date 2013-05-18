@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,14 +40,15 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
   private String             code;
   private String             language;
   private boolean            idempotent = false;
-  private List<String>	 	 parameters = null;
+  private List<String>       parameters = null;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateFunction parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("FUNCTION");
@@ -66,11 +66,12 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
       } else if (temp.equals("LANGUAGE")) {
         parserNextWord(false);
         language = parserGetLastWord();
-      } else if (temp.equals("PARAMETERS")){
-    	  parserNextWord(false);
-    	  parameters=new ArrayList<String>();
-    	  OStringSerializerHelper.getCollection(parserGetLastWord(), 0, parameters);
-    	  if (parameters.size()==0) throw new OCommandExecutionException("Syntax Error. Missing function parameter(s): " + getSyntax());
+      } else if (temp.equals("PARAMETERS")) {
+        parserNextWord(false);
+        parameters = new ArrayList<String>();
+        OStringSerializerHelper.getCollection(parserGetLastWord(), 0, parameters);
+        if (parameters.size() == 0)
+          throw new OCommandExecutionException("Syntax Error. Missing function parameter(s): " + getSyntax());
       }
 
       temp = parserOptionalWord(true);
@@ -86,14 +87,17 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
   public Object execute(final Map<Object, Object> iArgs) {
     if (name == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
-    if (name.isEmpty()) throw new OCommandExecutionException("Syntax Error. You must specify a function name: " + getSyntax());
-    if (code==null || code.isEmpty()) throw new OCommandExecutionException("Syntax Error. You must specify the function code: " + getSyntax());
-    
+    if (name.isEmpty())
+      throw new OCommandExecutionException("Syntax Error. You must specify a function name: " + getSyntax());
+    if (code == null || code.isEmpty())
+      throw new OCommandExecutionException("Syntax Error. You must specify the function code: " + getSyntax());
+
     ODatabaseRecord database = getDatabase();
     final OFunction f = database.getMetadata().getFunctionLibrary().createFunction(name);
     f.setCode(code);
     f.setIdempotent(idempotent);
-    if (parameters!=null) f.setParameters(parameters);
+    if (parameters != null)
+      f.setParameters(parameters);
     if (language != null)
       f.setLanguage(language);
 

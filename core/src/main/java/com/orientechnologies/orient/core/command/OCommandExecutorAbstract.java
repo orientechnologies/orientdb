@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -35,8 +36,9 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
-  public OCommandExecutorAbstract init(final String iText) {
-    parserText = iText;
+  public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
+    parserText = iRequest.getText().trim();
+    parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
     return this;
   }
 
@@ -71,6 +73,10 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     if (context == null)
       context = new OBasicCommandContext();
     return context;
+  }
+
+  public void setContext(final OCommandContext iContext) {
+    context = iContext;
   }
 
   public static ODatabaseRecord getDatabase() {

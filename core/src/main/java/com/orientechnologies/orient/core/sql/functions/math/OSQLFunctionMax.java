@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
@@ -38,35 +38,44 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null || !(iParameters[0] instanceof Comparable<?>))
-      // PRECONDITIONS
-      return null;
 
-    if (iParameters.length == 1) {
-      final Comparable<Object> value = (Comparable<Object>) iParameters[0];
-
+	// calculate max value for current record
+	// consider both collection of parameters and collection in each parameter
+    Object max = null;
+    for (Object item : iParameters) {
+    	if (item instanceof Collection<?>) {
+    		for (Object subitem : ((Collection<?>) item)) {
+    			if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0)
+    				max = subitem;
+    		}
+    	} else {
+            if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
+                max = item;    		
+    	}
+    }
+    
+    // what to do with the result, for current record, depends on how this function has been invoked
+    // for an unique result aggregated from all output records
+    if (aggregateResults() && max != null) {
       if (context == null)
         // FIRST TIME
-        context = value;
-      else if (context.compareTo(value) < 0)
+        context = (Comparable) max;
+      else if (context.compareTo((Comparable) max) < 0)
         // BIGGER
-        context = value;
+        context = (Comparable) max;
 
       return null;
-    } else {
-      Object max = null;
-      for (int i = 0; i < iParameters.length; ++i) {
-        if (max == null || iParameters[i] != null && ((Comparable) iParameters[i]).compareTo(max) > 0)
-          max = iParameters[i];
-      }
-      return max;
     }
+
+    // for non aggregated results (a result per output record)
+    return max;
   }
 
   public boolean aggregateResults() {
-    return configuredParameters.length == 1;
+    // LET definitions (contain $current) does not require results aggregation
+    return ((configuredParameters.length == 1) && !configuredParameters[0].toString().contains("$current"));
   }
 
   public String getSyntax() {

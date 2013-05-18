@@ -120,8 +120,8 @@
 
 		controller.parameter('queryResponse', commandResponse);
 		controller.parameter('commandResponse', commandResult);
-
 		controller.parameter('queryLimit', limit);
+		controller.parameter('queryLanguage', language);
 
 		var savedQueries = controller.parameter('savedQueries');
 		if (savedQueries == null) {
@@ -141,20 +141,24 @@
 			commandOutputEditor.setCode('');
 		} else {
 			queryResponse(commandResponse);
-			commandOutputEditor.setCode(commandResult);
+			commandOutputEditor.setCode( unescape( commandResult ) );
 		}
 	}
 
 	function refreshSavedQueries() {
 		var savedQueries = controller.parameter('savedQueries');
 		var options = '';
+		var last = "";
 		for (q in savedQueries) {
+			if( last == "" )
+				last = savedQueries[q];
+
 			options += '<option value="' + escape( savedQueries[q] ) + '">'
 					+ savedQueries[q] + '</option>';
 		}
 		$("#savedQueries").html(options);
 		$("#savedQueries").attr('selectedIndex', 1);
-		return $("#savedQueries").val();
+		return last;
 	}
 
 	function clearResultset() {
@@ -184,6 +188,10 @@
 	previous = controller.parameter('queryLimit');
 	if (previous != null)
 		$("#limit").val(previous);
+
+	previous = controller.parameter('queryLanguage');
+	if (previous != null)
+		$("#language").val(previous);
 
 	queryEditor = CodeMirror.fromTextArea('queryText', {
 		width : "auto",

@@ -3,6 +3,13 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -11,13 +18,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -130,6 +130,9 @@ public class ByteArrayKeyTest {
   }
 
   public void testAutomaticCompositeUsageInTX() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     byte[] key1 = new byte[] { 7, 8, 9 };
     byte[] key2 = new byte[] { 10, 11, 12 };
 
@@ -274,6 +277,9 @@ public class ByteArrayKeyTest {
   }
 
   public void testTransactionalUsageWorks() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     byte[] key3 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 3 };
     ODocument doc1 = new ODocument().field("k", "key3");
@@ -291,6 +297,9 @@ public class ByteArrayKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getManualIndex();
     byte[] key5 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 5 };
@@ -309,6 +318,9 @@ public class ByteArrayKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
+    if (database.getURL().startsWith("plocal:"))
+      return;
+
     OIndex<?> index = getManualIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     byte[] key7 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 7 };

@@ -396,6 +396,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.DATETIME;
     else if (iCharType == 's')
       return OType.SHORT;
+    else if (iCharType == 'e')
+      return OType.EMBEDDEDSET;
 
     return OType.STRING;
   }

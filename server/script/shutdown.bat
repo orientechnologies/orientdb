@@ -43,7 +43,7 @@ if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-ser
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set LOG_LEVEL=warning
 set WWW_PATH=%ORIENTDB_HOME%/www
-REM set JAVA_OPTS=-Xms1024m -Xmx1024m
+set JAVA_OPTS=-Djava.awt.headless=true
 
 call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-tools-@VERSION@.jar;%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
 

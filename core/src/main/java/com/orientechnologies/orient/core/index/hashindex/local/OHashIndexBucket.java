@@ -32,15 +32,20 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * @since 2/17/13
  */
 public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K, V>> {
-  private static final int            FREE_POINTER_OFFSET        = 0;
-  private static final int            DEPTH_OFFSET               = OIntegerSerializer.INT_SIZE;
+  private static final int            MAGIC_NUMBER_OFFSET        = 0;
+  private static final int            CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            WAL_SEGMENT_OFFSET         = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int            WAL_POSITION_OFFSET        = WAL_SEGMENT_OFFSET + OIntegerSerializer.INT_SIZE;
+
+  private static final int            FREE_POINTER_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            DEPTH_OFFSET               = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            SIZE_OFFSET                = DEPTH_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int            HISTORY_OFFSET             = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   private static final int            NEXT_REMOVED_BUCKET_OFFSET = HISTORY_OFFSET + OLongSerializer.LONG_SIZE * 64;
   private static final int            POSITIONS_ARRAY_OFFSET     = NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int             MAX_BUCKET_SIZE_BYTES      = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  public static final int             MAX_BUCKET_SIZE_BYTES      = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   private final long                  bufferPointer;
   private final ODirectMemory         directMemory;

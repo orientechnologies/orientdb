@@ -48,7 +48,8 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
   public OCommandExecutorSQLFindReferences parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword(KEYWORD_FIND);
     parserRequiredKeyword(KEYWORD_REFERENCES);

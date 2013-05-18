@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
@@ -99,7 +99,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze(final boolean throwException) {
-    if (!(getStorage() instanceof OStorageLocal)) {
+    if (!(getStorage() instanceof OStorageLocalAbstract)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -122,7 +122,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze() {
-    if (!(getStorage() instanceof OStorageLocal)) {
+    if (!(getStorage() instanceof OStorageLocalAbstract)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -145,7 +145,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void release() {
-    if (!(getStorage() instanceof OStorageLocal)) {
+    if (!(getStorage() instanceof OStorageLocalAbstract)) {
       OLogManager.instance().error(this,
           "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
       return;
@@ -419,20 +419,20 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ODocument iRecord) {
+  public ODatabaseDocumentTx delete(final ORecordInternal<?> iRecord) {
     if (iRecord == null)
       throw new ODatabaseException("Cannot delete null document");
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-    if (iRecord.getClassName() != null)
-      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, iRecord.getClassName());
+    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null)
+      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) iRecord).getClassName());
 
     try {
       underlying.delete(iRecord);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), iRecord.getClassName());
+          iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
     }
     return this;
   }

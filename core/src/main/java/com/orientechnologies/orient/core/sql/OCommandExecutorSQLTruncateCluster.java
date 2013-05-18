@@ -44,7 +44,8 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     StringBuilder word = new StringBuilder();
 

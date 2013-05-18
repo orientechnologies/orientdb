@@ -23,32 +23,32 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 @Test(groups = "db")
 public class DbCheckTest implements OCommandOutputListener {
 
-	private String	url;
+  private String url;
 
-	@Parameters(value = { "url" })
-	public DbCheckTest(String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = { "url" })
+  public DbCheckTest(String iURL) {
+    url = iURL;
+  }
 
-	@Test
-	public void checkDatabaseIntegrity() throws IOException {
-		ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-		database.open("admin", "admin");
+  @Test
+  public void checkDatabaseIntegrity() throws IOException {
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
+    database.open("admin", "admin");
 
-		boolean result = ((OStorageLocal) database.getStorage()).check(false, this);
-		Assert.assertTrue(result);
+    boolean result = ((OStorageLocalAbstract) database.getStorage()).check(false, this);
+    Assert.assertTrue(result);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(enabled = false)
-	public void onMessage(final String iText) {
-		System.out.print(iText);
-		System.out.flush();
-	}
+  @Test(enabled = false)
+  public void onMessage(final String iText) {
+    System.out.print(iText);
+    System.out.flush();
+  }
 }

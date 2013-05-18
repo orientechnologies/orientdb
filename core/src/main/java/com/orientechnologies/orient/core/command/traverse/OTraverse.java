@@ -23,6 +23,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 /**
  * Base class for traversing.
@@ -33,7 +34,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   private OTraverseContext                  context     = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
-  private List<String>                      fields      = new ArrayList<String>();
+  private List<Object>                      fields      = new ArrayList<Object>();
   private long                              resultCount = 0;
   private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
@@ -66,11 +67,17 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     if (lastTraversed == null && context.peek() != null)
       throw new IllegalStateException("Traverse ended abnormally");
 
+    if (!context.checkTimeout())
+      return false;
+
     // BROWSE ALL THE RECORDS
     return lastTraversed != null;
   }
 
   public OIdentifiable next() {
+    if (Thread.interrupted())
+      throw new OCommandExecutionException("The traverse execution has been interrupted");
+
     if (lastTraversed != null) {
       // RETURN LATEST AND RESET IT
       final OIdentifiable result = lastTraversed;
@@ -139,14 +146,14 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return predicate;
   }
 
-  public OTraverse field(final String iFieldName) {
-    if (!fields.contains(iFieldName))
-      fields.add(iFieldName);
+  public OTraverse field(final Object iField) {
+    if (!fields.contains(iField))
+      fields.add(iField);
     return this;
   }
 
-  public OTraverse fields(final Collection<String> iFields) {
-    for (String f : iFields)
+  public OTraverse fields(final Collection<Object> iFields) {
+    for (Object f : iFields)
       field(f);
     return this;
   }
@@ -157,7 +164,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return this;
   }
 
-  public List<String> getFields() {
+  public List<Object> getFields() {
     return fields;
   }
 

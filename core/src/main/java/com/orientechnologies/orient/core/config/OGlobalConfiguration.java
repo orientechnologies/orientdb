@@ -56,7 +56,28 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
-  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in bytes", Integer.class, 64 * 1024),
+  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
+
+  WAL_CACHE_SIZE("storage.wal.cacheSize",
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
+      Integer.class, 3000),
+
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 10 * 1024),
+
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 30 * 1024),
+
+  WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
+
+  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
+      Integer.class, 36000),
+
+  WAL_CHECKPOINT_INTERVAL_TIMEOUT("storage.wal.checkpointIntervalTimeout",
+      "Timeout till DB will wait checkpoint is finished during DB close (in seconds))", Integer.class, 300),
+
+  WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
+      + " it is highly recomended to use separate disk to store log operations", String.class, null),
+
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
       + "this queue is used to accumulate all pages that "
@@ -64,6 +85,9 @@ public enum OGlobalConfiguration {
 
   DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
       "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
+
+  PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
+      + " in page which is tracked in paginated storage", Integer.class, 16),
 
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
@@ -106,6 +130,11 @@ public enum OGlobalConfiguration {
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
+
+  // DATABASE
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
+
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
@@ -194,7 +223,7 @@ public enum OGlobalConfiguration {
       Integer.class, 8),
 
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 16),
+      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
@@ -203,7 +232,7 @@ public enum OGlobalConfiguration {
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, false),
+  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
 
   FILE_DEFRAG_STRATEGY("file.defrag.strategy", "Strategy to recycle free space: 0 = synchronous defrag, 1 = asynchronous defrag, ",
       Integer.class, 0),
@@ -351,6 +380,9 @@ public enum OGlobalConfiguration {
       OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
     }
   }),
+
+  // COMMAND
+  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands expressed in milliseconds", Long.class, 0),
 
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),

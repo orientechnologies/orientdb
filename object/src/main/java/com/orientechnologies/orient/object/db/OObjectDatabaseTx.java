@@ -259,7 +259,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
-    return load(iPojo, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iPojo, iFetchPlan, iIgnoreCache, false);
   }
 
   @Override
@@ -290,7 +290,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return load(iRecordId, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iRecordId, iFetchPlan, iIgnoreCache, false);
   }
 
   @Override
@@ -448,16 +448,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (iRID == null)
       return this;
 
-    ODocument record = iRID.getRecord();
-    if (record != null) {
+    final ORecordInternal<?> record = iRID.getRecord();
+    if (record instanceof ODocument) {
       Object iPojo = getUserObjectByRecord(record, null);
 
-      deleteCascade(record);
+      deleteCascade((ODocument) record);
 
       underlying.delete(record);
 
       if (getTransaction() instanceof OTransactionNoTx)
-        unregisterPojo(iPojo, record);
+        unregisterPojo(iPojo, (ODocument) record);
 
     }
     return this;
@@ -499,7 +499,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return false;
   }
 
-  protected void deleteCascade(ODocument record) {
+  protected void deleteCascade(final ODocument record) {
     if (record == null)
       return;
     List<String> toDeleteCascade = OObjectEntitySerializer.getCascadeDeleteFields(record.getClassName());

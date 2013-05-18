@@ -10,7 +10,7 @@ Look also at [Presentations](https://github.com/nuvolabase/orientdb/wiki/Present
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/nuvolabase/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [DocumentDatabase] but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/nuvolabase/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
 
 # Scalability: the database is the bottleneck of most of applications
 
@@ -38,7 +38,7 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 
 ## Professional services
 
-OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://www.nuvolabase.com/site/professional.html). For courses and training look at the [on-line course catalog](http://www.nuvolabase.com/site/training.html).
+OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://orientechnologies.com/support.htm). For courses and training look at the [on-line course catalog](http://orientechnologies.com/training.htm).
 
 ## Online cloud service
 

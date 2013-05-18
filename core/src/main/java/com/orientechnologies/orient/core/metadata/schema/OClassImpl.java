@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -52,6 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -118,6 +120,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
 
     return (T) javaClass.newInstance();
+  }
+
+  @Override
+  public <RET extends ODocumentWrapper> RET reload() {
+    return (RET) owner.reload();
   }
 
   public String getCustom(final String iName) {
@@ -796,9 +803,36 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public long count(final boolean iPolymorphic) {
     if (iPolymorphic)
-      return getDatabase().countClusterElements(polymorphicClusterIds);
+      return getDatabase().countClusterElements(readableClusters(getDatabase(), polymorphicClusterIds));
 
-    return getDatabase().countClusterElements(clusterIds);
+    return getDatabase().countClusterElements(readableClusters(getDatabase(), clusterIds));
+  }
+
+  public static int[] readableClusters(final ODatabaseRecord iDatabase, final int[] iClusterIds) {
+    List<Integer> listOfReadableIds = new ArrayList<Integer>();
+
+    boolean all = true;
+    for (int clusterId : iClusterIds) {
+      try {
+        String clusterName = iDatabase.getClusterNameById(clusterId);
+        iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
+        listOfReadableIds.add(clusterId);
+      } catch (OSecurityAccessException securityException) {
+        // if the cluster is inaccessible it's simply not processed in the list.add
+      }
+    }
+    
+    if (all)
+      // JUST RETURN INPUT ARRAY (FASTER)
+      return iClusterIds;
+
+    int[] readableClusterIds = new int[listOfReadableIds.size()];
+    int index = 0;
+    for (int clusterId : listOfReadableIds) {
+      readableClusterIds[index++] = clusterId;
+    }
+
+    return readableClusterIds;
   }
 
   private ODatabaseRecord getDatabase() {

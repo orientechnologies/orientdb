@@ -82,10 +82,11 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       String iFetchPlan) throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
+    json.setPrettyPrint(true);
 
     if (iRecords.size() > 0) {
       final ORecord<?> firstRecord = iRecords.get(0).getRecord();
-      final OClass vertexBaseClass = firstRecord.getDatabase().getMetadata().getSchema().getClass(OGraphDatabase.VERTEX_CLASS_NAME);
+      final OClass vertexBaseClass = firstRecord.getDatabase().getMetadata().getSchema().getClass(OGraphDatabase.VERTEX_ALIAS);
       if (firstRecord instanceof ODocument && ((ODocument) firstRecord).getSchemaClass().isSubClassOf(vertexBaseClass))
         // GRAPHDB MODEL
         generateGraphDbOutput(iRecords, json);

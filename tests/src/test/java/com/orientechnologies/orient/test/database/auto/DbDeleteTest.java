@@ -58,20 +58,35 @@ public class DbDeleteTest {
 
   @Test(dependsOnMethods = { "testDbDeleteNoCredential" })
   public void testDbDelete() throws IOException {
-    ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    String prefix = url.substring(0, url.indexOf(':') + 1);
+    if (prefix.equals("memory:") || prefix.equals("remote:"))
+      return;
+
+    ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    if (!db.exists())
+      db.create();
+
     ODatabaseHelper.dropDatabase(db);
 
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
 
   public void testDbDeleteWithIndex() {
-    final ODatabaseDocument db = new ODatabaseDocumentTx("local:" + testPath + "core/target/testDbDeleteWithIndex");
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
+    String prefix = url.substring(0, url.indexOf(':') + 1);
+    if (prefix.equals("memory:") || prefix.equals("remote:"))
+      return;
 
-    db.create();
+    ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
+    if (!db.exists())
+      db.create();
+
+    if (db.exists()) {
+      if (db.isClosed())
+        db.open("admin", "admin");
+
+      db.drop();
+      db.create();
+    }
 
     final OClass indexedClass = db.getMetadata().getSchema().createClass("IndexedClass");
     indexedClass.createProperty("value", OType.STRING);

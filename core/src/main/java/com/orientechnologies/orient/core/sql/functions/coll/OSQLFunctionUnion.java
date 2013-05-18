@@ -21,11 +21,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.iterator.OMultiCollectionIterator;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
 /**
@@ -43,7 +42,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(final OIdentifiable iCurrentRecord, ODocument iCurrentResult, final Object[] iParameters,
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters.length == 1) {
       // AGGREGATION MODE (STATEFULL)
@@ -62,7 +61,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Set<Object
       return context;
     } else {
       // IN-LINE MODE (STATELESS)
-      final List<Collection<OIdentifiable>> result = new ArrayList<Collection<OIdentifiable>>();
+      final Collection<Object> result = new ArrayList<Object>();
       for (Object value : iParameters) {
         if (value != null) {
           if (value instanceof OSQLFilterItemVariable)

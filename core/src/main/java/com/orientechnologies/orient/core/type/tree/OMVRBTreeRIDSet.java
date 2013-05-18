@@ -111,7 +111,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public boolean add(final OIdentifiable e) {
-    return tree.put(e, null) != null;
+    return tree.put(e, null) == null;
   }
 
   public boolean remove(final Object o) {

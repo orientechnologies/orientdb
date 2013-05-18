@@ -2,7 +2,7 @@
 	<div class="span12">
 		<div class="row-fluid">
 			<div class="span8">
-				<a href="http://www.orientechnologies.com/orient-db.htm"><img border="0" src="images/orient_db.png" /> </a><b> Studio</b>
+				<a href="http://www.orientdb.org"><img border="0" src="images/orient_db.png" /> </a><b> Studio</b>
 			</div>
 		</div>
 		<div class="row-fluid">
@@ -11,8 +11,8 @@
 					Welcome to OrientDB Studio. This is a graphical tool built as HTML + JS that communicates against OrientDB server using the HTTP RESTful
 					protocol. To know more about OrientDB Studio look at the <a href="https://github.com/nuvolabase/orientdb/wiki/OrientDB-Studio">Documentation</a>. To
 					report problems use the <a href="https://github.com/nuvolabase/orientdb/issues">Issue Tracker</a>, to receive jump to the <a
-						href="https://groups.google.com/forum/?fromgroups#!forum/orient-database">Forum</a>. Need a <a href="http://www.nuvolabase.com/site/training.html">course</a> or <a
-						href="http://www.nuvolabase.com/site/professional.html">professional support</a>?
+						href="https://groups.google.com/forum/?fromgroups#!forum/orient-database">Forum</a>. Need a <a href="http://orientechnologies.com/training.htm">course</a> or <a
+						href="http://orientechnologies.com/support.htm">professional support</a>?
 				</p>
 			</div>
 		</div>
@@ -125,8 +125,13 @@
 			orientServer = new ODatabase($('#server').val() + '/'
 					+ $('#database').val());
 		}
-		databaseInfo = orientServer
-				.open($('#user').val(), $('#password').val());
+		
+		// CONNECT TO THE SERVER
+		orientServer.open($('#user').val(), $('#password').val());
+
+		// LOAD METADATA
+		databaseInfo = orientServer.metadata();
+
 		if (databaseInfo == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 			orientServer = null;

@@ -67,6 +67,8 @@ public interface OCommandExecutor {
 
   public OCommandContext getContext();
 
+  public void setContext(OCommandContext context);
+
   /**
    * Returns true if the command doesn't change the database, otherwise false.
    */

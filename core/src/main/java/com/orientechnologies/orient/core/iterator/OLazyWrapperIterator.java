@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.iterator;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.util.OResettable;
 
@@ -26,17 +27,13 @@ import com.orientechnologies.common.util.OResettable;
  */
 public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
   protected final Iterator<?> iterator;
-  protected final Object      additionalData;
+  protected T                 nextElement;
 
   public OLazyWrapperIterator(final Iterator<?> iterator) {
     this.iterator = iterator;
-    this.additionalData = null;
   }
 
-  public OLazyWrapperIterator(final Iterator<?> iterator, final Object iAdditionalData) {
-    this.iterator = iterator;
-    this.additionalData = iAdditionalData;
-  }
+  public abstract boolean filter(T iObject);
 
   public abstract T createWrapper(Object iObject);
 
@@ -51,16 +48,30 @@ public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T
     if (iterator instanceof OResettable)
       // RESET IT FOR MULTIPLE ITERATIONS
       ((OResettable) iterator).reset();
+    nextElement = null;
   }
 
   @Override
   public boolean hasNext() {
-    return iterator.hasNext();
+    while (nextElement == null && iterator.hasNext()) {
+      nextElement = createWrapper(iterator.next());
+      if (nextElement != null && !filter(nextElement))
+        nextElement = null;
+    }
+
+    return nextElement != null;
   }
 
   @Override
   public T next() {
-    return createWrapper(iterator.next());
+    if (hasNext())
+      try {
+        return nextElement;
+      } finally {
+        nextElement = null;
+      }
+
+    throw new NoSuchElementException();
   }
 
   @Override

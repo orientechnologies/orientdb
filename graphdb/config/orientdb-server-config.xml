@@ -71,7 +71,21 @@
 	<users>
 	</users>
 	<properties>
-		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
+		<!-- DATABASE POOL: size min/max -->
+		<entry name="db.pool.min" value="1" />
+		<entry name="db.pool.max" value="20" />
+		
+		<!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
+		<entry name="cache.level1.enabled" value="false" />
+		<entry name="cache.level1.size" value="1000" />
+		<entry name="cache.level2.enabled" value="true" />
+		<entry name="cache.level2.size" value="1000" />
+		
+		<!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->
+		<entry name="profiler.enabled" value="true" />
+		<!-- <entry name="profiler.config" value="30,10,10" />  -->		
+
+		<!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />
 	</properties>

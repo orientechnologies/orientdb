@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.object.db.graph.OGraphElement;
 
 @Test
 public class GraphDatabaseTest {
@@ -143,15 +142,15 @@ public class GraphDatabaseTest {
     Assert.assertNotNull(database.getOutEdges(tom, "drives"));
     Assert.assertFalse(database.getOutEdges(tom, "drives").isEmpty());
 
-    List<OGraphElement> result = database.query(new OSQLSynchQuery<OGraphElement>(
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.query(new OSQLSynchQuery<OGraphElement>(
+    result = database.query(new OSQLSynchQuery<ODocument>(
         "select out[label='drives'][in.brand = 'Ferrari'].in from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.query(new OSQLSynchQuery<OGraphElement>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+    result = database.query(new OSQLSynchQuery<ODocument>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -195,6 +194,9 @@ public class GraphDatabaseTest {
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
+    if (url.startsWith("plocal:"))
+      return;
+
     OClass oc = database.getVertexType("vertexA");
     if (oc == null)
       oc = database.createVertexType("vertexA");
@@ -250,6 +252,9 @@ public class GraphDatabaseTest {
   }
 
   public void testEdgesIterationInTX() {
+    if (url.startsWith("plocal:"))
+      return;
+
     database.createVertexType("vertexAA");
     database.createVertexType("vertexBB");
     database.createEdgeType("edgeAB");
@@ -272,34 +277,13 @@ public class GraphDatabaseTest {
     }
   }
 
-  //
-  // @Test
-  // public void testTxDictionary() {
-  // database.open("admin", "admin");
-  //
-  // database.begin();
-  //
-  // try {
-  // ODocument rootNode = database.createVertex().field("id", 54254454);
-  // database.setRoot("test123", rootNode);
-  // rootNode.save();
-  //
-  // database.commit();
-  //
-  // database.close();
-  // database.open("admin", "admin");
-  //
-  // ODocument secroot = database.getRoot("test123");
-  // Assert.assertEquals(secroot.getIdentity(), rootNode.getIdentity());
-  // } finally {
-  // database.close();
-  // }
-  // }
-
   /**
    * @author bill@tobecker.com
    */
   public void testTxField() {
+    if (url.startsWith("plocal:"))
+      return;
+
     if (database.getVertexType("PublicCert") == null)
       database.createVertexType("PublicCert");
 
@@ -501,7 +485,7 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(((Collection<ODocument>) result.get(0).field("out")).size(), 2);
 
-    subquery = "select flatten(out[label='owns'].in) from V where name = 'UK'";
+    subquery = "select expand(out[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 2);
@@ -510,7 +494,7 @@ public class GraphDatabaseTest {
       Assert.assertTrue(result.get(i).containsField("lat"));
     }
 
-    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select flatten(out[label='owns'].in) from V where name = 'UK') order by distance";
+    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out[label='owns'].in) from V where name = 'UK') order by distance";
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
@@ -521,15 +505,15 @@ public class GraphDatabaseTest {
     }
   }
 
-  public void testFlattenBlankDatabase() throws IOException {
+  public void testexpandBlankDatabase() throws IOException {
     String iUrl = url;
     iUrl.replace("\\", "/");
     if (iUrl.endsWith("/"))
       iUrl = iUrl.substring(0, iUrl.length() - 1);
     if (iUrl.contains("/")) {
-      iUrl = iUrl.substring(0, iUrl.lastIndexOf("/") + 1) + "flattenTest";
+      iUrl = iUrl.substring(0, iUrl.lastIndexOf("/") + 1) + "expandTest";
     } else {
-      iUrl = iUrl.substring(0, iUrl.indexOf(":") + 1) + "flattenTest";
+      iUrl = iUrl.substring(0, iUrl.indexOf(":") + 1) + "expandTest";
     }
     ODatabaseDocument db = new ODatabaseDocumentTx(iUrl);
 
@@ -542,7 +526,7 @@ public class GraphDatabaseTest {
     ODocument teamDoc = database.createVertex().field("team", "Chelsea").save();
     database.createEdge(playerDoc, teamDoc).field("label", "player").save();
 
-    String query = "select flatten(out[label='player'].in) from V where surname = 'Torres'";
+    String query = "select expand(out[label='player'].in) from V where surname = 'Torres'";
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     for (int i = 0; i < result.size(); i++) {
       Assert.assertTrue(result.get(i).containsField("team"));
@@ -555,43 +539,38 @@ public class GraphDatabaseTest {
     database.close();
   }
 
-  public void checkDijkstra() {
-    String subquery = "select $current, Dijkstra($current, #53:3, 'weight') as path from V where 1 > 0";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
-    Assert.assertFalse(result.isEmpty());
-  }
-
-  public void testSQLManagementOfUnderlyingDocumentsInGraphs() {
-    Object result;
-
-    result = database.command(new OCommandSQL("create class V1 extends V")).execute();
-    result = database.command(new OCommandSQL("create class E1 extends E")).execute();
-
-    OIdentifiable v1 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
-    OIdentifiable v2 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
-    OIdentifiable v3 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
-    List<OIdentifiable> e1 = database.command(
-        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity() + " set name = 'wow' ")).execute();
-    List<OIdentifiable> e2 = database.command(
-        new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity() + " set name = 'wow' ")).execute();
-
-    result = database.command(
-        new OCommandSQL("delete edge from " + v1.getIdentity() + " to " + v2.getIdentity() + " where  name = 'wow'")).execute();
-    Assert.assertEquals(result, 1);
-    result = database.command(new OCommandSQL("delete edge where name = 'wow'")).execute();
-    Assert.assertEquals(result, 1);
-
-    result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v2);
-    Assert.assertEquals(result, 1);
-    result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v3);
-    Assert.assertEquals(result, 1);
-
-    result = database.command(new OCommandSQL("create property V1.ctime DATETIME")).execute();
-    // result = database.command(new OCommandSQL("update V1 set ctime=sysdate() where name = 'madeInSqlLand'")).execute();
-
-    result = database.command(new OCommandSQL("drop class V1")).execute();
-    result = database.command(new OCommandSQL("drop class E1")).execute();
-  }
+  //
+  // public void testSQLManagementOfUnderlyingDocumentsInGraphs() {
+  // Object result;
+  //
+  // result = database.command(new OCommandSQL("create class V1 extends V")).execute();
+  // result = database.command(new OCommandSQL("create class E1 extends E")).execute();
+  //
+  // OIdentifiable v1 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+  // OIdentifiable v2 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+  // OIdentifiable v3 = database.command(new OCommandSQL("create vertex V1 set name = 'madeInSqlLand'")).execute();
+  // List<OIdentifiable> e1 = database.command(
+  // new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v2.getIdentity() + " set name = 'wow' ")).execute();
+  // List<OIdentifiable> e2 = database.command(
+  // new OCommandSQL("create edge E1 from " + v1.getIdentity() + " to " + v3.getIdentity() + " set name = 'wow' ")).execute();
+  //
+  // result = database.command(
+  // new OCommandSQL("delete edge from " + v1.getIdentity() + " to " + v2.getIdentity() + " where  name = 'wow'")).execute();
+  // Assert.assertEquals(result, 1);
+  // result = database.command(new OCommandSQL("delete edge where name = 'wow'")).execute();
+  // Assert.assertEquals(result, 1);
+  //
+  // result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v2);
+  // Assert.assertEquals(result, 1);
+  // result = database.command(new OCommandSQL("delete from V1 where @rid = ?")).execute(v3);
+  // Assert.assertEquals(result, 1);
+  //
+  // result = database.command(new OCommandSQL("create property V1.ctime DATETIME")).execute();
+  // // result = database.command(new OCommandSQL("update V1 set ctime=sysdate() where name = 'madeInSqlLand'")).execute();
+  //
+  // result = database.command(new OCommandSQL("drop class V1")).execute();
+  // result = database.command(new OCommandSQL("drop class E1")).execute();
+  // }
 
   @Test
   public void testTransactionNative() {

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * SQL CREATE CLUSTER command: Creates a new cluster.
@@ -36,12 +37,14 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_CREATE      = "CREATE";
   public static final String KEYWORD_CLUSTER     = "CLUSTER";
+  public static final String KEYWORD_ID          = "ID";
   public static final String KEYWORD_DATASEGMENT = "DATASEGMENT";
   public static final String KEYWORD_LOCATION    = "LOCATION";
   public static final String KEYWORD_POSITION    = "POSITION";
 
   private String             clusterName;
   private String             clusterType;
+  private int                requestedId         = -1;
   private String             dataSegmentName     = "default";
   private String             location            = "default";
   private String             position            = "append";
@@ -50,7 +53,8 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-    init(((OCommandRequestText) iRequest).getText());
+        init((OCommandRequestText) iRequest);
+
 
     parserRequiredKeyword(KEYWORD_CREATE);
     parserRequiredKeyword(KEYWORD_CLUSTER);
@@ -64,7 +68,10 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     String temp = parseOptionalWord(true);
 
     while (temp != null) {
-      if (temp.equals(KEYWORD_DATASEGMENT)) {
+      if (temp.equals(KEYWORD_ID)) {
+        requestedId = Integer.parseInt(parserRequiredWord(false));
+
+      } else if (temp.equals(KEYWORD_DATASEGMENT)) {
         dataSegmentName = parserRequiredWord(false);
 
       } else if (temp.equals(KEYWORD_LOCATION)) {
@@ -84,9 +91,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
-    if (dataId == -1)
-      throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");
+    if (!(database.getStorage() instanceof OLocalPaginatedStorage)) {
+      final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
+      if (dataId == -1)
+        throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");
+    }
 
     if (!Orient.instance().getClusterFactory().isSupported(clusterType))
       throw new OCommandSQLParsingException("Cluster type '" + clusterType + "' is not supported");
@@ -103,7 +112,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
 
     final ODatabaseRecord database = getDatabase();
 
-    return database.addCluster(clusterType, clusterName, location, dataSegmentName);
+    if (requestedId == -1) {
+        return database.addCluster(clusterType, clusterName, location, dataSegmentName);
+    } else {
+        return database.addCluster(clusterType, clusterName, requestedId, location, dataSegmentName);
+    }
   }
 
   @Override

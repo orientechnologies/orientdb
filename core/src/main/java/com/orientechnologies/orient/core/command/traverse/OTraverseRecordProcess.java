@@ -63,10 +63,12 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
 
     // MATCH!
 
-    final List<String> fields = new ArrayList<String>();
+    final List<Object> fields = new ArrayList<Object>();
 
     // TRAVERSE THE DOCUMENT ITSELF
-    for (String cfgField : command.getFields()) {
+    for (Object cfgFieldObject : command.getFields()) {
+      String cfgField = cfgFieldObject.toString();
+
       if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
           || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
 
@@ -93,8 +95,9 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
 
           cfgField = cfgField.substring(pos + 1);
 
-        }
-        fields.add(cfgField);
+          fields.add(cfgField);
+        } else
+          fields.add(cfgFieldObject);
       }
     }
 

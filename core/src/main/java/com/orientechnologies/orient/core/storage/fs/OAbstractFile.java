@@ -23,6 +23,8 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -44,35 +46,39 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  * <br/>
  */
 public abstract class OAbstractFile implements OFile {
-  private FileLock           fileLock;
+  private FileLock            fileLock;
 
-  protected File             osFile;
-  protected RandomAccessFile accessFile;
-  protected FileChannel      channel;
-  protected volatile boolean dirty                  = false;
-  protected volatile boolean headerDirty            = false;
+  protected File              osFile;
+  protected RandomAccessFile  accessFile;
+  protected FileChannel       channel;
+  protected volatile boolean  dirty                  = false;
+  protected volatile boolean  headerDirty            = false;
 
-  protected int              incrementSize          = DEFAULT_INCREMENT_SIZE;
-  protected int              maxSize;
-  protected byte[]           securityCode           = new byte[32];          // PART OF HEADER (32 bytes)
-  protected String           mode;
-  protected boolean          failCheck              = true;
-  protected volatile int     size;                                           // PART OF HEADER (4 bytes)
+  protected int               incrementSize          = DEFAULT_INCREMENT_SIZE;
+  protected int               maxSize;
+  protected byte[]            securityCode           = new byte[32];                // PART OF HEADER (32 bytes)
+  protected String            mode;
+  protected boolean           failCheck              = true;
+  protected volatile int      size;                                                 // PART OF HEADER (4 bytes)
 
-  protected static final int HEADER_SIZE            = 1024;
-  protected static final int HEADER_DATA_OFFSET     = 128;
-  protected static final int DEFAULT_SIZE           = 1024000;
-  protected static final int DEFAULT_INCREMENT_SIZE = -50;                   // NEGATIVE NUMBER MEANS AS PERCENT OF CURRENT SIZE
+  protected static final int  HEADER_SIZE            = 1024;
+  protected static final int  HEADER_DATA_OFFSET     = 128;
+  protected static final int  DEFAULT_SIZE           = 1024000;
+  protected static final int  DEFAULT_INCREMENT_SIZE = -50;                         // NEGATIVE NUMBER MEANS AS PERCENT OF CURRENT
+                                                                                     // SIZE
 
-  private static final int   OPEN_RETRY_MAX         = 10;
-  private static final int   OPEN_DELAY_RETRY       = 100;
+  private static final int    OPEN_RETRY_MAX         = 10;
+  private static final int    OPEN_DELAY_RETRY       = 100;
 
-  private static final long  LOCK_WAIT_TIME         = 300;
-  private static final int   LOCK_MAX_RETRIES       = 10;
+  private static final long   LOCK_WAIT_TIME         = 300;
+  private static final int    LOCK_MAX_RETRIES       = 10;
 
-  protected static final int SIZE_OFFSET            = 0;
-  protected static final int FILLEDUPTO_OFFSET      = 4;
-  protected static final int SOFTLY_CLOSED_OFFSET   = 8;
+  protected static final int  SIZE_OFFSET            = 0;
+  protected static final int  FILLEDUPTO_OFFSET      = 4;
+  protected static final int  SOFTLY_CLOSED_OFFSET   = 8;
+
+  private final ReadWriteLock lock                   = new ReentrantReadWriteLock();
+  private boolean             wasSoftlyClosed        = true;
 
   public abstract int getFileSize();
 
@@ -118,43 +124,57 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#open()
    */
   public boolean open() throws IOException {
-    if (!osFile.exists())
-      throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
+    acquireWriteLock();
+    try {
+      if (!osFile.exists())
+        throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
 
-    openChannel((int) osFile.length());
+      openChannel((int) osFile.length());
 
-    OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
+      OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 
-    init();
+      init();
 
-    final int fileSize = getFileSize();
-    int filledUpTo = getFilledUpTo();
+      final int fileSize = getFileSize();
+      int filledUpTo = getFilledUpTo();
 
-    if (filledUpTo > 0 && filledUpTo > fileSize) {
-      OLogManager
-          .instance()
-          .error(
-              this,
-              "invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time. Please assure the right number of records in the cluster",
-              filledUpTo, getOsFile().getAbsolutePath(), fileSize, fileSize);
-      setSize(fileSize);
-      setFilledUpTo(fileSize);
-      filledUpTo = getFilledUpTo();
+      if (filledUpTo > 0 && filledUpTo > fileSize) {
+        OLogManager
+            .instance()
+            .error(
+                this,
+                "invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time. Please assure the right number of records in the cluster",
+                filledUpTo, getOsFile().getAbsolutePath(), fileSize, fileSize);
+        setSize(fileSize);
+        setFilledUpTo(fileSize);
+        filledUpTo = getFilledUpTo();
+      }
+
+      if (filledUpTo > fileSize || filledUpTo < 0)
+        OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
+            OStorageException.class);
+
+      if (failCheck) {
+        wasSoftlyClosed = isSoftlyClosed();
+
+        if (wasSoftlyClosed)
+          setSoftlyClosed(false);
+
+        return wasSoftlyClosed;
+      }
+      return true;
+    } finally {
+      releaseWriteLock();
     }
+  }
 
-    if (filledUpTo > fileSize || filledUpTo < 0)
-      OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
-          OStorageException.class);
-
-    if (failCheck) {
-      boolean softlyClosed = isSoftlyClosed();
-
-      if (softlyClosed)
-        setSoftlyClosed(false);
-
-      return softlyClosed;
+  public boolean wasSoftlyClosed() {
+    acquireReadLock();
+    try {
+      return wasSoftlyClosed;
+    } finally {
+      releaseReadLock();
     }
-    return true;
   }
 
   /*
@@ -163,14 +183,19 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#create(int)
    */
   public void create(int iStartSize) throws IOException {
-    if (iStartSize == -1)
-      iStartSize = DEFAULT_SIZE;
+    acquireWriteLock();
+    try {
+      if (iStartSize == -1)
+        iStartSize = DEFAULT_SIZE;
 
-    openChannel(iStartSize);
+      openChannel(iStartSize);
 
-    setFilledUpTo(0);
-    setSize(maxSize > 0 && iStartSize > maxSize ? maxSize : iStartSize);
-    setSoftlyClosed(!failCheck);
+      setFilledUpTo(0);
+      setSize(maxSize > 0 && iStartSize > maxSize ? maxSize : iStartSize);
+      setSoftlyClosed(!failCheck);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /*
@@ -179,21 +204,29 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#close()
    */
   public void close() throws IOException {
+    acquireWriteLock();
     try {
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-        unlock();
-      if (channel != null && channel.isOpen()) {
-        channel.close();
-        channel = null;
-      }
+      try {
+        setSoftlyClosed(true);
 
-      if (accessFile != null) {
-        accessFile.close();
-        accessFile = null;
-      }
+        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
+          unlock();
 
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
+        if (channel != null && channel.isOpen()) {
+          channel.close();
+          channel = null;
+        }
+
+        if (accessFile != null) {
+          accessFile.close();
+          accessFile = null;
+        }
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
@@ -203,13 +236,18 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#delete()
    */
   public void delete() throws IOException {
-    close();
-    if (osFile != null) {
-      boolean deleted = osFile.delete();
-      while (!deleted) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-        deleted = osFile.delete();
+    acquireWriteLock();
+    try {
+      close();
+      if (osFile != null) {
+        boolean deleted = osFile.delete();
+        while (!deleted) {
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+          deleted = osFile.delete();
+        }
       }
+    } finally {
+      releaseWriteLock();
     }
   }
 
@@ -217,20 +255,30 @@ public abstract class OAbstractFile implements OFile {
    * Locks a portion of file.
    */
   public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException {
-    return channel.lock(iRangeFrom, iRangeSize, iShared);
+    acquireWriteLock();
+    try {
+      return channel.lock(iRangeFrom, iRangeSize, iShared);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /*
    * Unlocks a portion of file.
    */
   public OFile unlock(final FileLock iLock) throws IOException {
-    if (iLock != null) {
-      try {
-        iLock.release();
-      } catch (ClosedChannelException e) {
+    acquireWriteLock();
+    try {
+      if (iLock != null) {
+        try {
+          iLock.release();
+        } catch (ClosedChannelException e) {
+        }
       }
+      return this;
+    } finally {
+      releaseWriteLock();
     }
-    return this;
   }
 
   /*
@@ -239,25 +287,34 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()
    */
   public void lock() throws IOException {
-    for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
-      try {
-        fileLock = channel.tryLock(0, 1, false);
-        break;
-      } catch (OverlappingFileLockException e) {
-        OLogManager.instance().debug(this,
-            "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
-            LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
+    if( channel == null )
+      return;
+    
+    acquireWriteLock();
+    try {
+      for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
+        try {
+          fileLock = channel.tryLock(0, 1, true);
+          if (fileLock != null)
+            break;
+        } catch (OverlappingFileLockException e) {
+          OLogManager.instance().debug(this,
+              "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
+              LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
 
-        // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-        OMemoryWatchDog.freeMemoryForResourceCleanup(LOCK_WAIT_TIME);
+          // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
+          OMemoryWatchDog.freeMemoryForResourceCleanup(LOCK_WAIT_TIME);
+        }
+
+        if (fileLock == null)
+          throw new OLockException(
+              "File '"
+                  + osFile.getPath()
+                  + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database.");
       }
+    } finally {
+      releaseWriteLock();
     }
-
-    if (fileLock == null)
-      throw new OLockException(
-          "File '"
-              + osFile.getPath()
-              + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database.");
   }
 
   /*
@@ -266,25 +323,35 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#unlock()
    */
   public void unlock() throws IOException {
-    if (fileLock != null) {
-      try {
-        fileLock.release();
-      } catch (ClosedChannelException e) {
+    acquireWriteLock();
+    try {
+      if (fileLock != null) {
+        try {
+          fileLock.release();
+        } catch (ClosedChannelException e) {
+        }
+        fileLock = null;
       }
-      fileLock = null;
+    } finally {
+      releaseWriteLock();
     }
   }
 
   protected void checkSize(final int iSize) throws IOException {
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
+    acquireReadLock();
+    try {
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
 
-    final int filledUpTo = getFilledUpTo();
-    if (iSize < filledUpTo)
-      OLogManager.instance().error(
-          this,
-          "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
-              + " bytes", OIOException.class);
+      final int filledUpTo = getFilledUpTo();
+      if (iSize < filledUpTo)
+        OLogManager.instance().error(
+            this,
+            "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
+                + " bytes", OIOException.class);
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -293,11 +360,16 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#removeTail(int)
    */
   public void removeTail(int iSizeToShrink) throws IOException {
-    final int filledUpTo = getFilledUpTo();
-    if (filledUpTo < iSizeToShrink)
-      iSizeToShrink = 0;
+    acquireWriteLock();
+    try {
+      final int filledUpTo = getFilledUpTo();
+      if (filledUpTo < iSizeToShrink)
+        iSizeToShrink = 0;
 
-    setFilledUpTo(filledUpTo - iSizeToShrink);
+      setFilledUpTo(filledUpTo - iSizeToShrink);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /*
@@ -306,13 +378,18 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#shrink(int)
    */
   public void shrink(final int iSize) throws IOException {
-    final int filledUpTo = getFilledUpTo();
-    if (iSize >= filledUpTo)
-      return;
+    acquireWriteLock();
+    try {
+      final int filledUpTo = getFilledUpTo();
+      if (iSize >= filledUpTo)
+        return;
 
-    OLogManager.instance().debug(this, "Shrinking filled file from " + filledUpTo + " to " + iSize + " bytes. " + toString());
+      OLogManager.instance().debug(this, "Shrinking filled file from " + filledUpTo + " to " + iSize + " bytes. " + toString());
 
-    setFilledUpTo(iSize);
+      setFilledUpTo(iSize);
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /*
@@ -321,51 +398,61 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#allocateSpace(int)
    */
   public int allocateSpace(final int iSize) throws IOException {
-    final int offset = getFilledUpTo();
-    final int size = getFileSize();
+    acquireWriteLock();
+    try {
+      final int offset = getFilledUpTo();
+      final int size = getFileSize();
 
-    if (getFreeSpace() < iSize) {
-      if (maxSize > 0 && maxSize - size < iSize)
-        throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
-            + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
+      if (getFreeSpace() < iSize) {
+        if (maxSize > 0 && maxSize - size < iSize)
+          throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
+              + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
 
-      // MAKE ROOM
-      int newFileSize = size;
-
-      if (newFileSize == 0)
-        // PROBABLY HAS BEEN LOST WITH HARD KILLS
-        newFileSize = DEFAULT_SIZE;
-
-      // GET THE STEP SIZE IN BYTES
-      int stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
-
-      // FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
-      while (newFileSize - offset <= iSize) {
-        newFileSize += stepSizeInBytes;
+        // MAKE ROOM
+        int newFileSize = size;
 
         if (newFileSize == 0)
-          // EMPTY FILE: ALLOCATE REQUESTED SIZE ONLY
-          newFileSize = iSize;
-        if (newFileSize > maxSize && maxSize > 0)
-          // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
-          newFileSize = maxSize;
+          // PROBABLY HAS BEEN LOST WITH HARD KILLS
+          newFileSize = DEFAULT_SIZE;
+
+        // GET THE STEP SIZE IN BYTES
+        int stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
+
+        // FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
+        while (newFileSize - offset <= iSize) {
+          newFileSize += stepSizeInBytes;
+
+          if (newFileSize == 0)
+            // EMPTY FILE: ALLOCATE REQUESTED SIZE ONLY
+            newFileSize = iSize;
+          if (newFileSize > maxSize && maxSize > 0)
+            // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
+            newFileSize = maxSize;
+        }
+
+        setSize(newFileSize);
       }
 
-      setSize(newFileSize);
+      // THERE IS SPACE IN FILE: RETURN THE UPPER BOUND OFFSET AND UPDATE THE FILLED THRESHOLD
+      setFilledUpTo(offset + iSize);
+
+      return offset;
+    } finally {
+      releaseWriteLock();
     }
-
-    // THERE IS SPACE IN FILE: RETURN THE UPPER BOUND OFFSET AND UPDATE THE FILLED THRESHOLD
-    setFilledUpTo(offset + iSize);
-
-    return offset;
   }
 
   protected long checkRegions(final long iOffset, final int iLength) {
-    if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
-      throw new OIOException("You cannot access outside the file size (" + getFilledUpTo() + " bytes). You have requested portion "
-          + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
+    acquireReadLock();
+    try {
+      if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
+        throw new OIOException("You cannot access outside the file size (" + getFilledUpTo()
+            + " bytes). You have requested portion " + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
 
-    return iOffset;
+      return iOffset;
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -374,7 +461,12 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getFreeSpace()
    */
   public int getFreeSpace() {
-    return getFileSize() - getFilledUpTo();
+    acquireReadLock();
+    try {
+      return getFileSize() - getFilledUpTo();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -383,7 +475,12 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#canOversize(int)
    */
   public boolean canOversize(final int iRecordSize) {
-    return maxSize - getFileSize() > iRecordSize;
+    acquireReadLock();
+    try {
+      return maxSize - getFileSize() > iRecordSize;
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -420,47 +517,64 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getOsFile()
    */
   public File getOsFile() {
-    return osFile;
+    acquireReadLock();
+    try {
+      return osFile;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   public OAbstractFile init(final String iFileName, final String iMode) {
-    mode = iMode;
-    osFile = new File(iFileName);
-    return this;
+    acquireWriteLock();
+    try {
+      mode = iMode;
+      osFile = new File(iFileName);
+
+      return this;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   protected void openChannel(final int iNewSize) throws IOException {
-    OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: ", osFile, osFile.length());
+    acquireWriteLock();
+    try {
+      OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: ", osFile, osFile.length());
 
-    for (int i = 0; i < OPEN_RETRY_MAX; ++i)
-      try {
-        accessFile = new RandomAccessFile(osFile, mode);
-        break;
-      } catch (FileNotFoundException e) {
-        if (i == OPEN_DELAY_RETRY)
-          throw e;
-
-        // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-        // FREQUENTLY)
-        osFile.getParentFile().mkdirs();
+      for (int i = 0; i < OPEN_RETRY_MAX; ++i)
         try {
-          Thread.sleep(OPEN_DELAY_RETRY);
-        } catch (InterruptedException e1) {
-          Thread.currentThread().interrupt();
+          accessFile = new RandomAccessFile(osFile, mode);
+          break;
+        } catch (FileNotFoundException e) {
+          if (i == OPEN_DELAY_RETRY)
+            throw e;
+
+          // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
+          // FREQUENTLY)
+          osFile.getParentFile().mkdirs();
+          try {
+            Thread.sleep(OPEN_DELAY_RETRY);
+          } catch (InterruptedException e1) {
+            Thread.currentThread().interrupt();
+          }
         }
-      }
 
-    if (accessFile == null)
-      throw new FileNotFoundException(osFile.getAbsolutePath());
+      if (accessFile == null)
+        throw new FileNotFoundException(osFile.getAbsolutePath());
 
-    if (accessFile.length() != iNewSize)
-      accessFile.setLength(iNewSize);
+      if (accessFile.length() != iNewSize)
+        accessFile.setLength(iNewSize);
 
-    accessFile.seek(0);
-    channel = accessFile.getChannel();
+      accessFile.seek(0);
+      channel = accessFile.getChannel();
 
-    if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-      lock();
+      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
+        lock();
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   /*
@@ -469,7 +583,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getMaxSize()
    */
   public int getMaxSize() {
-    return maxSize;
+    acquireReadLock();
+    try {
+      return maxSize;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -478,7 +598,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setMaxSize(int)
    */
   public void setMaxSize(int maxSize) {
-    this.maxSize = maxSize;
+    acquireWriteLock();
+    try {
+      this.maxSize = maxSize;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   /*
@@ -487,7 +613,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getIncrementSize()
    */
   public int getIncrementSize() {
-    return incrementSize;
+    acquireReadLock();
+    try {
+      return incrementSize;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -496,7 +628,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setIncrementSize(int)
    */
   public void setIncrementSize(int incrementSize) {
-    this.incrementSize = incrementSize;
+    acquireWriteLock();
+    try {
+      this.incrementSize = incrementSize;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   /*
@@ -505,7 +643,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
   public boolean isOpen() {
-    return accessFile != null;
+    acquireReadLock();
+    try {
+      return accessFile != null;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -514,7 +658,12 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#exists()
    */
   public boolean exists() {
-    return osFile != null && osFile.exists();
+    acquireReadLock();
+    try {
+      return osFile != null && osFile.exists();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
@@ -523,7 +672,13 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isFailCheck()
    */
   public boolean isFailCheck() {
-    return failCheck;
+    acquireReadLock();
+    try {
+      return failCheck;
+    } finally {
+      releaseReadLock();
+    }
+
   }
 
   /*
@@ -532,32 +687,84 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#setFailCheck(boolean)
    */
   public void setFailCheck(boolean failCheck) {
-    this.failCheck = failCheck;
+    acquireWriteLock();
+    try {
+      this.failCheck = failCheck;
+    } finally {
+      releaseWriteLock();
+    }
+
   }
 
   protected void setDirty() {
-    if (!dirty)
-      dirty = true;
+    acquireWriteLock();
+    try {
+      if (!dirty)
+        dirty = true;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   protected void setHeaderDirty() {
-    if (!headerDirty)
-      headerDirty = true;
+    acquireWriteLock();
+    try {
+      if (!headerDirty)
+        headerDirty = true;
+    } finally {
+      releaseWriteLock();
+    }
   }
 
   public String getName() {
-    return osFile.getName();
+    acquireReadLock();
+    try {
+      return osFile.getName();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   public String getPath() {
-    return osFile.getPath();
+    acquireReadLock();
+    try {
+      return osFile.getPath();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   public String getAbsolutePath() {
-    return osFile.getAbsolutePath();
+    acquireReadLock();
+    try {
+      return osFile.getAbsolutePath();
+    } finally {
+      releaseReadLock();
+    }
   }
 
   public boolean renameTo(final File newFile) {
-    return osFile.renameTo(newFile);
+    acquireWriteLock();
+    try {
+      return osFile.renameTo(newFile);
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  protected void acquireWriteLock() {
+    lock.writeLock().lock();
+  }
+
+  protected void releaseWriteLock() {
+    lock.writeLock().unlock();
+  }
+
+  protected void acquireReadLock() {
+    lock.readLock().lock();
+  }
+
+  protected void releaseReadLock() {
+    lock.readLock().unlock();
   }
 }

@@ -23,22 +23,26 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class OSharedDocumentDatabase {
-	public static ODatabaseDocumentTx acquire(final String iName, final String iUserName, final String iUserPassword)
-			throws InterruptedException {
-		final String path = OServerMain.server().getStoragePath(iName);
+  public static ODatabaseDocumentTx acquire(final String iName, final String iUserName, final String iUserPassword)
+      throws InterruptedException {
+    final String path = OServerMain.server().getStoragePath(iName);
 
-		return ODatabaseDocumentPool.global().acquire(path, iUserName, iUserPassword);
-	}
+    return ODatabaseDocumentPool.global().acquire(path, iUserName, iUserPassword);
+  }
 
-	public static void release(final ODatabaseDocumentTx iDatabase) {
-		iDatabase.close();
-	}
+  public static void release(final ODatabaseDocumentTx iDatabase) {
+    iDatabase.close();
+  }
 
-	public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
-		return ODatabaseDocumentPool.global().getPools();
-	}
+  public static Map<String, OResourcePool<String, ODatabaseDocumentTx>> getDatabasePools() {
+    return ODatabaseDocumentPool.global().getPools();
+  }
 
-	public static void remove(String iName, String iUser) {
-		ODatabaseDocumentPool.global().remove(iName, iUser);
-	}
+  public static void remove(String iName, String iUser) {
+    ODatabaseDocumentPool.global().remove(iName, iUser);
+  }
+
+  public static void setup(final int iMinSize, final int iMaxSize) {
+    ODatabaseDocumentPool.global(iMinSize, iMaxSize);
+  }
 }

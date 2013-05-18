@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -91,19 +92,23 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
         optimize();
         parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
             + parserGetCurrentPosition());
-      }
+      } else
+        parserGoBack();
+
     } else
       parserSetCurrentPosition(-1);
 
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP)) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT)) {
         final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
         else if (w.equals(KEYWORD_SKIP))
           parseSkip(w);
+        else if (w.equals(KEYWORD_TIMEOUT))
+          parseTimeout(w);
       }
     }
 
@@ -139,6 +144,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
 
     context = traverse.getContext();
+    context.beginExecution(timeoutMs, timeoutStrategy);
 
     // BROWSE ALL THE RECORDS AND COLLECTS RESULT
     final List<OIdentifiable> result = (List<OIdentifiable>) traverse.execute();
@@ -187,15 +193,21 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (fromPosition == -1)
       throw new OQueryParsingException("Missed " + KEYWORD_FROM, parserText, currentPos);
 
-    Set<String> fields = new HashSet<String>();
+    Set<Object> fields = new HashSet<Object>();
 
     final String fieldString = parserText.substring(currentPos, fromPosition).trim();
     if (fieldString.length() > 0) {
       // EXTRACT PROJECTIONS
       final List<String> items = OStringSerializerHelper.smartSplit(fieldString, ',');
 
-      for (String field : items)
-        fields.add(field.trim());
+      for (String field : items) {
+        final String fieldName = field.trim();
+
+        if (fieldName.contains("("))
+          fields.add(OSQLHelper.parseValue((OBaseParser) null, fieldName, context));
+        else
+          fields.add(fieldName);
+      }
     } else
       throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), parserText, currentPos);
 

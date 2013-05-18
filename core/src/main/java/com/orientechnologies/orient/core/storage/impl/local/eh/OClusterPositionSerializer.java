@@ -83,7 +83,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   @Override
   public void serializeInDirectMemory(OClusterPosition object, ODirectMemory memory, long pointer) {
     final byte[] serializedPosition = object.toStream();
-    memory.set(pointer, serializedPosition, serializedPosition.length);
+    memory.set(pointer, serializedPosition, 0, serializedPosition.length);
   }
 
   @Override

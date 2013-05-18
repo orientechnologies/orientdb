@@ -4,18 +4,19 @@
 			<form id="signin" action="#">
 				<table width="100%" cellpadding="4" cellspacing="3">
 					<tr>
-						<td colspan="3" align="left" valign="bottom"><a href="http://www.orientechnologies.com/orient-db.htm"><img border="0"
-								src="images/orient_db.png" />
+						<td colspan="3" align="left" valign="bottom">
+							<a href="http://www.orientdb.org"><img border="0" src="images/orient_db.png" /> </a><b> Studio</b>
 						</a><b class="help">Studio</b>
 						</td>
 					</tr>
 					<tr>
 						<td colspan="2" align="left" class="help"><br>
-							<p>Welcome to the OrientDB Studio application. If this is your first time play with the 'tinkerpop' database provided in bundle with any
-								OrientDB distribution.</p>
-							<p>To Login use "reader/reader" to read records from the database, and "writer/writer" to read, create, update and delete records. To
-								access to the Server information use, in the "Server" tab, "root" as user and the automatic generated password created in the file
-								"config/orient-server-config.xml".</p></td>
+					Welcome to OrientDB Studio. This is a graphical tool built as HTML + JS that communicates against OrientDB server using the HTTP RESTful
+					protocol. To know more about OrientDB Studio look at the <a href="https://github.com/nuvolabase/orientdb/wiki/OrientDB-Studio">Documentation</a>. To
+					report problems use the <a href="https://github.com/nuvolabase/orientdb/issues">Issue Tracker</a>, to receive jump to the <a
+						href="https://groups.google.com/forum/?fromgroups#!forum/orient-database">Forum</a>. Need a <a href="http://orientechnologies.com/training.htm">course</a> or <a
+						href="http://orientechnologies.com/support.htm">professional support</a>?</p>
+						</td>
 					</tr>
 					<tr>
 						<td align="right" class="ui-widget help">Server:</td>
@@ -108,8 +109,13 @@
 			orientServer = new ODatabase($('#server').val() + '/'
 					+ $('#database').val());
 		}
-		databaseInfo = orientServer
-				.open($('#user').val(), $('#password').val());
+
+		// CONNECT TO THE SERVER
+		orientServer.open($('#user').val(), $('#password').val());
+
+		// LOAD METADATA
+		databaseInfo = orientServer.metadata();
+
 		if (databaseInfo == null) {
 			jQuery("#output").text(orientServer.getErrorMessage());
 		} else {

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -77,24 +78,25 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 @SuppressWarnings({ "unchecked" })
 public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable,
     Externalizable {
-  private static final long                                              serialVersionUID = 1L;
+  private static final long                                              serialVersionUID    = 1L;
 
-  public static final byte                                               RECORD_TYPE      = 'd';
+  public static final byte                                               RECORD_TYPE         = 'd';
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
   protected Map<String, OSimpleMultiValueChangeListener<String, Object>> _fieldChangeListeners;
   protected Map<String, OMultiValueChangeTimeLine<String, Object>>       _fieldCollectionChangeTimeLines;
 
-  protected boolean                                                      _trackingChanges = true;
-  protected boolean                                                      _ordered         = true;
-  protected boolean                                                      _lazyLoad        = true;
+  protected boolean                                                      _trackingChanges    = true;
+  protected boolean                                                      _ordered            = true;
+  protected boolean                                                      _lazyLoad           = true;
+  protected boolean                                                      _allowChainedAccess = true;
 
-  protected transient List<WeakReference<ORecordElement>>                _owners          = null;
+  protected transient List<WeakReference<ORecordElement>>                _owners             = null;
 
-  protected static final String[]                                        EMPTY_STRINGS    = new String[] {};
+  protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
 
-  private long                                                           serializationId  = -1;
+  private long                                                           serializationId     = -1;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -634,10 +636,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Writes the field value.
+   * Writes the field value. This method sets the current document as dirty.
    * 
    * @param iFieldName
-   *          field name
+   *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
+   *          {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue
    *          field value
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
@@ -671,20 +674,56 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Writes the field value forcing the type.
+   * Writes the field value forcing the type. This method sets the current document as dirty.
    * 
    * @param iFieldName
-   *          field name
+   *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
+   *          {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue
    *          field value
    * @param iFieldType
    *          Forced type (not auto-determined)
-   * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
+   *         document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no
+   *         document has been found in chain
    */
   public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
+    }
+
+    final int lastSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
+    if (lastSep > -1) {
+      // SUB PROPERTY GET 1 LEVEL BEFORE LAST
+      final Object subObject = field(iFieldName.substring(0, lastSep));
+      if (subObject != null) {
+        final String subFieldName = iFieldName.substring(lastSep + 1);
+        if (subObject instanceof ODocument) {
+          // SUB-DOCUMENT
+          ((ODocument) subObject).field(subFieldName, iPropertyValue);
+          return (ODocument) (((ODocument) subObject).isEmbedded() ? this : subObject);
+        } else if (subObject instanceof Map<?, ?>)
+          // KEY/VALUE
+          ((Map<String, Object>) subObject).put(subFieldName, iPropertyValue);
+        else if (OMultiValue.isMultiValue(subObject)) {
+          // APPLY CHANGE TO ALL THE ITEM IN SUB-COLLECTION
+          for (Object subObjectItem : OMultiValue.getMultiValueIterable(subObject)) {
+            if (subObjectItem instanceof ODocument) {
+              // SUB-DOCUMENT, CHECK IF IT'S NOT LINKED
+              if (!((ODocument) subObjectItem).isEmbedded())
+                throw new IllegalArgumentException("Property '" + iFieldName
+                    + "' points to linked collection of items. You can only change embedded documents in this way");
+              ((ODocument) subObjectItem).field(subFieldName, iPropertyValue);
+            } else if (subObjectItem instanceof Map<?, ?>) {
+              // KEY/VALUE
+              ((Map<String, Object>) subObjectItem).put(subFieldName, iPropertyValue);
+            }
+          }
+          return this;
+        }
+      }
+      return null;
     }
 
     iFieldName = checkFieldName(iFieldName);
@@ -1599,5 +1638,24 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     fromStream(content);
 
     _dirty = stream.readBoolean();
+  }
+
+  /**
+   * Returns the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it
+   * to false if you allow to store properties with the dot.
+   */
+  public boolean isAllowChainedAccess() {
+    return _allowChainedAccess;
+  }
+
+  /**
+   * Change the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it to
+   * false if you allow to store properties with the dot.
+   * 
+   * @param _allowChainedAccess
+   */
+  public ODocument setAllowChainedAccess(final boolean _allowChainedAccess) {
+    this._allowChainedAccess = _allowChainedAccess;
+    return this;
   }
 }
