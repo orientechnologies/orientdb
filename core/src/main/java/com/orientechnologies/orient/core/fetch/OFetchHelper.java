@@ -42,10 +42,11 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @author Luca Molino
- * 
+ * @author Claudio Tesoriero (giastfader @ github)
  */
 public class OFetchHelper {
   public static final String ROOT_FETCH = "*";
+  private static final boolean debug=false;
 
   public static Map<String, Integer> buildFetchPlan(final String iFetchPlan) {
     final Map<String, Integer> fetchPlan = new HashMap<String, Integer>();
@@ -121,16 +122,22 @@ public class OFetchHelper {
         return false;
       }
     }
-
+ 
     return true;
 
   }
 
   private static int getDepthLevel(final Map<String, Integer> iFetchPlan, final String iFieldPath) {
-    Integer depthLevel = iFetchPlan.get(OFetchHelper.ROOT_FETCH);
-
+	  if (debug){
+		  System.out.println("     ++++ getDepthLevel start");
+		  System.out.println("     +++++ iFetchPlan: " + iFetchPlan);
+		  System.out.println("     +++++ iFieldPath: " + iFieldPath);
+	  }
+	  Integer depthLevel = iFetchPlan.get(OFetchHelper.ROOT_FETCH);
+	  if (debug) System.out.println("     +++++ depthLevel (root_fetch): " + depthLevel);
     for (String fieldFetchDefinition : iFetchPlan.keySet()) {
-      if (iFieldPath.startsWith(fieldFetchDefinition)) {
+      if (debug) System.out.println("     .......... fieldFetchDefinition: " + fieldFetchDefinition);
+      if (iFieldPath.equals(fieldFetchDefinition)) {
         // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
         depthLevel = iFetchPlan.get(fieldFetchDefinition);
         break;
@@ -140,7 +147,7 @@ public class OFetchHelper {
         break;
       }
     }
-
+      if (debug) System.out.println("     ..... depthLevel: " + depthLevel);
     return depthLevel.intValue();
   }
 
@@ -152,16 +159,14 @@ public class OFetchHelper {
 
     Object fieldValue;
     for (String fieldName : record.fieldNames()) {
-      final int depthLevel;
+      int depthLevel;
       final String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
 
+      depthLevel = getDepthLevel(iFetchPlan, fieldPath);
+      if (depthLevel == -2)
+          continue;
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
-      else
-        depthLevel = getDepthLevel(iFetchPlan, fieldPath);
-
-      if (depthLevel == -2)
-        continue;
 
       fieldValue = record.field(fieldName);
       if (fieldValue == null
@@ -291,19 +296,34 @@ public class OFetchHelper {
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
-
+    if (debug){
+	    System.out.println("processRecord start");
+	    System.out.println("iFieldDepthLevel: "+iFieldDepthLevel );
+	    System.out.println("record: " + record.toString());
+	    System.out.println("iFetchPlan: "+iFetchPlan );
+	    System.out.println("iCurrentLevel: "+iCurrentLevel );
+	    System.out.println("iLevelFromRoot: "+iLevelFromRoot );
+	    System.out.println("iCurrentLevel: "+iCurrentLevel );
+	    System.out.println("parsedRecords: "+parsedRecords );
+	    System.out.println("iFieldPathFromRoot: "+iFieldPathFromRoot );
+    }
+    
     for (String fieldName : record.fieldNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
-      final int depthLevel;
+  	  if (debug){
+      	System.out.println("     fieldName: "+fieldName );
+        System.out.println("     fieldPath: "+fieldPath );
+      }
+      int depthLevel;
+      depthLevel = getDepthLevel(iFetchPlan, fieldPath);
+      if (depthLevel == -2)
+          continue;
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
-      else
-        depthLevel = getDepthLevel(iFetchPlan, fieldPath);
 
-      if (depthLevel == -2)
-        continue;
+      if (debug) System.out.println("     depthLevel: "+depthLevel );
 
-      fieldValue = record.field(fieldName);
+      fieldValue = record.field(fieldName); 
       if (fieldValue == null
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
