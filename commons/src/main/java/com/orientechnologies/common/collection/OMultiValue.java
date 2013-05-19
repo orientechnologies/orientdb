@@ -73,11 +73,12 @@ public class OMultiValue {
     if (iObject == null)
       return 0;
 
+    if (iObject instanceof OMultiCollectionIterator<?>)
+      return ((OMultiCollectionIterator<?>) iObject).size();
+
     if (!isMultiValue(iObject))
       return 0;
 
-    if (iObject instanceof OMultiCollectionIterator<?>)
-      return ((OMultiCollectionIterator<?>) iObject).size();
     if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject).size();
     if (iObject instanceof Map<?, ?>)
