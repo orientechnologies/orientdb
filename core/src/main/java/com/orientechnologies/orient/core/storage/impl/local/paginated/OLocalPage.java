@@ -506,13 +506,13 @@ public class OLocalPage {
 
   private void endAtomicUpdate() throws IOException {
     if (walLog != null) {
-      setLsn(walLog.logRecord(currentPageDiff));
+      setLsn(walLog.log(currentPageDiff));
       currentPageDiff = null;
     }
   }
 
   private void logAddNewPage() throws IOException {
     if (walLog != null)
-      walLog.logRecord(new OAddNewPageRecord(pageIndex, fileName));
+      walLog.log(new OAddNewPageRecord(pageIndex, fileName));
   }
 }

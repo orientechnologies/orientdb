@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
@@ -25,10 +26,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 5/8/13
  */
+@Test(enabled = false)
 public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   private OWriteAheadLog writeAheadLog;
 
-  @BeforeClass
+  @BeforeClass(enabled = false)
   @Override
   public void beforeClass() throws IOException {
     System.out.println("Start LocalPaginatedClusterWithWALTest");
@@ -68,7 +70,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     paginatedCluster.create(-1);
   }
 
-  @AfterClass
+  @AfterClass(enabled = false)
   @Override
   public void afterClass() throws IOException {
     diskCache.clear();

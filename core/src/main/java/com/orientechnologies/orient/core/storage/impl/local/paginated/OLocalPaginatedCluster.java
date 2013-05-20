@@ -1397,7 +1397,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       if (writeAheadLog == null)
         return;
 
-      writeAheadLog.logRecord(new OClusterStateRecord(size, recordsSize, name));
+      writeAheadLog.log(new OClusterStateRecord(size, recordsSize, name));
     } finally {
       releaseSharedLock();
     }

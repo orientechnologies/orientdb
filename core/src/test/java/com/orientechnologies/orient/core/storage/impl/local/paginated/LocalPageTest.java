@@ -39,16 +39,21 @@ public class LocalPageTest {
 
   private OWriteAheadLog   writeAheadLog;
   private File             buildDir;
+  private String           buildDirectory;
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPageTest";
 
     buildDir = new File(buildDirectory);
     if (!buildDir.exists())
       buildDir.mkdirs();
 
+    createWAL(buildDirectory);
+  }
+
+  private void createWAL(String buildDirectory) throws IOException {
     OLocalPaginatedStorage localPaginatedStorage = mock(OLocalPaginatedStorage.class);
     when(localPaginatedStorage.getStoragePath()).thenReturn(buildDirectory);
     when(localPaginatedStorage.getName()).thenReturn("localPageTest");
@@ -1403,7 +1408,9 @@ public class LocalPageTest {
   }
 
   private void assertWALRestore(long pagePointer) throws IOException {
-    writeAheadLog.flush();
+    writeAheadLog.close();
+    createWAL(buildDirectory);
+
     long restoredPagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
     try {
       OLocalPage restoredPage = new OLocalPage(restoredPagePointer, false, writeAheadLog, -1, "test");

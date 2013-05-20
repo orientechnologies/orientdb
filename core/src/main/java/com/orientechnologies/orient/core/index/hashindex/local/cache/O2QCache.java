@@ -521,7 +521,8 @@ public class O2QCache implements ODiskCache {
   private void flushData(final long fileId, final long pageIndex, final long dataPointer) throws IOException {
     if (writeAheadLog != null) {
       OLogSequenceNumber lsn = getLogSequenceNumberFromPage(dataPointer);
-      if (lsn.compareTo(getFlushedLSN()) > 0)
+      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
+      if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
     }
 
@@ -537,14 +538,6 @@ public class O2QCache implements ODiskCache {
 
     if (syncOnPageFlush)
       multiFileSegment.synch();
-  }
-
-  private OLogSequenceNumber getFlushedLSN() {
-    OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
-    if (flushedLSN == null)
-      flushedLSN = new OLogSequenceNumber(-1, 0);
-
-    return flushedLSN;
   }
 
   @Override
