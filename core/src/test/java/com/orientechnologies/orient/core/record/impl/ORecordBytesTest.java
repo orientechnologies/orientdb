@@ -17,8 +17,10 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -83,6 +85,66 @@ public class ORecordBytesTest {
     }
   }
 
+  @Test
+  public void testReadFromInputStreamWithWait() throws Exception {
+    final byte[] data = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    final InputStream is = new NotFullyAvailableAtTheTimeInputStream(data, 5);
+
+    final int result = testedInstance.fromInputStream(is);
+    Assert.assertEquals(result, data.length);
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    assertArrayEquals(source, data);
+  }
+
+  @Test
+  public void testReadFromInputStreamWithWaitSizeLimit() throws Exception {
+    final byte[] data = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    final InputStream is = new NotFullyAvailableAtTheTimeInputStream(data, 5);
+
+    final int result = testedInstance.fromInputStream(is, 10);
+    Assert.assertEquals(result, data.length);
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    assertArrayEquals(source, data);
+  }
+
+  @Test
+  public void testReadFromInputStreamWithWaitSizeTooBigLimit() throws Exception {
+    final byte[] data = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    final InputStream is = new NotFullyAvailableAtTheTimeInputStream(data, 5);
+
+    final int result = testedInstance.fromInputStream(is, 15);
+    Assert.assertEquals(result, data.length);
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(data.length));
+
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    assertArrayEquals(source, data);
+  }
+
+  @Test
+  public void testReadFromInputStreamWithWaitSizeTooSmallLimit() throws Exception {
+    final byte[] data = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    final byte[] expected = Arrays.copyOf(data, 8);
+    final InputStream is = new NotFullyAvailableAtTheTimeInputStream(data, 5);
+
+    final int result = testedInstance.fromInputStream(is, 8);
+    Assert.assertEquals(result, expected.length);
+    Assert.assertEquals((Integer) getFieldValue(testedInstance, "_size"), Integer.valueOf(expected.length));
+
+    final byte[] source = (byte[]) getFieldValue(testedInstance, "_source");
+    assertArrayEquals(source, expected);
+  }
+
+  private static void assertArrayEquals(byte[] actual, byte[] expected) {
+    assert actual.length == expected.length;
+    for (int i = 0; i < expected.length; i++) {
+      assert actual[i] == expected[i];
+    }
+  }
+
   private static Object getFieldValue(Object source, String fieldName) throws NoSuchFieldException, IllegalAccessException {
     final Class<?> clazz = source.getClass();
     final Field field = getField(clazz, fieldName);
@@ -100,5 +162,32 @@ public class ORecordBytesTest {
       }
     }
     return getField(clazz.getSuperclass(), fieldName);
+  }
+
+  private static final class NotFullyAvailableAtTheTimeInputStream extends InputStream {
+
+    private int          pos = -1;
+    private int          interrupt;
+    private final byte[] data;
+
+    private NotFullyAvailableAtTheTimeInputStream(byte[] data, int interrupt) {
+      this.data = data;
+      this.interrupt = interrupt;
+      assert interrupt < data.length;
+    }
+
+    @Override
+    public int read() throws IOException {
+      pos++;
+      if (pos < interrupt) {
+        return data[pos];
+      } else if (pos == interrupt) {
+        return -1;
+      } else if (pos <= data.length) {
+        return data[pos - 1];
+      } else {
+        return -1;
+      }
+    }
   }
 }
