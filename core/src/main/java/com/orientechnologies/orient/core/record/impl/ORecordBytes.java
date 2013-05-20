@@ -111,9 +111,14 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
   public int fromInputStream(final InputStream in) throws IOException {
     final OMemoryStream out = new OMemoryStream();
     try {
-      int b;
-      while ((b = in.read()) > -1) {
-        out.write(b);
+      final byte[] buffer = new byte[OMemoryStream.DEF_SIZE];
+      int readBytesCount;
+      while(true) {
+        readBytesCount = in.read(buffer, 0, buffer.length);
+        if (readBytesCount == -1) {
+          break;
+        }
+        out.write(buffer, 0, readBytesCount);
       }
       out.flush();
       _source = out.toByteArray();
@@ -138,16 +143,24 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
    */
   public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
     final byte[] buffer = new byte[iMaxSize];
-    final int readBytesCount = in.read(buffer);
-    if (readBytesCount == -1) {
+    int totalBytesCount = 0;
+    int readBytesCount;
+    while (totalBytesCount < iMaxSize) {
+      readBytesCount = in.read(buffer, totalBytesCount, buffer.length - totalBytesCount);
+      if (readBytesCount == -1) {
+        break;
+      }
+      totalBytesCount += readBytesCount;
+    }
+    if (totalBytesCount == -1) {
       _source = EMPTY_SOURCE;
       _size = 0;
-    } else if (readBytesCount == iMaxSize) {
+    } else if (totalBytesCount == iMaxSize) {
       _source = buffer;
       _size = iMaxSize;
     } else {
-      _source = Arrays.copyOf(buffer, readBytesCount);
-      _size = readBytesCount;
+      _source = Arrays.copyOf(buffer, totalBytesCount);
+      _size = totalBytesCount;
     }
     return _size;
   }
