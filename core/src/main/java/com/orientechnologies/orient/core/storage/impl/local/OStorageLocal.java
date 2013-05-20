@@ -1470,6 +1470,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
+    if (iClusterId < 0)
+      return null;
+
     lock.acquireSharedLock();
     try {
 
