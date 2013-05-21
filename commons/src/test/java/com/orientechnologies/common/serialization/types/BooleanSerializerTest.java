@@ -20,10 +20,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
+@Test
 public class BooleanSerializerTest {
   private static final int     FIELD_SIZE   = 1;
   private static final Boolean OBJECT_TRUE  = true;
@@ -36,16 +40,41 @@ public class BooleanSerializerTest {
     booleanSerializer = new OBooleanSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(booleanSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
-  @Test
   public void testSerialize() {
     booleanSerializer.serialize(OBJECT_TRUE, stream, 0);
     Assert.assertEquals(booleanSerializer.deserialize(stream, 0), OBJECT_TRUE);
     booleanSerializer.serialize(OBJECT_FALSE, stream, 0);
     Assert.assertEquals(booleanSerializer.deserialize(stream, 0), OBJECT_FALSE);
+  }
+
+  public void testSerializeNative() {
+    booleanSerializer.serializeNative(OBJECT_TRUE, stream, 0);
+    Assert.assertEquals(booleanSerializer.deserializeNative(stream, 0), OBJECT_TRUE);
+    booleanSerializer.serializeNative(OBJECT_FALSE, stream, 0);
+    Assert.assertEquals(booleanSerializer.deserializeNative(stream, 0), OBJECT_FALSE);
+  }
+
+  public void testNativeDirectMemoryCompatibility() {
+    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    booleanSerializer.serializeNative(OBJECT_TRUE, stream, 0);
+    long pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT_TRUE);
+    } finally {
+      directMemory.free(pointer);
+    }
+
+    booleanSerializer.serializeNative(OBJECT_FALSE, stream, 0);
+    pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT_FALSE);
+    } finally {
+      directMemory.free(pointer);
+    }
   }
 }

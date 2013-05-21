@@ -1,6 +1,7 @@
 package com.orientechnologies.common.serialization;
 
 import java.lang.reflect.Field;
+import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -38,38 +39,66 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
     BYTE_ARRAY_OFFSET = theUnsafe.arrayBaseOffset(byte[].class);
   }
 
-  public void putShort(byte[] buffer, int index, short value) {
+  public void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder) {
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      value = Short.reverseBytes(value);
+
     theUnsafe.putShort(buffer, index + BYTE_ARRAY_OFFSET, value);
   }
 
-  public short getShort(byte[] buffer, int index) {
-    return theUnsafe.getShort(buffer, index + BYTE_ARRAY_OFFSET);
+  public short getShort(byte[] buffer, int index, ByteOrder byteOrder) {
+    short result = theUnsafe.getShort(buffer, index + BYTE_ARRAY_OFFSET);
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      result = Short.reverseBytes(result);
+
+    return result;
   }
 
-  public void putInt(byte[] buffer, int pointer, int value) {
+  public void putInt(byte[] buffer, int pointer, int value, ByteOrder byteOrder) {
     final long position = pointer + BYTE_ARRAY_OFFSET;
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      value = Integer.reverseBytes(value);
+
     theUnsafe.putInt(buffer, position, value);
   }
 
-  public int getInt(byte[] buffer, int pointer) {
+  public int getInt(byte[] buffer, int pointer, ByteOrder byteOrder) {
     final long position = pointer + BYTE_ARRAY_OFFSET;
-    return theUnsafe.getInt(buffer, position);
+    int result = theUnsafe.getInt(buffer, position);
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      result = Integer.reverseBytes(result);
+
+    return result;
   }
 
-  public void putLong(byte[] buffer, int index, long value) {
+  public void putLong(byte[] buffer, int index, long value, ByteOrder byteOrder) {
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      value = Long.reverseBytes(value);
+
     theUnsafe.putLong(buffer, index + BYTE_ARRAY_OFFSET, value);
   }
 
-  public long getLong(byte[] buffer, int index) {
-    return theUnsafe.getLong(buffer, index + BYTE_ARRAY_OFFSET);
+  public long getLong(byte[] buffer, int index, ByteOrder byteOrder) {
+    long result = theUnsafe.getLong(buffer, index + BYTE_ARRAY_OFFSET);
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      result = Long.reverseBytes(result);
+
+    return result;
   }
 
-  public void putChar(byte[] buffer, int index, char character) {
+  public void putChar(byte[] buffer, int index, char character, ByteOrder byteOrder) {
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      character = Character.reverseBytes(character);
+
     theUnsafe.putChar(buffer, index + BYTE_ARRAY_OFFSET, character);
   }
 
-  public char getChar(byte[] buffer, int index) {
-    return theUnsafe.getChar(buffer, index + BYTE_ARRAY_OFFSET);
+  public char getChar(byte[] buffer, int index, ByteOrder byteOrder) {
+    char result = theUnsafe.getChar(buffer, index + BYTE_ARRAY_OFFSET);
+    if (!byteOrder.equals(ByteOrder.nativeOrder()))
+      result = Character.reverseBytes(result);
+
+    return result;
   }
 
   public boolean nativeAccelerationUsed() {

@@ -16,6 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -59,17 +60,17 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return CONVERTER.getInt(stream, startPosition) + OIntegerSerializer.INT_SIZE;
+    return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()) + OIntegerSerializer.INT_SIZE;
   }
 
   public void serializeNative(byte[] object, byte[] stream, int startPosition) {
     int len = object.length;
-    CONVERTER.putInt(stream, startPosition, len);
+    CONVERTER.putInt(stream, startPosition, len, ByteOrder.nativeOrder());
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 
   public byte[] deserializeNative(byte[] stream, int startPosition) {
-    int len = CONVERTER.getInt(stream, startPosition);
+    int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
     return Arrays.copyOfRange(stream, startPosition + OIntegerSerializer.INT_SIZE, startPosition + OIntegerSerializer.INT_SIZE
         + len);
   }

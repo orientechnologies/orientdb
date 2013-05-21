@@ -23,10 +23,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+
 /**
  * @author Andrey Lomakin
  * @since 04.04.12
  */
+@Test
 public class DecimalSerializerTest {
   private final static int        FIELD_SIZE = 9;
   private static final BigDecimal OBJECT     = new BigDecimal(new BigInteger("20"), 2);
@@ -38,14 +42,29 @@ public class DecimalSerializerTest {
     decimalSerializer = new ODecimalSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(decimalSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
-  @Test
   public void testSerialize() {
     decimalSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(decimalSerializer.deserialize(stream, 0), OBJECT);
+  }
+
+  public void testSerializeNative() {
+    decimalSerializer.serializeNative(OBJECT, stream, 0);
+    Assert.assertEquals(decimalSerializer.deserializeNative(stream, 0), OBJECT);
+  }
+
+  public void testNativeDirectMemoryCompatibility() {
+    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    decimalSerializer.serializeNative(OBJECT, stream, 0);
+    long pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(decimalSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT);
+    } finally {
+      directMemory.free(pointer);
+    }
   }
 }

@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -62,11 +64,11 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   public void serializeNative(Character object, byte[] stream, int startPosition) {
-    BINARY_CONVERTER.putChar(stream, startPosition, object);
+    BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public Character deserializeNative(byte[] stream, int startPosition) {
-    return BINARY_CONVERTER.getChar(stream, startPosition);
+    return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   @Override

@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -359,11 +360,11 @@ public final class ODistributedVersion implements ORecordVersion {
       final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
-      CONVERTER.putInt(iStream, pos + len, distributedVersion.counter);
+      CONVERTER.putInt(iStream, pos + len, distributedVersion.counter, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_INT;
-      CONVERTER.putLong(iStream, pos + len, distributedVersion.timestamp);
+      CONVERTER.putLong(iStream, pos + len, distributedVersion.timestamp, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_LONG;
-      CONVERTER.putLong(iStream, pos + len, distributedVersion.macAddress);
+      CONVERTER.putLong(iStream, pos + len, distributedVersion.macAddress, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_LONG;
 
       return len;
@@ -374,11 +375,11 @@ public final class ODistributedVersion implements ORecordVersion {
       final ODistributedVersion distributedVersion = (ODistributedVersion) version;
 
       int len = 0;
-      distributedVersion.counter = CONVERTER.getInt(iStream, pos + len);
+      distributedVersion.counter = CONVERTER.getInt(iStream, pos + len, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_INT;
-      distributedVersion.timestamp = CONVERTER.getLong(iStream, pos + len);
+      distributedVersion.timestamp = CONVERTER.getLong(iStream, pos + len, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_LONG;
-      distributedVersion.macAddress = CONVERTER.getLong(iStream, pos + len);
+      distributedVersion.macAddress = CONVERTER.getLong(iStream, pos + len, ByteOrder.nativeOrder());
       len += OBinaryProtocol.SIZE_LONG;
       return len;
     }
