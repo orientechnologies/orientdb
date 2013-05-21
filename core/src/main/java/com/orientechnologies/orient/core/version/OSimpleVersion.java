@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -275,7 +276,7 @@ public final class OSimpleVersion implements ORecordVersion {
     public int fastWriteTo(byte[] iStream, int pos, ORecordVersion version) {
       final OSimpleVersion simpleVersion = (OSimpleVersion) version;
 
-      CONVERTER.putInt(iStream, pos, simpleVersion.version);
+      CONVERTER.putInt(iStream, pos, simpleVersion.version, ByteOrder.nativeOrder());
       return OBinaryProtocol.SIZE_INT;
     }
 
@@ -283,7 +284,7 @@ public final class OSimpleVersion implements ORecordVersion {
     public int fastReadFrom(byte[] iStream, int pos, ORecordVersion version) {
       final OSimpleVersion simpleVersion = (OSimpleVersion) version;
 
-      simpleVersion.version = CONVERTER.getInt(iStream, pos);
+      simpleVersion.version = CONVERTER.getInt(iStream, pos, ByteOrder.nativeOrder());
       return OBinaryProtocol.SIZE_INT;
     }
 

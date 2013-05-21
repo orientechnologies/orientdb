@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -69,23 +71,23 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
   public void serializeNative(String object, byte[] stream, int startPosition) {
     int length = object.length();
-    CONVERTER.putInt(stream, startPosition, length);
+    CONVERTER.putInt(stream, startPosition, length, ByteOrder.nativeOrder());
 
     int pos = startPosition + OIntegerSerializer.INT_SIZE;
     for (int i = 0; i < length; i++) {
       final char strChar = object.charAt(i);
-      CONVERTER.putChar(stream, pos, strChar);
+      CONVERTER.putChar(stream, pos, strChar, ByteOrder.nativeOrder());
       pos += 2;
     }
   }
 
   public String deserializeNative(byte[] stream, int startPosition) {
-    int len = CONVERTER.getInt(stream, startPosition);
+    int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
     char[] buffer = new char[len];
 
     int pos = startPosition + OIntegerSerializer.INT_SIZE;
     for (int i = 0; i < len; i++) {
-      buffer[i] = CONVERTER.getChar(stream, pos);
+      buffer[i] = CONVERTER.getChar(stream, pos, ByteOrder.nativeOrder());
       pos += 2;
     }
     return new String(buffer);

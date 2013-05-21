@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -64,11 +66,11 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   public void serializeNative(Short object, byte[] stream, int startPosition) {
-    CONVERTER.putShort(stream, startPosition, object);
+    CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
   public Short deserializeNative(byte[] stream, int startPosition) {
-    return CONVERTER.getShort(stream, startPosition);
+    return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   @Override
