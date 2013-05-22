@@ -381,14 +381,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     context.updateMetric("documentReads", +1);
 
     if (filter(record))
-      if (!handleResult(record))
+      if (!handleResult(record, true))
         // END OF EXECUTION
         return false;
 
     return true;
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord) {
+  protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
     lastRecord = null;
 
     if (orderedFields == null && skip > 0) {
@@ -396,7 +396,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return true;
     }
 
-    lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+    if (iCloneIt)
+      lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+    else
+      lastRecord = iRecord;
+    
     resultCount++;
 
     addResult(lastRecord);
@@ -811,7 +815,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           ORecord<?> record = identifiable.getRecord();
           // Don't throw exceptions is record is null, as indexed queries may fail when using record level security
           if ((record != null) && filter((ORecordInternal<?>) record)) {
-            final boolean continueResultParsing = handleResult(record);
+            final boolean continueResultParsing = handleResult(record, false);
             if (!continueResultParsing)
               break;
           }
@@ -819,7 +823,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } else {
         final ORecord<?> record = ((OIdentifiable) indexResult).getRecord();
         if (filter((ORecordInternal<?>) record))
-          handleResult(record);
+          handleResult(record, true);
       }
     }
   }
@@ -1050,7 +1054,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             getIndexKey(index.getDefinition(), values[2]));
 
         for (final OIdentifiable r : entries) {
-          final boolean continueResultParsing = handleResult(r);
+          final boolean continueResultParsing = handleResult(r, false);
           if (!continueResultParsing)
             break;
         }
@@ -1106,10 +1110,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (res instanceof Collection<?>)
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res)
-              handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
+              handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true);
           else
             // SINGLE VALUE INDEX
-            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
+            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), true);
       }
 
     } else {
@@ -1134,9 +1138,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (current.getValue() instanceof Collection<?>) {
             for (OIdentifiable identifiable : ((OMVRBTreeRIDSet) current.getValue()))
-              if (!handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity())))
+              if (!handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity()), true))
                 break;
-          } else if (!handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue())))
+          } else if (!handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()), true))
             break;
         }
       } finally {
@@ -1219,7 +1223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   protected void parseIndexSearchResult(final Collection<ODocument> entries) {
     for (final ODocument document : entries) {
-      final boolean continueResultParsing = handleResult(document);
+      final boolean continueResultParsing = handleResult(document, false);
       if (!continueResultParsing)
         break;
     }
@@ -1236,7 +1240,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private void handleNoTarget() {
     if (parsedTarget == null)
       // ONLY LET, APPLY TO THEM
-      handleResult(ORuntimeResult.createProjectionDocument(resultCount));
+      handleResult(ORuntimeResult.createProjectionDocument(resultCount), true);
   }
 
   private void handleGroupBy() {

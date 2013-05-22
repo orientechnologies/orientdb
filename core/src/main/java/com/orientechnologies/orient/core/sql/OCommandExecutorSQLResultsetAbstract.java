@@ -174,7 +174,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return null;
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord) {
+  protected boolean handleResult(final OIdentifiable iRecord, boolean iCloneIt) {
     if (iRecord != null) {
       resultCount++;
 
