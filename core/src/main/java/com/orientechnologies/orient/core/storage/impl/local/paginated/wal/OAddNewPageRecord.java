@@ -23,8 +23,8 @@ public class OAddNewPageRecord extends OAbstractPageWALRecord {
   public OAddNewPageRecord() {
   }
 
-  public OAddNewPageRecord(long pageIndex, String fileName) {
-    super(pageIndex, fileName);
+  public OAddNewPageRecord(long pageIndex, int clusterId) {
+    super(pageIndex, clusterId);
   }
 
   @Override

@@ -47,4 +47,5 @@ public interface ODiskCache {
   Set<ODirtyPage> logDirtyPagesTable() throws IOException;
 
   void forceSyncStoredChanges() throws IOException;
+
 }

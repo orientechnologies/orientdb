@@ -1,9 +1,7 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
 /**
  * @author Andrey Lomakin
@@ -14,15 +12,27 @@ public class OClusterStateRecord implements OWALRecord {
 
   private long               size;
   private long               recordsSize;
-  private String             name;
+  private int                clusterId;
 
   public OClusterStateRecord() {
   }
 
-  public OClusterStateRecord(long size, long recordsSize, String name) {
+  public OClusterStateRecord(long size, long recordsSize, int clusterId) {
     this.size = size;
     this.recordsSize = recordsSize;
-    this.name = name;
+    this.clusterId = clusterId;
+  }
+
+  public long getSize() {
+    return size;
+  }
+
+  public long getRecordsSize() {
+    return recordsSize;
+  }
+
+  public int getClusterId() {
+    return clusterId;
   }
 
   @Override
@@ -33,8 +43,8 @@ public class OClusterStateRecord implements OWALRecord {
     OLongSerializer.INSTANCE.serializeNative(recordsSize, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OStringSerializer.INSTANCE.serializeNative(name, content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(name);
+    OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     return offset;
   }
@@ -47,15 +57,15 @@ public class OClusterStateRecord implements OWALRecord {
     recordsSize = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    name = OStringSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(name);
+    clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    return 2 * OLongSerializer.LONG_SIZE + OStringSerializer.INSTANCE.getObjectSize(name);
+    return 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -82,11 +92,11 @@ public class OClusterStateRecord implements OWALRecord {
 
     OClusterStateRecord that = (OClusterStateRecord) o;
 
+    if (clusterId != that.clusterId)
+      return false;
     if (recordsSize != that.recordsSize)
       return false;
     if (size != that.size)
-      return false;
-    if (!name.equals(that.name))
       return false;
 
     return true;
@@ -96,7 +106,7 @@ public class OClusterStateRecord implements OWALRecord {
   public int hashCode() {
     int result = (int) (size ^ (size >>> 32));
     result = 31 * result + (int) (recordsSize ^ (recordsSize >>> 32));
-    result = 31 * result + name.hashCode();
+    result = 31 * result + clusterId;
     return result;
   }
 }

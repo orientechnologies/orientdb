@@ -33,8 +33,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(long pageIndex, String fileName) {
-    super(pageIndex, fileName);
+  public OUpdatePageRecord(long pageIndex, int clusterId) {
+    super(pageIndex, clusterId);
   }
 
   public List<Diff> getDiffs() {

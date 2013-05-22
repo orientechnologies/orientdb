@@ -615,6 +615,18 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    acquireSharedLock();
+    try {
+      boolean wasSoftlyClosed = fileSegment.wasSoftlyClosedAtPreviousTime();
+      wasSoftlyClosed = wasSoftlyClosed && holeSegment.wasSoftlyClosedAtPreviousTime();
+      return wasSoftlyClosed;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public String getName() {
     return name;
   }

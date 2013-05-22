@@ -135,6 +135,11 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    return true;
+  }
+
   public void lock() {
     acquireSharedLock();
   }

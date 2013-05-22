@@ -72,13 +72,13 @@ public class OLocalPage {
 
   private final OWriteAheadLog walLog;
   private final long           pageIndex;
-  private final String         fileName;
+  private final int            clusterId;
 
-  public OLocalPage(long pagePointer, boolean newPage, OWriteAheadLog walLog, long pageIndex, String fileName) throws IOException {
+  public OLocalPage(long pagePointer, boolean newPage, OWriteAheadLog walLog, long pageIndex, int clusterId) throws IOException {
     this.walLog = walLog;
     this.pagePointer = pagePointer;
     this.pageIndex = pageIndex;
-    this.fileName = fileName;
+    this.clusterId = clusterId;
 
     if (newPage) {
       startAtomicUpdate();
@@ -103,7 +103,7 @@ public class OLocalPage {
     return new OLogSequenceNumber(segment, position);
   }
 
-  private void setLsn(OLogSequenceNumber lsn) {
+  public void setLsn(OLogSequenceNumber lsn) {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
@@ -501,7 +501,7 @@ public class OLocalPage {
 
   private void startAtomicUpdate() throws IOException {
     if (walLog != null)
-      currentPageDiff = new OUpdatePageRecord(pageIndex, fileName);
+      currentPageDiff = new OUpdatePageRecord(pageIndex, clusterId);
   }
 
   private void endAtomicUpdate() throws IOException {
@@ -513,6 +513,6 @@ public class OLocalPage {
 
   private void logAddNewPage() throws IOException {
     if (walLog != null)
-      walLog.log(new OAddNewPageRecord(pageIndex, fileName));
+      walLog.log(new OAddNewPageRecord(pageIndex, clusterId));
   }
 }

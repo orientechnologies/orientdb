@@ -456,6 +456,18 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   }
 
   @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    acquireSharedLock();
+    try {
+      boolean wasSoftlyClosed = localHashTable.wasSoftlyClosed();
+      wasSoftlyClosed = wasSoftlyClosed && clusterStateHolder.wasSoftlyClosedAtPreviousTime();
+      return wasSoftlyClosed;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public String getName() {
     acquireSharedLock();
     try {

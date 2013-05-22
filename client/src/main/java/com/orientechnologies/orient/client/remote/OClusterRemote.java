@@ -162,6 +162,11 @@ public class OClusterRemote implements OCluster {
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    return true;
+  }
+
   public String getName() {
     return name;
   }

@@ -19,8 +19,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterStateRecord;
-
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
@@ -43,7 +41,7 @@ public class OWALRecordsFactory {
       content[0] = 2;
     else if (walRecord instanceof ODirtyPagesRecord)
       content[0] = 3;
-    else if (walRecord instanceof OCheckpointStartRecord)
+    else if (walRecord instanceof OFullCheckpointStartRecord)
       content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
       content[0] = 5;
@@ -77,7 +75,7 @@ public class OWALRecordsFactory {
       walRecord = new ODirtyPagesRecord();
       break;
     case 4:
-      walRecord = new OCheckpointStartRecord();
+      walRecord = new OFullCheckpointStartRecord();
       break;
     case 5:
       walRecord = new OCheckpointEndRecord();

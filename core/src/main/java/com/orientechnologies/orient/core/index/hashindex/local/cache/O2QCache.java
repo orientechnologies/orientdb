@@ -138,7 +138,7 @@ public class O2QCache implements ODiskCache {
       long fileId = fileCounter++;
 
       final OMultiFileSegment multiFileSegment = new OMultiFileSegment(storageLocal, fileConfiguration, fileExtension, pageSize);
-      if (multiFileSegment.getFile(0).exists())
+      if (multiFileSegment.exists())
         multiFileSegment.open();
       else
         multiFileSegment.create(pageSize);
@@ -186,26 +186,6 @@ public class O2QCache implements ODiskCache {
         + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
 
     return new OLogSequenceNumber(segment, position);
-  }
-
-  private void initLsn(long dataPointer) {
-    if (writeAheadLog != null) {
-      OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
-      if (flushedLSN == null)
-        flushedLSN = new OLogSequenceNumber(-1, 0);
-
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getSegment(), directMemory, dataPointer
-          + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
-
-      OLongSerializer.INSTANCE.serializeInDirectMemory(flushedLSN.getPosition(), directMemory, dataPointer
-          + OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE);
-    } else {
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(-1, directMemory, dataPointer + OLongSerializer.LONG_SIZE
-          + OIntegerSerializer.INT_SIZE);
-
-      OLongSerializer.INSTANCE.serializeInDirectMemory(0L, directMemory, dataPointer + OLongSerializer.LONG_SIZE + 2
-          * OIntegerSerializer.INT_SIZE);
-    }
   }
 
   @Override
@@ -501,7 +481,6 @@ public class O2QCache implements ODiskCache {
     } else {
       multiFileSegment.allocateSpaceContinuously((int) (endPosition - multiFileSegment.getFilledUpTo()));
       dataPointer = directMemory.allocate(content);
-      initLsn(dataPointer);
     }
 
     return new CacheResult(false, dataPointer);

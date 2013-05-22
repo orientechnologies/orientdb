@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 @Test
 public class UpdatePageRecordTest {
   public void testSerialization() {
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, "test");
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100);
 
     byte[] dataOne = new byte[] { 1, 2, 3 };
     byte[] dataTwo = new byte[] { 4, 5, 6 };
@@ -26,8 +26,8 @@ public class UpdatePageRecordTest {
     int fromStreamOffset = restoredUpdatePageRecord.fromStream(content, 1);
     Assert.assertEquals(fromStreamOffset, content.length);
 
-    Assert.assertEquals(restoredUpdatePageRecord.getFileName(), "test");
     Assert.assertEquals(restoredUpdatePageRecord.getPageIndex(), 12);
+    Assert.assertEquals(restoredUpdatePageRecord.getClusterId(), 100);
 
     Assert.assertEquals(restoredUpdatePageRecord.getDiffs(), serializedUpdatePageRecord.getDiffs());
   }

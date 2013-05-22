@@ -123,6 +123,8 @@ public interface OCluster {
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException;
 
+  public boolean wasSoftlyClosed() throws IOException;
+
   public String getName();
 
   /**

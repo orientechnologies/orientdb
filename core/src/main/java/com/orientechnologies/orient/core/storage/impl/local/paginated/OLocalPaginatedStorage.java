@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,6 +75,17 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterStateRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -223,12 +235,228 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         }
       }
 
+      restoreIfNeeded();
     } catch (Exception e) {
       close(true);
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  private void restoreIfNeeded() throws IOException {
+    boolean wasSoftlyClosed = true;
+    for (OCluster cluster : clusters)
+      if (cluster != null && !cluster.wasSoftlyClosed())
+        wasSoftlyClosed = false;
+
+    if (!wasSoftlyClosed) {
+      OLogManager.instance().warn(this,
+          "Storage " + name + " was not closed properly. Will try to restore from write ahead logging.");
+      restoreFromWAL();
+    }
+
+  }
+
+  private void restoreFromWAL() throws IOException {
+    if (writeAheadLog == null) {
+      OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.");
+      return;
+    }
+
+    if (writeAheadLog.begin() == null) {
+      OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
+      return;
+    }
+
+    OLogManager.instance().info(this, "Try to find last checkpoint.");
+
+    OLogSequenceNumber lastCheckPoint = writeAheadLog.getLastCheckpoint();
+    if (lastCheckPoint == null) {
+      OLogManager.instance().info(this, "Checkpoints are absent will restore from beginning.");
+      restoreFromBegging();
+    }
+
+    OWALRecord checkPointRecord = writeAheadLog.read(lastCheckPoint);
+    if (checkPointRecord == null) {
+      OLogManager.instance().info(this, "Checkpoints are absent will restore from beginning.");
+      restoreFromBegging();
+      return;
+    }
+
+    if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
+      OLogManager.instance().info(this, "Found checkpoint is fuzzy checkpoint.");
+
+      boolean fuzzyCheckPointIsComplete = checkFuzzyCheckPointIsComplete(lastCheckPoint);
+      if (!fuzzyCheckPointIsComplete) {
+        OLogManager.instance().warn(this, "Fuzzy checkpoint is not complete.");
+
+        OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+        checkPointRecord = null;
+
+        if (previousCheckpoint != null)
+          checkPointRecord = writeAheadLog.read(previousCheckpoint);
+
+        if (checkPointRecord != null) {
+          OLogManager.instance().warn(this, "Will restore from previous checkpoint.");
+          restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+        } else {
+          OLogManager.instance().warn(this, "Will restore from beginning.");
+          restoreFromBegging();
+        }
+      }
+
+      return;
+    }
+
+    if (checkPointRecord instanceof OFullCheckpointStartRecord) {
+      OLogManager.instance().info(this, "Found checkpoint is full checkpoint.");
+      boolean fullCheckPointIsComplete = checkFullCheckPointIsComplete(lastCheckPoint);
+      if (!fullCheckPointIsComplete) {
+        OLogManager.instance().warn(this, "Full checkpoint is not complete.");
+
+        OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+        checkPointRecord = null;
+        if (previousCheckpoint != null)
+          checkPointRecord = writeAheadLog.read(previousCheckpoint);
+
+        if (checkPointRecord != null) {
+          OLogManager.instance().warn(this, "Will restore from previous checkpoint.");
+          restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+        } else {
+          OLogManager.instance().warn(this, "Will restore from beginning.");
+          restoreFromBegging();
+        }
+      }
+
+      return;
+    }
+
+    throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
+
+  }
+
+  private boolean checkFullCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
+    OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
+
+    while (lsn != null) {
+      OWALRecord walRecord = writeAheadLog.read(lsn);
+      if (walRecord instanceof OCheckpointEndRecord)
+        return true;
+    }
+
+    return false;
+  }
+
+  private boolean checkFuzzyCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
+    OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
+
+    while (lsn != null) {
+      OWALRecord walRecord = writeAheadLog.read(lsn);
+      if (walRecord instanceof OFuzzyCheckpointEndRecord)
+        return true;
+    }
+
+    return false;
+  }
+
+  private void restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
+    if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
+      restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
+      return;
+    }
+
+    if (checkPointRecord instanceof OFullCheckpointStartRecord) {
+      restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
+      return;
+    }
+
+    throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
+  }
+
+  private void restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
+    OLogManager.instance().info(this, "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
+        checkPointRecord.getLsn());
+
+    final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn());
+    restoreFrom(lsn);
+  }
+
+  private void restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
+    OLogManager.instance().info(this, "Data restore procedure from fuzzy checkpoint is started.");
+    OLogSequenceNumber dirtyPagesLSN = writeAheadLog.next(checkPointRecord.getLsn());
+    ODirtyPagesRecord dirtyPagesRecord = (ODirtyPagesRecord) writeAheadLog.read(dirtyPagesLSN);
+    OLogSequenceNumber startLSN;
+
+    Set<ODirtyPage> dirtyPages = dirtyPagesRecord.getDirtyPages();
+    if (dirtyPages.isEmpty()) {
+      startLSN = dirtyPagesLSN;
+    } else {
+      ODirtyPage[] pages = dirtyPages.toArray(new ODirtyPage[dirtyPages.size()]);
+
+      Arrays.sort(pages, new Comparator<ODirtyPage>() {
+        @Override
+        public int compare(ODirtyPage pageOne, ODirtyPage pageTwo) {
+          return pageOne.getLsn().compareTo(pageTwo.getLsn());
+        }
+      });
+
+      startLSN = pages[0].getLsn();
+    }
+
+    if (startLSN.compareTo(writeAheadLog.begin()) < 0)
+      startLSN = writeAheadLog.begin();
+
+    restoreFrom(startLSN);
+  }
+
+  private void restoreFromBegging() throws IOException {
+    OLogManager.instance().info(this, "Date restore procedure is started.");
+    OLogSequenceNumber lsn = writeAheadLog.begin();
+    restoreFrom(lsn);
+  }
+
+  private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
+    while (lsn != null) {
+      OWALRecord walRecord = writeAheadLog.read(lsn);
+      if (walRecord instanceof OAbstractPageWALRecord)
+        restorePageWALRecord((OAbstractPageWALRecord) walRecord);
+      else if (walRecord instanceof OClusterStateRecord)
+        restoreClusterStateWALRecord((OClusterStateRecord) walRecord);
+      else if (walRecord instanceof OAbstractCheckPointStartRecord) {
+        // skip it
+      } else if (walRecord instanceof OCheckpointEndRecord) {
+        // skip it
+      } else if (walRecord instanceof OFuzzyCheckpointEndRecord) {
+        // skip it
+      } else if (walRecord instanceof ODirtyPagesRecord) {
+        // skip it
+      } else {
+        OLogManager.instance().error(this, "Unknown log record %s, will skip it.", walRecord.getClass().getName());
+      }
+
+      lsn = writeAheadLog.next(lsn);
+    }
+  }
+
+  private void restoreClusterStateWALRecord(OClusterStateRecord clusterStateRecord) {
+    int clusterId = clusterStateRecord.getClusterId();
+    OLocalPaginatedCluster cluster = getClusterById(clusterId);
+
+    if (cluster == null)
+      OLogManager.instance().error(this, "Cluster with id %d is absent, log record will be skipped.", clusterId);
+    else
+      cluster.restoreClusterState(clusterStateRecord);
+  }
+
+  private void restorePageWALRecord(OAbstractPageWALRecord pageRecord) throws IOException {
+    int clusterId = pageRecord.getClusterId();
+    OLocalPaginatedCluster cluster = getClusterById(clusterId);
+
+    if (cluster == null)
+      OLogManager.instance().error(this, "Cluster with id %d is absent, log record will be skipped.", clusterId);
+    else
+      cluster.restorePage(pageRecord);
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -267,7 +495,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       configuration.create();
 
-      makeCheckpoint();
+      makeFullCheckpoint();
     } catch (OStorageException e) {
       close();
       throw e;
@@ -303,7 +531,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       status = STATUS.CLOSING;
 
-      makeCheckpoint();
+      makeFullCheckpoint();
       fuzzyCheckpointExecutor.shutdown();
       final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
       fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS);
@@ -524,7 +752,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (cluster != null) {
       if (!cluster.exists()) {
         cluster.create(-1);
-        makeCheckpoint();
+        makeFullCheckpoint();
       } else {
         cluster.open();
       }
@@ -557,7 +785,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       // UPDATE CONFIGURATION
       configuration.dropCluster(iClusterId);
 
-      makeCheckpoint();
+      makeFullCheckpoint();
       return true;
     } catch (Exception e) {
       OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
@@ -1268,13 +1496,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
-        diskCache.forceSyncStoredChanges();
         writeAheadLog.logFuzzyCheckPointStart();
+        diskCache.forceSyncStoredChanges();
+        diskCache.logDirtyPagesTable();
 
         for (OLocalPaginatedCluster cluster : clusters)
           cluster.logClusterState();
 
-        diskCache.logDirtyPagesTable();
         writeAheadLog.logFuzzyCheckPointEnd();
       } finally {
         lock.releaseExclusiveLock();
@@ -1284,13 +1512,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public void makeCheckpoint() {
+  public void makeFullCheckpoint() {
     if (writeAheadLog == null)
       return;
 
     lock.acquireExclusiveLock();
     try {
-      writeAheadLog.logCheckpointStart();
+      writeAheadLog.logFullCheckpointStart();
 
       for (OLocalPaginatedCluster cluster : clusters)
         if (cluster != null)
@@ -1298,7 +1526,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       diskCache.flushBuffer();
 
-      writeAheadLog.logCheckpointEnd();
+      writeAheadLog.logFullCheckpointEnd();
     } catch (IOException ioe) {
       throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
     } finally {
@@ -1306,12 +1534,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public void scheduleCheckpoint() {
+  public void scheduleFullCheckpoint() {
     checkpointExecutor.execute(new Runnable() {
       @Override
       public void run() {
         try {
-          makeCheckpoint();
+          makeFullCheckpoint();
         } catch (Throwable t) {
           OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
         }
