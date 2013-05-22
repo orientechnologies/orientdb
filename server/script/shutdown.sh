@@ -37,12 +37,20 @@ then
   CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
 fi
 
+# Set JavaHome if it exists
+if [ -f "${JAVA_HOME}/bin/java" ]; then 
+   JAVA=${JAVA_HOME}/bin/java
+else
+   JAVA=java
+fi
+export JAVA
+
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_LEVEL=warning
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 
-java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
+$JAVA -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
 if [ "x$wait" = "xyes" ] ; then
   while true ; do
