@@ -119,13 +119,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       onBeforeRequest();
 
-      if (!executeRequest()) {
-        OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
-        channel.clearInput();
-        sendError(clientTxId, new ONetworkProtocolException("Request not supported. Code: " + requestType));
+      try {
+        if (!executeRequest()) {
+          OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
+          channel.clearInput();
+          sendError(clientTxId, new ONetworkProtocolException("Request not supported. Code: " + requestType));
+        }
+      } finally {
+        onAfterRequest();
       }
-
-      onAfterRequest();
 
     } catch (IOException e) {
       handleConnectionError(channel, e);
