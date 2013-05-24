@@ -26,11 +26,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 5/8/13
  */
-@Test(enabled = false)
+@Test
 public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   private OWriteAheadLog writeAheadLog;
 
-  @BeforeClass(enabled = false)
+  @BeforeClass
   @Override
   public void beforeClass() throws IOException {
     System.out.println("Start LocalPaginatedClusterWithWALTest");
@@ -70,7 +70,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     paginatedCluster.create(-1);
   }
 
-  @AfterClass(enabled = false)
+  @AfterClass
   @Override
   public void afterClass() throws IOException {
     diskCache.clear();

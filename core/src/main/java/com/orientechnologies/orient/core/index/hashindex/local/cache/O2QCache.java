@@ -321,6 +321,8 @@ public class O2QCache implements ODiskCache {
         }
       }
 
+      dirtyPages.get(fileId).clear();
+
       pageEntries.clear();
       files.get(fileId).truncate();
     }
