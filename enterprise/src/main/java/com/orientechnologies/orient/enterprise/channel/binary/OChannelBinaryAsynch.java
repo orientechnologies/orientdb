@@ -100,8 +100,11 @@ public class OChannelBinaryAsynch extends OChannelBinary {
             OLogManager.instance().debug(this, "%s - Session %d skip response, it is for %d", socket.getLocalAddress(),
                 iRequesterId, currentSessionId);
 
-          if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout)
+          if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
+            // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA 
+            close();
             throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
+          }
 
           if (unreadResponse > maxUnreadResponses) {
             if (debug)
@@ -112,8 +115,6 @@ public class OChannelBinaryAsynch extends OChannelBinary {
             throw new IOException("Timeout on reading response");
           }
 
-          // WAIT 1 SECOND AND RETRY
-
           readCondition.signalAll();
 
           if (debug)
@@ -121,6 +122,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
           final long start = System.currentTimeMillis();
 
+          // WAIT 1 SECOND AND RETRY
           readCondition.await(1, TimeUnit.SECONDS);
           final long now = System.currentTimeMillis();
 
