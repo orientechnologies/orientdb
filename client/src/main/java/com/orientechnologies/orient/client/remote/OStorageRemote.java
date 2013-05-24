@@ -1045,7 +1045,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             while ((status = network.readByte()) > 0) {
               final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
               if (record == null)
-                break;
+                continue;
 
               switch (status) {
               case 1:
