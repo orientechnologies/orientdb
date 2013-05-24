@@ -85,7 +85,7 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.getRecordsCount(), 1);
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(position, 0);
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (23 + OVersionFactory.instance().getVersionSize()));
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (27 + OVersionFactory.instance().getVersionSize()));
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
@@ -110,7 +110,7 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.getRecordsCount(), 1);
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(position, 0);
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (23 + OVersionFactory.instance().getVersionSize()));
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (27 + OVersionFactory.instance().getVersionSize()));
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
@@ -144,7 +144,7 @@ public class LocalPageTest {
       Assert.assertEquals(positionTwo, 1);
       Assert.assertEquals(positionThree, 2);
 
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (3 * (23 + OVersionFactory.instance().getVersionSize())));
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (3 * (27 + OVersionFactory.instance().getVersionSize())));
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertFalse(localPage.isDeleted(1));
       Assert.assertFalse(localPage.isDeleted(2));
@@ -189,7 +189,7 @@ public class LocalPageTest {
       Assert.assertEquals(positionTwo, 1);
       Assert.assertEquals(positionThree, 2);
 
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (3 * (23 + OVersionFactory.instance().getVersionSize())));
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (3 * (27 + OVersionFactory.instance().getVersionSize())));
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertFalse(localPage.isDeleted(1));
       Assert.assertFalse(localPage.isDeleted(2));
@@ -234,7 +234,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -275,7 +275,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -653,7 +653,7 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.getRecordVersion(3), recordVersion);
 
       Assert.assertEquals(localPage.getRecordsCount(), 2);
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace + 19 * 2);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace + 23 * 2);
     } finally {
       directMemory.free(pagePointer);
     }
@@ -716,7 +716,7 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.getRecordVersion(3), recordVersion);
 
       Assert.assertEquals(localPage.getRecordsCount(), 2);
-      Assert.assertEquals(localPage.getFreeSpace(), freeSpace + 19 * 2);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace + 23 * 2);
 
       assertWALRestore(pagePointer);
     } finally {
@@ -745,7 +745,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -766,7 +766,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -815,7 +815,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -836,7 +836,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -887,7 +887,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -908,7 +908,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -957,7 +957,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -978,7 +978,7 @@ public class LocalPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -1040,9 +1040,9 @@ public class LocalPageTest {
           counter++;
 
           if (lastPosition == 0)
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           else
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
 
           freeSpace = localPage.getFreeSpace();
         }
@@ -1093,9 +1093,9 @@ public class LocalPageTest {
           counter++;
 
           if (lastPosition == 0)
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 11);
+            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
           else
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
 
           freeSpace = localPage.getFreeSpace();
         }
@@ -1138,7 +1138,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -1200,7 +1200,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -1264,7 +1264,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -1322,7 +1322,7 @@ public class LocalPageTest {
           positions.add(lastPosition);
           counter++;
 
-          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (15 + OVersionFactory.instance().getVersionSize()));
+          Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
           freeSpace = localPage.getFreeSpace();
         }
       } while (lastPosition >= 0);
@@ -1400,6 +1400,327 @@ public class LocalPageTest {
       OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
       localPage.setPrevPage(1034);
       Assert.assertEquals(localPage.getPrevPage(), 1034);
+
+      assertWALRestore(pagePointer);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithBiggerSize() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithBiggerSizeWithWAL() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+      assertWALRestore(pagePointer);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithEqualSize() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithEqualSizeWithWAL() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+
+      assertWALRestore(pagePointer);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithSmallerSize() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 6);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 6);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordWithSmallerSizeWithWAL() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 6);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 6);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
+
+      assertWALRestore(pagePointer);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordNoVersionUpdate() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, false);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
+
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordNoVersionUpdateWithWAL() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+      newRecordVersion.increment();
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, false);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
+
+      assertWALRestore(pagePointer);
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordLowerVersion() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, null, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
+
+    } finally {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testReplaceOneRecordLowerVersionWithWAL() throws Exception {
+    long pagePointer = directMemory.allocate(new byte[OLocalPage.PAGE_SIZE]);
+    try {
+      OLocalPage localPage = new OLocalPage(pagePointer, true, writeAheadLog, -1, 100);
+      Assert.assertEquals(localPage.getRecordsCount(), 0);
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.increment();
+
+      int index = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 }, false);
+      int freeSpace = localPage.getFreeSpace();
+
+      ORecordVersion newRecordVersion = OVersionFactory.instance().createVersion();
+      newRecordVersion.copyFrom(recordVersion);
+
+      int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion, true);
+      Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
+      Assert.assertEquals(written, 11);
+
+      Assert.assertEquals(localPage.getRecordSize(index), 11);
+
+      long recordPointer = localPage.getRecordPointer(index);
+      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+
+      Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
 
       assertWALRestore(pagePointer);
     } finally {
