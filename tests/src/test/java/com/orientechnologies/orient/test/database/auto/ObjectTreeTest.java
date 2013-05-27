@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 import com.orientechnologies.orient.test.domain.base.Animal;
@@ -1060,5 +1061,44 @@ public class ObjectTreeTest {
     Assert.assertEquals(mercury.getName(), "Mercury");
     Assert.assertEquals(mercury.getDistanceSun(), 5000);
     database.close();
+  }
+
+  @Test
+  public void iteratorShouldTerminate() {
+    if (url.startsWith("plocal"))
+      // SKIPT IT
+      return;
+
+    OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      db.getEntityManager().registerEntityClass(Profile.class);
+
+      db.begin();
+      Profile person = new Profile();
+      person.setNick("Guy1");
+      person.setName("Guy");
+      person.setSurname("Ritchie");
+      person = db.save(person);
+      db.commit();
+
+      db.begin();
+      db.delete(person);
+      db.commit();
+
+      db.begin();
+      Profile person2 = new Profile();
+      person2.setNick("Guy1");
+      person2.setName("Guy");
+      person2.setSurname("Brush");
+      person2 = db.save(person2);
+      OObjectIteratorClass<Profile> it = db.browseClass(Profile.class);
+      while (it.hasNext()) {
+        System.out.println(it.next());
+      }
+
+      db.commit();
+    } finally {
+      db.close();
+    }
   }
 }

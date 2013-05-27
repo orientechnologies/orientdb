@@ -142,14 +142,14 @@ public class SQLSelectTest {
 
   @Test
   public void querySchemaAndLike() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'G%'"))
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gi%'"))
         .execute();
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
 
       Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
-      Assert.assertTrue(record.field("name").toString().startsWith("G"));
+      Assert.assertTrue(record.field("name").toString().startsWith("Gi"));
     }
 
     List<ODocument> result2 = database.command(
@@ -162,22 +162,22 @@ public class SQLSelectTest {
 
     Assert.assertEquals(result1, result3);
 
-    result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%G%'")).execute();
+    result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like '%Gi%'")).execute();
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
 
       Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
-      Assert.assertTrue(record.field("name").toString().contains("G"));
+      Assert.assertTrue(record.field("name").toString().contains("Gi"));
     }
 
-    result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like ?")).execute("%G%");
+    result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like ?")).execute("%Gi%");
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
 
       Assert.assertTrue(record.getClassName().equalsIgnoreCase("profile"));
-      Assert.assertTrue(record.field("name").toString().contains("G"));
+      Assert.assertTrue(record.field("name").toString().contains("Gi"));
     }
   }
 
