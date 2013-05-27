@@ -27,8 +27,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
 @Test
 public class O2QCacheTest {
@@ -56,6 +57,8 @@ public class O2QCacheTest {
     fileConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(), "o2QCacheTest", 0);
     fileConfiguration.fileType = OFileFactory.CLASSIC;
     fileConfiguration.fileMaxSize = "10000Mb";
+
+    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
 
   @BeforeMethod
@@ -629,7 +632,7 @@ public class O2QCacheTest {
     OLogSequenceNumber lsnToFlush = null;
     for (int i = 0; i < 8; i++) {
       long dataPointer = buffer.load(fileId, i);
-      OLogSequenceNumber pageLSN = writeAheadLog.log(new OUpdatePageRecord(1, 12));
+      OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(30, false));
 
       setLsn(dataPointer, pageLSN);
 

@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -9,13 +12,15 @@ import org.testng.annotations.Test;
  */
 @Test
 public class UpdatePageRecordTest {
-  public void testSerialization() {
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100);
+  public void testSerializationPrevLSNIsNotNull() {
+    OLogSequenceNumber lsn = new OLogSequenceNumber(5, 100);
+    List<OUpdatePageRecord.Diff<?>> diffs = new ArrayList<OUpdatePageRecord.Diff<?>>();
 
-    byte[] dataOne = new byte[] { 1, 2, 3 };
-    byte[] dataTwo = new byte[] { 4, 5, 6 };
-    serializedUpdatePageRecord.addDiff(34, dataOne);
-    serializedUpdatePageRecord.addDiff(43, dataTwo);
+    diffs.add(new OUpdatePageRecord.BinaryDiff(new byte[] { 1, 2, 6 }, new byte[] { 5, 1, 2, 8 }, 123));
+    diffs.add(new OUpdatePageRecord.IntDiff(10, 23, 56));
+    diffs.add(new OUpdatePageRecord.LongDiff(34L, 56L, 23));
+
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, lsn, diffs);
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
 
@@ -26,9 +31,28 @@ public class UpdatePageRecordTest {
     int fromStreamOffset = restoredUpdatePageRecord.fromStream(content, 1);
     Assert.assertEquals(fromStreamOffset, content.length);
 
-    Assert.assertEquals(restoredUpdatePageRecord.getPageIndex(), 12);
-    Assert.assertEquals(restoredUpdatePageRecord.getClusterId(), 100);
-
-    Assert.assertEquals(restoredUpdatePageRecord.getDiffs(), serializedUpdatePageRecord.getDiffs());
+    Assert.assertEquals(restoredUpdatePageRecord, serializedUpdatePageRecord);
   }
+
+  public void testSerializationPrevLSNIsNull() {
+    List<OUpdatePageRecord.Diff<?>> diffs = new ArrayList<OUpdatePageRecord.Diff<?>>();
+
+    diffs.add(new OUpdatePageRecord.BinaryDiff(new byte[] { 1, 2, 6 }, new byte[] { 5, 1, 2, 8 }, 123));
+    diffs.add(new OUpdatePageRecord.IntDiff(10, 23, 56));
+    diffs.add(new OUpdatePageRecord.LongDiff(34L, 56L, 23));
+
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, null, diffs);
+
+    byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
+
+    int toStreamOffset = serializedUpdatePageRecord.toStream(content, 1);
+    Assert.assertEquals(toStreamOffset, content.length);
+
+    OUpdatePageRecord restoredUpdatePageRecord = new OUpdatePageRecord();
+    int fromStreamOffset = restoredUpdatePageRecord.fromStream(content, 1);
+    Assert.assertEquals(fromStreamOffset, content.length);
+
+    Assert.assertEquals(restoredUpdatePageRecord, serializedUpdatePageRecord);
+  }
+
 }

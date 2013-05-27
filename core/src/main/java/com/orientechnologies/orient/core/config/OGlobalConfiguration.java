@@ -80,7 +80,7 @@ public enum OGlobalConfiguration {
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
   RECORD_GROW_FACTOR("storage.record.growFactor", "Multiplier which is used to predict how much record will grow after creation.",
-      Float.class, 1.5),
+      Float.class, 1.2),
 
   RECORD_OVERFLOW_GROW_FACTOR("storage.record.overflowGrowFactor",
       "Multiplier which is used to predict how much record will grow after update.", Float.class, 1.2),
