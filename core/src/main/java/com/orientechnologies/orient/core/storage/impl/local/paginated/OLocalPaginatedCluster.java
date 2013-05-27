@@ -73,8 +73,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterStateRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -1020,7 +1021,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private void logPageChanges(OLocalPage localPage, long pageIndex) throws IOException {
     if (writeAheadLog != null) {
-      List<OUpdatePageRecord.Diff<?>> pageChanges = localPage.getPageChanges();
+      List<OPageDiff<?>> pageChanges = localPage.getPageChanges();
       OLogSequenceNumber lsn = lastLsn.get();
       assert lsn != null;
 

@@ -6,6 +6,12 @@ import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OBinaryDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OIntDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OLongDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
+
 /**
  * @author Andrey Lomakin
  * @since 29.04.13
@@ -14,11 +20,11 @@ import org.testng.annotations.Test;
 public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNotNull() {
     OLogSequenceNumber lsn = new OLogSequenceNumber(5, 100);
-    List<OUpdatePageRecord.Diff<?>> diffs = new ArrayList<OUpdatePageRecord.Diff<?>>();
+    List<OPageDiff<?>> diffs = new ArrayList<OPageDiff<?>>();
 
-    diffs.add(new OUpdatePageRecord.BinaryDiff(new byte[] { 1, 2, 6 }, new byte[] { 5, 1, 2, 8 }, 123));
-    diffs.add(new OUpdatePageRecord.IntDiff(10, 23, 56));
-    diffs.add(new OUpdatePageRecord.LongDiff(34L, 56L, 23));
+    diffs.add(new OBinaryDiff(new byte[] { 7, 4, 8 }, 13));
+    diffs.add(new OIntDiff(19, 42));
+    diffs.add(new OLongDiff(37L, 213));
 
     OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, lsn, diffs);
 
@@ -35,11 +41,11 @@ public class UpdatePageRecordTest {
   }
 
   public void testSerializationPrevLSNIsNull() {
-    List<OUpdatePageRecord.Diff<?>> diffs = new ArrayList<OUpdatePageRecord.Diff<?>>();
+    List<OPageDiff<?>> diffs = new ArrayList<OPageDiff<?>>();
 
-    diffs.add(new OUpdatePageRecord.BinaryDiff(new byte[] { 1, 2, 6 }, new byte[] { 5, 1, 2, 8 }, 123));
-    diffs.add(new OUpdatePageRecord.IntDiff(10, 23, 56));
-    diffs.add(new OUpdatePageRecord.LongDiff(34L, 56L, 23));
+    diffs.add(new OBinaryDiff(new byte[] { 7, 4, 8 }, 13));
+    diffs.add(new OIntDiff(19, 42));
+    diffs.add(new OLongDiff(37L, 213));
 
     OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, null, diffs);
 

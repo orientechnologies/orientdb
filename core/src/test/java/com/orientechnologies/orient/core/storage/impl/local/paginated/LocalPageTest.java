@@ -885,10 +885,5 @@ public class LocalPageTest {
     } finally {
       directMemory.free(restoredPagePointer);
     }
-
-    localPage.revertChanges(localPage.getPageChanges());
-
-    Assert.assertEquals(directMemory.get(pagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET),
-        new byte[OLocalPage.PAGE_SIZE - SYSTEM_OFFSET]);
   }
 }
