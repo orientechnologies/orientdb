@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
@@ -28,13 +29,15 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
 
   private long               pageIndex;
   private int                clusterId;
+  private OLogSequenceNumber prevUnitRecord;
 
   protected OAbstractPageWALRecord() {
   }
 
-  protected OAbstractPageWALRecord(long pageIndex, int clusterId) {
+  protected OAbstractPageWALRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord) {
     this.pageIndex = pageIndex;
     this.clusterId = clusterId;
+    this.prevUnitRecord = prevUnitRecord;
   }
 
   @Override
@@ -44,6 +47,20 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
 
     OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
     offset += OIntegerSerializer.INT_SIZE;
+
+    if (prevUnitRecord == null) {
+      content[offset] = 0;
+      offset++;
+    } else {
+      content[offset] = 1;
+      offset++;
+
+      OLongSerializer.INSTANCE.serializeNative(prevUnitRecord.getPosition(), content, offset);
+      offset += OLongSerializer.LONG_SIZE;
+
+      OIntegerSerializer.INSTANCE.serializeNative(prevUnitRecord.getSegment(), content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+    }
 
     return offset;
   }
@@ -56,12 +73,30 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
     clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
+    if (content[offset] == 0) {
+      offset++;
+      return offset;
+    }
+
+    offset++;
+
+    long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    prevUnitRecord = new OLogSequenceNumber(segment, position);
+
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    return OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    if (prevUnitRecord == null)
+      return OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
+
+    return 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE) + OByteSerializer.BYTE_SIZE;
   }
 
   public long getPageIndex() {
@@ -95,6 +130,8 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
+    if (prevUnitRecord != null ? !prevUnitRecord.equals(that.prevUnitRecord) : that.prevUnitRecord != null)
+      return false;
 
     return true;
   }
@@ -103,6 +140,7 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
   public int hashCode() {
     int result = (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + clusterId;
+    result = 31 * result + (prevUnitRecord != null ? prevUnitRecord.hashCode() : 0);
     return result;
   }
 }

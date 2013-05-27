@@ -20,9 +20,6 @@ public class OWALPage {
 
   private final long          pagePointer;
 
-  private OLogSequenceNumber  lastMasterRecord;
-  private OLogSequenceNumber  firstLsn;
-
   private final ODirectMemory directMemory      = ODirectMemoryFactory.INSTANCE.directMemory();
 
   public OWALPage(long pagePointer, boolean isNew) {
@@ -34,14 +31,6 @@ public class OWALPage {
 
   public long getPagePointer() {
     return pagePointer;
-  }
-
-  public OLogSequenceNumber getLastMasterRecord() {
-    return lastMasterRecord;
-  }
-
-  public void setLastMasterRecord(OLogSequenceNumber lastMasterRecord) {
-    this.lastMasterRecord = lastMasterRecord;
   }
 
   public int appendRecord(byte[] content, boolean mergeWithNextPage, boolean recordTail) {

@@ -13,22 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
  * @author Andrey Lomakin
- * @since 5/2/13
+ * @since 24.05.13
  */
-public class OAddNewPageRecord extends OAbstractPageWALRecord {
-  public OAddNewPageRecord() {
+public class OAtomicUnitStartRecord implements OWALRecord {
+  private OLogSequenceNumber lsn;
+
+  public OAtomicUnitStartRecord() {
   }
 
-  public OAddNewPageRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord) {
-    super(pageIndex, clusterId, prevUnitRecord);
+  @Override
+  public int toStream(byte[] content, int offset) {
+    return offset;
+
+  }
+
+  @Override
+  public int fromStream(byte[] content, int offset) {
+    return offset;
+  }
+
+  @Override
+  public int serializedSize() {
+    return 0;
   }
 
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public OLogSequenceNumber getLsn() {
+    return lsn;
+  }
+
+  @Override
+  public void setLsn(OLogSequenceNumber lsn) {
+    this.lsn = lsn;
   }
 }

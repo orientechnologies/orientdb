@@ -14,45 +14,42 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private List<Diff> diffs = new ArrayList<Diff>();
+  private List<OPageDiff<?>> diffs = new ArrayList<OPageDiff<?>>();
 
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(long pageIndex, int clusterId) {
-    super(pageIndex, clusterId);
+  public OUpdatePageRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord, List<OPageDiff<?>> diffs) {
+    super(pageIndex, clusterId, prevUnitRecord);
+    this.diffs = diffs;
   }
 
-  public List<Diff> getDiffs() {
+  public List<OPageDiff<?>> getDiffs() {
     return diffs;
-  }
-
-  public void addDiff(int pageOffset, byte[] data) {
-    diffs.add(new Diff(data, pageOffset));
   }
 
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-    serializedSize += OIntegerSerializer.INT_SIZE;
+    serializedSize += OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE * diffs.size();
 
-    for (Diff diff : diffs) {
-      serializedSize += OIntegerSerializer.INT_SIZE;
-      serializedSize += OBinaryTypeSerializer.INSTANCE.getObjectSize(diff.data);
+    for (OPageDiff diff : diffs) {
+      serializedSize += diff.serializedSize();
     }
 
     return serializedSize;
@@ -65,12 +62,12 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     OIntegerSerializer.INSTANCE.serializeNative(diffs.size(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    for (Diff diff : diffs) {
-      OIntegerSerializer.INSTANCE.serializeNative(diff.pageOffset, content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+    for (OPageDiff diff : diffs) {
+      content[offset] = typeToId(diff.getClass());
+      offset++;
 
-      OBinaryTypeSerializer.INSTANCE.serializeNative(diff.data, content, offset);
-      offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(diff.data);
+      diff.toStream(content, offset);
+      offset += diff.serializedSize();
     }
 
     return offset;
@@ -83,15 +80,16 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    diffs = new ArrayList<Diff>(size);
+    diffs = new ArrayList<OPageDiff<?>>(size);
     for (int i = 0; i < size; i++) {
-      int pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+      byte typeId = content[offset];
+      offset++;
 
-      byte[] data = OBinaryTypeSerializer.INSTANCE.deserializeNative(content, offset);
-      offset += OBinaryTypeSerializer.INSTANCE.getObjectSize(data);
+      OPageDiff<?> diff = newDiffInstance(typeId);
+      diff.fromStream(content, offset);
+      offset += diff.serializedSize();
 
-      diffs.add(new Diff(data, pageOffset));
+      diffs.add(diff);
     }
 
     return offset;
@@ -126,45 +124,30 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     return result;
   }
 
-  public static final class Diff {
-    private final byte[] data;
-    private final int    pageOffset;
+  private byte typeToId(Class<? extends OPageDiff> diffClass) {
+    if (diffClass.equals(OBinaryDiff.class))
+      return 1;
 
-    public Diff(byte[] data, int pageOffset) {
-      this.data = data;
-      this.pageOffset = pageOffset;
-    }
+    if (diffClass.equals(OIntDiff.class))
+      return 2;
 
-    public byte[] getData() {
-      return data;
-    }
+    if (diffClass.equals(OLongDiff.class))
+      return 3;
 
-    public int getPageOffset() {
-      return pageOffset;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      Diff diff = (Diff) o;
-
-      if (pageOffset != diff.pageOffset)
-        return false;
-      if (!Arrays.equals(data, diff.data))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Arrays.hashCode(data);
-      result = 31 * result + pageOffset;
-      return result;
-    }
+    throw new IllegalArgumentException("Unknown Diff class " + diffClass);
   }
+
+  private OPageDiff<?> newDiffInstance(byte typeId) {
+    if (typeId == 1)
+      return new OBinaryDiff();
+
+    if (typeId == 2)
+      return new OIntDiff();
+
+    if (typeId == 3)
+      return new OLongDiff();
+
+    throw new IllegalArgumentException("Unknown Diff id " + typeId);
+  }
+
 }

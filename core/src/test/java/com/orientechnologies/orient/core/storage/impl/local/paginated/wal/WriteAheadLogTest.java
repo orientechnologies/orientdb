@@ -94,14 +94,14 @@ public class WriteAheadLogTest {
 
   public void testWriteSingleRecord() throws Exception {
 
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    TestRecord writtenRecord = new TestRecord(30, false);
+    writeAheadLog.log(writtenRecord);
 
     OWALRecord walRecord = writeAheadLog.read(writeAheadLog.begin());
-    Assert.assertTrue(walRecord instanceof OUpdatePageRecord);
+    Assert.assertTrue(walRecord instanceof TestRecord);
 
-    OUpdatePageRecord setPageDataRecord = (OUpdatePageRecord) walRecord;
-    Assert.assertEquals(setPageDataRecord.getPageIndex(), 20);
-    Assert.assertEquals(setPageDataRecord.getClusterId(), 100);
+    TestRecord testRecord = (TestRecord) walRecord;
+    Assert.assertEquals(testRecord, writtenRecord);
 
     Assert.assertNull(writeAheadLog.next(walRecord.getLsn()));
 
@@ -110,17 +110,18 @@ public class WriteAheadLogTest {
 
     walRecord = writeAheadLog.read(writeAheadLog.begin());
     Assert.assertEquals(walRecord.getLsn(), writeAheadLog.begin());
-    Assert.assertTrue(walRecord instanceof OUpdatePageRecord);
+    Assert.assertTrue(walRecord instanceof TestRecord);
 
-    setPageDataRecord = (OUpdatePageRecord) walRecord;
-    Assert.assertEquals(setPageDataRecord.getPageIndex(), 20);
-    Assert.assertEquals(setPageDataRecord.getClusterId(), 100);
+    testRecord = (TestRecord) walRecord;
+    Assert.assertEquals(testRecord, writtenRecord);
 
     Assert.assertNull(writeAheadLog.next(writeAheadLog.begin()));
   }
 
   public void testFirstMasterRecordUpdate() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    TestRecord writtenRecord = new TestRecord(30, false);
+
+    writeAheadLog.log(writtenRecord);
     OLogSequenceNumber masterLSN = writeAheadLog.logFuzzyCheckPointStart();
 
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -133,12 +134,12 @@ public class WriteAheadLogTest {
   }
 
   public void testSecondMasterRecordUpdate() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -151,17 +152,17 @@ public class WriteAheadLogTest {
   }
 
   public void testThirdMasterRecordUpdate() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
 
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -687,7 +688,7 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstMasterRecordIsBrokenSingleRecord() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -707,7 +708,7 @@ public class WriteAheadLogTest {
   }
 
   public void testSecondMasterRecordIsBroken() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -732,7 +733,7 @@ public class WriteAheadLogTest {
   }
 
   public void testFirstMasterRecordIsBrokenThreeCheckpoints() throws Exception {
-    writeAheadLog.log(new OUpdatePageRecord(20, 100));
+    writeAheadLog.log(new TestRecord(30, false));
 
     writeAheadLog.logFuzzyCheckPointStart();
     writeAheadLog.logFuzzyCheckPointEnd();
@@ -762,13 +763,12 @@ public class WriteAheadLogTest {
   }
 
   public void testWriteMultipleRecords() throws Exception {
-    List<OUpdatePageRecord> writtenRecords = new ArrayList<OUpdatePageRecord>();
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
 
     final int recordsToWrite = 2048;
     for (int i = 0; i < recordsToWrite; i++) {
-      long pageIndex = rnd.nextLong();
-      OUpdatePageRecord setPageDataRecord = new OUpdatePageRecord(pageIndex, 100);
+      TestRecord setPageDataRecord = new TestRecord(30, false);
       writtenRecords.add(setPageDataRecord);
 
       writeAheadLog.log(setPageDataRecord);
@@ -785,27 +785,24 @@ public class WriteAheadLogTest {
   }
 
   public void testAppendMultipleRecordsAfterClose() throws Exception {
-    List<OUpdatePageRecord> writtenRecords = new ArrayList<OUpdatePageRecord>();
-    Random rnd = new Random();
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     final int recordsToWrite = 1;
     for (int i = 0; i < recordsToWrite; i++) {
-      long pageIndex = rnd.nextLong();
-      OUpdatePageRecord setPageDataRecord = new OUpdatePageRecord(pageIndex, 100);
-      writtenRecords.add(setPageDataRecord);
+      TestRecord testRecord = new TestRecord(30, false);
+      writtenRecords.add(testRecord);
 
-      writeAheadLog.log(setPageDataRecord);
+      writeAheadLog.log(testRecord);
     }
 
     writeAheadLog.close();
     writeAheadLog = createWAL();
 
     for (int i = 0; i < recordsToWrite; i++) {
-      long pageIndex = rnd.nextLong();
-      OUpdatePageRecord setPageDataRecord = new OUpdatePageRecord(pageIndex, 100);
-      writtenRecords.add(setPageDataRecord);
+      TestRecord testRecord = new TestRecord(30, false);
+      writtenRecords.add(testRecord);
 
-      writeAheadLog.log(setPageDataRecord);
+      writeAheadLog.log(testRecord);
     }
 
     assertLogContent(writeAheadLog, writtenRecords);

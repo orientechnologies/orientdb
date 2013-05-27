@@ -19,6 +19,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
+
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
@@ -49,6 +51,10 @@ public class OWALRecordsFactory {
       content[0] = 6;
     else if (walRecord instanceof OClusterStateRecord)
       content[0] = 7;
+    else if (walRecord instanceof OAtomicUnitStartRecord)
+      content[0] = 8;
+    else if (walRecord instanceof OAtomicUnitEndRecord)
+      content[0] = 9;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -85,6 +91,12 @@ public class OWALRecordsFactory {
       break;
     case 7:
       walRecord = new OClusterStateRecord();
+      break;
+    case 8:
+      walRecord = new OAtomicUnitStartRecord();
+      break;
+    case 9:
+      walRecord = new OAtomicUnitEndRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))
