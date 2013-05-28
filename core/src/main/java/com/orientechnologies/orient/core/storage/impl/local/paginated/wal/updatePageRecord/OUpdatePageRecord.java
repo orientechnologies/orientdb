@@ -125,27 +125,45 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   private byte typeToId(Class<? extends OPageDiff> diffClass) {
-    if (diffClass.equals(OBinaryDiff.class))
+    if (diffClass.equals(OBinaryPageDiff.class))
       return 1;
 
-    if (diffClass.equals(OIntDiff.class))
+    if (diffClass.equals(OIntPageDiff.class))
       return 2;
 
-    if (diffClass.equals(OLongDiff.class))
+    if (diffClass.equals(OLongPageDiff.class))
       return 3;
+
+    if (diffClass.equals(OBinaryFullPageDiff.class))
+      return 4;
+
+    if (diffClass.equals(OIntFullPageDiff.class))
+      return 5;
+
+    if (diffClass.equals(OLongFullPageDiff.class))
+      return 6;
 
     throw new IllegalArgumentException("Unknown Diff class " + diffClass);
   }
 
   private OPageDiff<?> newDiffInstance(byte typeId) {
     if (typeId == 1)
-      return new OBinaryDiff();
+      return new OBinaryPageDiff();
 
     if (typeId == 2)
-      return new OIntDiff();
+      return new OIntPageDiff();
 
     if (typeId == 3)
-      return new OLongDiff();
+      return new OLongPageDiff();
+
+    if (typeId == 4)
+      return new OBinaryFullPageDiff();
+
+    if (typeId == 5)
+      return new OIntFullPageDiff();
+
+    if (typeId == 6)
+      return new OLongFullPageDiff();
 
     throw new IllegalArgumentException("Unknown Diff id " + typeId);
   }

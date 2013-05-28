@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+
 /**
  * @author Andrey Lomakin
  * @since 24.05.13
@@ -23,23 +25,31 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 public class OAtomicUnitStartRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
 
+  private boolean            isRollbackSupported;
+
   public OAtomicUnitStartRecord() {
+  }
+
+  public OAtomicUnitStartRecord(boolean isRollbackSupported) {
+    this.isRollbackSupported = isRollbackSupported;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
-    return offset;
+    isRollbackSupported = content[offset] > 0;
+    return offset + OByteSerializer.BYTE_SIZE;
 
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
-    return offset;
+    content[offset] = isRollbackSupported ? (byte) 1 : 0;
+    return offset + OByteSerializer.BYTE_SIZE;
   }
 
   @Override
   public int serializedSize() {
-    return 0;
+    return OByteSerializer.BYTE_SIZE;
   }
 
   @Override
