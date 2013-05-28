@@ -678,10 +678,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     long start = System.currentTimeMillis();
     currentResultSet = currentDatabase.command(new OCommandSQL("traverse " + iQueryText)).execute();
 
+    float elapsedSeconds = getElapsedSecs(start);
+
     dumpResultSet(limit);
 
-    out.println("\n" + currentResultSet.size() + " item(s) found. Traverse executed in "
-        + (float) (System.currentTimeMillis() - start) / 1000 + " sec(s).");
+    out.println("\n" + currentResultSet.size() + " item(s) found. Traverse executed in " + elapsedSeconds + " sec(s).");
   }
 
   @ConsoleCommand(splitInWords = false, description = "Execute a query against the database and display the results")
@@ -705,13 +706,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       limit = Integer.parseInt((String) properties.get("limit"));
     }
 
-    long start = System.currentTimeMillis();
+    final long start = System.currentTimeMillis();
     currentResultSet = currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:1"));
+
+    float elapsedSeconds = getElapsedSecs(start);
 
     dumpResultSet(limit);
 
-    out.println("\n" + currentResultSet.size() + " item(s) found. Query executed in "
-        + (float) (System.currentTimeMillis() - start) / 1000 + " sec(s).");
+    out.println("\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
   }
 
   @SuppressWarnings("unchecked")
@@ -721,13 +723,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iText == null)
       return;
 
-    long start = System.currentTimeMillis();
-
     currentResultSet.clear();
 
     final OCommandExecutorScript cmd = new OCommandExecutorScript();
     cmd.parse(new OCommandScript("Javascript", iText));
+
+    long start = System.currentTimeMillis();
+
     final Object result = cmd.execute(null);
+
+    float elapsedSeconds = getElapsedSecs(start);
 
     if (OMultiValue.isMultiValue(result)) {
       if (result instanceof List<?>)
@@ -741,11 +746,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           currentResultSet.add(o);
       }
       dumpResultSet(-1);
-      out.printf("Client side script executed in %f sec(s). Returned %d records",
-          (float) (System.currentTimeMillis() - start) / 1000, currentResultSet.size());
+      out.printf("Client side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
-      out.printf("Client side script executed in %f sec(s). Value returned is: %s",
-          (float) (System.currentTimeMillis() - start) / 1000, result);
+      out.printf("Client side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
   }
 
   @SuppressWarnings("unchecked")
@@ -757,11 +760,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iText == null)
       return;
 
-    long start = System.currentTimeMillis();
-
     currentResultSet.clear();
 
+    long start = System.currentTimeMillis();
     Object result = currentDatabase.command(new OCommandScript("Javascript", iText.toString())).execute();
+    float elapsedSeconds = getElapsedSecs(start);
 
     if (OMultiValue.isMultiValue(result)) {
       if (result instanceof List<?>)
@@ -775,11 +778,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           currentResultSet.add(o);
       }
       dumpResultSet(-1);
-      out.printf("Server side script executed in %f sec(s). Returned %d records",
-          (float) (System.currentTimeMillis() - start) / 1000, currentResultSet.size());
+      out.printf("Server side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
-      out.printf("Server side script executed in %f sec(s). Value returned is: %s",
-          (float) (System.currentTimeMillis() - start) / 1000, result);
+      out.printf("Server side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create an index against a property")
@@ -1829,18 +1830,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iReceivedCommand == null)
       return null;
 
-    long start = System.currentTimeMillis();
-
     iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
 
     currentResultSet.clear();
 
+    final long start = System.currentTimeMillis();
+
     final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
 
+    float elapsedSeconds = getElapsedSecs(start);
+
     if (iIncludeResult)
-      out.printf(iMessage, result, (float) (System.currentTimeMillis() - start) / 1000);
+      out.printf(iMessage, result, elapsedSeconds);
     else
-      out.printf(iMessage, (float) (System.currentTimeMillis() - start) / 1000);
+      out.printf(iMessage, elapsedSeconds);
 
     return result;
   }
@@ -1923,10 +1926,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return exec(new String[] { "sh", "-c", cmd });
   }
 
+  protected long getElapsedSecs(final long start) {
+    return (System.currentTimeMillis() - start) / 1000;
+  }
+
   /**
    * Execute the specified command and return the output (both stdout and stderr).
    */
-  private static int exec(final String[] cmd) throws IOException, InterruptedException {
+  protected static int exec(final String[] cmd) throws IOException, InterruptedException {
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
     Process p = Runtime.getRuntime().exec(cmd);
@@ -1948,7 +1955,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return p.exitValue();
   }
 
-  private void printError(final Exception e) {
+  protected void printError(final Exception e) {
     if (properties.get("debug") != null && Boolean.parseBoolean(properties.get("debug").toString())) {
       out.println("\n!ERROR:");
       e.printStackTrace();
@@ -1966,7 +1973,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  private void updateDatabaseInfo() {
+  protected void updateDatabaseInfo() {
     currentDatabase.getStorage().reload();
     currentDatabase.getMetadata().getSchema().reload();
     currentDatabase.getMetadata().getIndexManager().reload();

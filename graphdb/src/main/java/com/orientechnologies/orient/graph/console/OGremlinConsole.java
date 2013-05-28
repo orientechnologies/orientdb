@@ -76,15 +76,18 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     if (iScriptText == null || iScriptText.length() == 0)
       return;
 
-    long start = System.currentTimeMillis();
 
     currentResultSet.clear();
 
+    long start = System.currentTimeMillis();
     try {
-      Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+      final Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+
+      float elapsedSeconds = (System.currentTimeMillis() - start) / 1000;
+
       out.println("\n" + result);
 
-      out.printf("\nScript executed in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
+      out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof OCommandExecutorNotFoundException)

@@ -213,6 +213,7 @@ public class ODocumentHelper {
     return (RET) iValue;
   }
 
+  @SuppressWarnings("unchecked")
   public static <RET> RET getFieldValue(Object value, final String iFieldName) {
     return (RET) getFieldValue(value, iFieldName, null);
   }
