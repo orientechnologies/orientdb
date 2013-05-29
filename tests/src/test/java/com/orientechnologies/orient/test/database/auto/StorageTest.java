@@ -56,8 +56,7 @@ public class StorageTest {
     tempDir.deleteOnExit();
 
     final int segmentId = database.addDataSegment("binary", tempDir.toString());
-    Assert.assertEquals(segmentId, 1);
-    Assert.assertEquals(database.getStorage().getDataSegmentById(1).getSize(), 0);
+    Assert.assertEquals(database.getStorage().getDataSegmentById(segmentId).getSize(), 0);
 
     if (database.getStorage() instanceof OStorageLocal) {
       Assert.assertTrue(new File(tempDir.toString() + "/binary.0.oda").exists());

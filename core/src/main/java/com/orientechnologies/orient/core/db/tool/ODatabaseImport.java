@@ -542,7 +542,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId != id) {
         if (database.countClusterElements(clusterId - 1) == 0) {
           listener.onMessage("Found previous version: migrating old clusters...");
-          database.dropCluster(name);
+          database.dropCluster(name, true);
           clusterId = database.addCluster(type, "temp_" + clusterId, null, null);
           clusterId = database.addCluster(type, name, null, null);
           // recreateManualIndex = true;
@@ -584,7 +584,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
     // all clusters and recreate cluster for manual indexes in the end.
-    database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+    database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME, true);
 
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.existsClass(OUser.CLASS_NAME))
@@ -601,7 +601,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       schema.dropClass(OClassTrigger.CLASSNAME);
     schema.save();
 
-    database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME);
+    database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME, true);
 
     database.getStorage().setDefaultClusterId(
         database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));

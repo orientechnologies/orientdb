@@ -83,9 +83,9 @@ public class OStorageRemoteThread implements OStorageProxy {
     Orient.instance().unregisterStorage(this);
   }
 
-  public boolean dropCluster(final String iClusterName) {
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     delegate.setSessionId(sessionId);
-    return delegate.dropCluster(iClusterName);
+    return delegate.dropCluster(iClusterName, iTruncate);
   }
 
   public int getUsers() {
@@ -303,9 +303,9 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     delegate.setSessionId(sessionId);
-    return delegate.dropCluster(iClusterId);
+    return delegate.dropCluster(iClusterId, iTruncate);
   }
 
   public ODataSegment getDataSegmentById(final int iDataSegmentId) {

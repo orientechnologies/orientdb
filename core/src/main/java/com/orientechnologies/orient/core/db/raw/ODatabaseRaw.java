@@ -427,12 +427,12 @@ public class ODatabaseRaw implements ODatabase {
     return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
 
-  public boolean dropCluster(final String iClusterName) {
-    return storage.dropCluster(iClusterName);
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    return storage.dropCluster(iClusterName, iTruncate);
   }
 
-  public boolean dropCluster(int iClusterId) {
-    return storage.dropCluster(iClusterId);
+  public boolean dropCluster(int iClusterId, final boolean iTruncate) {
+    return storage.dropCluster(iClusterId, iTruncate);
   }
 
   public int addDataSegment(final String iSegmentName, final String iLocation) {

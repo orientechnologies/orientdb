@@ -159,8 +159,6 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
-      truncate();
-
       localHashTable.delete();
       clusterStateHolder.delete();
     } finally {
@@ -169,7 +167,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   }
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public void set(final ATTRIBUTES iAttribute, final Object iValue) throws IOException {
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 

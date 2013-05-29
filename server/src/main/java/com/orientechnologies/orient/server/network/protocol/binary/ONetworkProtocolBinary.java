@@ -561,7 +561,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IllegalArgumentException("Cluster " + id
           + " doesn't exist anymore. Refresh the db structure or just reconnect to the database");
 
-    boolean result = connection.database.dropCluster(clusterName);
+    boolean result = connection.database.dropCluster(clusterName, true);
 
     beginResponse();
     try {

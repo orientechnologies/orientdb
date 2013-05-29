@@ -85,16 +85,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public boolean dropCluster(final String iClusterName) {
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(getClusterIdByName(iClusterName));
-    return super.dropCluster(iClusterName);
+    return super.dropCluster(iClusterName, iTruncate);
   }
 
-  public boolean dropCluster(int iClusterId) {
+  public boolean dropCluster(int iClusterId, final boolean iTruncate) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(iClusterId);
-    return super.dropCluster(iClusterId);
+    return super.dropCluster(iClusterId, iTruncate);
   }
 
   @Override

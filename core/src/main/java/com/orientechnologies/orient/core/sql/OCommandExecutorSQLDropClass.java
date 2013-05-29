@@ -121,7 +121,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     OCluster cluster = database.getStorage().getClusterById(clusterId);
     if (cluster.getName().equalsIgnoreCase(className)) {
       if (isClusterDeletable(clusterId)) {
-        database.getStorage().dropCluster(clusterId);
+        database.getStorage().dropCluster(clusterId, true);
       }
     }
   }

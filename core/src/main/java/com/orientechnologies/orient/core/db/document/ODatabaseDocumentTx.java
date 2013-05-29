@@ -431,8 +431,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       underlying.delete(iRecord);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      if (iRecord instanceof ODocument)
+        OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
+            iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      else
+        OLogManager.instance().exception("Error on deleting record %s", e, ODatabaseException.class, iRecord.getIdentity());
     }
     return this;
   }

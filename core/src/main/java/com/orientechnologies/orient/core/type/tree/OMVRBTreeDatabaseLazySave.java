@@ -33,13 +33,13 @@ public class OMVRBTreeDatabaseLazySave<K, V> extends OMVRBTreeDatabase<K, V> {
   protected int     updates            = 0;
   protected boolean transactionRunning = false;
 
-  public OMVRBTreeDatabaseLazySave(ODatabaseRecord iDatabase, ORID iRID, int iMaxUpdatesBeforeSave) {
+  public OMVRBTreeDatabaseLazySave(final ODatabaseRecord iDatabase, final ORID iRID, final int iMaxUpdatesBeforeSave) {
     super(iDatabase, iRID);
     maxUpdatesBeforeSave = iMaxUpdatesBeforeSave;
   }
 
-  public OMVRBTreeDatabaseLazySave(String iClusterName, OBinarySerializer<K> iKeySerializer, OStreamSerializer iValueSerializer,
-      int keySize, int iMaxUpdatesBeforeSave) {
+  public OMVRBTreeDatabaseLazySave(final String iClusterName, final OBinarySerializer<K> iKeySerializer,
+      final OStreamSerializer iValueSerializer, final int keySize, final int iMaxUpdatesBeforeSave) {
     super(iClusterName, iKeySerializer, iValueSerializer, keySize);
     maxUpdatesBeforeSave = iMaxUpdatesBeforeSave;
   }

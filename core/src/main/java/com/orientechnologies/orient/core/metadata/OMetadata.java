@@ -46,6 +46,7 @@ public class OMetadata {
   public static final String          CLUSTER_INTERNAL_NAME     = "internal";
   public static final String          CLUSTER_INDEX_NAME        = "index";
   public static final String          CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String          DATASEGMENT_INDEX_NAME    = "index";
 
   protected int                       schemaClusterId;
 

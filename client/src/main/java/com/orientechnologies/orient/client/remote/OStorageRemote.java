@@ -1312,7 +1312,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     throw new UnsupportedOperationException();
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     checkConnection();
 
     do {

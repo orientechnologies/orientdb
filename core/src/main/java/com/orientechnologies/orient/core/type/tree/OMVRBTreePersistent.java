@@ -30,7 +30,6 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
@@ -38,6 +37,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
-  protected final OMVRBTreeProvider<K, V>                  dataProvider;
+  protected OMVRBTreeProvider<K, V>                        dataProvider;
   protected ORecord<?>                                     owner;
   protected final Set<OMVRBTreeEntryPersistent<K, V>>      recordsToCommit    = new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
@@ -203,19 +203,19 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     try {
       recordsToCommit.clear();
+      entryPoints.clear();
+      cache.clear();
       if (root != null) {
         try {
           ((OMVRBTreeEntryPersistent<K, V>) root).delete();
-        } catch (ORecordNotFoundException e) {
+        } catch (Exception e) {
+          dataProvider = new OMVRBTreeMapProvider<K, V>(null, dataProvider.getClusterName(),
+              ((OMVRBTreeMapProvider<K, V>) dataProvider).getKeySerializer(), ((OMVRBTreeMapProvider<K, V>) dataProvider).getValueSerializer());
         }
         super.clear();
         markDirty();
       }
-      entryPoints.clear();
-      cache.clear();
 
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), "Clear a MVRBTree", timer);
     }

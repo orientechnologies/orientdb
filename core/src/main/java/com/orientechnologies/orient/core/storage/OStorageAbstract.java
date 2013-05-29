@@ -120,8 +120,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     return version.get();
   }
 
-  public boolean dropCluster(final String iClusterName) {
-    return dropCluster(getClusterIdByName(iClusterName));
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
 
   protected boolean checkForClose(final boolean iForce) {

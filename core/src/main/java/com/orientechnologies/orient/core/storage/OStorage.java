@@ -155,7 +155,7 @@ public interface OStorage extends OSharedContainer {
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       boolean forceListBased, Object... iParameters);
 
-  public boolean dropCluster(String iClusterName);
+  public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
   /**
    * Drops a cluster.
@@ -163,7 +163,7 @@ public interface OStorage extends OSharedContainer {
    * @param iId
    * @return true if has been removed, otherwise false
    */
-  public boolean dropCluster(int iId);
+  public boolean dropCluster(int iId, final boolean iTruncate);
 
   /**
    * Add a new data segment in the default segment directory and with filename equals to the cluster name.

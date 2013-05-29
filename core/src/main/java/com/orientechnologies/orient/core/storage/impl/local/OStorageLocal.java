@@ -295,16 +295,16 @@ public class OStorageLocal extends OStorageLocalAbstract {
       status = STATUS.OPEN;
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
+      addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
 
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
-      // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME,
+          true);
 
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
-      // INDEXING
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
       // ADD THE DEFAULT CLUSTER
@@ -864,7 +864,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return txManager;
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
@@ -878,6 +878,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       getLevel2Cache().freeCluster(iClusterId);
 
+      if( iTruncate)
+        cluster.truncate();
       cluster.delete();
 
       clusterMap.remove(cluster.getName());

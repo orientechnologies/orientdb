@@ -244,14 +244,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.dropDataSegment(name);
   }
 
-  public boolean dropCluster(final String iClusterName) {
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     getLevel1Cache().freeCluster(getClusterIdByName(iClusterName));
-    return underlying.dropCluster(iClusterName);
+    return underlying.dropCluster(iClusterName, true);
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     getLevel1Cache().freeCluster(iClusterId);
-    return underlying.dropCluster(iClusterId);
+    return underlying.dropCluster(iClusterId, true);
   }
 
   public int addDataSegment(final String iSegmentName, final String iLocation) {

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +31,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -41,6 +47,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
+  private static final long   serialVersionUID     = 1L;
+  
   protected volatile Runnable rebuildIndexesThread = null;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
@@ -208,7 +216,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   @Override
-  public void rebuildIndexes() {
+  public synchronized void rebuildIndexes() {
     if (rebuildIndexesThread != null)
       // BUILDING ALREADY IN PROGRESS
       return;
@@ -222,54 +230,88 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       @Override
       public void run() {
         ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+
+        try {
+          newDb.getStorage().getDataSegmentIdByName(OMetadata.DATASEGMENT_INDEX_NAME);
+          // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER
+          newDb.getStorage().dropDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+          newDb.getStorage().dropCluster(OMetadata.CLUSTER_INDEX_NAME, false);
+
+          newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
+          newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME,
+              true);
+
+        } catch (IllegalArgumentException ex) {
+          // OLD DATABASE: CREATE SEPARATE DATASEGMENT AND LET THE INDEX CLUSTER TO POINT TO IT
+          OLogManager.instance().info(this, "Creating 'index' data-segment to store all the index content...");
+
+          newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
+          final OCluster indexCluster = newDb.getStorage().getClusterById(
+              newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME));
+          try {
+            indexCluster.set(ATTRIBUTES.DATASEGMENT, OMetadata.DATASEGMENT_INDEX_NAME);
+            OLogManager.instance().info(this,
+                "Data-segment 'index' create correctly. Indexes will store content into this data-segment");
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Error changing data segment for cluster 'index'", e);
+          }
+        }
+
         final Collection<? extends OIndex<?>> indexList = getIndexes();
 
-        OLogManager.instance().info(this,
-            "Start rebuilding of %d automatic indexes in background. During this phase queries could be slower", indexes.size());
+        final List<OIndex<?>> automaticIndexes = new ArrayList<OIndex<?>>();
+        for (OIndex<?> idx : indexList)
+          if (idx.isAutomatic())
+            automaticIndexes.add(idx);
 
+        OLogManager.instance().info(this,
+            "Start rebuilding of %d automatic indexes in background. During this phase queries could be slower",
+            automaticIndexes.size());
+
+        int i = 1;
         int ok = 0;
         int errors = 0;
 
-        for (final OIndex<?> idx : indexList)
-          if (idx.isAutomatic()) {
-            try {
-              OLogManager.instance().info(idx, "- rebuilding of index " + idx.getName() + "...");
-              idx.rebuild(new OProgressListener() {
-                long startTime;
-                long lastDump;
-                long lastCounter = 0;
+        for (final OIndex<?> idx : automaticIndexes)
+          try {
+            OLogManager.instance().info(idx, "- rebuilding index %d/%d: '%s'...", i, automaticIndexes.size(), idx.getName());
+            idx.rebuild(new OProgressListener() {
+              long startTime;
+              long lastDump;
+              long lastCounter = 0;
 
-                @Override
-                public void onBegin(final Object iTask, final long iTotal) {
-                  startTime = System.currentTimeMillis();
-                  lastDump = startTime;
+              @Override
+              public void onBegin(final Object iTask, final long iTotal) {
+                startTime = System.currentTimeMillis();
+                lastDump = startTime;
+              }
+
+              @Override
+              public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
+                final long now = System.currentTimeMillis();
+                if (now - lastDump > 10000) {
+                  // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
+                  OLogManager.instance().info(idx, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
+                      ((iCounter - lastCounter) / 10));
+                  lastDump = now;
+                  lastCounter = iCounter;
                 }
+                return true;
+              }
 
-                @Override
-                public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
-                  final long now = System.currentTimeMillis();
-                  if (now - lastDump > 10000) {
-                    // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
-                    OLogManager.instance().info(idx, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent,
-                        iCounter, ((iCounter - lastCounter) / 10));
-                    lastDump = now;
-                    lastCounter = iCounter;
-                  }
-                  return true;
-                }
+              @Override
+              public void onCompletition(final Object iTask, final boolean iSucceed) {
+                OLogManager.instance().info(idx, "--> ok, indexed %,d items in %,d ms", idx.getSize(),
+                    (System.currentTimeMillis() - startTime));
+              }
+            });
 
-                @Override
-                public void onCompletition(final Object iTask, final boolean iSucceed) {
-                  OLogManager.instance().info(idx, "--> ok, indexed %d items in %d ms", idx.getSize(),
-                      (System.currentTimeMillis() - startTime));
-                }
-              });
-
-              ok++;
-            } catch (Throwable e) {
-              OLogManager.instance().info(idx, "--> error caught (" + e + "). Continue with remaining indexes...");
-              errors++;
-            }
+            ok++;
+          } catch (Throwable e) {
+            OLogManager.instance().info(idx, "--> error caught (" + e + "). Continue with remaining indexes...");
+            errors++;
+          } finally {
+            ++i;
           }
 
         OLogManager.instance().info(this, "%d indexes rebuilt successfully, %d errors", ok, errors);

@@ -271,12 +271,12 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
   }
 
-  public boolean dropCluster(final String iClusterName) {
-    return wrapped.dropCluster(iClusterName);
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
-  public boolean dropCluster(final int iId) {
-    return wrapped.dropCluster(iId);
+  public boolean dropCluster(final int iId, final boolean iTruncate) {
+    return wrapped.dropCluster(iId, iTruncate);
   }
 
   public int addDataSegment(final String iDataSegmentName) {

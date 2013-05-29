@@ -204,7 +204,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     } else if ("del".equals(operation)) {
       iRequest.data.commandInfo = "Studio delete cluster";
 
-      db.dropCluster(rid);
+      db.dropCluster(rid, true);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
           + "' deleted successfully", null);

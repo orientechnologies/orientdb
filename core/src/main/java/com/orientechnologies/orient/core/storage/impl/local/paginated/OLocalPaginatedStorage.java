@@ -763,7 +763,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return createdClusterId;
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
@@ -777,6 +777,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       getLevel2Cache().freeCluster(iClusterId);
 
+      if (iTruncate)
+        cluster.truncate();
       cluster.delete();
 
       clusterMap.remove(cluster.getName());

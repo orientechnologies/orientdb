@@ -736,7 +736,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         if (name.toLowerCase().equals(db.getClusterNameById(defaultClusterId))) {
           // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
           if (ODatabaseRecordThreadLocal.INSTANCE.get().getClusterRecordSizeById(defaultClusterId) == 0)
-            ODatabaseRecordThreadLocal.INSTANCE.get().dropCluster(defaultClusterId);
+            ODatabaseRecordThreadLocal.INSTANCE.get().dropCluster(defaultClusterId, true);
         }
       }
     } else {
@@ -916,6 +916,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass iClass) {
+    if( iClass == null )
+      return false;
     return iClass.isSubClassOf(this);
   }
 

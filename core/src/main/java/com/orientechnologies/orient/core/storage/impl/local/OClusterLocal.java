@@ -197,7 +197,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     acquireExclusiveLock();
     try {
 
-      truncate();
       for (OFile f : fileSegment.files)
         f.delete();
 

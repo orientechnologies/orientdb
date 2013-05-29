@@ -86,7 +86,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
       }
     }
 
-    database.dropCluster(clusterId);
+    database.dropCluster(clusterId, true);
     return true;
   }
 

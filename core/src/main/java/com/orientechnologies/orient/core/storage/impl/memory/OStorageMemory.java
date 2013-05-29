@@ -86,12 +86,13 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
+      addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
 
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -215,12 +216,14 @@ public class OStorageMemory extends OStorageEmbedded {
     throw new UnsupportedOperationException();
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
       final OCluster c = clusters.get(iClusterId);
       if (c != null) {
+        if (iTruncate)
+          c.truncate();
         c.delete();
         clusters.set(iClusterId, null);
         getLevel2Cache().freeCluster(iClusterId);
