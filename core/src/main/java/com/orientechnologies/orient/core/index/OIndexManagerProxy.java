@@ -120,4 +120,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public OIndex<?> getClassIndex(final String className, final String indexName) {
     return delegate.getClassIndex(className, indexName);
   }
+
+  @Override
+  public void rebuildIndexes() {
+    delegate.rebuildIndexes();
+  }
 }

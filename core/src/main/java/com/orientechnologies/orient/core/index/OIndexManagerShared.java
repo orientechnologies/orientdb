@@ -23,6 +23,9 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
@@ -38,6 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
+  protected volatile Runnable rebuildIndexesThread = null;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
     super(iDatabase);
@@ -201,5 +205,85 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   @Override
   protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
     return iIndex;
+  }
+
+  @Override
+  public void rebuildIndexes() {
+    if (rebuildIndexesThread != null)
+      // BUILDING ALREADY IN PROGRESS
+      return;
+
+    final ODatabaseRecord db = getDatabase();
+
+    // USE A NEW DB INSTANCE
+    final ODatabaseDocumentTx newDb = new ODatabaseDocumentTx(db.getURL());
+
+    rebuildIndexesThread = new Runnable() {
+      @Override
+      public void run() {
+        ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+        final Collection<? extends OIndex<?>> indexList = getIndexes();
+
+        OLogManager.instance().info(this,
+            "Start rebuilding of %d automatic indexes in background. During this phase queries could be slower", indexes.size());
+
+        int ok = 0;
+        int errors = 0;
+
+        for (final OIndex<?> idx : indexList)
+          if (idx.isAutomatic()) {
+            try {
+              OLogManager.instance().info(idx, "- rebuilding of index " + idx.getName() + "...");
+              idx.rebuild(new OProgressListener() {
+                long startTime;
+                long lastDump;
+                long lastCounter = 0;
+
+                @Override
+                public void onBegin(final Object iTask, final long iTotal) {
+                  startTime = System.currentTimeMillis();
+                  lastDump = startTime;
+                }
+
+                @Override
+                public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
+                  final long now = System.currentTimeMillis();
+                  if (now - lastDump > 10000) {
+                    // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
+                    OLogManager.instance().info(idx, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent,
+                        iCounter, ((iCounter - lastCounter) / 10));
+                    lastDump = now;
+                    lastCounter = iCounter;
+                  }
+                  return true;
+                }
+
+                @Override
+                public void onCompletition(final Object iTask, final boolean iSucceed) {
+                  OLogManager.instance().info(idx, "--> ok, indexed %d items in %d ms", idx.getSize(),
+                      (System.currentTimeMillis() - startTime));
+                }
+              });
+
+              ok++;
+            } catch (Throwable e) {
+              OLogManager.instance().info(idx, "--> error caught (" + e + "). Continue with remaining indexes...");
+              errors++;
+            }
+          }
+
+        OLogManager.instance().info(this, "%d indexes rebuilt successfully, %d errors", ok, errors);
+        rebuildIndexesThread = null;
+      }
+    };
+
+    // START IT IN BACKGROUND
+    newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+    newDb.open("admin", "nopass");
+
+    new Thread(rebuildIndexesThread).start();
+
+    // RE-SET THE OLD DATABASE
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
   }
 }

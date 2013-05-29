@@ -33,6 +33,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
@@ -43,8 +46,10 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -53,6 +58,15 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
+  public OClassIndexManager() {
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+    // rebuild indexes if index cluster wasn't closed properly
+    if (OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
+        && (database.getStorage() instanceof OStorageLocalAbstract)
+        && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
+      database.getMetadata().getIndexManager().rebuildIndexes();
+  }
 
   @Override
   public RESULT onRecordBeforeCreate(ODocument iDocument) {

@@ -34,6 +34,8 @@ public interface OIndexManager {
   public OIndexManager load();
 
   public void create();
+  
+  public void rebuildIndexes();
 
   public Collection<? extends OIndex<?>> getIndexes();
 

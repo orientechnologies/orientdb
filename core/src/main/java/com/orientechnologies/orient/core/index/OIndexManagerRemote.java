@@ -141,4 +141,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       releaseExclusiveLock();
     }
   }
+
+  @Override
+  public void rebuildIndexes() {
+    throw new UnsupportedOperationException("rebuildIndexes()");
+  }
 }

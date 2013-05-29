@@ -397,7 +397,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       roleClass.setSuperClass(identityClass);
 
     if (!roleClass.existsProperty("name"))
-      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).createIndex(INDEX_TYPE.UNIQUE);
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
     if (!roleClass.existsProperty("rules"))
@@ -413,7 +413,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       userClass.setSuperClass(identityClass);
 
     if (!userClass.existsProperty("name"))
-      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).createIndex(INDEX_TYPE.UNIQUE);
     if (!userClass.existsProperty("password"))
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("roles"))
