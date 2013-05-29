@@ -61,7 +61,7 @@ public abstract class OAbstractFile implements OFile {
   protected boolean           failCheck              = true;
   protected volatile int      size;                                                 // PART OF HEADER (4 bytes)
 
-  protected static final int  HEADER_SIZE            = 1024;
+  public static final int     HEADER_SIZE            = 1024;
   protected static final int  HEADER_DATA_OFFSET     = 128;
   protected static final int  DEFAULT_SIZE           = 1024000;
   protected static final int  DEFAULT_INCREMENT_SIZE = -50;                         // NEGATIVE NUMBER MEANS AS PERCENT OF CURRENT
@@ -287,9 +287,9 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()
    */
   public void lock() throws IOException {
-    if( channel == null )
+    if (channel == null)
       return;
-    
+
     acquireWriteLock();
     try {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {

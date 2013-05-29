@@ -303,18 +303,18 @@ public class OLocalPage {
     return (entryPointer & MARKED_AS_DELETED_FLAG) > 0;
   }
 
-  public long getRecordPointer(int position) {
+  public int getRecordPageOffset(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
     if (position >= indexesLength)
-      return ODirectMemory.NULL_POINTER;
+      return -1;
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
     if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
-      return ODirectMemory.NULL_POINTER;
+      return -1;
 
     int entryPosition = entryPointer & POSITION_MASK;
-    return pagePointer + entryPosition + 3 * OIntegerSerializer.INT_SIZE;
+    return entryPosition + 3 * OIntegerSerializer.INT_SIZE;
   }
 
   public int getRecordSize(int position) {
@@ -420,6 +420,7 @@ public class OLocalPage {
 
   public void revertChanges(List<OFullPageDiff<?>> changes) {
     ListIterator<OFullPageDiff<?>> listIterator = changes.listIterator(changes.size());
+
     while (listIterator.hasPrevious()) {
       OFullPageDiff<?> diff = listIterator.previous();
       diff.revertPageData(pagePointer);
@@ -469,19 +470,23 @@ public class OLocalPage {
     }
   }
 
-  private int getIntValue(int pageOffset) {
+  public int getIntValue(int pageOffset) {
     return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
   }
 
-  private long getLongValue(int pageOffset) {
+  public long getLongValue(int pageOffset) {
     return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
   }
 
-  private byte[] getBinaryValue(int pageOffset, int valLen) {
+  public byte[] getBinaryValue(int pageOffset, int valLen) {
     return directMemory.get(pagePointer + pageOffset, valLen);
   }
 
-  private void setIntValue(int pageOffset, int value) throws IOException {
+  public byte getByteValue(int pageOffset) {
+    return directMemory.getByte(pagePointer + pageOffset);
+  }
+
+  public void setIntValue(int pageOffset, int value) throws IOException {
     if (trackMode.equals(TrackMode.FORWARD))
       pageChanges.add(new OIntPageDiff(value, pageOffset));
     else if (trackMode.equals(TrackMode.BOTH)) {
@@ -492,7 +497,7 @@ public class OLocalPage {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
 
-  private void setLongValue(int pageOffset, long value) throws IOException {
+  public void setLongValue(int pageOffset, long value) throws IOException {
     if (trackMode.equals(TrackMode.FORWARD))
       pageChanges.add(new OLongPageDiff(value, pageOffset));
     else if (trackMode.equals(TrackMode.BOTH)) {
@@ -503,7 +508,7 @@ public class OLocalPage {
     OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
 
-  private void setBinaryValue(int pageOffset, byte[] value) throws IOException {
+  public void setBinaryValue(int pageOffset, byte[] value) throws IOException {
     if (trackMode.equals(TrackMode.FORWARD))
       pageChanges.add(new OBinaryPageDiff(value, pageOffset));
     else if (trackMode.equals(TrackMode.BOTH)) {
@@ -515,7 +520,7 @@ public class OLocalPage {
     directMemory.set(pagePointer + pageOffset, value, 0, value.length);
   }
 
-  private void copyData(int from, int to, int len) throws IOException {
+  public void copyData(int from, int to, int len) throws IOException {
     if (trackMode.equals(TrackMode.FORWARD)) {
       byte[] content = directMemory.get(pagePointer + from, len);
       pageChanges.add(new OBinaryPageDiff(content, to));

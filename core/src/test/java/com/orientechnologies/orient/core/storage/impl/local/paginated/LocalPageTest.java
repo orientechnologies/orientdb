@@ -14,6 +14,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -44,8 +46,8 @@ public class LocalPageTest {
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      long pointer = localPage.getRecordPointer(0);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+      int pageOffset = localPage.getRecordPageOffset(0);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -78,18 +80,18 @@ public class LocalPageTest {
       Assert.assertFalse(localPage.isDeleted(1));
       Assert.assertFalse(localPage.isDeleted(2));
 
-      long pointer = localPage.getRecordPointer(0);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+      int pageOffset = localPage.getRecordPageOffset(0);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      pointer = localPage.getRecordPointer(1);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+      pageOffset = localPage.getRecordPageOffset(1);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
-      pointer = localPage.getRecordPointer(2);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
+      pageOffset = localPage.getRecordPageOffset(2);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
@@ -127,9 +129,9 @@ public class LocalPageTest {
 
       counter = 0;
       for (int position : positions) {
-        long pointer = localPage.getRecordPointer(position);
+        int pageOffset = localPage.getRecordPageOffset(position);
 
-        Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { counter, counter, counter });
+        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3), new byte[] { counter, counter, counter });
         Assert.assertEquals(localPage.getRecordSize(position), 3);
         Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
         counter++;
@@ -159,13 +161,13 @@ public class LocalPageTest {
       Assert
           .assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      long recordPointer = localPage.getRecordPointer(position);
+      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -190,12 +192,12 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, true), position);
 
-      long recordPointer = localPage.getRecordPointer(position);
+      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -225,12 +227,12 @@ public class LocalPageTest {
       Assert
           .assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      long recordPointer = localPage.getRecordPointer(position);
+      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
-      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -253,13 +255,13 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      long recordPointer = localPage.getRecordPointer(position);
+      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -282,12 +284,12 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, true), position);
 
-      long recordPointer = localPage.getRecordPointer(position);
+      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(directMemory.get(recordPointer, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
@@ -331,23 +333,23 @@ public class LocalPageTest {
       Assert.assertEquals(localPage.findFirstDeletedRecord(1), 2);
       Assert.assertEquals(localPage.findFirstDeletedRecord(3), -1);
 
-      long pointer = localPage.getRecordPointer(0);
-      Assert.assertEquals(pointer, ODirectMemory.NULL_POINTER);
+      int pageOffset = localPage.getRecordPageOffset(0);
+      Assert.assertEquals(pageOffset, -1);
       Assert.assertEquals(localPage.getRecordSize(0), -1);
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      pointer = localPage.getRecordPointer(1);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+      pageOffset = localPage.getRecordPageOffset(1);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
       Assert.assertEquals(localPage.getRecordSize(1), 11);
       Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
-      pointer = localPage.getRecordPointer(2);
-      Assert.assertEquals(pointer, ODirectMemory.NULL_POINTER);
+      pageOffset = localPage.getRecordPageOffset(2);
+      Assert.assertEquals(pageOffset, -1);
       Assert.assertEquals(localPage.getRecordSize(2), -1);
       Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
-      pointer = localPage.getRecordPointer(3);
-      Assert.assertEquals(directMemory.get(pointer, 11), new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
+      pageOffset = localPage.getRecordPageOffset(3);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
       Assert.assertEquals(localPage.getRecordSize(3), 11);
       Assert.assertEquals(localPage.getRecordVersion(3), recordVersion);
 
@@ -414,9 +416,10 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        final long pointer = localPage.getRecordPointer(entry.getKey());
+        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
 
-        Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
+            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
         if (deletedPositions.contains(entry.getKey()))
@@ -486,9 +489,10 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        final long pointer = localPage.getRecordPointer(entry.getKey());
+        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
 
-        Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
+            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
         if (deletedPositions.contains(entry.getKey()))
@@ -546,9 +550,10 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), positionCounter.size());
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        final long pointer = localPage.getRecordPointer(entry.getKey());
+        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
 
-        Assert.assertEquals(directMemory.get(pointer, 3), new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
+            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
         Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
       }
@@ -731,8 +736,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      long recordPointer = localPage.getRecordPointer(index);
-      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      int pageOffset = localPage.getRecordPageOffset(index);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
@@ -764,8 +769,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      long recordPointer = localPage.getRecordPointer(index);
-      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      int recordPageOffset = localPage.getRecordPageOffset(index);
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
@@ -797,8 +802,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 6);
 
-      long recordPointer = localPage.getRecordPointer(index);
-      Assert.assertEquals(directMemory.get(recordPointer, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
+      int pageOffset = localPage.getRecordPageOffset(index);
+      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
@@ -830,8 +835,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      long recordPointer = localPage.getRecordPointer(index);
-      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      int recordPageOffset = localPage.getRecordPageOffset(index);
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
 
@@ -862,8 +867,8 @@ public class LocalPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      long recordPointer = localPage.getRecordPointer(index);
-      Assert.assertEquals(directMemory.get(recordPointer, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      int recordPageOffset = localPage.getRecordPageOffset(index);
+      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
 
@@ -882,6 +887,15 @@ public class LocalPageTest {
 
       Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET),
           directMemory.get(pagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET));
+
+      List<OFullPageDiff<?>> changes = new ArrayList<OFullPageDiff<?>>();
+      for (OPageDiff<?> pageDiff : localPage.getPageChanges())
+        changes.add((OFullPageDiff<?>) pageDiff);
+
+      restoredPage.revertChanges(changes);
+
+      Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OLocalPage.PAGE_SIZE - SYSTEM_OFFSET),
+          new byte[OLocalPage.PAGE_SIZE - SYSTEM_OFFSET]);
     } finally {
       directMemory.free(restoredPagePointer);
     }

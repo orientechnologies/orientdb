@@ -39,7 +39,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     this.diffs = diffs;
   }
 
-  public List<OPageDiff<?>> getDiffs() {
+  public List<OPageDiff<?>> getChanges() {
     return diffs;
   }
 
