@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -139,7 +140,9 @@ public class OTableFormatter {
     else if (iRecord instanceof ORecordBytes)
       value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
 
-    if (value instanceof Collection<?>)
+    if (value instanceof OMultiCollectionIterator<?>)
+      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+    else if (value instanceof Collection<?>)
       value = "[" + ((Collection<?>) value).size() + "]";
     else if (value instanceof ORecord<?>) {
       if (((ORecord<?>) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
@@ -164,7 +167,7 @@ public class OTableFormatter {
       if (i++ > 0)
         out.print('|');
       String colName = column.getKey();
-      if( colName.length() > column.getValue())
+      if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
       out.printf("%-" + column.getValue() + "s", colName);
     }
