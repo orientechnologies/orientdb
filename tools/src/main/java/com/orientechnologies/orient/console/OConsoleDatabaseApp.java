@@ -1926,8 +1926,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return exec(new String[] { "sh", "-c", cmd });
   }
 
-  protected long getElapsedSecs(final long start) {
-    return (System.currentTimeMillis() - start) / 1000;
+  protected float getElapsedSecs(final long start) {
+    return (float) (System.currentTimeMillis() - start) / 1000;
   }
 
   /**
