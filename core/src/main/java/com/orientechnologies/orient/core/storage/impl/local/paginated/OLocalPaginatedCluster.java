@@ -599,11 +599,6 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         else
           trackMode = OLocalPage.TrackMode.FORWARD;
 
-        if (writeAheadLog != null) {
-          OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages));
-          lastLsn.set(lsn);
-        }
-
         long nextPagePointer = -1;
         int removedContentSize = 0;
         do {
@@ -619,6 +614,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
                 return false;
               else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
+            } else if (removedContentSize == 0 && writeAheadLog != null) {
+              OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages));
+              lastLsn.set(lsn);
             }
 
             byte[] content = localPage.getBinaryValue(recordPageOffset, localPage.getRecordSize(recordPosition));

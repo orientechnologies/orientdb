@@ -75,7 +75,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    diskCache = new O2QCache(1024 * 1024 * 1024, 15000, directMemory, writeAheadLog,
+    diskCache = new O2QCache(1024L * 1024 * 1024 * 1024, 15000, directMemory, writeAheadLog,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, storage, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
@@ -163,9 +163,134 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
+  @Override
+  public void testUpdateOneSmallRecord() throws IOException {
+    super.testUpdateOneSmallRecord();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateOneBigRecord() throws IOException {
+    super.testUpdateOneBigRecord();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
+    super.testDeleteRecordAndAddNewOnItsPlace();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddManySmallRecords() throws IOException {
+    super.testAddManySmallRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateOneSmallRecordVersionIsLowerCurrentOne() throws IOException {
+    super.testUpdateOneSmallRecordVersionIsLowerCurrentOne();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateOneSmallRecordVersionIsMinusTwo() throws IOException {
+    super.testUpdateOneSmallRecordVersionIsMinusTwo();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateManySmallRecords() throws IOException {
+    super.testUpdateManySmallRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddManyRecords() throws IOException {
+    super.testAddManyRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddManyBigRecords() throws IOException {
+    super.testAddManyBigRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateManyRecords() throws IOException {
+    super.testUpdateManyRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testUpdateManyBigRecords() throws IOException {
+    super.testUpdateManyBigRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testRemoveHalfSmallRecords() throws IOException {
+    super.testRemoveHalfSmallRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testRemoveHalfRecords() throws IOException {
+    super.testRemoveHalfRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testRemoveHalfBigRecords() throws IOException {
+    super.testRemoveHalfBigRecords();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
+    super.testRemoveHalfRecordsAndAddAnotherHalfAgain();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testForwardIteration() throws IOException {
+    super.testForwardIteration();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testBackwardIteration() throws IOException {
+    super.testBackwardIteration();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testGetPhysicalPosition() throws IOException {
+    super.testGetPhysicalPosition();
+  }
+
   private void assertFileRestoreFromWAL() throws IOException {
     paginatedCluster.close();
     writeAheadLog.close();
+
+    diskCache.clear();
 
     restoreClusterFromWAL(testCluster);
 
@@ -207,28 +332,36 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void assertClusterContentIsTheSame(String expectedCluster, String actualCluster) throws IOException {
-    RandomAccessFile fileOne = new RandomAccessFile(new File(buildDirectory, expectedCluster + ".0.pcl"), "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(buildDirectory, actualCluster + ".0.pcl"), "r");
+    int i = 0;
+    File expectedFile = new File(buildDirectory, expectedCluster + "." + i + ".pcl");
+    while (expectedFile.exists()) {
+      RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
+      RandomAccessFile fileTwo = new RandomAccessFile(new File(buildDirectory, actualCluster + "." + i + ".pcl"), "r");
 
-    byte[] expectedContent = new byte[OLocalPage.PAGE_SIZE];
-    byte[] actualContent = new byte[OLocalPage.PAGE_SIZE];
+      Assert.assertEquals(fileOne.length(), fileTwo.length());
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+      byte[] expectedContent = new byte[OLocalPage.PAGE_SIZE];
+      byte[] actualContent = new byte[OLocalPage.PAGE_SIZE];
 
-    int bytesRead = fileOne.read(expectedContent);
-    while (bytesRead >= 0) {
-      fileTwo.readFully(actualContent, 0, bytesRead);
+      fileOne.seek(OAbstractFile.HEADER_SIZE);
+      fileTwo.seek(OAbstractFile.HEADER_SIZE);
 
-      Assert.assertEquals(expectedContent, actualContent);
+      int bytesRead = fileOne.read(expectedContent);
+      while (bytesRead >= 0) {
+        fileTwo.readFully(actualContent, 0, bytesRead);
 
-      expectedContent = new byte[OLocalPage.PAGE_SIZE];
-      actualContent = new byte[OLocalPage.PAGE_SIZE];
-      bytesRead = fileOne.read(expectedContent);
+        Assert.assertEquals(expectedContent, actualContent);
+
+        expectedContent = new byte[OLocalPage.PAGE_SIZE];
+        actualContent = new byte[OLocalPage.PAGE_SIZE];
+        bytesRead = fileOne.read(expectedContent);
+      }
+
+      fileOne.close();
+      fileTwo.close();
+
+      i++;
+      expectedFile = new File(buildDirectory, expectedCluster + "." + i + ".pcl");
     }
-
-    fileOne.close();
-    fileTwo.close();
   }
-
 }
