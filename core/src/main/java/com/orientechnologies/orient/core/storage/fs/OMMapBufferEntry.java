@@ -17,21 +17,23 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
-public class OMMapBufferEntry extends OSharedResourceAbstract implements Comparable<OMMapBufferEntry> {
+public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
   private static final OJVMProfiler PROFILER = Orient.instance().getProfiler();
   private static final int          FORCE_DELAY;
   private static final int          FORCE_RETRY;
 
   static Method                     cleanerMethod;
 
+  Lock                              lock     = new ReentrantLock();
   volatile OFileMMap                file;
   volatile MappedByteBuffer         buffer;
   final long                        beginOffset;
@@ -67,11 +69,10 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
    * @return true if the buffer has been successfully flushed, otherwise false.
    */
   boolean flush() {
-    if (!dirty)
-      return true;
-
-    acquireExclusiveLock();
+    lock.lock();
     try {
+      if (!dirty)
+        return true;
 
       final long timer = PROFILER.startChrono();
 
@@ -98,7 +99,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
       return !dirty;
 
     } finally {
-      releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -114,7 +115,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
    * Force closing of file if it's opened yet.
    */
   void close() {
-    acquireExclusiveLock();
+    lock.lock();
     try {
 
       if (buffer != null) {
@@ -138,7 +139,7 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
       file = null;
 
     } finally {
-      releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -158,20 +159,12 @@ public class OMMapBufferEntry extends OSharedResourceAbstract implements Compara
     this.dirty = true;
   }
 
-  void acquireWriteLock() {
-    super.acquireExclusiveLock();
+  void acquireLock() {
+    lock.lock();
   }
 
-  void releaseWriteLock() {
-    super.releaseExclusiveLock();
-  }
-
-  void acquireReadLock() {
-    super.acquireExclusiveLock();
-  }
-
-  void releaseReadLock() {
-    super.releaseExclusiveLock();
+  void releaseLock() {
+    lock.unlock();
   }
 
   public void updateLastUsedTime() {

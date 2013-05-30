@@ -90,7 +90,7 @@ public abstract class OAbstractFile implements OFile {
 
   public abstract long readHeaderLong(int iPosition) throws IOException;
 
-  public abstract void synch() throws IOException;
+  public abstract boolean synch() throws IOException;
 
   public abstract void read(long iOffset, byte[] iDestBuffer, int iLenght) throws IOException;
 

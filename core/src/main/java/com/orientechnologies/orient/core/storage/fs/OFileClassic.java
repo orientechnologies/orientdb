@@ -218,10 +218,11 @@ public class OFileClassic extends OAbstractFile {
    * 
    */
   @Override
-  public void synch() throws IOException {
+  public boolean synch() throws IOException {
     acquireWriteLock();
     try {
       flushHeader();
+      return true;
     } finally {
       releaseWriteLock();
     }

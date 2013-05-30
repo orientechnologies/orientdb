@@ -541,12 +541,15 @@ public class OFileMMap extends OAbstractFile {
    * Synchronizes buffered changes to the file.
    */
   @Override
-  public void synch() {
+  public boolean synch() {
     acquireWriteLock();
     try {
 
-      OMMapManagerLocator.getInstance().flushFile(this);
+      boolean allFlushed = OMMapManagerLocator.getInstance().flushFile(this);
       flushHeader();
+      
+      return allFlushed;
+      
     } finally {
       releaseWriteLock();
     }
@@ -581,7 +584,7 @@ public class OFileMMap extends OAbstractFile {
   public void close() throws IOException {
     acquireWriteLock();
     try {
-      OMMapManagerLocator.getInstance().flush();
+      OMMapManagerLocator.getInstance().flushFile(this);
 
       super.close();
       headerBuffer = null;

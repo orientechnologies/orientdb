@@ -163,7 +163,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   /**
    * {@inheritDoc}
    * <p/>
-   * Flush all closed files on disk. If some mapped entries not flushed successfully file will be associated with not flushed
+   * Flushes all closed files on disk. If some mapped entries not flushed successfully file will be associated with not flushed
    * entries. When flush will be performed again not flushed records will be flushed again, File information for files which have
    * all records flushed will be removed from mmap manager.
    */
@@ -182,12 +182,12 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
       // FLUSHES ALL THE BLOCK OF THE FILE
       lockManager.acquireLock(Thread.currentThread(), file, OLockManager.LOCK.EXCLUSIVE);
       try {
-        if (autoFlushUnusedTime > 0 || file.isClosed()) {
+        if (file.isClosed()) {
           OMMapBufferEntry[] notFlushed = EMPTY_BUFFER_ENTRIES;
           for (OMMapBufferEntry entry : mapEntry.getValue()) {
             totalBlocks++;
 
-            if ((file.isClosed() || autoFlushUnusedTime == 0 || now - entry.getLastUsed() > autoFlushUnusedTime) && removeEntry(entry))
+            if (removeEntry(entry))
               // OK: FLUSHED
               flushedBlocks++;
             else
@@ -196,11 +196,21 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
           }
 
           if (notFlushed.length == 0) {
+            // NO REMAINING BUFFERS TO FLUSH, REMOVE THE ENTIRE FILE ENTRY
             it.remove();
-          } else {
+          } else
+            // SOME BUFFER CANNOT BE FLUSHED, KEEP ONLY THEM
             mapEntry.setValue(notFlushed);
+        } else if (autoFlushUnusedTime > 0) {
+          // JUST FLUSH BUFFERS TO DISK
+          for (OMMapBufferEntry entry : mapEntry.getValue()) {
+            if (entry.isDirty() && (autoFlushUnusedTime == 0 || now - entry.getLastUsed() > autoFlushUnusedTime)) {
+              flushedBlocks++;
+              entry.flush();
+            }
           }
         }
+
       } finally {
         lockManager.releaseLock(Thread.currentThread(), file, OLockManager.LOCK.EXCLUSIVE);
       }
@@ -406,12 +416,12 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   private void acquireLocksOnEntries(final OMMapBufferEntry[] entries, OPERATION_TYPE operationType) {
     if (operationType == OPERATION_TYPE.WRITE)
       for (OMMapBufferEntry entry : entries) {
-        entry.acquireWriteLock();
+        entry.acquireLock();
         entry.setDirty();
       }
     else
       for (OMMapBufferEntry entry : entries)
-        entry.acquireReadLock();
+        entry.acquireLock();
   }
 
   /**
@@ -435,11 +445,11 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
    *          that will be closed.
    */
   private void closeEntry(OMMapBufferEntry entry) {
-    entry.acquireWriteLock();
+    entry.acquireLock();
     try {
       entry.close();
     } finally {
-      entry.releaseWriteLock();
+      entry.releaseLock();
     }
   }
 
@@ -473,17 +483,22 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
   }
 
   /**
-   * {@inheritDoc}
+   * Flushes buffers to disk for a file.
    */
-  public void flushFile(final OFileMMap iFile) {
+  public boolean flushFile(final OFileMMap iFile) {
     lockManager.acquireLock(Thread.currentThread(), iFile, OLockManager.LOCK.SHARED);
     try {
+      boolean allFlushed = true;
       final OMMapBufferEntry[] fileEntries = bufferPoolPerFile.get(iFile);
       if (fileEntries != null) {
         for (OMMapBufferEntry entry : fileEntries) {
-          entry.flush();
+          if (!entry.flush())
+            allFlushed = false;
         }
       }
+
+      return allFlushed;
+
     } finally {
       lockManager.releaseLock(Thread.currentThread(), iFile, OLockManager.LOCK.SHARED);
     }

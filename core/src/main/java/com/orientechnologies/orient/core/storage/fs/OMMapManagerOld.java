@@ -294,7 +294,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
 
       } finally {
         if (entry != null) {
-          entry.acquireWriteLock();
+          entry.acquireLock();
 
           if (iOperationType == OMMapManager.OPERATION_TYPE.WRITE)
             entry.setDirty();
@@ -380,7 +380,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
     if (!entry.flush())
       return false;
 
-    entry.acquireWriteLock();
+    entry.acquireLock();
     try {
       // COMMITTED: REMOVE IT
       final List<OMMapBufferEntry> file = bufferPoolPerFile.get(entry.file);
@@ -395,7 +395,7 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
       return true;
 
     } finally {
-      entry.releaseWriteLock();
+      entry.releaseLock();
     }
   }
 
@@ -424,13 +424,17 @@ public class OMMapManagerOld extends OMMapManagerAbstract implements OMMapManage
    * @param iFile
    *          file to flush on disk.
    */
-  public void flushFile(final OFileMMap iFile) {
+  public boolean flushFile(final OFileMMap iFile) {
     lock.readLock().lock();
     try {
       final List<OMMapBufferEntry> entries = bufferPoolPerFile.get(iFile);
+      boolean allFlushed = true;
       if (entries != null)
         for (OMMapBufferEntry entry : entries)
-          entry.flush();
+          if (!entry.flush())
+            allFlushed = false;
+
+      return allFlushed;
     } finally {
       lock.readLock().unlock();
     }
