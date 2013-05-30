@@ -59,13 +59,9 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
   public OClassIndexManager() {
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-
     // rebuild indexes if index cluster wasn't closed properly
-    if (OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
-        && (database.getStorage() instanceof OStorageLocalAbstract)
-        && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
-      database.getMetadata().getIndexManager().rebuildIndexes();
+    if (autoRebuildAllIndexes())
+      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().rebuildIndexes();
   }
 
   @Override
@@ -287,6 +283,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public void onRecordReplicaDeleteFailed(ODocument iDocument) {
     releaseModificationLock(iDocument);
+  }
+
+  public static boolean autoRebuildAllIndexes() {
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    return OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
+        && (database.getStorage() instanceof OStorageLocalAbstract)
+        && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {

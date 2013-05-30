@@ -76,7 +76,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ODocument                        configuration;
   private ORID                             identity;
   private OMurmurHash3HashFunction<Object> keyHashFunction;
-  private boolean                          rebuilt                               = false;
+  private boolean                          rebuiding                             = false;
 
   public OAbstractLocalHashIndex(String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -352,6 +352,8 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
     acquireExclusiveLock();
     try {
+      rebuiding = true;
+
       try {
         clear();
       } catch (Exception e) {
@@ -395,7 +397,6 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
             if (iProgressListener != null)
               iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
 
-            rebuilt = true;
           }
         } catch (NoSuchElementException e) {
           // END OF CLUSTER REACHED, IGNORE IT
@@ -417,6 +418,8 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
     } finally {
+      rebuiding = false;
+
       if (intentInstalled)
         getDatabase().declareIntent(null);
 
@@ -722,7 +725,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     }
   }
 
-  public boolean isRebuilt() {
-    return rebuilt;
+  public boolean isRebuiding() {
+    return rebuiding;
   }
 }

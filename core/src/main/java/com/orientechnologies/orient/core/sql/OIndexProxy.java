@@ -507,6 +507,10 @@ public class OIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  public void automaticRebuild() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
   public long rebuild(OProgressListener iProgressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -532,7 +536,7 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuilt() {
+  public boolean isRebuiding() {
     return false;
   }
 }

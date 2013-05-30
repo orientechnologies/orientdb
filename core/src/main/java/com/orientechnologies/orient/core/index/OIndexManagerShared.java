@@ -265,7 +265,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
         final List<OIndex<?>> automaticIndexes = new ArrayList<OIndex<?>>();
         for (OIndex<?> idx : indexList)
-          if (idx.isAutomatic() && !idx.isRebuilt())
+          if (idx.isAutomatic())
             automaticIndexes.add(idx);
 
         OLogManager.instance().info(this,

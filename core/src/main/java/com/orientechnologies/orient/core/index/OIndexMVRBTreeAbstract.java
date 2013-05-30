@@ -86,7 +86,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   @ODocumentInstance
   protected ODocument                            configuration;
   private final Listener                         watchDog;
-  private boolean                                rebuilt          = false;
+  private boolean                                rebuilding       = false;
 
   public OIndexMVRBTreeAbstract(final String iType) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -373,6 +373,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     acquireExclusiveLock();
     try {
+      rebuilding = true;
+      
       try {
         map.clear();
       } catch (Exception e) {
@@ -428,8 +430,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
 
-      rebuilt = true;
-
     } catch (final Exception e) {
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, false);
@@ -443,6 +443,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
       throw new OIndexException("Error on rebuilding the index for clusters: " + clustersToIndex, e);
 
     } finally {
+      rebuilding = false;
+
       if (intentInstalled)
         getDatabase().declareIntent(null);
 
@@ -856,6 +858,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public void onClose(final ODatabase iDatabase) {
+    if (isRebuiding())
+      return;
+
     acquireExclusiveLock();
     try {
 
@@ -963,7 +968,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         : OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
   }
 
-  public boolean isRebuilt() {
-    return rebuilt;
+  public boolean isRebuiding() {
+    return rebuilding;
   }
 }

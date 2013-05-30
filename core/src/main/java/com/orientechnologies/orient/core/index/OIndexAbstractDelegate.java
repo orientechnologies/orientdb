@@ -287,8 +287,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuilt() {
-    return delegate.isRebuilt();
+  public boolean isRebuiding() {
+    return delegate.isRebuiding();
   }
-
 }

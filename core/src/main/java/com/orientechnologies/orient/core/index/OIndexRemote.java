@@ -233,6 +233,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Integer) getDatabase().command(cmd).execute(iRecord);
   }
 
+  public void automaticRebuild() {
+    throw new UnsupportedOperationException("autoRebuild()");
+  }
+
   public long rebuild() {
     final OCommandRequest cmd = formatCommand(QUERY_REBUILD, name);
     return (Long) getDatabase().command(cmd).execute();
@@ -491,9 +495,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
   }
-  
+
   @Override
-  public boolean isRebuilt() {
+  public boolean isRebuiding() {
     return false;
   }
 }

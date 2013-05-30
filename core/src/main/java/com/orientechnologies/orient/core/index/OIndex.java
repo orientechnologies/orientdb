@@ -192,5 +192,5 @@ public interface OIndex<T> extends OKeyValueIndex<T> {
 
   public boolean supportsOrderedIterations();
 
-  public boolean isRebuilt();
+  public boolean isRebuiding();
 }
