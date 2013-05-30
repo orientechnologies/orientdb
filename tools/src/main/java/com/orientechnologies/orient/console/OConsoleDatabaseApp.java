@@ -156,6 +156,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
     OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
     OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
+    OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.setValue(1);
+    OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
 
     properties.put("limit", "20");
     properties.put("width", "132");
@@ -955,8 +957,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       out.println("Current database: " + currentDatabaseName + " (url=" + currentDatabase.getURL() + ")");
 
       final OStorage stg = currentDatabase.getStorage();
-
-      out.println("\nTotal size: " + OFileUtils.getSizeAsString(stg.getSize()));
 
       if (stg instanceof OStorageRemoteThread) {
         final ODocument clusterConfig = ((OStorageRemoteThread) stg).getClusterConfiguration();
