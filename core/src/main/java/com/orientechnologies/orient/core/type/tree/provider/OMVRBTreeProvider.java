@@ -30,37 +30,39 @@ import com.orientechnologies.orient.core.id.ORID;
 public interface OMVRBTreeProvider<K, V> {
 
   public void setKeySize(int keySize);
-	
-	public int getKeySize();
-	
-	public int getSize();
 
-	public int getDefaultPageSize();
+  public int getKeySize();
 
-	public ORID getRoot();
+  public int getSize();
 
-	public boolean setRoot(ORID iRid);
+  public int getDefaultPageSize();
 
-	public boolean setSize(int iSize);
+  public ORID getRoot();
 
-	/** Give a chance to update config parameters (defaultSizePage, ...) */
-	public boolean updateConfig();
+  public boolean setRoot(ORID iRid);
 
-	public boolean isDirty();
-	
-	public boolean setDirty();
+  public boolean setSize(int iSize);
 
-	public OMVRBTreeEntryDataProvider<K, V> createEntry();
+  /** Give a chance to update config parameters (defaultSizePage, ...) */
+  public boolean updateConfig();
 
-	public OMVRBTreeEntryDataProvider<K, V> getEntry(ORID iRid);
+  public boolean isDirty();
 
-	public void load();
+  public boolean setDirty();
 
-	public void save();
+  public OMVRBTreeEntryDataProvider<K, V> createEntry();
 
-	public void delete();
+  public OMVRBTreeEntryDataProvider<K, V> getEntry(ORID iRid);
 
-	public int getClusterId();
+  public void load();
 
-	public String getClusterName();
+  public void save();
+
+  public void delete();
+
+  public int getClusterId();
+
+  public String getClusterName();
+
+  public OMVRBTreeProvider<K, V> copy();
 }

@@ -48,7 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
   private static final long   serialVersionUID     = 1L;
-  
+
   protected volatile Runnable rebuildIndexesThread = null;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
@@ -75,7 +75,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    * @param iProgressListener
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
+      final int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -90,6 +90,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
           : manualClusterName;
+
+      if (iProgressListener == null)
+        // ASSIGN DEFAULT PROGRESS LISTENER
+        iProgressListener = new OIndexRebuildOutputListener(index);
 
       index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, iProgressListener);
       addIndexInternal(index);
@@ -261,7 +265,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
         final List<OIndex<?>> automaticIndexes = new ArrayList<OIndex<?>>();
         for (OIndex<?> idx : indexList)
-          if (idx.isAutomatic())
+          if (idx.isAutomatic() && !idx.isRebuilt())
             automaticIndexes.add(idx);
 
         OLogManager.instance().info(this,
@@ -274,37 +278,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
         for (final OIndex<?> idx : automaticIndexes)
           try {
-            OLogManager.instance().info(idx, "- rebuilding index %d/%d: '%s'...", i, automaticIndexes.size(), idx.getName());
-            idx.rebuild(new OProgressListener() {
-              long startTime;
-              long lastDump;
-              long lastCounter = 0;
-
-              @Override
-              public void onBegin(final Object iTask, final long iTotal) {
-                startTime = System.currentTimeMillis();
-                lastDump = startTime;
-              }
-
-              @Override
-              public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
-                final long now = System.currentTimeMillis();
-                if (now - lastDump > 10000) {
-                  // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
-                  OLogManager.instance().info(idx, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
-                      ((iCounter - lastCounter) / 10));
-                  lastDump = now;
-                  lastCounter = iCounter;
-                }
-                return true;
-              }
-
-              @Override
-              public void onCompletition(final Object iTask, final boolean iSucceed) {
-                OLogManager.instance().info(idx, "--> ok, indexed %,d items in %,d ms", idx.getSize(),
-                    (System.currentTimeMillis() - startTime));
-              }
-            });
+            OLogManager.instance().info(idx, "Rebuilding index %d/%d", i, automaticIndexes.size());
+            idx.rebuild();
 
             ok++;
           } catch (Throwable e) {

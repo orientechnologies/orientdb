@@ -96,6 +96,13 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     ((ODocument) record).field("pageSize", pageSize);
   }
 
+  @Override
+  public OMVRBTreeRIDProvider copy() {
+    final OMVRBTreeRIDProvider copy = new OMVRBTreeRIDProvider(storage, clusterName);
+    copy.setTree(tree);
+    return copy;
+  }
+
   public OMVRBTreeRIDEntryProvider getEntry(final ORID iRid) {
     return new OMVRBTreeRIDEntryProvider(this, iRid);
   }

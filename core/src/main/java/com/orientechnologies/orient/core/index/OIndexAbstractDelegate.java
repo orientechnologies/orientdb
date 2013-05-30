@@ -286,4 +286,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.supportsOrderedIterations();
   }
 
+  @Override
+  public boolean isRebuilt() {
+    return delegate.isRebuilt();
+  }
+
 }

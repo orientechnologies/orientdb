@@ -531,4 +531,8 @@ public class OIndexProxy<T> implements OIndex<T> {
     return false;
   }
 
+  @Override
+  public boolean isRebuilt() {
+    return false;
+  }
 }

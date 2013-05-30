@@ -191,4 +191,6 @@ public interface OIndex<T> extends OKeyValueIndex<T> {
   public ORID getIdentity();
 
   public boolean supportsOrderedIterations();
+
+  public boolean isRebuilt();
 }

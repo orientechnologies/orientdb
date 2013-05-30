@@ -72,6 +72,11 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
   }
 
   @Override
+  public OMVRBTreeProvider<K, V> copy() {
+    return new OMVRBTreeMapProvider<K, V>(storage, clusterName, keySerializer, valueSerializer);
+  }
+
+  @Override
   protected void load(final ODatabaseRecord iDb) {
     ((ORecordBytesLazy) record).recycle(this);
     super.load(iDb);

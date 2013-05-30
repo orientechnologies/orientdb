@@ -491,4 +491,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
   }
+  
+  @Override
+  public boolean isRebuilt() {
+    return false;
+  }
 }

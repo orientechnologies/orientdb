@@ -86,6 +86,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   @ODocumentInstance
   protected ODocument                            configuration;
   private final Listener                         watchDog;
+  private boolean                                rebuilt          = false;
 
   public OIndexMVRBTreeAbstract(final String iType) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -359,7 +360,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public long rebuild() {
-    return rebuild(null);
+    return rebuild(new OIndexRebuildOutputListener(this));
   }
 
   /**
@@ -426,6 +427,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
+
+      rebuilt = true;
 
     } catch (final Exception e) {
       if (iProgressListener != null)
@@ -958,5 +961,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   private int lazyUpdates() {
     return isAutomatic() ? OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.getValueAsInteger()
         : OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
+  }
+
+  public boolean isRebuilt() {
+    return rebuilt;
   }
 }

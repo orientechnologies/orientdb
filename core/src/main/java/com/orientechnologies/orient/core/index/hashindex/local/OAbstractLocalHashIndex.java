@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexRebuildOutputListener;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -75,6 +76,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   private ODocument                        configuration;
   private ORID                             identity;
   private OMurmurHash3HashFunction<Object> keyHashFunction;
+  private boolean                          rebuilt                               = false;
 
   public OAbstractLocalHashIndex(String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -339,7 +341,7 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
   @Override
   public long rebuild() {
-    return rebuild(null);
+    return rebuild(new OIndexRebuildOutputListener(this));
   }
 
   @Override
@@ -392,6 +394,8 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
 
             if (iProgressListener != null)
               iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+
+            rebuilt = true;
           }
         } catch (NoSuchElementException e) {
           // END OF CLUSTER REACHED, IGNORE IT
@@ -716,5 +720,9 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public boolean isRebuilt() {
+    return rebuilt;
   }
 }

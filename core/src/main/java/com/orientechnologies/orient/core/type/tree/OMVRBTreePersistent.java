@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -205,16 +204,16 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       entryPoints.clear();
       cache.clear();
-      if (root != null) {
+      if (root != null)
         try {
           ((OMVRBTreeEntryPersistent<K, V>) root).delete();
         } catch (Exception e) {
-          dataProvider = new OMVRBTreeMapProvider<K, V>(null, dataProvider.getClusterName(),
-              ((OMVRBTreeMapProvider<K, V>) dataProvider).getKeySerializer(), ((OMVRBTreeMapProvider<K, V>) dataProvider).getValueSerializer());
+          // IGNORE ANY EXCEPTION
+          dataProvider = dataProvider.copy();
         }
-        super.clear();
-        markDirty();
-      }
+
+      super.clear();
+      markDirty();
 
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), "Clear a MVRBTree", timer);
