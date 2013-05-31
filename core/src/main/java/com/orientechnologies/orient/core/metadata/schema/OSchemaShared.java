@@ -125,15 +125,21 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OClass getOrCreateClass(final String iClassName) {
-    return getDatabase().getStorage().callInLock(new Callable<OClass>() {
-      @Override
-      public OClass call() throws Exception {
-        OClass cls = classes.get(iClassName.toLowerCase());
-        if (cls == null)
-          cls = createClass(iClassName);
-        return cls;
-      }
-    }, true);
+	return getOrCreateClass(iClassName, null);
+  }
+
+  public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
+	  return getDatabase().getStorage().callInLock(new Callable<OClass>() {
+		  @Override
+		  public OClass call() throws Exception {
+			  OClass cls = classes.get(iClassName.toLowerCase());
+			  if (cls == null)
+				  cls = createClass(iClassName, iSuperClass);
+			  else if (iSuperClass != null && !cls.isSubClassOf(iSuperClass))
+				  throw new IllegalArgumentException("Class '" + iClassName + "' is not an instance of " + iSuperClass.getShortName());
+			  return cls;
+		  }
+	  }, true);
   }
 
   @Override
