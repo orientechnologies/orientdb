@@ -1321,7 +1321,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
               if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
-                if (idx.getSize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET || compiledFilter == null) {
+                if (idx.getKeySize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET || compiledFilter == null) {
 
                   if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
                     target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
