@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
@@ -433,8 +434,10 @@ public class ODocumentHelper {
           continue;
         }
 
-        if (fieldName.contains("("))
-          value = evaluateFunction(value, fieldName);
+        if (fieldName.startsWith("$"))
+          value = iContext.getVariable(fieldName);
+        else if (fieldName.contains("("))
+          value = evaluateFunction(value, fieldName, iContext);
         else {
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(fieldName, '=', ' ');
 
@@ -613,7 +616,7 @@ public class ODocumentHelper {
     return doc._fieldValues.get(iFieldName);
   }
 
-  public static Object evaluateFunction(final Object currentValue, String iFunction) {
+  public static Object evaluateFunction(final Object currentValue, final String iFunction, final OCommandContext iContext) {
     if (currentValue == null)
       return null;
 
@@ -674,6 +677,14 @@ public class ODocumentHelper {
     else {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
+
+      final ORecordInternal<?> currentRecord = (ORecordInternal<?>) iContext.getVariable("$current");
+      for (int i = 0; i < args.size(); ++i) {
+        final String arg = args.get(i);
+        final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
+        if (o != null)
+          args.set(i, o.toString());
+      }
 
       if (function.startsWith("CHARAT("))
         result = currentValue.toString().charAt(Integer.parseInt(args.get(0)));
