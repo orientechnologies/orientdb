@@ -1087,7 +1087,7 @@ public class ObjectTreeTest {
 
       db.begin();
       Profile person2 = new Profile();
-      person2.setNick("Guy1");
+      person2.setNick("Guy2");
       person2.setName("Guy");
       person2.setSurname("Brush");
       person2 = db.save(person2);

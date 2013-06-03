@@ -864,7 +864,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     acquireExclusiveLock();
     try {
 
-      map.commitChanges();
+      map.commitChanges(true);
       Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 
     } finally {

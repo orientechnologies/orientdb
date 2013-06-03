@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -396,8 +397,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       // MIGRATE AUTOMATICALLY TO 1.2.0
       roleClass.setSuperClass(identityClass);
 
-    if (!roleClass.existsProperty("name"))
-      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).createIndex(INDEX_TYPE.UNIQUE);
+    if (!roleClass.existsProperty("name")) {
+      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
     if (!roleClass.existsProperty("rules"))
@@ -412,8 +415,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       // MIGRATE AUTOMATICALLY TO 1.2.0
       userClass.setSuperClass(identityClass);
 
-    if (!userClass.existsProperty("name"))
-      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).createIndex(INDEX_TYPE.UNIQUE);
+    if (!userClass.existsProperty("name")) {
+      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
     if (!userClass.existsProperty("password"))
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("roles"))

@@ -236,10 +236,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
 
         try {
-          newDb.getStorage().getDataSegmentIdByName(OMetadata.DATASEGMENT_INDEX_NAME);
-          // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER
-          newDb.getStorage().dropDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
-          newDb.getStorage().dropCluster(OMetadata.CLUSTER_INDEX_NAME, false);
+          // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER IF ANY
+          final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadata.DATASEGMENT_INDEX_NAME);
+          if (dataId > -1)
+            newDb.getStorage().dropDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+
+          final int clusterId = newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
+          if (clusterId > -1)
+            newDb.getStorage().dropCluster(clusterId, false);
 
           newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
           newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME,

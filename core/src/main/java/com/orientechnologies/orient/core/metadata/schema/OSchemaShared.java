@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -198,7 +199,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
 
         getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-        getDatabase().reload();
+        if (!(getDatabase().getStorage() instanceof OStorageEmbedded))
+          getDatabase().reload();
 
         if (classes.containsKey(key))
           return classes.get(key);
@@ -257,7 +259,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
           for (OIndex<?> index : iSuperClass.getIndexes())
             for (String clusterName : clusterNames)
-              index.getInternal().addCluster(clusterName);
+              if (clusterName != null)
+                index.getInternal().addCluster(clusterName);
         }
 
         return cls;
