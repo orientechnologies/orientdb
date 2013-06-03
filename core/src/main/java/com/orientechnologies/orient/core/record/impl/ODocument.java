@@ -691,6 +691,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
+    } else if ("@rid".equals(iFieldName)) {
+      _recordId.fromString(iPropertyValue.toString());
+      return this;
     }
 
     final int lastSep = _allowChainedAccess ? iFieldName.lastIndexOf('.') : -1;
