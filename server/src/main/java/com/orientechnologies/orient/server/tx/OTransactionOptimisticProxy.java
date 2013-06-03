@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,10 +49,11 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-  private final Map<ORecordId, ORecord<?>> createdRecords = new HashMap<ORecordId, ORecord<?>>();
-  private final Map<ORecordId, ORecord<?>> updatedRecords = new HashMap<ORecordId, ORecord<?>>();
-  private final int                        clientTxId;
-  private final OChannelBinary             channel;
+  private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
+  private final Map<ORecordId, ORecord<?>>  createdRecords = new HashMap<ORecordId, ORecord<?>>();
+  private final Map<ORecordId, ORecord<?>>  updatedRecords = new HashMap<ORecordId, ORecord<?>>();
+  private final int                         clientTxId;
+  private final OChannelBinary              channel;
 
   public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
     super(iDatabase);
@@ -122,7 +124,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         }
 
         // PUT IN TEMPORARY LIST TO GET FETCHED AFTER ALL FOR CACHE
-        recordEntries.put(entry.getRecord().getIdentity(), entry);
+        tempEntries.put(entry.getRecord().getIdentity(), entry);
       }
 
       if (lastTxStatus == -1)
@@ -133,9 +135,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       fillIndexOperations(remoteIndexEntries);
 
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
-      for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+      for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null);
       }
+      tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
       for (ORecord<?> record : createdRecords.values())
@@ -153,7 +156,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   public ORecordInternal<?> getRecord(final ORID rid) {
     ORecordInternal<?> record = super.getRecord(rid);
     if (record == OTransactionRealAbstract.DELETED_RECORD)
-      return null;
+      return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
       record = (ORecordInternal<?>) createdRecords.get(rid);
