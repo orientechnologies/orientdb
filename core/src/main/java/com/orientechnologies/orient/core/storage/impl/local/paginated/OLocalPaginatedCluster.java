@@ -37,8 +37,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.iq80.snappy.Snappy;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
@@ -55,6 +53,8 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.serialization.compression.OCompression;
+import com.orientechnologies.orient.core.serialization.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -84,6 +84,10 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements OCluster {
   public static final String                        DEF_EXTENSION                = ".pcl";
   private static final String                       CLUSTER_STATE_FILE_EXTENSION = ".pls";
+
+  private static final OCompression                 COMPRESSION                  = OCompressionFactory.INSTANCE
+                                                                                     .getCompression(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
+                                                                                         .getValueAsString());
 
   public static final String                        TYPE                         = "PHYSICAL";
 
@@ -304,7 +308,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       acquireExclusiveLock();
       try {
-        content = Snappy.compress(content);
+        content = COMPRESSION.compress(content);
 
         int grownContentSize = (int) (RECORD_GROW_FACTOR * content.length);
         int entryContentLength = grownContentSize + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
@@ -496,7 +500,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       byte[] recordContent = new byte[readContentSize];
       System.arraycopy(fullContent, fullContentPosition, recordContent, 0, recordContent.length);
 
-      recordContent = Snappy.uncompress(recordContent, 0, recordContent.length);
+      recordContent = COMPRESSION.uncompress(recordContent);
       return new ORawBuffer(recordContent, recordVersion, recordType);
     } finally {
       releaseSharedLock();
@@ -660,7 +664,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         if (fullEntryContent == null)
           return;
 
-        content = Snappy.compress(content);
+        content = COMPRESSION.compress(content);
 
         int updatedContentLength = content.length + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
             + OLongSerializer.LONG_SIZE;

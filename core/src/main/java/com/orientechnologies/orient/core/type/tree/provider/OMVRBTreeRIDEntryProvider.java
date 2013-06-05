@@ -56,207 +56,207 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * 
  */
 public class OMVRBTreeRIDEntryProvider extends OMVRBTreeEntryDataProviderAbstract<OIdentifiable, OIdentifiable> {
-	private static final long			serialVersionUID	= 1L;
+  private static final long     serialVersionUID = 1L;
 
-	protected final static int		OFFSET_TREESIZE		= 0;
-	protected final static int		OFFSET_NODESIZE		= OFFSET_TREESIZE + OBinaryProtocol.SIZE_INT;
-	protected final static int		OFFSET_COLOR			= OFFSET_NODESIZE + OBinaryProtocol.SIZE_INT;
-	protected final static int		OFFSET_PARENT			= OFFSET_COLOR + OBinaryProtocol.SIZE_BYTE;
-	protected final static int		OFFSET_LEFT				= OFFSET_PARENT + ORecordId.PERSISTENT_SIZE;
-	protected final static int		OFFSET_RIGHT			= OFFSET_LEFT + ORecordId.PERSISTENT_SIZE;
-	protected final static int		OFFSET_RIDLIST		= OFFSET_RIGHT + ORecordId.PERSISTENT_SIZE;
+  protected final static int    OFFSET_TREESIZE  = 0;
+  protected final static int    OFFSET_NODESIZE  = OFFSET_TREESIZE + OBinaryProtocol.SIZE_INT;
+  protected final static int    OFFSET_COLOR     = OFFSET_NODESIZE + OBinaryProtocol.SIZE_INT;
+  protected final static int    OFFSET_PARENT    = OFFSET_COLOR + OBinaryProtocol.SIZE_BYTE;
+  protected final static int    OFFSET_LEFT      = OFFSET_PARENT + ORecordId.PERSISTENT_SIZE;
+  protected final static int    OFFSET_RIGHT     = OFFSET_LEFT + ORecordId.PERSISTENT_SIZE;
+  protected final static int    OFFSET_RIDLIST   = OFFSET_RIGHT + ORecordId.PERSISTENT_SIZE;
 
-	private int										treeSize;
-	private final OIdentifiable[]	rids;
+  private int                   treeSize;
+  private final OIdentifiable[] rids;
 
-	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider) {
-		super(iTreeDataProvider, OFFSET_RIDLIST + (iTreeDataProvider.getDefaultPageSize() * ORecordId.PERSISTENT_SIZE));
-		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
-	}
+  public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider) {
+    super(iTreeDataProvider, OFFSET_RIDLIST + (iTreeDataProvider.getDefaultPageSize() * ORecordId.PERSISTENT_SIZE));
+    rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
+  }
 
-	public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider, final ORID iRID) {
-		super(iTreeDataProvider, iRID);
-		pageSize = treeDataProvider.getDefaultPageSize();
-		rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
-	}
+  public OMVRBTreeRIDEntryProvider(final OMVRBTreeRIDProvider iTreeDataProvider, final ORID iRID) {
+    super(iTreeDataProvider, iRID);
+    pageSize = treeDataProvider.getDefaultPageSize();
+    rids = OGlobalConfiguration.MVRBTREE_RID_NODE_SAVE_MEMORY.getValueAsBoolean() ? null : new OIdentifiable[pageSize];
+  }
 
-	/**
-	 * Lazy unmarshall the RID if not in memory.
-	 */
-	public OIdentifiable getKeyAt(final int iIndex) {
-		if (rids != null && rids[iIndex] != null)
-			return rids[iIndex];
+  /**
+   * Lazy unmarshall the RID if not in memory.
+   */
+  public OIdentifiable getKeyAt(final int iIndex) {
+    if (rids != null && rids[iIndex] != null)
+      return rids[iIndex];
 
-		final ORecordId rid = itemFromStream(iIndex);
+    final ORecordId rid = itemFromStream(iIndex);
 
-		if (rids != null)
-			rids[iIndex] = rid;
+    if (rids != null)
+      rids[iIndex] = rid;
 
-		return rid;
-	}
+    return rid;
+  }
 
-	/**
-	 * Returns the key
-	 */
-	public OIdentifiable getValueAt(final int iIndex) {
-		return getKeyAt(iIndex);
-	}
+  /**
+   * Returns the key
+   */
+  public OIdentifiable getValueAt(final int iIndex) {
+    return getKeyAt(iIndex);
+  }
 
-	public boolean setValueAt(int iIndex, final OIdentifiable iValue) {
-		if (iValue == null)
-			return false;
+  public boolean setValueAt(int iIndex, final OIdentifiable iValue) {
+    if (iValue == null)
+      return false;
 
-		try {
-			itemToStream(iValue, iIndex);
-		} catch (IOException e) {
-			throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
-		}
+    try {
+      itemToStream(iValue, iIndex);
+    } catch (IOException e) {
+      throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
+    }
 
-		if (rids != null)
-			rids[iIndex] = iValue;
+    if (rids != null)
+      rids[iIndex] = iValue;
 
-		return setDirty();
-	}
+    return setDirty();
+  }
 
-	public boolean insertAt(final int iIndex, final OIdentifiable iKey, final OIdentifiable iValue) {
-		if (iIndex < size) {
-			// MOVE RIGHT TO MAKE ROOM FOR THE ITEM
-			stream.move(getKeyPositionInStream(iIndex), ORecordId.PERSISTENT_SIZE);
-			if (rids != null)
-				System.arraycopy(rids, iIndex, rids, iIndex + 1, size - iIndex - 1);
-		}
+  public boolean insertAt(final int iIndex, final OIdentifiable iKey, final OIdentifiable iValue) {
+    if (iIndex < size) {
+      // MOVE RIGHT TO MAKE ROOM FOR THE ITEM
+      stream.move(getKeyPositionInStream(iIndex), ORecordId.PERSISTENT_SIZE);
+      if (rids != null)
+        System.arraycopy(rids, iIndex, rids, iIndex + 1, size - iIndex - 1);
+    }
 
-		try {
-			itemToStream(iKey, iIndex);
-		} catch (IOException e) {
-			throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
-		}
+    try {
+      itemToStream(iKey, iIndex);
+    } catch (IOException e) {
+      throw new OSerializationException("Cannot serialize entryRID object: " + this, e);
+    }
 
-		if (rids != null)
-			rids[iIndex] = iKey;
+    if (rids != null)
+      rids[iIndex] = iKey;
 
-		size++;
+    size++;
 
-		return setDirty();
-	}
+    return setDirty();
+  }
 
-	public boolean removeAt(final int iIndex) {
-		if (iIndex > -1 && iIndex < size - 1) {
-			// SHIFT LEFT THE VALUES
-			stream.move(getKeyPositionInStream(iIndex + 1), ORecordId.PERSISTENT_SIZE * -1);
-			if (rids != null)
-				System.arraycopy(rids, iIndex + 1, rids, iIndex, size - iIndex - 1);
-		}
+  public boolean removeAt(final int iIndex) {
+    if (iIndex > -1 && iIndex < size - 1) {
+      // SHIFT LEFT THE VALUES
+      stream.move(getKeyPositionInStream(iIndex + 1), ORecordId.PERSISTENT_SIZE * -1);
+      if (rids != null)
+        System.arraycopy(rids, iIndex + 1, rids, iIndex, size - iIndex - 1);
+    }
 
-		size--;
+    size--;
 
-		// FREE RESOURCES
-		if (rids != null)
-			rids[size] = null;
+    // FREE RESOURCES
+    if (rids != null)
+      rids[size] = null;
 
-		return setDirty();
-	}
+    return setDirty();
+  }
 
-	public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iFrom, final int iStartPosition) {
-		size = iFrom.getSize() - iStartPosition;
-		final OMVRBTreeRIDEntryProvider from = (OMVRBTreeRIDEntryProvider) iFrom;
-		moveToIndex(0).copyFrom(from.moveToIndex(iStartPosition), size * ORecordId.PERSISTENT_SIZE);
-		if (rids != null)
-			System.arraycopy(from.rids, iStartPosition, rids, 0, size);
-		return setDirty();
-	}
+  public boolean copyDataFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iFrom, final int iStartPosition) {
+    size = iFrom.getSize() - iStartPosition;
+    final OMVRBTreeRIDEntryProvider from = (OMVRBTreeRIDEntryProvider) iFrom;
+    moveToIndex(0).copyFrom(from.moveToIndex(iStartPosition), size * ORecordId.PERSISTENT_SIZE);
+    if (rids != null)
+      System.arraycopy(from.rids, iStartPosition, rids, 0, size);
+    return setDirty();
+  }
 
-	public boolean truncate(final int iNewSize) {
-		moveToIndex(iNewSize).fill((size - iNewSize) * ORecordId.PERSISTENT_SIZE, (byte) 0);
-		if (rids != null)
-			Arrays.fill(rids, iNewSize, size, null);
-		size = iNewSize;
-		return setDirty();
-	}
+  public boolean truncate(final int iNewSize) {
+    moveToIndex(iNewSize).fill((size - iNewSize) * ORecordId.PERSISTENT_SIZE, (byte) 0);
+    if (rids != null)
+      Arrays.fill(rids, iNewSize, size, null);
+    size = iNewSize;
+    return setDirty();
+  }
 
-	public boolean copyFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iSource) {
-		final OMVRBTreeRIDEntryProvider source = (OMVRBTreeRIDEntryProvider) iSource;
+  public boolean copyFrom(final OMVRBTreeEntryDataProvider<OIdentifiable, OIdentifiable> iSource) {
+    final OMVRBTreeRIDEntryProvider source = (OMVRBTreeRIDEntryProvider) iSource;
 
-		stream = source.stream;
-		size = source.size;
+    stream = source.stream;
+    size = source.size;
 
-		return setDirty();
-	}
+    return setDirty();
+  }
 
-	public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-		if (stream == null)
-			stream = new OMemoryStream(iStream);
-		else
-			stream.setSource(iStream);
+  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+    if (stream == null)
+      stream = new OMemoryStream(iStream);
+    else
+      stream.setSource(iStream);
 
-		treeSize = stream.jump(OFFSET_TREESIZE).getAsInteger();
-		size = stream.jump(OFFSET_NODESIZE).getAsInteger();
-		color = stream.jump(OFFSET_COLOR).getAsBoolean();
-		parentRid.fromStream(stream.jump(OFFSET_PARENT));
-		leftRid.fromStream(stream.jump(OFFSET_LEFT));
-		rightRid.fromStream(stream.jump(OFFSET_RIGHT));
+    treeSize = stream.jump(OFFSET_TREESIZE).getAsInteger();
+    size = stream.jump(OFFSET_NODESIZE).getAsInteger();
+    color = stream.jump(OFFSET_COLOR).getAsBoolean();
+    parentRid.fromStream(stream.jump(OFFSET_PARENT));
+    leftRid.fromStream(stream.jump(OFFSET_LEFT));
+    rightRid.fromStream(stream.jump(OFFSET_RIGHT));
 
-		if (rids != null)
-			// CREATE IN MEMORY RIDS FROM STREAM
-			Arrays.fill(rids, null);
+    if (rids != null)
+      // CREATE IN MEMORY RIDS FROM STREAM
+      Arrays.fill(rids, null);
 
-		return this;
-	}
+    return this;
+  }
 
-	public byte[] toStream() throws OSerializationException {
-		if (stream == null)
-			stream = new OMemoryStream();
+  public byte[] toStream() throws OSerializationException {
+    if (stream == null)
+      stream = new OMemoryStream();
 
-		try {
-			stream.jump(OFFSET_TREESIZE).set(treeSize);
-			stream.jump(OFFSET_NODESIZE).set(size);
-			stream.jump(OFFSET_COLOR).set(color);
-			parentRid.toStream(stream.jump(OFFSET_PARENT));
-			leftRid.toStream(stream.jump(OFFSET_LEFT));
-			rightRid.toStream(stream.jump(OFFSET_RIGHT));
+    try {
+      stream.jump(OFFSET_TREESIZE).set(treeSize);
+      stream.jump(OFFSET_NODESIZE).set(size);
+      stream.jump(OFFSET_COLOR).set(color);
+      parentRid.toStream(stream.jump(OFFSET_PARENT));
+      leftRid.toStream(stream.jump(OFFSET_LEFT));
+      rightRid.toStream(stream.jump(OFFSET_RIGHT));
 
-			if (rids != null)
-				// STREAM RIDS
-				for (int i = 0; i < size; ++i)
-					if (rids[i] != null)
-						itemToStream(rids[i], i);
+      if (rids != null)
+        // STREAM RIDS
+        for (int i = 0; i < size; ++i)
+          if (rids[i] != null)
+            itemToStream(rids[i], i);
 
-		} catch (IOException e) {
-			throw new OSerializationException("Cannot serialize tree entry RID node: " + this, e);
-		}
+    } catch (IOException e) {
+      throw new OSerializationException("Cannot serialize tree entry RID node: " + this, e);
+    }
 
-		// RETURN DIRECTLY THE UNDERLYING BUFFER SINCE IT'S FIXED
-		final byte[] buffer = stream.getInternalBuffer();
-		record.fromStream(buffer);
-		return buffer;
-	}
+    // RETURN DIRECTLY THE UNDERLYING BUFFER SINCE IT'S FIXED
+    final byte[] buffer = stream.getInternalBuffer();
+    record.fromStream(buffer);
+    return buffer;
+  }
 
-	protected OMemoryStream moveToIndex(final int iIndex) {
-		return stream.jump(getKeyPositionInStream(iIndex));
-	}
+  protected OMemoryStream moveToIndex(final int iIndex) {
+    return stream.jump(getKeyPositionInStream(iIndex));
+  }
 
-	protected int getKeyPositionInStream(final int iIndex) {
-		return OFFSET_RIDLIST + (iIndex * ORecordId.PERSISTENT_SIZE);
-	}
+  protected int getKeyPositionInStream(final int iIndex) {
+    return OFFSET_RIDLIST + (iIndex * ORecordId.PERSISTENT_SIZE);
+  }
 
-	public int getTreeSize() {
-		return treeSize;
-	}
+  public int getTreeSize() {
+    return treeSize;
+  }
 
-	public boolean setTreeSize(final int treeSize) {
-		if (this.treeSize != treeSize) {
-			this.treeSize = treeSize;
-			setDirty();
-			return true;
-		}
-		return false;
-	}
+  public boolean setTreeSize(final int treeSize) {
+    if (this.treeSize != treeSize) {
+      this.treeSize = treeSize;
+      setDirty();
+      return true;
+    }
+    return false;
+  }
 
-	protected ORecordId itemFromStream(final int iIndex) {
-		return new ORecordId().fromStream(moveToIndex(iIndex));
-	}
+  protected ORecordId itemFromStream(final int iIndex) {
+    return new ORecordId().fromStream(moveToIndex(iIndex));
+  }
 
-	protected int itemToStream(final OIdentifiable iKey, final int iIndex) throws IOException {
-		return iKey.getIdentity().toStream(moveToIndex(iIndex));
-	}
+  protected int itemToStream(final OIdentifiable iKey, final int iIndex) throws IOException {
+    return iKey.getIdentity().toStream(moveToIndex(iIndex));
+  }
 }

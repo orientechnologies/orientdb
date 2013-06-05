@@ -56,6 +56,9 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
+      + " Possible values : gzip, nothing, snappy. Default is snappy.", String.class, "snappy"),
+
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",

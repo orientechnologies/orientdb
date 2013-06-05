@@ -274,12 +274,12 @@ public class ORecordId implements ORID {
     return generateString(clusterId, clusterPosition.inc());
   }
 
-	@Override
-	public ORID nextRid() {
-		return new ORecordId(clusterId, clusterPosition.inc());
-	}
+  @Override
+  public ORID nextRid() {
+    return new ORecordId(clusterId, clusterPosition.inc());
+  }
 
-	public ORID getIdentity() {
+  public ORID getIdentity() {
     return this;
   }
 
