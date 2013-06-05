@@ -91,6 +91,51 @@ public class OProfilerData {
     hooks.clear();
   }
 
+  public void clear(final String iFilter) {
+    List<String> names = new ArrayList<String>(hooks.keySet());
+    Collections.sort(names);
+    boolean firstItem = true;
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      hooks.remove(k);
+    }
+
+    // CHRONOS
+    names = new ArrayList<String>(chronos.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      chronos.remove(k);
+    }
+
+    // STATISTICS
+    names = new ArrayList<String>(stats.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+      stats.remove(k);
+    }
+
+    // COUNTERS
+    names = new ArrayList<String>(counters.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      counters.remove(k);
+    }
+  }
+
   public long endRecording() {
     recordingTo = System.currentTimeMillis();
     return recordingTo;
