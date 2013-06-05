@@ -8,12 +8,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -21,7 +15,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsed;
+import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -31,6 +25,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -555,7 +555,7 @@ public class O2QCacheTest {
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
   }
 
-  @Test(expectedExceptions = OAllLRUListEntriesAreUsed.class)
+  @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
     long fileId = buffer.openFile(fileName);

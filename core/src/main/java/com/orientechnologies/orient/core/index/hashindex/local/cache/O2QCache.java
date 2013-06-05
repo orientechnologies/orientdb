@@ -37,7 +37,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsed;
+import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -459,7 +459,7 @@ public class O2QCache implements ODiskCache {
 
     try {
       removeColdestPageIfNeeded();
-    } catch (OAllLRUListEntriesAreUsed e) {
+    } catch (OAllLRUListEntriesAreUsedException e) {
       if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
         maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_STEP.getValueAsFloat()));
         K_IN = maxSize >> 2;
@@ -518,7 +518,7 @@ public class O2QCache implements ODiskCache {
       if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
         OLogManager.instance().warn(this, "Cache size will be increased.");
       }
-      throw new OAllLRUListEntriesAreUsed(message);
+      throw new OAllLRUListEntriesAreUsedException(message);
     }
   }
 
