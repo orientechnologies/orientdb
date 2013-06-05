@@ -113,7 +113,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
     try {
       final byte[] buffer = new byte[OMemoryStream.DEF_SIZE];
       int readBytesCount;
-      while(true) {
+      while (true) {
         readBytesCount = in.read(buffer, 0, buffer.length);
         if (readBytesCount == -1) {
           break;
@@ -135,29 +135,30 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
    * 
    * @param in
    *          Input Stream, use buffered input stream wrapper to speed up reading
-   * @param iMaxSize
+   * @param maxSize
    *          Maximum size to read
    * @return Buffer count of bytes that are read from the stream. It's also the internal buffer size in bytes
    * @throws IOException
    *           if an I/O error occurs.
    */
-  public int fromInputStream(final InputStream in, final int iMaxSize) throws IOException {
-    final byte[] buffer = new byte[iMaxSize];
+  public int fromInputStream(final InputStream in, final int maxSize) throws IOException {
+    final byte[] buffer = new byte[maxSize];
     int totalBytesCount = 0;
     int readBytesCount;
-    while (totalBytesCount < iMaxSize) {
+    while (totalBytesCount < maxSize) {
       readBytesCount = in.read(buffer, totalBytesCount, buffer.length - totalBytesCount);
       if (readBytesCount == -1) {
         break;
       }
       totalBytesCount += readBytesCount;
     }
-    if (totalBytesCount == -1) {
+
+    if (totalBytesCount == 0) {
       _source = EMPTY_SOURCE;
       _size = 0;
-    } else if (totalBytesCount == iMaxSize) {
+    } else if (totalBytesCount == maxSize) {
       _source = buffer;
-      _size = iMaxSize;
+      _size = maxSize;
     } else {
       _source = Arrays.copyOf(buffer, totalBytesCount);
       _size = totalBytesCount;
