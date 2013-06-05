@@ -41,10 +41,10 @@ public class OResourcePool<K, V> {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
+        throw new OLockException("Not more resources available in pool. Requested resource: " + iKey);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
+      throw new OLockException("Not more resources available in pool. Requested resource: " + iKey, e);
     }
 
     V res;
