@@ -65,4 +65,9 @@ public class OFuzzyCheckpointEndRecord implements OWALRecord {
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "OFuzzyCheckpointEndRecord{" + "lsn=" + lsn + '}';
+  }
 }

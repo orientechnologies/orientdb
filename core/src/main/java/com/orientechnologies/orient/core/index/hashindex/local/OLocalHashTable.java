@@ -27,7 +27,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -158,13 +157,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private OHashIndexFileLevelMetadata createFileMetadata(int i) throws IOException {
-    final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storage.getConfiguration(), name + i, i);
-    fileConfiguration.fileType = OFileFactory.CLASSIC;
-    fileConfiguration.fileMaxSize = "10000Mb";
+    String fileName = name + i + bucketFileExtension;
+    fileLevelIds[i] = buffer.openFile(fileName);
 
-    fileLevelIds[i] = buffer.openFile(fileConfiguration, bucketFileExtension);
-
-    return new OHashIndexFileLevelMetadata(fileConfiguration, 0, -1);
+    return new OHashIndexFileLevelMetadata(fileName, 0, -1);
   }
 
   public V get(K key) {
@@ -383,7 +379,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       for (int i = 0; i < filesMetadata.length; i++) {
         OHashIndexFileLevelMetadata fileLevelMetadata = filesMetadata[i];
         if (fileLevelMetadata != null)
-          fileLevelIds[i] = buffer.openFile(fileLevelMetadata.getFileConfiguration(), bucketFileExtension);
+          fileLevelIds[i] = buffer.openFile(fileLevelMetadata.getFileName());
 
       }
     } catch (IOException e) {

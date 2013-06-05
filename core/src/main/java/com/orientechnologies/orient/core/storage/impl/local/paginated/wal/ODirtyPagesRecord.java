@@ -121,4 +121,9 @@ public class ODirtyPagesRecord implements OWALRecord {
   public int hashCode() {
     return dirtyPages.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "ODirtyPagesRecord{" + "lsn=" + lsn + ", dirtyPages=" + dirtyPages + '}';
+  }
 }

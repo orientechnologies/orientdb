@@ -230,6 +230,33 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
+  public void close(boolean softlyClosed) throws IOException {
+    acquireWriteLock();
+    try {
+      try {
+        setSoftlyClosed(softlyClosed);
+
+        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
+          unlock();
+
+        if (channel != null && channel.isOpen()) {
+          channel.close();
+          channel = null;
+        }
+
+        if (accessFile != null) {
+          accessFile.close();
+          accessFile = null;
+        }
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on closing file " + osFile.getAbsolutePath(), e, OIOException.class);
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
   /*
    * (non-Javadoc)
    * 

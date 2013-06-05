@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,8 +35,8 @@ import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.OMultiFileSegment;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -62,7 +63,7 @@ public class O2QCache implements ODiskCache {
 
   private final ODirectMemory                                  directMemory;
 
-  private final Map<Long, OMultiFileSegment>                   files;
+  private final Map<Long, OFileClassic>                        files;
 
   /**
    * List of pages which were flushed out of the buffer but were not written to the disk.
@@ -97,7 +98,7 @@ public class O2QCache implements ODiskCache {
     this.pageSize = pageSize;
     this.storageLocal = storageLocal;
     this.syncOnPageFlush = syncOnPageFlush;
-    this.files = new HashMap<Long, OMultiFileSegment>();
+    this.files = new HashMap<Long, OFileClassic>();
     this.filePages = new HashMap<Long, Set<Long>>();
     this.dirtyPages = new HashMap<Long, SortedMap<Long, OLogSequenceNumber>>();
 
@@ -133,17 +134,20 @@ public class O2QCache implements ODiskCache {
   }
 
   @Override
-  public long openFile(OStorageSegmentConfiguration fileConfiguration, String fileExtension) throws IOException {
+  public long openFile(String fileName) throws IOException {
     synchronized (syncObject) {
       long fileId = fileCounter++;
 
-      final OMultiFileSegment multiFileSegment = new OMultiFileSegment(storageLocal, fileConfiguration, fileExtension, pageSize);
-      if (multiFileSegment.exists())
-        multiFileSegment.open();
-      else
-        multiFileSegment.create(pageSize);
+      OFileClassic fileClassic = new OFileClassic();
+      String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
+      fileClassic.init(path, storageLocal.getMode());
 
-      files.put(fileId, multiFileSegment);
+      if (fileClassic.exists())
+        fileClassic.open();
+      else
+        fileClassic.create(-1);
+
+      files.put(fileId, fileClassic);
 
       filePages.put(fileId, new HashSet<Long>());
       dirtyPages.put(fileId, new TreeMap<Long, OLogSequenceNumber>());
@@ -218,6 +222,9 @@ public class O2QCache implements ODiskCache {
   @Override
   public void flushFile(long fileId) throws IOException {
     synchronized (syncObject) {
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return;
 
       final SortedMap<Long, OLogSequenceNumber> dirtyPages = this.dirtyPages.get(fileId);
 
@@ -242,20 +249,23 @@ public class O2QCache implements ODiskCache {
         }
       }
 
-      files.get(fileId).synch();
+      fileClassic.synch();
     }
   }
 
   @Override
-  public void closeFile(long fileId) throws IOException {
+  public void closeFile(final long fileId) throws IOException {
     synchronized (syncObject) {
-      if (!files.containsKey(fileId))
+      OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
         return;
 
       final Set<Long> pageIndexes = filePages.get(fileId);
       Long[] sortedPageIndexes = new Long[pageIndexes.size()];
       sortedPageIndexes = pageIndexes.toArray(sortedPageIndexes);
       Arrays.sort(sortedPageIndexes);
+
+      final SortedMap<Long, OLogSequenceNumber> fileDirtyPages = dirtyPages.get(fileId);
 
       for (Long pageIndex : sortedPageIndexes) {
         LRUEntry lruEntry = get(fileId, pageIndex);
@@ -264,7 +274,7 @@ public class O2QCache implements ODiskCache {
             lruEntry = remove(fileId, pageIndex);
 
             flushData(fileId, pageIndex, lruEntry.dataPointer);
-            dirtyPages.get(fileId).remove(pageIndex);
+            fileDirtyPages.remove(pageIndex);
 
             directMemory.free(lruEntry.dataPointer);
           }
@@ -272,14 +282,13 @@ public class O2QCache implements ODiskCache {
           Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
           if (dataPointer != null) {
             flushData(fileId, pageIndex, dataPointer);
-            dirtyPages.get(fileId).remove(pageIndex);
+            fileDirtyPages.remove(pageIndex);
           }
         }
       }
 
       pageIndexes.clear();
-
-      files.get(fileId).close();
+      fileClassic.close();
     }
   }
 
@@ -289,22 +298,20 @@ public class O2QCache implements ODiskCache {
       if (!files.containsKey(fileId))
         return;
 
-      truncateFile(fileId);
+      if (isOpen(fileId))
+        truncateFile(fileId);
+
       files.get(fileId).delete();
 
       files.remove(fileId);
       filePages.remove(fileId);
       dirtyPages.remove(fileId);
     }
-
   }
 
   @Override
   public void truncateFile(long fileId) throws IOException {
     synchronized (syncObject) {
-      if (!files.containsKey(fileId))
-        return;
-
       final Set<Long> pageEntries = filePages.get(fileId);
       for (Long pageIndex : pageEntries) {
         LRUEntry lruEntry = get(fileId, pageIndex);
@@ -324,7 +331,7 @@ public class O2QCache implements ODiskCache {
       dirtyPages.get(fileId).clear();
 
       pageEntries.clear();
-      files.get(fileId).truncate();
+      files.get(fileId).shrink(0);
     }
   }
 
@@ -334,9 +341,18 @@ public class O2QCache implements ODiskCache {
       if (!files.containsKey(fileId))
         return;
 
-      files.get(fileId).rename(oldFileName, newFileName);
+      final OFileClassic file = files.get(fileId);
+      final String osFileName = file.getName();
+      if (osFileName.startsWith(oldFileName)) {
+        final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName
+            + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
+        boolean renamed = file.renameTo(newFile);
+        while (!renamed) {
+          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+          renamed = file.renameTo(newFile);
+        }
+      }
     }
-
   }
 
   @Override
@@ -366,9 +382,11 @@ public class O2QCache implements ODiskCache {
   public void close() throws IOException {
     synchronized (syncObject) {
       clear();
-      for (OMultiFileSegment multiFileSegment : files.values()) {
-        multiFileSegment.synch();
-        multiFileSegment.close();
+      for (OFileClassic fileClassic : files.values()) {
+        if (fileClassic.isOpen()) {
+          fileClassic.synch();
+          fileClassic.close();
+        }
       }
     }
 
@@ -377,11 +395,11 @@ public class O2QCache implements ODiskCache {
   @Override
   public boolean wasSoftlyClosed(long fileId) throws IOException {
     synchronized (syncObject) {
-      OMultiFileSegment multiFileSegment = files.get(fileId);
-      if (multiFileSegment == null)
+      OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null)
         return false;
 
-      return multiFileSegment.wasSoftlyClosedAtPreviousTime();
+      return fileClassic.wasSoftlyClosed();
     }
 
   }
@@ -389,10 +407,21 @@ public class O2QCache implements ODiskCache {
   @Override
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
-      OMultiFileSegment multiFileSegment = files.get(fileId);
-      if (multiFileSegment != null)
-        multiFileSegment.setSoftlyClosed(softlyClosed);
+      OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic != null)
+        fileClassic.setSoftlyClosed(softlyClosed);
     }
+  }
+
+  @Override
+  public boolean isOpen(long fileId) {
+    synchronized (syncObject) {
+      OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic != null)
+        return fileClassic.isOpen();
+    }
+
+    return false;
   }
 
   private LRUEntry updateCache(long fileId, long pageIndex) throws IOException {
@@ -471,17 +500,17 @@ public class O2QCache implements ODiskCache {
     if (evictedPages.containsKey(key))
       return new CacheResult(true, evictedPages.remove(key));
 
-    final OMultiFileSegment multiFileSegment = files.get(fileId);
+    final OFileClassic fileClassic = files.get(fileId);
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
     byte[] content = new byte[pageSize];
     long dataPointer;
-    if (multiFileSegment.getFilledUpTo() >= endPosition) {
-      multiFileSegment.readContinuously(startPosition, content, content.length);
+    if (fileClassic.getFilledUpTo() >= endPosition) {
+      fileClassic.read(startPosition, content, content.length);
       dataPointer = directMemory.allocate(content);
     } else {
-      multiFileSegment.allocateSpaceContinuously((int) (endPosition - multiFileSegment.getFilledUpTo()));
+      fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
       dataPointer = directMemory.allocate(content);
     }
 
@@ -513,12 +542,12 @@ public class O2QCache implements ODiskCache {
     final int crc32 = calculatePageCrc(content);
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
 
-    final OMultiFileSegment multiFileSegment = files.get(fileId);
+    final OFileClassic fileClassic = files.get(fileId);
 
-    multiFileSegment.writeContinuously(pageIndex * pageSize, content);
+    fileClassic.write(pageIndex * pageSize, content);
 
     if (syncOnPageFlush)
-      multiFileSegment.synch();
+      fileClassic.synch();
   }
 
   @Override
@@ -529,22 +558,22 @@ public class O2QCache implements ODiskCache {
     synchronized (syncObject) {
       for (long fileId : files.keySet()) {
 
-        OMultiFileSegment multiFileSegment = files.get(fileId);
+        OFileClassic fileClassic = files.get(fileId);
 
         boolean fileIsCorrect;
         try {
 
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Flashing file " + multiFileSegment.getName() + "... ");
+            commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
 
           flushFile(fileId);
 
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Start verification of content of " + multiFileSegment.getName() + "file ...");
+            commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
 
           long time = System.currentTimeMillis();
 
-          long filledUpTo = multiFileSegment.getFilledUpTo();
+          long filledUpTo = fileClassic.getFilledUpTo();
           fileIsCorrect = true;
 
           for (long pos = 0; pos < filledUpTo; pos += pageSize) {
@@ -553,7 +582,7 @@ public class O2QCache implements ODiskCache {
 
             byte[] data = new byte[pageSize];
 
-            multiFileSegment.readContinuously(pos, data, data.length);
+            fileClassic.read(pos, data, data.length);
 
             long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
@@ -561,7 +590,7 @@ public class O2QCache implements ODiskCache {
               magicNumberIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
-                    + multiFileSegment.getName() + " does not much !!!");
+                    + fileClassic.getName() + " does not much !!!");
               fileIsCorrect = false;
             }
 
@@ -572,12 +601,12 @@ public class O2QCache implements ODiskCache {
               checkSumIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
-                    + multiFileSegment.getName() + " is incorrect !!!");
+                    + fileClassic.getName() + " is incorrect !!!");
               fileIsCorrect = false;
             }
 
             if (magicNumberIncorrect || checkSumIncorrect)
-              errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, multiFileSegment
+              errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileClassic
                   .getName()));
 
             if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
@@ -587,7 +616,7 @@ public class O2QCache implements ODiskCache {
           }
         } catch (IOException ioe) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Error: Error during processing of file " + multiFileSegment.getName() + ". "
+            commandOutputListener.onMessage("Error: Error during processing of file " + fileClassic.getName() + ". "
                 + ioe.getMessage());
 
           fileIsCorrect = false;
@@ -595,10 +624,10 @@ public class O2QCache implements ODiskCache {
 
         if (!fileIsCorrect) {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + multiFileSegment.getName() + " is finished with errors.");
+            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
         } else {
           if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + multiFileSegment.getName() + " is successfully finished.");
+            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
         }
       }
 
@@ -629,8 +658,8 @@ public class O2QCache implements ODiskCache {
   @Override
   public void forceSyncStoredChanges() throws IOException {
     synchronized (syncObject) {
-      for (OMultiFileSegment multiFileSegment : files.values())
-        multiFileSegment.synch();
+      for (OFileClassic fileClassic : files.values())
+        fileClassic.synch();
     }
   }
 

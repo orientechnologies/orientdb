@@ -48,4 +48,9 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
       return false;
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "OFuzzyCheckpointStartRecord{" + "lsn=" + lsn + "} " + super.toString();
+  }
 }

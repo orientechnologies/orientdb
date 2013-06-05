@@ -7,7 +7,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 5/1/13
  */
-public class OClusterStateRecord implements OWALRecord {
+public class OClusterStateRecord extends OOperationUnitRecord implements OClusterAwareWALRecord {
   private OLogSequenceNumber lsn;
 
   private long               size;
@@ -17,7 +17,9 @@ public class OClusterStateRecord implements OWALRecord {
   public OClusterStateRecord() {
   }
 
-  public OClusterStateRecord(long size, long recordsSize, int clusterId) {
+  public OClusterStateRecord(long size, long recordsSize, int clusterId, OLogSequenceNumber prevLsn) {
+    super(prevLsn);
+
     this.size = size;
     this.recordsSize = recordsSize;
     this.clusterId = clusterId;
@@ -37,6 +39,8 @@ public class OClusterStateRecord implements OWALRecord {
 
   @Override
   public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
     OLongSerializer.INSTANCE.serializeNative(size, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
@@ -51,6 +55,8 @@ public class OClusterStateRecord implements OWALRecord {
 
   @Override
   public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
     size = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
@@ -65,7 +71,7 @@ public class OClusterStateRecord implements OWALRecord {
 
   @Override
   public int serializedSize() {
-    return 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    return super.serializedSize() + 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -89,6 +95,8 @@ public class OClusterStateRecord implements OWALRecord {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
+    if (!super.equals(o))
+      return false;
 
     OClusterStateRecord that = (OClusterStateRecord) o;
 
@@ -104,9 +112,16 @@ public class OClusterStateRecord implements OWALRecord {
 
   @Override
   public int hashCode() {
-    int result = (int) (size ^ (size >>> 32));
+    int result = super.hashCode();
+    result = 31 * result + (int) (size ^ (size >>> 32));
     result = 31 * result + (int) (recordsSize ^ (recordsSize >>> 32));
     result = 31 * result + clusterId;
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "OClusterStateRecord{" + "lsn=" + lsn + ", size=" + size + ", recordsSize=" + recordsSize + ", clusterId=" + clusterId
+        + "} " + super.toString();
   }
 }

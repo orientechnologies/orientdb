@@ -41,8 +41,6 @@ import org.iq80.snappy.Snappy;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -52,7 +50,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -75,6 +72,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClust
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -107,8 +105,6 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private long                                      size;
   private long                                      recordsSize;
-
-  private final ODirectMemory                       directMemory                 = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private OStoragePhysicalClusterConfigurationLocal config;
 
@@ -193,10 +189,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       acquireExclusiveLock();
       try {
-        final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-            name, id);
-        fileConfiguration.fileType = OFileFactory.CLASSIC;
-        fileId = diskCache.openFile(fileConfiguration, DEF_EXTENSION);
+        fileId = diskCache.openFile(name + DEF_EXTENSION);
         clusterStateHolder.create(-1);
 
         if (config.root.clusters.size() <= config.id)
@@ -218,10 +211,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       acquireExclusiveLock();
       try {
-        final OStorageSegmentConfiguration fileConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-            name, id);
-        fileConfiguration.fileType = OFileFactory.CLASSIC;
-        fileId = diskCache.openFile(fileConfiguration, DEF_EXTENSION);
+        fileId = diskCache.openFile(name + DEF_EXTENSION);
         clusterStateHolder.open();
 
         loadClusterState();
@@ -322,7 +312,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         if (entryContentLength < OLocalPage.MAX_RECORD_SIZE) {
           if (writeAheadLog != null) {
-            OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(false));
+            OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(false, id));
             lastLsn.set(lsn);
           }
 
@@ -359,7 +349,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           return createPhysicalPosition(recordType, addEntryResult.pagePointer, addEntryResult.recordVersion);
         } else {
           if (writeAheadLog != null) {
-            OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(true));
+            OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(true, id));
             lastLsn.set(lsn);
           }
 
@@ -422,8 +412,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
                 logPageChanges(prevPage, prevPageIndex);
 
-              } finally {
                 diskCache.markDirty(fileId, prevPageIndex);
+              } finally {
                 diskCache.release(fileId, prevPageIndex);
               }
             }
@@ -615,7 +605,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
               else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0 && writeAheadLog != null) {
-              OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages));
+              OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages, id));
               lastLsn.set(lsn);
             }
 
@@ -629,8 +619,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
             logPageChanges(localPage, pageIndex);
 
-          } finally {
             diskCache.markDirty(fileId, pageIndex);
+          } finally {
             diskCache.release(fileId, pageIndex);
           }
 
@@ -700,7 +690,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           trackMode = OLocalPage.TrackMode.FORWARD;
 
         if (writeAheadLog != null) {
-          OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages));
+          OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(isRecordSpreadAcrossSeveralPages, id));
           lastLsn.set(lsn);
         }
 
@@ -761,8 +751,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
                 prevPage.setLongValue(prevRecordPageOffset + prevPageRecordSize - OLongSerializer.LONG_SIZE, pagePointer);
 
                 logPageChanges(prevPage, prevPageIndex);
-              } finally {
+
                 diskCache.markDirty(fileId, prevPageIndex);
+              } finally {
                 diskCache.release(fileId, prevPageIndex);
               }
             }
@@ -777,8 +768,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
             logPageChanges(localPage, pageIndex);
 
-          } finally {
             diskCache.markDirty(fileId, pageIndex);
+          } finally {
             diskCache.release(fileId, pageIndex);
           }
 
@@ -821,8 +812,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
               logPageChanges(prevPage, prevPageIndex);
 
-            } finally {
               diskCache.markDirty(fileId, prevPageIndex);
+            } finally {
               diskCache.release(fileId, prevPageIndex);
             }
           }
@@ -868,19 +859,76 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
   }
 
-  public void restorePage(OAbstractPageWALRecord walRecord) throws IOException {
+  private void restorePage(OAbstractPageWALRecord walRecord) throws IOException {
     acquireExclusiveLock();
     try {
       if (walRecord instanceof OAddNewPageRecord) {
         // skip it
+        return;
       }
 
-      if (!(walRecord instanceof OUpdatePageRecord))
-        throw new OStorageException("Unknown WAL record type -  " + walRecord.getClass().getName());
+      if (!(walRecord instanceof OUpdatePageRecord)) {
+        assert false;
+        OLogManager.instance().error(this, "Unknown WAL record type -  %s", walRecord.getClass().getName());
+      }
 
       restorePageData((OUpdatePageRecord) walRecord);
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  private void revertPage(OAbstractPageWALRecord walRecord) throws IOException {
+    acquireExclusiveLock();
+    try {
+      if (walRecord instanceof OAddNewPageRecord) {
+        // skip it
+        return;
+      }
+
+      if (!(walRecord instanceof OUpdatePageRecord)) {
+        assert false;
+        OLogManager.instance().error(this, "Unknown WAL record type -  %s", walRecord.getClass().getName());
+      }
+
+      revertPageData((OUpdatePageRecord) walRecord);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  private void revertPageData(OUpdatePageRecord updatePageRecord) throws IOException {
+    OLogSequenceNumber prevLSN = updatePageRecord.getPrevLsn();
+    if (prevLSN == null) {
+      OLogManager.instance().error(this, "Current record %s does not have previous LSN reference, rollback is impossible",
+          updatePageRecord);
+      assert false;
+    }
+
+    long pageIndex = updatePageRecord.getPageIndex();
+    long pagePointer = diskCache.load(fileId, pageIndex);
+    try {
+      final OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+      List<OPageDiff<?>> pageDiffs = page.getPageChanges();
+
+      List<OFullPageDiff<?>> fullPageDiffs = new ArrayList<OFullPageDiff<?>>(pageDiffs.size());
+      for (OPageDiff<?> pageDiff : pageDiffs) {
+        if (pageDiff instanceof OFullPageDiff<?>) {
+          fullPageDiffs.add((OFullPageDiff<?>) pageDiff);
+        } else {
+          assert false;
+          OLogManager.instance()
+              .error(this, "Record operation %s can not be reverted, rollback will be aborted.", updatePageRecord);
+          return;
+        }
+      }
+
+      page.revertChanges(fullPageDiffs);
+      page.setLsn(prevLSN);
+
+      diskCache.markDirty(fileId, pageIndex);
+    } finally {
+      diskCache.release(fileId, pageIndex);
     }
   }
 
@@ -889,10 +937,12 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     long pagePointer = diskCache.load(fileId, pageIndex);
     try {
       final OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
-      page.setLsn(updatePageRecord.getLsn());
       page.restoreChanges(updatePageRecord.getChanges());
-    } finally {
+
+      page.setLsn(updatePageRecord.getLsn());
+
       diskCache.markDirty(fileId, pageIndex);
+    } finally {
       diskCache.release(fileId, pageIndex);
     }
   }
@@ -925,8 +975,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       logPageChanges(localPage, pageIndex);
 
-    } finally {
       diskCache.markDirty(fileId, pageIndex);
+    } finally {
       diskCache.release(fileId, pageIndex);
     }
 
@@ -999,8 +1049,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
           logPageChanges(prevPage, prevPageIndex);
 
-        } finally {
           diskCache.markDirty(fileId, prevPageIndex);
+        } finally {
           diskCache.release(fileId, prevPageIndex);
         }
       }
@@ -1046,8 +1096,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
             logPageChanges(oldFreeLocalPage, oldFreePage);
 
-          } finally {
             diskCache.markDirty(fileId, oldFreePage);
+          } finally {
             diskCache.release(fileId, oldFreePage);
           }
 
@@ -1060,8 +1110,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       logPageChanges(localPage, pageIndex);
 
-    } finally {
       diskCache.markDirty(fileId, pageIndex);
+    } finally {
       diskCache.release(fileId, pageIndex);
     }
   }
@@ -1112,6 +1162,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       acquireExclusiveLock();
       try {
+        if (writeAheadLog != null) {
+          OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(false, id));
+          lastLsn.set(lsn);
+        }
+
         diskCache.truncateFile(fileId);
         clusterStateHolder.truncate();
 
@@ -1120,6 +1175,10 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         logClusterState();
 
+        if (writeAheadLog != null) {
+          writeAheadLog.log(new OAtomicUnitEndRecord(lastLsn.get()));
+          lastLsn.set(null);
+        }
         for (int i = 0; i < freePageLists.length; i++)
           freePageLists[i] = -1;
       } finally {
@@ -1292,9 +1351,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   public void synch() throws IOException {
     acquireSharedLock();
     try {
-      storeClusterState();
-
       diskCache.flushFile(fileId);
+
+      storeClusterState();
       clusterStateHolder.synch();
     } finally {
       releaseSharedLock();
@@ -1366,8 +1425,15 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       OClusterPosition clusterPosition = position.clusterPosition;
       long pagePointer = clusterPosition.longValue();
 
-      long pageIndex = pagePointer >>> PAGE_INDEX_OFFSET;
-      int recordPosition = (int) (pagePointer & RECORD_POSITION_MASK) + 1;
+      long pageIndex;
+      int recordPosition;
+      if (pagePointer >= 0) {
+        pageIndex = pagePointer >>> PAGE_INDEX_OFFSET;
+        recordPosition = (int) (pagePointer & RECORD_POSITION_MASK) + 1;
+      } else {
+        pageIndex = 0;
+        recordPosition = 0;
+      }
 
       return findFirstPhysicalPosition(pageIndex, recordPosition);
     } finally {
@@ -1530,6 +1596,11 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     return new OPhysicalPosition[0];
   }
 
+  public void flushClusterState() throws IOException {
+    storeClusterState();
+    clusterStateHolder.synch();
+  }
+
   private void storeClusterState() throws IOException {
     clusterStateHolder.truncate();
     final int stateSize = OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE + freePageLists.length
@@ -1617,38 +1688,104 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     return pageIndex == testPageIndex;
   }
 
-  public void logClusterState() throws IOException {
+  private void logClusterState() throws IOException {
     acquireSharedLock();
     try {
       if (writeAheadLog == null)
         return;
 
-      writeAheadLog.log(new OClusterStateRecord(size, recordsSize, id));
+      OLogSequenceNumber lsn = lastLsn.get();
+      assert lsn != null;
+
+      lsn = writeAheadLog.log(new OClusterStateRecord(size, recordsSize, id, lsn));
+      lastLsn.set(lsn);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void restoreClusterState(OClusterStateRecord walRecord) {
+  private void restoreClusterState(OClusterStateRecord walRecord) {
     size = walRecord.getSize();
     recordsSize = walRecord.getRecordsSize();
   }
 
-  public void restoreOperation(List<OWALRecord> records) throws IOException {
-    for (OWALRecord record : records) {
-      if (record instanceof OAtomicUnitStartRecord || record instanceof OAtomicUnitEndRecord)
+  public void restoreAtomicOperation(List<OWALRecord> records) throws IOException {
+    for (int i = 0; i < records.size(); i++) {
+      OWALRecord record = records.get(i);
+      if (checkFirstAtomicUnitRecord(i, record))
+        continue;
+
+      if (checkLastAtomicUnitRecord(i, record, records.size()))
         continue;
 
       if (record instanceof OClusterStateRecord)
         restoreClusterState((OClusterStateRecord) record);
-      else if (record instanceof OAddNewPageRecord)
-        continue;
-      else if (record instanceof OUpdatePageRecord)
-        restorePage((OUpdatePageRecord) record);
-      else
-        OLogManager.instance().error(this, "Invalid WAL record type was passed in %s. Given record will be skipped.",
+      else if (record instanceof OAbstractPageWALRecord)
+        restorePage((OAbstractPageWALRecord) record);
+      else {
+        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
             record.getClass());
+        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
+      }
+
     }
+  }
+
+  private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
+    boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
+    if (isAtomicUnitStartRecord && index != 0) {
+      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
+          OAtomicUnitStartRecord.class.getName());
+      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
+    }
+
+    if (index == 0 && !isAtomicUnitStartRecord) {
+      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
+          OAtomicUnitStartRecord.class.getName());
+      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
+    }
+
+    return isAtomicUnitStartRecord;
+  }
+
+  private boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
+    boolean isAtomicUnitEndRecord = record instanceof OAtomicUnitEndRecord;
+    if (isAtomicUnitEndRecord && index != size - 1) {
+      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
+          OAtomicUnitEndRecord.class.getName());
+      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
+    }
+
+    if (index == size - 1 && !isAtomicUnitEndRecord) {
+      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
+          OAtomicUnitEndRecord.class.getName());
+      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
+    }
+
+    return isAtomicUnitEndRecord;
+  }
+
+  public void revertAtomicOperation(List<OWALRecord> records) throws IOException {
+    for (int i = records.size(); i >= 0; i--) {
+      OWALRecord record = records.get(i);
+      if (checkFirstAtomicUnitRecord(i, record))
+        continue;
+
+      if (checkLastAtomicUnitRecord(i, record, records.size()))
+        continue;
+
+      if (record instanceof OClusterStateRecord) {
+        // we store cluster state only if data flush (and WAL flush) were successful so just ignore it..
+      } else if (record instanceof OAbstractPageWALRecord)
+        revertPage((OAbstractPageWALRecord) record);
+      else {
+        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+            record.getClass());
+        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
+      }
+
+    }
+    // To change body of created methods use File | Settings | File Templates.
   }
 
   private static final class AddEntryResult {

@@ -60,6 +60,7 @@ public class LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
     ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
     diskCache = new O2QCache(2L * 1024 * 1024 * 1024, 15000, directMemory, null,
@@ -71,6 +72,7 @@ public class LocalPaginatedClusterTest {
     when(storage.getVariableParser()).thenReturn(variableParser);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
+    when(storage.getStoragePath()).thenReturn(buildDirectory);
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 

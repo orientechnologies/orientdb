@@ -47,4 +47,9 @@ public class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
       return false;
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "OFullCheckpointStartRecord{" + "lsn=" + lsn + "} " + super.toString();
+  }
 }

@@ -139,7 +139,7 @@ public class OWriteAheadLog {
       }
 
       masterRecordFile = new File(walLocation, paginatedStorage.getName() + ".wmr");
-      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rwd");
+      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rws");
 
       if (masterRecordLSNHolder.length() > 0) {
         firstMasterRecord = readMasterRecord(paginatedStorage.getName(), 0);
@@ -1009,7 +1009,7 @@ public class OWriteAheadLog {
 
         final int maxSize = pagesCache.size();
 
-        ArrayList<byte[]> pagesToFlush = new ArrayList<byte[]>(maxSize);
+        long[] pagesToFlush = new long[maxSize];
 
         long filePointer = nextPositionToFlush;
         int lastRecordOffset = -1;
@@ -1021,7 +1021,15 @@ public class OWriteAheadLog {
         while (flushedPages < maxSize) {
           final OWALPage page = pageIterator.next();
           synchronized (page) {
-            pagesToFlush.add(directMemory.get(page.getPagePointer(), OWALPage.PAGE_SIZE));
+            long dataPointer;
+            if (flushedPages == maxSize - 1) {
+              dataPointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+              directMemory.copyData(page.getPagePointer(), dataPointer, OWALPage.PAGE_SIZE);
+            } else {
+              dataPointer = page.getPagePointer();
+            }
+
+            pagesToFlush[flushedPages] = dataPointer;
             int recordOffset = findLastRecord(page);
             if (recordOffset >= 0) {
               lastRecordOffset = recordOffset;
@@ -1034,7 +1042,12 @@ public class OWriteAheadLog {
 
         synchronized (rndFile) {
           rndFile.seek(filePointer);
-          for (byte[] pageContent : pagesToFlush) {
+          for (int i = 0; i < pagesToFlush.length; i++) {
+            long dataPointer = pagesToFlush[i];
+            byte[] pageContent = directMemory.get(dataPointer, OWALPage.PAGE_SIZE);
+            if (i == pagesToFlush.length - 1)
+              directMemory.free(dataPointer);
+
             flushPage(pageContent);
             filePointer += OWALPage.PAGE_SIZE;
           }

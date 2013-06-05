@@ -168,4 +168,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     throw new IllegalArgumentException("Unknown Diff id " + typeId);
   }
 
+  @Override
+  public String toString() {
+    return "OUpdatePageRecord{" + "diffs size =" + diffs.size() + "} " + super.toString();
+  }
 }

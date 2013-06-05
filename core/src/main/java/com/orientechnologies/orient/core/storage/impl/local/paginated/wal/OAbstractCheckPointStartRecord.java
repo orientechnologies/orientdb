@@ -109,4 +109,9 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
   public int hashCode() {
     return previousCheckpoint != null ? previousCheckpoint.hashCode() : 0;
   }
+
+  @Override
+  public String toString() {
+    return "OAbstractCheckPointStartRecord{" + "previousCheckpoint=" + previousCheckpoint + '}';
+  }
 }

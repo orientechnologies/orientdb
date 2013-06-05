@@ -19,10 +19,13 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -76,15 +79,17 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterStateRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterAwareWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -133,6 +138,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
                                                                                     return thread;
                                                                                   }
                                                                                 });
+
+  private Map<OLogSequenceNumber, List<OWALRecord>> operationUnits          = new HashMap<OLogSequenceNumber, List<OWALRecord>>();
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -304,7 +311,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           OLogManager.instance().warn(this, "Will restore from beginning.");
           restoreFromBegging();
         }
-      }
+      } else
+        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
 
       return;
     }
@@ -322,12 +330,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
         if (checkPointRecord != null) {
           OLogManager.instance().warn(this, "Will restore from previous checkpoint.");
-          restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+
         } else {
           OLogManager.instance().warn(this, "Will restore from beginning.");
           restoreFromBegging();
         }
-      }
+      } else
+        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
 
       return;
     }
@@ -419,44 +428,82 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
     while (lsn != null) {
       OWALRecord walRecord = writeAheadLog.read(lsn);
-      if (walRecord instanceof OAbstractPageWALRecord)
-        restorePageWALRecord((OAbstractPageWALRecord) walRecord);
-      else if (walRecord instanceof OClusterStateRecord)
-        restoreClusterStateWALRecord((OClusterStateRecord) walRecord);
-      else if (walRecord instanceof OAbstractCheckPointStartRecord) {
-        // skip it
-      } else if (walRecord instanceof OCheckpointEndRecord) {
-        // skip it
-      } else if (walRecord instanceof OFuzzyCheckpointEndRecord) {
-        // skip it
-      } else if (walRecord instanceof ODirtyPagesRecord) {
-        // skip it
-      } else {
-        OLogManager.instance().error(this, "Unknown log record %s, will skip it.", walRecord.getClass().getName());
-      }
+      if (walRecord instanceof OAtomicUnitStartRecord) {
+        List<OWALRecord> operationList = new ArrayList<OWALRecord>();
+        operationUnits.put(walRecord.getLsn(), operationList);
+        operationList.add(walRecord);
+      } else if (walRecord instanceof OOperationUnitRecord) {
+        OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
+        OLogSequenceNumber prevLsn = operationUnitRecord.getPrevLsn();
+
+        if (prevLsn == null) {
+          assert false : "Record with LSN " + walRecord.getLsn() + " has no previous record link.";
+          OLogManager.instance().error(this, "Record with LSN %s has no previous record link.", walRecord.getLsn());
+
+          List<OWALRecord> operationList = new ArrayList<OWALRecord>();
+          operationUnits.put(walRecord.getLsn(), operationList);
+          operationList.add(walRecord);
+        } else {
+          List<OWALRecord> operationList = operationUnits.remove(prevLsn);
+          if (operationList == null) {
+            OLogManager.instance().error(this, "Record with LSN %s has no previous record link. And will be skipped.",
+                walRecord.getLsn());
+            continue;
+          } else {
+            operationList.add(walRecord);
+
+            if (!(operationUnitRecord instanceof OAtomicUnitEndRecord))
+              operationUnits.put(walRecord.getLsn(), operationList);
+          }
+
+          if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
+            OClusterAwareWALRecord clusterAwareRecord = (OClusterAwareWALRecord) operationList.get(0);
+            int clusterId = clusterAwareRecord.getClusterId();
+
+            OLocalPaginatedCluster paginatedCluster = getClusterById(clusterId);
+            if (paginatedCluster == null) {
+              OLogManager.instance().error(this,
+                  "Cluster with %d is absent and operation which consist of following WAL records %s will be skipped", clusterId,
+                  operationList);
+              assert false;
+            } else {
+              paginatedCluster.restoreAtomicOperation(operationList);
+            }
+          }
+        }
+      } else
+        OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
 
       lsn = writeAheadLog.next(lsn);
     }
+
+    rollbackAllUnfinishedWALOperations();
   }
 
-  private void restoreClusterStateWALRecord(OClusterStateRecord clusterStateRecord) {
-    int clusterId = clusterStateRecord.getClusterId();
-    OLocalPaginatedCluster cluster = getClusterById(clusterId);
+  private void rollbackAllUnfinishedWALOperations() throws IOException {
+    for (List<OWALRecord> operationUnit : operationUnits.values()) {
+      if (operationUnit.isEmpty())
+        continue;
 
-    if (cluster == null)
-      OLogManager.instance().error(this, "Cluster with id %d is absent, log record will be skipped.", clusterId);
-    else
-      cluster.restoreClusterState(clusterStateRecord);
-  }
+      OWALRecord firstWalRecord = operationUnit.get(0);
+      OClusterAwareWALRecord clusterAwareWALRecord = (OClusterAwareWALRecord) firstWalRecord;
+      int clusterId = clusterAwareWALRecord.getClusterId();
 
-  private void restorePageWALRecord(OAbstractPageWALRecord pageRecord) throws IOException {
-    int clusterId = pageRecord.getClusterId();
-    OLocalPaginatedCluster cluster = getClusterById(clusterId);
+      OLocalPaginatedCluster paginatedCluster = getClusterById(clusterId);
+      if (paginatedCluster == null) {
+        OLogManager.instance().error(this,
+            "Cluster with %d is absent and operation which consist of following WAL records %s will be skipped", clusterId,
+            operationUnit);
+        assert false;
+      } else {
+        if (firstWalRecord instanceof OAtomicUnitStartRecord) {
+          OAtomicUnitStartRecord atomicUnitStartRecord = (OAtomicUnitStartRecord) firstWalRecord;
+          if (atomicUnitStartRecord.isRollbackSupported())
+            paginatedCluster.revertAtomicOperation(operationUnit);
+        }
 
-    if (cluster == null)
-      OLogManager.instance().error(this, "Cluster with id %d is absent, log record will be skipped.", clusterId);
-    else
-      cluster.restorePage(pageRecord);
+      }
+    }
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -516,7 +563,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private boolean exists(String path) {
-    return new File(path + "/" + OMetadata.CLUSTER_INTERNAL_NAME + ".0" + OLocalPaginatedCluster.DEF_EXTENSION).exists();
+    return new File(path + "/" + OMetadata.CLUSTER_INTERNAL_NAME + OLocalPaginatedCluster.DEF_EXTENSION).exists();
   }
 
   @Override
@@ -1503,9 +1550,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         diskCache.logDirtyPagesTable();
 
         for (OLocalPaginatedCluster cluster : clusters)
-          cluster.logClusterState();
+          if (cluster != null)
+            cluster.flushClusterState();
 
         writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
       } finally {
         lock.releaseExclusiveLock();
       }
@@ -1524,11 +1573,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       for (OLocalPaginatedCluster cluster : clusters)
         if (cluster != null)
-          cluster.logClusterState();
-
-      diskCache.flushBuffer();
+          cluster.synch();
 
       writeAheadLog.logFullCheckpointEnd();
+      writeAheadLog.flush();
     } catch (IOException ioe) {
       throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
     } finally {

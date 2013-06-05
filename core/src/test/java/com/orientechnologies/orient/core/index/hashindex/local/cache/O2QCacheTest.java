@@ -33,14 +33,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteA
 
 @Test
 public class O2QCacheTest {
-  private int                          systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
+  private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-  private O2QCache                     buffer;
-  private OLocalPaginatedStorage       storageLocal;
-  private ODirectMemory                directMemory;
-  private OStorageSegmentConfiguration fileConfiguration;
-  private byte                         seed;
-  private OWriteAheadLog               writeAheadLog;
+  private O2QCache               buffer;
+  private OLocalPaginatedStorage storageLocal;
+  private ODirectMemory          directMemory;
+  private String                 fileName;
+  private byte                   seed;
+  private OWriteAheadLog         writeAheadLog;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -54,9 +54,7 @@ public class O2QCacheTest {
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QCacheTest");
 
-    fileConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(), "o2QCacheTest", 0);
-    fileConfiguration.fileType = OFileFactory.CLASSIC;
-    fileConfiguration.fileMaxSize = "10000Mb";
+    fileName = "o2QCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
@@ -82,7 +80,7 @@ public class O2QCacheTest {
       writeAheadLog = null;
     }
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
     if (file.exists()) {
       boolean delete = file.delete();
       Assert.assertTrue(delete);
@@ -103,7 +101,7 @@ public class O2QCacheTest {
 
     storageLocal.delete();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
     if (file.exists()) {
       Assert.assertTrue(file.delete());
       file.getParentFile().delete();
@@ -120,7 +118,7 @@ public class O2QCacheTest {
   }
 
   public void testAddFourItems() throws IOException {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -153,7 +151,7 @@ public class O2QCacheTest {
   }
 
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[10];
@@ -206,16 +204,16 @@ public class O2QCacheTest {
   }
 
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
-    buffer.openFile(fileConfiguration, ".tst");
+    buffer.openFile(fileName);
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
 
     Assert.assertTrue(file.exists());
     Assert.assertTrue(file.isFile());
   }
 
   public void testFrequentlyAddItemsAreMovedInAm() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[10];
@@ -278,7 +276,7 @@ public class O2QCacheTest {
   }
 
   public void testReadFourItems() throws IOException {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -318,7 +316,7 @@ public class O2QCacheTest {
   }
 
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long pointer = buffer.load(fileId, 0);
     buffer.release(fileId, 0);
@@ -336,7 +334,7 @@ public class O2QCacheTest {
   }
 
   public void testFlushFileShouldClearDirtyPagesFlag() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
     byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
 
     long pointer = buffer.load(fileId, 0);
@@ -363,7 +361,7 @@ public class O2QCacheTest {
   }
 
   public void testCloseFileShouldFlushData() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -396,7 +394,7 @@ public class O2QCacheTest {
   }
 
   public void testCloseFileShouldRemoveFilePagesFromBuffer() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -430,7 +428,7 @@ public class O2QCacheTest {
   }
 
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -453,7 +451,7 @@ public class O2QCacheTest {
   }
 
   public void testFlushData() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[4];
@@ -491,7 +489,7 @@ public class O2QCacheTest {
   }
 
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[6];
@@ -528,7 +526,7 @@ public class O2QCacheTest {
   }
 
   public void testDataVerificationOK() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[6];
@@ -544,7 +542,7 @@ public class O2QCacheTest {
   }
 
   public void testMagicNumberIsBroken() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[6];
@@ -570,16 +568,16 @@ public class O2QCacheTest {
     Assert.assertTrue(pageErrors[0].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest", pageErrors[0].fileName);
+    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertTrue(pageErrors[1].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest", pageErrors[1].fileName);
+    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testCheckSumIsBroken() throws Exception {
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
 
     long[] pointers;
     pointers = new long[6];
@@ -605,12 +603,12 @@ public class O2QCacheTest {
     Assert.assertFalse(pageErrors[0].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest", pageErrors[0].fileName);
+    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertFalse(pageErrors[1].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest", pageErrors[1].fileName);
+    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testFlushTillLSN() throws Exception {
@@ -628,7 +626,7 @@ public class O2QCacheTest {
 
     buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
     for (int i = 0; i < 8; i++) {
       long dataPointer = buffer.load(fileId, i);
@@ -663,7 +661,7 @@ public class O2QCacheTest {
 
     buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
-    long fileId = buffer.openFile(fileConfiguration, ".tst");
+    long fileId = buffer.openFile(fileName);
     for (int i = 0; i < 8; i++) {
       long dataPointer = buffer.load(fileId, i);
       setLsn(dataPointer, pageLSN);
@@ -691,7 +689,7 @@ public class O2QCacheTest {
     Set<ODirtyPage> dirtyPages = buffer.logDirtyPagesTable();
     Set<ODirtyPage> expectedDirtyPages = new HashSet<ODirtyPage>();
     for (int i = 7; i >= 2; i--)
-      expectedDirtyPages.add(new ODirtyPage("o2QCacheTest", i, pageLSN));
+      expectedDirtyPages.add(new ODirtyPage("o2QCacheTest.tst", i, pageLSN));
 
     Assert.assertEquals(dirtyPages, expectedDirtyPages);
 
@@ -707,7 +705,7 @@ public class O2QCacheTest {
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "rw");
@@ -719,7 +717,7 @@ public class O2QCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "r");

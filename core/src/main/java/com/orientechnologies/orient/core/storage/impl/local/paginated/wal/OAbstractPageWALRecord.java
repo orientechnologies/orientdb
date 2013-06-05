@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
@@ -24,79 +23,50 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 29.04.13
  */
-public abstract class OAbstractPageWALRecord implements OWALRecord {
+public abstract class OAbstractPageWALRecord extends OOperationUnitRecord implements OClusterAwareWALRecord {
   private OLogSequenceNumber lsn;
 
   private long               pageIndex;
   private int                clusterId;
-  private OLogSequenceNumber prevUnitRecord;
 
   protected OAbstractPageWALRecord() {
   }
 
   protected OAbstractPageWALRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord) {
+    super(prevUnitRecord);
     this.pageIndex = pageIndex;
     this.clusterId = clusterId;
-    this.prevUnitRecord = prevUnitRecord;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
     OLongSerializer.INSTANCE.serializeNative(pageIndex, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    if (prevUnitRecord == null) {
-      content[offset] = 0;
-      offset++;
-    } else {
-      content[offset] = 1;
-      offset++;
-
-      OLongSerializer.INSTANCE.serializeNative(prevUnitRecord.getPosition(), content, offset);
-      offset += OLongSerializer.LONG_SIZE;
-
-      OIntegerSerializer.INSTANCE.serializeNative(prevUnitRecord.getSegment(), content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-    }
-
     return offset;
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
     pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    if (content[offset] == 0) {
-      offset++;
-      return offset;
-    }
-
-    offset++;
-
-    long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    prevUnitRecord = new OLogSequenceNumber(segment, position);
-
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    if (prevUnitRecord == null)
-      return OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
-
-    return 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE) + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize() + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   public long getPageIndex() {
@@ -123,6 +93,8 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
+    if (!super.equals(o))
+      return false;
 
     OAbstractPageWALRecord that = (OAbstractPageWALRecord) o;
 
@@ -130,17 +102,20 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (prevUnitRecord != null ? !prevUnitRecord.equals(that.prevUnitRecord) : that.prevUnitRecord != null)
-      return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = (int) (pageIndex ^ (pageIndex >>> 32));
+    int result = super.hashCode();
+    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + clusterId;
-    result = 31 * result + (prevUnitRecord != null ? prevUnitRecord.hashCode() : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "OAbstractPageWALRecord{" + "lsn=" + lsn + ", pageIndex=" + pageIndex + ", clusterId=" + clusterId + '}';
   }
 }

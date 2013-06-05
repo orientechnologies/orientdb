@@ -17,39 +17,61 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecord implements OWALRecord {
+public class OAtomicUnitStartRecord implements OWALRecord, OClusterAwareWALRecord {
   private OLogSequenceNumber lsn;
+  private int                clusterId;
 
   private boolean            isRollbackSupported;
 
   public OAtomicUnitStartRecord() {
   }
 
-  public OAtomicUnitStartRecord(boolean isRollbackSupported) {
+  public OAtomicUnitStartRecord(boolean isRollbackSupported, int clusterId) {
     this.isRollbackSupported = isRollbackSupported;
+    this.clusterId = clusterId;
+  }
+
+  public boolean isRollbackSupported() {
+    return isRollbackSupported;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
     isRollbackSupported = content[offset] > 0;
-    return offset + OByteSerializer.BYTE_SIZE;
+    offset++;
+
+    OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    return offset;
 
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
     content[offset] = isRollbackSupported ? (byte) 1 : 0;
-    return offset + OByteSerializer.BYTE_SIZE;
+    offset++;
+
+    clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    return offset;
   }
 
   @Override
   public int serializedSize() {
-    return OByteSerializer.BYTE_SIZE;
+    return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public int getClusterId() {
+    return clusterId;
   }
 
   @Override
@@ -65,5 +87,10 @@ public class OAtomicUnitStartRecord implements OWALRecord {
   @Override
   public void setLsn(OLogSequenceNumber lsn) {
     this.lsn = lsn;
+  }
+
+  @Override
+  public String toString() {
+    return "OAtomicUnitStartRecord{" + "lsn=" + lsn + ", isRollbackSupported=" + isRollbackSupported + '}';
   }
 }

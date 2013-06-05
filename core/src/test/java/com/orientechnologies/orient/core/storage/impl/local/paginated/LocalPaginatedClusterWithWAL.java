@@ -50,7 +50,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   @BeforeMethod
   @Override
   public void beforeMethod() throws IOException {
-
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     buildDirectory += "/localPaginatedClusterWithWALTest";
@@ -88,6 +87,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
+    paginatedCluster = new OLocalPaginatedCluster();
     paginatedCluster.configure(storage, 5, "localPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
@@ -318,7 +318,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         atomicChangeIsProcessed = true;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
-        testCluster.restoreOperation(atomicUnit);
+        testCluster.restoreAtomicOperation(atomicUnit);
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OAbstractPageWALRecord || walRecord instanceof OClusterStateRecord);

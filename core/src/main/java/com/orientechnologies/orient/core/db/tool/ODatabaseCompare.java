@@ -431,10 +431,14 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       else
         storage = storage2;
 
-      OPhysicalPosition[] physicalPositions = storage.higherPhysicalPositions(clusterId, new OPhysicalPosition(
-          OClusterPositionFactory.INSTANCE.valueOf(-1)));
+      OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
+          OClusterPositionFactory.INSTANCE.valueOf(0)));
+
+      long recordsCounter = 0;
       while (physicalPositions.length > 0) {
         for (OPhysicalPosition physicalPosition : physicalPositions) {
+          recordsCounter++;
+
           final OClusterPosition position = physicalPosition.clusterPosition;
           rid.clusterPosition = position;
 
@@ -556,8 +560,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         }
 
         physicalPositions = storage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
+        if (recordsCounter % 10000 == 0)
+          listener.onMessage("\n" + recordsCounter + " records were processed for cluster " + clusterName + " ...");
       }
 
+      listener.onMessage("\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster "
+          + clusterName + " ...");
     }
 
     return true;

@@ -64,4 +64,9 @@ public class OCheckpointEndRecord implements OWALRecord {
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "OCheckpointEndRecord{" + "lsn=" + lsn + '}';
+  }
 }
