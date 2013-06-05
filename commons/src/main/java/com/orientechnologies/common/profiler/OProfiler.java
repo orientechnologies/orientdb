@@ -251,6 +251,20 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     final StringBuilder buffer = new StringBuilder();
 
     Map<String, Object> hookValuesSnapshots = null;
+
+    if (iQuery.equalsIgnoreCase("reset")) {
+      if (iPar1 == null) {
+        stopRecording();
+        startRecording();
+        return "Profiler restarted";
+      } else {
+        if (iPar1.equals("realtime")) {
+          realTime.clear(iPar2);
+          return "Profiler realtime reset";
+        }
+      }
+    }
+
     if (iQuery.equals("realtime"))
       // GET LATETS HOOK VALUES
       hookValuesSnapshots = archiveHooks();
