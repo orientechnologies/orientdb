@@ -21,6 +21,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsed;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -522,6 +523,60 @@ public class O2QCacheTest {
 
     for (int i = 0; i < 6; i++) {
       assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, new OLogSequenceNumber(0, 0));
+    }
+  }
+
+  public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    long fileId = buffer.openFile(fileName);
+
+    long[] pointers;
+    pointers = new long[5];
+
+    for (int i = 0; i < 5; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      if (i - 4 >= 0) {
+        buffer.load(fileId, i - 4);
+        directMemory.set(pointers[i - 4] + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      }
+    }
+
+    for (int i = 0; i < 5; i++) {
+      buffer.release(fileId, i);
+      if (i - 4 >= 0) {
+        buffer.release(fileId, i - 4);
+      }
+    }
+
+    int maxSize = buffer.getMaxSize();
+    Assert.assertEquals(maxSize, 5);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+  }
+
+  @Test(expectedExceptions = OAllLRUListEntriesAreUsed.class)
+  public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    long fileId = buffer.openFile(fileName);
+
+    long[] pointers;
+    pointers = new long[5];
+    try {
+      for (int i = 0; i < 5; i++) {
+        pointers[i] = buffer.load(fileId, i);
+        buffer.markDirty(fileId, i);
+        directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+        if (i - 4 >= 0) {
+          buffer.load(fileId, i - 4);
+          directMemory.set(pointers[i - 4] + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+        }
+      }
+    } finally {
+      for (int i = 0; i < 4; i++) {
+        buffer.release(fileId, i);
+      }
+      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
     }
   }
 

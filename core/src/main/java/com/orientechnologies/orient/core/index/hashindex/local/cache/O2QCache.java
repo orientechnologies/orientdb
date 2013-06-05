@@ -32,9 +32,12 @@ import java.util.TreeMap;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsed;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -51,9 +54,9 @@ public class O2QCache implements ODiskCache {
 
   public final int                                             writeQueueLength;
 
-  private final int                                            maxSize;
-  private final int                                            K_IN;
-  private final int                                            K_OUT;
+  private int                                                  maxSize;
+  private int                                                  K_IN;
+  private int                                                  K_OUT;
 
   private final int                                            pageSize;
 
@@ -454,7 +457,17 @@ public class O2QCache implements ODiskCache {
     if (lruEntry != null)
       return lruEntry;
 
-    removeColdestPageIfNeeded();
+    try {
+      removeColdestPageIfNeeded();
+    } catch (OAllLRUListEntriesAreUsed e) {
+      if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
+        maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_STEP.getValueAsFloat()));
+        K_IN = maxSize >> 2;
+        K_OUT = maxSize >> 1;
+      } else {
+        throw e;
+      }
+    }
 
     CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
     OLogSequenceNumber lsn;
@@ -474,6 +487,7 @@ public class O2QCache implements ODiskCache {
     if (am.size() + a1in.size() >= maxSize) {
       if (a1in.size() > K_IN) {
         LRUEntry removedFromAInEntry = a1in.removeLRU();
+        checkSizeIncreaseNeccerity(removedFromAInEntry);
         assert removedFromAInEntry.usageCounter == 0;
         evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
             removedFromAInEntry.isDirty);
@@ -481,17 +495,30 @@ public class O2QCache implements ODiskCache {
         a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false, null);
         if (a1out.size() > K_OUT) {
           LRUEntry removedEntry = a1out.removeLRU();
+          checkSizeIncreaseNeccerity(removedEntry);
           assert removedEntry.usageCounter == 0;
           Set<Long> pageEntries = filePages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
         }
       } else {
         LRUEntry removedEntry = am.removeLRU();
+        checkSizeIncreaseNeccerity(removedEntry);
         assert removedEntry.usageCounter == 0;
         evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
         Set<Long> pageEntries = filePages.get(removedEntry.fileId);
         pageEntries.remove(removedEntry.pageIndex);
       }
+    }
+  }
+
+  private void checkSizeIncreaseNeccerity(LRUEntry removedFromAInEntry) {
+    if (removedFromAInEntry == null) {
+      String message = "All records in aIn queue in 2q cache are used!";
+      OLogManager.instance().warn(this, message);
+      if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
+        OLogManager.instance().warn(this, "Cache size will be increased.");
+      }
+      throw new OAllLRUListEntriesAreUsed(message);
     }
   }
 
@@ -686,6 +713,10 @@ public class O2QCache implements ODiskCache {
     }
 
     evictedPages.clear();
+  }
+
+  int getMaxSize() {
+    return maxSize;
   }
 
   private static class CacheResult {
