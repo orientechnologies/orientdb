@@ -293,11 +293,16 @@ public class OServer {
     if (dbPath == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
       dbPath = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/databases/" + name);
-      File f = new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.odh");
-      if (!f.exists())
-        throw new OConfigurationException("Database '" + name + "' is not configured on server");
 
-      dbPath = "local:" + dbPath;
+      File localFile = new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.odh");
+      File plocalFile = new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl");
+
+      if (localFile.exists())
+        dbPath = "local:" + dbPath;
+      else if (plocalFile.exists())
+        dbPath = "plocal:" + dbPath;
+      else
+        throw new OConfigurationException("Database '" + name + "' is not configured on server");
     }
 
     return dbPath;
@@ -617,18 +622,23 @@ public class OServer {
     OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
   }
 
-  protected void scanDatabaseDirectory(final String iRootDirectory, final File iDirectory, final Map<String, String> iStorages) {
-    if (iDirectory.exists() && iDirectory.isDirectory()) {
-      for (File db : iDirectory.listFiles()) {
+  protected void scanDatabaseDirectory(final String rootDirectory, final File directory, final Map<String, String> storages) {
+    if (directory.exists() && directory.isDirectory()) {
+      for (File db : directory.listFiles()) {
         if (db.isDirectory()) {
-          final File f = new File(db.getAbsolutePath() + "/default.odh");
-          if (f.exists()) {
+          final File localFile = new File(db.getAbsolutePath() + "/default.odh");
+          final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+          if (localFile.exists()) {
             final String dbPath = db.getPath().replace('\\', '/');
             // FOUND DB FOLDER
-            iStorages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(iRootDirectory.length())), "local:" + dbPath);
+            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(rootDirectory.length())), "local:" + dbPath);
+          } else if (plocalFile.exists()) {
+            final String dbPath = db.getPath().replace('\\', '/');
+
+            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(rootDirectory.length())), "plocal:" + dbPath);
           } else
             // TRY TO GO IN DEEP RECURSIVELY
-            scanDatabaseDirectory(iRootDirectory, db, iStorages);
+            scanDatabaseDirectory(rootDirectory, db, storages);
         }
       }
     }
