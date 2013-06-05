@@ -132,6 +132,16 @@ public class LRUListTest {
     Assert.assertFalse(entryIterator.hasNext());
   }
 
+  public void testRemoveLRUShouldReturnNullIfAllRecordsAreUsed() {
+    LRUList lruList = new LRUList();
+
+    LRUEntry lruEntry = lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
+    lruEntry.usageCounter++;
+    LRUEntry removedLRU = lruList.removeLRU();
+
+    Assert.assertNull(removedLRU);
+  }
+
   public void testAddElevenRemoveLRU() {
     LRUList lruList = new LRUList();
 
