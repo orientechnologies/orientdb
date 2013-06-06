@@ -527,6 +527,8 @@ public class O2QCacheTest {
   }
 
   public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
@@ -552,11 +554,13 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
   @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
     long fileId = buffer.openFile(fileName);
 
@@ -576,7 +580,8 @@ public class O2QCacheTest {
       for (int i = 0; i < 4; i++) {
         buffer.release(fileId, i);
       }
-      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+
+      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
     }
   }
 
