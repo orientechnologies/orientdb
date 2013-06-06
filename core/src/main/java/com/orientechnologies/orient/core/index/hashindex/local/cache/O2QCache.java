@@ -515,7 +515,7 @@ public class O2QCache implements ODiskCache {
       K_IN = maxSize >> 2;
       K_OUT = maxSize >> 1;
     } else {
-      throw new OAllLRUListEntriesAreUsed(message);
+      throw new OAllLRUListEntriesAreUsedException(message);
     }
   }
 
