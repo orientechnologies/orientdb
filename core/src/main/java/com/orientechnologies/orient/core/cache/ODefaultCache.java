@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -169,17 +170,9 @@ public class ODefaultCache implements OCache {
    * @author Luca Garulli
    */
   @SuppressWarnings("serial")
-  static final class OLinkedHashMapCache extends LinkedHashMap<ORID, ORecordInternal<?>> {
-    private final int limit;
-
+  static final class OLinkedHashMapCache extends OLimitedMap<ORID, ORecordInternal<?>> {
     public OLinkedHashMapCache(final int initialCapacity, final float loadFactor, final int limit) {
-      super(initialCapacity, loadFactor, true);
-      this.limit = limit;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(final Map.Entry<ORID, ORecordInternal<?>> eldest) {
-      return limit > 0 ? size() - limit > 0 : false;
+      super(initialCapacity, loadFactor, limit);
     }
 
     void removeEldest(final int amount) {
