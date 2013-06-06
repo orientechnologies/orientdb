@@ -8,6 +8,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -25,12 +31,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -555,6 +555,35 @@ public class O2QCacheTest {
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+  }
+
+  public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    long fileId = buffer.openFile(fileName);
+
+    long[] pointers;
+    pointers = new long[20];
+
+    for (int i = 0; i < 6; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      buffer.release(fileId, i);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      buffer.release(fileId, i);
+    }
+
+    int maxSize = buffer.getMaxSize();
+    Assert.assertEquals(maxSize, 5);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
   }
 
   @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)

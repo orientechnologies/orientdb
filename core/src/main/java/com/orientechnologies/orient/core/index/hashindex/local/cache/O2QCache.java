@@ -457,17 +457,7 @@ public class O2QCache implements ODiskCache {
     if (lruEntry != null)
       return lruEntry;
 
-    try {
-      removeColdestPageIfNeeded();
-    } catch (OAllLRUListEntriesAreUsedException e) {
-      if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
-        maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_STEP.getValueAsFloat()));
-        K_IN = maxSize >> 2;
-        K_OUT = maxSize >> 1;
-      } else {
-        throw e;
-      }
-    }
+    removeColdestPageIfNeeded();
 
     CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
     OLogSequenceNumber lsn;
@@ -487,37 +477,44 @@ public class O2QCache implements ODiskCache {
     if (am.size() + a1in.size() >= maxSize) {
       if (a1in.size() > K_IN) {
         LRUEntry removedFromAInEntry = a1in.removeLRU();
-        checkSizeIncreaseNeccerity(removedFromAInEntry);
-        assert removedFromAInEntry.usageCounter == 0;
-        evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
-            removedFromAInEntry.isDirty);
+        if (removedFromAInEntry == null) {
+          checkSizeIncreaseNecessity();
+        } else {
+          assert removedFromAInEntry.usageCounter == 0;
+          evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
+              removedFromAInEntry.isDirty);
 
-        a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false, null);
+          a1out.putToMRU(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, ODirectMemory.NULL_POINTER, false, null);
+        }
         if (a1out.size() > K_OUT) {
           LRUEntry removedEntry = a1out.removeLRU();
-          checkSizeIncreaseNeccerity(removedEntry);
           assert removedEntry.usageCounter == 0;
           Set<Long> pageEntries = filePages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
         }
       } else {
         LRUEntry removedEntry = am.removeLRU();
-        checkSizeIncreaseNeccerity(removedEntry);
-        assert removedEntry.usageCounter == 0;
-        evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
-        Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-        pageEntries.remove(removedEntry.pageIndex);
+        if (removedEntry == null) {
+          checkSizeIncreaseNecessity();
+        } else {
+          assert removedEntry.usageCounter == 0;
+          evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
+          Set<Long> pageEntries = filePages.get(removedEntry.fileId);
+          pageEntries.remove(removedEntry.pageIndex);
+        }
       }
     }
   }
 
-  private void checkSizeIncreaseNeccerity(LRUEntry removedFromAInEntry) {
-    if (removedFromAInEntry == null) {
-      String message = "All records in aIn queue in 2q cache are used!";
-      OLogManager.instance().warn(this, message);
-      if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
-        OLogManager.instance().warn(this, "Cache size will be increased.");
-      }
+  private void checkSizeIncreaseNecessity() {
+    String message = "All records in aIn queue in 2q cache are used!";
+    OLogManager.instance().warn(this, message);
+    if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
+      OLogManager.instance().warn(this, "Cache size will be increased.");
+      maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_STEP.getValueAsFloat()));
+      K_IN = maxSize >> 2;
+      K_OUT = maxSize >> 1;
+    } else {
       throw new OAllLRUListEntriesAreUsedException(message);
     }
   }
