@@ -8,12 +8,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -31,6 +25,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test
 public class O2QCacheTest {
@@ -558,6 +558,8 @@ public class O2QCacheTest {
   }
 
   public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
@@ -583,7 +585,7 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
   @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)

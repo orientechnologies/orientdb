@@ -478,7 +478,7 @@ public class O2QCache implements ODiskCache {
       if (a1in.size() > K_IN) {
         LRUEntry removedFromAInEntry = a1in.removeLRU();
         if (removedFromAInEntry == null) {
-          checkSizeIncreaseNecessity();
+          increaseCacheSize();
         } else {
           assert removedFromAInEntry.usageCounter == 0;
           evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
@@ -495,7 +495,7 @@ public class O2QCache implements ODiskCache {
       } else {
         LRUEntry removedEntry = am.removeLRU();
         if (removedEntry == null) {
-          checkSizeIncreaseNecessity();
+          increaseCacheSize();
         } else {
           assert removedEntry.usageCounter == 0;
           evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
@@ -506,7 +506,7 @@ public class O2QCache implements ODiskCache {
     }
   }
 
-  private void checkSizeIncreaseNecessity() {
+  private void increaseCacheSize() {
     String message = "All records in aIn queue in 2q cache are used!";
     OLogManager.instance().warn(this, message);
     if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
