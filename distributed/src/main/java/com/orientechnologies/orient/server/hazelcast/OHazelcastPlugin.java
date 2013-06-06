@@ -361,7 +361,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               this,
               "DISTRIBUTED found wrong configuration for database '%s': cannot find the 'master' field for the cluster '%s'. '$auto' will be used",
               iDatabaseName, iClusterName);
-      masterNode = "$auto";
     } else if (!masterNode.equalsIgnoreCase("$auto"))
       return masterNode;
 

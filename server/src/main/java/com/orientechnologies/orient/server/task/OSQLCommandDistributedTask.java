@@ -63,7 +63,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;
     try {
 
-      Object result = openDatabase().command(new OCommandSQL(text));
+      Object result = openDatabase().command(new OCommandSQL(text)).execute();
 
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
         return result;
