@@ -198,8 +198,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       try {
         final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
 
-        for (final OIndexInternal<?> i : indexes.values()) {
-          idxs.add(i.updateConfiguration());
+        for (final OIndex<?> i : indexes.values()) {
+          idxs.add(((OIndexInternal<?>) i).updateConfiguration());
         }
         document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
 

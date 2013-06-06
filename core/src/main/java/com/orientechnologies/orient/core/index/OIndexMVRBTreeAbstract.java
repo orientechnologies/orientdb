@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
@@ -239,7 +240,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         map.load();
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic())
+          if (isAutomatic() && getDatabase().getStorage() instanceof OStorageEmbedded)
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
@@ -778,13 +779,6 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
             return map != null ? map.getMaxUpdatesBeforeSave() : "-";
           }
         }, profilerMetadataPrefix + "maxUpdateBeforeSave");
-
-    profiler.registerHookValue(profilerPrefix + "optimizationThreshold",
-        "Number of times as threshold to execute a background index optimization", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-          public Object getValue() {
-            return map != null ? map.getOptimizeThreshold() : "-";
-          }
-        }, profilerMetadataPrefix + "optimizationThreshold");
 
     Orient.instance().getMemoryWatchDog().addListener(watchDog);
     iDatabase.registerListener(this);

@@ -1357,7 +1357,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTx() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
@@ -1397,7 +1397,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTxRecursiveStore() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
