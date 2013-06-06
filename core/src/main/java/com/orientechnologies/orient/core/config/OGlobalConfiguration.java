@@ -212,7 +212,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_OPTIMIZE_THRESHOLD(
       "mvrbtree.optimizeThreshold",
       "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 100000),
+      Integer.class, 10000),
 
   MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
