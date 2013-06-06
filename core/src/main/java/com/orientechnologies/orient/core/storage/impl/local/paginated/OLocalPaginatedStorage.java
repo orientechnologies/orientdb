@@ -258,9 +258,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         wasSoftlyClosed = false;
 
     if (!wasSoftlyClosed) {
-      OLogManager.instance().warn(this,
-          "Storage " + name + " was not closed properly. Will try to restore from write ahead logging.");
-      restoreFromWAL();
+      OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
+      try {
+        restoreFromWAL();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during storage data restore.", e);
+      } finally {
+        OLogManager.instance().info(this, "Storage data restore was completed");
+      }
+
     }
 
   }

@@ -57,7 +57,7 @@ public enum OGlobalConfiguration {
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy. Default is snappy.", String.class, "snappy"),
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -212,7 +212,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_OPTIMIZE_THRESHOLD(
       "mvrbtree.optimizeThreshold",
       "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 100000),
+      Integer.class, 10000),
 
   MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 

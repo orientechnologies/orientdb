@@ -195,30 +195,39 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Long) result.get(0).field("size") > 0;
   }
 
-  public long count(Object iKey) {
+  public long count(final Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_COUNT, name);
     final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
     return (Long) result.get(0).field("size");
   }
 
-  public OIndexRemote<T> put(Object iKey, final OIdentifiable iValue) {
+  public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
     if (iValue instanceof ORecord<?> && !iValue.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
       ((ORecord<?>) iValue).save();
+
+    if (iValue.getIdentity().isNew())
+      throw new OIndexException(
+          "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
 
     final OCommandRequest cmd = formatCommand(QUERY_PUT, name);
     getDatabase().command(cmd).execute(iKey, iValue.getIdentity());
     return this;
   }
 
-  public boolean remove(Object iKey) {
+  public boolean remove(final Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
-    return Boolean.parseBoolean((String) getDatabase().command(cmd).execute(iKey));
+    return ((Integer) getDatabase().command(cmd).execute(iKey)) > 0;
   }
 
-  public boolean remove(Object iKey, final OIdentifiable iRID) {
+  public boolean remove(final Object iKey, final OIdentifiable iRID) {
     final int deleted;
     if (iRID != null) {
+
+      if (iRID.getIdentity().isNew())
+        throw new OIndexException(
+            "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
+
       final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name);
       deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
     } else {

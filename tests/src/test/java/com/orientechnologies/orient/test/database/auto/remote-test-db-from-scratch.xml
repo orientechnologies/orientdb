@@ -73,12 +73,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
 
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
         </classes>
     </test>

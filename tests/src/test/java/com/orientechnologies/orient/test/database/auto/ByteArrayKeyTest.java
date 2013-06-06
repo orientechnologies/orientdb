@@ -277,7 +277,7 @@ public class ByteArrayKeyTest {
   }
 
   public void testTransactionalUsageWorks() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
       return;
 
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
@@ -297,7 +297,7 @@ public class ByteArrayKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
       return;
 
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
@@ -318,7 +318,7 @@ public class ByteArrayKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
       return;
 
     OIndex<?> index = getManualIndex();

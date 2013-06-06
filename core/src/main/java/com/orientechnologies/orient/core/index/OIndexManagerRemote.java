@@ -19,10 +19,7 @@ import java.util.Collection;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -101,11 +98,12 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       classPropertyIndex.clear();
 
       if (idxs != null) {
-        OIndexInternal<?> index;
+        OIndex<?> index;
         for (final ODocument d : idxs) {
           index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+          // GET THE REMOTE WRAPPER
           if (((OIndexInternal<?>) index).loadFromConfiguration(d))
-            addIndexInternal(index);
+            addIndexInternal(getIndexInstance(index));
         }
       }
     } finally {
@@ -113,33 +111,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  /**
-   * Binds POJO to ODocument.
-   */
   @Override
   public ODocument toStream() {
-    acquireExclusiveLock();
-
-    try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-
-      try {
-        final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
-
-        for (final OIndexInternal<?> i : indexes.values()) {
-          idxs.add(i.updateConfiguration());
-        }
-        document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
-      }
-      document.setDirty();
-
-      return document;
-    } finally {
-      releaseExclusiveLock();
-    }
+    throw new UnsupportedOperationException("Remote index cannot be streamed");
   }
 
   @Override
