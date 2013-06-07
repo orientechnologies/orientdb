@@ -21,6 +21,7 @@
             com.orientechnologies.orient.graph.gremlin;resolution:=optional,
             com.orientechnologies.orient.graph.handler;resolution:=optional,
             org.iq80.snappy;resolution:=optional,
+            org.xerial.snappy;resolution:=optional,
             *
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*</osgi.export>
