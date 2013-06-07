@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
@@ -88,6 +90,11 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     connection.data.serverInfo = ORIENT_SERVER_DB;
   }
 
+  @Override
+  protected void afterExecution() throws InterruptedException {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
   public String getType() {
     return "http";
   }
@@ -105,6 +112,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     sharedCmdManager.registerCommand(new OServerCommandGetDocumentByClass());
     sharedCmdManager.registerCommand(new OServerCommandGetQuery());
     sharedCmdManager.registerCommand(new OServerCommandGetServer());
+    sharedCmdManager.registerCommand(new OServerCommandGetConnections());
     sharedCmdManager.registerCommand(new OServerCommandGetStorageAllocation());
     sharedCmdManager.registerCommand(new OServerCommandGetFileDownload());
     sharedCmdManager.registerCommand(new OServerCommandGetIndex());

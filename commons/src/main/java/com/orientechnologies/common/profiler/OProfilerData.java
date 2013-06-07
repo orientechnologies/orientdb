@@ -94,7 +94,6 @@ public class OProfilerData {
   public void clear(final String iFilter) {
     List<String> names = new ArrayList<String>(hooks.keySet());
     Collections.sort(names);
-    boolean firstItem = true;
     for (String k : names) {
       if (iFilter != null && !k.startsWith(iFilter))
         // APPLIED FILTER: DOESN'T MATCH
