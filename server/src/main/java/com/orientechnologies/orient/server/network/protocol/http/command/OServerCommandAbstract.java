@@ -39,6 +39,11 @@ public abstract class OServerCommandAbstract implements OServerCommand {
     return true;
   }
 
+  @Override
+  public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    return true;
+  }
+
   protected String[] checkSyntax(final String iURL, final int iArgumentCount, final String iSyntax) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false);
     if (parts.size() < iArgumentCount)

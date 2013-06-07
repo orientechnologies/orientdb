@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -110,18 +109,25 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     }
   }
 
+  @Override
+  public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    return true;
+  }
+
   protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse,
       final List<String> iAuthenticationParts, final String iDatabaseName) throws IOException {
     ODatabaseDocumentTx db = null;
     try {
-      db = (ODatabaseDocumentTx) server.openDatabase("graph", iDatabaseName, iAuthenticationParts.get(0),
+      db = (ODatabaseDocumentTx) server.openDatabase("document", iDatabaseName, iAuthenticationParts.get(0),
           iAuthenticationParts.get(1));
-      if (db.getUser() == null)
-        // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
-        return false;
+      // if (db.getUser() == null)
+      // // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
+      // return false;
 
-      // db = OSharedDocumentDatabase.acquire(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
-      iRequest.data.currentUserId = db.getUser().getDocument().getIdentity().toString(); // Set user rid after authentication
+      // Set user rid after authentication
+      iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString();
+
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
       iResponse.sessionId = iRequest.sessionId;
@@ -132,9 +138,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OLockException e) {
       OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
     } finally {
-      if (db != null)
-        db.close();
-      else
+      if (db == null)
         // WRONG USER/PASSWD
         sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
     }
@@ -157,29 +161,25 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (iRequest.authorization == null)
       throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
 
-    final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-
-    final ODatabaseDocumentTx db = OSharedDocumentDatabase.acquire(iRequest.databaseName, parts.get(0), parts.get(1));
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    String currentUserId = iRequest.data.currentUserId;
-    if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-      if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
-        ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
-        localDatabase.setUser(new OUser(userDoc));
+
+    if (localDatabase == null) {
+      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, parts.get(0), parts.get(1));
+    } else {
+
+      String currentUserId = iRequest.data.currentUserId;
+      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+          ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
+          localDatabase.setUser(new OUser(userDoc));
+        }
       }
     }
-    // final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase("graph", iRequest.databaseName, parts.get(0),
-    // parts.get(1));
 
-    if (db != null) {
-      iRequest.data.lastDatabase = db.getName();
-      iRequest.data.lastUser = db.getUser() != null ? db.getUser().getName() : null;
-    } else {
-      iRequest.data.lastDatabase = null;
-      iRequest.data.lastUser = null;
-    }
-
-    return db;
+    iRequest.data.lastDatabase = localDatabase.getName();
+    iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
   }
 }

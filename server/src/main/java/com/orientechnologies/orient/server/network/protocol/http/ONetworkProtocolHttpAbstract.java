@@ -137,8 +137,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       if (cmd != null)
         try {
           if (cmd.beforeExecute(request, response))
-            // EXECUTE THE COMMAND
-            isChain = cmd.execute(request, response);
+            try {
+              // EXECUTE THE COMMAND
+              isChain = cmd.execute(request, response);
+            } finally {
+              cmd.afterExecute(request, response);
+            }
 
         } catch (Exception e) {
           handleError(e);

@@ -43,6 +43,11 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
     return db;
   }
 
+  @Override
+  public void remove() {
+    super.remove();
+  }
+
   public ODatabaseRecord getIfDefined() {
     return super.get();
   }

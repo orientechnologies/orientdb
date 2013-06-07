@@ -34,6 +34,14 @@ public interface OServerCommand {
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
   /**
+   * Called after to execute. Useful to free resources.
+   * 
+   * @param iResponse
+   *          TODO
+   */
+  public boolean afterExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
+
+  /**
    * Executes the command requested.
    * 
    * @return boolean value that indicates if this command is part of a chain
