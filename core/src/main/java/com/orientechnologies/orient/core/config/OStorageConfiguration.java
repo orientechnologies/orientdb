@@ -47,35 +47,33 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID       = new OImmutableRecordId(0,
-                                                                 OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId             CONFIG_RID      = new OImmutableRecordId(0, OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                DEFAULT_TIMEZONE = "UTC";
-  public static final String                DEFAULT_CHARSET  = "UTF-8";
+  public static final String                DEFAULT_CHARSET = "UTF-8";
 
-  public static final int                   CURRENT_VERSION  = 5;
+  public static final int                   CURRENT_VERSION = 5;
 
-  public int                                version          = -1;
+  public int                                version         = -1;
   public String                             name;
   public String                             schemaRecordId;
   public String                             dictionaryRecordId;
   public String                             indexMgrRecordId;
 
-  private String                            localeLanguage   = Locale.getDefault().getLanguage();
-  private String                            localeCountry    = Locale.getDefault().getCountry();
-  public String                             dateFormat       = "yyyy-MM-dd";
-  public String                             dateTimeFormat   = "yyyy-MM-dd HH:mm:ss";
-  private TimeZone                          timeZone         = TimeZone.getTimeZone(DEFAULT_TIMEZONE);
-  private String                            charset          = DEFAULT_CHARSET;
+  private String                            localeLanguage  = Locale.getDefault().getLanguage();
+  private String                            localeCountry   = Locale.getDefault().getCountry();
+  public String                             dateFormat      = "yyyy-MM-dd";
+  public String                             dateTimeFormat  = "yyyy-MM-dd HH:mm:ss";
+  private TimeZone                          timeZone        = TimeZone.getDefault();
+  private String                            charset         = DEFAULT_CHARSET;
 
   public OStorageSegmentConfiguration       fileTemplate;
 
-  public List<OStorageClusterConfiguration> clusters         = new ArrayList<OStorageClusterConfiguration>();
-  public List<OStorageDataConfiguration>    dataSegments     = new ArrayList<OStorageDataConfiguration>();
+  public List<OStorageClusterConfiguration> clusters        = new ArrayList<OStorageClusterConfiguration>();
+  public List<OStorageDataConfiguration>    dataSegments    = new ArrayList<OStorageDataConfiguration>();
 
-  public OStorageTxConfiguration            txSegment        = new OStorageTxConfiguration();
+  public OStorageTxConfiguration            txSegment       = new OStorageTxConfiguration();
 
-  public List<OStorageEntryConfiguration>   properties       = new ArrayList<OStorageEntryConfiguration>();
+  public List<OStorageEntryConfiguration>   properties      = new ArrayList<OStorageEntryConfiguration>();
 
   private transient Locale                  localeInstance;
   private transient DecimalFormatSymbols    unusualSymbols;
