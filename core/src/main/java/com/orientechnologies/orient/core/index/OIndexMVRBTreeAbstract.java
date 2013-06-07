@@ -248,7 +248,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
-                "Cannot rebuild index '%s' from storage (rid=%s) bacause '" + t + "'. The index will be removed in configuration",
+                "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration",
                 getName(), rid);
             // REMOVE IT
             return false;
