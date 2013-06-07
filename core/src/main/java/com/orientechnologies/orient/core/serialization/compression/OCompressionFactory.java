@@ -22,7 +22,6 @@ import java.util.Map;
 import com.orientechnologies.orient.core.serialization.compression.impl.OGZIPCompression;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyCompression;
-import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyNativeCompression;
 
 /**
  * @author Andrey Lomakin
@@ -36,7 +35,6 @@ public class OCompressionFactory {
   public OCompressionFactory() {
     register(OGZIPCompression.INSTANCE);
     register(OSnappyCompression.INSTANCE);
-    register(OSnappyNativeCompression.INSTANCE);
     register(ONothingCompression.INSTANCE);
   }
 
