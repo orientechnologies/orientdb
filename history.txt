@@ -22,8 +22,32 @@
        ``        `.                   ORIENT DATABASE                      
                  ``           http://www.orientechnologies.com                               
                  `                                 
-*******************************************************************************
+***************************************************************************************************
 This document enlist the last changes to the OrientDB project.
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.0 - (June, 7th 2013)
+---------------------------------------------------------------------------------------------------
+- Graph: total rewrite of Blueprints API that now are the default Java interface, support for
+         light-weight edges (no document), labeled relationships using separate classes and vertex
+         fields
+- Storage: new Paged-Local compressed "plocal" engine  (not yet transactional)
+- SQL: INSERT and UPDATE supports JSON syntax, improved usage of indexes upon ORDER BY, supported
+       timeout in query and global, new create function command, flatten() now is expand(), new
+       OSQLMethod classes to handle methods even in chain, new encode() and decode() functions,
+       support for new dictionary:<key> as target in SELECT and TRAVERSE
+- new SCHEDULER component using CRON syntax
+- new OTriggered class to use JS as hook
+- MMap: auto flush of pages on regular basis
+- Fetch-plan: support for skip field using "-2"
+- Index: auto rebuild in background, usage of different data-segment
+- Export: supported partial export like schema, few clusters, etc.
+- Console: imporved
+- HTTP: new /batch command supporting transaction too, faster connection through /connect command,
+        /document returns a JSON
+- Studio: UML display of class
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=2&state=closed
 
 -------------------------------------------------------------------------------
 VERSION 1.3.0 - (December, 19th 2012)

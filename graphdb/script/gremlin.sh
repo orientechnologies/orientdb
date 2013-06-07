@@ -7,7 +7,7 @@ case `uname` in
   *)
     CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /:/g')
 esac
-echo $CP
+#echo $CP
 
 # Find Java
 if [ "$JAVA_HOME" = "" ] ; then
