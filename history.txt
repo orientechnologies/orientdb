@@ -42,7 +42,7 @@ VERSION 1.4.0 - (June, 7th 2013)
 - Fetch-plan: support for skip field using "-2"
 - Index: auto rebuild in background, usage of different data-segment
 - Export: supported partial export like schema, few clusters, etc.
-- Console: imporved
+- Console: improved formatting of resultsets
 - HTTP: new /batch command supporting transaction too, faster connection through /connect command,
         /document returns a JSON
 - Studio: UML display of class
