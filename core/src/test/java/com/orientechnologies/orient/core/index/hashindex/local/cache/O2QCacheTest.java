@@ -527,6 +527,8 @@ public class O2QCacheTest {
   }
 
   public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
@@ -552,11 +554,44 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+  }
+
+  public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    long fileId = buffer.openFile(fileName);
+
+    long[] pointers;
+    pointers = new long[20];
+
+    for (int i = 0; i < 6; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      buffer.release(fileId, i);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      pointers[i] = buffer.load(fileId, i);
+      buffer.markDirty(fileId, i);
+      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      buffer.release(fileId, i);
+    }
+
+    int maxSize = buffer.getMaxSize();
+    Assert.assertEquals(maxSize, 5);
+    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
   @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+
     OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
     long fileId = buffer.openFile(fileName);
 
@@ -576,7 +611,8 @@ public class O2QCacheTest {
       for (int i = 0; i < 4; i++) {
         buffer.release(fileId, i);
       }
-      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+
+      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
     }
   }
 
