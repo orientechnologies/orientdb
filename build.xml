@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.4.0"/>
+    <property name="version" value="1.5.0-SNAPSHOT"/>
     <condition property="global.release" value="${releaseHome}/orientdb-${version}"
                else="../releases/orientdb-${version}">
         <isset property="releaseHome"/>
