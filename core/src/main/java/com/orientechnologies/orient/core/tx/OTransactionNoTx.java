@@ -205,6 +205,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void updateIndexIdentityAfterCommit(ORID oldRid, ORID newRid) {
+  public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {
   }
 }

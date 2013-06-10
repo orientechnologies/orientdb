@@ -95,7 +95,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public void clearRecordEntries() {
-    allEntries.putAll(recordEntries);
+    for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+      final ORID key = entry.getKey();
+
+      // ID NEW CREATE A COPY OF RID TO AVOID IT CHANGES IDENTITY+HASHCODE AND IT'S UNREACHEABLE THEREAFTER
+      allEntries.put(key.isNew() ? key.copy() : key, entry.getValue());
+    }
+
     recordEntries.clear();
   }
 
@@ -108,13 +114,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public ORecordOperation getRecordEntry(ORID rid) {
+    ORecordOperation e = allEntries.get(rid);
+    if (e != null)
+      return e;
+
     if (rid.isTemporary()) {
       final ORecord<?> record = temp2persistent.get(rid);
       if (record != null && !record.getIdentity().equals(rid))
         rid = record.getIdentity();
     }
 
-    ORecordOperation e = recordEntries.get(rid);
+    e = recordEntries.get(rid);
     if (e != null)
       return e;
 
@@ -286,8 +296,20 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
   }
 
-  public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
-    List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
+    if (oldRid.equals(newRid))
+      // NO CHANGE, IGNORE IT
+      return;
+
+    if (oldRid.isNew()) {
+      // REMOVE AND RE-PUT THE OPERATION BECAUSE KEY IS CHANGED
+      final ORecordOperation rec = allEntries.remove(oldRid);
+      if (rec != null)
+        allEntries.put(newRid, rec);
+    }
+
+    // UPDATE INDEXES
+    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
     if (transactionIndexOperations != null) {
       for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
         OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
