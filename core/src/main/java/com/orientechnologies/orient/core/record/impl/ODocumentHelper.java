@@ -678,7 +678,7 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      final ORecordInternal<?> currentRecord = (ORecordInternal<?>) iContext.getVariable("$current");
+      final ORecordInternal<?> currentRecord = iContext != null ? (ORecordInternal<?>) iContext.getVariable("$current") : null;
       for (int i = 0; i < args.size(); ++i) {
         final String arg = args.get(i);
         final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
