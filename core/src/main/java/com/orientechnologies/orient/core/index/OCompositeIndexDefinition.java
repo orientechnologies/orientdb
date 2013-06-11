@@ -521,4 +521,9 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
       return compositeKey;
     }
   }
+
+  @Override
+  public boolean isAutomatic() {
+    return indexDefinitions.get(0).isAutomatic();
+  }
 }

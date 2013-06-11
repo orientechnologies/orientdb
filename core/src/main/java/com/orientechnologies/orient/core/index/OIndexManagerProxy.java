@@ -122,7 +122,12 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   @Override
-  public void rebuildIndexes() {
-    delegate.rebuildIndexes();
+  public void recreateIndexes() {
+    delegate.recreateIndexes();
+  }
+
+  @Override
+  public void waitTillIndexRestore() {
+    delegate.waitTillIndexRestore();
   }
 }

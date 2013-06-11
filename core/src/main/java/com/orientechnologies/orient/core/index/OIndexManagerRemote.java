@@ -117,7 +117,11 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public void rebuildIndexes() {
-    throw new UnsupportedOperationException("rebuildIndexes()");
+  public void recreateIndexes() {
+    throw new UnsupportedOperationException("recreateIndexes()");
+  }
+
+  @Override
+  public void waitTillIndexRestore() {
   }
 }

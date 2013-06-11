@@ -101,45 +101,47 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                          ONE_KB                  = 1024;
+  private static final int                          ONE_KB                    = 1024;
   private final int                                 DELETE_MAX_RETRIES;
   private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OLocalPaginatedCluster> clusterMap              = new LinkedHashMap<String, OLocalPaginatedCluster>();
-  private OLocalPaginatedCluster[]                  clusters                = new OLocalPaginatedCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap                = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters                  = new OLocalPaginatedCluster[0];
 
   private String                                    storagePath;
   private final OStorageVariableParser              variableParser;
-  private int                                       defaultClusterId        = -1;
+  private int                                       defaultClusterId          = -1;
 
-  private static String[]                           ALL_FILE_EXTENSIONS     = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                       };
+  private static String[]                           ALL_FILE_EXTENSIONS       = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
+      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                         };
 
-  private OModificationLock                         modificationLock        = new OModificationLock();
+  private OModificationLock                         modificationLock          = new OModificationLock();
 
   private ODiskCache                                diskCache;
   private OWriteAheadLog                            writeAheadLog;
 
-  private final ScheduledExecutorService            fuzzyCheckpointExecutor = Executors
-                                                                                .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                  @Override
-                                                                                  public Thread newThread(Runnable r) {
-                                                                                    Thread thread = new Thread(r);
-                                                                                    thread.setDaemon(true);
-                                                                                    return thread;
-                                                                                  }
-                                                                                });
-  private final ExecutorService                     checkpointExecutor      = Executors
-                                                                                .newSingleThreadExecutor(new ThreadFactory() {
-                                                                                  @Override
-                                                                                  public Thread newThread(Runnable r) {
-                                                                                    Thread thread = new Thread(r);
-                                                                                    thread.setDaemon(true);
-                                                                                    return thread;
-                                                                                  }
-                                                                                });
+  private final ScheduledExecutorService            fuzzyCheckpointExecutor   = Executors
+                                                                                  .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                    @Override
+                                                                                    public Thread newThread(Runnable r) {
+                                                                                      Thread thread = new Thread(r);
+                                                                                      thread.setDaemon(true);
+                                                                                      return thread;
+                                                                                    }
+                                                                                  });
+  private final ExecutorService                     checkpointExecutor        = Executors
+                                                                                  .newSingleThreadExecutor(new ThreadFactory() {
+                                                                                    @Override
+                                                                                    public Thread newThread(Runnable r) {
+                                                                                      Thread thread = new Thread(r);
+                                                                                      thread.setDaemon(true);
+                                                                                      return thread;
+                                                                                    }
+                                                                                  });
 
-  private Map<OLogSequenceNumber, List<OWALRecord>> operationUnits          = new HashMap<OLogSequenceNumber, List<OWALRecord>>();
+  private Map<OLogSequenceNumber, List<OWALRecord>> operationUnits            = new HashMap<OLogSequenceNumber, List<OWALRecord>>();
+
+  private volatile boolean                          wereDataRestoredAfterOpen = false;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -432,6 +434,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
+    wereDataRestoredAfterOpen = true;
+
     while (lsn != null) {
       OWALRecord walRecord = writeAheadLog.read(lsn);
       if (walRecord instanceof OAtomicUnitStartRecord) {
@@ -510,6 +514,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       }
     }
+  }
+
+  public boolean wereDataRestoredAfterOpen() {
+
+    return wereDataRestoredAfterOpen;
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -718,12 +727,21 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public ODataLocal getDataSegmentById(final int iDataSegmentId) {
-    throw new UnsupportedOperationException("getDataSegmentById");
+  public ODataLocal getDataSegmentById(final int dataSegmentId) {
+    OLogManager.instance().error(
+        this,
+        "getDataSegmentById: Local paginated storage does not support data segments. "
+            + "null will be returned for data segment %d.", dataSegmentId);
+    return null;
   }
 
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    throw new UnsupportedOperationException("getDataSegmentIdByName");
+  public int getDataSegmentIdByName(final String dataSegmentName) {
+    OLogManager.instance().error(
+        this,
+        "getDataSegmentIdByName: Local paginated storage does not support data segments. "
+            + "-1 will be returned for data segment %s.", dataSegmentName);
+
+    return -1;
   }
 
   /**
@@ -733,8 +751,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return addDataSegment(iDataSegmentName, null);
   }
 
-  public int addDataSegment(String iSegmentName, final String iDirectory) {
-    throw new UnsupportedOperationException("addDataSegment");
+  public int addDataSegment(String segmentName, final String directory) {
+    OLogManager.instance().error(
+        this,
+        "addDataSegment: Local paginated storage does not support data"
+            + " segments, segment %s will not be added in directory %s.", segmentName, directory);
+
+    return -1;
   }
 
   public int addCluster(final String clusterType, String clusterName, final String location, final String dataSegmentName,

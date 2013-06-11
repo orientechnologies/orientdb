@@ -118,4 +118,6 @@ public interface OIndexDefinition extends OIndexCallback {
   public void fromStream(ODocument document);
 
   public String toCreateIndexDDL(String indexName, String indexType);
+
+  public boolean isAutomatic();
 }

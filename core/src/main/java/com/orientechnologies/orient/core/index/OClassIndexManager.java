@@ -49,7 +49,9 @@ import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -60,8 +62,8 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OClassIndexManager extends ODocumentHookAbstract {
   public OClassIndexManager() {
     // rebuild indexes if index cluster wasn't closed properly
-    if (autoRebuildAllIndexes())
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().rebuildIndexes();
+    if (autoRecreateIndexesAfterCrash())
+      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().recreateIndexes();
   }
 
   @Override
@@ -285,11 +287,20 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     releaseModificationLock(iDocument);
   }
 
-  public static boolean autoRebuildAllIndexes() {
+  public static boolean autoRecreateIndexesAfterCrash() {
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    return OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
-        && (database.getStorage() instanceof OStorageLocalAbstract)
-        && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
+      return false;
+
+    OStorage storage = database.getStorage();
+
+    if (storage instanceof OStorageLocal)
+      return !((OStorageLocal) storage).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+    else if (storage instanceof OLocalPaginatedStorage) {
+      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
+    }
+
+    return false;
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {

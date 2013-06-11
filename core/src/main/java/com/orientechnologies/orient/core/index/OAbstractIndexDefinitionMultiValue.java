@@ -20,55 +20,58 @@ import java.util.Map;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
- * Base class for all multivalue index definitions that contains base functionality
- * which can be reused by concrete implementations.
+ * Base class for all multivalue index definitions that contains base functionality which can be reused by concrete implementations.
  */
 public abstract class OAbstractIndexDefinitionMultiValue extends OPropertyIndexDefinition implements OIndexDefinitionMultiValue {
-	protected OAbstractIndexDefinitionMultiValue() {
-	}
+  protected OAbstractIndexDefinitionMultiValue() {
+  }
 
-	protected OAbstractIndexDefinitionMultiValue(final String iClassName, final String iField, final OType iType) {
-		super(iClassName, iField, iType);
-	}
+  protected OAbstractIndexDefinitionMultiValue(final String iClassName, final String iField, final OType iType) {
+    super(iClassName, iField, iType);
+  }
 
-	protected void processAdd(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
-		if (value == null)
-			return;
+  protected void processAdd(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
+    if (value == null)
+      return;
 
-		final Integer removeCount = keysToRemove.get(value);
-		if (removeCount != null) {
-			int newRemoveCount = removeCount - 1;
-			if (newRemoveCount > 0)
-				keysToRemove.put(value, newRemoveCount);
-			else
-				keysToRemove.remove(value);
-		} else {
-			final Integer addCount = keysToAdd.get(value);
-			if (addCount != null)
-				keysToAdd.put(value, addCount + 1);
-			else
-				keysToAdd.put(value, 1);
-		}
-	}
+    final Integer removeCount = keysToRemove.get(value);
+    if (removeCount != null) {
+      int newRemoveCount = removeCount - 1;
+      if (newRemoveCount > 0)
+        keysToRemove.put(value, newRemoveCount);
+      else
+        keysToRemove.remove(value);
+    } else {
+      final Integer addCount = keysToAdd.get(value);
+      if (addCount != null)
+        keysToAdd.put(value, addCount + 1);
+      else
+        keysToAdd.put(value, 1);
+    }
+  }
 
-	protected void processRemoval(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
-		if (value == null)
-			return;
+  protected void processRemoval(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
+    if (value == null)
+      return;
 
-		final Integer addCount = keysToAdd.get(value);
-		if (addCount != null) {
-			int newAddCount = addCount - 1;
-			if (newAddCount > 0)
-				keysToAdd.put(value, newAddCount);
-			else
-				keysToAdd.remove(value);
-		} else {
-			final Integer removeCount = keysToRemove.get(value);
-			if (removeCount != null)
-				keysToRemove.put(value, removeCount + 1);
-			else
-				keysToRemove.put(value, 1);
-		}
-	}
+    final Integer addCount = keysToAdd.get(value);
+    if (addCount != null) {
+      int newAddCount = addCount - 1;
+      if (newAddCount > 0)
+        keysToAdd.put(value, newAddCount);
+      else
+        keysToAdd.remove(value);
+    } else {
+      final Integer removeCount = keysToRemove.get(value);
+      if (removeCount != null)
+        keysToRemove.put(value, removeCount + 1);
+      else
+        keysToRemove.put(value, 1);
+    }
+  }
 
+  @Override
+  public boolean isAutomatic() {
+    return true;
+  }
 }
