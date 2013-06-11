@@ -84,7 +84,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public OIndexManagerAbstract load() {
-    if (!OClassIndexManager.autoRebuildAllIndexes()) {
+    if (!OClassIndexManager.autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
 
@@ -93,8 +93,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           create();
 
         // CLEAR PREVIOUS STUFF
-        indexes.clear();
-        classPropertyIndex.clear();
+        clearMetadata();
 
         // RELOAD IT
         ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
@@ -104,6 +103,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       }
     }
     return this;
+  }
+
+  private void clearMetadata() {
+    acquireExclusiveLock();
+    try {
+      indexes.clear();
+      classPropertyIndex.clear();
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   @Override
@@ -235,8 +244,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         if (idx instanceof OCloseable)
           ((OCloseable) idx).close();
 
-      indexes.clear();
-      classPropertyIndex.clear();
+      clearMetadata();
     } finally {
       releaseExclusiveLock();
     }
@@ -307,10 +315,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
       final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-      for (final OIndex<?> index : rawResult) {
-        if (!index.isRebuiding())
-          transactionalResult.add(preProcessBeforeReturn(index));
-      }
+      for (final OIndex<?> index : rawResult)
+        transactionalResult.add(preProcessBeforeReturn(index));
 
       return transactionalResult;
     } finally {

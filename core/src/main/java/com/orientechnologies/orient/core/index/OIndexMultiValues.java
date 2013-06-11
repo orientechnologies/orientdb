@@ -49,6 +49,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Set<OIdentifiable> get(final Object iKey) {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -66,6 +67,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public long count(final Object iKey) {
+    checkForRebuild();
+
     acquireExclusiveLock();
     try {
 
@@ -82,6 +85,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public OIndexMultiValues put(final Object iKey, final OIdentifiable iSingleValue) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -115,6 +120,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
   @Override
   public boolean remove(final Object iKey, final OIdentifiable iValue) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -144,6 +151,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public int remove(final OIdentifiable iRecord) {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -167,13 +175,15 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public OIndexMultiValues create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-    return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex,
+      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener) {
+    return (OIndexMultiValues) super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild,
         iProgressListener, OStreamSerializerListRID.INSTANCE);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -230,6 +240,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -269,6 +281,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -308,6 +322,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
+    checkForRebuild();
+
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
@@ -338,6 +354,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -383,6 +401,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -429,6 +449,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch) {
+    checkForRebuild();
 
     final OType[] types = getDefinition().getTypes();
     if (types.length == 1) {
@@ -500,6 +521,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
+    checkForRebuild();
+
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
@@ -535,6 +558,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public long getSize() {
+    checkForRebuild();
+
     if (map.size() == 0)
       return 0;
 
@@ -566,6 +591,8 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public long getKeySize() {
+    checkForRebuild();
+
     acquireSharedLock();
     try {
       return map.size();
@@ -575,6 +602,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   }
 
   public Iterator<OIdentifiable> valuesIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -588,6 +616,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {

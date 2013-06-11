@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -87,8 +88,13 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
         BUCKET_FILE_EXTENSION, keyHashFunction);
   }
 
+  @Override
+  public void setRebuildingFlag() {
+    rebuiding = true;
+  }
+
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, ODatabaseRecord database, String clusterIndexName,
-      int[] clusterIdsToIndex, OProgressListener progressListener, OBinarySerializer<T> valueSerializer) {
+      int[] clusterIdsToIndex, boolean rebuild, OProgressListener progressListener, OBinarySerializer<T> valueSerializer) {
     acquireExclusiveLock();
     try {
       configuration = new ODocument();
@@ -110,7 +116,9 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       localHashTable.create(name, keySerializer, valueSerializer, storage);
 
       updateConfiguration();
-      rebuild(progressListener);
+      if (rebuild)
+        rebuild(progressListener);
+
       return this;
     } finally {
       releaseExclusiveLock();
@@ -507,6 +515,39 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   }
 
   @Override
+  public IndexMetadata loadMetadata(ODocument config) {
+    final String indexName = config.field(OIndexInternal.CONFIG_NAME);
+    final String indexType = config.field(OIndexInternal.CONFIG_TYPE);
+
+    OIndexDefinition loadedIndexDefinition = null;
+
+    final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
+    if (indexDefinitionDoc != null) {
+      try {
+        final String indexDefClassName = config.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+        final Class<?> indexDefClass = Class.forName(indexDefClassName);
+        loadedIndexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
+        loadedIndexDefinition.fromStream(indexDefinitionDoc);
+
+      } catch (final ClassNotFoundException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final NoSuchMethodException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InvocationTargetException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InstantiationException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final IllegalAccessException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      }
+
+    }
+
+    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, indexType);
+  }
+
+  @Override
   public void flush() {
     acquireExclusiveLock();
     try {
@@ -520,45 +561,25 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   public boolean loadFromConfiguration(ODocument configuration) {
     acquireExclusiveLock();
     try {
-      final ORID rid = (ORID) configuration.field(CONFIG_MAP_RID, ORID.class);
+      final ORID rid = configuration.field(CONFIG_MAP_RID, ORID.class);
       if (rid == null)
         throw new OIndexException("Error during deserialization of index definition: '" + CONFIG_MAP_RID + "' attribute is null");
       identity = rid;
 
       this.configuration = configuration;
-      name = configuration.field(OIndexInternal.CONFIG_NAME);
-      type = configuration.field(OIndexInternal.CONFIG_TYPE);
       storage = (OStorageLocalAbstract) getDatabase().getStorage();
+      clustersToIndex.clear();
 
-      final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
-      if (indexDefinitionDoc != null) {
-        try {
-          final String indexDefClassName = configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS);
-          final Class<?> indexDefClass = Class.forName(indexDefClassName);
-          indexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
-          indexDefinition.fromStream(indexDefinitionDoc);
+      IndexMetadata indexMetadata = loadMetadata(configuration);
 
-        } catch (final ClassNotFoundException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final NoSuchMethodException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final InvocationTargetException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final InstantiationException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final IllegalAccessException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        }
+      name = indexMetadata.getName();
+      type = indexMetadata.getType();
+      indexDefinition = indexMetadata.getIndexDefinition();
+      clustersToIndex.addAll(indexMetadata.getClustersToIndex());
 
-        clustersToIndex.clear();
+      keyHashFunction.setValueSerializer((OBinarySerializer<Object>) detectKeySerializer(indexDefinition));
+      localHashTable.load(name, storage);
 
-        final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
-        if (clusters != null)
-          clustersToIndex.addAll(clusters);
-
-        keyHashFunction.setValueSerializer((OBinarySerializer<Object>) detectKeySerializer(indexDefinition));
-        localHashTable.load(name, storage);
-      }
       return true;
     } finally {
       releaseExclusiveLock();

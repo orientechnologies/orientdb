@@ -143,4 +143,9 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
     }
     return ddl.toString();
   }
+
+  @Override
+  public boolean isAutomatic() {
+    return false;
+  }
 }

@@ -51,6 +51,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public OIdentifiable get(final Object iKey) {
+    checkForRebuild();
+
     acquireExclusiveLock();
     try {
 
@@ -62,6 +64,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public long count(final Object iKey) {
+    checkForRebuild();
+
     acquireExclusiveLock();
     try {
 
@@ -73,6 +77,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public int remove(final OIdentifiable iRecord) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -98,6 +104,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
   @Override
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+    checkForRebuild();
+
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(iKey);
     if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity())) {
@@ -121,13 +129,15 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public OIndexOneValue create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-    return (OIndexOneValue) super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex,
+      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener) {
+    return (OIndexOneValue) super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild,
         iProgressListener, OStreamSerializerRID.INSTANCE);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     if (iRangeFrom.getClass() != iRangeTo.getClass())
       throw new IllegalArgumentException("Range from-to parameters are of different types");
 
@@ -179,6 +189,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -207,6 +219,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -238,6 +252,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToSearch) {
+    checkForRebuild();
+
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
@@ -262,6 +278,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -297,6 +315,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive, final int maxEntriesToFetch) {
+    checkForRebuild();
+
     acquireExclusiveLock();
 
     try {
@@ -335,6 +355,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
       final int maxEntriesToFetch) {
+    checkForRebuild();
+
     if (iRangeFrom.getClass() != iRangeTo.getClass())
       throw new IllegalArgumentException("Range from-to parameters are of different types");
 
@@ -393,6 +415,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
+    checkForRebuild();
+
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
     Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
 
@@ -423,6 +447,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public long getSize() {
+    checkForRebuild();
+
     acquireSharedLock();
     try {
       return map.size();
@@ -432,6 +458,8 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public long getKeySize() {
+    checkForRebuild();
+
     acquireSharedLock();
     try {
       return map.size();
@@ -441,6 +469,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   }
 
   public Iterator<OIdentifiable> valuesIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -454,6 +483,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {

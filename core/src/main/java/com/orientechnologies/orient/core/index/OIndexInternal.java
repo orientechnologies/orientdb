@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -48,6 +49,7 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * 
    * @param iConfig
    *          ODocument instance containing the configuration
+   * 
    */
   public boolean loadFromConfiguration(ODocument iConfig);
 
@@ -113,4 +115,38 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
    */
   public void releaseModificationLock();
+
+  public IndexMetadata loadMetadata(ODocument iConfig);
+
+  public void setRebuildingFlag();
+
+  public final class IndexMetadata {
+    private String           name;
+    private OIndexDefinition indexDefinition;
+    private Set<String>      clustersToIndex;
+    private String           type;
+
+    public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type) {
+      this.name = name;
+      this.indexDefinition = indexDefinition;
+      this.clustersToIndex = clustersToIndex;
+      this.type = type;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public OIndexDefinition getIndexDefinition() {
+      return indexDefinition;
+    }
+
+    public Set<String> getClustersToIndex() {
+      return clustersToIndex;
+    }
+
+    public String getType() {
+      return type;
+    }
+  }
 }

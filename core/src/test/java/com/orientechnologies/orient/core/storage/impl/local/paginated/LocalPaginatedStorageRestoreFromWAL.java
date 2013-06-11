@@ -174,7 +174,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
       OClass classOne = baseDocumentTx.getMetadata().getSchema().getClass("TestOne");
       OClass classTwo = baseDocumentTx.getMetadata().getSchema().getClass("TestTwo");
 
-      for (int i = 0; i < 20000; i++) {
+      for (int i = 0; i < 1000; i++) {
         ODocument docOne = new ODocument(classOne);
         docOne.field("intProp", random.nextInt());
 

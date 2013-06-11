@@ -383,7 +383,7 @@ public class OIndexProxy<T> implements OIndex<T> {
   //
 
   public OIndex<T> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
-      int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+      int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

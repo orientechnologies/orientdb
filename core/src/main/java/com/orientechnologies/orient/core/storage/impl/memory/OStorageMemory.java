@@ -924,11 +924,18 @@ public class OStorageMemory extends OStorageEmbedded {
         byte[] stream = txEntry.getRecord().toStream();
 
         if (rid.isNew()) {
+          final ORecordId oldRID = rid.copy();
+
           txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream,
               OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult();
+
           txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
+
+          iTx.updateIdentityAfterCommit(oldRID, rid);
+
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
+
         } else {
           txEntry
               .getRecord()

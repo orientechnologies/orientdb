@@ -26,10 +26,11 @@ public interface OKeyValueIndex<T> {
    * @param iClusterIndexName
    *          Cluster name where to place the TreeMap
    * @param iClusterIdsToIndex
+   * @param rebuild
    * @param iProgressListener
    */
   OIndex<T> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
-      int[] iClusterIdsToIndex, OProgressListener iProgressListener);
+      int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener);
 
   /**
    * Unloads the index freeing the resource in memory.

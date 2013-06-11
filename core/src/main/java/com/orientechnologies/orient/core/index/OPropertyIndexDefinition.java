@@ -184,4 +184,9 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 
     return ddl;
   }
+
+  @Override
+  public boolean isAutomatic() {
+    return true;
+  }
 }
