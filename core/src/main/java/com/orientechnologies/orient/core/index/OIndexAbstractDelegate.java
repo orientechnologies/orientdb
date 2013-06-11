@@ -50,8 +50,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   public OIndex<T> create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-    return delegate.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
+      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener) {
+    return delegate.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild, iProgressListener);
   }
 
   public Iterator<Entry<Object, T>> iterator() {

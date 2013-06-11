@@ -118,6 +118,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 
   public IndexMetadata loadMetadata(ODocument iConfig);
 
+  public void setRebuildingFlag();
+
   public final class IndexMetadata {
     private String           name;
     private OIndexDefinition indexDefinition;

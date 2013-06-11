@@ -93,6 +93,8 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
+    checkForRebuild();
+
     if (iKey == null)
       return this;
 
@@ -145,6 +147,7 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public boolean remove(final Object iKey, final OIdentifiable value) {
+    checkForRebuild();
 
     modificationLock.requestModificationLock();
 
@@ -179,23 +182,24 @@ public class OIndexFullText extends OIndexMultiValues {
 
   @Override
   public OIndexInternal<?> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase,
-      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener, OStreamSerializer iValueSerializer) {
+      String iClusterIndexName, int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener,
+      OStreamSerializer iValueSerializer) {
 
     if (iIndexDefinition.getFields().size() > 1) {
       throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
     }
 
-    return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
+    return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild, iProgressListener,
         iValueSerializer);
   }
 
   @Override
   public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, ODatabaseRecord iDatabase,
-      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+      String iClusterIndexName, int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener) {
     if (indexDefinition.getFields().size() > 1) {
       throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
     }
-    return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
+    return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild, iProgressListener);
   }
 
   @Override

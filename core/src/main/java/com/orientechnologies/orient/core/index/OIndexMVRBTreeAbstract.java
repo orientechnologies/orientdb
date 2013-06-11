@@ -90,6 +90,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   private final Listener                         watchDog;
   private volatile boolean                       rebuilding       = false;
 
+  private Thread                                 rebuildThread    = null;
+
   public OIndexMVRBTreeAbstract(final String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
@@ -115,11 +117,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    *          Current Database instance
    * @param iClusterIndexName
    *          Cluster name where to place the TreeMap
+   * @param rebuild
    * @param iProgressListener
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public OIndexInternal<?> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener,
       final OStreamSerializer iValueSerializer) {
     acquireExclusiveLock();
     try {
@@ -154,7 +157,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
       installHooks(iDatabase);
 
-      rebuild(iProgressListener);
+      if (rebuild)
+        rebuild(iProgressListener);
+
       updateConfiguration();
     } catch (Exception e) {
       if (map != null)
@@ -273,10 +278,10 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean contains(final Object iKey) {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
-
       return map.containsKey(iKey);
 
     } finally {
@@ -298,6 +303,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    * @see #getValuesBetween(Object, boolean, Object, boolean)
    */
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+    checkForRebuild();
+
     return getValuesBetween(iRangeFrom, true, iRangeTo, true);
   }
 
@@ -312,22 +319,32 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    * @return
    */
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+    checkForRebuild();
+
     return getEntriesBetween(iRangeFrom, iRangeTo, true);
   }
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getValuesMajor(fromKey, isInclusive, -1);
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getValuesMinor(toKey, isInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getEntriesMajor(fromKey, isInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getEntriesMinor(toKey, isInclusive, -1);
   }
 
@@ -349,18 +366,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    */
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive) {
+    checkForRebuild();
+
     return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+    checkForRebuild();
+
     return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, -1);
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+    checkForRebuild();
+
     return getValues(iKeys, -1);
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+    checkForRebuild();
+
     return getEntries(iKeys, -1);
   }
 
@@ -370,6 +395,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   public long rebuild() {
     return rebuild(new OIndexRebuildOutputListener(this));
+  }
+
+  @Override
+  public void setRebuildingFlag() {
+    rebuilding = true;
   }
 
   /**
@@ -382,6 +412,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     acquireExclusiveLock();
     try {
+      rebuildThread = Thread.currentThread();
       rebuilding = true;
 
       try {
@@ -415,12 +446,19 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
               final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
               if (fieldValue != null) {
-                if (fieldValue instanceof Collection) {
-                  for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-                    put(fieldValueItem, doc);
-                  }
-                } else
-                  put(fieldValue, doc);
+                try {
+                  if (fieldValue instanceof Collection) {
+                    for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+                      put(fieldValueItem, doc);
+                    }
+                  } else
+                    put(fieldValue, doc);
+                } catch (OIndexException e) {
+                  OLogManager.instance().error(
+                      this,
+                      "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                          + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+                }
 
                 ++documentIndexed;
               }
@@ -453,6 +491,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     } finally {
       rebuilding = false;
+      rebuildThread = null;
 
       if (intentInstalled)
         getDatabase().declareIntent(null);
@@ -464,6 +503,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iValue) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
     try {
       return remove(iKey);
@@ -474,6 +515,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean remove(final Object key) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -491,6 +534,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public OIndex<T> clear() {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -544,6 +589,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public Iterator<Entry<Object, T>> iterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -557,6 +603,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   @SuppressWarnings("unchecked")
   public Iterator<Entry<Object, T>> inverseIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -569,6 +616,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public Iterable<Object> keys() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -684,6 +732,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   @SuppressWarnings("unchecked")
   public void commit(final ODocument iDocument) {
+    checkForRebuild();
+
     if (iDocument == null)
       return;
 
@@ -972,5 +1022,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   public boolean isRebuiding() {
     return rebuilding;
+  }
+
+  protected void checkForRebuild() {
+    if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
+      throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
+    }
   }
 }

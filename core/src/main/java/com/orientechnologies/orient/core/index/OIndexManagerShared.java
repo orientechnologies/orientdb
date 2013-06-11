@@ -96,7 +96,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         // ASSIGN DEFAULT PROGRESS LISTENER
         iProgressListener = new OIndexRebuildOutputListener(index);
 
-      index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, iProgressListener);
+      index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, true, iProgressListener);
       addIndexInternal(index);
 
       setDirty();
@@ -292,7 +292,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   continue;
                 }
 
-                OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType);
+                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType);
                 OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
                 OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
@@ -300,12 +300,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   OLogManager.instance().info(this, "Index %s is not automatic index and will be added as is.",
                       indexMetadata.getName());
 
-                  index.loadFromConfiguration(idx);
-                  addIndexInternal(index);
-                  setDirty();
-                  save();
+                  if (index.loadFromConfiguration(idx)) {
+                    addIndexInternal(index);
+                    setDirty();
+                    save();
 
-                  ok++;
+                    ok++;
+                  } else {
+                    index.delete();
+                    errors++;
+                  }
 
                   OLogManager.instance().info(this, "Index %s was added in DB index list.", index.getName());
                 } else {
@@ -332,19 +336,24 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
                     OLogManager.instance().info(this, "Start creation of index %s", indexName);
 
-                    index.create(indexName, indexDefinition, newDb, defaultClusterName, clustersToIndex,
+                    index.create(indexName, indexDefinition, newDb, defaultClusterName, clustersToIndex, false,
                         new OIndexRebuildOutputListener(index));
 
-                    OLogManager.instance().info(this, "Index %s was successfully created.", indexName);
-
-                    index.flush();
+                    index.setRebuildingFlag();
                     addIndexInternal(index);
+
+                    OLogManager.instance().info(this, "Index %s was successfully created and rebuild is going to be started.",
+                        indexName);
+
+                    index.rebuild(new OIndexRebuildOutputListener(index));
+                    index.flush();
 
                     setDirty();
                     save();
 
-                    OLogManager.instance().info(this, "Index %s was added in list of DB indexes.", indexName);
                     ok++;
+
+                    OLogManager.instance().info(this, "Rebuild of %s index was successfully finished.", indexName);
                   } else {
                     errors++;
                     OLogManager.instance().error(
@@ -354,6 +363,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                         type);
                   }
                 }
+
               } catch (Exception e) {
                 OLogManager.instance().error(this, "Error during addition of index %s", idx);
                 errors++;
@@ -361,7 +371,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             }
 
             newDb.close();
-            OLogManager.instance().info(this, "%d indexes restored successfully, %d errors", ok, errors);
+
+            OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.");
           }

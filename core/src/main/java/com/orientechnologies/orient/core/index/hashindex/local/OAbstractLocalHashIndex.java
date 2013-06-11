@@ -88,8 +88,13 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
         BUCKET_FILE_EXTENSION, keyHashFunction);
   }
 
+  @Override
+  public void setRebuildingFlag() {
+    rebuiding = true;
+  }
+
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, ODatabaseRecord database, String clusterIndexName,
-      int[] clusterIdsToIndex, OProgressListener progressListener, OBinarySerializer<T> valueSerializer) {
+      int[] clusterIdsToIndex, boolean rebuild, OProgressListener progressListener, OBinarySerializer<T> valueSerializer) {
     acquireExclusiveLock();
     try {
       configuration = new ODocument();
@@ -111,7 +116,9 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
       localHashTable.create(name, keySerializer, valueSerializer, storage);
 
       updateConfiguration();
-      rebuild(progressListener);
+      if (rebuild)
+        rebuild(progressListener);
+
       return this;
     } finally {
       releaseExclusiveLock();

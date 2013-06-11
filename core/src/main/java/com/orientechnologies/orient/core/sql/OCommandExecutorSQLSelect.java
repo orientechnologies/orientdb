@@ -400,7 +400,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
     else
       lastRecord = iRecord;
-    
+
     resultCount++;
 
     addResult(lastRecord);
@@ -639,6 +639,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       // go through all possible index for given set of fields.
       for (final OIndex index : involvedIndexes) {
+        if (index.isRebuiding())
+          continue;
+
         final OIndexDefinition indexDefinition = index.getDefinition();
         final OQueryOperator operator = searchResult.lastOperator;
 
