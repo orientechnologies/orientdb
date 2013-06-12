@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.orientechnologies</groupId>
   <artifactId>orientdb-parent</artifactId>
-  <version>1.4.0</version>
+  <version>1.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OrientDB</name>
@@ -78,8 +78,8 @@
     <module>tools</module>
     <module>tests</module>
     <module>distributed</module>
-    <!--<module>clustered-client</module>-->
-    <!--<module>blueprints</module>-->
+    <!--<module>clustered-client</module> -->
+    <!--<module>blueprints</module> -->
     <module>graphdb</module>
   </modules>
 
@@ -98,12 +98,12 @@
   </ciManagement>
   <distributionManagement>
     <repository>
-      <id>oss.sonatype.org</id>
+      <id>sonatype-nexus-staging</id>
       <name>OrientDB Maven2 Repository</name>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
     </repository>
     <snapshotRepository>
-      <id>oss.sonatype.org</id>
+      <id>sonatype-nexus-snapshots</id>
       <name>OrientDB Maven2 Snapshot Repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
@@ -115,6 +115,12 @@
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Snapshots</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -126,18 +132,15 @@
     <javac.target.version>1.6</javac.target.version>
     <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
     <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
-    <!--
-         | Configuration properties for the OSGi maven-bundle-plugin
-        -->
-    <osgi.fragment.host/>
+    <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
+    <osgi.fragment.host />
     <osgi.export>${project.groupId}.*;version=${project.version};-noimport:=true</osgi.export>
     <osgi.import>*</osgi.import>
-    <osgi.dynamicImport/>
-    <osgi.private/>
-    <!--
-         | shared build/report plugins version
-        -->
+    <osgi.dynamicImport />
+    <osgi.private />
+    <!-- | shared build/report plugins version -->
     <surefire.version>2.12</surefire.version>
+    <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
   </properties>
 
   <build>
@@ -193,10 +196,8 @@
           <version>2.6</version>
         </plugin>
 
-        <!--
-                 | This plugin's configuration is used to store Eclipse
-                 | m2e settings only. It has no influence on the Maven build itself.
-                -->
+        <!-- | This plugin's configuration is used to store Eclipse | m2e 
+          settings only. It has no influence on the Maven build itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -214,7 +215,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -254,7 +255,8 @@
         <configuration>
           <doCheck>false</doCheck>
           <doUpdate>false</doUpdate>
-          <!-- Use committed revision so it does not change every time svn update is run -->
+          <!-- Use committed revision so it does not change every time svn 
+            update is run -->
           <useLastCommittedRevision>true</useLastCommittedRevision>
           <!-- default revision number if unavailable -->
           <revisionOnScmFailure>??????</revisionOnScmFailure>
@@ -272,27 +274,22 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <version>2.3.7</version>
         <configuration>
-          <!--
-                     | dummy entry to stop bundle plugin from picking up jar config and reporting
-                     | WARNING: Duplicate name in Manifest
-                     | See http://markmail.org/message/mpkl24wk3jrjhhjg
-                    -->
+          <!-- | dummy entry to stop bundle plugin from picking up jar config 
+            and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
           <archive>
             <forced>true</forced>
           </archive>
           <excludeDependencies>true</excludeDependencies>
           <manifestLocation>${project.build.directory}/osgi</manifestLocation>
           <instructions>
-            <!--
-                         | stops the "uses" clauses being added to "Export-Package" manifest entry
-                        -->
+            <!-- | stops the "uses" clauses being added to "Export-Package" 
+              manifest entry -->
             <_nouses>true</_nouses>
-            <!--
-                         | Stop the JAVA_1_n_HOME variables from being treated as headers by Bnd
-                        -->
+            <!-- | Stop the JAVA_1_n_HOME variables from being treated as 
+              headers by Bnd -->
             <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
-                Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
-                Ignore-Package,Private-Package,Bundle-DocURL
+              Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
+              Ignore-Package,Private-Package,Bundle-DocURL
             </_removeheaders>
             <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
             <Export-Package>${osgi.export}</Export-Package>
@@ -419,9 +416,7 @@
             <link>http://download.oracle.com/javase/5/docs/api/index.html</link>
           </links>
           <aggregate>true</aggregate>
-          <!--
-                      | Apple's JVM sometimes requires more memory
-                    -->
+          <!-- | Apple's JVM sometimes requires more memory -->
           <additionalJOption>-J-Xmx1024m</additionalJOption>
         </configuration>
       </plugin>
@@ -445,7 +440,7 @@
               <target>${javac.target.version}</target>
               <showDeprecation>true</showDeprecation>
               <showWarnings>true</showWarnings>
-              <optimize>true</optimize>
+              <optimize>true</optimize>              
               <excludes>
                 <exclude>com/orientechnologies/common/directmemory/OUnsafeMemoryJava7.java</exclude>
               </excludes>
@@ -505,7 +500,7 @@
       </build>
     </profile>
     <profile>
-      <id>release</id>
+      <id>sonatype-oss-release</id>
       <build>
         <plugins>
           <plugin>
@@ -536,10 +531,10 @@
               </execution>
             </executions>
           </plugin>
-
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.7</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -565,7 +560,6 @@
               </execution>
             </executions>
           </plugin>
-
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
@@ -584,5 +578,4 @@
       </build>
     </profile>
   </profiles>
-
 </project>
