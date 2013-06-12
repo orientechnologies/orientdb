@@ -318,7 +318,13 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         atomicChangeIsProcessed = true;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
-        testCluster.restoreAtomicOperation(atomicUnit);
+
+        for (OWALRecord restoreRecord : atomicUnit) {
+          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord)
+            continue;
+
+          testCluster.restoreRecord(restoreRecord);
+        }
         atomicUnit.clear();
       } else {
         Assert.assertTrue(walRecord instanceof OAbstractPageWALRecord || walRecord instanceof OClusterStateRecord);

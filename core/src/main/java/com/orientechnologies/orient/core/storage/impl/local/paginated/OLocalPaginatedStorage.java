@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -73,7 +74,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -89,10 +89,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullC
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -101,47 +103,49 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                          ONE_KB                    = 1024;
+  private static final int                          ONE_KB                     = 1024;
   private final int                                 DELETE_MAX_RETRIES;
   private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OLocalPaginatedCluster> clusterMap                = new LinkedHashMap<String, OLocalPaginatedCluster>();
-  private OLocalPaginatedCluster[]                  clusters                  = new OLocalPaginatedCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap                 = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters                   = new OLocalPaginatedCluster[0];
 
   private String                                    storagePath;
   private final OStorageVariableParser              variableParser;
-  private int                                       defaultClusterId          = -1;
+  private int                                       defaultClusterId           = -1;
 
-  private static String[]                           ALL_FILE_EXTENSIONS       = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                         };
+  private static String[]                           ALL_FILE_EXTENSIONS        = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
+      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                          };
 
-  private OModificationLock                         modificationLock          = new OModificationLock();
+  private OModificationLock                         modificationLock           = new OModificationLock();
 
   private ODiskCache                                diskCache;
   private OWriteAheadLog                            writeAheadLog;
 
-  private final ScheduledExecutorService            fuzzyCheckpointExecutor   = Executors
-                                                                                  .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                    @Override
-                                                                                    public Thread newThread(Runnable r) {
-                                                                                      Thread thread = new Thread(r);
-                                                                                      thread.setDaemon(true);
-                                                                                      return thread;
-                                                                                    }
-                                                                                  });
-  private final ExecutorService                     checkpointExecutor        = Executors
-                                                                                  .newSingleThreadExecutor(new ThreadFactory() {
-                                                                                    @Override
-                                                                                    public Thread newThread(Runnable r) {
-                                                                                      Thread thread = new Thread(r);
-                                                                                      thread.setDaemon(true);
-                                                                                      return thread;
-                                                                                    }
-                                                                                  });
+  private final ScheduledExecutorService            fuzzyCheckpointExecutor    = Executors
+                                                                                   .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                     @Override
+                                                                                     public Thread newThread(Runnable r) {
+                                                                                       Thread thread = new Thread(r);
+                                                                                       thread.setDaemon(true);
+                                                                                       return thread;
+                                                                                     }
+                                                                                   });
+  private final ExecutorService                     checkpointExecutor         = Executors
+                                                                                   .newSingleThreadExecutor(new ThreadFactory() {
+                                                                                     @Override
+                                                                                     public Thread newThread(Runnable r) {
+                                                                                       Thread thread = new Thread(r);
+                                                                                       thread.setDaemon(true);
+                                                                                       return thread;
+                                                                                     }
+                                                                                   });
 
-  private Map<OLogSequenceNumber, List<OWALRecord>> operationUnits            = new HashMap<OLogSequenceNumber, List<OWALRecord>>();
+  private boolean                                   storageRestoreWasPerformed = false;
 
-  private volatile boolean                          wereDataRestoredAfterOpen = false;
+  private OStorageTransaction                       transaction                = null;
+
+  private volatile boolean                          wereDataRestoredAfterOpen  = false;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -253,6 +257,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
+  public boolean wereDataRestoredAfterClose() {
+    lock.acquireSharedLock();
+    try {
+      return storageRestoreWasPerformed;
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
   private void restoreIfNeeded() throws IOException {
     boolean wasSoftlyClosed = true;
     for (OCluster cluster : clusters)
@@ -262,13 +275,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!wasSoftlyClosed) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
+        storageRestoreWasPerformed = true;
         restoreFromWAL();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
       } finally {
         OLogManager.instance().info(this, "Storage data restore was completed");
       }
-
     }
 
   }
@@ -436,50 +449,33 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
     wereDataRestoredAfterOpen = true;
 
+    Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<OOperationUnitId, List<OWALRecord>>();
     while (lsn != null) {
       OWALRecord walRecord = writeAheadLog.read(lsn);
+
       if (walRecord instanceof OAtomicUnitStartRecord) {
         List<OWALRecord> operationList = new ArrayList<OWALRecord>();
-        operationUnits.put(walRecord.getLsn(), operationList);
+        operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
         operationList.add(walRecord);
       } else if (walRecord instanceof OOperationUnitRecord) {
         OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
-        OLogSequenceNumber prevLsn = operationUnitRecord.getPrevLsn();
+        OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
+        List<OWALRecord> records = operationUnits.get(unitId);
 
-        if (prevLsn == null) {
-          assert false : "Record with LSN " + walRecord.getLsn() + " has no previous record link.";
-          OLogManager.instance().error(this, "Record with LSN %s has no previous record link.", walRecord.getLsn());
+        if (records == null) {
+          OLogManager.instance().error(this, OAtomicUnitStartRecord.class.getName() + " is absent for record " + walRecord);
+          assert false;
 
-          List<OWALRecord> operationList = new ArrayList<OWALRecord>();
-          operationUnits.put(walRecord.getLsn(), operationList);
-          operationList.add(walRecord);
-        } else {
-          List<OWALRecord> operationList = operationUnits.remove(prevLsn);
-          if (operationList == null) {
-            OLogManager.instance().error(this, "Record with LSN %s has no previous record link. And will be skipped.",
-                walRecord.getLsn());
-            continue;
-          } else {
-            operationList.add(walRecord);
+          records = new ArrayList<OWALRecord>();
 
-            if (!(operationUnitRecord instanceof OAtomicUnitEndRecord))
-              operationUnits.put(walRecord.getLsn(), operationList);
-          }
+          operationUnits.put(unitId, records);
+        }
 
-          if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
-            OClusterAwareWALRecord clusterAwareRecord = (OClusterAwareWALRecord) operationList.get(0);
-            int clusterId = clusterAwareRecord.getClusterId();
+        records.add(walRecord);
 
-            OLocalPaginatedCluster paginatedCluster = getClusterById(clusterId);
-            if (paginatedCluster == null) {
-              OLogManager.instance().error(this,
-                  "Cluster with %d is absent and operation which consist of following WAL records %s will be skipped", clusterId,
-                  operationList);
-              assert false;
-            } else {
-              paginatedCluster.restoreAtomicOperation(operationList);
-            }
-          }
+        if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
+          redoOperation(records);
+          operationUnits.remove(unitId);
         }
       } else
         OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
@@ -487,37 +483,106 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       lsn = writeAheadLog.next(lsn);
     }
 
-    rollbackAllUnfinishedWALOperations();
+    rollbackAllUnfinishedWALOperations(operationUnits);
   }
 
-  private void rollbackAllUnfinishedWALOperations() throws IOException {
+  private void redoOperation(List<OWALRecord> records) throws IOException {
+    for (int i = 0; i < records.size(); i++) {
+      OWALRecord record = records.get(i);
+      if (checkFirstAtomicUnitRecord(i, record))
+        continue;
+
+      if (checkLastAtomicUnitRecord(i, record, records.size()))
+        continue;
+
+      if (record instanceof OClusterAwareWALRecord) {
+        final int clusterId = ((OClusterAwareWALRecord) record).getClusterId();
+        OLocalPaginatedCluster paginatedCluster = getClusterById(clusterId);
+        if (paginatedCluster == null) {
+          assert false;
+          OLogManager.instance().error(this, "Cluster with id %d is absent so record %s will be skipped.", clusterId, record);
+        } else
+          paginatedCluster.restoreRecord(record);
+
+      } else {
+        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+            record.getClass());
+        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
+      }
+    }
+  }
+
+  private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
+    boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
+    if (isAtomicUnitStartRecord && index != 0) {
+      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
+          OAtomicUnitStartRecord.class.getName());
+      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
+    }
+
+    if (index == 0 && !isAtomicUnitStartRecord) {
+      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
+          OAtomicUnitStartRecord.class.getName());
+      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
+    }
+
+    return isAtomicUnitStartRecord;
+  }
+
+  private boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
+    boolean isAtomicUnitEndRecord = record instanceof OAtomicUnitEndRecord;
+    if (isAtomicUnitEndRecord && index != size - 1) {
+      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
+          OAtomicUnitEndRecord.class.getName());
+      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
+    }
+
+    if (index == size - 1 && !isAtomicUnitEndRecord) {
+      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
+          OAtomicUnitEndRecord.class.getName());
+      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
+    }
+
+    return isAtomicUnitEndRecord;
+  }
+
+  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OWALRecord>> operationUnits) throws IOException {
     for (List<OWALRecord> operationUnit : operationUnits.values()) {
       if (operationUnit.isEmpty())
         continue;
 
-      OWALRecord firstWalRecord = operationUnit.get(0);
-      OClusterAwareWALRecord clusterAwareWALRecord = (OClusterAwareWALRecord) firstWalRecord;
-      int clusterId = clusterAwareWALRecord.getClusterId();
+      undoOperation(operationUnit);
+    }
+  }
 
-      OLocalPaginatedCluster paginatedCluster = getClusterById(clusterId);
-      if (paginatedCluster == null) {
-        OLogManager.instance().error(this,
-            "Cluster with %d is absent and operation which consist of following WAL records %s will be skipped", clusterId,
-            operationUnit);
-        assert false;
+  private void undoOperation(List<OWALRecord> operationUnit) throws IOException {
+    for (int i = operationUnit.size(); i >= 0; i--) {
+      OWALRecord record = operationUnit.get(i);
+      if (checkFirstAtomicUnitRecord(i, record))
+        continue;
+
+      if (checkLastAtomicUnitRecord(i, record, operationUnit.size()))
+        continue;
+
+      if (record instanceof OClusterAwareWALRecord) {
+        OClusterAwareWALRecord clusterAwareWALRecord = (OClusterAwareWALRecord) record;
+        int clusterId = clusterAwareWALRecord.getClusterId();
+        OLocalPaginatedCluster localPaginatedCluster = getClusterById(clusterId);
+
+        if (localPaginatedCluster == null) {
+          assert false;
+          OLogManager.instance().error(this, "Cluster with id %d is absent so record %s will be skipped.", clusterId, record);
+        } else
+          localPaginatedCluster.revertRecord(record);
       } else {
-        if (firstWalRecord instanceof OAtomicUnitStartRecord) {
-          OAtomicUnitStartRecord atomicUnitStartRecord = (OAtomicUnitStartRecord) firstWalRecord;
-          if (atomicUnitStartRecord.isRollbackSupported())
-            paginatedCluster.revertAtomicOperation(operationUnit);
-        }
-
+        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+            record.getClass());
+        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
       }
     }
   }
 
   public boolean wereDataRestoredAfterOpen() {
-
     return wereDataRestoredAfterOpen;
   }
 
@@ -975,7 +1040,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         try {
           lock.acquireSharedLock();
           try {
-            ppos = cluster.createRecord(content, recordVersion, recordType);
+            ppos = cluster.createRecord(content, recordVersion, recordType, transaction);
             rid.clusterPosition = ppos.clusterPosition;
 
             if (callback != null)
@@ -988,7 +1053,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         } catch (IOException ioe) {
           try {
             if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
-              cluster.deleteRecord(ppos.clusterPosition);
+              cluster.deleteRecord(ppos.clusterPosition, transaction);
           } catch (IOException e) {
             OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, e);
           }
@@ -1130,7 +1195,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               ppos.recordVersion.increment();
             }
 
-            cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+            cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType, transaction);
 
             if (callback != null)
               callback.call(rid, ppos.recordVersion);
@@ -1187,7 +1252,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
-            cluster.deleteRecord(ppos.clusterPosition);
+            cluster.deleteRecord(ppos.clusterPosition, transaction);
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
@@ -1323,12 +1388,191 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return null;
   }
 
-  public void commit(final OTransaction tx) {
-    throw new UnsupportedOperationException("commit");
+  public void commit(final OTransaction clientTx) {
+    modificationLock.requestModificationLock();
+    try {
+      lock.acquireExclusiveLock();
+      try {
+        if (writeAheadLog == null)
+          throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+
+        if (transaction != null && transaction.getClientTx().getId() != clientTx.getId())
+          rollback(clientTx);
+
+        transaction = new OStorageTransaction(clientTx, OOperationUnitId.generateId());
+
+        OLogSequenceNumber startLSN = writeAheadLog.log(new OAtomicUnitStartRecord(true, transaction.getOperationUnitId()));
+        transaction.setStartLSN(startLSN);
+
+        final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+
+        while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
+          for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
+            tmpEntries.add(txEntry);
+
+          clientTx.clearRecordEntries();
+
+          if (!tmpEntries.isEmpty()) {
+            for (ORecordOperation txEntry : tmpEntries)
+              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+              commitEntry(clientTx, txEntry);
+          }
+        }
+
+        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId()));
+
+      } catch (Exception e) {
+        // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+        rollback(clientTx);
+        throw new OStorageException("Error during transaction commit.", e);
+      } finally {
+        transaction = null;
+        lock.releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
   }
 
-  public void rollback(final OTransaction iTx) {
-    throw new UnsupportedOperationException("rollback");
+  private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
+
+    if (txEntry.type != ORecordOperation.DELETED && !txEntry.getRecord().isDirty())
+      return;
+
+    final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
+
+    if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
+        && ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
+      // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+      rid.clusterId = ((ODocument) txEntry.getRecord()).getSchemaClass().getDefaultClusterId();
+    }
+
+    final OLocalPaginatedCluster cluster = getClusterById(rid.clusterId);
+
+    if (cluster.getName().equals(OMetadata.CLUSTER_INDEX_NAME) || cluster.getName().equals(OMetadata.CLUSTER_MANUAL_INDEX_NAME))
+      // AVOID TO COMMIT INDEX STUFF
+      return;
+
+    if (txEntry.getRecord() instanceof OTxListener)
+      ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
+
+    switch (txEntry.type) {
+    case ORecordOperation.LOADED:
+      break;
+
+    case ORecordOperation.CREATED: {
+      // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
+      byte[] stream = txEntry.getRecord().toStream();
+
+      final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
+
+      if (rid.isNew()) {
+        txEntry.getRecord().onBeforeIdentityChanged(rid);
+        rid.clusterId = cluster.getId();
+      }
+
+      if (rid.isNew()) {
+        final OPhysicalPosition ppos;
+        ppos = createRecord(-1, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
+            .getResult();
+
+        rid.clusterPosition = ppos.clusterPosition;
+        txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
+
+        txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
+        clientTx.updateIdentityAfterCommit(oldRID, rid);
+
+      } else {
+        txEntry
+            .getRecord()
+            .getRecordVersion()
+            .copyFrom(
+                updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
+                    .getResult());
+      }
+      break;
+    }
+
+    case ORecordOperation.UPDATED: {
+      byte[] stream = txEntry.getRecord().toStream();
+      txEntry
+          .getRecord()
+          .getRecordVersion()
+          .copyFrom(
+              updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
+                  .getResult());
+
+      break;
+    }
+
+    case ORecordOperation.DELETED: {
+      deleteRecord(rid, txEntry.getRecord().getRecordVersion(), -1, null);
+      break;
+    }
+    }
+
+    txEntry.getRecord().unsetDirty();
+
+    if (txEntry.getRecord() instanceof OTxListener)
+      ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
+  }
+
+  public void rollback(final OTransaction clientTx) {
+    checkOpeness();
+    modificationLock.requestModificationLock();
+    try {
+      lock.acquireExclusiveLock();
+      try {
+        if (writeAheadLog == null)
+          throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+
+        if (transaction == null)
+          throw new OStorageException("There is no active transaction, rollback can not be performed.");
+
+        if (transaction.getClientTx().getId() != clientTx.getId())
+          throw new OStorageException(
+              "Passed in and active transaction are different transactions. Passed in transaction can not be rolled back.");
+
+        final List<OWALRecord> operationUnit = readOperationUnit(transaction.getStartLSN(), transaction.getOperationUnitId());
+        undoOperation(operationUnit);
+
+        transaction = null;
+      } catch (IOException e) {
+        throw new OStorageException("Error during transaction rollback.", e);
+      } finally {
+        lock.releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
+
+  private List<OWALRecord> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
+    final OLogSequenceNumber beginSequence = writeAheadLog.begin();
+
+    if (startLSN == null)
+      startLSN = beginSequence;
+
+    if (startLSN.compareTo(beginSequence) < 0)
+      startLSN = beginSequence;
+
+    List<OWALRecord> operationUnit = new ArrayList<OWALRecord>();
+
+    OLogSequenceNumber lsn = startLSN;
+    while (lsn != null) {
+      OWALRecord record = writeAheadLog.read(lsn);
+      if (!(record instanceof OOperationUnitRecord))
+        continue;
+
+      OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
+      if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
+        operationUnit.add(record);
+        if (record instanceof OAtomicUnitEndRecord)
+          break;
+      }
+    }
+
+    return operationUnit;
   }
 
   @Override
@@ -1557,11 +1801,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     modificationLock.allowModifications();
   }
 
-  public boolean isClusterSoftlyClosed(String clusterName) {
+  public boolean wasClusterSoftlyClosed(String clusterName) {
     lock.acquireSharedLock();
     try {
-      final OCluster indexCluster = clusterMap.get(clusterName);
-      return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
+      final OLocalPaginatedCluster indexCluster = clusterMap.get(clusterName);
+      return indexCluster.wasSoftlyClosed();
+    } catch (IOException ioe) {
+      throw new OStorageException("Error during index consistency check", ioe);
     } finally {
       lock.releaseSharedLock();
     }

@@ -21,8 +21,10 @@ import java.util.List;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 /**
  * @author Andrey Lomakin
@@ -30,22 +32,33 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
   private List<OPageDiff<?>> diffs = new ArrayList<OPageDiff<?>>();
+  private OLogSequenceNumber prevLsn;
 
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord, List<OPageDiff<?>> diffs) {
-    super(pageIndex, clusterId, prevUnitRecord);
+  public OUpdatePageRecord(long pageIndex, int clusterId, OOperationUnitId operationUnitId, List<OPageDiff<?>> diffs,
+      OLogSequenceNumber prevLsn) {
+    super(pageIndex, clusterId, operationUnitId);
     this.diffs = diffs;
+    this.prevLsn = prevLsn;
+
+    assert prevLsn != null;
   }
 
   public List<OPageDiff<?>> getChanges() {
     return diffs;
   }
 
+  public OLogSequenceNumber getPrevLsn() {
+    return prevLsn;
+  }
+
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
+
+    serializedSize += OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
     serializedSize += OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE * diffs.size();
 
     for (OPageDiff diff : diffs) {
@@ -58,6 +71,12 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
+
+    OLongSerializer.INSTANCE.serializeNative(prevLsn.getPosition(), content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeNative(diffs.size(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -76,6 +95,14 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
+
+    long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    prevLsn = new OLogSequenceNumber(segment, position);
 
     int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -113,6 +140,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     if (!diffs.equals(that.diffs))
       return false;
+    if (!prevLsn.equals(that.prevLsn))
+      return false;
 
     return true;
   }
@@ -121,6 +150,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + diffs.hashCode();
+    result = 31 * result + prevLsn.hashCode();
     return result;
   }
 
@@ -170,6 +200,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
   @Override
   public String toString() {
-    return "OUpdatePageRecord{" + "diffs size =" + diffs.size() + "} " + super.toString();
+    return "OUpdatePageRecord{ diffs size =" + diffs.size() + "} " + super.toString();
   }
 }

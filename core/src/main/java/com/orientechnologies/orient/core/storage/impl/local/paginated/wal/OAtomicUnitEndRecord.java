@@ -26,9 +26,9 @@ public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  public OAtomicUnitEndRecord(OLogSequenceNumber prevUnitRecord) {
-    super(prevUnitRecord);
-    assert prevUnitRecord != null;
+  public OAtomicUnitEndRecord(OOperationUnitId operationUnitId) {
+    super(operationUnitId);
+    assert operationUnitId != null;
   }
 
   @Override

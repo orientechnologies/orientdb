@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -51,6 +52,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
+  private final OOperationUnitId                              operationUnitId;
+
   protected int                                               newObjectCounter      = -2;
 
   /**
@@ -73,9 +76,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     public OPERATION operation;
   }
 
-  protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
-    super(iDatabase);
-    id = iId;
+  protected OTransactionRealAbstract(ODatabaseRecordTx database, int id) {
+    super(database);
+    this.id = id;
+    this.operationUnitId = OOperationUnitId.generateId();
   }
 
   public void close() {
