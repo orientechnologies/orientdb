@@ -917,6 +917,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       map.commitChanges(true);
+      map.unload();
       Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 
     } finally {
