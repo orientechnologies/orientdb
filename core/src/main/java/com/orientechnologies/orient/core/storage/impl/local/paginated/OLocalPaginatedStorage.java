@@ -94,6 +94,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -277,6 +278,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       try {
         storageRestoreWasPerformed = true;
         restoreFromWAL();
+        makeFullCheckpoint();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
       } finally {
@@ -551,18 +553,28 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (operationUnit.isEmpty())
         continue;
 
+      final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) operationUnit.get(0);
+      final OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(operationUnitRecord.getOperationUnitId(), true);
+
+      writeAheadLog.log(atomicUnitEndRecord);
+      operationUnit.add(atomicUnitEndRecord);
+
       undoOperation(operationUnit);
     }
   }
 
   private void undoOperation(List<OWALRecord> operationUnit) throws IOException {
-    for (int i = operationUnit.size(); i >= 0; i--) {
+    for (int i = operationUnit.size() - 1; i >= 0; i--) {
       OWALRecord record = operationUnit.get(i);
-      if (checkFirstAtomicUnitRecord(i, record))
+      if (checkFirstAtomicUnitRecord(i, record)) {
+        assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
         continue;
+      }
 
-      if (checkLastAtomicUnitRecord(i, record, operationUnit.size()))
+      if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
+        assert ((OAtomicUnitEndRecord) record).isRollback();
         continue;
+      }
 
       if (record instanceof OClusterAwareWALRecord) {
         OClusterAwareWALRecord clusterAwareWALRecord = (OClusterAwareWALRecord) record;
@@ -1419,12 +1431,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           }
         }
 
-        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId()));
+        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), false));
+
+        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
         rollback(clientTx);
-        throw new OStorageException("Error during transaction commit.", e);
+        if (e instanceof OException)
+          throw ((OException) e);
+        else
+          throw new OStorageException("Error during transaction commit.", e);
       } finally {
         transaction = null;
         lock.releaseExclusiveLock();
@@ -1533,9 +1550,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           throw new OStorageException(
               "Passed in and active transaction are different transactions. Passed in transaction can not be rolled back.");
 
+        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), true));
         final List<OWALRecord> operationUnit = readOperationUnit(transaction.getStartLSN(), transaction.getOperationUnitId());
         undoOperation(operationUnit);
 
+        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
         transaction = null;
       } catch (IOException e) {
         throw new OStorageException("Error during transaction rollback.", e);
@@ -1561,8 +1580,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     OLogSequenceNumber lsn = startLSN;
     while (lsn != null) {
       OWALRecord record = writeAheadLog.read(lsn);
-      if (!(record instanceof OOperationUnitRecord))
+      if (!(record instanceof OOperationUnitRecord)) {
+        lsn = writeAheadLog.next(lsn);
         continue;
+      }
 
       OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
       if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
@@ -1570,6 +1591,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         if (record instanceof OAtomicUnitEndRecord)
           break;
       }
+      lsn = writeAheadLog.next(lsn);
     }
 
     return operationUnit;

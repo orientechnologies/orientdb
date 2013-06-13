@@ -109,9 +109,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -217,9 +214,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapUpdateOneTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -380,9 +374,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapAddItemTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -545,9 +536,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapUpdateItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -708,9 +696,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapRemoveItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -857,9 +842,6 @@ public class LinkMapIndexTest {
   }
 
   public void testIndexMapRemoveInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 

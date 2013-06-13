@@ -446,7 +446,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private void endRecordOperation(OStorageTransaction transaction) throws IOException {
     if (transaction == null && writeAheadLog != null) {
-      writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get()));
+      writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get(), false));
     }
 
     currentUnitId.set(null);
@@ -1203,8 +1203,10 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         logClusterState(prevSize, prevRecordsSize);
 
         if (writeAheadLog != null) {
-          writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get()));
+          writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get(), false));
+
           currentUnitId.set(null);
+          startLSN.set(null);
         }
 
         for (int i = 0; i < freePageLists.length; i++)
