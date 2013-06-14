@@ -204,6 +204,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
         } else if (autoFlushUnusedTime > 0) {
           // JUST FLUSH BUFFERS TO DISK
           for (OMMapBufferEntry entry : mapEntry.getValue()) {
+            totalBlocks++;
             if (entry.isDirty() && (autoFlushUnusedTime == 0 || now - entry.getLastUsed() > autoFlushUnusedTime)) {
               flushedBlocks++;
               entry.flush();
