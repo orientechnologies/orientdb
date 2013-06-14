@@ -38,7 +38,7 @@ public class OIndexRebuildOutputListener implements OProgressListener {
   public void onBegin(final Object iTask, final long iTotal) {
     startTime = System.currentTimeMillis();
     lastDump = startTime;
-    OLogManager.instance().debug(idx, "- Building index %s...", idx.getName());
+    OLogManager.instance().debug(this, "- Building index %s...", idx.getName());
   }
 
   @Override
@@ -46,7 +46,7 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     final long now = System.currentTimeMillis();
     if (now - lastDump > 10000) {
       // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
-      OLogManager.instance().debug(idx, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
+      OLogManager.instance().debug(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
           ((iCounter - lastCounter) / 10));
       lastDump = now;
       lastCounter = iCounter;
@@ -56,7 +56,7 @@ public class OIndexRebuildOutputListener implements OProgressListener {
 
   @Override
   public void onCompletition(final Object iTask, final boolean iSucceed) {
-    OLogManager.instance().debug(idx, "--> OK, indexed %,d items in %,d ms", idx.getSize(),
+    OLogManager.instance().debug(this, "--> OK, indexed %,d items in %,d ms", idx.getSize(),
         (System.currentTimeMillis() - startTime));
   }
 }
