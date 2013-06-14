@@ -1623,6 +1623,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
       // CHECK AGAIN IF THERE ARE FREE CHANNELS
+      createConnectionPool();
       synchronized (networkPool) {
         availableConnections = !networkPool.isEmpty();
       }
