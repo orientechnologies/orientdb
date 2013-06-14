@@ -473,6 +473,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         }
 
       lazySave();
+      unload();
 
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
