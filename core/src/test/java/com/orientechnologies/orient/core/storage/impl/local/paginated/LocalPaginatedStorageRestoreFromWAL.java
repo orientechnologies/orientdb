@@ -76,8 +76,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
-    } else
-      baseDocumentTx.create();
+    }
+
+    baseDocumentTx.create();
 
     createSchema(baseDocumentTx);
   }
@@ -166,69 +167,74 @@ public class LocalPaginatedStorageRestoreFromWAL {
     public Void call() throws Exception {
 
       Random random = new Random();
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
 
-      List<ORID> testTwoList = new ArrayList<ORID>();
-      List<ORID> firstDocs = new ArrayList<ORID>();
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(baseDocumentTx.getURL());
+      db.open("admin", "admin");
+      try {
+        List<ORID> testTwoList = new ArrayList<ORID>();
+        List<ORID> firstDocs = new ArrayList<ORID>();
 
-      OClass classOne = baseDocumentTx.getMetadata().getSchema().getClass("TestOne");
-      OClass classTwo = baseDocumentTx.getMetadata().getSchema().getClass("TestTwo");
+        OClass classOne = db.getMetadata().getSchema().getClass("TestOne");
+        OClass classTwo = db.getMetadata().getSchema().getClass("TestTwo");
 
-      for (int i = 0; i < 1000; i++) {
-        ODocument docOne = new ODocument(classOne);
-        docOne.field("intProp", random.nextInt());
+        for (int i = 0; i < 1000; i++) {
+          ODocument docOne = new ODocument(classOne);
+          docOne.field("intProp", random.nextInt());
 
-        byte[] stringData = new byte[256];
-        random.nextBytes(stringData);
-        String stringProp = new String(stringData);
+          byte[] stringData = new byte[256];
+          random.nextBytes(stringData);
+          String stringProp = new String(stringData);
 
-        docOne.field("stringProp", stringProp);
+          docOne.field("stringProp", stringProp);
 
-        Set<String> stringSet = new HashSet<String>();
-        for (int n = 0; n < 5; n++) {
-          stringSet.add("str" + random.nextInt());
-        }
-        docOne.field("stringSet", stringSet);
-
-        docOne.save();
-
-        firstDocs.add(docOne.getIdentity());
-
-        if (random.nextBoolean()) {
-          ODocument docTwo = new ODocument(classTwo);
-
-          List<String> stringList = new ArrayList<String>();
-
+          Set<String> stringSet = new HashSet<String>();
           for (int n = 0; n < 5; n++) {
-            stringList.add("strnd" + random.nextInt());
+            stringSet.add("str" + random.nextInt());
           }
+          docOne.field("stringSet", stringSet);
 
-          docTwo.field("stringList", stringList);
-          docTwo.save();
-
-          testTwoList.add(docTwo.getIdentity());
-        }
-
-        if (!testTwoList.isEmpty()) {
-          int startIndex = random.nextInt(testTwoList.size());
-          int endIndex = random.nextInt(testTwoList.size() - startIndex) + startIndex;
-
-          Map<String, ORID> linkMap = new HashMap<String, ORID>();
-
-          for (int n = startIndex; n < endIndex; n++) {
-            ORID docTwoRid = testTwoList.get(n);
-            linkMap.put(docTwoRid.toString(), docTwoRid);
-          }
-
-          docOne.field("linkMap", linkMap);
           docOne.save();
-        }
 
-        boolean deleteDoc = random.nextDouble() <= 0.2;
-        if (deleteDoc) {
-          ORID rid = firstDocs.remove(random.nextInt(firstDocs.size()));
-          baseDocumentTx.delete(rid);
+          firstDocs.add(docOne.getIdentity());
+
+          if (random.nextBoolean()) {
+            ODocument docTwo = new ODocument(classTwo);
+
+            List<String> stringList = new ArrayList<String>();
+
+            for (int n = 0; n < 5; n++) {
+              stringList.add("strnd" + random.nextInt());
+            }
+
+            docTwo.field("stringList", stringList);
+            docTwo.save();
+
+            testTwoList.add(docTwo.getIdentity());
+          }
+
+          if (!testTwoList.isEmpty()) {
+            int startIndex = random.nextInt(testTwoList.size());
+            int endIndex = random.nextInt(testTwoList.size() - startIndex) + startIndex;
+
+            Map<String, ORID> linkMap = new HashMap<String, ORID>();
+
+            for (int n = startIndex; n < endIndex; n++) {
+              ORID docTwoRid = testTwoList.get(n);
+              linkMap.put(docTwoRid.toString(), docTwoRid);
+            }
+
+            docOne.field("linkMap", linkMap);
+            docOne.save();
+          }
+
+          boolean deleteDoc = random.nextDouble() <= 0.2;
+          if (deleteDoc) {
+            ORID rid = firstDocs.remove(random.nextInt(firstDocs.size()));
+            db.delete(rid);
+          }
         }
+      } finally {
+        db.close();
       }
 
       return null;
