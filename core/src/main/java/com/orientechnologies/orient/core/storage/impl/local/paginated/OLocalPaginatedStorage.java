@@ -72,7 +72,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
@@ -619,22 +618,24 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       status = STATUS.OPEN;
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
+      doAddCluster(OMetadata.CLUSTER_INTERNAL_NAME, null, false, null);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
+      doAddCluster(OMetadata.CLUSTER_INDEX_NAME, null, false, null);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
+      doAddCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, false, null);
 
       // ADD THE DEFAULT CLUSTER
-      defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
+      defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null, false, null);
 
       configuration.create();
 
-      makeFullCheckpoint();
+      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
+        makeFullCheckpoint();
+
     } catch (OStorageException e) {
       close();
       throw e;
@@ -659,13 +660,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean force) {
+    doClose(force, true);
+  }
+
+  private void doClose(boolean force, boolean flush) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
 
-      if (!checkForClose(iForce))
+      if (!checkForClose(force))
         return;
 
       status = STATUS.CLOSING;
@@ -673,15 +678,18 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       makeFullCheckpoint();
       fuzzyCheckpointExecutor.shutdown();
       final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
-      fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS);
+      if (!fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS))
+        throw new OStorageException("Can not terminate fuzzy checkpoint task");
 
       checkpointExecutor.shutdown();
-      checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
-          TimeUnit.SECONDS);
+      if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
+          TimeUnit.SECONDS))
+        throw new OStorageException("Can not terminate full checkpoint task");
 
-      for (OCluster cluster : clusters)
+      for (OLocalPaginatedCluster cluster : clusters)
         if (cluster != null)
-          cluster.close();
+          cluster.close(flush);
+
       clusters = new OLocalPaginatedCluster[0];
       clusterMap.clear();
 
@@ -690,7 +698,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       level2Cache.shutdown();
 
-      super.close(iForce);
+      super.close(force);
 
       if (writeAheadLog != null)
         writeAheadLog.close();
@@ -719,7 +727,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           ;
       }
     }
-    close(true);
+
+    doClose(true, false);
 
     try {
       Orient.instance().unregisterStorage(this);
@@ -843,16 +852,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     lock.acquireExclusiveLock();
     try {
-      // FIND THE FIRST AVAILABLE CLUSTER ID
-      int clusterPos = clusters.length;
-      for (int i = 0; i < clusters.length; ++i) {
-        if (clusters[i] == null) {
-          clusterPos = i;
-          break;
-        }
-      }
-
-      return addClusterInternal(clusterName, clusterPos, location, parameters);
+      return doAddCluster(clusterName, location, true, parameters);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
@@ -862,6 +862,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
 
     return -1;
+  }
+
+  private int doAddCluster(String clusterName, String location, boolean fullCheckPoint, Object[] parameters) throws IOException {
+    // FIND THE FIRST AVAILABLE CLUSTER ID
+    int clusterPos = clusters.length;
+    for (int i = 0; i < clusters.length; ++i) {
+      if (clusters[i] == null) {
+        clusterPos = i;
+        break;
+      }
+    }
+
+    return addClusterInternal(clusterName, clusterPos, location, fullCheckPoint, parameters);
   }
 
   public int addCluster(String clusterType, String clusterName, int iRequestedId, String location, String dataSegmentName,
@@ -876,7 +889,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         throw new OConfigurationException("Requested cluster ID is occupied!");
       }
 
-      return addClusterInternal(clusterName, iRequestedId, location, parameters);
+      return addClusterInternal(clusterName, iRequestedId, location, true, parameters);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
@@ -888,7 +901,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return -1;
   }
 
-  private int addClusterInternal(String clusterName, int clusterPos, String location, Object... parameters) throws IOException {
+  private int addClusterInternal(String clusterName, int clusterPos, String location, boolean fullCheckPoint, Object... parameters)
+      throws IOException {
 
     final OLocalPaginatedCluster cluster;
     if (clusterName != null) {
@@ -905,7 +919,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (cluster != null) {
       if (!cluster.exists()) {
         cluster.create(-1);
-        makeFullCheckpoint();
+        if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE.getValueAsBoolean() && fullCheckPoint)
+          makeFullCheckpoint();
       } else {
         cluster.open();
       }

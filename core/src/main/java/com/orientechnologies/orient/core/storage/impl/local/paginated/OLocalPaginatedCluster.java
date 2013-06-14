@@ -231,14 +231,20 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   @Override
   public void close() throws IOException {
+    close(true);
+  }
+
+  public void close(boolean flush) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
       try {
-        synch();
+        if (flush)
+          synch();
 
-        diskCache.closeFile(fileId);
+        diskCache.closeFile(fileId, flush);
         clusterStateHolder.close();
+
       } finally {
         releaseExclusiveLock();
       }
