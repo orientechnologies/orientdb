@@ -38,14 +38,17 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
   private static final long serialVersionUID = 1L;
 
   public OReadRecordDistributedTask() {
+    executionType = EXEC_TYPE.LOCAL_ONLY;
   }
 
   public OReadRecordDistributedTask(final String nodeSource, final String iDbName, final ORecordId iRid) {
     super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, OVersionFactory.instance().createUntrackedVersion());
+    executionType = EXEC_TYPE.LOCAL_ONLY;
   }
 
   public OReadRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid) {
     super(iRunId, iOperationId, iRid, OVersionFactory.instance().createUntrackedVersion());
+    executionType = EXEC_TYPE.LOCAL_ONLY;
   }
 
   @Override

@@ -33,7 +33,8 @@ public interface OReplicationConflictResolver {
 
   public ODocument getAllConflicts();
 
-  public void handleUpdateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordVersion iCurrentVersion, int iOtherVersion);
+  public void handleUpdateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordVersion iCurrentVersion,
+      ORecordVersion iOtherVersion);
 
   public void handleCreateConflict(String iRemoteNodeId, ORecordId iCurrentRID, ORecordId iOtherRID);
 

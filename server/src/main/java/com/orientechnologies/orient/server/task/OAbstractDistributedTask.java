@@ -44,6 +44,10 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     DISTRIBUTE, REMOTE_EXEC, ALIGN, LOCAL_EXEC
   }
 
+  public enum EXEC_TYPE {
+    LOCAL_ONLY, REMOTE_ONLY, BOTH
+  }
+
   protected String                          nodeSource;
   protected String                          databaseName;
   protected long                            runId;
@@ -51,6 +55,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   protected EXECUTION_MODE                  mode;
   protected STATUS                          status;
+  protected EXEC_TYPE                       executionType = EXEC_TYPE.BOTH;
   protected boolean                         inheritedDatabase;
 
   protected static OServerUserConfiguration replicatorUser;
@@ -109,6 +114,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     out.writeLong(operationSerial);
     out.writeByte(mode.ordinal());
     out.writeByte(status.ordinal());
+    out.writeByte(executionType.ordinal());
   }
 
   @Override
@@ -119,6 +125,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     operationSerial = in.readLong();
     mode = EXECUTION_MODE.values()[in.readByte()];
     status = STATUS.values()[in.readByte()];
+    executionType = EXEC_TYPE.values()[in.readByte()];
   }
 
   public String getNodeSource() {
@@ -198,5 +205,13 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
   protected void closeDatabase(final ODatabaseDocumentTx iDatabase) {
     if (!inheritedDatabase)
       iDatabase.close();
+  }
+
+  public EXEC_TYPE getExecutionType() {
+    return executionType;
+  }
+
+  public void setExecutionType(EXEC_TYPE executionMode) {
+    this.executionType = executionMode;
   }
 }
