@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
@@ -177,7 +178,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       getStorage().getConfiguration().update();
 
       if (!(getStorage() instanceof OStorageProxy)) {
-      	registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
+        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
@@ -206,14 +207,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
 
-		setCurrentDatabaseinThreadLocal();
+    setCurrentDatabaseinThreadLocal();
 
-		if (metadata != null) {
-			metadata.close();
-			metadata = null;
-		}
+    if (metadata != null) {
+      metadata.close();
+      metadata = null;
+    }
 
-		super.drop();
+    super.drop();
   }
 
   @Override
@@ -221,6 +222,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     setCurrentDatabaseinThreadLocal();
 
     if (metadata != null) {
+      if (!(getStorage() instanceof OStorageProxy)) {
+        final OIndexManager indexManager = metadata.getIndexManager();
+
+        if (indexManager != null)
+          indexManager.waitTillIndexRestore();
+      }
+
       metadata.close();
       metadata = null;
     }
@@ -933,7 +941,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void setUser(OUser user) {
     this.user = user;
   }
-  
+
   public boolean isMVCC() {
     return mvcc;
   }

@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -127,6 +128,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
     if (e.getIdentity().isNew()) {
       final ORecord<?> record = e.getRecord();
+
+      if (record == null)
+        throw new OTransactionException("Cannot insert item in mvrb-tree because the transactional item was not found.");
 
       // ADD IN TEMP LIST
       if (newEntries == null)
@@ -456,7 +460,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
           first = false;
         }
 
-        buffer.append(item.toString());
+        if (item != null)
+          buffer.append(item.toString());
       }
       buffer.append("}");
     }

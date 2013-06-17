@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -87,15 +88,17 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   @ODocumentInstance
   protected ODocument                            configuration;
   private final Listener                         watchDog;
-  private boolean                                rebuilding       = false;
+  private volatile boolean                       rebuilding       = false;
 
-  public OIndexMVRBTreeAbstract(final String iType) {
+  private Thread                                 rebuildThread    = null;
+
+  public OIndexMVRBTreeAbstract(final String type) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
 
     databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
 
-    type = iType;
+    this.type = type;
     watchDog = new Listener() {
       public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
         map.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
@@ -114,11 +117,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    *          Current Database instance
    * @param iClusterIndexName
    *          Cluster name where to place the TreeMap
+   * @param rebuild
    * @param iProgressListener
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public OIndexInternal<?> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, final OProgressListener iProgressListener,
+      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener,
       final OStreamSerializer iValueSerializer) {
     acquireExclusiveLock();
     try {
@@ -153,7 +157,9 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
       installHooks(iDatabase);
 
-      rebuild(iProgressListener);
+      if (rebuild)
+        rebuild(iProgressListener);
+
       updateConfiguration();
     } catch (Exception e) {
       if (map != null)
@@ -169,72 +175,20 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     return this;
   }
 
-  public boolean loadFromConfiguration(final ODocument iConfig) {
+  public boolean loadFromConfiguration(final ODocument config) {
     acquireExclusiveLock();
     try {
 
-      final ORID rid = (ORID) iConfig.field(CONFIG_MAP_RID, ORID.class);
-      if (rid == null)
-        throw new OIndexException("Error during deserialization of index definition: '" + CONFIG_MAP_RID + "' attribute is null");
-
-      configuration = iConfig;
-      name = configuration.field(OIndexInternal.CONFIG_NAME);
-
-      final ODocument indexDefinitionDoc = configuration.field(OIndexInternal.INDEX_DEFINITION);
-      if (indexDefinitionDoc != null) {
-        try {
-          final String indexDefClassName = configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS);
-          final Class<?> indexDefClass = Class.forName(indexDefClassName);
-          indexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
-          indexDefinition.fromStream(indexDefinitionDoc);
-
-        } catch (final ClassNotFoundException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final NoSuchMethodException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final InvocationTargetException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final InstantiationException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        } catch (final IllegalAccessException e) {
-          throw new OIndexException("Error during deserialization of index definition", e);
-        }
-      } else {
-        // @COMPATIBILITY 1.0rc6 new index model was implemented
-        final Boolean isAutomatic = configuration.field(OIndexInternal.CONFIG_AUTOMATIC);
-        if (Boolean.TRUE.equals(isAutomatic)) {
-          final int pos = name.lastIndexOf('.');
-          if (pos < 0)
-            throw new OIndexException("Can not convert from old index model to new one. "
-                + "Invalid index name. Dot (.) separator should be present.");
-          final String className = name.substring(0, pos);
-          final String propertyName = name.substring(pos + 1);
-
-          final String keyTypeStr = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
-          if (keyTypeStr == null)
-            throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
-          final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-          indexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
-
-          configuration.removeField(OIndexInternal.CONFIG_AUTOMATIC);
-          configuration.removeField(OIndexInternal.CONFIG_KEYTYPE);
-        } else if (configuration.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
-          final String keyTypeStr = configuration.field(OIndexInternal.CONFIG_KEYTYPE);
-          final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-
-          indexDefinition = new OSimpleKeyIndexDefinition(keyType);
-
-          configuration.removeField(OIndexInternal.CONFIG_KEYTYPE);
-        }
-      }
-
+      configuration = config;
       clustersToIndex.clear();
       maxUpdatesBeforeSave = lazyUpdates();
 
-      final Collection<? extends String> clusters = configuration.field(CONFIG_CLUSTERS);
-      if (clusters != null)
-        clustersToIndex.addAll(clusters);
+      IndexMetadata indexMetadata = loadMetadata(configuration);
+      name = indexMetadata.getName();
+      indexDefinition = indexMetadata.getIndexDefinition();
+      clustersToIndex.addAll(indexMetadata.getClustersToIndex());
 
+      final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
       map = new OMVRBTreeDatabaseLazySave<Object, T>(getDatabase(), rid, maxUpdatesBeforeSave);
       try {
         map.load();
@@ -256,7 +210,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         }
       }
 
-      installHooks(iConfig.getDatabase());
+      installHooks(config.getDatabase());
 
       return true;
 
@@ -265,11 +219,69 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     }
   }
 
+  @Override
+  public IndexMetadata loadMetadata(ODocument config) {
+    String indexName = config.field(OIndexInternal.CONFIG_NAME);
+
+    final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
+    OIndexDefinition loadedIndexDefinition = null;
+    if (indexDefinitionDoc != null) {
+      try {
+        final String indexDefClassName = config.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+        final Class<?> indexDefClass = Class.forName(indexDefClassName);
+        loadedIndexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
+        loadedIndexDefinition.fromStream(indexDefinitionDoc);
+
+      } catch (final ClassNotFoundException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final NoSuchMethodException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InvocationTargetException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InstantiationException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final IllegalAccessException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      }
+    } else {
+      // @COMPATIBILITY 1.0rc6 new index model was implemented
+      final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
+      if (Boolean.TRUE.equals(isAutomatic)) {
+        final int pos = indexName.lastIndexOf('.');
+        if (pos < 0)
+          throw new OIndexException("Can not convert from old index model to new one. "
+              + "Invalid index name. Dot (.) separator should be present.");
+        final String className = indexName.substring(0, pos);
+        final String propertyName = indexName.substring(pos + 1);
+
+        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        if (keyTypeStr == null)
+          throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
+        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
+
+        config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
+        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
+      } else if (config.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
+        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+
+        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
+
+        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
+      }
+    }
+
+    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
+
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type);
+  }
+
   public boolean contains(final Object iKey) {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
-
       return map.containsKey(iKey);
 
     } finally {
@@ -291,6 +303,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    * @see #getValuesBetween(Object, boolean, Object, boolean)
    */
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+    checkForRebuild();
+
     return getValuesBetween(iRangeFrom, true, iRangeTo, true);
   }
 
@@ -305,22 +319,32 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    * @return
    */
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
+    checkForRebuild();
+
     return getEntriesBetween(iRangeFrom, iRangeTo, true);
   }
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getValuesMajor(fromKey, isInclusive, -1);
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getValuesMinor(toKey, isInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getEntriesMajor(fromKey, isInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
+    checkForRebuild();
+
     return getEntriesMinor(toKey, isInclusive, -1);
   }
 
@@ -342,18 +366,26 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
    */
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive) {
+    checkForRebuild();
+
     return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
   }
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+    checkForRebuild();
+
     return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, -1);
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+    checkForRebuild();
+
     return getValues(iKeys, -1);
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
+    checkForRebuild();
+
     return getEntries(iKeys, -1);
   }
 
@@ -363,6 +395,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   public long rebuild() {
     return rebuild(new OIndexRebuildOutputListener(this));
+  }
+
+  @Override
+  public void setRebuildingFlag() {
+    rebuilding = true;
   }
 
   /**
@@ -375,6 +412,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     acquireExclusiveLock();
     try {
+      rebuildThread = Thread.currentThread();
       rebuilding = true;
 
       try {
@@ -408,12 +446,19 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
               final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 
               if (fieldValue != null) {
-                if (fieldValue instanceof Collection) {
-                  for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-                    put(fieldValueItem, doc);
-                  }
-                } else
-                  put(fieldValue, doc);
+                try {
+                  if (fieldValue instanceof Collection) {
+                    for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+                      put(fieldValueItem, doc);
+                    }
+                  } else
+                    put(fieldValue, doc);
+                } catch (OIndexException e) {
+                  OLogManager.instance().error(
+                      this,
+                      "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                          + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+                }
 
                 ++documentIndexed;
               }
@@ -446,6 +491,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
     } finally {
       rebuilding = false;
+      rebuildThread = null;
 
       if (intentInstalled)
         getDatabase().declareIntent(null);
@@ -457,6 +503,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iValue) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
     try {
       return remove(iKey);
@@ -467,6 +515,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public boolean remove(final Object key) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -484,6 +534,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public OIndex<T> clear() {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {
@@ -537,6 +589,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public Iterator<Entry<Object, T>> iterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -550,6 +603,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   @SuppressWarnings("unchecked")
   public Iterator<Entry<Object, T>> inverseIterator() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -562,6 +616,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public Iterable<Object> keys() {
+    checkForRebuild();
 
     acquireExclusiveLock();
     try {
@@ -677,6 +732,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   @SuppressWarnings("unchecked")
   public void commit(final ODocument iDocument) {
+    checkForRebuild();
+
     if (iDocument == null)
       return;
 
@@ -965,5 +1022,11 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
 
   public boolean isRebuiding() {
     return rebuilding;
+  }
+
+  protected void checkForRebuild() {
+    if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
+      throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
+    }
   }
 }

@@ -43,8 +43,9 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
 
   @Override
   public OIndex<OIdentifiable> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase,
-      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
-    create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener, OLinkSerializer.INSTANCE);
+      String iClusterIndexName, int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener) {
+    create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild, iProgressListener,
+        OLinkSerializer.INSTANCE);
     return this;
   }
 

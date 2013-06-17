@@ -50,7 +50,7 @@ public interface OTransaction {
   public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
       boolean loadTombstone);
 
-	public boolean updateReplica(ORecordInternal<?> iRecord);
+  public boolean updateReplica(ORecordInternal<?> iRecord);
 
   public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
@@ -99,13 +99,12 @@ public interface OTransaction {
 
   /**
    * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
-   * to fix them given method will be called for each entry.
+   * to fix them given method will be called for each entry. This update local transaction maps too.
    * 
    * @param oldRid
    *          Record identity before commit.
    * @param newRid
    *          Record identity after commit.
    */
-  public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid);
-
+  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 }

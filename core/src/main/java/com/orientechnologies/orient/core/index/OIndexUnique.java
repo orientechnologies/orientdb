@@ -35,6 +35,8 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
+    checkForRebuild();
+
     modificationLock.requestModificationLock();
 
     try {

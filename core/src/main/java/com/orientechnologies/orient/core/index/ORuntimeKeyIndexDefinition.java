@@ -141,4 +141,9 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
   public OBinarySerializer<T> getSerializer() {
     return serializer;
   }
+
+  @Override
+  public boolean isAutomatic() {
+    return getClassName() != null;
+  }
 }
