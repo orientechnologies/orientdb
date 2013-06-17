@@ -463,19 +463,18 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
         List<OWALRecord> records = operationUnits.get(unitId);
 
-        if (records == null) {
-          OLogManager.instance().error(this, OAtomicUnitStartRecord.class.getName() + " is absent for record " + walRecord);
-          assert false;
-
-          records = new ArrayList<OWALRecord>();
-
-          operationUnits.put(unitId, records);
-        }
+        assert records != null;
 
         records.add(walRecord);
 
         if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
-          redoOperation(records);
+          OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+
+          if (atomicUnitEndRecord.isRollback())
+            undoOperation(records);
+          else
+            redoOperation(records);
+
           operationUnits.remove(unitId);
         }
       } else
@@ -552,9 +551,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (operationUnit.isEmpty())
         continue;
 
-      final OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) operationUnit.get(0);
-      final OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(operationUnitRecord.getOperationUnitId(), true);
+      final OAtomicUnitStartRecord atomicUnitStartRecord = (OAtomicUnitStartRecord) operationUnit.get(0);
+      if (!atomicUnitStartRecord.isRollbackSupported())
+        continue;
 
+      final OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(atomicUnitStartRecord.getOperationUnitId(), true);
       writeAheadLog.log(atomicUnitEndRecord);
       operationUnit.add(atomicUnitEndRecord);
 
@@ -1067,6 +1068,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         try {
           lock.acquireSharedLock();
           try {
+            recordVersion.increment();
             ppos = cluster.createRecord(content, recordVersion, recordType, transaction);
             rid.clusterPosition = ppos.clusterPosition;
 

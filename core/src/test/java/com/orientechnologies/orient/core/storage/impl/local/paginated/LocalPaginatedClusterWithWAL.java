@@ -26,10 +26,9 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractPageWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterStateRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterAwareWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
@@ -327,7 +326,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         }
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OAbstractPageWALRecord || walRecord instanceof OClusterStateRecord);
+        Assert.assertTrue(walRecord instanceof OClusterAwareWALRecord);
       }
 
       lsn = log.next(lsn);

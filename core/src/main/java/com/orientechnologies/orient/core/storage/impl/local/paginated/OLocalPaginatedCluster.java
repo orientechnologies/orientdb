@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAddNe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterStateRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFreePageChangeRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
@@ -344,7 +345,13 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           entryPosition++;
 
           OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryPosition);
-          OLocalPage.TrackMode trackMode = writeAheadLog == null ? OLocalPage.TrackMode.NONE : OLocalPage.TrackMode.FORWARD;
+          OLocalPage.TrackMode trackMode;
+          if (writeAheadLog == null)
+            trackMode = OLocalPage.TrackMode.NONE;
+          else if (transaction != null)
+            trackMode = OLocalPage.TrackMode.BOTH;
+          else
+            trackMode = OLocalPage.TrackMode.FORWARD;
 
           final AddEntryResult addEntryResult = addEntry(recordVersion, entryContent, trackMode);
 
@@ -931,7 +938,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     long pagePointer = diskCache.load(fileId, pageIndex);
     try {
       final OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
-      List<OPageDiff<?>> pageDiffs = page.getPageChanges();
+      List<OPageDiff<?>> pageDiffs = updatePageRecord.getChanges();
 
       List<OFullPageDiff<?>> fullPageDiffs = new ArrayList<OFullPageDiff<?>>(pageDiffs.size());
       for (OPageDiff<?> pageDiff : pageDiffs) {
@@ -1103,7 +1110,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
       if (prevFreePageIndex >= 0 && prevFreePageIndex < freePageLists.length) {
         if (prevPageIndex < 0)
-          freePageLists[prevFreePageIndex] = nextPageIndex;
+          updateFreePagesList(prevFreePageIndex, nextPageIndex);
       }
 
       if (newFreePageIndex >= 0) {
@@ -1127,7 +1134,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           localPage.setPrevPage(-1);
         }
 
-        freePageLists[newFreePageIndex] = pageIndex;
+        updateFreePagesList(newFreePageIndex, pageIndex);
       }
 
       logPageChanges(localPage, pageIndex, false);
@@ -1135,6 +1142,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       diskCache.markDirty(fileId, pageIndex);
     } finally {
       diskCache.release(fileId, pageIndex);
+    }
+  }
+
+  private void updateFreePagesList(int freePageIndex, long pageIndex) throws IOException {
+    if (writeAheadLog == null)
+      freePageLists[freePageIndex] = pageIndex;
+    else {
+      final long prevPageIndex = freePageLists[freePageIndex];
+      freePageLists[freePageIndex] = pageIndex;
+      writeAheadLog.log(new OFreePageChangeRecord(currentUnitId.get(), id, freePageIndex, prevPageIndex, pageIndex));
     }
   }
 
@@ -1744,10 +1761,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       restoreClusterState((OClusterStateRecord) record);
     else if (record instanceof OAbstractPageWALRecord)
       restorePage((OAbstractPageWALRecord) record);
-    else {
+    else if (record instanceof OFreePageChangeRecord) {
+      restoreFreePageListState((OFreePageChangeRecord) record);
+    } else {
       OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", record.getClass());
       assert false : "Invalid WAL record type was passed " + record.getClass().getName();
     }
+  }
+
+  private void restoreFreePageListState(OFreePageChangeRecord record) {
+    freePageLists[record.getFreePageIndex()] = record.getPageIndex();
   }
 
   public void revertRecord(OWALRecord record) throws IOException {
@@ -1759,10 +1782,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     } else if (record instanceof OAbstractPageWALRecord)
       revertPage((OAbstractPageWALRecord) record);
-    else {
+    else if (record instanceof OFreePageChangeRecord) {
+      revertFreePageListState((OFreePageChangeRecord) record);
+    } else {
       OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.", record.getClass());
       assert false : "Invalid WAL record type was passed " + record.getClass().getName();
     }
+  }
+
+  private void revertFreePageListState(OFreePageChangeRecord record) {
+    freePageLists[record.getFreePageIndex()] = record.getPrevPageIndex();
   }
 
   private static final class AddEntryResult {
