@@ -1930,7 +1930,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
-        // serverURLs.clear();
+        serverURLs.clear();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("id"))) {
