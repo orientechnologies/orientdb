@@ -1,65 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
-		<relativePath>../</relativePath>
-	</parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
 
-	<artifactId>orientdb-tools</artifactId>
+    <artifactId>orientdb-tools</artifactId>
 
-	<name>OrientDB Tools</name>
+    <name>OrientDB Tools</name>
 
-	<properties>
-		<osgi.import>*</osgi.import>
-		<osgi.export>com.orientechnologies.orient.console.*</osgi.export>
-		<jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
-	</properties>
+    <properties>
+        <osgi.import>*</osgi.import>
+        <osgi.export>com.orientechnologies.orient.console.*</osgi.export>
+        <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-client</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
-			<type>pom</type>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${project.version}</version>
-			<type>pom</type>
-			<scope>compile</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orient-commons</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>compile</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-object</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-object</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${jar.manifest.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

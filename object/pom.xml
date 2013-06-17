@@ -1,61 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
-	</parent>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+    </parent>
 
-	<artifactId>orientdb-object</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>orientdb-object</artifactId>
+    <packaging>jar</packaging>
 
-	<name>OrientDB Object</name>
+    <name>OrientDB Object</name>
 
-	<organization>
-		<name>Orient Technologies</name>
-		<url>http://www.orientechnologies.com</url>
-	</organization>
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
+    <organization>
+        <name>Orient Technologies</name>
+        <url>http://www.orientechnologies.com</url>
+    </organization>
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <!-- Use an OSGi ready dependency https://hibernate.onjira.com/browse/JPA-42 -->
-			<groupId>org.hibernate.javax.persistence</groupId>
-			<artifactId>hibernate-jpa-2.0-api</artifactId>
-			<version>1.0.0.Final</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>org.javassist</groupId>
-			<artifactId>javassist</artifactId>
-			<version>3.16.1-GA</version>
-			<type>jar</type>
-		</dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.0-api</artifactId>
+            <version>1.0.0.Final</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.16.1-GA</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>5.14.1</version>
             <scope>test</scope>
         </dependency>
-	</dependencies>
-	<build>
-		<plugins>
-		</plugins>
-	</build>
-	<properties>
-		<import.package>*</import.package>
-		<export.package>com.orientechnologies.orient.object.*</export.package>
-	</properties>
-	<repositories>
-		<repository>
-			<id>jboss-releases-repository</id>
-			<name>JBoss Releases Repository</name>
-			<url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</repositories>
+    </dependencies>
+    <build>
+        <plugins>
+        </plugins>
+    </build>
+    <properties>
+        <import.package>*</import.package>
+        <export.package>com.orientechnologies.orient.object.*</export.package>
+    </properties>
+    <repositories>
+        <repository>
+            <id>jboss-releases-repository</id>
+            <name>JBoss Releases Repository</name>
+            <url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </repositories>
 </project>

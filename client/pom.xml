@@ -1,34 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.orientechnologies</groupId>
-    <artifactId>orientdb-parent</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
-    <relativePath>../</relativePath>
-  </parent>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
 
-  <artifactId>orientdb-client</artifactId>
+    <artifactId>orientdb-client</artifactId>
 
-  <name>OrientDB Client</name>
+    <name>OrientDB Client</name>
 
-  <properties>
-    <osgi.import>*</osgi.import>
-    <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
-    <osgi.fragment.host>com.orientechnologies.orientdb-core</osgi.fragment.host>
-  </properties>
+    <properties>
+        <osgi.import>*</osgi.import>
+        <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
+        <osgi.fragment.host>com.orientechnologies.orientdb-core</osgi.fragment.host>
+    </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-enterprise</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-  </dependencies>
-
-
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-enterprise</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 
 </project>

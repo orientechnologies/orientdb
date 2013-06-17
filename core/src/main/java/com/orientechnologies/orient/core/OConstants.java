@@ -16,29 +16,29 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-	public static final String	ORIENT_VERSION	= "1.4.1-SNAPSHOT";
-	public static final String	ORIENT_URL			= "www.orientechnologies.com";
+  public static final String ORIENT_VERSION = "1.4.1-SNAPSHOT";
+  public static final String ORIENT_URL     = "www.orientechnologies.com";
 
-	public static String getVersion() {
-		final StringBuilder buffer = new StringBuilder();
-		buffer.append(OConstants.ORIENT_VERSION);
+  public static String getVersion() {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(OConstants.ORIENT_VERSION);
 
-		final String buildNumber = System.getProperty("orientdb.build.number");
+    final String buildNumber = System.getProperty("orientdb.build.number");
 
-		if (buildNumber != null) {
-			buffer.append(" (build ");
-			buffer.append(buildNumber);
-			buffer.append(")");
-		}
+    if (buildNumber != null) {
+      buffer.append(" (build ");
+      buffer.append(buildNumber);
+      buffer.append(")");
+    }
 
-		return buffer.toString();
-	}
+    return buffer.toString();
+  }
 
-	public static String getBuildNumber() {
-		final String buildNumber = System.getProperty("orientdb.build.number");
-		if (buildNumber == null)
-			return null;
+  public static String getBuildNumber() {
+    final String buildNumber = System.getProperty("orientdb.build.number");
+    if (buildNumber == null)
+      return null;
 
-		return buildNumber;
-	}
+    return buildNumber;
+  }
 }

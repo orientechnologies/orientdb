@@ -1,163 +1,165 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
-		<relativePath>../</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.5.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
 
-	<artifactId>orientdb-graphdb</artifactId>
+    <artifactId>orientdb-graphdb</artifactId>
 
-	<name>OrientDB GraphDB</name>
+    <name>OrientDB GraphDB</name>
 
-	<properties>
-		<javac.src.version>1.6</javac.src.version>
-		<javac.target.version>1.6</javac.target.version>
-		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-		<osgi.import>com.tinkerpop.blueprints;resolution:=optional,*</osgi.import>
-		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
-		<blueprints.version>2.4.0-SNAPSHOT</blueprints.version>
-	</properties>
+    <properties>
+        <javac.src.version>1.6</javac.src.version>
+        <javac.target.version>1.6</javac.target.version>
+        <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+        <osgi.import>com.tinkerpop.blueprints;resolution:=optional,*</osgi.import>
+        <osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
+        <blueprints.version>2.4.0-SNAPSHOT</blueprints.version>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-server</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-enterprise</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-enterprise</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-tools</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orient-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
-			<type>pom</type>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
 
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>5.14.1</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.codehaus</groupId>
-			<artifactId>groovy</artifactId>
-			<version>1.8.9</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
-		</dependency>
+        <dependency>
+            <groupId>org.codehaus</groupId>
+            <artifactId>groovy</artifactId>
+            <version>1.8.9</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
+        </dependency>
 
-		<!-- TINKERPOP STACK -->
-		<dependency>
-			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-core</artifactId>
-			<version>${blueprints.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/blueprints-core-${blueprints.version}.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop.blueprints</groupId>
-			<artifactId>blueprints-orient-graph</artifactId>
-			<version>${blueprints.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/blueprints-orient-graph-${blueprints.version}.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop</groupId>
-			<artifactId>pipes</artifactId>
-			<version>${blueprints.version}</version>
-			<type>jar</type>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/pipes-${blueprints.version}.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop.gremlin</groupId>
-			<artifactId>gremlin-java</artifactId>
-			<version>${blueprints.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/gremlin-java-${blueprints.version}.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>com.tinkerpop.gremlin</groupId>
-			<artifactId>gremlin-groovy</artifactId>
-			<version>${blueprints.version}</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/gremlin-groovy-${blueprints.version}.jar</systemPath>
-		</dependency>
-		<!-- <dependency> <groupId>com.tinkerpop.blueprints</groupId> <artifactId>blueprints-core</artifactId> 
-			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.blueprints</groupId> 
-			<artifactId>blueprints-orient-graph</artifactId> <version>${blueprints.version}</version> 
-			</dependency> <dependency> <groupId>com.tinkerpop</groupId> <artifactId>pipes</artifactId> 
-			<version>${blueprints.version}</version> <type>jar</type> <scope>compile</scope> 
-			</dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> <artifactId>gremlin-java</artifactId> 
-			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> 
-			<artifactId>gremlin-groovy</artifactId> <version>${blueprints.version}</version> 
-			</dependency> -->
-		<dependency>
-			<groupId>asm</groupId>
-			<artifactId>asm</artifactId>
-			<version>3.2</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>antlr</groupId>
-			<artifactId>antlr</artifactId>
-			<version>2.7.7</version>
-			<scope>runtime</scope>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
+        <!-- TINKERPOP STACK -->
+        <dependency>
+            <groupId>com.tinkerpop.blueprints</groupId>
+            <artifactId>blueprints-core</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/blueprints-core-${blueprints.version}.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.blueprints</groupId>
+            <artifactId>blueprints-orient-graph</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/blueprints-orient-graph-${blueprints.version}.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop</groupId>
+            <artifactId>pipes</artifactId>
+            <version>${blueprints.version}</version>
+            <type>jar</type>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/pipes-${blueprints.version}.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-java</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/gremlin-java-${blueprints.version}.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-groovy</artifactId>
+            <version>${blueprints.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/gremlin-groovy-${blueprints.version}.jar</systemPath>
+        </dependency>
+        <!-- <dependency> <groupId>com.tinkerpop.blueprints</groupId> <artifactId>blueprints-core</artifactId>
+            <version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.blueprints</groupId>
+            <artifactId>blueprints-orient-graph</artifactId> <version>${blueprints.version}</version>
+            </dependency> <dependency> <groupId>com.tinkerpop</groupId> <artifactId>pipes</artifactId>
+            <version>${blueprints.version}</version> <type>jar</type> <scope>compile</scope>
+            </dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> <artifactId>gremlin-java</artifactId>
+            <version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId>
+            <artifactId>gremlin-groovy</artifactId> <version>${blueprints.version}</version>
+            </dependency> -->
+        <dependency>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>3.2</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>antlr</groupId>
+            <artifactId>antlr</artifactId>
+            <version>2.7.7</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${jar.manifest.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<argLine>-Xss2048k</argLine> <!--IBM JDK StackOverflowException fix -->
-					<systemPropertyVariables>
-						<ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
-					</systemPropertyVariables>
-					<suiteXmlFiles>
-						<suiteXmlFile>${basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
-						</suiteXmlFile>
-					</suiteXmlFiles>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xss2048k</argLine>
+                    <!--IBM JDK StackOverflowException fix -->
+                    <systemPropertyVariables>
+                        <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
+                    </systemPropertyVariables>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>
+                            ${basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
+                        </suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
