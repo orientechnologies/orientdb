@@ -80,6 +80,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private long                              runId              = -1;
   private volatile String                   status             = "starting";
   private Map<String, Boolean>              pendingAlignments  = new HashMap<String, Boolean>();
+  private TimerTask                         alignmentTask;
 
   private volatile static HazelcastInstance hazelcastInstance;
 
@@ -135,6 +136,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void shutdown() {
     if (!enabled)
       return;
+    
+    if (alignmentTask != null)
+      alignmentTask.cancel();
 
     super.shutdown();
 
@@ -488,14 +492,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     else
       alignNodes();
 
-    if (alignmentTimer > 0)
+    if (alignmentTimer > 0) {
       // SCHEDULE THE AUTO ALIGNMENT
-      Orient.getTimer().schedule(new TimerTask() {
+      alignmentTask = new TimerTask() {
         @Override
         public void run() {
           alignNodes();
         }
-      }, alignmentTimer, alignmentTimer);
+      };
+
+      Orient.getTimer().schedule(alignmentTask, alignmentTimer, alignmentTimer);
+    }
   }
 
   protected void alignNodes() {

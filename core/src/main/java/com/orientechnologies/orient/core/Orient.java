@@ -287,6 +287,8 @@ public class Orient extends OSharedResourceAbstract {
 
       active = false;
 
+      timer.cancel();
+
       if (shutdownHook != null)
         shutdownHook.cancel();
       if (profiler != null)
