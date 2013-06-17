@@ -38,6 +38,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -258,6 +259,11 @@ public class O2QCache implements ODiskCache {
 
   @Override
   public void closeFile(final long fileId) throws IOException {
+    closeFile(fileId, true);
+  }
+
+  @Override
+  public void closeFile(long fileId, boolean flush) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
       if (fileClassic == null || !fileClassic.isOpen())
@@ -276,15 +282,22 @@ public class O2QCache implements ODiskCache {
           if (lruEntry.usageCounter == 0) {
             lruEntry = remove(fileId, pageIndex);
 
-            flushData(fileId, pageIndex, lruEntry.dataPointer);
+            if (flush)
+              flushData(fileId, pageIndex, lruEntry.dataPointer);
+
             fileDirtyPages.remove(pageIndex);
 
             directMemory.free(lruEntry.dataPointer);
-          }
+          } else
+            throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
+                + "can not be freed because it is used.");
+
         } else {
           Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
           if (dataPointer != null) {
-            flushData(fileId, pageIndex, dataPointer);
+            if (flush)
+              flushData(fileId, pageIndex, dataPointer);
+
             fileDirtyPages.remove(pageIndex);
           }
         }

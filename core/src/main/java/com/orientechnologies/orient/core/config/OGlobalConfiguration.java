@@ -80,6 +80,12 @@ public enum OGlobalConfiguration {
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
 
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
   RECORD_GROW_FACTOR("storage.record.growFactor", "Multiplier which is used to predict how much record will grow after creation.",

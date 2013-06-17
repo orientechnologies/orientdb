@@ -194,9 +194,6 @@ public class GraphDatabaseTest {
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
-    if (url.startsWith("plocal:"))
-      return;
-
     OClass oc = database.getVertexType("vertexA");
     if (oc == null)
       oc = database.createVertexType("vertexA");
@@ -252,9 +249,6 @@ public class GraphDatabaseTest {
   }
 
   public void testEdgesIterationInTX() {
-    if (url.startsWith("plocal:"))
-      return;
-
     database.createVertexType("vertexAA");
     database.createVertexType("vertexBB");
     database.createEdgeType("edgeAB");
@@ -281,9 +275,6 @@ public class GraphDatabaseTest {
    * @author bill@tobecker.com
    */
   public void testTxField() {
-    if (url.startsWith("plocal:"))
-      return;
-
     if (database.getVertexType("PublicCert") == null)
       database.createVertexType("PublicCert");
 
@@ -430,7 +421,7 @@ public class GraphDatabaseTest {
     final int v1Edges = database.getOutEdges(v1).size();
     final int v2Edges = database.getInEdges(v2).size();
 
-    ODocument e = (ODocument) database.command(new OCommandSQL("insert into E SET out = ?, in = ?")).execute(v1, v2);
+    ODocument e = database.command(new OCommandSQL("insert into E SET out = ?, in = ?")).execute(v1, v2);
     database.command(new OCommandSQL("update " + v1.getIdentity() + " ADD out = " + e.getIdentity())).execute();
     database.command(new OCommandSQL("update " + v2.getIdentity() + " ADD in = " + e.getIdentity())).execute();
 

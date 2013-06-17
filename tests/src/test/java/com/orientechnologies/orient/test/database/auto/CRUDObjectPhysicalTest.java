@@ -197,9 +197,6 @@ public class CRUDObjectPhysicalTest {
 
   @Test(dependsOnMethods = "testSimpleTypes")
   public void testDateInTransaction() {
-    if (url.startsWith("plocal:"))
-      return;
-
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     JavaSimpleTestClass javaObj = new JavaSimpleTestClass();
     Date date = new Date();

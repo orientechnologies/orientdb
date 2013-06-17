@@ -113,9 +113,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     try {
       database.begin();
       final Mapper mapper = new Mapper();
@@ -207,9 +204,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapUpdateOneTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Mapper mapper = new Mapper();
     Map<String, Integer> mapOne = new HashMap<String, Integer>();
 
@@ -351,9 +345,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapAddItemTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -487,9 +478,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapUpdateItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -623,9 +611,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapRemoveItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 
@@ -744,9 +729,6 @@ public class MapIndexTest {
   }
 
   public void testIndexMapRemoveInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Mapper mapper = new Mapper();
     Map<String, Integer> map = new HashMap<String, Integer>();
 

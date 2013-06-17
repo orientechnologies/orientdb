@@ -35,158 +35,158 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest {
-	private String	url;
+  private String url;
 
-	@Parameters(value = "url")
-	public TransactionAtomicTest(String iURL) {
-		url = iURL;
-	}
+  @Parameters(value = "url")
+  public TransactionAtomicTest(String iURL) {
+    url = iURL;
+  }
 
-	@Test
-	public void testTransactionAtomic() throws IOException {
-		ODatabaseFlat db1 = new ODatabaseFlat(url);
-		db1.open("admin", "admin");
+  @Test
+  public void testTransactionAtomic() throws IOException {
+    ODatabaseFlat db1 = new ODatabaseFlat(url);
+    db1.open("admin", "admin");
 
-		ODatabaseFlat db2 = new ODatabaseFlat(url);
-		db2.open("admin", "admin");
+    ODatabaseFlat db2 = new ODatabaseFlat(url);
+    db2.open("admin", "admin");
 
-		ORecordFlat record1 = new ORecordFlat(db1);
-		record1.value("This is the first version").save();
+    ORecordFlat record1 = new ORecordFlat(db1);
+    record1.value("This is the first version").save();
 
-		// RE-READ THE RECORD
-		record1.reload();
-		ORecordFlat record2 = db2.load(record1.getIdentity());
+    // RE-READ THE RECORD
+    record1.reload();
+    ORecordFlat record2 = db2.load(record1.getIdentity());
 
-		record2.value("This is the second version").save();
-		record2.value("This is the third version").save();
+    record2.value("This is the second version").save();
+    record2.value("This is the third version").save();
 
-		record1.reload(null, true);
+    record1.reload(null, true);
 
-		Assert.assertEquals(record1.value(), "This is the third version");
+    Assert.assertEquals(record1.value(), "This is the third version");
 
-		db1.close();
-		db2.close();
-	}
+    db1.close();
+    db2.close();
+  }
 
-	@Test
-	public void testMVCC() throws IOException {
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-		db.open("admin", "admin");
+  @Test
+  public void testMVCC() throws IOException {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    db.open("admin", "admin");
 
-		ODocument doc = new ODocument("Account");
-		doc.field("version", 0);
-		doc.save();
+    ODocument doc = new ODocument("Account");
+    doc.field("version", 0);
+    doc.save();
 
-		doc.setDirty();
+    doc.setDirty();
     doc.field("testmvcc", true);
-    doc.getRecordVersion().setCounter(1);
-		try {
-			doc.save();
-			Assert.assertTrue(false);
-		} catch (OConcurrentModificationException e) {
-			Assert.assertTrue(true);
-		}
+    doc.getRecordVersion().increment();
+    try {
+      doc.save();
+      Assert.assertTrue(false);
+    } catch (OConcurrentModificationException e) {
+      Assert.assertTrue(true);
+    }
 
-		db.close();
-	}
+    db.close();
+  }
 
-	@Test(expectedExceptions = OTransactionException.class)
-	public void testTransactionPreListenerRollback() throws IOException {
-		ODatabaseFlat db = new ODatabaseFlat(url);
-		db.open("admin", "admin");
+  @Test(expectedExceptions = OTransactionException.class)
+  public void testTransactionPreListenerRollback() throws IOException {
+    ODatabaseFlat db = new ODatabaseFlat(url);
+    db.open("admin", "admin");
 
-		ORecordFlat record1 = new ORecordFlat(db);
-		record1.value("This is the first version").save();
+    ORecordFlat record1 = new ORecordFlat(db);
+    record1.value("This is the first version").save();
 
-		db.registerListener(new ODatabaseListener() {
+    db.registerListener(new ODatabaseListener() {
 
-			public void onAfterTxCommit(ODatabase iDatabase) {
-			}
+      public void onAfterTxCommit(ODatabase iDatabase) {
+      }
 
-			public void onAfterTxRollback(ODatabase iDatabase) {
-			}
+      public void onAfterTxRollback(ODatabase iDatabase) {
+      }
 
-			public void onBeforeTxBegin(ODatabase iDatabase) {
-			}
+      public void onBeforeTxBegin(ODatabase iDatabase) {
+      }
 
-			public void onBeforeTxCommit(ODatabase iDatabase) {
-				throw new RuntimeException("Rollback test");
-			}
+      public void onBeforeTxCommit(ODatabase iDatabase) {
+        throw new RuntimeException("Rollback test");
+      }
 
-			public void onBeforeTxRollback(ODatabase iDatabase) {
-			}
+      public void onBeforeTxRollback(ODatabase iDatabase) {
+      }
 
-			public void onClose(ODatabase iDatabase) {
-			}
+      public void onClose(ODatabase iDatabase) {
+      }
 
-			public void onCreate(ODatabase iDatabase) {
-			}
+      public void onCreate(ODatabase iDatabase) {
+      }
 
-			public void onDelete(ODatabase iDatabase) {
-			}
+      public void onDelete(ODatabase iDatabase) {
+      }
 
-			public void onOpen(ODatabase iDatabase) {
-			}
+      public void onOpen(ODatabase iDatabase) {
+      }
 
-			public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
-				return true;
-			}
-		});
+      public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
+        return true;
+      }
+    });
 
-		db.commit();
+    db.commit();
 
-		db.close();
-	}
+    db.close();
+  }
 
-	@Test
-	public void testTransactionWithDuplicateUniqueIndexValues() {
-		ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-		db.open("admin", "admin");
+  @Test
+  public void testTransactionWithDuplicateUniqueIndexValues() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    db.open("admin", "admin");
 
-		OClass fruitClass = db.getMetadata().getSchema().getClass("Fruit");
+    OClass fruitClass = db.getMetadata().getSchema().getClass("Fruit");
 
-		if (fruitClass == null) {
-			fruitClass = db.getMetadata().getSchema().createClass("Fruit");
+    if (fruitClass == null) {
+      fruitClass = db.getMetadata().getSchema().createClass("Fruit");
 
-			fruitClass.createProperty("name", OType.STRING);
-			fruitClass.createProperty("color", OType.STRING);
+      fruitClass.createProperty("name", OType.STRING);
+      fruitClass.createProperty("color", OType.STRING);
 
-			db.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
-		}
+      db.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
+    }
 
-		Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+    Assert.assertEquals(db.countClusterElements("Fruit"), 0);
 
-		try {
-			db.begin();
+    try {
+      db.begin();
 
-			ODocument apple = new ODocument("Fruit").field("name", "Apple").field("color", "Red");
-			ODocument orange = new ODocument("Fruit").field("name", "Orange").field("color", "Orange");
-			ODocument banana = new ODocument("Fruit").field("name", "Banana").field("color", "Yellow");
-			ODocument kumquat = new ODocument("Fruit").field("name", "Kumquat").field("color", "Orange");
+      ODocument apple = new ODocument("Fruit").field("name", "Apple").field("color", "Red");
+      ODocument orange = new ODocument("Fruit").field("name", "Orange").field("color", "Orange");
+      ODocument banana = new ODocument("Fruit").field("name", "Banana").field("color", "Yellow");
+      ODocument kumquat = new ODocument("Fruit").field("name", "Kumquat").field("color", "Orange");
 
-			apple.save();
-			Assert.assertEquals(apple.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      apple.save();
+      Assert.assertEquals(apple.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
-			orange.save();
-			Assert.assertEquals(orange.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      orange.save();
+      Assert.assertEquals(orange.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
-			banana.save();
-			Assert.assertEquals(banana.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      banana.save();
+      Assert.assertEquals(banana.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
-			kumquat.save();
-			Assert.assertEquals(kumquat.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      kumquat.save();
+      Assert.assertEquals(kumquat.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
-			db.commit();
-			Assert.assertTrue(false);
+      db.commit();
+      Assert.assertTrue(false);
 
-		} catch (OIndexException e) {
-			Assert.assertTrue(true);
-			db.rollback();
+    } catch (OIndexException e) {
+      Assert.assertTrue(true);
+      db.rollback();
 
-		}
+    }
 
-		Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+    Assert.assertEquals(db.countClusterElements("Fruit"), 0);
 
-		db.close();
-	}
+    db.close();
+  }
 }

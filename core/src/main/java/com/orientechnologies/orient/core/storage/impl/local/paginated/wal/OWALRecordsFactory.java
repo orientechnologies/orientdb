@@ -55,6 +55,8 @@ public class OWALRecordsFactory {
       content[0] = 8;
     else if (walRecord instanceof OAtomicUnitEndRecord)
       content[0] = 9;
+    else if (walRecord instanceof OFreePageChangeRecord)
+      content[0] = 10;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -97,6 +99,9 @@ public class OWALRecordsFactory {
       break;
     case 9:
       walRecord = new OAtomicUnitEndRecord();
+      break;
+    case 10:
+      walRecord = new OFreePageChangeRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

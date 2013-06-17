@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+
 /**
  * @author Andrey Lomakin
  * @since 24.05.13
@@ -23,29 +25,43 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   private OLogSequenceNumber lsn;
 
+  private boolean            rollback;
+
   public OAtomicUnitEndRecord() {
   }
 
-  public OAtomicUnitEndRecord(OLogSequenceNumber prevUnitRecord) {
-    super(prevUnitRecord);
-    assert prevUnitRecord != null;
+  public OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback) {
+    super(operationUnitId);
+    this.rollback = rollback;
+    assert operationUnitId != null;
+  }
+
+  public boolean isRollback() {
+    return rollback;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
+
+    content[offset] = rollback ? (byte) 1 : 0;
+    offset++;
+
     return offset;
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
+
+    rollback = content[offset] > 0;
+
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize();
+    return super.serializedSize() + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

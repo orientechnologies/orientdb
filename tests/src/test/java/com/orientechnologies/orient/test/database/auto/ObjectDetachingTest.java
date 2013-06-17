@@ -163,9 +163,6 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testOrientObjectIdPlusVersionAnnotationsInTx")
   public void testInsertCommit() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "insertCommit";
     Country country = new Country(initialCountryName);
 
@@ -186,9 +183,6 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testInsertCommit")
   public void testInsertRollback() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "insertRollback";
     Country country = new Country(initialCountryName);
 
@@ -205,9 +199,6 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testInsertRollback")
   public void testUpdateCommit() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "updateCommit";
     Country country = new Country(initialCountryName);
 
@@ -236,9 +227,6 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testUpdateCommit")
   public void testUpdateRollback() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "updateRollback";
     Country country = new Country(initialCountryName);
 
@@ -258,7 +246,7 @@ public class ObjectDetachingTest {
     loaded = (Country) database.save(loaded);
     database.rollback();
 
-    loaded = (Country) database.load((ORecordId) country.getId());
+    loaded = database.load((ORecordId) country.getId());
     Assert.assertNotSame(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
     Assert.assertEquals(loaded.getVersion(), initVersion);
     Assert.assertEquals(loaded.getName(), initialCountryName);
@@ -266,38 +254,32 @@ public class ObjectDetachingTest {
 
   @Test(dependsOnMethods = "testUpdateRollback")
   public void testDeleteCommit() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "deleteCommit";
-    Country Country = new Country(initialCountryName);
+    Country country = new Country(initialCountryName);
 
     long initCount = database.countClass(Country.class);
 
-    Country = (Country) database.save(Country);
+    country = database.save(country);
 
     Assert.assertEquals(database.countClass(Country.class), initCount + 1);
 
     database.begin();
-    database.delete(Country);
+    database.delete(country);
     database.commit();
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
-    Country found = (Country) database.load((ORecordId) Country.getId());
+    Country found = database.load((ORecordId) country.getId());
     Assert.assertNull(found);
   }
 
   @Test(dependsOnMethods = "testDeleteCommit")
   public void testDeleteRollback() {
-    if (url.startsWith("plocal:"))
-      return;
-
     String initialCountryName = "deleteRollback";
     Country country = new Country(initialCountryName);
 
     long initCount = database.countClass(Country.class);
 
-    country = (Country) database.save(country);
+    country = database.save(country);
 
     Assert.assertEquals(database.countClass(Country.class), initCount + 1);
 
@@ -306,7 +288,7 @@ public class ObjectDetachingTest {
     database.rollback();
 
     Assert.assertEquals(database.countClass(Country.class), initCount + 1);
-    Country found = (Country) database.load((ORecordId) country.getId());
+    Country found = database.load((ORecordId) country.getId());
     Assert.assertNotNull(found);
     Assert.assertEquals(found.getName(), country.getName());
   }

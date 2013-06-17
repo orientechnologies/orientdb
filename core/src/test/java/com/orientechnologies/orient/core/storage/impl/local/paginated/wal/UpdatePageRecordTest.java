@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.update
 @Test
 public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNotNull() {
-    OLogSequenceNumber lsn = new OLogSequenceNumber(5, 100);
     List<OPageDiff<?>> diffs = new ArrayList<OPageDiff<?>>();
 
     diffs.add(new OBinaryPageDiff(new byte[] { 7, 4, 8 }, 13));
@@ -33,7 +32,10 @@ public class UpdatePageRecordTest {
     diffs.add(new OIntFullPageDiff(19, 46, 70));
     diffs.add(new OLongFullPageDiff(37L, 213, 45L));
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, lsn, diffs);
+    OLogSequenceNumber prevLsn = new OLogSequenceNumber(12, 124);
+    OOperationUnitId unitId = OOperationUnitId.generateId();
+
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, diffs, prevLsn);
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
 
@@ -58,7 +60,10 @@ public class UpdatePageRecordTest {
     diffs.add(new OIntFullPageDiff(19, 46, 70));
     diffs.add(new OLongFullPageDiff(37L, 213, 45L));
 
-    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, null, diffs);
+    OLogSequenceNumber prevLsn = new OLogSequenceNumber(12, 124);
+    OOperationUnitId unitId = OOperationUnitId.generateId();
+
+    OUpdatePageRecord serializedUpdatePageRecord = new OUpdatePageRecord(12, 100, unitId, diffs, prevLsn);
 
     byte[] content = new byte[serializedUpdatePageRecord.serializedSize() + 1];
 

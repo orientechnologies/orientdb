@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
@@ -1065,10 +1064,6 @@ public class ObjectTreeTest {
 
   @Test
   public void iteratorShouldTerminate() {
-    if (url.startsWith("plocal"))
-      // SKIPT IT
-      return;
-
     OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
       db.getEntityManager().registerEntityClass(Profile.class);

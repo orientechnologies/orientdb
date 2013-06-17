@@ -186,7 +186,7 @@ public class OStorageLocalTxExecuter {
       }
 
       // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-      OTransactionAbstract.updateCacheFromEntries(storage, iTx, iTx.getAllRecordEntries(), true);
+      OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
     } finally {
       currentTransaction = null;
     }

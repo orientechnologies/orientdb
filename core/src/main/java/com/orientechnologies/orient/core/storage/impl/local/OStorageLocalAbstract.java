@@ -51,7 +51,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded {
 
   public abstract ODiskCache getDiskCache();
 
-  public abstract boolean isClusterSoftlyClosed(String clusterIndexName);
+  public abstract boolean wasClusterSoftlyClosed(String clusterIndexName);
 
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 }

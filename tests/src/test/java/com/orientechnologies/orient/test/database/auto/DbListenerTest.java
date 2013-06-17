@@ -109,9 +109,6 @@ public class DbListenerTest {
   public void testEmbeddedDbListeners() throws IOException {
     if (database.getURL().startsWith("remote:"))
       return;
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     if (database.exists())
       ODatabaseHelper.deleteDatabase(database);
 
