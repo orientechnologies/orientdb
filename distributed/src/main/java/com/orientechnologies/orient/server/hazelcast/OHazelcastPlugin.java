@@ -136,7 +136,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void shutdown() {
     if (!enabled)
       return;
-    
+
     if (alignmentTask != null)
       alignmentTask.cancel();
 
@@ -409,6 +409,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public ODocument getClusterConfiguration() {
+    if (!enabled)
+      return null;
+
     final ODocument cluster = new ODocument();
 
     final HazelcastInstance instance = getHazelcastInstance();
