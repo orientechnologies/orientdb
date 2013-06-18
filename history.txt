@@ -18,15 +18,22 @@
            ,::::,,,. `:   ,,   :::::    :     :   .:  DB
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                 DOCUMENT-GRAPH DBMS   
-       ``        `.                   ORIENT DATABASE                      
-                 ``           http://www.orientechnologies.com                               
-                 `                                 
+         ,,.     `,                 DOCUMENT-GRAPH DBMS
+       ``        `.                   ORIENT DATABASE
+                 ``           http://www.orientechnologies.com
+
 ***************************************************************************************************
-This document enlist the last changes to the OrientDB project.
+This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
-VERSION 1.4.1-SNAPSHOT - (June, 7th 2013)
+VERSION 1.4.1 - (June, 18th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=6&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.0 - (June, 7th 2013)
 ---------------------------------------------------------------------------------------------------
 - Graph: total rewrite of Blueprints API that now are the default Java interface, support for
          light-weight edges (no document), labeled relationships using separate classes and vertex
