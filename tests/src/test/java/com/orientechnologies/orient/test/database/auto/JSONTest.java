@@ -27,6 +27,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,6 +53,19 @@ public class JSONTest {
     doc.fromJSON("{'title': '#330: Dollar Coins Are Done'}");
   }
 
+  @Test
+  public void testNullList() throws Exception {
+    ODocument documentSource = new ODocument();
+    documentSource.fromJSON("{\"list\" : [\"string\", null]}");
+
+    ODocument documentTarget = new ODocument();
+    documentTarget.fromStream(documentSource.toStream());
+
+    OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
+    Assert.assertEquals(list.get(0), "string");
+    Assert.assertNull(list.get(1));
+  }
+  
   @Test
   public void testNullity() {
     ODocument newDoc = new ODocument();
