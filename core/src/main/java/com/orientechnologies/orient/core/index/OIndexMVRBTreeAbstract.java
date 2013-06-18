@@ -990,7 +990,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public void releaseModificationLock() {
-    modificationLock.releaseModificationLock();
+    try {
+      modificationLock.releaseModificationLock();
+    } catch (IllegalMonitorStateException e) {
+      OLogManager.instance().error(this, "Error on releasing index lock against %s", e, getName());
+      throw e;
+    }
   }
 
   @Override
