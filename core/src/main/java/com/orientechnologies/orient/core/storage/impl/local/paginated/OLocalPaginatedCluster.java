@@ -519,6 +519,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       }
 
       byte[] fullContent = readFullEntry(clusterPosition);
+      if (fullContent == null)
+        return null;
+
       int fullContentPosition = 0;
 
       byte recordType = fullContent[fullContentPosition];

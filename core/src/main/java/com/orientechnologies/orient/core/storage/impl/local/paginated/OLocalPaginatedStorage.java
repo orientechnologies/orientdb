@@ -122,24 +122,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private ODiskCache                                diskCache;
   private OWriteAheadLog                            writeAheadLog;
 
-  private final ScheduledExecutorService            fuzzyCheckpointExecutor    = Executors
-                                                                                   .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                     @Override
-                                                                                     public Thread newThread(Runnable r) {
-                                                                                       Thread thread = new Thread(r);
-                                                                                       thread.setDaemon(true);
-                                                                                       return thread;
-                                                                                     }
-                                                                                   });
-  private final ExecutorService                     checkpointExecutor         = Executors
-                                                                                   .newSingleThreadExecutor(new ThreadFactory() {
-                                                                                     @Override
-                                                                                     public Thread newThread(Runnable r) {
-                                                                                       Thread thread = new Thread(r);
-                                                                                       thread.setDaemon(true);
-                                                                                       return thread;
-                                                                                     }
-                                                                                   });
+  private ScheduledExecutorService                  fuzzyCheckpointExecutor;
+  private ExecutorService                           checkpointExecutor;
 
   private boolean                                   storageRestoreWasPerformed = false;
 
@@ -173,6 +157,24 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
+      fuzzyCheckpointExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread thread = new Thread(r);
+          thread.setDaemon(true);
+          return thread;
+        }
+      });
+
+      checkpointExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread thread = new Thread(r);
+          thread.setDaemon(true);
+          return thread;
+        }
+      });
+
       writeAheadLog = new OWriteAheadLog(this);
 
       final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
