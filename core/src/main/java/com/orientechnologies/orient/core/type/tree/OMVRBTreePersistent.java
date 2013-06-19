@@ -256,9 +256,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       root = null;
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed())
+      if (db != null && !db.isClosed()) {
         // RELOAD IT
-        load();
+        try {
+          load();
+        } catch (Exception e) {
+          // IGNORE IT
+        }
+      }
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);

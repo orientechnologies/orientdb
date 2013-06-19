@@ -535,8 +535,8 @@ public class GraphDatabaseTest {
     database.removeVertex(playerDoc);
     database.removeVertex(teamDoc);
 
-    ODatabaseHelper.deleteDatabase(database);
     database.close();
+    ODatabaseHelper.deleteDatabase(database);
   }
 
   //
