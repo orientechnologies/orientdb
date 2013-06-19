@@ -216,11 +216,9 @@
         </copy>
 
         <delete includeEmptyDirs="true">
-            <fileset dir="${graph.release}/log/" includes="**/*"/>
+            <fileset dir="${graph.release}/log" includes="**/*"/>
         </delete>
-        <delete includeEmptyDirs="true">
-            <fileset dir="${graph.release}/databases/" includes="demo"/>
-        </delete>
+        <delete dir="${graph.release}/databases/demo" />
     </target>
 
     <target name="md5" depends="init">
