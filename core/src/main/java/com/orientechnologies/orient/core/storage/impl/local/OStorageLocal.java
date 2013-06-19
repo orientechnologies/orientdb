@@ -2070,7 +2070,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     modificationLock.allowModifications();
   }
 
-  public boolean isClusterSoftlyClosed(String clusterName) {
+  public boolean wasClusterSoftlyClosed(String clusterName) {
     final OCluster indexCluster = clusterMap.get(clusterName);
     return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }

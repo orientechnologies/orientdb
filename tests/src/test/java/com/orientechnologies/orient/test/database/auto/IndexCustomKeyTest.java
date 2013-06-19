@@ -17,6 +17,13 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
@@ -28,13 +35,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = { "index" })
 public class IndexCustomKeyTest {
@@ -200,9 +200,6 @@ public class IndexCustomKeyTest {
   }
 
   public void testTransactionalUsageWorks() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     // OIndex<?> index = getManualIndex();
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -223,9 +220,6 @@ public class IndexCustomKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getIndex();
     ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -246,9 +240,6 @@ public class IndexCustomKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     OIndex<?> index = getIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,

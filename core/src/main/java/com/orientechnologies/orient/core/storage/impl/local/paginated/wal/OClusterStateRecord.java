@@ -12,17 +12,25 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
 
   private long               size;
   private long               recordsSize;
+
+  private long               prevSize;
+  private long               prevRecordsSize;
+
   private int                clusterId;
 
   public OClusterStateRecord() {
   }
 
-  public OClusterStateRecord(long size, long recordsSize, int clusterId, OLogSequenceNumber prevLsn) {
-    super(prevLsn);
+  public OClusterStateRecord(long size, long recordsSize, int clusterId, long prevSize, long prevRecordsSize,
+      OOperationUnitId operationUnitId) {
+    super(operationUnitId);
 
     this.size = size;
     this.recordsSize = recordsSize;
     this.clusterId = clusterId;
+
+    this.prevSize = prevSize;
+    this.prevRecordsSize = prevRecordsSize;
   }
 
   public long getSize() {
@@ -37,9 +45,23 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
     return clusterId;
   }
 
+  public long getPrevSize() {
+    return prevSize;
+  }
+
+  public long getPrevRecordsSize() {
+    return prevRecordsSize;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
+
+    OLongSerializer.INSTANCE.serializeNative(prevSize, content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OLongSerializer.INSTANCE.serializeNative(prevRecordsSize, content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     OLongSerializer.INSTANCE.serializeNative(size, content, offset);
     offset += OLongSerializer.LONG_SIZE;
@@ -57,6 +79,12 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
+    prevSize = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    prevRecordsSize = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
     size = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
@@ -71,7 +99,7 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    return super.serializedSize() + 4 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -102,6 +130,10 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
 
     if (clusterId != that.clusterId)
       return false;
+    if (prevRecordsSize != that.prevRecordsSize)
+      return false;
+    if (prevSize != that.prevSize)
+      return false;
     if (recordsSize != that.recordsSize)
       return false;
     if (size != that.size)
@@ -115,13 +147,9 @@ public class OClusterStateRecord extends OOperationUnitRecord implements OCluste
     int result = super.hashCode();
     result = 31 * result + (int) (size ^ (size >>> 32));
     result = 31 * result + (int) (recordsSize ^ (recordsSize >>> 32));
+    result = 31 * result + (int) (prevSize ^ (prevSize >>> 32));
+    result = 31 * result + (int) (prevRecordsSize ^ (prevRecordsSize >>> 32));
     result = 31 * result + clusterId;
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return "OClusterStateRecord{" + "lsn=" + lsn + ", size=" + size + ", recordsSize=" + recordsSize + ", clusterId=" + clusterId
-        + "} " + super.toString();
   }
 }

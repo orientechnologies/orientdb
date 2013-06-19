@@ -114,9 +114,6 @@ public class ConcurrentUpdatesTest {
 
   @Test
   public void concurrentUpdates() throws Exception {
-    if (url.startsWith("plocal:"))
-      return;
-
     ODatabaseDocumentTx database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database3 = new ODatabaseDocumentTx(url).open("admin", "admin");

@@ -57,7 +57,7 @@ public class NativeQueryTest {
 
     }.setLimit(20);
 
-    List<ODocument> result = (List<ODocument>) q.execute();
+    List<ODocument> result = q.execute();
     int firstResultSize = result.size();
 
     for (int i = 0; i < result.size(); ++i) {
@@ -70,7 +70,7 @@ public class NativeQueryTest {
       Assert.assertTrue(record.field("name").toString().startsWith("G"));
     }
 
-    result = (List<ODocument>) q.execute();
+    result = q.execute();
     Assert.assertEquals(result.size(), firstResultSize);
 
     database.close();

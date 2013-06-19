@@ -295,7 +295,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     OStorage storage = database.getStorage();
 
     if (storage instanceof OStorageLocal)
-      return !((OStorageLocal) storage).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
     else if (storage instanceof OLocalPaginatedStorage) {
       return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
     }

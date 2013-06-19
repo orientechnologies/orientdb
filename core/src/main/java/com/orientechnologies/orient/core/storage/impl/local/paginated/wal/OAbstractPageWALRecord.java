@@ -32,8 +32,8 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitRecord implem
   protected OAbstractPageWALRecord() {
   }
 
-  protected OAbstractPageWALRecord(long pageIndex, int clusterId, OLogSequenceNumber prevUnitRecord) {
-    super(prevUnitRecord);
+  protected OAbstractPageWALRecord(long pageIndex, int clusterId, OOperationUnitId operationUnitId) {
+    super(operationUnitId);
     this.pageIndex = pageIndex;
     this.clusterId = clusterId;
   }
@@ -109,6 +109,7 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitRecord implem
   @Override
   public int hashCode() {
     int result = super.hashCode();
+
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + clusterId;
     return result;
@@ -116,6 +117,7 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitRecord implem
 
   @Override
   public String toString() {
-    return "OAbstractPageWALRecord{" + "lsn=" + lsn + ", pageIndex=" + pageIndex + ", clusterId=" + clusterId + '}';
+    return "OAbstractPageWALRecord{" + "lsn=" + lsn + ", pageIndex=" + pageIndex + ", clusterId=" + clusterId + "} "
+        + super.toString();
   }
 }
