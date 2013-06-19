@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -256,9 +257,14 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       root = null;
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed())
+      if (db != null && !db.isClosed() && db.getStorage() instanceof OStorageEmbedded) {
         // RELOAD IT
-        load();
+        try {
+          load();
+        } catch (Exception e) {
+          // IGNORE IT
+        }
+      }
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
