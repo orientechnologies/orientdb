@@ -671,9 +671,9 @@ public class OServerAdmin {
           storage.endRequest(network);
         }
 
-        storage.beginResponse(network);
         retry = false;
         try {
+          storage.beginResponse(network);
           return new ODocument(network.readBytes());
         } finally {
           storage.endResponse(network);

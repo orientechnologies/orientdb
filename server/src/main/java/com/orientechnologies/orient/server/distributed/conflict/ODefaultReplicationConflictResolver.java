@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed.conflict;
 
+import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -111,15 +112,15 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleUpdateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordVersion iCurrentVersion,
-      final int iOtherVersion) {
+      final ORecordVersion iOtherVersion) {
     OLogManager.instance().warn(this, "CONFLICT against node %s UDPATE record %s (current=v%d, other=v%d)...", iRemoteNode,
-        iCurrentRID, iCurrentVersion, iOtherVersion);
+        iCurrentRID, iCurrentVersion.getCounter(), iOtherVersion.getCounter());
 
     if (!existConflictsForRecord(iCurrentRID)) {
       // WRITE THE CONFLICT AS RECORD
       final ODocument doc = createConflictDocument(ORecordOperation.UPDATED, iCurrentRID, iRemoteNode);
-      doc.field(FIELD_CURRENT_VERSION, iCurrentVersion);
-      doc.field(FIELD_OTHER_VERSION, iOtherVersion);
+      doc.field(FIELD_CURRENT_VERSION, iCurrentVersion.getCounter());
+      doc.field(FIELD_OTHER_VERSION, iOtherVersion.getCounter());
       doc.save();
     }
   }
@@ -168,8 +169,17 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
    */
   public boolean existConflictsForRecord(final ORecordId iRID) {
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    if (index == null) {
+      OLogManager.instance().warn(this, "Index against %s is not available right now, searches will be slower",
+          DISTRIBUTED_CONFLICT_CLASS);
+
+      final List<?> result = database.query(new OSQLSynchQuery<Object>("select from " + DISTRIBUTED_CONFLICT_CLASS + " where "
+          + FIELD_RECORD + " = " + iRID.toString()));
+      return !result.isEmpty();
+    }
+
     if (index.contains(iRID)) {
-      OLogManager.instance().warn(this, "Conflict already present for record %s, skip it", iRID);
+      OLogManager.instance().info(this, "Conflict already present for record %s, skip it", iRID);
       return true;
     }
     return false;
@@ -180,7 +190,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
     final ODocument doc = new ODocument(DISTRIBUTED_CONFLICT_CLASS);
     doc.field(FIELD_OPERATION, iOperation);
-    doc.field(FIELD_DATE, System.currentTimeMillis());
+    doc.field(FIELD_DATE, new Date());
     doc.field(FIELD_RECORD, iRid);
     doc.field(FIELD_NODE, iServerNode);
     return doc;

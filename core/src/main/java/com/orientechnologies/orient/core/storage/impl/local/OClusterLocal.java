@@ -223,8 +223,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
             .inc()) {
           final OPhysicalPosition pposToDelete = getPhysicalPosition(ppos);
 
-          if (pposToDelete != null && storage.checkForRecordValidity(pposToDelete))
-            storage.getDataSegmentById(pposToDelete.dataSegmentId).deleteRecord(pposToDelete.dataSegmentPos);
+          if (pposToDelete != null && storage.checkForRecordValidity(pposToDelete)) {
+            final ODataLocal data = storage.getDataSegmentById(pposToDelete.dataSegmentId);
+            if (data != null)
+              data.deleteRecord(pposToDelete.dataSegmentPos);
+          }
         }
       }
 

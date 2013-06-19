@@ -54,7 +54,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
 
   @Override
   public Integer call() throws Exception {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] align request starting from %d.%d", nodeSource, databaseName,
+    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] align request starting from %d.%d", nodeSource, databaseName,
         lastRunId, lastOperationId);
 
     int aligned;
@@ -78,18 +78,18 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
         final List<Long> positions = new ArrayList<Long>();
 
         Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId });
-        //for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
-        while(it.hasNext()) {
+        // for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
+        while (it.hasNext()) {
           final long pos = it.next();
 
           final OAbstractDistributedTask<?> operation = log.getOperation(pos);
           if (operation == null) {
-            OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] skipped operation #%d.%d", nodeSource, databaseName,
+            OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] skipped operation #%d.%d", nodeSource, databaseName,
                 lastRunId, lastOperationId);
             continue;
           }
 
-          OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
+          OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] operation %s", nodeSource, databaseName, operation);
 
           operation.setNodeSource(localNode);
           operation.setDatabaseName(databaseName);
@@ -105,7 +105,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
         if (tasks.getTasks() > 0)
           aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
 
-        OLogManager.instance().warn(this, "DISTRIBUTED ->[%s/%s] aligned %d operations", nodeSource, databaseName, aligned);
+        OLogManager.instance().info(this, "DISTRIBUTED ->[%s/%s] aligned %d operations", nodeSource, databaseName, aligned);
       } finally {
         alignmentLock.unlock();
       }

@@ -68,7 +68,8 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%s", nodeSource, databaseName, rid.toString(), version.toString());
+    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%s", nodeSource, databaseName, rid.toString(),
+        version.toString());
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
@@ -107,10 +108,14 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
-    out.writeInt(content.length);
-    out.write(content);
-    if(version == null)
-        version = OVersionFactory.instance().createUntrackedVersion();
+    if (content == null)
+      out.writeInt(0);
+    else {
+      out.writeInt(content.length);
+      out.write(content);
+    }
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
     out.write(recordType);
   }
@@ -120,10 +125,14 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
-    content = new byte[contentSize];
-    in.readFully(content);
-    if(version == null)
-        version = OVersionFactory.instance().createUntrackedVersion();
+    if (contentSize == 0)
+      content = null;
+    else {
+      content = new byte[contentSize];
+      in.readFully(content);
+    }
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
     recordType = in.readByte();
   }

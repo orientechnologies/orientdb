@@ -262,21 +262,23 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
         final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
         final OChannelBinary channel = (OChannelBinary) p.getChannel();
 
-        channel.acquireExclusiveLock();
         try {
-          channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-          channel.writeInt(Integer.MIN_VALUE);
-          channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
-          channel.writeBytes(content);
-          channel.flush();
+          channel.acquireExclusiveLock();
+          try {
+            channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+            channel.writeInt(Integer.MIN_VALUE);
+            channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
+            channel.writeBytes(content);
+            channel.flush();
 
-          pushed.add(c.getRemoteAddress());
-          OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
+            pushed.add(c.getRemoteAddress());
+            OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
 
+          } finally {
+            channel.releaseExclusiveLock();
+          }
         } catch (IOException e) {
-          OLogManager.instance().warn(this, "Cannot push cluster configuration to client %s", c.getRemoteAddress());
-        } finally {
-          channel.releaseExclusiveLock();
+          OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", c.getRemoteAddress());
         }
       }
 
@@ -306,15 +308,23 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
           if (c.database != null && c.database.getName().equals(dbName))
             synchronized (c) {
-              channel.acquireExclusiveLock();
               try {
-                channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-                channel.writeInt(Integer.MIN_VALUE);
-                channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
-                p.writeIdentifiable(iRecord);
-              } finally {
-                channel.releaseExclusiveLock();
+
+                channel.acquireExclusiveLock();
+                try {
+
+                  channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+                  channel.writeInt(Integer.MIN_VALUE);
+                  channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
+                  p.writeIdentifiable(iRecord);
+
+                } finally {
+                  channel.releaseExclusiveLock();
+                }
+              } catch (IOException e) {
+                OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());
               }
+
             }
 
         }

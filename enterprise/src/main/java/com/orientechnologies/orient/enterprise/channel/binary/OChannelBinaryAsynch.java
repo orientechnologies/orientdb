@@ -101,7 +101,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
                 iRequesterId, currentSessionId);
 
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
-            // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA 
+            // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
             close();
             throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
           }
@@ -159,9 +159,16 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
     try {
       readCondition.signalAll();
+    } catch (IllegalMonitorStateException e) {
+      // IGNORE IT
+      OLogManager.instance().debug(this, "Error on signaling waiting clients after reading response");
+    }
+
+    try {
       lockRead.unlock();
     } catch (IllegalMonitorStateException e) {
       // IGNORE IT
+      OLogManager.instance().debug(this, "Error on unlocking network channel after reading response");
     }
   }
 

@@ -48,13 +48,13 @@ public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Inte
 
     if (aligned == -1) {
       // ALIGNMENT POSTPONED
-      OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] alignment postponed", nodeSource, databaseName);
+      OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] alignment postponed", nodeSource, databaseName);
 
       dManager.postponeAlignment(nodeSource, databaseName);
 
     } else {
       // ALIGNMENT DONE
-      OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] alignment ended: %d operation(s)", nodeSource, databaseName, aligned);
+      OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] alignment ended: %d operation(s)", nodeSource, databaseName, aligned);
 
       dManager.endAlignment(nodeSource, databaseName);
     }

@@ -816,6 +816,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       boolean forceListBased, final Object... iParameters) {
     checkOpeness();
 
+    lock.acquireExclusiveLock();
     try {
       final OCluster cluster;
       if (iClusterName != null) {
@@ -846,6 +847,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
           OStorageException.class);
+    } finally {
+      lock.releaseExclusiveLock();
     }
 
     return -1;

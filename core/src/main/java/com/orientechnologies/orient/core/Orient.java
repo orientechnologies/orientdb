@@ -329,6 +329,8 @@ public class Orient extends OSharedResourceAbstract {
       if (listeners != null)
         listeners.clear();
 
+      timer.cancel();
+
       OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
 
     } finally {
