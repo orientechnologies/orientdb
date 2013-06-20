@@ -54,6 +54,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
   @BeforeClass
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";

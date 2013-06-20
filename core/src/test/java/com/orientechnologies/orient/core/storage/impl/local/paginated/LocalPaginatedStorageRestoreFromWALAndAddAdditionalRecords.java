@@ -267,9 +267,8 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
           boolean deleteDoc = random.nextDouble() <= 0.2;
           if (deleteDoc) {
             ORID rid = firstDocs.remove(random.nextInt(firstDocs.size()));
-            baseDB.delete(rid);
 
-            deleteFromTestDB(rid);
+            deleteDoc(rid);
           }
         }
       } finally {
@@ -298,7 +297,9 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
       }
     }
 
-    private void deleteFromTestDB(ORID rid) {
+    private void deleteDoc(ORID rid) {
+      baseDB.delete(rid);
+
       if (testDB != null) {
         ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
         Assert.assertNotNull(testDB.load(rid));

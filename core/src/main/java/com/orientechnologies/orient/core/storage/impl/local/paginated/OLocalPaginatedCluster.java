@@ -36,6 +36,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.CRC32;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
@@ -87,6 +88,16 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   public static final String                        DEF_EXTENSION                = ".pcl";
   private static final String                       CLUSTER_STATE_FILE_EXTENSION = ".pls";
 
+  private final static int                          FREE_LIST_SIZE               = DISK_CACHE_PAGE_SIZE.getValueAsInteger()
+                                                                                     - PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
+                                                                                         .getValueAsInteger();
+
+  private final static int                          STATE_SIZE                   = OIntegerSerializer.INT_SIZE + 2
+                                                                                     * OLongSerializer.LONG_SIZE + FREE_LIST_SIZE
+                                                                                     * OLongSerializer.LONG_SIZE + 3
+                                                                                     * OIntegerSerializer.INT_SIZE
+                                                                                     + OLongSerializer.LONG_SIZE;
+
   private static final OCompression                 COMPRESSION                  = OCompressionFactory.INSTANCE
                                                                                      .getCompression(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
                                                                                          .getValueAsString());
@@ -116,10 +127,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private OSingleFileSegment                        clusterStateHolder;
 
-  private long[]                                    freePageLists                = new long[DISK_CACHE_PAGE_SIZE
-                                                                                     .getValueAsInteger()
-                                                                                     - PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                                                                                         .getValueAsInteger()];
+  private long[]                                    freePageLists                = new long[FREE_LIST_SIZE];
 
   private final OModificationLock                   externalModificationLock     = new OModificationLock();
 
@@ -127,6 +135,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private ThreadLocal<OOperationUnitId>             currentUnitId                = new ThreadLocal<OOperationUnitId>();
   private ThreadLocal<OLogSequenceNumber>           startLSN                     = new ThreadLocal<OLogSequenceNumber>();
+
+  private boolean                                   useFirstStateHolder          = true;
 
   public OLocalPaginatedCluster() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -197,7 +207,13 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       acquireExclusiveLock();
       try {
         fileId = diskCache.openFile(name + DEF_EXTENSION);
-        clusterStateHolder.create(-1);
+
+        final int statesSize = 2 * STATE_SIZE;
+
+        clusterStateHolder.create(statesSize);
+        OFile file = clusterStateHolder.getFile();
+        file.allocateSpace(statesSize);
+        file.write(0, new byte[statesSize]);
 
         if (config.root.clusters.size() <= config.id)
           config.root.clusters.add(config);
@@ -1409,8 +1425,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       diskCache.flushFile(fileId);
 
-      storeClusterState();
-      clusterStateHolder.synch();
+      flushClusterState();
     } finally {
       releaseSharedLock();
     }
@@ -1653,51 +1668,149 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   }
 
   public void flushClusterState() throws IOException {
-    storeClusterState();
-    clusterStateHolder.synch();
-  }
 
-  private void storeClusterState() throws IOException {
-    clusterStateHolder.truncate();
-    final int stateSize = OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE + freePageLists.length
-        * OLongSerializer.LONG_SIZE;
     OFile file = clusterStateHolder.getFile();
-    file.allocateSpace(stateSize);
 
-    long fileOffset = 0;
-    file.writeLong(fileOffset, size);
-    fileOffset += OLongSerializer.LONG_SIZE;
+    final CRC32 crc32 = new CRC32();
+    byte[] clusterState = new byte[STATE_SIZE];
 
-    file.writeLong(fileOffset, recordsSize);
-    fileOffset += OLongSerializer.LONG_SIZE;
+    int offset = OIntegerSerializer.INT_SIZE;
 
-    file.writeInt(fileOffset, freePageLists.length);
-    fileOffset += OIntegerSerializer.INT_SIZE;
+    if (writeAheadLog != null) {
+      OLogSequenceNumber end = writeAheadLog.end();
+
+      offset += OIntegerSerializer.INT_SIZE;
+
+      OIntegerSerializer.INSTANCE.serializeNative(end.getSegment(), clusterState, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      OLongSerializer.INSTANCE.serializeNative(end.getPosition(), clusterState, offset);
+      offset += OLongSerializer.LONG_SIZE;
+    } else {
+      OIntegerSerializer.INSTANCE.serializeNative(1, clusterState, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      OLongSerializer.INSTANCE.serializeNative(System.currentTimeMillis(), clusterState, offset);
+      offset += OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    }
+
+    OLongSerializer.INSTANCE.serializeNative(size, clusterState, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OLongSerializer.INSTANCE.serializeNative(recordsSize, clusterState, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(freePageLists.length, clusterState, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     for (long freePageIndex : freePageLists) {
-      file.writeLong(fileOffset, freePageIndex);
-      fileOffset += OLongSerializer.LONG_SIZE;
+      OLongSerializer.INSTANCE.serializeNative(freePageIndex, clusterState, offset);
+      offset += OLongSerializer.LONG_SIZE;
     }
+
+    crc32.update(clusterState, OIntegerSerializer.INT_SIZE, STATE_SIZE - OIntegerSerializer.INT_SIZE);
+    OIntegerSerializer.INSTANCE.serializeNative((int) crc32.getValue(), clusterState, 0);
+
+    long fileOffset;
+    if (useFirstStateHolder)
+      fileOffset = 0;
+    else
+      fileOffset = STATE_SIZE;
+    useFirstStateHolder = !useFirstStateHolder;
+
+    file.write(fileOffset, clusterState);
+    clusterStateHolder.synch();
   }
 
   private void loadClusterState() throws IOException {
     OFile file = clusterStateHolder.getFile();
-    long fileOffset = 0;
+    byte[] clusterStateOne = new byte[STATE_SIZE];
+    byte[] clusterStateTwo = new byte[STATE_SIZE];
+    byte[] clusterState;
 
-    size = file.readLong(fileOffset);
-    fileOffset += OLongSerializer.LONG_SIZE;
+    file.read(0, clusterStateOne, STATE_SIZE);
+    file.read(STATE_SIZE, clusterStateTwo, STATE_SIZE);
 
-    recordsSize = file.readLong(fileOffset);
-    fileOffset += OLongSerializer.LONG_SIZE;
+    CRC32 crc32 = new CRC32();
+    crc32.update(clusterStateOne, OIntegerSerializer.INT_SIZE, STATE_SIZE - OIntegerSerializer.INT_SIZE);
 
-    int freePageIndexesSize = file.readInt(fileOffset);
-    fileOffset += OIntegerSerializer.INT_SIZE;
+    int crcOne = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateOne, 0);
+    Comparable tsOne;
 
-    freePageLists = new long[freePageIndexesSize];
+    if (crcOne != (int) crc32.getValue()) {
+      tsOne = null;
+    } else {
+      int type = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateOne, OIntegerSerializer.INT_SIZE);
 
-    for (int i = 0; i < freePageIndexesSize; i++) {
-      freePageLists[i] = file.readLong(fileOffset);
-      fileOffset += OLongSerializer.LONG_SIZE;
+      if (type == 1) {
+        tsOne = OLongSerializer.INSTANCE.deserializeNative(clusterStateOne, 2 * OIntegerSerializer.INT_SIZE);
+      } else if (type == 0) {
+        int segment = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateOne, 2 * OIntegerSerializer.INT_SIZE);
+        long position = OLongSerializer.INSTANCE.deserializeNative(clusterStateOne, 3 * OIntegerSerializer.INT_SIZE);
+
+        tsOne = new OLogSequenceNumber(segment, position);
+      } else
+        throw new OStorageException("Invalid type of cluster state timestamp");
+    }
+
+    int crcTwo = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateTwo, 0);
+
+    Comparable tsTwo;
+    crc32.reset();
+    crc32.update(clusterStateTwo, OIntegerSerializer.INT_SIZE, STATE_SIZE - OIntegerSerializer.INT_SIZE);
+    if (crcTwo != (int) crc32.getValue()) {
+      tsTwo = null;
+    } else {
+      int type = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateTwo, OIntegerSerializer.INT_SIZE);
+
+      if (type == 1) {
+        tsTwo = OLongSerializer.INSTANCE.deserializeNative(clusterStateTwo, 2 * OIntegerSerializer.INT_SIZE);
+      } else if (type == 0) {
+        int segment = OIntegerSerializer.INSTANCE.deserializeNative(clusterStateTwo, 2 * OIntegerSerializer.INT_SIZE);
+        long position = OLongSerializer.INSTANCE.deserializeNative(clusterStateTwo, 3 * OIntegerSerializer.INT_SIZE);
+
+        tsTwo = new OLogSequenceNumber(segment, position);
+      } else
+        throw new OStorageException("Invalid type of cluster state timestamp");
+    }
+
+    if (tsOne == null && tsTwo == null) {
+      OLogManager.instance().error(this, "Cluster state can not be loaded from file.");
+      return;
+    }
+
+    if (tsOne == null) {
+      clusterState = clusterStateTwo;
+      useFirstStateHolder = true;
+    } else if (tsTwo == null) {
+      clusterState = clusterStateOne;
+      useFirstStateHolder = false;
+    } else {
+      int cmp = tsOne.compareTo(tsTwo);
+      if (cmp >= 0) {
+        clusterState = clusterStateOne;
+        useFirstStateHolder = false;
+      } else {
+        clusterState = clusterStateTwo;
+        useFirstStateHolder = true;
+      }
+    }
+
+    int offset = 3 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+    size = OLongSerializer.INSTANCE.deserializeNative(clusterState, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    recordsSize = OLongSerializer.INSTANCE.deserializeNative(clusterState, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    int freeListSize = OIntegerSerializer.INSTANCE.deserializeNative(clusterState, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    freePageLists = new long[freeListSize];
+
+    for (int i = 0; i < freeListSize; i++) {
+      freePageLists[i] = OLongSerializer.INSTANCE.deserializeNative(clusterState, offset);
+      offset += OLongSerializer.LONG_SIZE;
     }
   }
 

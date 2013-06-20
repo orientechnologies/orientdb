@@ -187,6 +187,24 @@ public class OWriteAheadLog {
     }
   }
 
+  public OLogSequenceNumber end() throws IOException {
+    synchronized (syncObject) {
+      checkForClose();
+
+      int lastIndex = logSegments.size() - 1;
+      LogSegment last = logSegments.get(lastIndex);
+      while (last.filledUpTo == 0) {
+        lastIndex--;
+        if (lastIndex >= 0)
+          last = logSegments.get(lastIndex);
+        else
+          return null;
+      }
+
+      return last.end();
+    }
+  }
+
   public void flush() {
     synchronized (syncObject) {
       checkForClose();
@@ -344,8 +362,6 @@ public class OWriteAheadLog {
         logSegments.remove(0);
 
         fixMasterRecords();
-
-        paginatedStorage.scheduleFullCheckpoint();
       }
 
       if (last.filledUpTo() >= maxSegmentSize) {
@@ -558,6 +574,8 @@ public class OWriteAheadLog {
                                                                    }
                                                                  });
 
+    private OLogSequenceNumber                    last           = null;
+
     private LogSegment(File file, int maxPagesCacheSize) throws IOException {
       this.file = file;
       this.maxPagesCacheSize = maxPagesCacheSize;
@@ -579,7 +597,8 @@ public class OWriteAheadLog {
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
-          if (!commitExecutor.awaitTermination(10000, TimeUnit.MILLISECONDS))
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
             throw new OStorageException("WAL flush task for " + getPath() + " segment can not be stopped.");
 
         } catch (InterruptedException e) {
@@ -596,8 +615,38 @@ public class OWriteAheadLog {
       boolean error = selfCheck();
 
       initPageCache();
+      initLastPage();
 
       return error;
+    }
+
+    private void initLastPage() throws IOException {
+      synchronized (rndFile) {
+        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+        long currentPage = pagesCount - 1;
+        if (currentPage < 0)
+          return;
+
+        do {
+          rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+          byte[] content = new byte[OWALPage.PAGE_SIZE];
+          rndFile.readFully(content);
+
+          long pointer = directMemory.allocate(content);
+          try {
+            final OWALPage page = new OWALPage(pointer, false);
+            int lastPosition = findLastRecord(page);
+            if (lastPosition > -1) {
+              last = new OLogSequenceNumber(order, currentPage * OWALPage.PAGE_SIZE + lastPosition);
+              return;
+            }
+
+            currentPage--;
+          } finally {
+            directMemory.free(pointer);
+          }
+        } while (currentPage >= 0);
+      }
     }
 
     private void initPageCache() throws IOException {
@@ -656,6 +705,10 @@ public class OWriteAheadLog {
         return new OLogSequenceNumber(order, OWALPage.RECORDS_OFFSET);
 
       return null;
+    }
+
+    public OLogSequenceNumber end() {
+      return last;
     }
 
     private int findLastRecord(OWALPage page) {
@@ -751,7 +804,8 @@ public class OWriteAheadLog {
         flush();
       }
 
-      return lsn;
+      last = lsn;
+      return last;
     }
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {

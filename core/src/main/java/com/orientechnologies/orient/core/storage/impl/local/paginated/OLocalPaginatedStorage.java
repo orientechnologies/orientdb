@@ -103,21 +103,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                          ONE_KB                     = 1024;
+  private static final int                          ONE_KB                    = 1024;
   private final int                                 DELETE_MAX_RETRIES;
   private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OLocalPaginatedCluster> clusterMap                 = new LinkedHashMap<String, OLocalPaginatedCluster>();
-  private OLocalPaginatedCluster[]                  clusters                   = new OLocalPaginatedCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap                = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters                  = new OLocalPaginatedCluster[0];
 
   private String                                    storagePath;
   private final OStorageVariableParser              variableParser;
-  private int                                       defaultClusterId           = -1;
+  private int                                       defaultClusterId          = -1;
 
-  private static String[]                           ALL_FILE_EXTENSIONS        = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                          };
+  private static String[]                           ALL_FILE_EXTENSIONS       = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
+      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                         };
 
-  private OModificationLock                         modificationLock           = new OModificationLock();
+  private OModificationLock                         modificationLock          = new OModificationLock();
 
   private ODiskCache                                diskCache;
   private OWriteAheadLog                            writeAheadLog;
@@ -125,11 +125,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private ScheduledExecutorService                  fuzzyCheckpointExecutor;
   private ExecutorService                           checkpointExecutor;
 
-  private boolean                                   storageRestoreWasPerformed = false;
+  private OStorageTransaction                       transaction               = null;
 
-  private OStorageTransaction                       transaction                = null;
-
-  private volatile boolean                          wereDataRestoredAfterOpen  = false;
+  private volatile boolean                          wereDataRestoredAfterOpen = false;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -259,15 +257,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public boolean wereDataRestoredAfterClose() {
-    lock.acquireSharedLock();
-    try {
-      return storageRestoreWasPerformed;
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
   private void restoreIfNeeded() throws IOException {
     boolean wasSoftlyClosed = true;
     for (OCluster cluster : clusters)
@@ -277,7 +266,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!wasSoftlyClosed) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
-        storageRestoreWasPerformed = true;
         restoreFromWAL();
         makeFullCheckpoint();
       } catch (Exception e) {
@@ -679,15 +667,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       status = STATUS.CLOSING;
 
       makeFullCheckpoint();
-      fuzzyCheckpointExecutor.shutdown();
-      final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
-      if (!fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS))
-        throw new OStorageException("Can not terminate fuzzy checkpoint task");
+      if (writeAheadLog != null) {
+        fuzzyCheckpointExecutor.shutdown();
+        if (!fuzzyCheckpointExecutor.awaitTermination(
+            OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
+          throw new OStorageException("Can not terminate fuzzy checkpoint task");
 
-      checkpointExecutor.shutdown();
-      if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
-          TimeUnit.SECONDS))
-        throw new OStorageException("Can not terminate full checkpoint task");
+        checkpointExecutor.shutdown();
+        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
+            TimeUnit.SECONDS))
+          throw new OStorageException("Can not terminate full checkpoint task");
+      }
 
       for (OLocalPaginatedCluster cluster : clusters)
         if (cluster != null)
@@ -1861,6 +1851,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
+        writeAheadLog.flush();
         writeAheadLog.logFuzzyCheckPointStart();
         diskCache.forceSyncStoredChanges();
         diskCache.logDirtyPagesTable();
@@ -1885,6 +1876,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     lock.acquireExclusiveLock();
     try {
+      writeAheadLog.flush();
       writeAheadLog.logFullCheckpointStart();
 
       for (OLocalPaginatedCluster cluster : clusters)
