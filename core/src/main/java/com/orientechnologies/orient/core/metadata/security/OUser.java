@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -124,9 +125,13 @@ public class OUser extends ODocumentWrapper {
    * @return The role that has granted the permission if any, otherwise null
    */
   public ORole checkIfAllowed(final String iResource, final int iOperation) {
-    for (ORole r : roles)
-      if (r.allow(iResource, iOperation))
+    for (ORole r : roles) {
+      if (r == null)
+        OLogManager.instance().warn(this,
+            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+      else if (r.allow(iResource, iOperation))
         return r;
+    }
 
     return null;
   }
