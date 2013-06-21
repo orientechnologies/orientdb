@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1481,18 +1482,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
    * 
-   * @param iMessage
-   * @param iException
+   * @param message
+   * @param exception
    */
-  protected void handleException(final String iMessage, final Exception iException) {
-    if (iException instanceof OTimeoutException)
+  protected void handleException(final String message, final Exception exception) {
+    if (exception instanceof OTimeoutException)
       // TIMEOUT, AVOID LOOP, RE-THROW IT
-      throw (OTimeoutException) iException;
-    else if (iException instanceof OException)
+      throw (OTimeoutException) exception;
+    else if (exception instanceof SocketException)
+      throw new OStorageException("Can not  connect to remote database.", exception);
+    else if (exception instanceof OException)
       // RE-THROW IT
-      throw (OException) iException;
-    else if (!(iException instanceof IOException))
-      throw new OStorageException(iMessage, iException);
+      throw (OException) exception;
+    else if (!(exception instanceof IOException))
+      throw new OStorageException(message, exception);
 
     if (status != STATUS.OPEN)
       // STORAGE CLOSED: DON'T HANDLE RECONNECTION
@@ -1544,7 +1547,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-    throw new OStorageException(iMessage, iException);
+    throw new OStorageException(message, exception);
   }
 
   protected void openRemoteDatabase() throws IOException {
@@ -1768,11 +1771,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // FIND THE FIRST FREE CHANNEL AVAILABLE
     synchronized (networkPool) {
-      final int beginCursor = networkPoolCursor;
+      if (networkPoolCursor >= networkPool.size())
+        networkPoolCursor = networkPool.size() - 1;
 
+      final int beginCursor = networkPoolCursor;
       while (network == null) {
-        if (networkPool.size() == 0)
+        if (networkPool.size() == 0) {
           openRemoteDatabase();
+          networkPoolCursor = 0;
+        }
 
         if (networkPool.size() == 0)
           throw new ONetworkProtocolException("Connection pool closed");

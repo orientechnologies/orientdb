@@ -34,6 +34,13 @@
             <artifactId>mail</artifactId>
             <version>1.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -46,6 +53,17 @@
                             <mainClass>${jar.manifest.mainclass}</mainClass>
                         </manifest>
                     </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <argLine>-Xmx2048m</argLine>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
