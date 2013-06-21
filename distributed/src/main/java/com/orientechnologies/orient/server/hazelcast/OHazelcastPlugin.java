@@ -190,7 +190,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final Member clusterMember = member;
 
-    final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+    DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
 
     ExecutionCallback<Object> callback = null;
     if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
@@ -231,6 +231,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (InterruptedException ex) {
             Thread.interrupted();
           }
+          
+          task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+          
         } else {
           OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode", e,
               EXECUTION_MODE.SYNCHRONOUS);
