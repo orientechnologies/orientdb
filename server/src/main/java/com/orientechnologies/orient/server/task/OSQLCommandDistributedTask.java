@@ -59,7 +59,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
       // NODE NOT ONLINE, REFUSE THE OPEPRATION
-      throw new OServerOfflineException(dManager.getLocalNodeId(),
+      throw new OServerOfflineException(dManager.getLocalNodeId(), dManager.getStatus(),
           "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
 
     final ODatabaseDocumentTx db = openDatabase();

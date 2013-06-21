@@ -23,8 +23,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.distributed.OServerOfflineException;
+import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -60,14 +64,15 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
   public T call() {
     if (OLogManager.instance().isDebugEnabled()) {
-      if(rid != null && version != null)
-        OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(), version.toString());
+      if (rid != null && version != null)
+        OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(),
+            version.toString());
     }
 
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
       // NODE NOT ONLINE, REFUSE THE OPEPRATION
-      throw new OServerOfflineException(dManager.getLocalNodeId(),
+      throw new OServerOfflineException(dManager.getLocalNodeId(), dManager.getStatus(),
           "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
 
     final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer();
