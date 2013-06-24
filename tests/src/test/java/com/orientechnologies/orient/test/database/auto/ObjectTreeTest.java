@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.business.IdentityChild;
 import com.orientechnologies.orient.test.domain.customserialization.Sec;
 import com.orientechnologies.orient.test.domain.customserialization.SecurityRole;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -405,6 +407,42 @@ public class ObjectTreeTest {
 
     Assert.assertEquals(proxy.getAnimals(), proxy.getAnimals());
     database.delete(proxy);
+  }
+
+  // @Test(dependsOnMethods = "complicatedProxySetsSelfEquals")
+  public void testSetEntityDuplication() {
+    JavaComplexTestClass test = database.newInstance(JavaComplexTestClass.class);
+    for (int i = 0; i < 100; i++) {
+      IdentityChild child = database.newInstance(IdentityChild.class);
+      child.setName(String.valueOf(i));
+      test.getDuplicationTestSet().add(child);
+    }
+    Assert.assertNotNull(test.getDuplicationTestSet());
+    Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
+    database.save(test);
+    // Assert.assertEquals(test.getSet().size(), 100);
+    ORID rid = database.getIdentity(test);
+    close();
+    open();
+    test = database.load(rid);
+    Assert.assertNotNull(test.getDuplicationTestSet());
+    Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
+    for (int i = 0; i < 100; i++) {
+      IdentityChild child = new IdentityChild();
+      child.setName(String.valueOf(i));
+      test.getDuplicationTestSet().add(child);
+    }
+    Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
+    database.save(test);
+    rid = database.getIdentity(test);
+    close();
+    open();
+    test = database.load(rid);
+    Assert.assertNotNull(test.getDuplicationTestSet());
+    Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
+    List<IdentityChild> childs = database.query(new OSQLSynchQuery<IdentityChild>("select from IdentityChild"));
+    Assert.assertEquals(childs.size(), 1);
+    database.delete(test);
   }
 
   @Test(dependsOnMethods = "complicatedProxySetsSelfEquals")
