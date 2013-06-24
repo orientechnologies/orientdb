@@ -8,10 +8,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.Assert;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,18 +34,20 @@ import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
- * @since 20.06.13
+ * @since 6/24/13
  */
 @Test
-public class LocalPaginatedStorageCreateCrashRestore {
-  private ODatabaseDocumentTx baseDocumentTx;
-  private ODatabaseDocumentTx testDocumentTx;
+public class LocalPaginatedStorageUpdateCrashRestore {
+  private ODatabaseDocumentTx           baseDocumentTx;
+  private ODatabaseDocumentTx           testDocumentTx;
 
-  private File                buildDir;
-  private final AtomicLong    idGen           = new AtomicLong();
+  private File                          buildDir;
+  private int                           idGen           = 0;
 
-  private ExecutorService     executorService = Executors.newCachedThreadPool();
-  private Process             process;
+  private OLockManager<Integer, Thread> idLockManager   = new OLockManager<Integer, Thread>(true, 1000);
+
+  private ExecutorService               executorService = Executors.newCachedThreadPool();
+  private Process                       process;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -55,7 +57,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
     OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/localPaginatedStorageCreateCrashRestore";
+    buildDirectory += "/localPaginatedStorageUpdateCrashRestore";
 
     buildDir = new File(buildDirectory);
     if (buildDir.exists())
@@ -75,6 +77,22 @@ public class LocalPaginatedStorageCreateCrashRestore {
     Thread.sleep(5000);
   }
 
+  public static final class RemoteDBRunner {
+    public static void main(String[] args) throws Exception {
+      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+      OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
+      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
+      OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+
+      OServer server = OServerMain.create();
+      server.startup(RemoteDBRunner.class
+          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-update-config.xml"));
+      server.activate();
+      while (true)
+        ;
+    }
+  }
+
   @AfterClass
   public void afterClass() {
     testDocumentTx.drop();
@@ -85,7 +103,8 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   @BeforeMethod
   public void beforeMethod() {
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageCrashRestore");
+    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
+        + "/baseLocalPaginatedStorageUpdateCrashRestore");
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
@@ -93,17 +112,24 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
     baseDocumentTx.create();
 
-    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageCrashRestore");
+    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageUpdateCrashRestore");
     testDocumentTx.open("admin", "admin");
   }
 
-  public void testDocumentCreation() throws Exception {
+  public void testDocumentUpdate() throws Exception {
     createSchema(baseDocumentTx);
     createSchema(testDocumentTx);
+    System.out.println("Schema was created.");
+
+    System.out.println("Document creation was started.");
+    createDocuments();
+    System.out.println("Document creation was finished.");
+
+    System.out.println("Start documents update.");
 
     List<Future> futures = new ArrayList<Future>();
     for (int i = 0; i < 5; i++) {
-      futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
+      futures.add(executorService.submit(new DataUpdateTask(baseDocumentTx, testDocumentTx)));
     }
 
     Thread.sleep(150000);
@@ -119,11 +145,16 @@ public class LocalPaginatedStorageCreateCrashRestore {
       }
     }
 
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageCrashRestore");
+    System.out.println("Documents update was stopped.");
+
+    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
+        + "/testLocalPaginatedStorageUpdateCrashRestore");
     testDocumentTx.open("admin", "admin");
     testDocumentTx.close();
 
     testDocumentTx.open("admin", "admin");
+
+    System.out.println("Start documents comparison.");
     compareDocuments(lastTs);
   }
 
@@ -141,6 +172,34 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
       schema.save();
     }
+  }
+
+  private void createDocuments() {
+    Random random = new Random();
+
+    for (int i = 0; i < 1000000; i++) {
+      final ODocument document = new ODocument("TestClass");
+      document.field("id", idGen++);
+      document.field("timestamp", System.currentTimeMillis());
+      document.field("stringValue", "sfe" + random.nextLong());
+
+      saveDoc(document, baseDocumentTx, testDocumentTx);
+
+      if (i % 10000 == 0)
+        System.out.println(i + " documents were created.");
+    }
+  }
+
+  private void saveDoc(ODocument document, ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDB) {
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+
+    ODocument testDoc = new ODocument();
+    document.copyTo(testDoc);
+    document.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+    testDoc.save();
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
   }
 
   private void compareDocuments(long lastTs) {
@@ -166,15 +225,15 @@ public class LocalPaginatedStorageCreateCrashRestore {
         ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
         List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
             + baseDocument.field("id")));
-        if (testDocuments.size() == 0) {
+        Assert.assertTrue(!testDocuments.isEmpty());
+
+        ODocument testDocument = testDocuments.get(0);
+        if (testDocument.field("timestamp").equals(baseDocument.field("timestamp"))
+            && testDocument.field("stringValue").equals(baseDocument.field("stringValue"))) {
+          recordsRestored++;
+        } else {
           if (((Long) baseDocument.field("timestamp")) < minTs)
             minTs = baseDocument.field("timestamp");
-        } else {
-          ODocument testDocument = testDocuments.get(0);
-          Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
-          Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
-          Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
-          recordsRestored++;
         }
 
         recordsTested++;
@@ -190,27 +249,11 @@ public class LocalPaginatedStorageCreateCrashRestore {
         + ". Max interval for lost records " + (lastTs - minTs));
   }
 
-  public static final class RemoteDBRunner {
-    public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
-
-      OServer server = OServerMain.create();
-      server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-create-config.xml"));
-      server.activate();
-      while (true)
-        ;
-    }
-  }
-
-  public class DataPropagationTask implements Callable<Void> {
+  public class DataUpdateTask implements Callable<Void> {
     private ODatabaseDocumentTx baseDB;
     private ODatabaseDocumentTx testDB;
 
-    public DataPropagationTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
+    public DataUpdateTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
       this.baseDB = new ODatabaseDocumentTx(baseDB.getURL());
       this.testDB = new ODatabaseDocumentTx(testDocumentTx.getURL());
     }
@@ -221,32 +264,36 @@ public class LocalPaginatedStorageCreateCrashRestore {
       baseDB.open("admin", "admin");
       testDB.open("admin", "admin");
 
+      int counter = 0;
+
       try {
         while (true) {
-          final ODocument document = new ODocument("TestClass");
-          document.field("id", idGen.incrementAndGet());
-          document.field("timestamp", System.currentTimeMillis());
-          document.field("stringValue", "sfe" + random.nextLong());
+          final int idToUpdate = random.nextInt(idGen);
+          idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          try {
+            OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
+            final List<ODocument> result = baseDB.query(query);
 
-          saveDoc(document);
+            Assert.assertTrue(!result.isEmpty());
+
+            final ODocument document = result.get(0);
+            document.field("timestamp", System.currentTimeMillis());
+            document.field("stringValue", "vde" + random.nextLong());
+
+            saveDoc(document, baseDB, testDB);
+
+            counter++;
+
+            if (counter % 50000 == 0)
+              System.out.println(counter + " records were updated.");
+          } finally {
+            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          }
         }
-
       } finally {
         baseDB.close();
         testDB.close();
       }
-    }
-
-    private void saveDoc(ODocument document) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-
-      ODocument testDoc = new ODocument();
-      document.copyTo(testDoc);
-      document.save();
-
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-      testDoc.save();
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
     }
   }
 
