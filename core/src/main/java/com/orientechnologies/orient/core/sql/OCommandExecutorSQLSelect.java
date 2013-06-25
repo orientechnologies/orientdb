@@ -1304,6 +1304,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           } else if (parsedTarget.getTargetIndex() != null) {
             count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+          } else {
+            final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
+            if (recs != null) {
+              if (recs instanceof Collection<?>)
+                count += ((Collection<?>) recs).size();
+              else {
+                for (Object o : recs)
+                  count++;
+              }
+            }
+
           }
 
           if (tempResult == null)
