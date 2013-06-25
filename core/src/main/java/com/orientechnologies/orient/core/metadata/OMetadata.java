@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -124,7 +125,12 @@ public class OMetadata {
               instance = new OIndexManagerShared(database);
 
             if (iLoad)
-              instance.load();
+              try {
+                instance.load();
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "[OMetadata] Error on loading index manager, reset index configuration", e);
+                instance.create();
+              }
 
             return instance;
           }

@@ -642,8 +642,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         ++totalRecords;
-      } else
-        lastClusterId = 0;
+      }
       record = null;
     }
 
