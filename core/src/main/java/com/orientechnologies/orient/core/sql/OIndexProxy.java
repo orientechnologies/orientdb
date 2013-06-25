@@ -133,6 +133,12 @@ public class OIndexProxy<T> implements OIndex<T> {
     return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
   }
 
+  @Override
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int maxValuesToFetch) {
+    return lastIndex.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
+  }
+
   /**
    * {@inheritDoc}
    */

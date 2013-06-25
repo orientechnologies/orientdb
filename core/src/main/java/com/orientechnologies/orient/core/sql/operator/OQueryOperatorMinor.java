@@ -81,7 +81,7 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesMinor(key, false).size();
+        result = index.count(null, false, key, false, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesMinor(key, false, fetchLimit);
       else
@@ -105,7 +105,7 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesBetween(keyOne, true, keyTwo, false).size();
+        result = index.count(keyOne, true, keyTwo, false, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, true, keyTwo, false, fetchLimit);
       else

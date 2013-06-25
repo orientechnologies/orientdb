@@ -118,6 +118,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
   }
 
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int fetchLimit) {
+    return delegate.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, fetchLimit);
+  }
+
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
     return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
   }
