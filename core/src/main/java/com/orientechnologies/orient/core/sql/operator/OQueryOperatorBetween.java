@@ -108,6 +108,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
+      if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
+        return OMultiValue.getSize(result);
+
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -146,6 +149,8 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       else
         result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
+      if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
+        return OMultiValue.getSize(result);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
