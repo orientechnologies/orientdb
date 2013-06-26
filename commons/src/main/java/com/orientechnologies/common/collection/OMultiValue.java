@@ -400,7 +400,7 @@ public class OMultiValue {
   public static Object remove(Object iObject, final Object iToRemove) {
     if (iObject != null) {
       if (iObject instanceof OMultiCollectionIterator<?>) {
-        final List<Object> list = new ArrayList<Object>();
+        final Collection<Object> list = new ArrayList<Object>(OMultiValue.getSize(iObject));
         for (Object o : ((OMultiCollectionIterator<?>) iObject))
           list.add(o);
         iObject = list;
@@ -436,8 +436,15 @@ public class OMultiValue {
             coll.remove(entry.getKey());
         } else if (iToRemove instanceof Iterator<?>) {
           // ITERATOR
-          for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();)
-            coll.remove(it.next());
+          if (iToRemove instanceof OMultiCollectionIterator<?>)
+            ((OMultiCollectionIterator<?>) iToRemove).reset();
+
+          for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
+            final Object itemToRemove = it.next();
+            while (coll.remove(itemToRemove))
+              // REMOVE ALL THE ITEM
+              ;
+          }
         } else
           coll.remove(iToRemove);
 

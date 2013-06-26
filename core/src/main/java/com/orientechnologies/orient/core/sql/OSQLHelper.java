@@ -205,7 +205,7 @@ public class OSQLHelper {
     return new OSQLFilterItemField(iCommand, iWord);
   }
 
-  public static Object getFunction(final OBaseParser iCommand, final String iWord) {
+  public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {
     final int separator = iWord.indexOf('.');
     final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {

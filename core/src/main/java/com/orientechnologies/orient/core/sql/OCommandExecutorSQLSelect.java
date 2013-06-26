@@ -336,7 +336,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (target == null) {
       if (let != null)
         // EXECUTE ONCE TO ASSIGN THE LET
-        assignLetClauses(null);
+        assignLetClauses(lastRecord != null ? lastRecord.getRecord() : null);
 
       // SEARCH WITHOUT USING TARGET (USUALLY WHEN LET/INDEXES ARE INVOLVED)
       return;
