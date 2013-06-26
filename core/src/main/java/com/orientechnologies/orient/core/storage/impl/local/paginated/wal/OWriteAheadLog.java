@@ -576,6 +576,8 @@ public class OWriteAheadLog {
 
     private OLogSequenceNumber                    last           = null;
 
+    private volatile boolean                      flushNewData   = true;
+
     private LogSegment(File file, int maxPagesCacheSize) throws IOException {
       this.file = file;
       this.maxPagesCacheSize = maxPagesCacheSize;
@@ -737,6 +739,7 @@ public class OWriteAheadLog {
     }
 
     public OLogSequenceNumber logRecord(byte[] record) throws IOException {
+      flushNewData = true;
       int pageOffset = (int) (filledUpTo % OWALPage.PAGE_SIZE);
       long pageIndex = filledUpTo / OWALPage.PAGE_SIZE;
 
@@ -1044,7 +1047,6 @@ public class OWriteAheadLog {
     }
 
     private final class FlushTask implements Runnable {
-
       private FlushTask() {
       }
 
@@ -1060,6 +1062,11 @@ public class OWriteAheadLog {
       private void commit() throws IOException {
         if (pagesCache.isEmpty())
           return;
+
+        if (!flushNewData)
+          return;
+
+        flushNewData = false;
 
         final int maxSize = pagesCache.size();
 
