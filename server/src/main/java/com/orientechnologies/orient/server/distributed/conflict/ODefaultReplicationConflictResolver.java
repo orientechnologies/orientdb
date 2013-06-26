@@ -71,7 +71,12 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
         return;
 
       final OServerUserConfiguration replicatorUser = OServerMain.server().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-      database = OServerMain.server().openDatabase("document", iDatabaseName, replicatorUser.name, replicatorUser.password);
+
+      final ODatabaseRecord threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (threadDb != null && threadDb.getStorage().getName().equals(iDatabaseName))
+        database = threadDb;
+      else
+        database = OServerMain.server().openDatabase("document", iDatabaseName, replicatorUser.name, replicatorUser.password);
 
       OClass cls = database.getMetadata().getSchema().getClass(DISTRIBUTED_CONFLICT_CLASS);
       final OProperty p;
