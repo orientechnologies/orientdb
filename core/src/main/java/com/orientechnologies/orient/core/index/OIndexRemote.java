@@ -223,7 +223,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
 
     final OCommandRequest cmd = formatCommand(query.toString());
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
