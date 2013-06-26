@@ -31,6 +31,8 @@ public class OResourcePool<K, V> {
   private OResourcePoolListener<K, V> listener;
 
   public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
+    if (iMaxResources < 1)
+      throw new IllegalArgumentException("iMaxResource must be major than 0");
     listener = iListener;
     sem = new Semaphore(iMaxResources + 1, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
