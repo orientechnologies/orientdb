@@ -1,13 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,13 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -38,6 +28,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -123,27 +120,29 @@ public class LocalPaginatedStorageRestoreFromWAL {
   }
 
   private void copyDataFromTestWithoutClose() throws Exception {
-    final Path testStoragePath = Paths.get(baseDocumentTx.getURL().substring("plocal:".length()));
-    Path buildPath = Paths.get(buildDir.toURI());
+    final String testStoragePath = baseDocumentTx.getURL().substring("plocal:".length());
+    final String copyTo = buildDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL";
 
-    final Path copyTo = buildPath.resolve("testLocalPaginatedStorageRestoreFromWAL");
+    final File testStorageDir = new File(testStoragePath);
+    final File copyToDir = new File(copyTo);
 
-    Files.copy(testStoragePath, copyTo);
+    Assert.assertTrue(!copyToDir.exists());
+    Assert.assertTrue(copyToDir.mkdir());
 
-    Files.walkFileTree(testStoragePath, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Path fileToCopy = copyTo.resolve(testStoragePath.relativize(file));
-        if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWAL.wmr");
-        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWAL.0.wal");
+    File[] storageFiles = testStorageDir.listFiles();
+    Assert.assertNotNull(storageFiles);
 
-        Files.copy(file, fileToCopy);
+    for (File storageFile : storageFiles) {
+      String copyToPath;
+      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
+      else
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
 
-        return FileVisitResult.CONTINUE;
-      }
-    });
+      copyFile(storageFile.getAbsolutePath(), copyToPath);
+    }
   }
 
   private void createSchema(ODatabaseDocumentTx databaseDocumentTx) {
@@ -239,5 +238,22 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
       return null;
     }
+  }
+
+  private static void copyFile(String from, String to) throws IOException {
+    final File fromFile = new File(from);
+    FileInputStream fromInputStream = new FileInputStream(fromFile);
+    BufferedInputStream fromBufferedStream = new BufferedInputStream(fromInputStream);
+
+    FileOutputStream toOutputStream = new FileOutputStream(to);
+    byte[] data = new byte[1024];
+    int bytesRead = fromBufferedStream.read(data);
+    while (bytesRead > 0) {
+      toOutputStream.write(data, 0, bytesRead);
+      bytesRead = fromBufferedStream.read(data);
+    }
+
+    fromBufferedStream.close();
+    toOutputStream.close();
   }
 }
