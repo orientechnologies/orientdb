@@ -63,6 +63,8 @@ public interface OKeyValueIndex<T> {
    */
   long count(Object iKey);
 
+  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
+
   /**
    * Tells if a key is contained in the index.
    * 

@@ -336,7 +336,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (target == null) {
       if (let != null)
         // EXECUTE ONCE TO ASSIGN THE LET
-        assignLetClauses(null);
+        assignLetClauses(lastRecord != null ? lastRecord.getRecord() : null);
 
       // SEARCH WITHOUT USING TARGET (USUALLY WHEN LET/INDEXES ARE INVOLVED)
       return;
@@ -1304,6 +1304,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           } else if (parsedTarget.getTargetIndex() != null) {
             count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+          } else {
+            final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
+            if (recs != null) {
+              if (recs instanceof Collection<?>)
+                count += ((Collection<?>) recs).size();
+              else {
+                for (Object o : recs)
+                  count++;
+              }
+            }
+
           }
 
           if (tempResult == null)

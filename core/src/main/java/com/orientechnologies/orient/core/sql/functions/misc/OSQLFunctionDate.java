@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 /**
  * Builds a date object from the format passed. If no arguments are passed, than the system date is built (like sysdate() function)
@@ -47,7 +48,8 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
     date = new Date();
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters.length == 0)
       return date;
 
@@ -55,9 +57,10 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
       return new Date(((Number) iParameters[0]).longValue());
 
     if (format == null) {
-      if (iParameters.length > 1)
+      if (iParameters.length > 1) {
         format = new SimpleDateFormat((String) iParameters[1]);
-      else
+        format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+      } else
         format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
 
       if (iParameters.length == 3)

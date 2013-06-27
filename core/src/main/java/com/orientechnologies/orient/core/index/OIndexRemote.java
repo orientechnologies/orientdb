@@ -73,6 +73,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String   QUERY_REMOVE3                                     = "delete from index:%s where rid = ?";
   private final static String   QUERY_CONTAINS                                    = "select count(*) as size from index:%s where key = ?";
   private final static String   QUERY_COUNT                                       = "select count(*) as size from index:%s where key = ?";
+  private final static String   QUERY_COUNT_RANGE                                 = "select count(*) as size from index:%s where ";
   private final static String   QUERY_SIZE                                        = "select count(*) as size from index:%s";
   private final static String   QUERY_KEY_SIZE                                    = "select count(distinct( key )) as size from index:%s";
   private final static String   QUERY_KEYS                                        = "select key from index:%s";
@@ -199,6 +200,30 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     final OCommandRequest cmd = formatCommand(QUERY_COUNT, name);
     final List<ODocument> result = getDatabase().command(cmd).execute(iKey);
     return (Long) result.get(0).field("size");
+  }
+
+  @Override
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int maxValuesToFetch) {
+    final StringBuilder query = new StringBuilder(QUERY_COUNT_RANGE);
+
+    if (iFromInclusive)
+      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
+    else
+      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
+
+    query.append(QUERY_GET_VALUES_AND_OPERATOR);
+
+    if (iToInclusive)
+      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
+    else
+      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
+
+    if (maxValuesToFetch > 0)
+      query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
+
+    final OCommandRequest cmd = formatCommand(query.toString());
+    return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {

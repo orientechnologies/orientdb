@@ -64,11 +64,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.codehaus</groupId>
+			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy</artifactId>
 			<version>1.8.9</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
 		</dependency>
 
 		<!-- TINKERPOP STACK -->

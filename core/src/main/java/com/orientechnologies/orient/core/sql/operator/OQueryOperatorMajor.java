@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
 
 /**
  * MAJOR operator.
@@ -83,7 +82,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesMajor(key, false).size();
+        result = index.count(key, false, null, false, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesMajor(key, false, fetchLimit);
       else
@@ -107,7 +106,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesBetween(keyOne, false, keyTwo, true).size();
+        result = index.count(keyOne, false, keyTwo, true, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
       else

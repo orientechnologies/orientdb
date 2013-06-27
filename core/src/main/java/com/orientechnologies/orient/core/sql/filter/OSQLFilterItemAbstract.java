@@ -70,9 +70,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           OSQLMethod method = getMethod(methodName);
           final Object[] arguments;
           if (method != null) {
-            if (method.getMaxParams() > 0) {
+            if (method.getMaxParams() == -1 || method.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length < method.getMinParams() || arguments.length > method.getMaxParams())
+              if (arguments.length < method.getMinParams()
+                  || (method.getMaxParams() > -1 && arguments.length > method.getMaxParams()))
                 throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: field operator '"
                     + method.getName()
                     + "' needs "
@@ -91,9 +92,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
                   "Syntax error: function or field operator not recognized between the supported ones: "
                       + Arrays.toString(getAllMethodNames()), 0);
 
-            if (f.getMaxParams() > 0) {
+            if (f.getMaxParams() == -1 || f.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length < f.getMinParams() || arguments.length > f.getMaxParams())
+              if (arguments.length < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length > f.getMaxParams()))
                 throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
                     + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
                     + " argument(s) while has been received " + arguments.length, 0);

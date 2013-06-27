@@ -251,6 +251,11 @@ public abstract class OAbstractLocalHashIndex<T> extends OSharedResourceAdaptive
   }
 
   @Override
+  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch) {
+    throw new UnsupportedOperationException("count");
+  }
+
+  @Override
   public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
     throw new UnsupportedOperationException("getValuesMajor");
   }

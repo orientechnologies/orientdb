@@ -111,6 +111,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     function.setResult(iValue);
   }
 
+  @Override
   public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
     return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null, iContext);
   }

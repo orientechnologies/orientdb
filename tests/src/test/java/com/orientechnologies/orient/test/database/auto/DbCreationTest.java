@@ -91,6 +91,7 @@ public class DbCreationTest {
   public void testDbOpen() {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
+    Assert.assertNotNull(database.getName());
     database.close();
   }
 
@@ -112,8 +113,8 @@ public class DbCreationTest {
   public void testChangeLocale() throws IOException {
     database = new OObjectDatabaseTx(url);
     database.open("admin", "admin");
-    database.getStorage().getConfiguration().setLocaleLanguage( Locale.ENGLISH.getLanguage());
-    database.getStorage().getConfiguration().setLocaleCountry( Locale.ENGLISH.getCountry());
+    database.getStorage().getConfiguration().setLocaleLanguage(Locale.ENGLISH.getLanguage());
+    database.getStorage().getConfiguration().setLocaleCountry(Locale.ENGLISH.getCountry());
     database.getStorage().getConfiguration().update();
     database.close();
   }

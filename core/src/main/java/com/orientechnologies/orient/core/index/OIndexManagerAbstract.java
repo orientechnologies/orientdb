@@ -138,7 +138,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public void create() {
     acquireExclusiveLock();
     try {
-      save(OMetadata.CLUSTER_INTERNAL_NAME);
+      try {
+        save(OMetadata.CLUSTER_INTERNAL_NAME);
+      } catch (Exception e) {
+        // RESET RID TO ALLOCATE A NEW ONE
+        if (document.getIdentity().getClusterPosition().isPersistent()) {
+          document.getIdentity().reset();
+          save(OMetadata.CLUSTER_INTERNAL_NAME);
+        }
+      }
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
       getDatabase().getStorage().getConfiguration().update();
 

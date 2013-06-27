@@ -567,10 +567,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_lazyLoad && value instanceof ORID && t != OType.LINK && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
-      removeCollectionChangeListener(iFieldName);
-      removeCollectionTimeLine(iFieldName);
-      _fieldValues.put(iFieldName, value);
-      addCollectionChangeListener(iFieldName, value);
+      if (!iFieldName.contains(".")) {
+        removeCollectionChangeListener(iFieldName);
+        removeCollectionTimeLine(iFieldName);
+        _fieldValues.put(iFieldName, value);
+        addCollectionChangeListener(iFieldName, value);
+      }
     }
 
     // CHECK FOR CONVERSION

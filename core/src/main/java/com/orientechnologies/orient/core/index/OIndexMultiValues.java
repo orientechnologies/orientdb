@@ -520,6 +520,69 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
 
   }
 
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int maxValuesToFetch) {
+    checkForRebuild();
+
+    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
+      throw new IllegalArgumentException("Range from-to parameters are of different types");
+
+    acquireExclusiveLock();
+    try {
+
+      final OMVRBTreeEntry<Object, Set<OIdentifiable>> firstEntry;
+
+      if (iRangeFrom == null)
+        firstEntry = (OMVRBTreeEntry<Object, Set<OIdentifiable>>) map.firstEntry();
+      else if (iFromInclusive)
+        firstEntry = map.getCeilingEntry(iRangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(iRangeFrom);
+
+      if (firstEntry == null)
+        return 0;
+
+      long count = 0;
+      final int firstEntryIndex = map.getPageIndex();
+
+      final OMVRBTreeEntry<Object, Set<OIdentifiable>> lastEntry;
+
+      if (iRangeFrom == null)
+        lastEntry = (OMVRBTreeEntry<Object, Set<OIdentifiable>>) map.lastEntry();
+      else if (iToInclusive)
+        lastEntry = map.getHigherEntry(iRangeTo);
+      else
+        lastEntry = map.getCeilingEntry(iRangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+      final int lastEntryIndex;
+
+      if (lastEntry != null)
+        lastEntryIndex = map.getPageIndex();
+      else
+        lastEntryIndex = -1;
+
+      OMVRBTreeEntry<Object, Set<OIdentifiable>> entry = firstEntry;
+      map.setPageIndex(firstEntryIndex);
+
+      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
+        final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) entry.getValue();
+        if (values.isEmpty())
+          continue;
+
+        count += values.size();
+
+        if (maxValuesToFetch > -1 && maxValuesToFetch == count)
+          return maxValuesToFetch;
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      return count;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
     checkForRebuild();
 

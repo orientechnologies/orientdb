@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.OServerOfflineException;
@@ -55,9 +56,11 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
 
-    if (status != STATUS.ALIGN && !getDistributedServerManager().checkStatus("online"))
-      // NODE NOT ONLINE, REFUSE THE OEPRATION
-      throw new OServerOfflineException();
+    final ODistributedServerManager dManager = getDistributedServerManager();
+    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
+      // NODE NOT ONLINE, REFUSE THE OPEPRATION
+      throw new OServerOfflineException(dManager.getLocalNodeId(), dManager.getStatus(),
+          "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
 
     final ODatabaseDocumentTx db = openDatabase();
     ODistributedThreadLocal.INSTANCE.distributedExecution = true;

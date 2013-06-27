@@ -190,7 +190,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final Member clusterMember = member;
 
-    final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+    DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
 
     ExecutionCallback<Object> callback = null;
     if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
@@ -231,6 +231,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (InterruptedException ex) {
             Thread.interrupted();
           }
+
+          task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+
         } else {
           OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode", e,
               EXECUTION_MODE.SYNCHRONOUS);
@@ -557,11 +560,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       else {
         // WAKE UP ALL THE POSTPONED ALIGNMENTS
         for (Entry<String, Boolean> entry : pendingAlignments.entrySet()) {
-          if (entry.getValue()) {
-            final String[] parts = entry.getKey().split("/");
-            final String node = parts[0];
-            final String databaseName = parts[1];
+          final String[] parts = entry.getKey().split("/");
+          final String node = parts[0];
+          final String databaseName = parts[1];
 
+          if (entry.getValue()) {
             final OStorageSynchronizer synch = synchronizers.get(databaseName);
 
             long[] lastOperationId;
@@ -579,7 +582,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               OLogManager.instance().warn(this, "DISTRIBUTED -> error on retrieve last operation id from the log for db %s",
                   databaseName);
             }
-          }
+          } else
+            OLogManager.instance().info(this,
+                "DISTRIBUTED - database %s:%s is in alignment status yet, the node is not online yet", node, databaseName);
         }
       }
     }

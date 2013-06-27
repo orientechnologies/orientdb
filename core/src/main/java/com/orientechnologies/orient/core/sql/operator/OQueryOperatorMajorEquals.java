@@ -81,7 +81,7 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesMajor(key, true).size();
+        result = index.count(key, true, null, false, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesMajor(key, true, fetchLimit);
       else
@@ -105,7 +105,7 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesBetween(keyOne, true, keyTwo, true).size();
+        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
       else
