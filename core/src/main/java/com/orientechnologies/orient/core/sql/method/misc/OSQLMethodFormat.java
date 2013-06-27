@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -33,7 +34,7 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
   public static final String NAME = "format";
 
   public OSQLMethodFormat() {
-    super(NAME, 1);
+    super(NAME, 1, 2);
   }
 
   @Override
@@ -43,7 +44,10 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
     if (v != null) {
       if (ioResult instanceof Date) {
         final SimpleDateFormat format = new SimpleDateFormat(v.toString());
-        format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+        if (iMethodParams.length > 1)
+          format.setTimeZone(TimeZone.getTimeZone(iMethodParams[1].toString()));
+        else
+          format.setTimeZone(ODateHelper.getDatabaseTimeZone());
         ioResult = format.format(ioResult);
       } else {
         ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
