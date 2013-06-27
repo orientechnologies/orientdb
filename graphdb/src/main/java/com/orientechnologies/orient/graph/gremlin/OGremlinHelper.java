@@ -53,7 +53,7 @@ public class OGremlinHelper {
   private static GremlinGroovyScriptEngineFactory    factory      = new GremlinGroovyScriptEngineFactory();
   private static OGremlinHelper                      instance     = new OGremlinHelper();
 
-  private int                                        maxPool      = 0;
+  private int                                        maxPool      = 50;
 
   private OResourcePool<OGraphDatabase, OrientGraph> graphPool;
   private long                                       timeout;
