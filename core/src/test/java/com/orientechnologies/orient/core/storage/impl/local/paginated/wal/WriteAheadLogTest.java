@@ -12,16 +12,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -1313,6 +1313,80 @@ public class WriteAheadLogTest {
 
     Assert.assertEquals(writeAheadLog.end(), end);
     Assert.assertEquals(writeAheadLog.size(), logSize);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+  }
+
+  public void testSecondPageWasTruncated() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+
+    OWALRecord walRecord = new TestRecord(100, false);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    writeAheadLog.close();
+
+    RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
+    rndFile.setLength(OWALPage.PAGE_SIZE);
+    rndFile.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.end(), end);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+  }
+
+  public void testThirdPageWasTruncated() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+
+    OWALRecord walRecord = new TestRecord(100, false);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    writeAheadLog.close();
+
+    RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
+    rndFile.setLength(2 * OWALPage.PAGE_SIZE);
+    rndFile.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.end(), end);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+  }
+
+  public void testThirdPageCRCWasIncorrect() throws Exception {
+    List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
+
+    OWALRecord walRecord = new TestRecord(100, false);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    writeAheadLog.close();
+
+    RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
+    rndFile.seek(2 * OWALPage.PAGE_SIZE);
+    int bt = rndFile.read();
+    rndFile.write(bt + 1);
+    rndFile.close();
+
+    writeAheadLog = createWAL();
+
+    Assert.assertEquals(writeAheadLog.end(), end);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
   }

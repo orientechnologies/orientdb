@@ -394,8 +394,8 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
    */
   private OMMapBufferEntry mapNew(final OFileMMap file, final long beginOffset) throws IOException {
     metricMappedPages++;
-    return new OMMapBufferEntry(file, file.map(beginOffset, file.getFileSize() - (int) beginOffset), beginOffset,
-        file.getFileSize() - (int) beginOffset);
+    return new OMMapBufferEntry(file, file.map(beginOffset, (int) (file.getFileSize() - beginOffset)), beginOffset,
+        (int) (file.getFileSize() - beginOffset));
   }
 
   private OMMapBufferEntry[] addEntry(final OMMapBufferEntry[] sourceEntries, final OMMapBufferEntry newEntry) {

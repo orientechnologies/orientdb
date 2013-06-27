@@ -183,6 +183,8 @@ public class O2QCache implements ODiskCache {
     if (lruEntry.isDirty)
       return;
 
+    assert pageIndex >= 0;
+
     dirtyPages.get(fileId).put(pageIndex, lruEntry.loadedLSN);
     lruEntry.isDirty = true;
   }
