@@ -71,6 +71,11 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
     return delegate.getSyntax();
   }
 
+  @Override
+  public String getFetchPlan() {
+    return delegate.getFetchPlan();
+  }
+
   public boolean isIdempotent() {
     return delegate.isIdempotent();
   }

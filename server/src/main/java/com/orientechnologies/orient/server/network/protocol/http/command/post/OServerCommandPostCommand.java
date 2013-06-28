@@ -36,7 +36,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
     String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
-    final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+    String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
     if (iRequest.content != null)
       // CONTENT REPLACES TEXT
@@ -70,6 +70,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
 
       response = executor.execute(null);
+      
+      fetchPlan = executor.getFetchPlan();
 
       final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
 
