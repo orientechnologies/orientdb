@@ -1123,8 +1123,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         final AtomicBoolean empty = new AtomicBoolean(true);
         final Set<ODocument> recordsToSend = new HashSet<ODocument>();
 
-        final Map<String, Integer> fetchPlan = command != null ? OFetchHelper.buildFetchPlan(command.getFetchPlan()) : null;
-        command.setResultListener(new AsyncResultListener(empty, clientTxId, fetchPlan, recordsToSend));
+        final AsyncResultListener listener = new AsyncResultListener(empty, clientTxId, recordsToSend);
+        command.setResultListener(listener);
 
         final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
 
@@ -1133,6 +1133,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();
+
+        // ASSIGNED THE PARSED FETCHPLAN
+        listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
 
         if (empty.get())
           try {
@@ -1631,20 +1634,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   public class AsyncResultListener implements OCommandResultListener {
 
-    private final AtomicBoolean        empty;
-    private final int                  txId;
-    private final Map<String, Integer> fetchPlan;
-    private final Set<ODocument>       recordsToSend;
+    private final AtomicBoolean  empty;
+    private final int            txId;
+    private final Set<ODocument> recordsToSend;
+    private Map<String, Integer> fetchPlan;
 
-    public AsyncResultListener(AtomicBoolean empty, int txId, Map<String, Integer> fetchPlan, Set<ODocument> recordsToSend) {
+    public AsyncResultListener(AtomicBoolean empty, int txId, Set<ODocument> recordsToSend) {
       this.empty = empty;
       this.txId = txId;
-      this.fetchPlan = fetchPlan;
       this.recordsToSend = recordsToSend;
     }
 
     @Override
-    public boolean result(Object iRecord) {
+    public boolean result(final Object iRecord) {
       if (empty.compareAndSet(true, false))
         try {
           sendOk(txId);
@@ -1673,5 +1675,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     public void end() {
     }
 
+    public void setFetchPlan(final String iText) {
+      fetchPlan = iText != null ? OFetchHelper.buildFetchPlan(iText) : null;
+    }
   }
 }
