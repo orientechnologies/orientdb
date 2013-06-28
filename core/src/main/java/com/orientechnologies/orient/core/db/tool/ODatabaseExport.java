@@ -64,6 +64,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(iDatabase, iFileName, iListener);
 
+    if (fileName == null)
+      throw new IllegalArgumentException("file name missing");
+
     if (!fileName.endsWith(".gz")) {
       fileName += ".gz";
     }
