@@ -36,7 +36,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
   private final ReentrantLock lockRead      = new ReentrantLock(true);
   private final Condition     readCondition = lockRead.newCondition();
   private final ReentrantLock lockWrite     = new ReentrantLock();
-  private boolean             channelRead   = false;
+  private volatile boolean    channelRead   = false;
   private byte                currentStatus;
   private int                 currentSessionId;
   private final int           maxUnreadResponses;
@@ -84,9 +84,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
           } catch (IOException e) {
             // UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
+            channelRead = false;
             readCondition.signalAll();
             lockRead.unlock();
-            channelRead = false;
             throw e;
           }
         }
