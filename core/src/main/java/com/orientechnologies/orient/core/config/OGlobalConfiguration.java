@@ -116,7 +116,7 @@ public enum OGlobalConfiguration {
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.FALSE),
+      Boolean.class, Boolean.TRUE),
 
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
