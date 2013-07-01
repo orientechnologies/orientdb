@@ -84,7 +84,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           // TRY WITH SIMPLE CONDITION
           final String text = ((OCommandSQL) configuredParameters[i]).getText();
           final OSQLPredicate pred = new OSQLPredicate(text);
-          runtimeParameters[i] = pred.evaluate(iCurrentRecord instanceof ORecord<?> ? (ORecord<?>) iCurrentResult : null,
+          runtimeParameters[i] = pred.evaluate(iCurrentRecord instanceof ORecord<?> ? (ORecord<?>) iCurrentRecord : null,
               (ODocument) iCurrentResult, iContext);
           // REPLACE ORIGINAL PARAM
           configuredParameters[i] = pred;
