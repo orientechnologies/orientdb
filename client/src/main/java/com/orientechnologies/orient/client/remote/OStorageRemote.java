@@ -128,7 +128,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final int                        maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode);
+    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
     clientId = iClientId;
     configuration = null;
 

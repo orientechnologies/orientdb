@@ -112,7 +112,8 @@ public enum OGlobalConfiguration {
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
       Boolean.class, Boolean.FALSE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 15000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the local and remote storages",
+      Integer.class, 15000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),
@@ -324,7 +325,7 @@ public enum OGlobalConfiguration {
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
