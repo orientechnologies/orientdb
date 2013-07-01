@@ -602,7 +602,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<Entry<Object, T>> inverseIterator() {
     checkForRebuild();
 

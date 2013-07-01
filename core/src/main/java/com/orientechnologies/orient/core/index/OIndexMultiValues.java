@@ -623,11 +623,11 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   public long getSize() {
     checkForRebuild();
 
-    if (map.size() == 0)
-      return 0;
-
     acquireExclusiveLock();
     try {
+      if (map.size() == 0)
+        return 0;
+
       OMVRBTreeEntry<Object, Set<OIdentifiable>> rootEntry = map.getRoot();
       long size = 0;
 
@@ -656,11 +656,11 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
   public long getKeySize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return map.size();
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -670,21 +670,22 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OMultiCollectionIterator<OIdentifiable>(map.values().iterator());
+      return new OIndexIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(map.values().iterator()));
 
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
     checkForRebuild();
 
     acquireExclusiveLock();
     try {
 
-      return new OMultiCollectionIterator<OIdentifiable>(((OMVRBTree.Values) map.values()).inverseIterator());
+      return new OIndexIterator(this, new OMultiCollectionIterator<OIdentifiable>(
+          ((OMVRBTree.Values) map.values()).inverseIterator()));
 
     } finally {
       releaseExclusiveLock();

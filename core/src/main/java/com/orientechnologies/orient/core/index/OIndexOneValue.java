@@ -449,11 +449,11 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   public long getSize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return map.size();
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -519,11 +519,11 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   public long getKeySize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return map.size();
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -533,21 +533,21 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     acquireExclusiveLock();
     try {
 
-      return map.values().iterator();
+      return new OIndexIterator<OIdentifiable>(this, map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
     checkForRebuild();
 
     acquireExclusiveLock();
     try {
 
-      return ((OMVRBTree.Values) map.values()).inverseIterator();
+      return new OIndexIterator(this, ((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();
