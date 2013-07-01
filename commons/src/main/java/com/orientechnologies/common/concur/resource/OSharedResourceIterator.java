@@ -13,53 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.common.concur.resource;
 
 import java.util.Iterator;
 
 /**
- * Index iterator that locks while fetching.
+ * Iterator against a shared resource: locks the resource while fetching.
  * 
  * @author Luca Garulli
  * 
  */
-public class OIndexIterator<T> implements Iterator<T> {
-  protected final OIndexMVRBTreeAbstract<?> index;
-  protected Iterator<?>                     iterator;
+public class OSharedResourceIterator<T> implements Iterator<T> {
+  protected final OSharedResourceAdaptiveExternal resource;
+  protected Iterator<?>                           iterator;
 
-  public OIndexIterator(final OIndexMVRBTreeAbstract<?> index, final Iterator<?> iIterator) {
-    this.index = index;
+  public OSharedResourceIterator(final OSharedResourceAdaptiveExternal iResource, final Iterator<?> iIterator) {
+    this.resource = iResource;
     this.iterator = iIterator;
   }
 
   @Override
   public boolean hasNext() {
-    index.acquireExclusiveLock();
+    resource.acquireExclusiveLock();
     try {
       return iterator.hasNext();
     } finally {
-      index.releaseExclusiveLock();
+      resource.releaseExclusiveLock();
     }
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public T next() {
-    index.acquireExclusiveLock();
+    resource.acquireExclusiveLock();
     try {
       return (T) iterator.next();
     } finally {
-      index.releaseExclusiveLock();
+      resource.releaseExclusiveLock();
     }
   }
 
   @Override
   public void remove() {
-    index.acquireExclusiveLock();
+    resource.acquireExclusiveLock();
     try {
       iterator.remove();
     } finally {
-      index.releaseExclusiveLock();
+      resource.releaseExclusiveLock();
     }
   }
 }

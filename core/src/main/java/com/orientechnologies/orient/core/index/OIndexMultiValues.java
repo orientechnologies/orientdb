@@ -28,6 +28,7 @@ import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -670,7 +671,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OIndexIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(map.values().iterator()));
+      return new OSharedResourceIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(map.values().iterator()));
 
     } finally {
       releaseExclusiveLock();
@@ -684,7 +685,7 @@ public abstract class OIndexMultiValues extends OIndexMVRBTreeAbstract<Set<OIden
     acquireExclusiveLock();
     try {
 
-      return new OIndexIterator(this, new OMultiCollectionIterator<OIdentifiable>(
+      return new OSharedResourceIterator(this, new OMultiCollectionIterator<OIdentifiable>(
           ((OMVRBTree.Values) map.values()).inverseIterator()));
 
     } finally {

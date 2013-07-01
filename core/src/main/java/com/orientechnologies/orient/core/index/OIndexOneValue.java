@@ -27,6 +27,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -533,7 +534,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     acquireExclusiveLock();
     try {
 
-      return new OIndexIterator<OIdentifiable>(this, map.values().iterator());
+      return new OSharedResourceIterator<OIdentifiable>(this, map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
@@ -547,7 +548,7 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     acquireExclusiveLock();
     try {
 
-      return new OIndexIterator(this, ((OMVRBTree.Values) map.values()).inverseIterator());
+      return new OSharedResourceIterator(this, ((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();
