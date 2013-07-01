@@ -71,7 +71,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
       if (ioResult instanceof OCommandContext) {
         ioResult = ((OCommandContext) ioResult).getVariable(iMethodParams[0].toString());
       } else {
-        ioResult = ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString());
+        ioResult = ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString(), iContext);
       }
     }
 
