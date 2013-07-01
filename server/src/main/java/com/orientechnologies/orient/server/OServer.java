@@ -142,12 +142,12 @@ public class OServer {
     startup(loadConfigurationFromFile(iConfigurationFile));
   }
 
-  public void startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+  public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
       IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
-    startup(new ByteArrayInputStream(iConfiguration.getBytes()));
+    return startup(new ByteArrayInputStream(iConfiguration.getBytes()));
   }
 
-  public void startup(final InputStream iInputStream) throws InstantiationException, IllegalAccessException,
+  public OServer startup(final InputStream iInputStream) throws InstantiationException, IllegalAccessException,
       ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException,
       IOException {
 
@@ -155,10 +155,10 @@ public class OServer {
     configuration = configurationLoader.load();
 
     // Startup function split to allow pre-activation changes
-    startup(configuration);
+    return startup(configuration);
   }
 
-  public void startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException,
+  public OServer startup(final OServerConfiguration iConfiguration) throws IllegalArgumentException, SecurityException,
       InvocationTargetException, NoSuchMethodException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
@@ -183,10 +183,12 @@ public class OServer {
     databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
     databaseDirectory = databaseDirectory.replace("//", "/");
+    
+    return this;
   }
 
   @SuppressWarnings("unchecked")
-  public void activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeActivate();
 
@@ -206,6 +208,8 @@ public class OServer {
 
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
     startupLatch.countDown();
+    
+    return this;
   }
 
   public void shutdown() {
