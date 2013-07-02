@@ -50,7 +50,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
-    Orient.getTimer().schedule(new TimerTask() {
+    Orient.instance().getTimer().schedule(new TimerTask() {
 
       @Override
       public void run() {

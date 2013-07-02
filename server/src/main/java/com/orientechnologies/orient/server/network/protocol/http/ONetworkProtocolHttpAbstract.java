@@ -74,7 +74,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
-    super(Orient.getThreadGroup(), "IO-HTTP");
+    super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override

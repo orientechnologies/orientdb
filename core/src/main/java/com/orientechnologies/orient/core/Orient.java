@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
@@ -51,50 +50,137 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 public class Orient extends OSharedResourceAbstract {
-  public static final String                            ORIENTDB_HOME        = "ORIENTDB_HOME";
-  public static final String                            URL_SYNTAX           = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                      ORIENTDB_HOME        = "ORIENTDB_HOME";
+  public static final String                      URL_SYNTAX           = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected final Map<String, OEngine>                  engines              = new HashMap<String, OEngine>();
-  protected final Map<String, OStorage>                 storages             = new HashMap<String, OStorage>();
-  protected final Set<ODatabaseLifecycleListener>       dbLifecycleListeners = new HashSet<ODatabaseLifecycleListener>();
-  protected final List<OOrientListener>                 listeners            = new ArrayList<OOrientListener>();
-  protected final ODatabaseFactory                      databaseFactory      = new ODatabaseFactory();
-  protected final OScriptManager                        scriptManager        = new OScriptManager();
-  protected volatile boolean                            active               = false;
-  protected OClusterFactory                             clusterFactory       = new ODefaultClusterFactory();
-  protected ORecordFactoryManager                       recordFactoryManager = new ORecordFactoryManager();
+  protected static final Orient                   instance             = new Orient();
 
-  protected static final OrientShutdownHook             shutdownHook         = new OrientShutdownHook();
-  protected static final Timer                          timer                = new Timer(true);
-  protected static final ThreadGroup                    threadGroup          = new ThreadGroup("OrientDB");
-  protected static final Orient                         instance             = new Orient();
+  protected final Map<String, OEngine>            engines              = new HashMap<String, OEngine>();
+  protected final Map<String, OStorage>           storages             = new HashMap<String, OStorage>();
+  protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners = new HashSet<ODatabaseLifecycleListener>();
+  protected final List<OOrientListener>           listeners            = new ArrayList<OOrientListener>();
+  protected final ODatabaseFactory                databaseFactory      = new ODatabaseFactory();
+  protected final OScriptManager                  scriptManager        = new OScriptManager();
+  protected OClusterFactory                       clusterFactory       = new ODefaultClusterFactory();
+  protected ORecordFactoryManager                 recordFactoryManager = new ORecordFactoryManager();
 
-  private final OMemoryWatchDog                         memoryWatchDog;
-  private final OJVMProfiler                            profiler;
-  private static final AtomicInteger                    serialId             = new AtomicInteger();
+  protected OrientShutdownHook                    shutdownHook         = new OrientShutdownHook();
+  protected final Timer                           timer                = new Timer(true);
+  protected final ThreadGroup                     threadGroup          = new ThreadGroup("OrientDB");
+  protected final AtomicInteger                   serialId             = new AtomicInteger();
 
-  public ODatabaseThreadLocalFactory                    databaseThreadFactory;
+  protected OMemoryWatchDog                       memoryWatchDog;
+  protected OJVMProfiler                          profiler;
 
-  protected List<Class<? extends ODatabasePoolBase<?>>> pools;
+  protected ODatabaseThreadLocalFactory           databaseThreadFactory;
+
+  protected volatile boolean                      active               = false;
 
   protected Orient() {
-    // REGISTER THE EMBEDDED ENGINE
-    registerEngine(new OEngineLocal());
-    registerEngine(new OEngineLocalPaginated());
-    registerEngine(new OEngineMemory());
-    registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
+    startup();
+  }
 
-    profiler = new OJVMProfiler();
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
-      // ACTIVATE RECORDING OF THE PROFILER
-      profiler.startRecording();
+  public Orient startup() {
+    acquireExclusiveLock();
+    try {
+      if (active)
+        // ALREADY ACTIVE
+        return this;
 
-    if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
-      OGlobalConfiguration.dumpConfiguration(System.out);
+      profiler = new OJVMProfiler();
 
-    memoryWatchDog = new OMemoryWatchDog();
+      // REGISTER THE EMBEDDED ENGINE
+      registerEngine(new OEngineLocal());
+      registerEngine(new OEngineLocalPaginated());
+      registerEngine(new OEngineMemory());
+      registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-    active = true;
+      if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
+        // ACTIVATE RECORDING OF THE PROFILER
+        profiler.startRecording();
+
+      if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
+        OGlobalConfiguration.dumpConfiguration(System.out);
+
+      memoryWatchDog = new OMemoryWatchDog();
+
+      active = true;
+      return this;
+
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public Orient shutdown() {
+    acquireExclusiveLock();
+    try {
+      if (!active)
+        return this;
+
+      active = false;
+
+      if (memoryWatchDog != null)
+        memoryWatchDog.interrupt();
+
+      if (shutdownHook != null) {
+        shutdownHook.cancel();
+        shutdownHook = null;
+      }
+
+      OLogManager.instance().debug(this, "Orient Engine is shutting down...");
+
+      if (listeners != null)
+        // CALL THE SHUTDOWN ON ALL THE LISTENERS
+        for (OOrientListener l : listeners) {
+          if (l != null)
+            l.onShutdown();
+        }
+
+      // SHUTDOWN ENGINES
+      if (engines != null) {
+        for (OEngine engine : engines.values()) {
+          engine.shutdown();
+        }
+        engines.clear();
+      }
+
+      if (databaseFactory != null)
+        // CLOSE ALL DATABASES
+        databaseFactory.shutdown();
+
+      if (storages != null) {
+        // CLOSE ALL THE STORAGES
+        final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
+        for (OStorage stg : storagesCopy) {
+          OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
+          stg.close(true);
+        }
+      }
+
+      if (OMMapManagerLocator.getInstance() != null)
+        OMMapManagerLocator.getInstance().shutdown();
+
+      if (threadGroup != null)
+        // STOP ALL THE PENDING THREADS
+        threadGroup.interrupt();
+
+      if (listeners != null)
+        listeners.clear();
+
+      timer.cancel();
+
+      if (profiler != null) {
+        profiler.shutdown();
+        profiler = null;
+      }
+
+      OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
+
+    } finally {
+      releaseExclusiveLock();
+    }
+    return this;
   }
 
   public OStorage loadStorage(String iURL) {
@@ -279,66 +365,7 @@ public class Orient extends OSharedResourceAbstract {
     }
   }
 
-  public void shutdown() {
-    acquireExclusiveLock();
-    try {
-      if (!active)
-        return;
-
-      active = false;
-
-      if (shutdownHook != null)
-        shutdownHook.cancel();
-      if (profiler != null)
-        profiler.shutdown();
-
-      OLogManager.instance().debug(this, "Orient Engine is shutting down...");
-
-      if (listeners != null)
-        // CALL THE SHUTDOWN ON ALL THE LISTENERS
-        for (OOrientListener l : listeners) {
-          if (l != null)
-            l.onShutdown();
-        }
-
-      // SHUTDOWN ENGINES
-      for (OEngine engine : engines.values()) {
-        engine.shutdown();
-      }
-
-      if (databaseFactory != null)
-        // CLOSE ALL DATABASES
-        databaseFactory.shutdown();
-
-      if (storages != null) {
-        // CLOSE ALL THE STORAGES
-        final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-        for (OStorage stg : storagesCopy) {
-          OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
-          stg.close(true);
-        }
-      }
-
-      if (OMMapManagerLocator.getInstance() != null)
-        OMMapManagerLocator.getInstance().shutdown();
-
-      if (threadGroup != null)
-        // STOP ALL THE PENDING THREADS
-        threadGroup.interrupt();
-
-      if (listeners != null)
-        listeners.clear();
-
-      timer.cancel();
-
-      OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public static Timer getTimer() {
+  public Timer getTimer() {
     return timer;
   }
 
@@ -362,7 +389,7 @@ public class Orient extends OSharedResourceAbstract {
     return instance;
   }
 
-  public static ThreadGroup getThreadGroup() {
+  public ThreadGroup getThreadGroup() {
     return threadGroup;
   }
 
@@ -427,7 +454,7 @@ public class Orient extends OSharedResourceAbstract {
     }
   }
 
-  public void setRecordFactoryManager(ORecordFactoryManager iRecordFactoryManager) {
+  public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
     recordFactoryManager = iRecordFactoryManager;
   }
 
@@ -441,7 +468,7 @@ public class Orient extends OSharedResourceAbstract {
     return v;
   }
 
-  public void setClusterFactory(OClusterFactory clusterFactory) {
+  public void setClusterFactory(final OClusterFactory clusterFactory) {
     this.clusterFactory = clusterFactory;
   }
 
@@ -449,7 +476,7 @@ public class Orient extends OSharedResourceAbstract {
     return profiler;
   }
 
-  public void registerThreadDatabaseFactory(ODatabaseThreadLocalFactory iDatabaseFactory) {
+  public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {
     databaseThreadFactory = iDatabaseFactory;
   }
 

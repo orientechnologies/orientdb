@@ -86,7 +86,7 @@ public class OMMapManagerNew extends OMMapManagerAbstract implements OMMapManage
         }
       };
 
-      Orient.getTimer().schedule(autoFlushTask, autoFlushTimer, autoFlushTimer);
+      Orient.instance().getTimer().schedule(autoFlushTask, autoFlushTimer, autoFlushTimer);
     }
   }
 

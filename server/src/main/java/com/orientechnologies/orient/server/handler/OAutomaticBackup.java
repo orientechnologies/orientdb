@@ -156,9 +156,9 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
     };
 
     if (firstTime == null)
-      Orient.getTimer().schedule(timerTask, delay, delay);
+      Orient.instance().getTimer().schedule(timerTask, delay, delay);
     else
-      Orient.getTimer().schedule(timerTask, firstTime, delay);
+      Orient.instance().getTimer().schedule(timerTask, firstTime, delay);
   }
 
   @Override

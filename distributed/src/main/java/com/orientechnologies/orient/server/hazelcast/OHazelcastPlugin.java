@@ -507,7 +507,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
       };
 
-      Orient.getTimer().schedule(alignmentTask, alignmentTimer, alignmentTimer);
+      Orient.instance().getTimer().schedule(alignmentTask, alignmentTimer, alignmentTimer);
     }
   }
 
