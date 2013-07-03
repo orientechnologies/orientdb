@@ -67,8 +67,7 @@ public class ORecordOperation implements OSerializableStream {
 
   @Override
   public String toString() {
-    return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
-        .append("]").toString();
+    return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type)).append("]").toString();
   }
 
   public ORecordInternal<?> getRecord() {
@@ -131,5 +130,17 @@ public class ORecordOperation implements OSerializableStream {
       break;
     }
     return operation;
+  }
+
+  public static byte getId(String iName) {
+    iName = iName.toUpperCase();
+
+    if (iName.startsWith("CREAT"))
+      return ORecordOperation.CREATED;
+    else if (iName.startsWith("UPDAT"))
+      return ORecordOperation.UPDATED;
+    else if (iName.startsWith("DELET"))
+      return ORecordOperation.DELETED;
+    return -1;
   }
 }
