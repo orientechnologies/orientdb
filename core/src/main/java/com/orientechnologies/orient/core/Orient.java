@@ -64,7 +64,7 @@ public class Orient extends OSharedResourceAbstract {
   protected OClusterFactory                       clusterFactory       = new ODefaultClusterFactory();
   protected ORecordFactoryManager                 recordFactoryManager = new ORecordFactoryManager();
 
-  protected OrientShutdownHook                    shutdownHook         = new OrientShutdownHook();
+  protected OrientShutdownHook                    shutdownHook;
   protected final Timer                           timer                = new Timer(true);
   protected final ThreadGroup                     threadGroup          = new ThreadGroup("OrientDB");
   protected final AtomicInteger                   serialId             = new AtomicInteger();
@@ -87,6 +87,7 @@ public class Orient extends OSharedResourceAbstract {
         // ALREADY ACTIVE
         return this;
 
+      shutdownHook = new OrientShutdownHook();
       profiler = new OJVMProfiler();
 
       // REGISTER THE EMBEDDED ENGINE
@@ -193,8 +194,7 @@ public class Orient extends OSharedResourceAbstract {
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
-      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
-          + ". URL was: " + iURL);
+      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
 
     final String engineName = iURL.substring(0, pos);
 
@@ -203,8 +203,8 @@ public class Orient extends OSharedResourceAbstract {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
       if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-            + iURL + ". Registered engines are: " + engines.keySet());
+        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: " + iURL
+            + ". Registered engines are: " + engines.keySet());
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
@@ -223,8 +223,7 @@ public class Orient extends OSharedResourceAbstract {
         for (String pair : pairs) {
           kv = pair.split("=");
           if (kv.length < 2)
-            throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX
-                + ". URL was: " + iURL);
+            throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
           parameters.put(kv[0], kv[1]);
         }
       } else
@@ -370,7 +369,8 @@ public class Orient extends OSharedResourceAbstract {
   }
 
   public void removeShutdownHook() {
-    Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    if (shutdownHook != null)
+      Runtime.getRuntime().removeShutdownHook(shutdownHook);
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
