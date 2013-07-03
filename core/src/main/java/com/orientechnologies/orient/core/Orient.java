@@ -121,8 +121,14 @@ public class Orient extends OSharedResourceAbstract {
 
       active = false;
 
-      if (memoryWatchDog != null)
+      if (memoryWatchDog != null) {
+        // SHUTDOWN IT AND WAIT FOR COMPLETITION
         memoryWatchDog.interrupt();
+        try {
+          memoryWatchDog.join();
+        } catch (InterruptedException e) {
+        }
+      }
 
       if (shutdownHook != null) {
         shutdownHook.cancel();
