@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -49,7 +50,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
   public static final String                                  CONFIG_INDEXES     = "indexes";
   public static final String                                  DICTIONARY_NAME    = "dictionary";
@@ -129,7 +130,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public <RET extends ODocumentWrapper> RET save() {
     acquireExclusiveLock();
     try {
+      for (int retry = 0; retry < 10; retry++)
+        try {
+          return (RET) super.save();
+        } catch (OConcurrentModificationException e) {
+          reload(null, true);
+        }
+      
       return (RET) super.save();
+      
     } finally {
       releaseExclusiveLock();
     }
@@ -225,8 +234,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   private OIndex<?> createDictionary() {
-    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
-        null);
+    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null);
   }
 
   public ODocument getConfiguration() {
