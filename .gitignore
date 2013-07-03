@@ -5,3 +5,9 @@ dist
 app/components
 info
 hooks
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
