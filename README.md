@@ -6,7 +6,7 @@ Studio Web tool
 
 ## Developers
 
-### Requirements
+### Quick Start
 
 0. Install [Node.js](http://nodejs.org/) and NPM 
 
