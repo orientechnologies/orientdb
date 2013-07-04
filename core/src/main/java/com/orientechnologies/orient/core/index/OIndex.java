@@ -106,6 +106,7 @@ public interface OIndex<T> extends OKeyValueIndex<T> {
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
       boolean iToInclusive, int maxValuesToFetch);
 
+  
   /**
    * Returns a set of records with keys greater than passed parameter.
    * 

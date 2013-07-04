@@ -60,6 +60,7 @@ import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.task.OAbstractDistributedTask.EXEC_TYPE;
 import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
 import com.orientechnologies.orient.server.task.OAlignRequestDistributedTask;
 
@@ -79,6 +80,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private long                              runId              = -1;
   private volatile String                   status             = "starting";
   private Map<String, Boolean>              pendingAlignments  = new HashMap<String, Boolean>();
+  private TimerTask                         alignmentTask;
 
   private volatile static HazelcastInstance hazelcastInstance;
 
@@ -135,6 +137,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
+    if (alignmentTask != null)
+      alignmentTask.cancel();
+
     super.shutdown();
 
     remoteClusterNodes.clear();
@@ -185,7 +190,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final Member clusterMember = member;
 
-    final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+    DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
 
     ExecutionCallback<Object> callback = null;
     if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
@@ -226,6 +231,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (InterruptedException ex) {
             Thread.interrupted();
           }
+
+          task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
+
         } else {
           OLogManager.instance().error(this, "DISTRIBUTED -> error on execution of operation in %s mode", e,
               EXECUTION_MODE.SYNCHRONOUS);
@@ -285,21 +293,30 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, masterNodeId, dbName);
 
           try {
-            // EXECUTES ON THE TARGET NODE
-            final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, iKey);
-            final Object remoteResult = executeOperation(task, EXECUTION_MODE.SYNCHRONOUS, null);
+            final Object remoteResult;
+            if (iTask.getExecutionType() == EXEC_TYPE.BOTH || iTask.getExecutionType() == EXEC_TYPE.REMOTE_ONLY) {
+              // EXECUTES ON THE TARGET NODE
+              final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, iKey);
+              remoteResult = executeOperation(task, EXECUTION_MODE.SYNCHRONOUS, null);
+            } else
+              remoteResult = null;
 
-            // APPLY LOCALLY TOO
-            final Object localResult = iTask.setStatus(STATUS.LOCAL_EXEC).call();
+            final Object localResult;
+            if (iTask.getExecutionType() == EXEC_TYPE.BOTH || iTask.getExecutionType() == EXEC_TYPE.LOCAL_ONLY)
+              // APPLY LOCALLY TOO
+              localResult = iTask.setStatus(STATUS.LOCAL_EXEC).call();
+            else
+              localResult = remoteResult;
 
-            if (remoteResult != null && localResult != null)
-              if (!remoteResult.equals(localResult)) {
-                OLogManager.instance().warn(this,
-                    "DISTRIBUTED -> detected conflict on %s in %s mode against %s/%s: remote {%s} != local {%s}",
-                    iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, masterNodeId, dbName, remoteResult, localResult);
+            if (iTask.getExecutionType() == EXEC_TYPE.BOTH)
+              if (remoteResult != null && localResult != null)
+                if (!remoteResult.equals(localResult)) {
+                  OLogManager.instance().warn(this,
+                      "DISTRIBUTED -> detected conflict on %s in %s mode against %s/%s: remote {%s} != local {%s}",
+                      iTask.getName().toUpperCase(), EXECUTION_MODE.SYNCHRONOUS, masterNodeId, dbName, remoteResult, localResult);
 
-                iTask.handleConflict(masterNodeId, localResult, remoteResult);
-              }
+                  iTask.handleConflict(masterNodeId, localResult, remoteResult);
+                }
 
             // OK
             return localResult;
@@ -395,6 +412,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public ODocument getClusterConfiguration() {
+    if (!enabled)
+      return null;
+
     final ODocument cluster = new ODocument();
 
     final HazelcastInstance instance = getHazelcastInstance();
@@ -478,14 +498,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     else
       alignNodes();
 
-    if (alignmentTimer > 0)
+    if (alignmentTimer > 0) {
       // SCHEDULE THE AUTO ALIGNMENT
-      Orient.getTimer().schedule(new TimerTask() {
+      alignmentTask = new TimerTask() {
         @Override
         public void run() {
           alignNodes();
         }
-      }, alignmentTimer, alignmentTimer);
+      };
+
+      Orient.instance().getTimer().schedule(alignmentTask, alignmentTimer, alignmentTimer);
+    }
   }
 
   protected void alignNodes() {
@@ -502,7 +525,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         try {
           final long[] lastOperationId = entry.getValue().getLog().getLastOperationId(true);
 
-          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
+          OLogManager.instance().warn(this, "DISTRIBUTED --> send align request in broadcast for database %s from %d:%d",
+              databaseName, lastOperationId[0], lastOperationId[1]);
 
           synchronized (pendingAlignments) {
             for (String node : remoteClusterNodes.keySet()) {
@@ -536,11 +560,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       else {
         // WAKE UP ALL THE POSTPONED ALIGNMENTS
         for (Entry<String, Boolean> entry : pendingAlignments.entrySet()) {
-          if (entry.getValue()) {
-            final String[] parts = entry.getKey().split("/");
-            final String node = parts[0];
-            final String databaseName = parts[1];
+          final String[] parts = entry.getKey().split("/");
+          final String node = parts[0];
+          final String databaseName = parts[1];
 
+          if (entry.getValue()) {
             final OStorageSynchronizer synch = synchronizers.get(databaseName);
 
             long[] lastOperationId;
@@ -558,7 +582,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               OLogManager.instance().warn(this, "DISTRIBUTED -> error on retrieve last operation id from the log for db %s",
                   databaseName);
             }
-          }
+          } else
+            OLogManager.instance().info(this,
+                "DISTRIBUTED - database %s:%s is in alignment status yet, the node is not online yet", node, databaseName);
         }
       }
     }

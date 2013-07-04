@@ -203,7 +203,7 @@ public class ODatabaseJournal {
 
       final OAbstractDistributedTask<?> op = getOperation(fileOffset);
 
-      OLogManager.instance().warn(this, "DISTRIBUTED Found uncommitted operation %s", op);
+      OLogManager.instance().info(this, "DISTRIBUTED Found uncommitted operation %s", op);
 
       if (op instanceof OAbstractRecordDistributedTask<?>)
         // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
@@ -223,7 +223,7 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      OLogManager.instance().warn(this, "Updating status operation #%d.%d rid %s",
+      OLogManager.instance().info(this, "Updating status operation #%d.%d rid %s",
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { 1 });
@@ -280,7 +280,7 @@ public class ODatabaseJournal {
         final ORecordId rid = task.getRid();
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().warn(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
+          OLogManager.instance().info(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
               iOperationId);
 
         if (needOverWrited(iRunId, iOperationId))
@@ -300,7 +300,7 @@ public class ODatabaseJournal {
         varSize = cmdBinary.length;
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().warn(this, "Journaled operation %s '%s' as #%d.%d", iOperationType.toString(), cmdText, iRunId,
+          OLogManager.instance().info(this, "Journaled operation %s '%s' as #%d.%d", iOperationType.toString(), cmdText, iRunId,
               iOperationId);
 
         offset = writeOperationLogHeader(iOperationType, varSize);

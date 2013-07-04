@@ -129,7 +129,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final int                        maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode);
+    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
     clientId = iClientId;
     configuration = null;
 
@@ -1626,6 +1626,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
       // CHECK AGAIN IF THERE ARE FREE CHANNELS
+      createConnectionPool();
       synchronized (networkPool) {
         availableConnections = !networkPool.isEmpty();
       }
@@ -1936,7 +1937,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
-        // serverURLs.clear();
+        serverURLs.clear();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("id"))) {

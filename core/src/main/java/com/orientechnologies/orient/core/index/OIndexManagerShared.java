@@ -253,7 +253,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
               final int clusterId = newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
               if (clusterId > -1)
-                newDb.getStorage().dropCluster(clusterId, false);
+                newDb.dropCluster(clusterId, false);
 
               newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
               newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadata.CLUSTER_INDEX_NAME, null,

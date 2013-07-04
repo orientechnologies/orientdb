@@ -15,10 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -40,11 +43,14 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 
 /**
  * SQL Helper class
@@ -53,11 +59,13 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
  * 
  */
 public class OSQLHelper {
-  public static final String NAME             = "sql";
+  public static final String NAME              = "sql";
 
-  public static final String VALUE_NOT_PARSED = "_NOT_PARSED_";
-  public static final String NOT_NULL         = "_NOT_NULL_";
-  public static final String DEFINED          = "_DEFINED_";
+  public static final String VALUE_NOT_PARSED  = "_NOT_PARSED_";
+  public static final String NOT_NULL          = "_NOT_NULL_";
+  public static final String DEFINED           = "_DEFINED_";
+
+  private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
@@ -205,7 +213,7 @@ public class OSQLHelper {
     return new OSQLFilterItemField(iCommand, iWord);
   }
 
-  public static Object getFunction(final OBaseParser iCommand, final String iWord) {
+  public static OSQLFunctionRuntime getFunction(final OBaseParser iCommand, final String iWord) {
     final int separator = iWord.indexOf('.');
     final int beginParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_BEGIN);
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
@@ -315,5 +323,27 @@ public class OSQLHelper {
       }
     }
     return changedDocuments;
+  }
+
+  public static String[] getAllMethodNames() {
+    final List<String> methods = new ArrayList<String>();
+    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
+    while (ite.hasNext()) {
+      final OSQLMethodFactory factory = ite.next();
+      methods.addAll(factory.getMethodNames());
+    }
+    return methods.toArray(new String[methods.size()]);
+  }
+
+  public static OSQLMethod getMethodByName(String name) {
+    name = name.toLowerCase();
+    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
+    while (ite.hasNext()) {
+      final OSQLMethodFactory factory = ite.next();
+      if (factory.hasMethod(name)) {
+        return factory.createMethod(name);
+      }
+    }
+    return null;
   }
 }

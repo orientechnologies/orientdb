@@ -48,7 +48,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String             PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
-    super(iName, iFilePath, iMode);
+    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
     lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 
     PROFILER_CREATE_RECORD = "db." + name + ".createRecord";

@@ -98,7 +98,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     return tree.iterator(iAutoConvertToRecord);
   }
 
-  public OLazyIterator<OIdentifiable> iterator() {
+  public Iterator<OIdentifiable> iterator() {
     return tree.iterator();
   }
 

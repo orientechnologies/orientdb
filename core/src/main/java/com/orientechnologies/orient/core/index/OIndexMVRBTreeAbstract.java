@@ -473,6 +473,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
         }
 
       lazySave();
+      unload();
 
       if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
@@ -601,7 +602,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<Entry<Object, T>> inverseIterator() {
     checkForRebuild();
 
@@ -917,6 +918,7 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       map.commitChanges(true);
+      map.unload();
       Orient.instance().getMemoryWatchDog().removeListener(watchDog);
 
     } finally {
@@ -988,7 +990,12 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
   }
 
   public void releaseModificationLock() {
-    modificationLock.releaseModificationLock();
+    try {
+      modificationLock.releaseModificationLock();
+    } catch (IllegalMonitorStateException e) {
+      OLogManager.instance().error(this, "Error on releasing index lock against %s", e, getName());
+      throw e;
+    }
   }
 
   @Override

@@ -61,20 +61,19 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     ODatabaseDocumentTx db = null;
 
-    final List<OIdentifiable> response;
-
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      response = (List<OIdentifiable>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
-          .execute();
+      final List<OIdentifiable> response = (List<OIdentifiable>) db.command(
+          new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan)).execute();
+
+      sendRecordsContent(iRequest, iResponse, response, fetchPlan);
 
     } finally {
       if (db != null)
         db.close();
     }
 
-    sendRecordsContent(iRequest, iResponse, response, fetchPlan);
     return false;
   }
 

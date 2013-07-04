@@ -62,11 +62,14 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   public ORecordVersion executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] UPDATE RECORD %s v.%s", nodeSource, databaseName, rid.toString(), version.toString());
+    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] UPDATE RECORD %s v.%s", nodeSource, databaseName, rid.toString(),
+        version.toString());
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
+      if (version.getCounter() > -1)
+        version.setRollbackMode();
       record.fill(rid, version, content, true);
       record.save();
 
@@ -88,7 +91,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
     final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleUpdateConflict(iRemoteNodeId, rid, version, (Integer) remoteResult);
+    resolver.handleUpdateConflict(iRemoteNodeId, rid, version, (ORecordVersion) remoteResult);
   }
 
   @Override
@@ -97,8 +100,8 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
-    if(version == null)
-        version = OVersionFactory.instance().createUntrackedVersion();
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
     out.write(recordType);
   }
@@ -110,8 +113,8 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
-    if(version == null)
-        version = OVersionFactory.instance().createUntrackedVersion();
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
     recordType = in.readByte();
   }

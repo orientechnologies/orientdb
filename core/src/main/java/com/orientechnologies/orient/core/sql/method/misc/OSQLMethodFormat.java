@@ -16,36 +16,44 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
+
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodFormat extends OAbstractSQLMethod {
 
-    public static final String NAME = "format";
+  public static final String NAME = "format";
 
-    public OSQLMethodFormat() {
-        super(NAME, 1);
+  public OSQLMethodFormat() {
+    super(NAME, 1, 2);
+  }
+
+  @Override
+  public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+
+    final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
+    if (v != null) {
+      if (ioResult instanceof Date) {
+        final SimpleDateFormat format = new SimpleDateFormat(v.toString());
+        if (iMethodParams.length > 1)
+          format.setTimeZone(TimeZone.getTimeZone(iMethodParams[1].toString()));
+        else
+          format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+        ioResult = format.format(ioResult);
+      } else {
+        ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
+      }
     }
 
-    @Override
-    public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        
-        final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
-        if (v != null) {
-            if (ioResult instanceof Date) {
-                ioResult = new SimpleDateFormat(v.toString()).format(ioResult);
-            } else {
-                ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;
-            }
-        }
-
-        return ioResult;
-    }
+    return ioResult;
+  }
 }

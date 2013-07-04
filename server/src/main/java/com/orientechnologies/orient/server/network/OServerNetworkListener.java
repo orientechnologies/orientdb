@@ -53,7 +53,8 @@ public class OServerNetworkListener extends Thread {
   public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
       final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-    super(Orient.getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
+    super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":"
+        + iHostPortRange);
     server = iServer;
 
     listen(iHostName, iHostPortRange, iProtocolName);

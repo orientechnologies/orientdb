@@ -33,6 +33,11 @@ public class OObjectDatabasePool extends ODatabasePoolBase<OObjectDatabaseTx> {
     return globalInstance;
   }
 
+  public static OObjectDatabasePool global(final int iPoolMin, final int iPoolMax) {
+    globalInstance.setup(iPoolMin, iPoolMax);
+    return globalInstance;
+  }
+
   @Override
   protected OObjectDatabaseTx createResource(final Object owner, final String iDatabaseName, final Object... iAdditionalArgs) {
     return new OObjectDatabaseTxPooled((OObjectDatabasePool) owner, iDatabaseName, (String) iAdditionalArgs[0],

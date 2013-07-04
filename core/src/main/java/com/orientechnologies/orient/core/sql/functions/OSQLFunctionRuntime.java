@@ -68,7 +68,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
    * @param iRequester
    * @return
    */
-  public Object execute(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final OCommandContext iContext) {
     // RESOLVE VALUES USING THE CURRENT RECORD
     for (int i = 0; i < configuredParameters.length; ++i) {
       if (configuredParameters[i] instanceof OSQLFilterItemField)
@@ -84,14 +84,15 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           // TRY WITH SIMPLE CONDITION
           final String text = ((OCommandSQL) configuredParameters[i]).getText();
           final OSQLPredicate pred = new OSQLPredicate(text);
-          runtimeParameters[i] = pred.evaluate((ORecord<?>) iCurrentRecord, iCurrentResult, iContext);
+          runtimeParameters[i] = pred.evaluate(iCurrentRecord instanceof ORecord<?> ? (ORecord<?>) iCurrentRecord : null,
+              (ODocument) iCurrentResult, iContext);
           // REPLACE ORIGINAL PARAM
           configuredParameters[i] = pred;
 
         }
       } else if (configuredParameters[i] instanceof OSQLPredicate) {
-        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate((ORecord<?>) iCurrentRecord, iCurrentResult,
-            iContext);
+        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
+            (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
       } else {
         // plain value
         runtimeParameters[i] = configuredParameters[i];
@@ -111,6 +112,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     function.setResult(iValue);
   }
 
+  @Override
   public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
     return execute(iRecord != null ? (ORecordSchemaAware<?>) iRecord.getRecord() : null, null, iContext);
   }

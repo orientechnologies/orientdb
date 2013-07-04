@@ -569,7 +569,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       Object objectToAdd = null;
       linkedType = null;
 
-      if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
+      if (item.equals("null"))
+        // NULL VALUE
+        objectToAdd = null;
+      else if (item.length() > 2 && item.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
         // REMOVE EMBEDDED BEGIN/END CHARS
         item = item.substring(1, item.length() - 1);
 
@@ -604,11 +607,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         objectToAdd = fieldTypeFromStream(iDocument, linkedType, item);
       }
 
-      if (objectToAdd != null) {
-        if (objectToAdd instanceof ODocument && coll instanceof ORecordElement)
-          ((ODocument) objectToAdd).addOwner((ORecordElement) coll);
-        ((Collection<Object>) coll).add(objectToAdd);
-      }
+      if (objectToAdd != null && objectToAdd instanceof ODocument && coll instanceof ORecordElement)
+        ((ODocument) objectToAdd).addOwner((ORecordElement) coll);
+
+      ((Collection<Object>) coll).add(objectToAdd);
     }
 
     if (coll instanceof ORecordElement)
@@ -632,8 +634,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (i > 0)
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
-      if (o == null)
+      if (o == null) {
+        iOutput.append("null");
         continue;
+      }
 
       OIdentifiable id = null;
       ODocument doc = null;

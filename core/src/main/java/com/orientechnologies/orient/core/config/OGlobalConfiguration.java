@@ -129,11 +129,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
   CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -224,7 +224,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_OPTIMIZE_THRESHOLD(
       "mvrbtree.optimizeThreshold",
       "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 10000),
+      Integer.class, 100000),
 
   MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
@@ -330,7 +330,7 @@ public enum OGlobalConfiguration {
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),

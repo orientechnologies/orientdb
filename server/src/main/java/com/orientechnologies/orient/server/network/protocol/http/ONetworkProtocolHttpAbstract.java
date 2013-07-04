@@ -23,9 +23,11 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -53,26 +55,26 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String                 COMMAND_SEPARATOR = "|";
-  private static int                          requestMaxContentLength;                // MAX = 10Kb
+  private static final String                  COMMAND_SEPARATOR  = "|";
+  private static int                          requestMaxContentLength;                  // MAX = 10Kb
   private static int                          socketTimeout;
 
-  protected OClientConnection                 connection;
+  protected OClientConnection                  connection;
   protected OChannelTextServer                channel;
-  protected OUser                             account;
+  protected OUser                              account;
   protected OHttpRequest                      request;
-  protected OHttpResponse                     response;
+  protected OHttpResponse                      response;
 
-  private final StringBuilder                 requestContent    = new StringBuilder();
+  private final StringBuilder                  requestContent    = new StringBuilder();
   private String                              responseCharSet;
   private String[]                            additionalResponseHeaders;
   private String                              listeningAddress  = "?";
 
-  protected static OHttpNetworkCommandManager sharedCmdManager;
+  protected static OHttpNetworkCommandManager  sharedCmdManager;
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
-    super(Orient.getThreadGroup(), "IO-HTTP");
+    super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override
@@ -134,6 +136,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       final String commandString = getCommandString(command);
 
       final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
+      Map<String, String> requestParams = cmdManager.extractUrlTokens(commandString);
+      if (requestParams != null) {
+        if (request.parameters == null) {
+          request.parameters = new HashMap<String, String>();
+        }
+        for (Map.Entry<String, String> entry : requestParams.entrySet()) {
+          request.parameters.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
+        }
+      }
+
       if (cmd != null)
         try {
           if (cmd.beforeExecute(request, response))

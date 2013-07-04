@@ -43,7 +43,7 @@ public class OMultipleDistributedTasks extends OAbstractDistributedTask<Object[]
 
   @Override
   public Object[] call() throws Exception {
-    OLogManager.instance().warn(this, "DISTRIBUTED <-[%s/%s] executing group of %d command(s)", nodeSource, databaseName,
+    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] executing group of %d command(s)", nodeSource, databaseName,
         tasks.size());
 
     final Object[] result = new Object[tasks.size()];

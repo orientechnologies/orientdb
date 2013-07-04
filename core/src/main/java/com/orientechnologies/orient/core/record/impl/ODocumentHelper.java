@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
@@ -678,7 +679,7 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      final ORecordInternal<?> currentRecord = (ORecordInternal<?>) iContext.getVariable("$current");
+      final ORecordInternal<?> currentRecord = iContext != null ? (ORecordInternal<?>) iContext.getVariable("$current") : null;
       for (int i = 0; i < args.size(); ++i) {
         final String arg = args.get(i);
         final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
@@ -716,6 +717,10 @@ public class ODocumentHelper {
         final int offset = Integer.parseInt(args.get(0));
         final String stringValue = currentValue.toString();
         result = stringValue.substring(offset < stringValue.length() ? stringValue.length() - offset : 0);
+      } else {
+        final OSQLFunctionRuntime f = OSQLHelper.getFunction(null, iFunction);
+        if (f != null)
+          result = f.execute(currentRecord, null, iContext);
       }
     }
 

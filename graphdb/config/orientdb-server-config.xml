@@ -2,7 +2,10 @@
 <orient-server>
 	<handlers>
 		<handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
-			<parameters />
+			<parameters>
+				<parameter name="enabled" value="true" />
+				<parameter name="graph.pool.max" value="50" />
+			</parameters>
 		</handler>
 		<!-- JMX SERVER, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
 		<handler class="com.orientechnologies.orient.server.handler.OJMXPlugin">
@@ -65,8 +68,6 @@
 		</cluster>
 	</network>
 	<storages>
-		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
 	</storages>
 	<users>
 	</users>

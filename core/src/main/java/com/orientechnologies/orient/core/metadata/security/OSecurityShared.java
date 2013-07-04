@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -376,6 +377,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     acquireExclusiveLock();
     try {
 
+      getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
+      getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
+
       return createMetadata();
 
     } finally {
@@ -400,7 +404,12 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     if (!roleClass.existsProperty("name")) {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
+      if (indexes.isEmpty())
+        roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
+
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
     if (!roleClass.existsProperty("rules"))

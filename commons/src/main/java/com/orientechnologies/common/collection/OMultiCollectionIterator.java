@@ -117,7 +117,15 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           size += ((Collection<?>) o).size();
         else if (o instanceof Map<?, ?>)
           size += ((Map<?, ?>) o).size();
-        else
+        else if (o instanceof OMultiCollectionIterator<?>)
+          size += ((OMultiCollectionIterator<?>) o).size();
+        else if (o instanceof Iterator<?> && o instanceof OResettable) {
+          while (((Iterator<?>) o).hasNext()) {
+            size++;
+            ((Iterator<?>) o).next();
+          }
+          ((OResettable) o).reset();
+        } else
           size++;
     }
     return size;

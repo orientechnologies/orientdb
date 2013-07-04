@@ -91,13 +91,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_ORDER                     = "ORDER";
   public static final String          KEYWORD_BY                        = "BY";
   public static final String          KEYWORD_GROUP                     = "GROUP";
+  public static final String          KEYWORD_FETCHPLAN                 = "FETCHPLAN";
   private static final int            MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
 
   private Map<String, String>         projectionDefinition              = null;
-  private Map<String, Object>         projections                       = null;    // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
-                                                                                    // IT'S
-                                                                                    // USED THE
-                                                                                    // PROJECTIONS IN GROUPED-RESULTS
+  private Map<String, Object>         projections                       = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
+                                                                                       // IT'S
+                                                                                       // USED THE
+                                                                                       // PROJECTIONS IN GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields;
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
@@ -105,6 +106,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private int                         fetchLimit                        = -1;
   private OIdentifiable               lastRecord;
   private Iterator<OIdentifiable>     subIterator;
+  private String                      fetchPlan;
 
   /**
    * Compile the filter conditions only the first time.
@@ -157,6 +159,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseLimit(w);
           else if (w.equals(KEYWORD_SKIP))
             parseSkip(w);
+          else if (w.equals(KEYWORD_FETCHPLAN))
+            parseFetchplan(w);
           else if (w.equals(KEYWORD_TIMEOUT))
             parseTimeout(w);
           else
@@ -336,7 +340,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (target == null) {
       if (let != null)
         // EXECUTE ONCE TO ASSIGN THE LET
-        assignLetClauses(null);
+        assignLetClauses(lastRecord != null ? lastRecord.getRecord() : null);
 
       // SEARCH WITHOUT USING TARGET (USUALLY WHEN LET/INDEXES ARE INVOLVED)
       return;
@@ -1284,6 +1288,24 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>]";
   }
 
+  /**
+   * Parses the fetchplan keyword if found.
+   */
+  protected boolean parseFetchplan(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_FETCHPLAN))
+      return false;
+
+    parserNextWord(true);
+    fetchPlan = OStringSerializerHelper.getStringContent(parserGetLastWord());
+    request.setFetchPlan( fetchPlan );
+
+    return true;
+  }
+
+  public String getFetchPlan() {
+    return fetchPlan != null ? fetchPlan : request.getFetchPlan();
+  }
+
   protected boolean optimizeExecution() {
     if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && groupByFields == null
         && projections != null && projections.size() == 1) {
@@ -1304,6 +1326,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           } else if (parsedTarget.getTargetIndex() != null) {
             count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+          } else {
+            final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
+            if (recs != null) {
+              if (recs instanceof Collection<?>)
+                count += ((Collection<?>) recs).size();
+              else {
+                for (Object o : recs)
+                  count++;
+              }
+            }
+
           }
 
           if (tempResult == null)

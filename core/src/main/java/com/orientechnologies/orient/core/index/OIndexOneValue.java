@@ -27,6 +27,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -449,22 +450,81 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
   public long getSize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return map.size();
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
+    }
+  }
+
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int maxValuesToFetch) {
+    checkForRebuild();
+
+    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
+      throw new IllegalArgumentException("Range from-to parameters are of different types");
+
+    acquireExclusiveLock();
+    try {
+
+      final OMVRBTreeEntry<Object, OIdentifiable> firstEntry;
+
+      if (iRangeFrom == null)
+        firstEntry = (OMVRBTreeEntry<Object, OIdentifiable>) map.firstEntry();
+      else if (iFromInclusive)
+        firstEntry = map.getCeilingEntry(iRangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        firstEntry = map.getHigherEntry(iRangeFrom);
+
+      if (firstEntry == null)
+        return 0;
+
+      final int firstEntryIndex = map.getPageIndex();
+
+      final OMVRBTreeEntry<Object, OIdentifiable> lastEntry;
+
+      if (iRangeFrom == null)
+        lastEntry = (OMVRBTreeEntry<Object, OIdentifiable>) map.lastEntry();
+      else if (iToInclusive)
+        lastEntry = map.getHigherEntry(iRangeTo);
+      else
+        lastEntry = map.getCeilingEntry(iRangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+      final int lastEntryIndex;
+
+      if (lastEntry != null)
+        lastEntryIndex = map.getPageIndex();
+      else
+        lastEntryIndex = -1;
+
+      OMVRBTreeEntry<Object, OIdentifiable> entry = firstEntry;
+      map.setPageIndex(firstEntryIndex);
+
+      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+      long count = 0;
+      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)
+          && !(maxValuesToFetch > -1 && result.size() == maxValuesToFetch)) {
+        count++;
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      return count;
+    } finally {
+      releaseExclusiveLock();
     }
   }
 
   public long getKeySize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return map.size();
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -474,21 +534,21 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
     acquireExclusiveLock();
     try {
 
-      return map.values().iterator();
+      return new OSharedResourceIterator<OIdentifiable>(this, map.values().iterator());
 
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
     checkForRebuild();
 
     acquireExclusiveLock();
     try {
 
-      return ((OMVRBTree.Values) map.values()).inverseIterator();
+      return new OSharedResourceIterator(this, ((OMVRBTree.Values) map.values()).inverseIterator());
 
     } finally {
       releaseExclusiveLock();

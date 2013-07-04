@@ -80,21 +80,20 @@ public class ODistributedStorage implements OStorage {
   }
 
   public Object command(final OCommandRequestText iCommand) {
-
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
     executor.setProgressListener(iCommand.getProgressListener());
     executor.parse(iCommand);
 
-    final boolean distribute;
+    boolean distribute = false;
     final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ? ((OCommandExecutorSQLDelegate) executor)
         .getDelegate() : executor;
-    if (exec instanceof OCommandDistributedConditionalReplicateRequest)
-      distribute = ((OCommandDistributedConditionalReplicateRequest) exec).isReplicated();
-    else if (exec instanceof OCommandDistributedReplicateRequest)
-      distribute = true;
-    else
-      distribute = false;
+
+    if (!ODistributedThreadLocal.INSTANCE.distributedExecution)
+      if (exec instanceof OCommandDistributedConditionalReplicateRequest)
+        distribute = ((OCommandDistributedConditionalReplicateRequest) exec).isReplicated();
+      else if (exec instanceof OCommandDistributedReplicateRequest)
+        distribute = true;
 
     if (distribute)
       ODistributedThreadLocal.INSTANCE.distributedExecution = true;

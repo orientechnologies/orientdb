@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLeft;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLength;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodReplace;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRight;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSize;
@@ -79,6 +80,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     methods.put(OSQLMethodNormalize.NAME, new OSQLMethodNormalize());
     methods.put(OSQLMethodPrefix.NAME, new OSQLMethodPrefix());
     methods.put(OSQLMethodReplace.NAME, new OSQLMethodReplace());
+    methods.put(OSQLMethodRemove.NAME, new OSQLMethodRemove());
     methods.put(OSQLMethodRight.NAME, new OSQLMethodRight());
     methods.put(OSQLMethodSize.NAME, new OSQLMethodSize());
     methods.put(OSQLMethodSubString.NAME, new OSQLMethodSubString());
@@ -90,7 +92,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
   }
 
   @Override
-  public boolean hasMethod(String iName) {
+  public boolean hasMethod(final String iName) {
     return methods.containsKey(iName);
   }
 
@@ -100,7 +102,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
   }
 
   @Override
-  public OSQLMethod createMethod(String name) throws OCommandExecutionException {
+  public OSQLMethod createMethod(final String name) throws OCommandExecutionException {
     final Object m = methods.get(name);
     final OSQLMethod method;
 

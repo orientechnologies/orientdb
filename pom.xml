@@ -84,13 +84,13 @@
   </modules>
 
   <scm>
-    <connection>scm:git:git@github.com:nuvolabase/orientdb.git</connection>
-    <developerConnection>scm:git:git@github.com:nuvolabase/orientdb.git</developerConnection>
-    <url>scm:git:git@github.com:nuvolabase/orientdb.git</url>
+    <connection>scm:git:git@github.com:orientechnologies/orientdb.git</connection>
+    <developerConnection>scm:git:git@github.com:orientechnologies/orientdb.git</developerConnection>
+    <url>scm:git:git@github.com:orientechnologies/orientdb.git</url>
   </scm>
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>https://github.com/nuvolabase/orientdb/issues</url>
+    <url>https://github.com/orientechnologies/orientdb/issues</url>
   </issueManagement>
   <ciManagement>
     <system>jenkins</system>

@@ -30,6 +30,8 @@ import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -253,7 +256,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       root = null;
 
-      load();
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && !db.isClosed() && db.getStorage() instanceof OStorageEmbedded) {
+        // RELOAD IT
+        try {
+          load();
+        } catch (Exception e) {
+          // IGNORE IT
+        }
+      }
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);

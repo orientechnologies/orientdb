@@ -63,6 +63,8 @@ public interface OCommandExecutor {
 
   public <RET extends OCommandExecutor> RET setLimit(int iLimit);
 
+  public String getFetchPlan();
+
   public Map<Object, Object> getParameters();
 
   public OCommandContext getContext();

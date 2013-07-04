@@ -722,7 +722,7 @@ public class ODatabaseRaw implements ODatabase {
         // CREATE A NEW ONE
         storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
     }
-    
+
     storage.getConfiguration().update();
   }
 
@@ -730,17 +730,17 @@ public class ODatabaseRaw implements ODatabase {
     storage.getConfiguration().properties = null;
   }
 
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
   @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+  public <V> V callInRecordLock(final Callable<V> iCallable, final ORID rid, final boolean iExclusiveLock) {
     return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
   @Override
-  public ORecordMetadata getRecordMetadata(ORID rid) {
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
   }
 
@@ -758,7 +758,7 @@ public class ODatabaseRaw implements ODatabase {
       }
   }
 
-  protected boolean isClusterBoundedToClass(int iClusterId) {
+  protected boolean isClusterBoundedToClass(final int iClusterId) {
     return false;
   }
 
@@ -778,7 +778,7 @@ public class ODatabaseRaw implements ODatabase {
     storage.freeze(false);
   }
 
-  public void freeze(boolean throwException) {
+  public void freeze(final boolean throwException) {
     final OStorageLocalAbstract storage;
     if (getStorage() instanceof OStorageLocalAbstract)
       storage = ((OStorageLocalAbstract) getStorage());
@@ -803,12 +803,12 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   @Override
-  public void freezeCluster(int iClusterId) {
+  public void freezeCluster(final int iClusterId) {
     freezeCluster(iClusterId, false);
   }
 
   @Override
-  public void releaseCluster(int iClusterId) {
+  public void releaseCluster(final int iClusterId) {
     final OLocalPaginatedStorage storage;
     if (getStorage() instanceof OLocalPaginatedStorage)
       storage = ((OLocalPaginatedStorage) getStorage());
@@ -821,7 +821,7 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
+  public void freezeCluster(final int iClusterId, final boolean throwException) {
     if (getStorage() instanceof OLocalPaginatedStorage) {
       final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
       paginatedStorage.freeze(throwException, iClusterId);

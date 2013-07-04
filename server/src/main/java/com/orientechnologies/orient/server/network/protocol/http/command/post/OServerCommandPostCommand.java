@@ -15,15 +15,17 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "POST|command/*" };
+  private static final String[] NAMES = { "GET|command/*", "POST|command/*" };
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
@@ -34,11 +36,14 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     final String language = urlParts.length > 2 ? urlParts[2].trim() : "sql";
     String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
-    final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+    String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
     if (iRequest.content != null)
       // CONTENT REPLACES TEXT
       text = iRequest.content;
+
+    if (text == null)
+      throw new IllegalArgumentException("text cannot be null");
 
     iRequest.data.commandInfo = "Command";
     iRequest.data.commandDetail = text;
@@ -51,15 +56,27 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       db = getProfiledDatabaseInstance(iRequest);
 
       final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
+
       cmd.setText(text);
       cmd.setLimit(limit);
       cmd.setFetchPlan(fetchPlan);
-      response = db.command(cmd).execute();
+
+      final OCommandExecutor executor = OCommandManager.instance().getExecutor(cmd);
+      executor.setContext(cmd.getContext());
+      executor.setProgressListener(cmd.getProgressListener());
+      executor.parse(cmd);
+
+      if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET"))
+        throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
+
+      response = executor.execute(null);
+      
+      fetchPlan = executor.getFetchPlan();
 
       final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
 
       iResponse.writeResult(response, format);
-      
+
     } finally {
       if (db != null)
         db.close();

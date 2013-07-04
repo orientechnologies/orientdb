@@ -64,6 +64,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       throws IOException {
     super(iDatabase, iFileName, iListener);
 
+    if (fileName == null)
+      throw new IllegalArgumentException("file name missing");
+
     if (!fileName.endsWith(".gz")) {
       fileName += ".gz";
     }
@@ -487,7 +490,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes"));
+        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded"));
 
         recordExported++;
         recordNum++;
