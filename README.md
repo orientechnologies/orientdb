@@ -29,10 +29,10 @@ Studio Web tool
     $ bower install
     ```
 
-4. Start OrientDB server
+4. Start OrientDB server.
 
 
-5. Start the server grunt
+5. Start the server grunt:
 
 >
 	$ grunt server
