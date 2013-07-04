@@ -14,7 +14,7 @@ angular.module('login.controller',['database.services']).controller("LoginContro
 				Database.current =  currentDb;
 				Database.username = $scope.username;
 				Database.dbName = $scope.database;
-				$location.path("/database/" + $scope.database);
+				$location.path("/database/" + $scope.database + "/browse");
 			});
 	
 		});

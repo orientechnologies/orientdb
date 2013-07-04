@@ -1,0 +1,16 @@
+<div class="row-fluid">
+	<div class="span9 offset3">
+		<form  class="form-horizontal">
+			<div class="control-group" ng-repeat = "header in headers">
+				<label class="control-label" for="input{{header}}">{{header}}</label>
+				<div class="controls">
+					<textarea id="input{{header}}" ng-model= "doc[header]"  placeholder="{{header}}"></textarea>
+				</div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<button type="submit" ng-click="save()" class="btn">Save</button>
+				</div>
+			</form>
+		</div>
+	</div>

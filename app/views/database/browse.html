@@ -1,0 +1,21 @@
+<div class="row-fluid" ng-controller="BrowseController">
+	<div class = "span12">
+		<form ng:submit="query()" class="form-inline">
+			<textarea ui-codemirror="editorOptions" ng-model="queryText"></textarea>
+		</form>
+	</div>
+	<div class = "span12 nomargin">
+		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="headers">
+			<thead>
+				<tr>
+					<th ng-repeat="header in headers">{{header}}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="result in results" ng-click="openRecord(result)">
+					<td ng-repeat="header in headers">{{result[header]}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>

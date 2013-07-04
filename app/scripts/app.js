@@ -1,7 +1,7 @@
 'use strict';
 
 
-var deps = ['header.controller','login.controller','database.controller','$strap.directives'];
+var deps = ['header.controller','login.controller','database.controller','document.controller','$strap.directives','ui.codemirror'];
 angular.module('OrientDBStudioApp', deps)
   .config(function ($routeProvider) {
     $routeProvider
@@ -9,9 +9,13 @@ angular.module('OrientDBStudioApp', deps)
         templateUrl: 'views/login.html',
         controller: 'LoginController'
       })
-      .when('/database/:database', {
-        templateUrl: 'views/database.html',
+      .when('/database/:database/:action', {
+        templateUrl: 'views/database/database.html',
         controller: 'DatabaseController'
+      })
+      .when('/database/:database/browse/:rid', {
+        templateUrl: 'views/database/editRecord.html',
+        controller: 'DocumentController'
       })
       .otherwise({
         redirectTo: '/'

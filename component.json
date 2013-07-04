@@ -9,7 +9,8 @@
     "angular-cookies": "~1.0.5",
     "angular-sanitize": "~1.0.5",
     "angular-strap" : "~0.7.4",
-    "js-base64":"~2.1.2"	
+    "js-base64":"~2.1.2",
+    "angular-ui-codemirror": "latest"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

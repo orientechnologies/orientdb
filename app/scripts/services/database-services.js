@@ -1,6 +1,6 @@
 var database = angular.module('database.services', ['ngResource']);
 database.factory('Database', function(){
-	return { current : { }};
+	return { };
 }) ;
 
 database.factory('DatabaseApi', function($http,$resource){
@@ -21,6 +21,14 @@ database.factory('CommandApi', function($http,$resource){
 
 	resource.queryText = function(params,callback){
 		$http.post('/api/command/' + params.database + "/" + params.language + "/" + params.text + "/" + params.limit).success(callback);
+	}
+	return resource;
+}) ;
+database.factory('DocumentApi', function($http,$resource){
+
+	var resource = $resource('/api/document/:database/:document');
+	resource.updateDocument = function (database,rid,doc,callback){
+		$http.put('/api/document/' + database + "/" + rid.replace('#',''),doc).success(callback);		
 	}
 	return resource;
 }) ;
