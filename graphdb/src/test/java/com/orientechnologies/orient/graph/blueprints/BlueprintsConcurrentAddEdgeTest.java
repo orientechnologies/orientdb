@@ -156,7 +156,7 @@ public class BlueprintsConcurrentAddEdgeTest {
             try {
               OrientVertex iSourceVertex = databaseNoTx.getVertex(vertexReg.get(keyFrom));
               OrientVertex iDestVertex = databaseNoTx.getVertex(vertexReg.get(keyTo));
-              databaseNoTx.addEdge("CustomEdge", iSourceVertex, iDestVertex, "CustomEdge");
+              databaseNoTx.addEdge(null, iSourceVertex, iDestVertex, "CustomEdge");
 
               // OK
               if (retry > 2)
