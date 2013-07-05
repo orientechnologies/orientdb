@@ -10,17 +10,17 @@ Studio Web tool
 
 0. Install [Node.js](http://nodejs.org/) and NPM 
 
-1. Install global dependencies `grunt-cli`, `bower`, and `karma`:
+1. Clone the repository:
 
     ```bash
-    $ npm install -g karma grunt-cli bower
+    $ git clone https://github.com/orientechnologies/orientdb-studio.git
     ```
 
-2. Clone the repo:
+2. Install global dependencies `yo`, `bower` and `compass` (remove "sudo" if your account already has the permissions to install software):
 
-	```bash
-	$ git clone https://github.com/orientechnologies/orientdb-studio.git
-	```
+    ```bash
+    $ sudo npm install -g yo bower compass
+    ```
 
 3. Install local dependencies:
 
@@ -32,14 +32,9 @@ Studio Web tool
 4. Start OrientDB server.
 
 
-5. Start the server grunt:
+5. Start the server grunt and your browser will be opened at `http://localhost:9000`:
 
->
+    ```bash
 	$ grunt server
-
-
-
-
-
-
-
+    ```
+    
