@@ -17,13 +17,15 @@ package com.orientechnologies.common.concur.resource;
 
 import java.util.Iterator;
 
+import com.orientechnologies.common.util.OResettable;
+
 /**
  * Iterator against a shared resource: locks the resource while fetching.
  * 
  * @author Luca Garulli
  * 
  */
-public class OSharedResourceIterator<T> implements Iterator<T> {
+public class OSharedResourceIterator<T> implements Iterator<T>, OResettable {
   protected final OSharedResourceAdaptiveExternal resource;
   protected Iterator<?>                           iterator;
 
@@ -58,6 +60,19 @@ public class OSharedResourceIterator<T> implements Iterator<T> {
     resource.acquireExclusiveLock();
     try {
       iterator.remove();
+    } finally {
+      resource.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public void reset() {
+    if( !( iterator instanceof OResettable) )
+      return;
+    
+    resource.acquireExclusiveLock();
+    try {
+      ((OResettable) iterator).reset();
     } finally {
       resource.releaseExclusiveLock();
     }
