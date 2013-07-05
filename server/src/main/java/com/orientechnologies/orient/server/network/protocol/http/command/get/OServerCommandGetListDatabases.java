@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import java.io.IOException;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
@@ -43,7 +42,7 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
 
     try {
       final ODocument result = new ODocument();
-      result.field("databases", OServerMain.server().getAvailableStorageNames().keySet());
+      result.field("databases", server.getAvailableStorageNames().keySet());
       iResponse.writeRecord(result);
     } finally {
     }

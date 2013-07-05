@@ -152,7 +152,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback) {
-    if (ODistributedThreadLocal.INSTANCE.distributedExecution || undistributedClusters.contains(iRecordId.getClusterId())) {
+    if (ODistributedThreadLocal.INSTANCE.get() != null || undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
 

@@ -55,22 +55,22 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String                  COMMAND_SEPARATOR  = "|";
-  private static int                          requestMaxContentLength;                  // MAX = 10Kb
+  private static final String                 COMMAND_SEPARATOR = "|";
+  private static int                          requestMaxContentLength;                // MAX = 10Kb
   private static int                          socketTimeout;
 
-  protected OClientConnection                  connection;
+  protected OClientConnection                 connection;
   protected OChannelTextServer                channel;
-  protected OUser                              account;
+  protected OUser                             account;
   protected OHttpRequest                      request;
-  protected OHttpResponse                      response;
+  protected OHttpResponse                     response;
 
-  private final StringBuilder                  requestContent    = new StringBuilder();
+  private final StringBuilder                 requestContent    = new StringBuilder();
   private String                              responseCharSet;
   private String[]                            additionalResponseHeaders;
   private String                              listeningAddress  = "?";
 
-  protected static OHttpNetworkCommandManager  sharedCmdManager;
+  protected static OHttpNetworkCommandManager sharedCmdManager;
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {

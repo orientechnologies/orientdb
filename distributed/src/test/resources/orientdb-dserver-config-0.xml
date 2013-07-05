@@ -4,9 +4,9 @@
 		<handler
 			class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
 			<parameters>
-				<parameter value="europe1" name="alias" />
+				<parameter value="europe0" name="alias" />
 				<parameter value="true" name="enabled" />
-				<parameter value="src/test/resources/hazelcast-1.xml"
+				<parameter value="src/test/resources/hazelcast-0.xml"
 					name="configuration.hazelcast" />
 				<parameter name="alignment.startup" value="true" />
 				<parameter name="alignment.timer" value="0" />
@@ -79,7 +79,7 @@
 		<user resources="connect,server.listDatabases" password="guest"
 			name="guest" />
 		<user resources="database.passthrough"
-			password="42BF13166BD3DCA08BF21DCD7BE9F1FFDCD81772B9467F6C61ABC634AEF14B77"
+			password="79498491C4D4F1360816D003E2004BC04606AA1C31B1A0E3BCF091A30EFDAB7D"
 			name="replicator" />
 	</users>
 	<properties>

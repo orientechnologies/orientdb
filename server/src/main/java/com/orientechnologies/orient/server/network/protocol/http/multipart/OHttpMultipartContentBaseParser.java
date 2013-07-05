@@ -27,15 +27,15 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  */
 public class OHttpMultipartContentBaseParser implements OHttpMultipartContentParser<String> {
 
-	@Override
-	public String parse(OHttpRequest iRequest, Map<String, String> headers, OHttpMultipartContentInputStream in,
-			ODatabaseRecord database) throws IOException {
-		StringBuilder builder = new StringBuilder();
-		int b;
-		while ((b = in.read()) > 0)
-			builder.append((char) b);
+  @Override
+  public String parse(OHttpRequest iRequest, Map<String, String> headers, OHttpMultipartContentInputStream in,
+      ODatabaseRecord database) throws IOException {
+    StringBuilder builder = new StringBuilder();
+    int b;
+    while ((b = in.read()) > 0)
+      builder.append((char) b);
 
-		return builder.toString();
-	}
+    return builder.toString();
+  }
 
 }

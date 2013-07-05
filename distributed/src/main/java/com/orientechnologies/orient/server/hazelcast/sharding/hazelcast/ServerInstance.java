@@ -17,6 +17,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNodeLookup;
@@ -35,8 +36,10 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
   private final Timer                             timer       = new Timer("DHT timer", true);
   private String                                  configFile;
   private ODHTConfiguration                       dhtConfiguration;
+  private OServer                                 server;
 
-  public ServerInstance(String configFile) {
+  public ServerInstance(final OServer iServer, final String configFile) {
+    this.server = iServer;
     this.configFile = configFile;
   }
 
@@ -47,7 +50,7 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
       throw new OConfigurationException("Error on creation Hazelcast instance");
     }
 
-    localNode = new OLocalDHTNode(getNodeId(hazelcastInstance.getCluster().getLocalMember()));
+    localNode = new OLocalDHTNode(server, getNodeId(hazelcastInstance.getCluster().getLocalMember()));
     localNode.setNodeLookup(this);
     localNode.setDhtConfiguration(dhtConfiguration);
     INSTANCES.put(hazelcastInstance.getCluster().getLocalMember().getUuid(), this);

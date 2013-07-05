@@ -26,37 +26,37 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartHelper {
 
-	protected static boolean isMultipartPartHeader(StringBuilder header) {
-		final String linePart = header.toString();
-		return ((linePart.equals(OHttpUtils.MULTIPART_CONTENT_CHARSET)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_FILENAME))
-				|| (linePart.equals(OHttpUtils.MULTIPART_CONTENT_NAME)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_TYPE))
-				|| (linePart.equals(OHttpUtils.MULTIPART_CONTENT_DISPOSITION)) || (linePart
-				.equals(OHttpUtils.MULTIPART_CONTENT_TRANSFER_ENCODING)));
-	}
+  protected static boolean isMultipartPartHeader(StringBuilder header) {
+    final String linePart = header.toString();
+    return ((linePart.equals(OHttpUtils.MULTIPART_CONTENT_CHARSET)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_FILENAME))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_NAME)) || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_TYPE))
+        || (linePart.equals(OHttpUtils.MULTIPART_CONTENT_DISPOSITION)) || (linePart
+          .equals(OHttpUtils.MULTIPART_CONTENT_TRANSFER_ENCODING)));
+  }
 
-	public static boolean isEndRequest(final OHttpRequest iRequest) throws IOException {
-		int in = iRequest.multipartStream.read();
-		if (((char) in) == '-') {
-			in = iRequest.multipartStream.read();
-			if (((char) in) == '-') {
-				in = iRequest.multipartStream.read();
-				if (((char) in) == '\r') {
-					in = iRequest.multipartStream.read();
-					if (((char) in) == '\n') {
-						return true;
-					} else {
-						iRequest.multipartStream.setSkipInput(in);
-					}
-				} else {
-					iRequest.multipartStream.setSkipInput(in);
-				}
-			} else {
-				iRequest.multipartStream.setSkipInput(in);
-			}
-		} else {
-			iRequest.multipartStream.setSkipInput(in);
-		}
-		return false;
-	}
+  public static boolean isEndRequest(final OHttpRequest iRequest) throws IOException {
+    int in = iRequest.multipartStream.read();
+    if (((char) in) == '-') {
+      in = iRequest.multipartStream.read();
+      if (((char) in) == '-') {
+        in = iRequest.multipartStream.read();
+        if (((char) in) == '\r') {
+          in = iRequest.multipartStream.read();
+          if (((char) in) == '\n') {
+            return true;
+          } else {
+            iRequest.multipartStream.setSkipInput(in);
+          }
+        } else {
+          iRequest.multipartStream.setSkipInput(in);
+        }
+      } else {
+        iRequest.multipartStream.setSkipInput(in);
+      }
+    } else {
+      iRequest.multipartStream.setSkipInput(in);
+    }
+    return false;
+  }
 
 }

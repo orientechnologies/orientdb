@@ -23,7 +23,7 @@ import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -64,7 +64,7 @@ public interface ODistributedServerManager {
 
   public Set<String> getRemoteNodeIds();
 
-  public Set<String> getRemoteNodeIdsBut(String iNodeId);
+  public Set<String> getRemoteNodeIdsBut(String... iNodeId);
 
   public ODocument getDatabaseStatus(String iDatabaseName);
 

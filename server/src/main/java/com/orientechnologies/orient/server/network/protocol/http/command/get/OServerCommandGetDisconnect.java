@@ -24,32 +24,32 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandGetDisconnect extends OServerCommandAbstract {
-	private static final String[]	NAMES	= { "GET|disconnect" };
+  private static final String[] NAMES = { "GET|disconnect" };
 
-	@Override
-	public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-		return true;
-	}
+  @Override
+  public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    return true;
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		checkSyntax(iRequest.url, 1, "Syntax error: disconnect");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    checkSyntax(iRequest.url, 1, "Syntax error: disconnect");
 
-		iRequest.data.commandInfo = "Disconnect";
-		iRequest.data.commandDetail = null;
+    iRequest.data.commandInfo = "Disconnect";
+    iRequest.data.commandDetail = null;
 
-		if (iRequest.sessionId != null) {
-			OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-			iRequest.sessionId = "!";
-		}
+    if (iRequest.sessionId != null) {
+      OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+      iRequest.sessionId = "!";
+    }
 
-		iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out", null,
-				false);
-		return false;
-	}
+    iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out",
+        null, false);
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

@@ -24,103 +24,103 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @XmlRootElement(name = "orient-server")
 public class OServerConfiguration {
-	public static final String								FILE_NAME							= "server-config.xml";
-	// private static final String HEADER = "OrientDB Server configuration";
+  public static final String               FILE_NAME            = "server-config.xml";
+  // private static final String HEADER = "OrientDB Server configuration";
 
-	@XmlTransient
-	public String															location;
+  @XmlTransient
+  public String                            location;
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerHandlerConfiguration.class)
-	public List<OServerHandlerConfiguration>	handlers;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerHandlerConfiguration.class)
+  public List<OServerHandlerConfiguration> handlers;
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerHookConfiguration.class)
-	public List<OServerHookConfiguration>	hooks;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerHookConfiguration.class)
+  public List<OServerHookConfiguration>    hooks;
 
-	@XmlElementRef(type = OServerNetworkConfiguration.class)
-	public OServerNetworkConfiguration				network;
+  @XmlElementRef(type = OServerNetworkConfiguration.class)
+  public OServerNetworkConfiguration       network;
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerStorageConfiguration.class)
-	public OServerStorageConfiguration[]			storages;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerStorageConfiguration.class)
+  public OServerStorageConfiguration[]     storages;
 
-	@XmlElementWrapper(required = false)
-	@XmlElementRef(type = OServerUserConfiguration.class)
-	public OServerUserConfiguration[]					users;
+  @XmlElementWrapper(required = false)
+  @XmlElementRef(type = OServerUserConfiguration.class)
+  public OServerUserConfiguration[]        users;
 
-	@XmlElementRef(type = OServerSecurityConfiguration.class)
-	public OServerSecurityConfiguration				security;
+  @XmlElementRef(type = OServerSecurityConfiguration.class)
+  public OServerSecurityConfiguration      security;
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerEntryConfiguration.class)
-	public OServerEntryConfiguration[]				properties;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerEntryConfiguration.class)
+  public OServerEntryConfiguration[]       properties;
 
-	public static final String								DEFAULT_CONFIG_FILE		= "config/orientdb-server-config.xml";
+  public static final String               DEFAULT_CONFIG_FILE  = "config/orientdb-server-config.xml";
 
-	public static final String								PROPERTY_CONFIG_FILE	= "orientdb.config.file";
+  public static final String               PROPERTY_CONFIG_FILE = "orientdb.config.file";
 
-	public static final String								SRV_ROOT_ADMIN				= "root";
-	public static final String								SRV_ROOT_GUEST				= "guest";
+  public static final String               SRV_ROOT_ADMIN       = "root";
+  public static final String               SRV_ROOT_GUEST       = "guest";
 
-	/**
-	 * Empty constructor for JAXB
-	 */
-	public OServerConfiguration() {
-	}
+  /**
+   * Empty constructor for JAXB
+   */
+  public OServerConfiguration() {
+  }
 
-	public OServerConfiguration(OServerConfigurationLoaderXml iFactory) {
-		location = FILE_NAME;
-		network = new OServerNetworkConfiguration(iFactory);
-		storages = new OServerStorageConfiguration[0];
-		security = new OServerSecurityConfiguration(iFactory);
-	}
+  public OServerConfiguration(OServerConfigurationLoaderXml iFactory) {
+    location = FILE_NAME;
+    network = new OServerNetworkConfiguration(iFactory);
+    storages = new OServerStorageConfiguration[0];
+    security = new OServerSecurityConfiguration(iFactory);
+  }
 
-	public String getStoragePath(String iURL) {
-		if (storages != null)
-			for (OServerStorageConfiguration stg : storages)
-				if (stg.name.equals(iURL))
-					return stg.path;
+  public String getStoragePath(String iURL) {
+    if (storages != null)
+      for (OServerStorageConfiguration stg : storages)
+        if (stg.name.equals(iURL))
+          return stg.path;
 
-		return null;
-	}
+    return null;
+  }
 
-	/**
-	 * Returns the property value configured, if any.
-	 * 
-	 * @param iName
-	 *          Property name to find
-	 */
-	public String getProperty(final String iName) {
-		return getProperty(iName, null);
-	}
+  /**
+   * Returns the property value configured, if any.
+   * 
+   * @param iName
+   *          Property name to find
+   */
+  public String getProperty(final String iName) {
+    return getProperty(iName, null);
+  }
 
-	/**
-	 * Returns the property value configured, if any.
-	 * 
-	 * @param iName
-	 *          Property name to find
-	 * @param iDefaultValue
-	 *          Default value returned if not found
-	 */
-	public String getProperty(final String iName, final String iDefaultValue) {
-		if (properties == null)
-			return null;
+  /**
+   * Returns the property value configured, if any.
+   * 
+   * @param iName
+   *          Property name to find
+   * @param iDefaultValue
+   *          Default value returned if not found
+   */
+  public String getProperty(final String iName, final String iDefaultValue) {
+    if (properties == null)
+      return null;
 
-		for (OServerEntryConfiguration p : properties) {
-			if (p.name.equals(iName))
-				return p.value;
-		}
+    for (OServerEntryConfiguration p : properties) {
+      if (p.name.equals(iName))
+        return p.value;
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	public OServerUserConfiguration getUser(final String iName) {
-		for (OServerUserConfiguration u : users) {
-			if (u.name.equals(iName))
-				return u;
-		}
-		return null;
-	}
+  public OServerUserConfiguration getUser(final String iName) {
+    for (OServerUserConfiguration u : users) {
+      if (u.name.equals(iName))
+        return u;
+    }
+    return null;
+  }
 
 }

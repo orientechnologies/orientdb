@@ -18,18 +18,18 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public abstract class OServerCommandConfigurableAbstract extends OServerCommandAbstract {
-	private final String[]	pattern;
+  private final String[] pattern;
 
-	public OServerCommandConfigurableAbstract(final String iPattern) {
-		pattern = iPattern.split(" ");
-	}
+  public OServerCommandConfigurableAbstract(final String iPattern) {
+    pattern = iPattern.split(" ");
+  }
 
-	public OServerCommandConfigurableAbstract(final String[] iPattern) {
-		pattern = iPattern;
-	}
+  public OServerCommandConfigurableAbstract(final String[] iPattern) {
+    pattern = iPattern;
+  }
 
-	@Override
-	public String[] getNames() {
-		return pattern;
-	}
+  @Override
+  public String[] getNames() {
+    return pattern;
+  }
 }

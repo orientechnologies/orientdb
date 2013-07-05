@@ -77,32 +77,19 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private final int                     DELETE_MAX_RETRIES;
-
   private final int                     DELETE_WAIT_TIME;
-
   private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
-
   private OCluster[]                    clusters                  = new OCluster[0];
-
   private ODataLocal[]                  dataSegments              = new ODataLocal[0];
-
   private final OStorageLocalTxExecuter txManager;
-
   private String                        storagePath;
-
   private final OStorageVariableParser  variableParser;
-
   private int                           defaultClusterId          = -1;
-
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", ".oet"                                     };
-
   private long                          positionGenerator         = 1;
-
   private OModificationLock             modificationLock          = new OModificationLock();
-
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
-
   private final ODiskCache              diskCache;
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {

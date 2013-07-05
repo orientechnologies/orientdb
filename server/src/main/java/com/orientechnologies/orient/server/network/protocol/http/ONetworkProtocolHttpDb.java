@@ -79,9 +79,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
       // FIRST TIME REGISTERS THE STATELESS COMMANDS
       registerStatelessCommands(iStatelessCommands);
 
-    cmdManager = new OHttpNetworkCommandManager(sharedCmdManager);
+    cmdManager = new OHttpNetworkCommandManager(server, sharedCmdManager);
     for (Object cmdConfig : iStatefulCommands)
-      cmdManager.registerCommand(OServerNetworkListener.createCommand((OServerCommandConfiguration) cmdConfig));
+      cmdManager.registerCommand(OServerNetworkListener.createCommand(server, (OServerCommandConfiguration) cmdConfig));
 
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
@@ -100,7 +100,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   }
 
   protected void registerStatelessCommands(final List<?> iStatelessCommands) {
-    sharedCmdManager = new OHttpNetworkCommandManager(null);
+    sharedCmdManager = new OHttpNetworkCommandManager(server, null);
 
     sharedCmdManager.registerCommand(new OServerCommandGetConnect());
     sharedCmdManager.registerCommand(new OServerCommandGetDisconnect());

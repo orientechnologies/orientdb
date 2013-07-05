@@ -28,6 +28,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -45,13 +46,18 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
+
+  @Override
+  public void configure(final OServer server) {
+    super.configure(server);
+  }
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
@@ -69,7 +75,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     ODatabaseDocumentTx db = null;
     try {
       if (urlParts.length > 2) {
-        db = OSharedDocumentDatabase.acquire(urlParts[1], urlParts[2], urlParts[3]);
+        server.getDatabasePool().acquire(urlParts[1], urlParts[2], urlParts[3]);
       } else
         db = getProfiledDatabaseInstance(iRequest);
 

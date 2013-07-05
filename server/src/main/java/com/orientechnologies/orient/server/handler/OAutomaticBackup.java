@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 public class OAutomaticBackup extends OServerHandlerAbstract {
@@ -36,9 +35,12 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
   private String      targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
   private Set<String> excludeDatabases = new HashSet<String>();
+  private OServer     serverInstance;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
+    serverInstance = iServer;
+
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -87,7 +89,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 
         int ok = 0, errors = 0;
 
-        final Map<String, String> databaseNames = OServerMain.server().getAvailableStorageNames();
+        final Map<String, String> databaseNames = serverInstance.getAvailableStorageNames();
         for (final Entry<String, String> dbName : databaseNames.entrySet()) {
           boolean include;
 

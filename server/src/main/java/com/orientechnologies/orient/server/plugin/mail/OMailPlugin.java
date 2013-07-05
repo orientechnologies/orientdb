@@ -47,149 +47,149 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 
 public class OMailPlugin extends OServerHandlerAbstract implements OScriptInjection {
-	private static final String				CONFIG_PROFILE_PREFIX	= "profile.";
-	private static final String				CONFIG_MAIL_PREFIX		= "mail.";
+  private static final String       CONFIG_PROFILE_PREFIX = "profile.";
+  private static final String       CONFIG_MAIL_PREFIX    = "mail.";
 
-	private Map<String, OMailProfile>	profiles							= new HashMap<String, OMailProfile>();
+  private Map<String, OMailProfile> profiles              = new HashMap<String, OMailProfile>();
 
-	public OMailPlugin() {
-		Orient.instance().getScriptManager().registerInjection(this);
-	}
+  public OMailPlugin() {
+    Orient.instance().getScriptManager().registerInjection(this);
+  }
 
-	@Override
-	public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
-		for (OServerParameterConfiguration param : iParams) {
-			if (param.name.equalsIgnoreCase("enabled")) {
-				if (!Boolean.parseBoolean(param.value))
-					// DISABLE IT
-					return;
-			} else if (param.name.startsWith(CONFIG_PROFILE_PREFIX)) {
-				final String parts = param.name.substring(CONFIG_PROFILE_PREFIX.length());
-				int pos = parts.indexOf('.');
-				if (pos == -1)
-					continue;
+  @Override
+  public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
+    for (OServerParameterConfiguration param : iParams) {
+      if (param.name.equalsIgnoreCase("enabled")) {
+        if (!Boolean.parseBoolean(param.value))
+          // DISABLE IT
+          return;
+      } else if (param.name.startsWith(CONFIG_PROFILE_PREFIX)) {
+        final String parts = param.name.substring(CONFIG_PROFILE_PREFIX.length());
+        int pos = parts.indexOf('.');
+        if (pos == -1)
+          continue;
 
-				final String profileName = parts.substring(0, pos);
-				final String profileParam = parts.substring(pos + 1);
+        final String profileName = parts.substring(0, pos);
+        final String profileParam = parts.substring(pos + 1);
 
-				OMailProfile profile = profiles.get(profileName);
-				if (profile == null) {
-					profile = new OMailProfile();
-					profiles.put(profileName, profile);
-				}
+        OMailProfile profile = profiles.get(profileName);
+        if (profile == null) {
+          profile = new OMailProfile();
+          profiles.put(profileName, profile);
+        }
 
-				if (profileParam.startsWith(CONFIG_MAIL_PREFIX)) {
-					profile.properties.setProperty("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
-				}
-			}
-		}
+        if (profileParam.startsWith(CONFIG_MAIL_PREFIX)) {
+          profile.properties.setProperty("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
+        }
+      }
+    }
 
-		OLogManager.instance().info(this, "Mail plugin installed and active. Loaded %d profile(s): %s", profiles.size(),
-				profiles.keySet());
-	}
+    OLogManager.instance().info(this, "Mail plugin installed and active. Loaded %d profile(s): %s", profiles.size(),
+        profiles.keySet());
+  }
 
-	/**
-	 * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
-	 * 
-	 * @param iMessage
-	 *          Configuration as Map<String,Object>
-	 * @throws AddressException
-	 * @throws MessagingException
-	 * @throws ParseException
-	 */
-	public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
-		final String profileName = (String) iMessage.get("profile");
+  /**
+   * Sends an email. Supports the following configuration: subject, message, to, cc, bcc, date, attachments
+   * 
+   * @param iMessage
+   *          Configuration as Map<String,Object>
+   * @throws AddressException
+   * @throws MessagingException
+   * @throws ParseException
+   */
+  public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
+    final String profileName = (String) iMessage.get("profile");
 
-		OMailProfile profile = profiles.get(profileName);
-		if (profile == null)
-			throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
+    OMailProfile profile = profiles.get(profileName);
+    if (profile == null)
+      throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
 
-		final Properties prop = profile.properties;
+    final Properties prop = profile.properties;
 
-		// creates a new session with an authenticator
-		Authenticator auth = new OSMTPAuthenticator((String) prop.get("mail.smtp.user"), (String) prop.get("mail.smtp.password"));
-		Session session = Session.getInstance(prop, auth);
+    // creates a new session with an authenticator
+    Authenticator auth = new OSMTPAuthenticator((String) prop.get("mail.smtp.user"), (String) prop.get("mail.smtp.password"));
+    Session session = Session.getInstance(prop, auth);
 
-		// creates a new e-mail message
-		MimeMessage msg = new MimeMessage(session);
+    // creates a new e-mail message
+    MimeMessage msg = new MimeMessage(session);
 
-		msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
-		InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
-		msg.setRecipients(Message.RecipientType.TO, toAddresses);
-		InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
-		msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-		InternetAddress[] bccAddresses = { new InternetAddress((String) iMessage.get("bcc")) };
-		msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-		msg.setSubject((String) iMessage.get("subject"));
+    msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
+    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
+    msg.setRecipients(Message.RecipientType.TO, toAddresses);
+    InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
+    msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+    InternetAddress[] bccAddresses = { new InternetAddress((String) iMessage.get("bcc")) };
+    msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
+    msg.setSubject((String) iMessage.get("subject"));
 
-		// DATE
-		Object date = iMessage.get("date");
-		final Date sendDate;
-		if (date == null)
-			// NOT SPECIFIED = NOW
-			sendDate = new Date();
-		else if (date instanceof Date)
-			// PASSED
-			sendDate = (Date) date;
-		else {
-			// FORMAT IT
-			String dateFormat = (String) prop.get("mail.date.format");
-			if (dateFormat == null)
-				dateFormat = "yyyy-MM-dd HH:mm:ss";
-			sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
-		}
-		msg.setSentDate(sendDate);
+    // DATE
+    Object date = iMessage.get("date");
+    final Date sendDate;
+    if (date == null)
+      // NOT SPECIFIED = NOW
+      sendDate = new Date();
+    else if (date instanceof Date)
+      // PASSED
+      sendDate = (Date) date;
+    else {
+      // FORMAT IT
+      String dateFormat = (String) prop.get("mail.date.format");
+      if (dateFormat == null)
+        dateFormat = "yyyy-MM-dd HH:mm:ss";
+      sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
+    }
+    msg.setSentDate(sendDate);
 
-		// creates message part
-		MimeBodyPart messageBodyPart = new MimeBodyPart();
-		messageBodyPart.setContent(iMessage.get("message"), "text/html");
+    // creates message part
+    MimeBodyPart messageBodyPart = new MimeBodyPart();
+    messageBodyPart.setContent(iMessage.get("message"), "text/html");
 
-		// creates multi-part
-		Multipart multipart = new MimeMultipart();
-		multipart.addBodyPart(messageBodyPart);
+    // creates multi-part
+    Multipart multipart = new MimeMultipart();
+    multipart.addBodyPart(messageBodyPart);
 
-		final String[] attachments = (String[]) iMessage.get("attachments");
-		// adds attachments
-		if (attachments != null && attachments.length > 0) {
-			for (String filePath : attachments) {
-				addAttachment(multipart, filePath);
-			}
-		}
+    final String[] attachments = (String[]) iMessage.get("attachments");
+    // adds attachments
+    if (attachments != null && attachments.length > 0) {
+      for (String filePath : attachments) {
+        addAttachment(multipart, filePath);
+      }
+    }
 
-		// sets the multi-part as e-mail's content
-		msg.setContent(multipart);
+    // sets the multi-part as e-mail's content
+    msg.setContent(multipart);
 
-		// sends the e-mail
-		Transport.send(msg);
-	}
+    // sends the e-mail
+    Transport.send(msg);
+  }
 
-	/**
-	 * Adds a file as an attachment to the email's content
-	 * 
-	 * @param multipart
-	 * @param filePath
-	 * @throws MessagingException
-	 */
-	private void addAttachment(final Multipart multipart, final String filePath) throws MessagingException {
-		MimeBodyPart attachPart = new MimeBodyPart();
-		DataSource source = new FileDataSource(filePath);
-		attachPart.setDataHandler(new DataHandler(source));
-		attachPart.setFileName(new File(filePath).getName());
-		multipart.addBodyPart(attachPart);
-	}
+  /**
+   * Adds a file as an attachment to the email's content
+   * 
+   * @param multipart
+   * @param filePath
+   * @throws MessagingException
+   */
+  private void addAttachment(final Multipart multipart, final String filePath) throws MessagingException {
+    MimeBodyPart attachPart = new MimeBodyPart();
+    DataSource source = new FileDataSource(filePath);
+    attachPart.setDataHandler(new DataHandler(source));
+    attachPart.setFileName(new File(filePath).getName());
+    multipart.addBodyPart(attachPart);
+  }
 
-	@Override
-	public void bind(Bindings binding) {
-		binding.put("mail", this);
-	}
+  @Override
+  public void bind(Bindings binding) {
+    binding.put("mail", this);
+  }
 
-	@Override
-	public void unbind(Bindings binding) {
-		binding.remove("mail");
-	}
+  @Override
+  public void unbind(Bindings binding) {
+    binding.remove("mail");
+  }
 
-	@Override
-	public String getName() {
-		return "mail";
-	}
+  @Override
+  public String getName() {
+    return "mail";
+  }
 }

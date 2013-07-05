@@ -69,7 +69,7 @@ public class OServerNetworkListener extends Thread {
           statefulCommands.add(iCommands[i]);
         else
           // EARLY CREATE STATELESS COMMAND
-          statelessCommands.add(createCommand(iCommands[i]));
+          statelessCommands.add(OServerNetworkListener.createCommand(server, iCommands[i]));
       }
     }
 
@@ -241,11 +241,13 @@ public class OServerNetworkListener extends Thread {
   }
 
   @SuppressWarnings("unchecked")
-  public static OServerCommand createCommand(final OServerCommandConfiguration iCommand) {
+  public static OServerCommand createCommand(final OServer server, final OServerCommandConfiguration iCommand) {
     try {
       final Constructor<OServerCommand> c = (Constructor<OServerCommand>) Class.forName(iCommand.implementation).getConstructor(
           OServerCommandConfiguration.class);
-      return c.newInstance(new Object[] { iCommand });
+      final OServerCommand cmd = c.newInstance(new Object[] { iCommand });
+      cmd.configure(server);
+      return cmd;
     } catch (Exception e) {
       throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + "("
           + iCommand + ")", e);

@@ -20,16 +20,16 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import javax.xml.bind.annotation.*;
 
 @XmlRootElement(name = "hook")
-@XmlType(propOrder = { "parameters", "clazz","position" })
+@XmlType(propOrder = { "parameters", "clazz", "position" })
 public class OServerHookConfiguration {
 
-	@XmlAttribute(name = "class", required = true)
-	public String														clazz;
+  @XmlAttribute(name = "class", required = true)
+  public String                          clazz;
 
-    @XmlAttribute(name = "position")
-    public String														position= ORecordHook.HOOK_POSITION.REGULAR.name();
+  @XmlAttribute(name = "position")
+  public String                          position = ORecordHook.HOOK_POSITION.REGULAR.name();
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerParameterConfiguration.class)
-	public OServerParameterConfiguration[]	parameters;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerParameterConfiguration.class)
+  public OServerParameterConfiguration[] parameters;
 }

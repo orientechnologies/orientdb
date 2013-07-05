@@ -132,6 +132,11 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
    */
   @Override
   public void onOpen(final ODatabase iDatabase) {
+    final String dbDirectory = serverInstance.getDatabaseDirectory();
+    if (!iDatabase.getURL().substring(iDatabase.getURL().indexOf(":") + 1).startsWith(dbDirectory))
+      // NOT OWN DB, SKIPT IT
+      return;
+
     final ODocument cfg = getDatabaseConfiguration(iDatabase.getName());
     if (cfg == null)
       return;
@@ -140,8 +145,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     if (synch == null || synch) {
       final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iDatabase.getName());
 
-      if (iDatabase instanceof ODatabaseComplex<?>)
-        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(this, dbSynchronizer,
+      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
+        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance, dbSynchronizer,
             (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
     }
   }
@@ -194,14 +199,14 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
       if (sync == null) {
         try {
-          sync = new OStorageSynchronizer(this, iDatabaseName);
+          sync = new OStorageSynchronizer(serverInstance, this, iDatabaseName);
           synchronizers.put(iDatabaseName, sync);
           sync.recoverUncommited(this, iDatabaseName);
         } catch (IllegalArgumentException e) {
-            synchronizers.remove(iDatabaseName);
+          synchronizers.remove(iDatabaseName);
           return null;
         } catch (IOException e) {
-            synchronizers.remove(iDatabaseName);
+          synchronizers.remove(iDatabaseName);
           throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
         }
       }

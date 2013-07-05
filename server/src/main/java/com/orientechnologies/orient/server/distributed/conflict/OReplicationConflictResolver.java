@@ -20,14 +20,14 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.OServer;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public interface OReplicationConflictResolver {
-  public void startup(final ODistributedServerManager iDManager, String iStorageName);
+  public void startup(final OServer iServer, String iStorageName);
 
   public void shutdown();
 

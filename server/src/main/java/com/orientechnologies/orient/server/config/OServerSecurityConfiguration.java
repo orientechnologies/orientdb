@@ -25,21 +25,21 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "security")
 public class OServerSecurityConfiguration {
-	@XmlElementWrapper
-	@XmlAnyElement
-	@XmlElementRef(type = OServerUserConfiguration.class)
-	public List<OServerUserConfiguration>			users;
+  @XmlElementWrapper
+  @XmlAnyElement
+  @XmlElementRef(type = OServerUserConfiguration.class)
+  public List<OServerUserConfiguration>     users;
 
-	@XmlElementWrapper
-	@XmlAnyElement
-	@XmlElementRef(type = OServerNetworkListenerConfiguration.class)
-	public List<OServerResourceConfiguration>	resources;
+  @XmlElementWrapper
+  @XmlAnyElement
+  @XmlElementRef(type = OServerNetworkListenerConfiguration.class)
+  public List<OServerResourceConfiguration> resources;
 
-	public OServerSecurityConfiguration() {
-	}
+  public OServerSecurityConfiguration() {
+  }
 
-	public OServerSecurityConfiguration(Object iObject) {
-		users = new ArrayList<OServerUserConfiguration>();
-		resources = new ArrayList<OServerResourceConfiguration>();
-	}
+  public OServerSecurityConfiguration(Object iObject) {
+    users = new ArrayList<OServerUserConfiguration>();
+    resources = new ArrayList<OServerResourceConfiguration>();
+  }
 }

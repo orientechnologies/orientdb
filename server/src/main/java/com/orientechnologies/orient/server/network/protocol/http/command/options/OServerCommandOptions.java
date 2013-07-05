@@ -21,27 +21,28 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 
 public class OServerCommandOptions extends OServerCommandAbstract {
-	private static final String[]	NAMES	= { "OPTIONS|*" };
+  private static final String[] NAMES = { "OPTIONS|*" };
 
-	public OServerCommandOptions() {
-	}
+  public OServerCommandOptions() {
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		iRequest.data.commandInfo = "HTTP Options";
-		iRequest.data.commandDetail = iRequest.url;
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    iRequest.data.commandInfo = "HTTP Options";
+    iRequest.data.commandDetail = iRequest.url;
 
-		iResponse.send(
-				OHttpUtils.STATUS_OK_CODE,
-				OHttpUtils.STATUS_OK_DESCRIPTION,
-				OHttpUtils.CONTENT_TEXT_PLAIN,
-				null,
-				"Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\nAccess-Control-Max-Age: 1728000\r\nAccess-Control-Allow-Headers: if-modified-since, content-type, authorization, x-requested-with");
-		return false;
-	}
+    iResponse
+        .send(
+            OHttpUtils.STATUS_OK_CODE,
+            OHttpUtils.STATUS_OK_DESCRIPTION,
+            OHttpUtils.CONTENT_TEXT_PLAIN,
+            null,
+            "Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS\r\nAccess-Control-Max-Age: 1728000\r\nAccess-Control-Allow-Headers: if-modified-since, content-type, authorization, x-requested-with");
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

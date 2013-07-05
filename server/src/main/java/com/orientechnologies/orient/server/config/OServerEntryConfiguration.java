@@ -22,17 +22,17 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "entry")
 @XmlType(propOrder = { "value", "name" })
 public class OServerEntryConfiguration {
-	@XmlAttribute
-	public String	name;
+  @XmlAttribute
+  public String name;
 
-	@XmlAttribute
-	public String	value;
+  @XmlAttribute
+  public String value;
 
-	public OServerEntryConfiguration() {
-	}
+  public OServerEntryConfiguration() {
+  }
 
-	public OServerEntryConfiguration(final String iName, final String iValue) {
-		name = iName;
-		value = iValue;
-	}
+  public OServerEntryConfiguration(final String iName, final String iValue) {
+    name = iName;
+    value = iValue;
+  }
 }

@@ -70,7 +70,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
 
       response = executor.execute(null);
-      
+
       fetchPlan = executor.getFetchPlan();
 
       final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;

@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,13 +34,16 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
-import com.orientechnologies.orient.server.task.OAbstractDistributedTask.STATUS;
-import com.orientechnologies.orient.server.task.OAbstractRecordDistributedTask;
-import com.orientechnologies.orient.server.task.OCreateRecordDistributedTask;
-import com.orientechnologies.orient.server.task.ODeleteRecordDistributedTask;
-import com.orientechnologies.orient.server.task.OSQLCommandDistributedTask;
-import com.orientechnologies.orient.server.task.OUpdateRecordDistributedTask;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask.STATUS;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordDistributedTask;
 
 /**
  * Writes all the non-idempotent operations against a database. Uses the classic IO API and NOT the MMAP to avoid the buffer is not
@@ -83,6 +85,7 @@ public class ODatabaseJournal {
 
   private static final int                FIXED_SIZE            = 22;
 
+  private OServer                         server;
   private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
                                                                     0, true);
@@ -90,7 +93,8 @@ public class ODatabaseJournal {
   private OFile                           file;
   private boolean                         synchEnabled          = false;
 
-  public ODatabaseJournal(final OStorage iStorage, final String iStartingDirectory) throws IOException {
+  public ODatabaseJournal(final OServer iServer, final OStorage iStorage, final String iStartingDirectory) throws IOException {
+    server = iServer;
     storage = iStorage;
 
     File osFile = new File(iStartingDirectory + "/" + DIRECTORY);
@@ -147,7 +151,11 @@ public class ODatabaseJournal {
 
     lock.acquireExclusiveLock();
     try {
-      long offset = this.getLongestUncommiteJournal(100, iOffset);// TODO : 100?
+      final long offset = this.getLongestUncommiteJournal(100, iOffset);// TODO : 100?
+
+      if (offset == 0)
+        return new long[] { -1, -1 };
+
       final long[] ids = new long[2];
       ids[0] = file.readLong(offset - OFFSET_BACK_RUNID);
       ids[1] = file.readLong(offset - OFFSET_BACK_OPERATID);
@@ -203,7 +211,8 @@ public class ODatabaseJournal {
 
       final OAbstractDistributedTask<?> op = getOperation(fileOffset);
 
-      OLogManager.instance().info(this, "DISTRIBUTED Found uncommitted operation %s", op);
+      ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+          "db '%s' found uncommitted operation %s", storage.getName(), op);
 
       if (op instanceof OAbstractRecordDistributedTask<?>)
         // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
@@ -223,7 +232,8 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      OLogManager.instance().info(this, "Updating status operation #%d.%d rid %s",
+      ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+          "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { 1 });
@@ -279,9 +289,9 @@ public class ODatabaseJournal {
         varSize = ORecordId.PERSISTENT_SIZE;
         final ORecordId rid = task.getRid();
 
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().info(this, "Journaled operation %s %s as #%d.%d", iOperationType.toString(), rid, iRunId,
-              iOperationId);
+        ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+            "journaled operation %s against db '%s' rid %s as #%d.%d", iOperationType.toString(), storage.getName(), rid, iRunId,
+            iOperationId);
 
         if (needOverWrited(iRunId, iOperationId))
           offset = getOverWriteStart(iRunId, iOperationId, iOperationType, varSize);
@@ -299,9 +309,9 @@ public class ODatabaseJournal {
         final byte[] cmdBinary = cmdText.getBytes();
         varSize = cmdBinary.length;
 
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().info(this, "Journaled operation %s '%s' as #%d.%d", iOperationType.toString(), cmdText, iRunId,
-              iOperationId);
+        ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+            "journaled operation %s against db '%s' cmd '%s' as #%d.%d", iOperationType.toString(), storage.getName(), cmdText,
+            iRunId, iOperationId);
 
         offset = writeOperationLogHeader(iOperationType, varSize);
 
@@ -465,8 +475,10 @@ public class ODatabaseJournal {
       }
       }
 
-      if (task != null)
+      if (task != null) {
+        task.setServerInstance(server);
         task.setStatus(STATUS.ALIGN);
+      }
 
     } finally {
       lock.releaseExclusiveLock();
