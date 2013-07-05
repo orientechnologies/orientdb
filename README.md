@@ -38,4 +38,3 @@ Studio Web tool
 	$ grunt server
     ```
     
-6. Connect with your browser to
