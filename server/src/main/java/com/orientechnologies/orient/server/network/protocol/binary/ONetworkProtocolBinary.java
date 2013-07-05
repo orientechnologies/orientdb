@@ -248,10 +248,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       isLHClustersAreUsed();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY:
-      changeRecordIdentity();
-      break;
-
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
       addCluster();
       break;
@@ -624,27 +620,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected void changeRecordIdentity() throws IOException {
-    setDataCommandInfo("Move record from one cluster and cluster position to other");
 
-    checkDatabase();
-
-    final int originalClusterId = channel.readShort();
-    final OClusterPosition originalClusterPosition = channel.readClusterPosition();
-
-    final int destinationClusterId = channel.readShort();
-    final OClusterPosition destinationClusterPosition = channel.readClusterPosition();
-
-    connection.database.getStorage().changeRecordIdentity(new ORecordId(originalClusterId, originalClusterPosition),
-        new ORecordId(destinationClusterId, destinationClusterPosition));
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
 
   protected void isLHClustersAreUsed() throws IOException {
     setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");

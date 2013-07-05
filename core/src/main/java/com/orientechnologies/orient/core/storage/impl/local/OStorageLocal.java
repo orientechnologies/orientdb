@@ -1762,31 +1762,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     }
   }
 
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      final OPhysicalPosition ppos = moveRecord(originalId, newId);
-
-      final ODataLocal dataLocal = getDataSegmentById(ppos.dataSegmentId);
-      dataLocal.setRecordRid(ppos.dataSegmentPos, newId);
-
-    } catch (IOException e) {
-
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, e);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer,
-              "db.*.changeRecordIdentity");
-    }
-  }
-
-  @Override
+	@Override
   public boolean isHashClustersAreUsed() {
     return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }

@@ -46,6 +46,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorRemote;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -129,7 +130,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final int                        maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
+    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
     clientId = iClientId;
     configuration = null;
 
@@ -936,39 +937,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       } catch (Exception e) {
         handleException("Error on read record count in clusters: " + Arrays.toString(iClusterIds), e);
 
-      }
-    } while (true);
-  }
-
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    checkConnection();
-
-    do {
-      try {
-        OChannelBinaryClient network = null;
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY);
-
-          network.writeShort((short) originalId.getClusterId());
-          network.writeClusterPosition(originalId.getClusterPosition());
-
-          network.writeShort((short) newId.getClusterId());
-          network.writeClusterPosition(newId.getClusterPosition());
-
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-          return;
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException("Error during changing identity of  " + originalId + " record to " + newId, e);
       }
     } while (true);
   }

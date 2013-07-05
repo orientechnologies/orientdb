@@ -465,7 +465,6 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
           return createPhysicalPosition(recordType, firstPagePointer, version);
         }
       } finally {
-        currentUnitId.set(null);
         releaseExclusiveLock();
       }
     } finally {

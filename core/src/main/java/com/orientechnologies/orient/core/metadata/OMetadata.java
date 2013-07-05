@@ -78,9 +78,9 @@ public class OMetadata {
   public void create() throws IOException {
     init(false);
 
-    security.create();
     schema.create();
     indexManager.create();
+    security.create();
     functionLibrary.create();
     security.createClassTrigger();
     scheduler.create();

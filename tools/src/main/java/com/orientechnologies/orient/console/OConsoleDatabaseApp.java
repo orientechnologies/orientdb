@@ -1432,10 +1432,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Compare two databases")
-  public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
+  public void compareDatabases(
+      @ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
       @ConsoleParameter(name = "user-name", description = "User name", optional = true) final String iUserName,
-      @ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword)
+      @ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword,
+      @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk.", optional = true) Boolean autoDiscoveringMappingData)
       throws IOException {
     try {
       final ODatabaseCompare compare;
@@ -1444,6 +1446,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       else
         compare = new ODatabaseCompare(iDb1URL, iDb1URL, iUserName, iUserPassword, this);
 
+      compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? autoDiscoveringMappingData : true);
       compare.compare();
     } catch (ODatabaseExportException e) {
       printError(e);
@@ -1451,19 +1454,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
-  public void importDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text,
+      @ConsoleParameter(name = "delete-rid-mapping", description = "User password", optional = true) final boolean deleteRIDMapping)
       throws IOException {
     checkForDatabase();
 
-    out.println("Importing database " + iText + "...");
+    out.println("Importing database " + text + "...");
 
-    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
-    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
-    final String options = fileName != null ? iText.substring(
-        ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
     try {
-      new ODatabaseImport(currentDatabase, fileName, this).setOptions(options).importDatabase().close();
+      ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
+
+      databaseImport.setOptions(options).importDatabase();
+      if (deleteRIDMapping)
+        databaseImport.removeExportImportRIDsMap();
+
+      databaseImport.close();
     } catch (ODatabaseImportException e) {
       printError(e);
     }
