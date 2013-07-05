@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -21,7 +21,10 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
@@ -37,14 +40,15 @@ public class OMultipleDistributedTasks extends OAbstractDistributedTask<Object[]
   public OMultipleDistributedTasks() {
   }
 
-  public OMultipleDistributedTasks(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode) {
-    super(nodeSource, iDbName, iMode);
+  public OMultipleDistributedTasks(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode);
   }
 
   @Override
   public Object[] call() throws Exception {
-    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] executing group of %d command(s)", nodeSource, databaseName,
-        tasks.size());
+    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+        "executing group of %d command(s) against db '%s'", databaseName, tasks.size());
 
     final Object[] result = new Object[tasks.size()];
 

@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
@@ -41,9 +43,9 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
   public OSQLCommandDistributedTask() {
   }
 
-  public OSQLCommandDistributedTask(final String nodeSource, final String databaseName, final EXECUTION_MODE iMode,
-      final String iCommand) {
-    super(nodeSource, databaseName, iMode);
+  public OSQLCommandDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String databaseName, final EXECUTION_MODE iMode, final String iCommand) {
+    super(iServer, iDistributedSrvMgr, databaseName, iMode);
     text = iCommand;
   }
 
@@ -53,17 +55,17 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
 
   @Override
   public Object call() throws Exception {
-    if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "DISTRIBUTED <- command: %s", text.toString());
+    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+        "DISTRIBUTED db '%s' command: %s", databaseName, text.toString());
 
     final ODistributedServerManager dManager = getDistributedServerManager();
-    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
+    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !getNodeSource().equals(dManager.getLocalNodeId()))
       // NODE NOT ONLINE, REFUSE THE OPEPRATION
       throw new OServerOfflineException(dManager.getLocalNodeId(), dManager.getStatus(),
           "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
 
     final ODatabaseDocumentTx db = openDatabase();
-    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+    ODistributedThreadLocal.INSTANCE.set(getNodeSource());
     try {
 
       Object result = openDatabase().command(new OCommandSQL(text)).execute();
@@ -75,7 +77,7 @@ public class OSQLCommandDistributedTask extends OAbstractDistributedTask<Object>
       return null;
 
     } finally {
-      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+      ODistributedThreadLocal.INSTANCE.set(null);
       closeDatabase(db);
     }
   }

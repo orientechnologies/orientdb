@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -41,33 +41,29 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
   private static final long serialVersionUID = 1L;
 
   public enum STATUS {
-    DISTRIBUTE, REMOTE_EXEC, ALIGN, LOCAL_EXEC
+    DISTRIBUTE, ALIGN
   }
 
   public enum EXEC_TYPE {
     LOCAL_ONLY, REMOTE_ONLY, BOTH
   }
 
-  protected String                          nodeSource;
-  protected String                          databaseName;
-  protected long                            runId;
-  protected long                            operationSerial;
+  private String              nodeSource;
+  protected String            nodeDestination;
+  protected String            databaseName;
+  protected long              runId;
+  protected long              operationSerial;
 
-  protected EXECUTION_MODE                  mode;
-  protected STATUS                          status;
-  protected EXEC_TYPE                       executionType = EXEC_TYPE.BOTH;
-  protected boolean                         inheritedDatabase;
-
-  protected static OServerUserConfiguration replicatorUser;
-  static {
-    replicatorUser = OServerMain.server().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-  }
+  protected EXECUTION_MODE    mode;
+  protected STATUS            status;
+  protected EXEC_TYPE         executionType = EXEC_TYPE.BOTH;
+  protected boolean           inheritedDatabase;
+  protected transient OServer serverInstance;
 
   /**
    * Constructor used from unmarshalling.
    */
   public OAbstractDistributedTask() {
-    status = STATUS.REMOTE_EXEC;
   }
 
   /**
@@ -82,14 +78,16 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     this.status = STATUS.ALIGN;
   }
 
-  public OAbstractDistributedTask(final String nodeSource, final String databaseName, final EXECUTION_MODE iMode) {
-    this.nodeSource = nodeSource;
+  public OAbstractDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String databaseName, final EXECUTION_MODE iMode) {
+    this.serverInstance = iServer;
+    this.setNodeSource(iDistributedSrvMgr.getLocalNodeId());
     this.databaseName = databaseName;
     this.mode = iMode;
     this.status = STATUS.DISTRIBUTE;
 
-    this.runId = getDistributedServerManager().getRunId();
-    this.operationSerial = getDistributedServerManager().incrementDistributedSerial(databaseName);
+    this.runId = iDistributedSrvMgr.getRunId();
+    this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
   }
 
   /**
@@ -108,7 +106,8 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(nodeSource);
+    out.writeUTF(getNodeSource());
+    out.writeUTF(nodeDestination);
     out.writeUTF(databaseName);
     out.writeLong(runId);
     out.writeLong(operationSerial);
@@ -119,7 +118,9 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    nodeSource = in.readUTF();
+    setNodeSource(in.readUTF());
+    nodeDestination = in.readUTF();
+    serverInstance = OServer.getInstance(nodeDestination);
     databaseName = in.readUTF();
     runId = in.readLong();
     operationSerial = in.readLong();
@@ -130,6 +131,14 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
 
   public String getNodeSource() {
     return nodeSource;
+  }
+
+  public String getNodeDestination() {
+    return nodeDestination;
+  }
+
+  public void setNodeDestination(final String masterNodeId) {
+    nodeDestination = masterNodeId;
   }
 
   public String getDatabaseName() {
@@ -161,7 +170,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     return this;
   }
 
-  public void setNodeSource(String nodeSource) {
+  public void setNodeSource(final String nodeSource) {
     this.nodeSource = nodeSource;
   }
 
@@ -179,7 +188,7 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
   }
 
   protected ODistributedServerManager getDistributedServerManager() {
-    return (ODistributedServerManager) OServerMain.server().getVariable("ODistributedAbstractPlugin");
+    return serverInstance.getDistributedManager();
   }
 
   protected void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
@@ -198,8 +207,9 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     }
 
     inheritedDatabase = false;
-    return (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName, replicatorUser.name,
-        replicatorUser.password);
+    OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+    return (ODatabaseDocumentTx) serverInstance
+        .openDatabase("document", databaseName, replicatorUser.name, replicatorUser.password);
   }
 
   protected void closeDatabase(final ODatabaseDocumentTx iDatabase) {
@@ -211,7 +221,15 @@ public abstract class OAbstractDistributedTask<T> implements Callable<T>, Extern
     return executionType;
   }
 
-  public void setExecutionType(EXEC_TYPE executionMode) {
+  public void setExecutionType(final EXEC_TYPE executionMode) {
     this.executionType = executionMode;
+  }
+
+  public OServer getServerInstance() {
+    return serverInstance;
+  }
+
+  public void setServerInstance(final OServer serverInstance) {
+    this.serverInstance = serverInstance;
   }
 }

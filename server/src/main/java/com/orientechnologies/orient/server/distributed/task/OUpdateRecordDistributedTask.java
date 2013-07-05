@@ -13,59 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
- * Distributed delete record task used for synchronization.
+ * Distributed updated record task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask<Boolean> {
+public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask<ORecordVersion> {
   private static final long serialVersionUID = 1L;
 
-  public ODeleteRecordDistributedTask() {
+  protected byte[]          content;
+  protected byte            recordType;
+
+  public OUpdateRecordDistributedTask() {
   }
 
-  public ODeleteRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final ORecordVersion iVersion) {
-    super(nodeSource, iDbName, iMode, iRid, iVersion);
+  public OUpdateRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
+      final byte iRecordType) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
+    content = iContent;
+    recordType = iRecordType;
   }
 
-  public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
-      final ORecordVersion iVersion) {
+  public OUpdateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType) {
     super(iRunId, iOperationId, iRid, iVersion);
+    content = iContent;
+    recordType = iRecordType;
   }
 
   @Override
-  protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] DELETE RECORD %s v.%s", nodeSource, databaseName, rid.toString(),
-        version.toString());
+  public ORecordVersion executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+        "UPDATE RECORD %s/%s v.%s", databaseName, rid.toString(), version.toString());
+    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
-      final ORecordInternal<?> record = database.load(rid);
-      if (record != null) {
-        record.getRecordVersion().copyFrom(version);
-        record.delete();
-        return Boolean.TRUE;
-      }
-      return Boolean.FALSE;
+      if (version.getCounter() > -1)
+        version.setRollbackMode();
+      record.fill(rid, version, content, true);
+      record.save();
+
+      return record.getRecordVersion();
+
     } finally {
       closeDatabase(database);
     }
@@ -82,34 +95,41 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
     final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleDeleteConflict(iRemoteNodeId, rid);
+    resolver.handleUpdateConflict(iRemoteNodeId, rid, version, (ORecordVersion) remoteResult);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
+    out.writeInt(content.length);
+    out.write(content);
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
+    out.write(recordType);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
+    final int contentSize = in.readInt();
+    content = new byte[contentSize];
+    in.readFully(content);
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
+    recordType = in.readByte();
   }
 
   @Override
   public String getName() {
-    return "record_delete";
+    return "record_update";
   }
 
   @Override
   protected OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.RECORD_DELETE;
+    return OPERATION_TYPES.RECORD_UPDATE;
   }
 }

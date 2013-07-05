@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
@@ -37,8 +39,9 @@ public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Inte
   public OAlignResponseDistributedTask() {
   }
 
-  public OAlignResponseDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
-    super(nodeSource, iDbName, iMode);
+  public OAlignResponseDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode);
     aligned = iAligned;
   }
 
@@ -48,15 +51,17 @@ public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Inte
 
     if (aligned == -1) {
       // ALIGNMENT POSTPONED
-      OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] alignment postponed", nodeSource, databaseName);
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "alignment postponed for db '%s'", databaseName);
 
-      dManager.postponeAlignment(nodeSource, databaseName);
+      dManager.postponeAlignment(getNodeSource(), databaseName);
 
     } else {
       // ALIGNMENT DONE
-      OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] alignment ended: %d operation(s)", nodeSource, databaseName, aligned);
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
 
-      dManager.endAlignment(nodeSource, databaseName);
+      dManager.endAlignment(getNodeSource(), databaseName);
     }
     return null;
   }

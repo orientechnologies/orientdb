@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -28,6 +27,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -55,9 +58,10 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
     recordType = iRecordType;
   }
 
-  public OCreateRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(nodeSource, iDbName, iMode, iRid, iVersion);
+  public OCreateRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
+      final byte iRecordType) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
@@ -68,8 +72,9 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
 
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
-    OLogManager.instance().info(this, "DISTRIBUTED <-[%s/%s] CREATE RECORD %s v.%s", nodeSource, databaseName, rid.toString(),
-        version.toString());
+    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+        "CREATING RECORD %s/%s v.%s...", databaseName, rid.toString(), version.toString());
+
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
@@ -82,6 +87,9 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
         record.save();
 
       rid = (ORecordId) record.getIdentity();
+
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "CREATED RECORD %s/%s v.%s", databaseName, rid.toString(), version.toString());
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {

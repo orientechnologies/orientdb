@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
@@ -44,9 +46,9 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
   public OAbstractRecordDistributedTask() {
   }
 
-  public OAbstractRecordDistributedTask(final String nodeSource, final String iDbName, final EXECUTION_MODE iMode,
-      final ORecordId iRid, final ORecordVersion iVersion) {
-    super(nodeSource, iDbName, iMode);
+  public OAbstractRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode);
     this.rid = iRid;
     this.version = iVersion;
   }
@@ -63,14 +65,12 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
   protected abstract T executeOnLocalNode(final OStorageSynchronizer dbSynchronizer);
 
   public T call() {
-    if (OLogManager.instance().isDebugEnabled()) {
-      if (rid != null && version != null)
-        OLogManager.instance().debug(this, "DISTRIBUTED <-[%s] %s %s v.%s", nodeSource, getName(), rid.toString(),
-            version.toString());
-    }
+    if (rid != null && version != null)
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "operation %s against record %s/%s v.%s", getName(), databaseName, rid.toString(), version.toString());
 
     final ODistributedServerManager dManager = getDistributedServerManager();
-    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !nodeSource.equals(dManager.getLocalNodeId()))
+    if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !getNodeSource().equals(dManager.getLocalNodeId()))
       // NODE NOT ONLINE, REFUSE THE OPEPRATION
       throw new OServerOfflineException(dManager.getLocalNodeId(), dManager.getStatus(),
           "Cannot execute the operation because the server is offline: current status: " + dManager.getStatus());
@@ -85,15 +85,14 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       try {
         operationLogOffset = dbSynchronizer.getLog().journalOperation(runId, operationSerial, opType, this);
       } catch (IOException e) {
-        OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on logging operation %s %s v.%s", e, nodeSource, getName(),
-            rid.toString(), version.toString());
+        ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+            "error on logging operation %s %s/%s v.%s", e, getName(), databaseName, rid.toString(), version.toString());
         throw new ODistributedException("Error on logging operation", e);
       }
     else
       operationLogOffset = -1;
 
-    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
-    ODistributedThreadLocal.INSTANCE.distributedRequestSource = nodeSource;
+    ODistributedThreadLocal.INSTANCE.set(getNodeSource());
     try {
       // EXECUTE IT LOCALLY
       final T localResult = executeOnLocalNode(dbSynchronizer);
@@ -102,14 +101,13 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
         try {
           setAsCompleted(dbSynchronizer, operationLogOffset);
         } catch (IOException e) {
-          OLogManager.instance().error(this, "DISTRIBUTED <-[%s] error on changing the log status for operation %s %s v.%s", e,
-              nodeSource, getName(), rid.toString(), version.toString());
+          ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+              "error on changing the log status for operation %s %s/%s v.%s", e, getName(), databaseName, rid.toString(),
+              version.toString());
           throw new ODistributedException("Error on changing the log status", e);
         }
 
-      // TODO
-
-      if (status == STATUS.DISTRIBUTE) {
+      if (status == STATUS.DISTRIBUTE && getDistributedServerManager().getLocalNodeId().equals(getNodeSource())) {
         // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
         final Map<String, Object> distributedResult = dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
 
@@ -118,9 +116,8 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
             final String remoteNode = entry.getKey();
             final Object remoteResult = entry.getValue();
 
-            if (localResult != remoteResult
-                && (localResult == null && remoteResult != null || localResult != null && remoteResult == null)) {
-
+            if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
+                || !localResult.equals(remoteResult)) {
               // CONFLICT
               handleConflict(remoteNode, localResult, remoteResult);
             }
@@ -134,7 +131,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
       return null;
 
     } finally {
-      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+      ODistributedThreadLocal.INSTANCE.set(null);
     }
   }
 

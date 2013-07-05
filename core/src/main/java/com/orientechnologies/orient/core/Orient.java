@@ -30,6 +30,7 @@ import java.util.Timer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -50,31 +51,32 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 public class Orient extends OSharedResourceAbstract {
-  public static final String                      ORIENTDB_HOME        = "ORIENTDB_HOME";
-  public static final String                      URL_SYNTAX           = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
+  public static final String                      URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                   instance             = new Orient();
+  protected static final Orient                   instance               = new Orient();
+  protected static boolean                        registerDatabaseByPath = false;
 
-  protected final Map<String, OEngine>            engines              = new HashMap<String, OEngine>();
-  protected final Map<String, OStorage>           storages             = new HashMap<String, OStorage>();
-  protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners = new HashSet<ODatabaseLifecycleListener>();
-  protected final List<OOrientListener>           listeners            = new ArrayList<OOrientListener>();
-  protected final ODatabaseFactory                databaseFactory      = new ODatabaseFactory();
-  protected final OScriptManager                  scriptManager        = new OScriptManager();
-  protected OClusterFactory                       clusterFactory       = new ODefaultClusterFactory();
-  protected ORecordFactoryManager                 recordFactoryManager = new ORecordFactoryManager();
+  protected final Map<String, OEngine>            engines                = new HashMap<String, OEngine>();
+  protected final Map<String, OStorage>           storages               = new HashMap<String, OStorage>();
+  protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
+  protected final List<OOrientListener>           listeners              = new ArrayList<OOrientListener>();
+  protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
+  protected final OScriptManager                  scriptManager          = new OScriptManager();
+  protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
+  protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
 
   protected OrientShutdownHook                    shutdownHook;
-  protected final Timer                           timer                = new Timer(true);
-  protected final ThreadGroup                     threadGroup          = new ThreadGroup("OrientDB");
-  protected final AtomicInteger                   serialId             = new AtomicInteger();
+  protected final Timer                           timer                  = new Timer(true);
+  protected final ThreadGroup                     threadGroup            = new ThreadGroup("OrientDB");
+  protected final AtomicInteger                   serialId               = new AtomicInteger();
 
   protected OMemoryWatchDog                       memoryWatchDog;
   protected OJVMProfiler                          profiler;
 
   protected ODatabaseThreadLocalFactory           databaseThreadFactory;
 
-  protected volatile boolean                      active               = false;
+  protected volatile boolean                      active                 = false;
 
   protected Orient() {
     startup();
@@ -200,7 +202,8 @@ public class Orient extends OSharedResourceAbstract {
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
-      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
+      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
+          + ". URL was: " + iURL);
 
     final String engineName = iURL.substring(0, pos);
 
@@ -209,8 +212,8 @@ public class Orient extends OSharedResourceAbstract {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
       if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: " + iURL
-            + ". Registered engines are: " + engines.keySet());
+        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
+            + iURL + ". Registered engines are: " + engines.keySet());
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
@@ -229,18 +232,14 @@ public class Orient extends OSharedResourceAbstract {
         for (String pair : pairs) {
           kv = pair.split("=");
           if (kv.length < 2)
-            throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX + ". URL was: " + iURL);
+            throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX
+                + ". URL was: " + iURL);
           parameters.put(kv[0], kv[1]);
         }
       } else
         dbPath = iURL;
 
-      final String dbName;
-      pos = dbPath.lastIndexOf('/');
-      if (pos > -1)
-        dbName = dbPath.substring(pos + 1);
-      else
-        dbName = dbPath;
+      final String dbName = registerDatabaseByPath ? dbPath : OIOUtils.getRelativePathIfAny(dbPath, null);
 
       OStorage storage;
       if (engine.isShared()) {
@@ -333,9 +332,18 @@ public class Orient extends OSharedResourceAbstract {
     }
   }
 
+  public void unregisterStorageByName(final String iName) {
+    final String dbName = registerDatabaseByPath ? iName : OIOUtils.getRelativePathIfAny(iName, null);
+    final OStorage stg = storages.get(dbName);
+    unregisterStorage(stg);
+  }
+
   public void unregisterStorage(final OStorage iStorage) {
     if (!active)
       // SHUTDOWNING OR NOT ACTIVE: RETURN
+      return;
+
+    if (iStorage == null)
       return;
 
     acquireExclusiveLock();
@@ -488,5 +496,26 @@ public class Orient extends OSharedResourceAbstract {
 
   public OScriptManager getScriptManager() {
     return scriptManager;
+  }
+
+  /**
+   * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
+   * with the same name.
+   * 
+   * @see #setRegisterDatabaseByPath(boolean)
+   * @return
+   */
+  public static boolean isRegisterDatabaseByPath() {
+    return registerDatabaseByPath;
+  }
+
+  /**
+   * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
+   * name.
+   * 
+   * @param iValue
+   */
+  public static void setRegisterDatabaseByPath(final boolean iValue) {
+    registerDatabaseByPath = iValue;
   }
 }

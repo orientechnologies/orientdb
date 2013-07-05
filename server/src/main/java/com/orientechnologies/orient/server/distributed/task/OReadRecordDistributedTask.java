@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.task;
+package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -41,8 +43,10 @@ public class OReadRecordDistributedTask extends OAbstractRecordDistributedTask<O
     executionType = EXEC_TYPE.LOCAL_ONLY;
   }
 
-  public OReadRecordDistributedTask(final String nodeSource, final String iDbName, final ORecordId iRid) {
-    super(nodeSource, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, OVersionFactory.instance().createUntrackedVersion());
+  public OReadRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final ORecordId iRid) {
+    super(iServer, iDistributedSrvMgr, iDbName, EXECUTION_MODE.SYNCHRONOUS, iRid, OVersionFactory.instance()
+        .createUntrackedVersion());
     executionType = EXEC_TYPE.LOCAL_ONLY;
   }
 
