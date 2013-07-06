@@ -20,7 +20,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class BlueprintsConcurrentAddEdgeTest {
   private static final int                        THREADS     = 20;
-  private static final int                        VERTICES    = 500;
+  private static final int                        VERTICES    = 200;
   private static final int                        RETRIES     = 20;
   private static final String                     DBURL       = "local:target/databases/concurrenttestdb";
 
@@ -123,7 +123,7 @@ public class BlueprintsConcurrentAddEdgeTest {
       Random r = new Random();
 
       for (int i = 0; i < VERTICES; i++) {
-        graph.addVertex("class:CustomVertex", "name", "SomeVertex_" + r.nextInt(2000));
+        graph.addVertex("class:CustomVertex", "name", "SomeVertex_" + r.nextInt(VERTICES));
       }
 
       Assert.assertEquals(graph.countVertices("CustomVertex"), VERTICES + 1);
@@ -164,13 +164,18 @@ public class BlueprintsConcurrentAddEdgeTest {
                     + Thread.currentThread().getName());
               success = true;
               current++;
-              edgeCounter.incrementAndGet();
+
+              final int totalEdges = edgeCounter.incrementAndGet();
+
+              if (totalEdges % 10000 == 0)
+                System.out.println("Inserted edges: " + totalEdges + ", currentThread " + current + " Thread:"
+                    + Thread.currentThread().getName());
 
               break;
 
             } catch (OConcurrentModificationException e) {
               if (retry > 2)
-                System.out.println("Concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->"
+                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->"
                     + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
             } catch (Exception e) {
               System.err.println("Exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo
