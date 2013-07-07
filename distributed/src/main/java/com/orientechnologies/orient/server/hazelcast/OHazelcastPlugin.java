@@ -32,7 +32,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.ExecutionCallback;
@@ -70,6 +69,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
+	private static final String        DISTRIBUTED_EXECUTOR_NAME = "OHazelcastPlugin::Executor"; 
   private static final int           SEND_RETRY_MAX     = 100;
   private int                        nodeNumber;
   private String                     localNodeId;
@@ -80,6 +80,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private volatile String            status             = "starting";
   private Map<String, Boolean>       pendingAlignments  = new HashMap<String, Boolean>();
   private TimerTask                  alignmentTask;
+  private String                     membershipListenerRegistration;
 
   private volatile HazelcastInstance hazelcastInstance;
 
@@ -149,12 +150,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     super.shutdown();
 
     remoteClusterNodes.clear();
-    hazelcastInstance.getCluster().removeMembershipListener(this);
+    if (membershipListenerRegistration != null) {
+    	hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
+    }
   }
 
   @Override
   public long incrementDistributedSerial(final String iDatabaseName) {
-    return hazelcastInstance.getAtomicNumber("db." + iDatabaseName).incrementAndGet();
+    return hazelcastInstance.getAtomicLong("db." + iDatabaseName).incrementAndGet();
   }
 
   @Override
@@ -200,30 +203,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final Member clusterMember = member;
 
-    DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
-
     ExecutionCallback<Object> callback = null;
     if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
       callback = new ExecutionCallback<Object>() {
-        @SuppressWarnings("unused")
         @Override
-        public void done(Future<Object> future) {
-          try {
-            if (!future.isCancelled()) {
-              // CHECK FOR CONFLICTS
-              Object result = future.get();
-            }
-          } catch (Exception e) {
-            ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT,
-                "error on execution of operation in ASYNCH mode", e);
-          }
+        public void onResponse(Object result) {
+        }
+        
+        @Override
+        public void onFailure(Throwable t) {
+          ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT,
+              "error on execution of operation in ASYNCH mode", t);
         }
       };
 
     for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
       try {
 
-        Object result = executeOperation(task, iTask.getMode(), callback);
+        Object result = executeOperation((Callable<Object>) iTask, clusterMember, iTask.getMode(), callback);
 
         // OK
         return result;
@@ -241,8 +238,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (InterruptedException ex) {
             Thread.interrupted();
           }
-
-          task = new DistributedTask<Object>((Callable<Object>) iTask, clusterMember);
 
         } else {
           ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT, "error on execution of operation in %s mode",
@@ -314,8 +309,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   "execution operation %s against db '%s' remotely type=%s...", iTask.getName().toUpperCase(), dbName,
                   iTask.getExecutionType());
 
-              final DistributedTask<Object> task = new DistributedTask<Object>((Callable<Object>) iTask, iKey);
-              remoteResult = executeOperation(task, EXECUTION_MODE.SYNCHRONOUS, null);
+              remoteResult = executeOperation((Callable<Object>) iTask, iKey, EXECUTION_MODE.SYNCHRONOUS, null);
             } else
               remoteResult = null;
 
@@ -508,7 +502,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public void registerAndAlignNodes() {
-    hazelcastInstance.getCluster().addMembershipListener(this);
+  	membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
     // COLLECTS THE MEMBER LIST
     for (Member clusterMember : hazelcastInstance.getCluster().getMembers()) {
@@ -763,15 +757,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return confictResolverClass;
   }
 
-  protected Object executeOperation(final DistributedTask<Object> task, final EXECUTION_MODE iMode,
+  protected Object executeOperation(final Callable<Object> task, final Object iKey, final EXECUTION_MODE iMode,
+  		final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
+  	Member member = hazelcastInstance.getPartitionService().getPartition(iKey).getOwner();
+  	return executeOperation(task, member, iMode, callback);
+  }
+  
+  protected Object executeOperation(final Callable<Object> task, Member member, final EXECUTION_MODE iMode,
       final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
-    if (iMode == EXECUTION_MODE.ASYNCHRONOUS && callback != null)
-      task.setExecutionCallback(callback);
 
-    hazelcastInstance.getExecutorService().execute(task);
+    if (iMode == EXECUTION_MODE.ASYNCHRONOUS && callback != null) {
+      hazelcastInstance.getExecutorService(DISTRIBUTED_EXECUTOR_NAME).submitToMember(task, member, callback);
+      return null;
+    }
+
+    Future<Object> future = hazelcastInstance.getExecutorService(DISTRIBUTED_EXECUTOR_NAME).submitToMember(task, member);
 
     if (iMode == EXECUTION_MODE.SYNCHRONOUS)
-      return task.get();
+      return future.get();
 
     return null;
   }
