@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import com.hazelcast.core.DistributedTask;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.log.OLogManager;
@@ -27,6 +26,7 @@ import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNo
  * @since 17.08.12
  */
 public class OHazelcastDHTNodeProxy implements ODHTNode {
+	private static final String     DHT_EXECUTOR = "OHazelcastDHTNodeProxy::DHT";
   private final long              nodeId;
   private final Member            member;
   private final HazelcastInstance hazelcastInstance;
@@ -105,7 +105,7 @@ public class OHazelcastDHTNodeProxy implements ODHTNode {
 
   private <T> T callOnRemoteMember(final NodeCall<T> call, boolean async) {
     try {
-      Future<T> future = (Future<T>) hazelcastInstance.getExecutorService().submit(new DistributedTask<T>(call, member));
+      Future<T> future = (Future<T>) hazelcastInstance.getExecutorService(DHT_EXECUTOR).submitToMember(call, member);
 
       if (async)
         return null;
