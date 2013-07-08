@@ -106,7 +106,7 @@ public class ODistributedStorage implements OStorage {
 
       if (distribute) {
 
-        final Map<String, Object> distributedResult = dManager.sendOperation2Nodes(dManager.getRemoteNodeIds(),
+        final Map<String, Object> distributedResult = dManager.propagate(dManager.getRemoteNodeIds(),
             new OSQLCommandDistributedTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
                 createRecordMode, iCommand.getText()));
 
@@ -141,7 +141,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new OCreateRecordDistributedTask(
+      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new OCreateRecordDistributedTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode, iRecordId, iContent,
           iRecordVersion, iRecordType));
 
@@ -164,7 +164,7 @@ public class ODistributedStorage implements OStorage {
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     try {
-      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.routeOperation2Node(getClusterNameFromRID(iRecordId),
+      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.manageExecution(getClusterNameFromRID(iRecordId),
           iRecordId, new OReadRecordDistributedTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
               iRecordId)));
     } catch (ExecutionException e) {
@@ -182,7 +182,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new OUpdateRecordDistributedTask(
+      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new OUpdateRecordDistributedTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
           iVersion, iRecordType));
     } catch (ExecutionException e) {
@@ -202,7 +202,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.routeOperation2Node(getClusterNameFromRID(iRecordId), iRecordId, new ODeleteRecordDistributedTask(
+      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new ODeleteRecordDistributedTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route DELETE_RECORD operation against %s to the distributed node", e, iRecordId);

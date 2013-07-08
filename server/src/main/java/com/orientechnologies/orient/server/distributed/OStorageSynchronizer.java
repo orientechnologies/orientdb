@@ -75,7 +75,7 @@ public class OStorageSynchronizer {
         if (getConflictResolver().existConflictsForRecord(rid))
           continue;
 
-        final ORawBuffer record = (ORawBuffer) iCluster.routeOperation2Node(getClusterNameByRID(storage, rid), rid,
+        final ORawBuffer record = (ORawBuffer) iCluster.manageExecution(getClusterNameByRID(storage, rid), rid,
             new OReadRecordDistributedTask(server, server.getDistributedManager(), storageName, rid));
 
         if (record == null)
@@ -92,12 +92,12 @@ public class OStorageSynchronizer {
     }
   }
 
-  public Map<String, Object> distributeOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
+  public Map<String, Object> propagateOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
     final Set<String> targetNodes = cluster.getRemoteNodeIdsBut(iTask.getNodeSource(), iTask.getNodeDestination());
     if (!targetNodes.isEmpty()) {
       // RESET THE SOURCE TO AVOID LOOPS
       iTask.setNodeSource(cluster.getLocalNodeId());
-      return cluster.sendOperation2Nodes(targetNodes, iTask);
+      return cluster.propagate(targetNodes, iTask);
     }
     return null;
   }

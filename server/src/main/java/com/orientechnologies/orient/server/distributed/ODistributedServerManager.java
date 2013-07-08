@@ -53,11 +53,11 @@ public interface ODistributedServerManager {
 
   public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
 
-  public Object routeOperation2Node(String iClusterName, Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
+  public Object manageExecution(String iClusterName, Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
 
   public Object sendOperation2Node(String iNodeId, OAbstractDistributedTask<?> iTask) throws ODistributedException;
 
-  public Map<String, Object> sendOperation2Nodes(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
+  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
       throws ODistributedException;
 
   public String getLocalNodeId();

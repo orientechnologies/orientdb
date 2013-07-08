@@ -108,7 +108,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   @Override
   public void handleCreateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordId iOtherRID) {
     ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
-        "CONFLICT on CREATE record %s/%s (other RID=%s)...", database.getName(), iCurrentRID, iOtherRID);
+        "Conflict on CREATE record %s/%s (other RID=%s)...", database.getName(), iCurrentRID, iOtherRID);
 
     if (!existConflictsForRecord(iCurrentRID)) {
       final ODocument doc = createConflictDocument(ORecordOperation.CREATED, iCurrentRID, iRemoteNode);
@@ -126,7 +126,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   public void handleUpdateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordVersion iCurrentVersion,
       final ORecordVersion iOtherVersion) {
     ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
-        "CONFLICT on UDPATE record %s/%s (current=v%d, other=v%d)...", database.getName(), iCurrentRID,
+        "Conflict on UDPATE record %s/%s (current=v%d, other=v%d)...", database.getName(), iCurrentRID,
         iCurrentVersion.getCounter(), iOtherVersion.getCounter());
 
     if (!existConflictsForRecord(iCurrentRID)) {
@@ -145,7 +145,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   @Override
   public void handleDeleteConflict(final String iRemoteNode, final ORecordId iCurrentRID) {
     ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
-        "CONFLICT on DELETE record %s/%s (cannot be deleted on other node)", database.getName(), iCurrentRID);
+        "Conflict on DELETE record %s/%s (cannot be deleted on other node)", database.getName(), iCurrentRID);
 
     if (!existConflictsForRecord(iCurrentRID)) {
       // WRITE THE CONFLICT AS RECORD
@@ -161,7 +161,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   @Override
   public void handleCommandConflict(final String iRemoteNode, OCommandRequest iCommand, Object iLocalResult, Object iRemoteResult) {
     ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
-        "CONFLICT on COMMAND execution on db '%s', cmd='%s' result local=%s, remote=%s", database.getName(), iCommand,
+        "Conflict on COMMAND execution on db '%s', cmd='%s' result local=%s, remote=%s", database.getName(), iCommand,
         iLocalResult, iRemoteResult);
   }
 

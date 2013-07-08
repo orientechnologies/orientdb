@@ -73,7 +73,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   protected OPhysicalPosition executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "CREATING RECORD %s/%s v.%s...", databaseName, rid.toString(), version.toString());
+        "created record %s/%s v.%s oper=%d.%d...", databaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
@@ -89,7 +89,7 @@ public class OCreateRecordDistributedTask extends OAbstractRecordDistributedTask
       rid = (ORecordId) record.getIdentity();
 
       ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "CREATED RECORD %s/%s v.%s", databaseName, rid.toString(), version.toString());
+          "assigned new rid %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {

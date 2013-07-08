@@ -67,7 +67,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   public ORecordVersion executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "UPDATE RECORD %s/%s v.%s", databaseName, rid.toString(), version.toString());
+        "update record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();

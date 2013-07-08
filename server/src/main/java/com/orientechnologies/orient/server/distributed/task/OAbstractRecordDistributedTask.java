@@ -65,9 +65,9 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
   protected abstract T executeOnLocalNode(final OStorageSynchronizer dbSynchronizer);
 
   public T call() {
-    if (rid != null && version != null)
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "operation %s against record %s/%s v.%s", getName(), databaseName, rid.toString(), version.toString());
+    // if (rid != null && version != null)
+    // ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+    // "operation %s against record %s/%s v.%s", getName(), databaseName, rid.toString(), version.toString());
 
     final ODistributedServerManager dManager = getDistributedServerManager();
     if (status != STATUS.ALIGN && !dManager.checkStatus("online") && !getNodeSource().equals(dManager.getLocalNodeId()))
@@ -109,7 +109,7 @@ public abstract class OAbstractRecordDistributedTask<T> extends OAbstractDistrib
 
       if (status == STATUS.DISTRIBUTE && getDistributedServerManager().getLocalNodeId().equals(getNodeSource())) {
         // SEND OPERATION ACROSS THE CLUSTER TO THE TARGET NODES
-        final Map<String, Object> distributedResult = dbSynchronizer.distributeOperation(ORecordOperation.CREATED, rid, this);
+        final Map<String, Object> distributedResult = dbSynchronizer.propagateOperation(ORecordOperation.CREATED, rid, this);
 
         if (distributedResult != null)
           for (Entry<String, Object> entry : distributedResult.entrySet()) {

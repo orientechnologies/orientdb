@@ -58,7 +58,7 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "DELETE RECORD %s/%s v.%s", databaseName, rid.toString(), version.toString());
+        "delete record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
