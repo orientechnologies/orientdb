@@ -706,13 +706,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid date format", e);
+          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
         }
       } else if (type == OType.DATETIME) {
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid datetime format", e);
+          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
         }
       }
   }

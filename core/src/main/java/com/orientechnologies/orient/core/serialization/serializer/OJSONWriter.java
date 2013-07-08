@@ -20,13 +20,11 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -35,21 +33,15 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-  private static final String           DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2";
-  private Writer                        out;
-  private boolean                       prettyPrint    = false;
-  private boolean                       firstAttribute = true;
-  private final String                  format;
-  private static final SimpleDateFormat dateFormat;
-
-  static {
-    dateFormat = new SimpleDateFormat(ORecordSerializerJSON.DEF_DATE_FORMAT);
-    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
+  private static final String DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
+  private Writer              out;
+  private boolean             prettyPrint    = false;
+  private boolean             firstAttribute = true;
+  private final String        format;
 
   public OJSONWriter(final Writer out) {
     this(out, DEF_FORMAT);
@@ -57,7 +49,7 @@ public class OJSONWriter {
 
   public OJSONWriter(final Writer out, final String iJsonFormat) {
     this.out = out;
-    format = iJsonFormat;
+    this.format = iJsonFormat;
   }
 
   public OJSONWriter beginObject() throws IOException {
@@ -267,13 +259,13 @@ public class OJSONWriter {
     }
 
     else if (iValue instanceof Date) {
-      buffer.append('"');
-      final String d;
-      synchronized (dateFormat) {
-        d = dateFormat.format(iValue);
+      if (iFormat.indexOf("dateAsLong") > -1)
+        buffer.append(((Date) iValue).getTime());
+      else {
+        buffer.append('"');
+        buffer.append(ODateHelper.getDateTimeFormatInstance().format(iValue));
+        buffer.append('"');
       }
-      buffer.append(d);
-      buffer.append('"');
     } else if (iValue instanceof String) {
       final String v = (String) iValue;
       buffer.append('"');

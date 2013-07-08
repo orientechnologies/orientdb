@@ -490,7 +490,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded"));
+        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong"));
 
         recordExported++;
         recordNum++;

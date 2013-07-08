@@ -72,7 +72,7 @@ public class JSONTest {
 
     newDoc.fromJSON("{\"gender\":{\"name\":\"Male\"},\"firstName\":\"Jack\",\"lastName\":\"Williams\","
         + "\"phone\":\"561-401-3348\",\"email\":\"0586548571@example.com\",\"address\":{\"street1\":\"Smith Ave\","
-        + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"}," + "\"dob\":\"2011-11-17T03:17:04Z\"}");
+        + "\"street2\":null,\"city\":\"GORDONSVILLE\",\"state\":\"VA\",\"code\":\"22942\"}," + "\"dob\":\"2011-11-17 03:17:04\"}");
 
     String json = newDoc.toJSON();
     ODocument loadedDoc = new ODocument().fromJSON(json);
@@ -656,7 +656,7 @@ public class JSONTest {
     System.out.println("--------------------");
 
     ODocument jdoc = new ODocument("TestModel");
-    jdoc.fromJSON("{\"name\":\"Jane Doe\",\"knowledge\":[{\"endNode\":\"#9:0\",\"relationship\":\"friend\",\"since\":\"2013-04-27T05:09:07.440Z\"}]}");
+    jdoc.fromJSON("{\"name\":\"Jane Doe\",\"knowledge\":[{\"endNode\":\"#9:0\",\"relationship\":\"friend\",\"since\":\"2013-04-27 05:09:07.440\"}]}");
     jdoc.save();
 
     for (ODocument o : db.browseClass("TestModel"))
@@ -665,7 +665,7 @@ public class JSONTest {
 
     db.command(
         new OCommandSQL(
-            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27T16:07:15.094Z\"}]}"))
+            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27 16:07:15.094\"}]}"))
         .execute();
 
     for (ODocument o : db.browseClass("TestModel"))
@@ -674,7 +674,7 @@ public class JSONTest {
 
     db.command(
         new OCommandSQL(
-            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27T16:07:15.094Z\"}]}"))
+            "UPDATE #9:0 merge {\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"years\":0,\"since\":\"2013-04-27 16:07:15.094\"}]}"))
         .execute();
 
     for (ODocument o : db.browseClass("TestModel"))
@@ -683,7 +683,7 @@ public class JSONTest {
 
     db.command(
         new OCommandSQL(
-            "Insert into TestModel content {\"name\":\"Theon Greyjoy\",\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"since\":\"2013-04-27T05:09:07.440Z\"}]}"))
+            "Insert into TestModel content {\"name\":\"Theon Greyjoy\",\"knowledge\":[{\"endNode\":\"#9:1\",\"relationship\":\"friend\",\"since\":\"2013-04-27 05:09:07.440\"}]}"))
         .execute();
 
     for (ODocument o : db.browseClass("TestModel"))

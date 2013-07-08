@@ -63,12 +63,70 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public static final String                NAME                  = "json";
   public static final ORecordSerializerJSON INSTANCE              = new ORecordSerializerJSON();
   public static final String                ATTRIBUTE_FIELD_TYPES = "@fieldTypes";
-  public static final String                DEF_DATE_FORMAT       = "yyyy-MM-dd HH:mm:ss:SSS";
   public static final char[]                PARAMETER_SEPARATOR   = new char[] { ':', ',' };
   private static final Long                 MAX_INT               = new Long(Integer.MAX_VALUE);
   private static final Long                 MIN_INT               = new Long(Integer.MIN_VALUE);
   private static final Double               MAX_FLOAT             = new Double(Float.MAX_VALUE);
   private static final Double               MIN_FLOAT             = new Double(Float.MIN_VALUE);
+
+  public class FormatSettings {
+    public boolean includeVer;
+    public boolean includeType;
+    public boolean includeId;
+    public boolean includeClazz;
+    public boolean attribSameRow;
+    public boolean alwaysFetchEmbeddedDocuments;
+    public int     indentLevel;
+    public String  fetchPlan  = null;
+    public boolean keepTypes;
+    public boolean dateAsLong = false;
+
+    public FormatSettings(final String iFormat) {
+      if (iFormat == null) {
+        includeType = true;
+        includeVer = true;
+        includeId = true;
+        includeClazz = true;
+        attribSameRow = true;
+        indentLevel = 0;
+        fetchPlan = "";
+        keepTypes = true;
+        alwaysFetchEmbeddedDocuments = true;
+      } else {
+        includeType = false;
+        includeVer = false;
+        includeId = false;
+        includeClazz = false;
+        attribSameRow = false;
+        alwaysFetchEmbeddedDocuments = false;
+        indentLevel = 0;
+        keepTypes = true;
+
+        final String[] format = iFormat.split(",");
+        for (String f : format)
+          if (f.equals("type"))
+            includeType = true;
+          else if (f.equals("rid"))
+            includeId = true;
+          else if (f.equals("version"))
+            includeVer = true;
+          else if (f.equals("class"))
+            includeClazz = true;
+          else if (f.equals("attribSameRow"))
+            attribSameRow = true;
+          else if (f.startsWith("indent"))
+            indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
+          else if (f.startsWith("fetchPlan"))
+            fetchPlan = f.substring(f.indexOf(':') + 1);
+          else if (f.startsWith("keepTypes"))
+            keepTypes = true;
+          else if (f.startsWith("alwaysFetchEmbedded"))
+            alwaysFetchEmbeddedDocuments = true;
+          else if (f.startsWith("dateAsLong"))
+            dateAsLong = true;
+      }
+    }
+  }
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
@@ -509,84 +567,31 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     try {
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
+      final FormatSettings settings = new FormatSettings(iFormat);
 
-      boolean includeVer;
-      boolean includeType;
-      boolean includeId;
-      boolean includeClazz;
-      boolean attribSameRow;
-      boolean alwaysFetchEmbeddedDocuments;
-      int indentLevel;
-      String fetchPlan = null;
-      boolean keepTypes;
-
-      if (iFormat == null) {
-        includeType = true;
-        includeVer = true;
-        includeId = true;
-        includeClazz = true;
-        attribSameRow = true;
-        indentLevel = 0;
-        fetchPlan = "";
-        keepTypes = true;
-        alwaysFetchEmbeddedDocuments = true;
-      } else {
-        includeType = false;
-        includeVer = false;
-        includeId = false;
-        includeClazz = false;
-        attribSameRow = false;
-        alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 0;
-        keepTypes = true;
-
-        final String[] format = iFormat.split(",");
-        for (String f : format)
-          if (f.equals("type"))
-            includeType = true;
-          else if (f.equals("rid"))
-            includeId = true;
-          else if (f.equals("version"))
-            includeVer = true;
-          else if (f.equals("class"))
-            includeClazz = true;
-          else if (f.equals("attribSameRow"))
-            attribSameRow = true;
-          else if (f.startsWith("indent"))
-            indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
-          else if (f.startsWith("fetchPlan"))
-            fetchPlan = f.substring(f.indexOf(':') + 1);
-          else if (f.startsWith("keepTypes"))
-            keepTypes = true;
-          else if (f.startsWith("alwaysFetchEmbedded"))
-            alwaysFetchEmbeddedDocuments = true;
-      }
-
-      json.beginObject(indentLevel);
-      OJSONFetchContext context = new OJSONFetchContext(json, includeType, includeId, includeVer, includeClazz, attribSameRow,
-          keepTypes, alwaysFetchEmbeddedDocuments);
-
-      context.writeSignature(json, indentLevel, includeType, includeId, includeVer, includeClazz, attribSameRow, iRecord);
+      json.beginObject(settings.indentLevel);
+      OJSONFetchContext context = new OJSONFetchContext(json, settings);
+      context.writeSignature(json, iRecord);
 
       if (iRecord instanceof ORecordSchemaAware<?>) {
 
-        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(fetchPlan), new OJSONFetchListener(), context);
+        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context);
       } else if (iRecord instanceof ORecordStringable) {
 
         // STRINGABLE
         final ORecordStringable record = (ORecordStringable) iRecord;
-        json.writeAttribute(indentLevel + 1, true, "value", record.value());
+        json.writeAttribute(settings.indentLevel + 1, true, "value", record.value());
 
       } else if (iRecord instanceof ORecordBytes) {
         // BYTES
         final ORecordBytes record = (ORecordBytes) iRecord;
-        json.writeAttribute(indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
+        json.writeAttribute(settings.indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
       } else
 
         throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
             + "' to JSON. The record type cannot be exported to JSON");
 
-      json.endObject(indentLevel);
+      json.endObject(settings.indentLevel);
 
       iOutput.append(buffer);
       return iOutput;
