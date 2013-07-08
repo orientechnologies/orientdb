@@ -41,19 +41,20 @@ public class ServerRun {
     this.serverId = serverId;
   }
 
-  protected void createDatabase(final String iName) {
+  protected ODatabaseDocumentTx createDatabase(final String iName) {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
     String dbPath = getDatabasePath(iName);
 
-    System.out.println("Creating database " + iName + " under: " + dbPath + "...");
-
     new File(dbPath).mkdirs();
 
     final ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + dbPath);
-    if (database.exists())
+    if (database.exists()) {
+      System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
       OFileUtils.deleteRecursively(new File(dbPath));
+    }
 
+    System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
     database.create();
 
     System.out.println("Creating database schema...");
@@ -67,13 +68,15 @@ public class ServerRun {
     personClass.createProperty("children", OType.INTEGER);
 
     database.close();
+    return database;
   }
 
   protected void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
-    System.out.println("Copying database " + iDatabaseName + " to " + iDestinationDirectory + "...");
-
+    System.out.println("Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
     OFileUtils.deleteRecursively(new File(iDestinationDirectory));
+
+    System.out.println("Copying database folder " + iDatabaseName + " to " + iDestinationDirectory + "...");
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
