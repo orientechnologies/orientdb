@@ -23,8 +23,16 @@ public class ODateHelper {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance();
   }
 
+  public static String getDateFormat() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormat();
+  }
+
   public static DateFormat getDateTimeFormatInstance() {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
+  }
+
+  public static String getDateTimeFormat() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormat();
   }
 
   public static Date now() {

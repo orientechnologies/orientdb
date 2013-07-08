@@ -476,4 +476,12 @@ public class OStorageConfiguration implements OSerializableStream {
     localeCountry = iValue;
     localeInstance = null;
   }
+
+  public String getDateFormat() {
+    return dateFormat;
+  }
+
+  public String getDateTimeFormat() {
+    return dateTimeFormat;
+  }
 }

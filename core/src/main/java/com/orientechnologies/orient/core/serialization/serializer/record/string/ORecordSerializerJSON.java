@@ -18,14 +18,12 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
@@ -56,6 +54,7 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 @SuppressWarnings("serial")
@@ -70,13 +69,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Long                 MIN_INT               = new Long(Integer.MIN_VALUE);
   private static final Double               MAX_FLOAT             = new Double(Float.MAX_VALUE);
   private static final Double               MIN_FLOAT             = new Double(Float.MIN_VALUE);
-
-  private final static SimpleDateFormat     dateFormat;
-
-  static {
-    dateFormat = new SimpleDateFormat(DEF_DATE_FORMAT);
-    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
@@ -149,7 +141,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             if (localRecord != null)
               iRecord = localRecord;
           }
-        } else if(fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument) {
+        } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_CLASS) && iRecord instanceof ODocument) {
           ((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
         }
       }
@@ -181,8 +173,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
           } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
-          } 
-          else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
+          } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
             // JUMP IT
             continue;
 
@@ -236,9 +227,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                     doc.field(fieldName, v, OType.EMBEDDEDMAP);
                     continue;
                   }
-                } else if(v instanceof ODocument && type != null && type.isLink()) {
+                } else if (v instanceof ODocument && type != null && type.isLink()) {
                   String className = ((ODocument) v).getClassName();
-                  if(className != null && className.length() > 0)
+                  if (className != null && className.length() > 0)
                     ((ODocument) v).save();
                 }
 
@@ -426,13 +417,20 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
         if (iType == null) {
-          if (iFieldValueAsString.length() == DEF_DATE_FORMAT.length())
+          if (iFieldValueAsString.length() == ODateHelper.getDateFormat().length())
             // TRY TO PARSE AS DATE
             try {
-              synchronized (dateFormat) {
-                return dateFormat.parseObject(iFieldValueAsString);
-              }
+              return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
             } catch (Exception e) {
+              // IGNORE IT
+            }
+
+          if (iFieldValueAsString.length() == ODateHelper.getDateTimeFormat().length())
+            // TRY TO PARSE AS DATETIME
+            try {
+              return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
+            } catch (Exception e) {
+              // IGNORE IT
             }
 
           iType = OType.STRING;
@@ -458,7 +456,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         return fromString(iFieldValueAsString);
 
       case DATE:
-      case DATETIME:
         if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
           return null;
         try {
@@ -467,11 +464,26 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         } catch (NumberFormatException e) {
           try {
             // TRY TO PARSE AS DATE
-            synchronized (dateFormat) {
-              return dateFormat.parseObject(iFieldValueAsString);
-            }
+            return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
           } catch (ParseException ex) {
-            throw new OSerializationException("Unable to unmarshall date: " + iFieldValueAsString, e);
+            throw new OSerializationException("Unable to unmarshall date (format=" + ODateHelper.getDateFormat() + ") : "
+                + iFieldValueAsString, e);
+          }
+        }
+
+      case DATETIME:
+        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+          return null;
+        try {
+          // TRY TO PARSE AS LONG
+          return Long.parseLong(iFieldValueAsString);
+        } catch (NumberFormatException e) {
+          try {
+            // TRY TO PARSE AS DATETIME
+            return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
+          } catch (ParseException ex) {
+            throw new OSerializationException("Unable to unmarshall datetime (format=" + ODateHelper.getDateTimeFormat() + ") : "
+                + iFieldValueAsString, e);
           }
         }
       case BINARY:
