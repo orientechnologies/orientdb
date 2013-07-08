@@ -1,5 +1,6 @@
    <!-- BEGIN HEADER -->
-   <div class="header navbar navbar-inverse navbar-fixed-top">
+<header class="header">
+   <div class="header navbar navbar-inverse navbar-fixed-top" bs-navbar>
       <!-- BEGIN TOP NAVIGATION BAR -->
       <div class="navbar-inner">
          <div class="container-fluid">
@@ -7,10 +8,15 @@
             <a class="brand" href="/">
             <img src="images/orient_db.png" alt="logo" />
             </a>
-            <ul class="nav pull-right" ng-show="database.current">
+            <ul class = "nav">
+            <li data-match-route="{{menu.link}}"  ng-repeat="menu in menus">
+               <a href="{{menu.link}}"><i class="icon-home icon-white"></i>{{menu.name | capitalize}}</a>
+            </li>
+            </ul>
+            <ul class="nav pull-right" ng-show="database.getName()">
                 <li class="dropdown user">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                  <span class="username">{{ database.dbName}} ({{ database.username}})</span>
+                  <span class="username">{{ database.getName()}} ({{ database.currentUser()}})</span>
                   <i class="icon-angle-down icon-white"></i>
                   </a>
                   <ul class="dropdown-menu">
@@ -25,3 +31,4 @@
       <!-- END TOP NAVIGATION BAR -->
    </div>
    <!-- END HEADER -->
+</header>

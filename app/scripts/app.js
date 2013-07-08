@@ -1,9 +1,22 @@
 'use strict';
 
 
-var deps = ['header.controller','login.controller','database.controller','document.controller','$strap.directives','ui.codemirror'];
-angular.module('OrientDBStudioApp', deps)
-  .config(function ($routeProvider) {
+var deps = ['header.controller',
+            'login.controller',
+            'database.controller',
+            'document.controller',
+            'notification.controller',
+            '$strap.directives',
+            'ui.codemirror',
+            'LocalStorageModule',
+            'filters',
+            'rendering'];
+          
+
+
+var App = angular.module('OrientDBStudioApp', deps);
+
+App.config(function ($routeProvider) {
     $routeProvider
       .when('/', {
         templateUrl: 'views/login.html',
@@ -11,13 +24,23 @@ angular.module('OrientDBStudioApp', deps)
       })
       .when('/database/:database/:action', {
         templateUrl: 'views/database/database.html',
-        controller: 'DatabaseController'
+        controller: 'DatabaseController',
+        resolve : DatabaseResolve
       })
-      .when('/database/:database/browse/:rid', {
+      .when('/database/:database/browse/edit/:rid', {
         templateUrl: 'views/database/editRecord.html',
-        controller: 'DocumentController'
+        controller: 'DocumentEditController',
+        resolve : DatabaseResolve
+      })
+      .when('/database/:database/browse/create/:clazz', {
+        templateUrl: 'views/database/createRecord.html',
+        controller: 'DocumentCreateController',
+        resolve : DatabaseResolve
+      })
+      .when('/404' , {
+        templateUrl: 'views/404.html'
       })
       .otherwise({
         redirectTo: '/'
       });
-  });
+});

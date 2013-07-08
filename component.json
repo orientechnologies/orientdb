@@ -10,7 +10,10 @@
     "angular-sanitize": "~1.0.5",
     "angular-strap" : "~0.7.4",
     "js-base64":"~2.1.2",
-    "angular-ui-codemirror": "latest"
+    "angular-ui-codemirror": "latest",
+    "angular-localstorage" : "latest",
+    "bootstrap-datepicker" : "1.0.2",
+    "moment" : "latest"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

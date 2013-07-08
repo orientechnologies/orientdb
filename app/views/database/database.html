@@ -1,13 +1,6 @@
 
 <div class="row-fluid">
-	<div class = "span3">
-		<ul class = "nav nav-list sidenav affix-top">
-			<li ng-class="{active: menu.name==action}" ng-repeat="menu in menus">
-				<a href="#"><i class="icon-chevron-right"></i>{{menu.name}}</a>
-			</li>
-		</ul>
-	</div>
-	<div class="span9" >
+	<div class="span12" >
 		<ng-include src="getPartials(action)">
 		</ng-include>
 	</div>

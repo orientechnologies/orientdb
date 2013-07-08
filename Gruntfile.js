@@ -277,8 +277,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('server', [
     'clean:server',
-//    'coffee:dist',
-    'compass:server',
+    'coffee:dist',
+//    'compass:server',
     'configureProxies',
     'livereload-start',
     'connect:livereload',

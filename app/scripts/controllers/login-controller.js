@@ -6,17 +6,9 @@ angular.module('login.controller',['database.services']).controller("LoginContro
 	DatabaseApi.listDatabases(function(data){
 		$scope.databases = data.databases;
 	});
-
-
-	$scope.connect = function(){
-		DatabaseApi.connect($scope.database,$scope.username,$scope.password,function(){
-			var currentDb = DatabaseApi.get({database : $scope.database},function(){
-				Database.current =  currentDb;
-				Database.username = $scope.username;
-				Database.dbName = $scope.database;
-				$location.path("/database/" + $scope.database + "/browse");
-			});
-	
+	$scope.connect = function(){	
+		Database.connect($scope.database,$scope.username,$scope.password,function(){
+			$location.path("/database/" + $scope.database + "/browse");
 		});
 	}
 }]);
