@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -100,7 +101,7 @@ public class ServerClusterTest {
 
     System.out.println("Writer threads finished, shutting down Reader threads...");
 
-    readerExecutor.shutdownNow();
+    readerExecutor.shutdown();
     Assert.assertTrue(readerExecutor.awaitTermination(10, TimeUnit.SECONDS));
 
     System.out.println("All threads have finished, shutting down server instances");
@@ -171,7 +172,7 @@ public class ServerClusterTest {
           if (name == null)
             name = database.getURL();
 
-          if ((i + 1) % 1 == 0)
+          if ((i + 1) % 10000 == 0)
             System.out.println("\nWriter " + name + " created " + (i + 1) + "/" + count + " records so far");
 
           ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "firstName", "Billy", "lastName",
@@ -202,36 +203,50 @@ public class ServerClusterTest {
 
     @Override
     public void run() {
-      String name = null;
       try {
         while (!Thread.interrupted()) {
-          ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
           try {
-            List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-
-            if (name == null)
-              name = database.getURL();
-
-            System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: "
-                + database.countClass("Person") + " counting cluster: " + database.countClusterElements("Person"));
-
+            printStats();
             Thread.sleep(DELAY_READER_QUERY);
 
           } catch (InterruptedException e) {
-            System.out.println("\nReader received interrupt (db=" + database.getURL());
+            System.out.println("\nReader received interrupt (db=" + databaseUrl);
             Thread.currentThread().interrupt();
             break;
+          } catch (Exception e) {
+            e.printStackTrace();
 
-          } finally {
-            database.close();
           }
         }
+
       } finally {
-        ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
-        List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-        System.out.println("\nReader END REPORT " + name + " sql count: " + result.get(0) + " counting class: "
-            + database.countClass("Person") + " counting cluster: " + database.countClusterElements("Person"));
+        printStats();
       }
+    }
+
+    private void printStats() {
+      final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
+      try {
+        List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+
+        final String name = database.getURL();
+
+        System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: "
+            + database.countClass("Person") + " counting cluster: " + database.countClusterElements("Person"));
+
+        try {
+          List<ODocument> conflicts = database
+              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
+          Assert.assertEquals(0, conflicts.get(0).field("count"));
+          System.out.println("\nReader " + name + " conflicts: " + result.get(0));
+        } catch (OQueryParsingException e) {
+          // IGNORE IT
+        }
+
+      } finally {
+        database.close();
+      }
+
     }
   }
 }
