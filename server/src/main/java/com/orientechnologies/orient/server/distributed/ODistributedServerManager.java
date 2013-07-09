@@ -109,5 +109,5 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object executeLocal(final OAbstractReplicatedTask<?> iTask);
+  public Object enqueueLocalExecution(final OAbstractReplicatedTask<?> iTask);
 }

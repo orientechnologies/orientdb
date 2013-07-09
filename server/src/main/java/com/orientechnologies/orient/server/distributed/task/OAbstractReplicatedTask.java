@@ -71,7 +71,7 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   @SuppressWarnings("unchecked")
   public T call() {
     // EXECUTE IT LOCALLY
-    final Object localResult = getDistributedServerManager().executeLocal(this);
+    final Object localResult = getDistributedServerManager().enqueueLocalExecution(this);
 
     if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
       return (T) localResult;

@@ -70,21 +70,22 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
-  private static final String        DISTRIBUTED_EXECUTOR_NAME = "OHazelcastPlugin::Executor";
-  private static final int           SEND_RETRY_MAX            = 100;
-  private int                        nodeNumber;
-  private String                     localNodeId;
-  private String                     configFile                = "hazelcast.xml";
-  private Map<String, Member>        remoteClusterNodes        = new ConcurrentHashMap<String, Member>();
-  private long                       timeOffset;
-  private long                       runId                     = -1;
-  private volatile String            status                    = "starting";
-  private Map<String, Boolean>       pendingAlignments         = new HashMap<String, Boolean>();
-  private TimerTask                  alignmentTask;
-  private String                     membershipListenerRegistration;
-  private Map<Long, Long>            executionQueue            = new HashMap<Long, Long>();
+  protected static final String        DISTRIBUTED_EXECUTOR_NAME = "OHazelcastPlugin::Executor";
+  protected static final int           SEND_RETRY_MAX            = 100;
+  
+  protected int                        nodeNumber;
+  protected String                     localNodeId;
+  protected String                     configFile                = "hazelcast.xml";
+  protected Map<String, Member>        remoteClusterNodes        = new ConcurrentHashMap<String, Member>();
+  protected long                       timeOffset;
+  protected long                       runId                     = -1;
+  protected volatile String            status                    = "starting";
+  protected Map<String, Boolean>       pendingAlignments         = new HashMap<String, Boolean>();
+  protected TimerTask                  alignmentTask;
+  protected String                     membershipListenerRegistration;
+  protected Map<Long, Long>            executionQueue            = new HashMap<Long, Long>();
 
-  private volatile HazelcastInstance hazelcastInstance;
+  protected volatile HazelcastInstance hazelcastInstance;
 
   public OHazelcastPlugin() {
   }
@@ -315,7 +316,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               "local execution %s against db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
               iTask.getRunId(), iTask.getOperationSerial());
 
-          localResult = executeLocal((OAbstractReplicatedTask<? extends Object>) iTask);
+          localResult = enqueueLocalExecution((OAbstractReplicatedTask<? extends Object>) iTask);
 
           // CHECK CONFLICT
           if (remoteResult != null && localResult != null)
@@ -382,7 +383,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     // LOCAL EXECUTION AVOID TO USE EXECUTORS
-    final Object localResult = executeLocal(iTask);
+    final Object localResult = enqueueLocalExecution(iTask);
 
     try {
       iTask.setAsCompleted(dbSynchronizer, operationLogOffset);
@@ -854,7 +855,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return masterNodeId;
   }
 
-  public Object executeLocal(final OAbstractReplicatedTask<? extends Object> iTask) {
+  public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask) {
 
     // MANAGE ORDER
     while (true)
