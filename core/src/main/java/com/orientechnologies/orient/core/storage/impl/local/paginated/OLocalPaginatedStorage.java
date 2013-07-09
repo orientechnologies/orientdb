@@ -127,7 +127,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private OStorageTransaction                       transaction                          = null;
 
-  private boolean                                   wereDataRestoredAfterOpen            = false;
+  private volatile boolean                          wereDataRestoredAfterOpen            = false;
 
   private boolean                                   makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
                                                                                              .getValueAsBoolean();
@@ -1156,7 +1156,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return null;
   }
 
-	@Override
+  @Override
   public boolean isHashClustersAreUsed() {
     return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }

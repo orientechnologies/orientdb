@@ -62,8 +62,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OClassIndexManager extends ODocumentHookAbstract {
   public OClassIndexManager() {
     // rebuild indexes if index cluster wasn't closed properly
-    if (autoRecreateIndexesAfterCrash())
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getIndexManager().recreateIndexes();
   }
 
   @Override
@@ -287,21 +285,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     releaseModificationLock(iDocument);
   }
 
-  public static boolean autoRecreateIndexesAfterCrash() {
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
-      return false;
 
-    OStorage storage = database.getStorage();
-
-    if (storage instanceof OStorageLocal)
-      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
-    else if (storage instanceof OLocalPaginatedStorage) {
-      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
-    }
-
-    return false;
-  }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();

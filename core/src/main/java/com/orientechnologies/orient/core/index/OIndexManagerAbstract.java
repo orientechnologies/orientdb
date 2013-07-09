@@ -85,7 +85,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public OIndexManagerAbstract load() {
-    if (!OClassIndexManager.autoRecreateIndexesAfterCrash()) {
+    if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
 

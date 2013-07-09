@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * @author Andrey Lomakin
@@ -117,12 +118,16 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
+    OStorage storage = baseDocumentTx.getStorage();
     baseDocumentTx.close();
+    storage.close();
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
         + "/testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
     testDocumentTx.open("admin", "admin");
+    OStorage testStorage = testDocumentTx.getStorage();
     testDocumentTx.close();
+    testStorage.close();
 
     long dataAddSeed = random.nextLong();
     System.out.println("Data add seed = " + dataAddSeed);
