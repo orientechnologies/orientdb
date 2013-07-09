@@ -1,0 +1,30 @@
+<div class="row-fluid" ng-controller="SchemaController">
+	<div class = "span12 nomargin">
+		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="headers">
+			<thead>
+				<tr>
+					<th ng-repeat="header in headers" >
+						<a href="" ng-click= "predicate = 'header'; reverse=true">
+							{{header}}</a>(<a href="" ng-click= "predicate = -'header'; reverse=true">^</a>)</th>
+
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="result in list | orderBy:predicate:reverse">
+							<td>{{result['name']}}</td>
+							<td>{{result['superClass']}}</td>
+							<td>{{result['alias']}}</td>
+							<td>
+								<input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
+							</td>
+							<td>{{result['clusters']}}</td>
+							<td>{{result['defaultCluster']}}</td>
+							<td>{{result['records']}}</td>
+						</tr>
+					</tbody>
+
+
+	
+			</div>
+
+		</div>
