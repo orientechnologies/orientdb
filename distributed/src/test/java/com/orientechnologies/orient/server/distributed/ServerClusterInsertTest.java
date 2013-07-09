@@ -141,9 +141,7 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
             Thread.sleep(delayReader);
 
           } catch (Exception e) {
-            e.printStackTrace();
             break;
-
           }
         }
 
@@ -165,7 +163,7 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
 
       try {
         List<ODocument> conflicts = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-        Assert.assertEquals(0, conflicts.get(0).field("count"));
+        Assert.assertEquals((Long) 0l, (Long) conflicts.get(0).field("count"));
         System.out.println("\nReader " + name + " conflicts: " + result.get(0));
       } catch (OQueryParsingException e) {
         // IGNORE IT

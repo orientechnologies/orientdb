@@ -37,17 +37,17 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integer> {
+public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   private static final long  serialVersionUID = 1L;
 
   protected long             lastRunId;
   protected long             lastOperationId;
   protected static final int OP_BUFFER        = 150;
 
-  public OAlignRequestDistributedTask() {
+  public OAlignRequestTask() {
   }
 
-  public OAlignRequestDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+  public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
       final String iDbName, final EXECUTION_MODE iMode, final long iLastRunId, final long iLastOperationId) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode);
     lastRunId = iLastRunId;
@@ -76,7 +76,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
     if (alignmentLock.tryLock())
       try {
         aligned = 0;
-        final OMultipleDistributedTasks tasks = new OMultipleDistributedTasks(serverInstance, dManager, databaseName,
+        final OMultipleRemoteTasks tasks = new OMultipleRemoteTasks(serverInstance, dManager, databaseName,
             EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
 
@@ -85,7 +85,7 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
         while (it.hasNext()) {
           final long pos = it.next();
 
-          final OAbstractDistributedTask<?> operation = log.getOperation(pos);
+          final OAbstractReplicatedTask<?> operation = log.getOperation(pos);
           if (operation == null) {
             ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
                 "db '%s' skipped operation #%d.%d", databaseName, lastRunId, lastOperationId);
@@ -119,14 +119,14 @@ public class OAlignRequestDistributedTask extends OAbstractDistributedTask<Integ
       aligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendOperation2Node(getNodeSource(), new OAlignResponseDistributedTask(serverInstance, dManager, databaseName,
+    dManager.sendOperation2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName,
         EXECUTION_MODE.FIRE_AND_FORGET, aligned));
 
     return aligned;
   }
 
   protected int flushBufferedTasks(final ODistributedServerManager dManager, final OStorageSynchronizer synchronizer,
-      final OMultipleDistributedTasks tasks, final List<Long> positions) throws IOException {
+      final OMultipleRemoteTasks tasks, final List<Long> positions) throws IOException {
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     @SuppressWarnings("unused")

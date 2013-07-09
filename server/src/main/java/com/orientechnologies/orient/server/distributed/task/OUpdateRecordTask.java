@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -40,16 +39,16 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask<ORecordVersion> {
+public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVersion> {
   private static final long serialVersionUID = 1L;
 
   protected byte[]          content;
   protected byte            recordType;
 
-  public OUpdateRecordDistributedTask() {
+  public OUpdateRecordTask() {
   }
 
-  public OUpdateRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+  public OUpdateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
       final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
       final byte iRecordType) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
@@ -57,7 +56,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
     recordType = iRecordType;
   }
 
-  public OUpdateRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+  public OUpdateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType) {
     super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
@@ -65,7 +64,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
   }
 
   @Override
-  public ORecordVersion executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+  public ORecordVersion executeOnLocalNode() {
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
         "update record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
@@ -129,7 +128,7 @@ public class OUpdateRecordDistributedTask extends OAbstractRecordDistributedTask
   }
 
   @Override
-  protected OPERATION_TYPES getOperationType() {
+  public OPERATION_TYPES getOperationType() {
     return OPERATION_TYPES.RECORD_UPDATE;
   }
 }

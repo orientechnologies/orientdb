@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -30,8 +28,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OReadRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 
 /**
@@ -75,8 +72,8 @@ public class OStorageSynchronizer {
         if (getConflictResolver().existConflictsForRecord(rid))
           continue;
 
-        final ORawBuffer record = (ORawBuffer) iCluster.manageExecution(getClusterNameByRID(storage, rid), rid,
-            new OReadRecordDistributedTask(server, server.getDistributedManager(), storageName, rid));
+        final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid,
+            new OReadRecordTask(server, server.getDistributedManager(), storageName, rid));
 
         if (record == null)
           // DELETE IT
@@ -90,16 +87,6 @@ public class OStorageSynchronizer {
             "error on acquiring uncommitted record %s from other servers. The database could be unaligned with others!", e, rid);
       }
     }
-  }
-
-  public Map<String, Object> propagateOperation(final byte operation, final ORecordId rid, final OAbstractDistributedTask<?> iTask) {
-    final Set<String> targetNodes = cluster.getRemoteNodeIdsBut(iTask.getNodeSource(), iTask.getNodeDestination());
-    if (!targetNodes.isEmpty()) {
-      // RESET THE SOURCE TO AVOID LOOPS
-      iTask.setNodeSource(cluster.getLocalNodeId());
-      return cluster.propagate(targetNodes, iTask);
-    }
-    return null;
   }
 
   /**

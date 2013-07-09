@@ -37,13 +37,13 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask.STATUS;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 /**
  * Writes all the non-idempotent operations against a database. Uses the classic IO API and NOT the MMAP to avoid the buffer is not
@@ -209,14 +209,14 @@ public class ODatabaseJournal {
       if (getOperationStatus(fileOffset))
         break;
 
-      final OAbstractDistributedTask<?> op = getOperation(fileOffset);
+      final OAbstractRemoteTask<?> op = getOperation(fileOffset);
 
       ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
           "db '%s' found uncommitted operation %s", storage.getName(), op);
 
-      if (op instanceof OAbstractRecordDistributedTask<?>)
+      if (op instanceof OAbstractRecordReplicatedTask<?>)
         // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
-        uncommittedRecords.add(((OAbstractRecordDistributedTask<?>) op).getRid());
+        uncommittedRecords.add(((OAbstractRecordReplicatedTask<?>) op).getRid());
 
       fileOffset = getPreviousOperation(fileOffset);
     }
@@ -272,8 +272,11 @@ public class ODatabaseJournal {
    * 
    * @return The end of the record stored for this operation.
    */
-  public long journalOperation(final long iRunId, final long iOperationId, final OPERATION_TYPES iOperationType,
-      final Object iVarData) throws IOException {
+  public long journalOperation(final OAbstractReplicatedTask<?> task) throws IOException {
+
+    final OPERATION_TYPES iOperationType = task.getOperationType();
+    final long iRunId = task.getRunId();
+    final long iOperationId = task.getOperationSerial();
 
     lock.acquireExclusiveLock();
     try {
@@ -285,9 +288,8 @@ public class ODatabaseJournal {
       case RECORD_CREATE:
       case RECORD_UPDATE:
       case RECORD_DELETE: {
-        final OAbstractRecordDistributedTask<?> task = (OAbstractRecordDistributedTask<?>) iVarData;
         varSize = ORecordId.PERSISTENT_SIZE;
-        final ORecordId rid = task.getRid();
+        final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
 
         ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
             "journaled operation %s against db '%s' rid %s as #%d.%d", iOperationType.toString(), storage.getName(), rid, iRunId,
@@ -304,7 +306,7 @@ public class ODatabaseJournal {
       }
 
       case SQL_COMMAND: {
-        final OCommandSQL cmd = (OCommandSQL) iVarData;
+        final OCommandSQL cmd = new OCommandSQL(task.getPayload());
         final String cmdText = cmd.getText();
         final byte[] cmdBinary = cmdText.getBytes();
         varSize = cmdBinary.length;
@@ -417,8 +419,8 @@ public class ODatabaseJournal {
     return writeOperationLogHeader(iOperationType, varSize);
   }
 
-  public OAbstractDistributedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {
-    OAbstractDistributedTask<?> task = null;
+  public OAbstractReplicatedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {
+    OAbstractReplicatedTask<?> task = null;
 
     lock.acquireExclusiveLock();
     try {
@@ -441,7 +443,7 @@ public class ODatabaseJournal {
 
         final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         if (record != null)
-          task = new OCreateRecordDistributedTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
+          task = new OCreateRecordTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
         break;
       }
 
@@ -453,7 +455,7 @@ public class ODatabaseJournal {
         if (record != null) {
           final ORecordVersion version = record.version.copy();
           version.decrement();
-          task = new OUpdateRecordDistributedTask(runId, operationId, rid, record.buffer, version, record.recordType);
+          task = new OUpdateRecordTask(runId, operationId, rid, record.buffer, version, record.recordType);
         }
         break;
       }
@@ -462,7 +464,7 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
         final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
-        task = new ODeleteRecordDistributedTask(runId, operationId, rid, record != null ? record.version : OVersionFactory
+        task = new ODeleteRecordTask(runId, operationId, rid, record != null ? record.version : OVersionFactory
             .instance().createUntrackedVersion());
         break;
       }
@@ -470,15 +472,13 @@ public class ODatabaseJournal {
       case SQL_COMMAND: {
         final byte[] buffer = new byte[varSize];
         file.read(offset + OFFSET_VARDATA, buffer, buffer.length);
-        task = new OSQLCommandDistributedTask(runId, operationId, new String(buffer));
+        task = new OSQLCommandTask(runId, operationId, new String(buffer));
         break;
       }
       }
 
-      if (task != null) {
+      if (task != null)
         task.setServerInstance(server);
-        task.setStatus(STATUS.ALIGN);
-      }
 
     } finally {
       lock.releaseExclusiveLock();

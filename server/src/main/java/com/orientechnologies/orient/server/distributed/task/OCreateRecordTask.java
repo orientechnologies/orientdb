@@ -19,9 +19,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
@@ -34,41 +36,60 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
- * Distributed delete record task used for synchronization.
+ * Distributed create record task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask<Boolean> {
+public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPosition> {
   private static final long serialVersionUID = 1L;
 
-  public ODeleteRecordDistributedTask() {
+  protected byte[]          content;
+  protected byte            recordType;
+
+  public OCreateRecordTask() {
   }
 
-  public ODeleteRecordDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
-  }
-
-  public ODeleteRecordDistributedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
-      final ORecordVersion iVersion) {
+  public OCreateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType) {
     super(iRunId, iOperationId, iRid, iVersion);
+    content = iContent;
+    recordType = iRecordType;
+  }
+
+  public OCreateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
+    content = iContent;
+    recordType = iRecordType;
+  }
+
+  public Object getDistributedKey() {
+    return rid;
   }
 
   @Override
-  protected Boolean executeOnLocalNode(final OStorageSynchronizer dbSynchronizer) {
+  public OPhysicalPosition executeOnLocalNode() {
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "delete record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+        "creating record %s/%s v.%s oper=%d.%d...", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+
+    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
+    //rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(-1);
     try {
-      final ORecordInternal<?> record = database.load(rid);
-      if (record != null) {
-        record.getRecordVersion().copyFrom(version);
-        record.delete();
-        return Boolean.TRUE;
-      }
-      return Boolean.FALSE;
+      record.fill(rid, version, content, true);
+      if (rid.getClusterId() != -1)
+        record.save(database.getClusterNameById(rid.getClusterId()), true);
+      else
+        record.save();
+
+      rid = (ORecordId) record.getIdentity();
+
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "assigned new rid %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+
+      return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {
       closeDatabase(database);
     }
@@ -85,34 +106,58 @@ public class ODeleteRecordDistributedTask extends OAbstractRecordDistributedTask
   @Override
   public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
     final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleDeleteConflict(iRemoteNodeId, rid);
+    resolver.handleCreateConflict(iRemoteNodeId, rid, new ORecordId(rid.getClusterId(),
+        ((OPhysicalPosition) remoteResult).clusterPosition));
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeUTF(rid.toString());
+    if (content == null)
+      out.writeInt(0);
+    else {
+      out.writeInt(content.length);
+      out.write(content);
+    }
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
+    out.write(recordType);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     rid = new ORecordId(in.readUTF());
+    final int contentSize = in.readInt();
+    if (contentSize == 0)
+      content = null;
+    else {
+      content = new byte[contentSize];
+      in.readFully(content);
+    }
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
+    recordType = in.readByte();
   }
 
   @Override
   public String getName() {
-    return "record_delete";
+    return "record_create";
+  }
+
+  /**
+   * Write the status with the new RID too.
+   */
+  @Override
+  public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
+    dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, rid);
   }
 
   @Override
-  protected OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.RECORD_DELETE;
+  public OPERATION_TYPES getOperationType() {
+    return OPERATION_TYPES.RECORD_CREATE;
   }
 }

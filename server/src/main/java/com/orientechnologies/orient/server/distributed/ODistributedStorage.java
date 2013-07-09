@@ -52,11 +52,11 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OReadRecordDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandDistributedTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -107,7 +107,7 @@ public class ODistributedStorage implements OStorage {
       if (distribute) {
 
         final Map<String, Object> distributedResult = dManager.propagate(dManager.getRemoteNodeIds(),
-            new OSQLCommandDistributedTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
+            new OSQLCommandTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
                 createRecordMode, iCommand.getText()));
 
         for (Entry<String, Object> entry : distributedResult.entrySet()) {
@@ -141,7 +141,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new OCreateRecordDistributedTask(
+      result = dManager.execute(getClusterNameFromRID(iRecordId), iRecordId, new OCreateRecordTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode, iRecordId, iContent,
           iRecordVersion, iRecordType));
 
@@ -164,8 +164,8 @@ public class ODistributedStorage implements OStorage {
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     try {
-      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.manageExecution(getClusterNameFromRID(iRecordId),
-          iRecordId, new OReadRecordDistributedTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
+      return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dManager.execute(getClusterNameFromRID(iRecordId),
+          iRecordId, new OReadRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
               iRecordId)));
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route READ_RECORD operation against %s to the distributed node", e, iRecordId);
@@ -182,7 +182,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new OUpdateRecordDistributedTask(
+      result = dManager.execute(getClusterNameFromRID(iRecordId), iRecordId, new OUpdateRecordTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode, iRecordId, iContent,
           iVersion, iRecordType));
     } catch (ExecutionException e) {
@@ -202,7 +202,7 @@ public class ODistributedStorage implements OStorage {
     Object result = null;
 
     try {
-      result = dManager.manageExecution(getClusterNameFromRID(iRecordId), iRecordId, new ODeleteRecordDistributedTask(
+      result = dManager.execute(getClusterNameFromRID(iRecordId), iRecordId, new ODeleteRecordTask(
           serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode, iRecordId, iVersion));
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route DELETE_RECORD operation against %s to the distributed node", e, iRecordId);

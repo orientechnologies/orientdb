@@ -18,68 +18,78 @@ package com.orientechnologies.orient.server.distributed.task;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
- * Distributed align response task to communicate the result of alignment.
+ * Groups multiples tasks to being replicated in one single call.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignResponseDistributedTask extends OAbstractDistributedTask<Integer> {
-  private static final long serialVersionUID = 1L;
+public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
+  private static final long                serialVersionUID = 1L;
+  private List<OAbstractReplicatedTask<?>> tasks            = new ArrayList<OAbstractReplicatedTask<?>>();
 
-  protected int             aligned;
-
-  public OAlignResponseDistributedTask() {
+  public OMultipleRemoteTasks() {
   }
 
-  public OAlignResponseDistributedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
+  public OMultipleRemoteTasks(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode);
-    aligned = iAligned;
   }
 
   @Override
-  public Integer call() throws Exception {
-    final ODistributedServerManager dManager = getDistributedServerManager();
+  public Object[] call() throws Exception {
+    final Object[] result = new Object[tasks.size()];
 
-    if (aligned == -1) {
-      // ALIGNMENT POSTPONED
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "alignment postponed for db '%s'", databaseName);
-
-      dManager.postponeAlignment(getNodeSource(), databaseName);
-
-    } else {
-      // ALIGNMENT DONE
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
-
-      dManager.endAlignment(getNodeSource(), databaseName);
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRemoteTask<?> task = tasks.get(i);
+      result[i] = task.call();
     }
-    return null;
+
+    return result;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
-    out.writeInt(aligned);
+    out.writeInt(tasks.size());
+    for (int i = 0; i < tasks.size(); ++i) {
+      out.writeObject(tasks.get(i));
+    }
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
-    aligned = in.readInt();
+    final int taskSize = in.readInt();
+    for (int i = 0; i < taskSize; ++i)
+      tasks.add((OAbstractReplicatedTask<?>) in.readObject());
   }
 
   @Override
   public String getName() {
-    return "align_response";
+    return "multiple_requests";
+  }
+
+  public int getTasks() {
+    return tasks.size();
+  }
+
+  public void addTask(final OAbstractReplicatedTask<?> operation) {
+    tasks.add(operation);
+  }
+
+  public void clearTasks() {
+    tasks.clear();
+  }
+
+  public OAbstractReplicatedTask<?> getTask(final int i) {
+    return tasks.get(i);
   }
 }

@@ -23,7 +23,8 @@ import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.distributed.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -53,12 +54,11 @@ public interface ODistributedServerManager {
 
   public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
 
-  public Object manageExecution(String iClusterName, Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
+  public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask) throws ExecutionException;
 
-  public Object sendOperation2Node(String iNodeId, OAbstractDistributedTask<?> iTask) throws ODistributedException;
+  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask) throws ODistributedException;
 
-  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
-      throws ODistributedException;
+  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractRemoteTask<?> iTask) throws ODistributedException;
 
   public String getLocalNodeId();
 
@@ -108,4 +108,6 @@ public interface ODistributedServerManager {
   public Lock getLock(String iLockName);
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
+
+  public Object executeLocal(final OAbstractReplicatedTask<?> iTask);
 }
