@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -38,6 +40,7 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
   protected int              count       = 2000;
+  protected long             beginInstances;
 
   public String getDatabaseName() {
     return "distributed";
@@ -50,9 +53,26 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
    *          Current database
    */
   protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+    System.out.println("Creating database schema...");
+
+    // CREATE BASIC SCHEMA
+    OClass personClass = db.getMetadata().getSchema().createClass("Person");
+    personClass.createProperty("id", OType.STRING);
+    personClass.createProperty("name", OType.STRING);
+    personClass.createProperty("birthday", OType.DATE);
+    personClass.createProperty("children", OType.INTEGER);
   }
 
   public void executeTest() throws Exception {
+
+    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
+    try {
+      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      beginInstances = ((Long) result.get(0).field("count")).longValue();
+    } finally {
+      database.close();
+    }
+
     System.out.println("Creating Writers and Readers threads...");
 
     final ExecutorService writerExecutor = Executors.newCachedThreadPool();
@@ -81,6 +101,17 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
     for (ServerRun server : serverInstance) {
       printStats(getDatabaseURL(server));
     }
+
+    for (ServerRun server : serverInstance) {
+      database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+      try {
+        List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances,
+            ((Long) result.get(0).field("count")).longValue());
+      } finally {
+        database.close();
+      }
+    }
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -106,7 +137,7 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
           if ((i + 1) % 10000 == 0)
             System.out.println("\nWriter " + name + " created " + (i + 1) + "/" + count + " records so far");
 
-          ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "firstName", "Billy", "lastName",
+          ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + i, "surname",
               "Mayes" + i, "birthday", new Date(), "children", i);
           database.save(person);
 
@@ -163,8 +194,9 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
 
       try {
         List<ODocument> conflicts = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-        Assert.assertEquals((Long) 0l, (Long) conflicts.get(0).field("count"));
-        System.out.println("\nReader " + name + " conflicts: " + result.get(0));
+        long totalConflicts = (Long) conflicts.get(0).field("count");
+        Assert.assertEquals(0l, totalConflicts);
+        System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
       } catch (OQueryParsingException e) {
         // IGNORE IT
       }

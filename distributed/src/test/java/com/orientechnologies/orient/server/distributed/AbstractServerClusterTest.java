@@ -102,8 +102,11 @@ public abstract class AbstractServerClusterTest {
     final ServerRun master = it.next();
 
     final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
-
-    onAfterDatabaseCreation(db);
+    try {
+      onAfterDatabaseCreation(db);
+    } finally {
+      db.close();
+    }
 
     // COPY DATABASE TO OTHER SERVERS
     while (it.hasNext()) {

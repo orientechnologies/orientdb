@@ -22,8 +22,6 @@ import java.lang.reflect.InvocationTargetException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.server.OServer;
 
 /**
@@ -56,18 +54,6 @@ public class ServerRun {
 
     System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
     database.create();
-
-    System.out.println("Creating database schema...");
-
-    // CREATE BASIC SCHEMA
-    OClass personClass = database.getMetadata().getSchema().createClass("Person");
-    personClass.createProperty("id", OType.STRING);
-    personClass.createProperty("firstName", OType.STRING);
-    personClass.createProperty("lastName", OType.STRING);
-    personClass.createProperty("birthday", OType.DATE);
-    personClass.createProperty("children", OType.INTEGER);
-
-    database.close();
     return database;
   }
 
