@@ -10,14 +10,12 @@
 					</th>
 				</tr>
 				
-
-
 			</thead>
 			<tbody>
-				<tr ng-repeat="result in list | orderBy:predicate:reverse">
+				<tr ng-repeat="result in list | orderBy:predicate:reverse" ng-click="openClass(result)">
 					<td>{{result['name']}}</td>
-					<td>{{result['superClass']}}</td>
-					<td>{{result['alias']}}</td>
+					<td>{{result['type']}}</td>
+					<td>{{result['mandatory']}}</td>
 					<td>
 						<input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
 					</td>

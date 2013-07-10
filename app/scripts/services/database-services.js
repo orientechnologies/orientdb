@@ -116,6 +116,22 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			}
 			return fields;
 		},
+		listPropertiesForClass : function(clazz){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var fields = new Array
+			for (var entry in classes){
+				var defaultCluster = classes[entry]['properties'];
+				if(clazz.toUpperCase() == classes[entry].name.toUpperCase()){
+					var props = classes[entry]['properties'];
+					for (var f in props) {
+						fields.push(props[f]);
+					};
+					break;
+				}				
+			}
+			return fields;
+		},
 		listClasses : function(){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];

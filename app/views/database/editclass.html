@@ -1,0 +1,37 @@
+<div class="row-fluid" >
+	<div class = "span12 nomargin">
+		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
+			<thead>
+				<tr>
+
+					<th ng-repeat="header in classClickedHeaders">
+						{{header}}
+					</th>
+				</tr>
+				
+			</thead>
+			<tbody>
+				<tr ng-repeat="result in property | orderBy:predicate:reverse">
+					<td>{{result['name']}}</td>
+					<td>{{result['type']}}</td>
+					<td>{{result['linkedType']}}</td>
+					<td>{{result['linkedClass']}}</td>
+					<td>
+						<input type="checkbox" ng-model="result['mandatory']" ng-disabled="true">
+					</td>
+					<td>
+						<input type="checkbox" ng-model="result['readonly']" ng-disabled="true">
+					</td>
+					<td>
+						<input type="checkbox" ng-model="result['notNull']" ng-disabled="true">
+					</td>
+					<td>{{result['min']}}</td>
+					<td>{{result['max']}}</td>
+					
+				</tr>
+			</tbody>
+			{{clazz}}
+
+		</table>
+	</div>
+</div>
