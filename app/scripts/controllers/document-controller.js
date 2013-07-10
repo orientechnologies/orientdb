@@ -8,10 +8,9 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 	$scope.reload = function(){
 
 		$scope.doc = DocumentApi.get({ database : database , document : rid},function(){
-			$scope.headers = Object.keys($scope.doc).splice(4,Number.MAX_VALUE);
-			if($scope.headers[$scope.headers.length -1] == '@fieldTypes'){
-				$scope.headers.pop();
-			}
+			$scope.headers = Database.getPropertyFromDoc($scope.doc);
+			$scope.incomings = Database.getEdge($scope.doc,'in');
+			$scope.outgoings = Database.getEdge($scope.doc,'out');
 		}, function(error){
 			Notification.push({content : JSON.stringify(error)});
 			$location.path('/404');
@@ -25,6 +24,19 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 		});
 		
 	}
+	$scope.filterArray = function(arr) {
+		if(arr instanceof Array){
+			return arr;
+		}else {
+			var newArr = new Array;
+			newArr.push(arr);
+			return newArr;
+		}
+
+	}
+	$scope.navigate = function(rid){
+		$location.path('/database/'+database + '/browse/edit/' + rid.replace('#',''));
+	}
 	$scope.create = function(){
 		$location.path('/database/'+database + '/browse/create/' + $scope.doc['@class']);
 	}
@@ -35,10 +47,7 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 	var clazz = $routeParams.clazz
 	$scope.fixed = Database.header;
 	$scope.doc = DocumentApi.createNewDoc(clazz);
-	$scope.headers = Object.keys($scope.doc).splice(4,Number.MAX_VALUE);
-	if($scope.headers[$scope.headers.length -1] == '@fieldTypes'){
-		$scope.headers.pop();
-	}
+	$scope.headers = Database.getPropertyFromDoc($scope.doc);
 	$scope.save = function(){
 		DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
 			Notification.push({content : JSON.stringify(data)});

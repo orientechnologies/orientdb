@@ -18,9 +18,12 @@ body div.container-studio {
   overflow-x: auto;
 }
 .nomargin {
-    margin-left : 0px !important;
+    margin : 0px !important;
 }
-
+.accordion-scroll {
+    height: 150px;
+    overflow: auto;
+}
 
 .sidenav {
     background-color: #FFFFFF;
@@ -56,4 +59,29 @@ body div.container-studio {
     margin-right: -6px;
     margin-top: 2px;
     opacity: 0.25;
+}
+
+
+.doc-header  {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: -moz-use-text-color -moz-use-text-color #E5E5E5;
+    border-image: none;
+    border-style: none none solid;
+    border-width: 0 0 1px;
+    color: #333333;
+    display: block;
+    font-size: 21px;
+    line-height: 40px;
+    margin-bottom: 20px;
+    margin-left: 0px !important;
+    padding: 0;
+
+}
+.doc-header > label  {
+    color: #333333;
+    font-size: 21px;
+    line-height: 40px;
 }

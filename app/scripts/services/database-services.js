@@ -25,7 +25,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 
 		header : ["@rid","@version","@class"],
 
-		exclude : ["@type"],
+		exclude : ["@type","@fieldTypes"],
 
 		getMetadata : function() {
 			if(current.metadata ==null){
@@ -58,6 +58,9 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				callback();
 			});
 		},
+		isConnected : function(){
+			return current.username !=null;
+		},
 		connect : function (database,username,password,callback){
 			var self = this;
 			DatabaseApi.connect(database,username,password,function(){
@@ -76,7 +79,6 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			document.cookie = "";
 		},
 		findType : function(clazz,value,field){
-
 			var metadata = this.getMetadata();
 			if(metadata==null) return "STRING";
 			var classes =  metadata['classes'];
@@ -126,6 +128,77 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				}				
 			}
 			return clazz;
+		},
+		getSuperClazz : function(clazz){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var clazz ;
+			for (var entry in classes){
+				var name = classes[entry]['name'];
+				if(clazz == name){
+					clazz =  classes[entry].superClass;
+					break;
+				}				
+			}
+			return clazz;
+		},
+		isGraph : function(clazz){
+			var sup=clazz; 
+			var iterator = clazz;
+			while( (iterator = this.getSuperClazz(iterator)) != "") {
+			 	sup = iterator;
+			}
+			return sup == 'V' || sup == 'E';
+		},
+		/**
+ 		* Creates a new Array from a document with property name.
+ 		*
+ 		* @param {doc} OrientDB Document.
+ 		* @return {Array} Property name Array.
+ 		*/
+		getPropertyFromDoc : function(doc){
+			var isGraph = this.isGraph(doc['@class']);
+			var fixedHeader = this.header.concat(this.exclude);
+			var all = Object.keys(doc).filter(function(element,index,array){
+				if(isGraph){
+					return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in") && !element.startsWith("out")));
+				}else {
+					return (fixedHeader.indexOf(element) == -1);
+				}
+			});
+			return all;
+		},
+		getEdge : function(doc,direction){
+			
+			var all = Object.keys(doc).filter(function(element,index,array){
+				return element.startsWith(direction);
+			});
+			return all;
+		},
+		/**
+ 		* Creates a new Array with property name from a result set of documents.
+ 		*
+ 		* @param {results} OrientDB result set.
+ 		* @return {Array} Property name Array.
+ 		*/
+		getPropertyTableFromResults : function(results){
+			var self = this;
+			var headers = new Array;
+			results.forEach(function(element, index, array){
+				var tmp = Object.keys(element);
+				if(headers.length==0){
+					headers = headers.concat(tmp);
+				}else {
+					var tmp2 = tmp.filter(function(element,index,array){
+						return headers.indexOf(element) == -1;
+					});
+					headers = headers.concat(tmp2);
+				}
+			});
+			var all = headers.filter(function(element,index,array){
+				return self.exclude.indexOf(element) == -1;
+			});
+			return all;
 		}
 
 	};

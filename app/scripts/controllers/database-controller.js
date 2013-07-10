@@ -10,6 +10,7 @@ dbModule.controller("DatabaseController",['$scope','$routeParams','$location','D
 dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
 	$scope.database = Database;
 	$scope.limit = 20;
+	$scope.queries = new Array;
 	$scope.editorOptions = {
         lineWrapping : true,
         lineNumbers: true,
@@ -22,13 +23,11 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
     };
 	$scope.query = function(){
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
-			var resultHeader = data.result.length > 0 ? Object.keys(data.result[0]) : [];
-			$scope.headers = $scope.parseHeader(resultHeader); 
+			$scope.headers = Database.getPropertyTableFromResults(data.result);
 			$scope.results = data.result;
+			if($scope.queries.indexOf($scope.queryText)==-1)
+				$scope.queries.push($scope.queryText);
 		});
-	}
-	$scope.parseHeader = function (headers){
-		return Database.header.concat( headers.splice(4,Number.MAX_VALUE));
 	}
 	$scope.openRecord = function(doc){
 		$location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#',''));

@@ -2,7 +2,9 @@ angular.module('login.controller',['database.services']).controller("LoginContro
 
 	$scope.server = "http://localhost:2480"
 
-
+	if(Database.isConnected()) {
+		$location.path("/database/" + Database.getName() + "/browse");
+	}
 	DatabaseApi.listDatabases(function(data){
 		$scope.databases = data.databases;
 	});

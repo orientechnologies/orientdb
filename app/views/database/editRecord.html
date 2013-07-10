@@ -1,25 +1,79 @@
 <div class="row-fluid">
-	<div class="span3"></div>
+	<div class="span3">
+		<form>
+			<legend>Incoming Edges</legend>
+			<div class="accordion row-fluid" id="accordion2">
+				<div class="accordion-group" ng-repeat="i in incomings">
+					<div class="accordion-heading">
+						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{i}}">
+							{{i}}
+						</a>
+					</div>
+					<div id="{{i}}" class="accordion-body collapse">
+						<div class="accordion-inner accordion-scroll">
+							<table>
+								<tbody>
+									<tr ng-repeat="out in filterArray(doc[i])">
+										<td>
+											<a href=""><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
+										</td>
+										<td>{{out}}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
 	<div class="span6">
 		<div class="row-fluid"> 
 			<form  class="form-horizontal well">
-				 <fieldset>
-				 <legend>{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</legend>
-				<div class="control-group">
-					<div class="controls">
-						<button type="submit" ng-click="save()" class="btn pull-right">Save</button>
-						<button type="submit" ng-click="create()" class="btn pull-right">Create</button>
-						<button type="submit" ng-click="save()" class="btn pull-right">Delete</button>
+				<fieldset>
+					<div class="control-group">
+						<div class="controls doc-header controls-row">
+							<label class="span8">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
+							<button type="submit" ng-click="save()" class="btn pull-right">Save</button>
+							<button type="submit" ng-click="create()" class="btn pull-right">Create</button>
+							<button type="submit" ng-click="save()" class="btn pull-right">Delete</button>
+						</div>
 					</div>
-				</div>
-				<div class="control-group" ng-repeat = "header in headers">
-					<label class="control-label" for="input{{header}}">{{header}}</label>
-					<div class="controls" render ng-model= "doc[header]" render-field = "{{header}}">
+					<div class="control-group" ng-repeat = "header in headers">
+						<label class="control-label" for="input{{header}}">{{header}}</label>
+						<div class="controls" render ng-model= "doc[header]" render-field = "{{header}}">
+						</div>
 					</div>
-				</div>
 				</fieldset>
 			</form>
 		</div>
 	</div>
-	<div class="span3"></div>
+	<div class="span3">
+		<form>
+			<legend>Outgoing Edges</legend>
+			<div class="accordion row-fluid" id="accordion1">
+				<div class="accordion-group" ng-repeat="i in outgoings">
+					<div class="accordion-heading">
+						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{i}}">
+							{{i}}
+						</a>
+					</div>
+					<div id="{{i}}" class="accordion-body collapse">
+						<div class="accordion-inner accordion-scroll">
+							<table>
+								<tbody>
+									<tr ng-repeat="out in filterArray(doc[i])">
+										<td>{{out}}</td>
+										<td>
+											<a href=""><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
 </div>
