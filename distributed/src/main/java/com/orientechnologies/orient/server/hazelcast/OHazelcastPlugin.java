@@ -173,7 +173,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throws ODistributedException {
     final Map<String, Object> result = new HashMap<String, Object>();
 
-    ODistributedServerLog.info(this, iTask.getNodeSource(), iNodeIds.toString(), DIRECTION.OUT, "propagate %s oper=%d.%d", iTask
+    ODistributedServerLog.debug(this, iTask.getNodeSource(), iNodeIds.toString(), DIRECTION.OUT, "propagate %s oper=%d.%d", iTask
         .getName().toUpperCase(), iTask.getRunId(), iTask.getOperationSerial());
 
     for (String nodeId : iNodeIds) {
@@ -316,12 +316,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     // RETRY UNTIL SUCCEED
     for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
-      ODistributedServerLog.info(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+      ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
           "routing %s against db=%s in %s mode...", iTask.getName().toUpperCase(), dbName, EXECUTION_MODE.SYNCHRONOUS);
 
       try {
         // EXECUTES ON THE TARGET NODE
-        ODistributedServerLog.info(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+        ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
             "remote execution %s db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
             iTask.getRunId(), iTask.getOperationSerial());
 
@@ -330,7 +330,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final Object localResult;
         if (iTask instanceof OAbstractReplicatedTask<?>) {
           // APPLY LOCALLY TOO
-          ODistributedServerLog.info(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.IN,
+          ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.IN,
               "local execution %s against db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
               iTask.getRunId(), iTask.getOperationSerial());
 
@@ -925,5 +925,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
       ODistributedThreadLocal.INSTANCE.set(null);
     }
+  }
+
+  @Override
+  public String toString() {
+    return getLocalNodeAlias();
   }
 }

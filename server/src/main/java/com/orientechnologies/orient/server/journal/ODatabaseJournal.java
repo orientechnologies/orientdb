@@ -232,7 +232,7 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
           "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
@@ -291,7 +291,7 @@ public class ODatabaseJournal {
         varSize = ORecordId.PERSISTENT_SIZE;
         final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
 
-        ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
             "journaled operation %s against db '%s' rid %s as #%d.%d", iOperationType.toString(), storage.getName(), rid, iRunId,
             iOperationId);
 
@@ -311,7 +311,7 @@ public class ODatabaseJournal {
         final byte[] cmdBinary = cmdText.getBytes();
         varSize = cmdBinary.length;
 
-        ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
             "journaled operation %s against db '%s' cmd '%s' as #%d.%d", iOperationType.toString(), storage.getName(), cmdText,
             iRunId, iOperationId);
 
@@ -464,8 +464,8 @@ public class ODatabaseJournal {
         final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
             .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
         final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
-        task = new ODeleteRecordTask(runId, operationId, rid, record != null ? record.version : OVersionFactory
-            .instance().createUntrackedVersion());
+        task = new ODeleteRecordTask(runId, operationId, rid, record != null ? record.version : OVersionFactory.instance()
+            .createUntrackedVersion());
         break;
       }
 

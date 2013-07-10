@@ -56,7 +56,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
 
   @Override
   public Boolean executeOnLocalNode() {
-    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
         "delete record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ODatabaseDocumentTx database = openDatabase();

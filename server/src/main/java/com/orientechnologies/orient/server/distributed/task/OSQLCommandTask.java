@@ -43,8 +43,8 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   public OSQLCommandTask() {
   }
 
-  public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String databaseName, final EXECUTION_MODE iMode, final String iCommand) {
+  public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
+      final EXECUTION_MODE iMode, final String iCommand) {
     super(iServer, iDistributedSrvMgr, databaseName, iMode);
     text = iCommand;
   }
