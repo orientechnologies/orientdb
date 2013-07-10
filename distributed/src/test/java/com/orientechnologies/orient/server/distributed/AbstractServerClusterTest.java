@@ -86,14 +86,14 @@ public abstract class AbstractServerClusterTest {
 
     System.out.println("Executing test...");
 
-    executeTest();
-
-    for (ServerRun server : serverInstance)
-      server.shutdownServer();
-
-    Hazelcast.shutdownAll();
-
-    System.out.println("Test termined");
+    try {
+      executeTest();
+    } finally {
+      for (ServerRun server : serverInstance)
+        server.shutdownServer();
+      Hazelcast.shutdownAll();
+      System.out.println("Test finished");
+    }
   }
 
   protected void prepare() throws IOException {

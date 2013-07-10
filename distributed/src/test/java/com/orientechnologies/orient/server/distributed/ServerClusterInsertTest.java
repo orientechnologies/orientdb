@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class ServerClusterInsertTest extends AbstractServerClusterTest {
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
-  protected int              count       = 2000;
+  protected int              count       = 1000;
   protected long             beginInstances;
 
   public String getDatabaseName() {
@@ -90,7 +90,7 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
     System.out.println("Threads started, waiting for the end");
 
     writerExecutor.shutdown();
-    Assert.assertTrue(writerExecutor.awaitTermination(3, TimeUnit.MINUTES));
+    Assert.assertTrue(writerExecutor.awaitTermination(300, TimeUnit.MINUTES));
 
     System.out.println("Writer threads finished, shutting down Reader threads...");
 
@@ -107,8 +107,18 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
       database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
       try {
         List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances,
-            ((Long) result.get(0).field("count")).longValue());
+        final long total = ((Long) result.get(0).field("count")).longValue();
+
+        if (total != (long) (count * serverInstance.size()) + beginInstances) {
+          // ERROR: DUMP ALL THE RECORDS
+          result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
+          i = 0;
+          for (ODocument d : result) {
+            System.out.println((i++) + ": " + d);
+          }
+        }
+
+        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances, total);
       } finally {
         database.close();
       }
