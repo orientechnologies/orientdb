@@ -72,8 +72,11 @@ public class OStorageSynchronizer {
         if (getConflictResolver().existConflictsForRecord(rid))
           continue;
 
-        final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid,
-            new OReadRecordTask(server, server.getDistributedManager(), storageName, rid));
+        final String clusterName = ((ODistributedStorage) storage).getClusterNameFromRID(rid);
+        final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, clusterName, rid);
+
+        final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(server,
+            server.getDistributedManager(), storageName, rid), replicationData);
 
         if (record == null)
           // DELETE IT

@@ -42,19 +42,20 @@ public interface ODistributedServerManager {
 
   public boolean checkStatus(String string);
 
-  public void setStatus(final String iStatus);
+  public void setStatus(String iStatus);
 
-  public boolean isOfflineNode(final String iNodeId);
+  public boolean isOfflineNode(String iNodeId);
 
-  public boolean isLocalNodeMaster(final Object iKey);
+  public boolean isLocalNodeMaster(Object iKey);
 
-  public String getMasterNode(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public OReplicationConfig getReplicationData(String iDatabaseName, String iClusterName, Object iKey);
 
-  public Collection<String> getSynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public Collection<String> getSynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
 
-  public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public Collection<String> getAsynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
 
-  public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask) throws ExecutionException;
+  public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
+      throws ExecutionException;
 
   public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask) throws ODistributedException;
 
@@ -86,7 +87,7 @@ public interface ODistributedServerManager {
 
   public long getRunId();
 
-  public long incrementDistributedSerial(final String iDatabaseName);
+  public long incrementDistributedSerial(String iDatabaseName);
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 
@@ -109,5 +110,5 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(final OAbstractReplicatedTask<?> iTask);
+  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask);
 }

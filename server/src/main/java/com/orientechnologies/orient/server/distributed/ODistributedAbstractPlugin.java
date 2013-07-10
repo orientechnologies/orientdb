@@ -51,6 +51,7 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
   public static final String                              REPLICATOR_USER            = "replicator";
+  protected static final String                           MASTER_AUTO                = "$auto";
 
   protected static final String                           PAR_DEF_DISTRIB_DB_CONFIG  = "configuration.db.default";
   protected static final String                           FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
@@ -64,6 +65,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   protected Class<? extends OReplicationConflictResolver> confictResolverClass;
   protected boolean                                       alignmentStartup;
   protected int                                           alignmentTimer;
+  protected Map<String, OReplicationStrategy>             strategies                 = new HashMap<String, OReplicationStrategy>();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -87,12 +89,22 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         try {
           confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
         } catch (ClassNotFoundException e) {
-          OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", param.value, e);
+          OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
         }
       else if (param.name.equalsIgnoreCase("alignment.startup"))
         alignmentStartup = Boolean.parseBoolean(param.value);
       else if (param.name.equalsIgnoreCase("alignment.timer"))
         alignmentTimer = Integer.parseInt(param.value);
+      else if (param.name.startsWith("replication.strategy.")) {
+        try {
+          strategies.put(param.name.substring("replication.strategy.".length()), (OReplicationStrategy) Class.forName(param.value)
+              .newInstance());
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Cannot create replication strategy instance '%s'", e, param.value);
+
+          e.printStackTrace();
+        }
+      }
     }
 
     // CHECK THE CONFIGURATION
@@ -175,6 +187,18 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
   public String getLocalNodeId() {
     return alias;
+  }
+
+  public OReplicationStrategy getReplicationStrategy(String iStrategy) {
+    if (iStrategy.startsWith("$"))
+      iStrategy = iStrategy.substring(1);
+
+    final OReplicationStrategy strategy = strategies.get(iStrategy);
+    if (strategy == null)
+      throw new ODistributedException("Configured strategy '" + iStrategy + "' is not configured");
+
+    return strategy;
+
   }
 
   public ODocument getDatabaseConfiguration(final String iDatabaseName) {

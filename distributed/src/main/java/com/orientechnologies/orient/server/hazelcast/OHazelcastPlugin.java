@@ -55,6 +55,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.distributed.OReplicationConfig;
 import com.orientechnologies.orient.server.distributed.OServerOfflineException;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
@@ -72,7 +73,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
   protected static final String        DISTRIBUTED_EXECUTOR_NAME = "OHazelcastPlugin::Executor";
   protected static final int           SEND_RETRY_MAX            = 100;
-  
+
   protected int                        nodeNumber;
   protected String                     localNodeId;
   protected String                     configFile                = "hazelcast.xml";
@@ -261,23 +262,40 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     throw new ODistributedException("Cannot complete the operation because the cluster is offline");
   }
 
-  public Object execute(final String iClusterName, final Object iKey, final OAbstractRemoteTask<? extends Object> iTask)
-      throws ExecutionException {
+  public Object execute(final String iClusterName, final Object iKey, final OAbstractRemoteTask<? extends Object> iTask,
+      OReplicationConfig replicationData) throws ExecutionException {
 
     final String dbName = iTask.getDatabaseName();
 
-    // ASSIGN DESTINATION NODE
-    String masterNodeId = getMasterNode(dbName, iClusterName, iKey);
-    iTask.setNodeDestination(masterNodeId);
-
-    masterNodeId = waitUntilMasterNodeIsOnline(iClusterName, iKey, dbName, masterNodeId);
+    String masterNodeId = null;
 
     try {
-      if (isLocalNodeMaster(iKey))
-        return executeLocallyAndPropagate((OAbstractReplicatedTask<? extends Object>) iTask);
-      else
-        return executeRemotelyAndApplyLocally(iClusterName, iKey, iTask, dbName);
+      if (replicationData == null) {
+        // NO REPLICATION: LOCAL ONLY
+        ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
+        try {
+          // EXECUTE IT LOCALLY
+          return ((OAbstractReplicatedTask<? extends Object>) iTask).executeOnLocalNode();
+        } finally {
+          // SET LAST EXECUTION SERIAL
+          ODistributedThreadLocal.INSTANCE.set(null);
+        }
 
+      } else {
+        if (replicationData != null) {
+          // SET THE DESTINATION NODE
+          iTask.setNodeDestination(replicationData.masterNode);
+          replicationData.masterNode = waitUntilMasterNodeIsOnline(iClusterName, iKey, dbName, replicationData.masterNode);
+          masterNodeId = replicationData.masterNode;
+        }
+
+        if (getLocalNodeId().equals(replicationData.masterNode))
+          // LOCAL + PROPAGATE
+          return executeLocallyAndPropagate((OAbstractReplicatedTask<? extends Object>) iTask);
+        else
+          // REMOTE + LOCAL
+          return executeRemotelyAndApplyLocally(iClusterName, iKey, iTask, dbName, replicationData);
+      }
     } catch (InterruptedException e) {
       Thread.interrupted();
 
@@ -293,8 +311,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @SuppressWarnings("unchecked")
   protected Object executeRemotelyAndApplyLocally(final String iClusterName, final Object iKey,
-      final OAbstractRemoteTask<? extends Object> iTask, final String dbName) throws InterruptedException, Exception,
-      ExecutionException {
+      final OAbstractRemoteTask<? extends Object> iTask, final String dbName, final OReplicationConfig iReplicationData)
+      throws InterruptedException, Exception, ExecutionException {
 
     // RETRY UNTIL SUCCEED
     for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
@@ -340,7 +358,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             "error on execution of operation in %s mode, because node left. Re-route it in transparent way", e,
             EXECUTION_MODE.SYNCHRONOUS);
 
-        return execute(iClusterName, iKey, iTask);
+        return execute(iClusterName, iKey, iTask, iReplicationData);
 
       } catch (ExecutionException e) {
         if (e.getCause() instanceof OServerOfflineException) {
@@ -419,15 +437,26 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final Member partitionOwner = hazelcastInstance.getPartitionService().getPartition(iKey).getOwner();
     final boolean local = partitionOwner.equals(hazelcastInstance.getCluster().getLocalMember());
 
-    // ODistributedServerLog.debug(this, getLocalNodeId(), null, DIRECTION.NONE,
-    // "network partition: check for local master: key '%s' is assigned to %s (local=%s)", iKey, getNodeId(partitionOwner), local);
+    ODistributedServerLog.debug(this, getLocalNodeId(), null, DIRECTION.NONE,
+        "network partition: check for local master: key '%s' is assigned to %s (local=%s)", iKey, getNodeId(partitionOwner), local);
 
     return local;
   }
 
-  public String getMasterNode(final String iDatabaseName, final String iClusterName, final Object iKey) {
-    String masterNode = getDatabaseClusterConfiguration(iDatabaseName, iClusterName).field("master");
-    if (masterNode == null) {
+  /**
+   * Returns the replicaiton data, or null if replication is not active.
+   */
+  public OReplicationConfig getReplicationData(final String iDatabaseName, final String iClusterName, final Object iKey) {
+
+    final ODocument cfg = getDatabaseClusterConfiguration(iDatabaseName, iClusterName);
+    final Boolean active = cfg.field("synchronization");
+    if (active == null || !active)
+      // NOT ACTIVE, RETURN
+      return null;
+
+    final OReplicationConfig data = new OReplicationConfig();
+    data.masterNode = cfg.field("master");
+    if (data.masterNode == null) {
       ODistributedServerLog
           .warn(
               this,
@@ -436,15 +465,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               DIRECTION.NONE,
               "network partition: found wrong configuration for database '%s': cannot find the 'master' field for the cluster '%s'. '$auto' will be used",
               iDatabaseName, iClusterName);
-    } else if (masterNode.equalsIgnoreCase("$auto"))
-      // AUTO, BY HAZELCAST PARTITION SERVICE
-      masterNode = getNodeId(hazelcastInstance.getPartitionService().getPartition(iKey).getOwner());
+      data.masterNode = MASTER_AUTO;
+    }
 
-    final boolean local = masterNode.equals(getLocalNodeId());
+    if (data.masterNode.startsWith("$"))
+      // GET THE MASTER NODE BY USING THE STRATEGY FACTORY
+      data.masterNode = getReplicationStrategy(data.masterNode).getNode(this, iClusterName, iKey);
+
+    if (data.masterNode == null)
+      throw new ODistributedException("Cannot find a master node for the key '" + iKey + "'");
+
+    final boolean local = data.masterNode.equals(getLocalNodeId());
     ODistributedServerLog.debug(this, getLocalNodeId(), "?", DIRECTION.OUT,
-        "network partition: get node master for key '%s' is assigned %s (local=%s)", iKey, masterNode, local);
+        "network partition: get node master for key '%s' is assigned %s (local=%s)", iKey, data.masterNode, local);
 
-    return masterNode;
+    return data;
   }
 
   @Override
@@ -682,7 +717,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getLocalNodeId();
   }
 
-  protected String getNodeId(final Member iMember) {
+  public String getNodeId(final Member iMember) {
     return iMember.getInetSocketAddress().toString().substring(1);
   }
 
@@ -770,7 +805,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return nodeNumber;
   }
 
-  protected HazelcastInstance getHazelcastInstance() {
+  public HazelcastInstance getHazelcastInstance() {
     while (hazelcastInstance == null) {
       // WAIT UNTIL THE INSTANCE IS READY
       try {
@@ -840,15 +875,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           Thread.interrupted();
         }
         // RE-READ THE KEY OWNER (IT COULD BE CHANGED DURING THE PAUSE)
-        final String newMasterNodeId = getMasterNode(dbName, iClusterName, iKey);
+        final OReplicationConfig newReplicationConfig = getReplicationData(dbName, iClusterName, iKey);
 
-        if (!newMasterNodeId.equals(masterNodeId)) {
+        if (!newReplicationConfig.masterNode.equals(masterNodeId)) {
           ODistributedServerLog.warn(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
               "node %s is the new owner of the requested key set", getRemoteNodeStatus(masterNodeId));
-          masterNodeId = newMasterNodeId;
+          masterNodeId = newReplicationConfig.masterNode;
         }
 
       }
+
       ODistributedServerLog.warn(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
           "node %s is aligned. Flushing pending operations...");
     }

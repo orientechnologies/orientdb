@@ -78,8 +78,9 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
     final ExecutorService writerExecutor = Executors.newCachedThreadPool();
     final ExecutorService readerExecutor = Executors.newCachedThreadPool();
 
+    int i = 0;
     for (ServerRun server : serverInstance) {
-      Writer writer = new Writer(getDatabaseURL(server));
+      Writer writer = new Writer(i++, getDatabaseURL(server));
       writerExecutor.submit(writer);
 
       Reader reader = new Reader(getDatabaseURL(server));
@@ -120,8 +121,10 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
 
   class Writer implements Runnable {
     private final String databaseUrl;
+    private int          serverId;
 
-    public Writer(final String db) {
+    public Writer(final int iServerId, final String db) {
+      serverId = iServerId;
       databaseUrl = db;
     }
 
@@ -134,11 +137,13 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
           if (name == null)
             name = database.getURL();
 
-          if ((i + 1) % 10000 == 0)
+          if ((i + 1) % 1 == 0)
             System.out.println("\nWriter " + name + " created " + (i + 1) + "/" + count + " records so far");
 
-          ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + i, "surname",
-              "Mayes" + i, "birthday", new Date(), "children", i);
+          final int uniqueId = count * serverId + i;
+
+          ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId,
+              "surname", "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
           database.save(person);
 
           Thread.sleep(delayWriter);
@@ -192,14 +197,16 @@ public class ServerClusterInsertTest extends AbstractServerClusterTest {
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      try {
-        List<ODocument> conflicts = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-        long totalConflicts = (Long) conflicts.get(0).field("count");
-        Assert.assertEquals(0l, totalConflicts);
-        System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
-      } catch (OQueryParsingException e) {
-        // IGNORE IT
-      }
+      if (database.getMetadata().getSchema().existsClass("ODistributedConflict"))
+        try {
+          List<ODocument> conflicts = database
+              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
+          long totalConflicts = (Long) conflicts.get(0).field("count");
+          Assert.assertEquals(0l, totalConflicts);
+          System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
+        } catch (OQueryParsingException e) {
+          // IGNORE IT
+        }
 
     } finally {
       database.close();

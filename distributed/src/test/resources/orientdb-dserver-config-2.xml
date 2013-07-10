@@ -14,6 +14,9 @@
 					value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
 				<parameter name="configuration.db.default"
 					value="src/test/resources/default-distributed-db-config.json" />
+					
+				<parameter name="replication.strategy.auto"
+					value="com.orientechnologies.orient.server.hazelcast.strategy.OAutoReplicationStrategy" />
 			</parameters>
 		</handler>
 		<handler
