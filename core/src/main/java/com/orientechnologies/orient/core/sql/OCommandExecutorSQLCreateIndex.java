@@ -63,8 +63,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 
@@ -85,17 +84,12 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
     indexName = word.toString();
 
-    final int namePos = oldPos;
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
     if (pos == -1)
       throw new OCommandSQLParsingException("Index type requested. Use " + getSyntax(), parserText, oldPos + 1);
 
     if (word.toString().equals(KEYWORD_ON)) {
-      if (indexName.contains(".")) {
-        throw new OCommandSQLParsingException("Index name cannot contain '.' character. Use " + getSyntax(), parserText, namePos);
-      }
-
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
       if (pos == -1)
