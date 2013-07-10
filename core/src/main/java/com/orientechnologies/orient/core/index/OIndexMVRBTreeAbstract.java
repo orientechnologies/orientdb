@@ -918,8 +918,8 @@ public abstract class OIndexMVRBTreeAbstract<T> extends OSharedResourceAdaptiveE
     try {
 
       map.commitChanges(true);
-      map.unload();
-      Orient.instance().getMemoryWatchDog().removeListener(watchDog);
+      // TODO: GO IN DEEP WHY THE UNLOAD CAUSE LOOSE OF INDEX ENTRIES!
+      // map.unload();
 
     } finally {
       releaseExclusiveLock();
