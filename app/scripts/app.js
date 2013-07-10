@@ -22,9 +22,14 @@ App.config(function ($routeProvider) {
     templateUrl: 'views/login.html',
     controller: 'LoginController'
   })
-  .when('/database/:database/:action', {
-    templateUrl: 'views/database/database.html',
-    controller: 'DatabaseController',
+  .when('/database/:database/browse', {
+    templateUrl: 'views/database/browse.html',
+    controller: 'BrowseController',
+    resolve : DatabaseResolve
+  })
+   .when('/database/:database/schema', {
+    templateUrl: 'views/database/schema.html',
+    controller: 'SchemaController',
     resolve : DatabaseResolve
   })
   .when('/database/:database/browse/edit/:rid', {

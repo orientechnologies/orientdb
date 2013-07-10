@@ -1,12 +1,4 @@
 var dbModule = angular.module('database.controller',['database.services']);
-dbModule.controller("DatabaseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
-
-	$scope.database = Database;
-	$scope.action = $routeParams.action;
-	$scope.getPartials = function(action){
-		return "/views/database/" + action + ".html";
-	}
-}]);
 dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
 	$scope.database = Database;
 	$scope.limit = 20;

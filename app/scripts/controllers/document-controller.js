@@ -1,10 +1,19 @@
 var  DocController = angular.module('document.controller',[]);
-DocController.controller("DocumentEditController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
+DocController.controller("DocumentEditController",['$scope','$routeParams','$location','$modal','$q','DocumentApi','Database','Notification',function($scope,$routeParams,$location,$modal,$q,DocumentApi,Database,Notification){
 
 	var database = $routeParams.database;
 	var rid = $routeParams.rid;
 	$scope.fixed = Database.header;
 	
+	
+ 
+	// Toggle modal
+	$scope.showModal = function() {
+	  var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static'});
+	  $q.when(modalPromise).then(function(modalEl) {
+	    modalEl.modal('show');
+	  });
+	};
 	$scope.reload = function(){
 
 		$scope.doc = DocumentApi.get({ database : database , document : rid},function(){
@@ -43,6 +52,7 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 }]);
 DocController.controller("DocumentCreateController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
+
 	var database = $routeParams.database;
 	var clazz = $routeParams.clazz
 	$scope.fixed = Database.header;
@@ -52,6 +62,27 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 		DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
 			Notification.push({content : JSON.stringify(data)});
 			$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
+		});
+		
+	}
+}]);
+DocController.controller("DocumentModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
+
+	var db = 'tinkerpop';
+	var rid = '#11:0';
+	$scope.reload = function(){
+		$scope.doc = DocumentApi.get({ database : db , document : rid},function(){
+			$scope.headers = Database.getPropertyFromDoc($scope.doc);
+		}, function(error){
+			Notification.push({content : JSON.stringify(error)});
+			$location.path('/404');
+		});
+	}
+	$scope.reload();
+	$scope.save = function(){
+		DocumentApi.updateDocument(db,rid,$scope.doc,function(data){
+			Notification.push({content : data});
+			$scope.reload();
 		});
 		
 	}
