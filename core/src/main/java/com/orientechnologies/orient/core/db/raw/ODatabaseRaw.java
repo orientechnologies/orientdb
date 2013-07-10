@@ -102,16 +102,8 @@ public class ODatabaseRaw implements ODatabase {
 
       status = STATUS.OPEN;
 
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onOpen(getDatabaseOwner());
-
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : listeners)
-        try {
-          listener.onOpen(this);
-        } catch (Throwable t) {
-        }
+      callOnOpenListeners();
 
     } catch (OException e) {
       // PASS THROUGH
@@ -742,6 +734,20 @@ public class ODatabaseRaw implements ODatabase {
   @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
+  }
+
+  public void callOnOpenListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onOpen(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
   }
 
   public void callOnCloseListeners() {

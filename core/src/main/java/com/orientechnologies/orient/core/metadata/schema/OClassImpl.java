@@ -178,6 +178,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return new HashSet<String>();
   }
 
+  @SuppressWarnings("resource")
   public void validateInstances() {
     ODatabaseComplex<?> current = getDatabase().getDatabaseOwner();
 
