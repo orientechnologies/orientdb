@@ -423,7 +423,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final Object remoteResult = entry.getValue();
 
         if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
-            || !localResult.equals(remoteResult)) {
+            || (localResult != null && !localResult.equals(remoteResult))) {
           // CONFLICT
           iTask.handleConflict(remoteNode, localResult, remoteResult);
         }

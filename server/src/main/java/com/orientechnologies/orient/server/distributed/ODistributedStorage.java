@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -51,7 +50,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
@@ -82,6 +80,17 @@ public class ODistributedStorage implements OStorage {
   }
 
   public Object command(final OCommandRequestText iCommand) {
+    if (ODistributedThreadLocal.INSTANCE.get() != null)
+      // ALREADY DISTRIBUTED
+      return wrapped.command(iCommand);
+
+    // ASSIGN DESTINATION NODE
+    final OReplicationConfig replicationData = dManager.getReplicationData(getName(), null, null);
+
+    if (replicationData == null)
+      // DON'T REPLICATE
+      return wrapped.command(iCommand);
+
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
     executor.setProgressListener(iCommand.getProgressListener());
@@ -97,37 +106,23 @@ public class ODistributedStorage implements OStorage {
       else if (exec instanceof OCommandDistributedReplicateRequest)
         distribute = true;
 
-    if (distribute)
-      ODistributedThreadLocal.INSTANCE.set("");
+    if (!distribute)
+      // DON'T REPLICATE
+      return wrapped.executeCommand(iCommand, executor);
 
     try {
       // EXECUTE IT LOCALLY
-      final Object localResult = wrapped.executeCommand(iCommand, executor);
+      return dManager.execute(
+          null,
+          null,
+          new OSQLCommandTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode, iCommand
+              .getText()), replicationData);
 
-      if (distribute) {
-
-        final Map<String, Object> distributedResult = dManager.propagate(dManager.getRemoteNodeIds(), new OSQLCommandTask(
-            serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode, iCommand.getText()));
-
-        for (Entry<String, Object> entry : distributedResult.entrySet()) {
-          final Object remoteResult = entry.getValue();
-          if (localResult != remoteResult
-              && (localResult == null && remoteResult != null || localResult != null && remoteResult == null || remoteResult
-                  .equals(localResult))) {
-            // CONFLICT
-            final OReplicationConflictResolver resolver = dbSynchronizer.getConflictResolver();
-            resolver.handleCommandConflict(entry.getKey(), iCommand, localResult, remoteResult);
-          }
-        }
-      }
-
-      return localResult;
-
-    } finally {
-
-      if (distribute)
-        ODistributedThreadLocal.INSTANCE.set(null);
+    } catch (ExecutionException e) {
+      handleDistributedException("Cannot route COMMAND operation to the distributed node", e);
     }
+
+    return null;
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRecordId,

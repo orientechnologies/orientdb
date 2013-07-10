@@ -29,7 +29,13 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 public class OAutoReplicationStrategy implements OReplicationStrategy {
   @Override
   public String getNode(final ODistributedServerManager iManager, final String iClusterName, final Object iKey) {
-    final Member member = ((OHazelcastPlugin) iManager).getHazelcastInstance().getPartitionService().getPartition(iKey).getOwner();
+    final Member member;
+    if (iKey == null)
+      // GET THE LOCAL NODE
+      member = ((OHazelcastPlugin) iManager).getHazelcastInstance().getCluster().getLocalMember();
+    else
+      // GET THE PARTITION BASED ON THE KEY
+      member = ((OHazelcastPlugin) iManager).getHazelcastInstance().getPartitionService().getPartition(iKey).getOwner();
     return ((OHazelcastPlugin) iManager).getNodeId(member);
   }
 }

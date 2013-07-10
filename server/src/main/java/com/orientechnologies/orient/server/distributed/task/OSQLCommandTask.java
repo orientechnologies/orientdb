@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -51,6 +52,20 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
 
   public OSQLCommandTask(final long iRunId, final long iOperationId, final String iCommand) {
     text = iCommand;
+  }
+
+  /**
+   * Handles conflict between local and remote execution results.
+   * 
+   * @param localResult
+   *          The result on local node
+   * @param remoteResult
+   *          the result on remote node
+   */
+  @Override
+  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
+    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
+    resolver.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
   }
 
   public Object executeOnLocalNode() {

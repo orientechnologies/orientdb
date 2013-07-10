@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed.conflict;
 import java.util.Date;
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -159,7 +158,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   @Override
-  public void handleCommandConflict(final String iRemoteNode, OCommandRequest iCommand, Object iLocalResult, Object iRemoteResult) {
+  public void handleCommandConflict(final String iRemoteNode, final Object iCommand, Object iLocalResult, Object iRemoteResult) {
     ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Conflict on COMMAND execution on db '%s', cmd='%s' result local=%s, remote=%s", database.getName(), iCommand,
         iLocalResult, iRemoteResult);
