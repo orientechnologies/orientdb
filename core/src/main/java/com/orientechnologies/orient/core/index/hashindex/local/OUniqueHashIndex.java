@@ -73,9 +73,9 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
       if (currentValue != null) {
         // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
         if (!currentValue.equals(value))
-          throw new ORecordDuplicatedException("Found duplicated key '" + key + "' on unique index '" + getName() + "' for record "
-              + value.getIdentity() + ". The record already present in the index is " + currentValue.getIdentity(),
-              currentValue.getIdentity());
+          throw new ORecordDuplicatedException(String.format(
+              "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
+              OIndexException.class, value.getIdentity(), key, getName(), currentValue.getIdentity()), currentValue.getIdentity());
         else
           return this;
       }
@@ -109,8 +109,9 @@ public class OUniqueHashIndex extends OAbstractLocalHashIndex<OIdentifiable> {
         }
       }
 
-      OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-          OIndexException.class, iKey, indexedRID);
+      OLogManager.instance().exception(
+          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
+          OIndexException.class, iRecord.getIdentity(), iKey, getName(), indexedRID.getIdentity());
     }
   }
 }

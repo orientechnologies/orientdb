@@ -124,8 +124,9 @@ public abstract class OIndexOneValue extends OIndexMVRBTreeAbstract<OIdentifiabl
         }
       }
 
-      OLogManager.instance().exception("Found duplicated key '%s' previously assigned to the record %s", null,
-          OIndexException.class, iKey, indexedRID);
+      OLogManager.instance().exception(
+          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
+          OIndexException.class, iKey, iRecord, indexedRID);
     }
   }
 

@@ -568,7 +568,7 @@ public abstract class OAbstractFile implements OFile {
   protected void openChannel(final int iNewSize) throws IOException {
     acquireWriteLock();
     try {
-      OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: ", osFile, osFile.length());
+      OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: %d", osFile, osFile.length());
 
       for (int i = 0; i < OPEN_RETRY_MAX; ++i)
         try {
