@@ -125,9 +125,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
         + "/testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords");
     testDocumentTx.open("admin", "admin");
-    OStorage testStorage = testDocumentTx.getStorage();
     testDocumentTx.close();
-    testStorage.close();
 
     long dataAddSeed = random.nextLong();
     System.out.println("Data add seed = " + dataAddSeed);
@@ -219,7 +217,7 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
         OClass classOne = baseDB.getMetadata().getSchema().getClass("TestOne");
         OClass classTwo = baseDB.getMetadata().getSchema().getClass("TestTwo");
 
-        for (int i = 0; i < 5000; i++) {
+        for (int i = 0; i < 10000; i++) {
           ODocument docOne = new ODocument(classOne);
           docOne.field("intProp", random.nextInt());
 

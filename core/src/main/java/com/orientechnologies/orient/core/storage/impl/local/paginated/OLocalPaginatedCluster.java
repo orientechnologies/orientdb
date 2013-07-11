@@ -48,7 +48,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -85,58 +85,51 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @since 22.03.13
  */
 public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements OCluster {
-  public static final String                        DEF_EXTENSION                = ".pcl";
-  private static final String                       CLUSTER_STATE_FILE_EXTENSION = ".pls";
+  public static final String                    DEF_EXTENSION                = ".pcl";
+  private static final String                   CLUSTER_STATE_FILE_EXTENSION = ".pls";
 
-  private final static int                          FREE_LIST_SIZE               = DISK_CACHE_PAGE_SIZE.getValueAsInteger()
-                                                                                     - PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                                                                                         .getValueAsInteger();
+  private final static int                      FREE_LIST_SIZE               = DISK_CACHE_PAGE_SIZE.getValueAsInteger()
+                                                                                 - PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
+                                                                                     .getValueAsInteger();
 
-  private final static int                          STATE_SIZE                   = OIntegerSerializer.INT_SIZE + 2
-                                                                                     * OLongSerializer.LONG_SIZE + FREE_LIST_SIZE
-                                                                                     * OLongSerializer.LONG_SIZE + 3
-                                                                                     * OIntegerSerializer.INT_SIZE
-                                                                                     + OLongSerializer.LONG_SIZE;
+  private final static int                      STATE_SIZE                   = OIntegerSerializer.INT_SIZE + 2
+                                                                                 * OLongSerializer.LONG_SIZE + FREE_LIST_SIZE
+                                                                                 * OLongSerializer.LONG_SIZE + 3
+                                                                                 * OIntegerSerializer.INT_SIZE
+                                                                                 + OLongSerializer.LONG_SIZE;
 
-  private static final OCompression                 COMPRESSION                  = OCompressionFactory.INSTANCE
-                                                                                     .getCompression(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD
-                                                                                         .getValueAsString());
+  private OCompression                          compression;
 
-  public static final String                        TYPE                         = "PHYSICAL";
+  public static final String                    TYPE                         = "PHYSICAL";
 
-  private static final float                        RECORD_GROW_FACTOR           = OGlobalConfiguration.RECORD_GROW_FACTOR
-                                                                                     .getValueAsFloat();
-  private static final float                        RECORD_OVERFLOW_GROW_FACTOR  = OGlobalConfiguration.RECORD_OVERFLOW_GROW_FACTOR
-                                                                                     .getValueAsFloat();
+  private static final int                      PAGE_INDEX_OFFSET            = 16;
+  private static final int                      RECORD_POSITION_MASK         = 0xFFFF;
+  private static final int                      ONE_KB                       = 1024;
 
-  private static final int                          PAGE_INDEX_OFFSET            = 16;
-  private static final int                          RECORD_POSITION_MASK         = 0xFFFF;
-  private static final int                          ONE_KB                       = 1024;
+  private ODiskCache                            diskCache;
 
-  private ODiskCache                                diskCache;
+  private String                                name;
+  private OLocalPaginatedStorage                storageLocal;
+  private volatile int                          id;
+  private long                                  fileId;
 
-  private String                                    name;
-  private OLocalPaginatedStorage                    storageLocal;
-  private volatile int                              id;
-  private long                                      fileId;
+  private long                                  size;
+  private long                                  recordsSize;
 
-  private long                                      size;
-  private long                                      recordsSize;
+  private OStoragePaginatedClusterConfiguration config;
 
-  private OStoragePhysicalClusterConfigurationLocal config;
+  private OSingleFileSegment                    clusterStateHolder;
 
-  private OSingleFileSegment                        clusterStateHolder;
+  private long[]                                freePageLists                = new long[FREE_LIST_SIZE];
 
-  private long[]                                    freePageLists                = new long[FREE_LIST_SIZE];
+  private final OModificationLock               externalModificationLock     = new OModificationLock();
 
-  private final OModificationLock                   externalModificationLock     = new OModificationLock();
+  private OWriteAheadLog                        writeAheadLog;
 
-  private OWriteAheadLog                            writeAheadLog;
+  private ThreadLocal<OOperationUnitId>         currentUnitId                = new ThreadLocal<OOperationUnitId>();
+  private ThreadLocal<OLogSequenceNumber>       startLSN                     = new ThreadLocal<OLogSequenceNumber>();
 
-  private ThreadLocal<OOperationUnitId>             currentUnitId                = new ThreadLocal<OOperationUnitId>();
-  private ThreadLocal<OLogSequenceNumber>           startLSN                     = new ThreadLocal<OLogSequenceNumber>();
-
-  private boolean                                   useFirstStateHolder          = true;
+  private boolean                               useFirstStateHolder          = true;
 
   public OLocalPaginatedCluster() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -151,7 +144,10 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     try {
       acquireExclusiveLock();
       try {
-        config = new OStoragePhysicalClusterConfigurationLocal(storage.getConfiguration(), id, -1);
+        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
+            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+            OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString());
+
         config.name = clusterName;
 
         init((OLocalPaginatedStorage) storage, config);
@@ -181,7 +177,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   private void init(OLocalPaginatedStorage storage, OStorageClusterConfiguration config) throws IOException {
     OFileUtils.checkValidName(config.getName());
 
-    this.config = (OStoragePhysicalClusterConfigurationLocal) config;
+    this.config = (OStoragePaginatedClusterConfiguration) config;
+    this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression);
 
     storageLocal = storage;
     writeAheadLog = storage.getWALInstance();
@@ -302,6 +299,18 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         case NAME:
           setNameInternal(stringValue);
           break;
+        case USE_WAL:
+          setUseWalInternal(stringValue);
+          break;
+        case RECORD_GROW_FACTOR:
+          setRecordGrowFactorInternal(stringValue);
+          break;
+        case RECORD_OVERFLOW_GROW_FACTOR:
+          setRecordOverflowGrowFactorInternal(stringValue);
+          break;
+        case COMPRESSION:
+          setCompressionInternal(stringValue);
+          break;
         }
 
       } finally {
@@ -312,6 +321,54 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     }
   }
 
+  private void setCompressionInternal(String stringValue) {
+    try {
+      compression = OCompressionFactory.INSTANCE.getCompression(stringValue);
+      config.compression = stringValue;
+      storageLocal.getConfiguration().update();
+    } catch (IllegalArgumentException e) {
+      throw new OStorageException("Invalid value for " + ATTRIBUTES.COMPRESSION + " attribute. ", e);
+    }
+
+  }
+
+  private void setRecordOverflowGrowFactorInternal(String stringValue) {
+    try {
+      float growFactor = Float.parseFloat(stringValue);
+      if (growFactor < 1)
+        throw new OStorageException(ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " can not be less than 1");
+
+      config.recordOverflowGrowFactor = growFactor;
+      storageLocal.getConfiguration().update();
+    } catch (NumberFormatException nfe) {
+      throw new OStorageException("Invalid value for cluster attribute " + ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed ["
+          + stringValue + "].", nfe);
+    }
+  }
+
+  private void setRecordGrowFactorInternal(String stringValue) {
+    try {
+      float growFactor = Float.parseFloat(stringValue);
+      if (growFactor < 1)
+        throw new OStorageException(ATTRIBUTES.RECORD_GROW_FACTOR + " can not be less than 1");
+
+      config.recordGrowFactor = growFactor;
+      storageLocal.getConfiguration().update();
+    } catch (NumberFormatException nfe) {
+      throw new OStorageException("Invalid value for cluster attribute " + ATTRIBUTES.RECORD_GROW_FACTOR + " was passed ["
+          + stringValue + "].", nfe);
+    }
+  }
+
+  private void setUseWalInternal(String stringValue) {
+    if (!(stringValue.equals("true") || stringValue.equals("false")))
+      throw new OStorageException("Invalid value for cluster attribute " + ATTRIBUTES.USE_WAL + " was passed [" + stringValue
+          + "].");
+
+    config.useWal = Boolean.valueOf(stringValue);
+    storageLocal.getConfiguration().update();
+  }
+
   private void setNameInternal(String newName) throws IOException {
     diskCache.renameFile(fileId, this.name, newName);
     clusterStateHolder.rename(name, newName);
@@ -320,6 +377,47 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
     storageLocal.renameCluster(name, newName);
     name = newName;
     storageLocal.getConfiguration().update();
+  }
+
+  @Override
+  public boolean useWal() {
+    acquireSharedLock();
+    try {
+      return config.useWal;
+    } finally {
+      releaseSharedLock();
+    }
+
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    acquireSharedLock();
+    try {
+      return config.recordGrowFactor;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    acquireSharedLock();
+    try {
+      return config.recordOverflowGrowFactor;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public String compression() {
+    acquireSharedLock();
+    try {
+      return config.compression;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   @Override
@@ -336,9 +434,9 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         final long prevSize = size;
         final long prevRecordsSize = recordsSize;
 
-        content = COMPRESSION.compress(content);
+        content = compression.compress(content);
 
-        int grownContentSize = (int) (RECORD_GROW_FACTOR * content.length);
+        int grownContentSize = (int) (config.recordGrowFactor * content.length);
         int entryContentLength = grownContentSize + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
             + OLongSerializer.LONG_SIZE;
 
@@ -362,7 +460,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
           OLongSerializer.INSTANCE.serializeNative(-1L, entryContent, entryPosition);
           OLocalPage.TrackMode trackMode;
-          if (writeAheadLog == null)
+          if (!config.useWal || writeAheadLog == null)
             trackMode = OLocalPage.TrackMode.NONE;
           else if (transaction != null)
             trackMode = OLocalPage.TrackMode.BOTH;
@@ -382,7 +480,8 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         } else {
           startRecordOperation(transaction, true);
 
-          OLocalPage.TrackMode trackMode = writeAheadLog == null ? OLocalPage.TrackMode.NONE : OLocalPage.TrackMode.BOTH;
+          OLocalPage.TrackMode trackMode = (!config.useWal || writeAheadLog == null) ? OLocalPage.TrackMode.NONE
+              : OLocalPage.TrackMode.BOTH;
           int entrySize = grownContentSize + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE;
 
           int fullEntryPosition = 0;
@@ -473,7 +572,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   }
 
   private void endRecordOperation(OStorageTransaction transaction) throws IOException {
-    if (transaction == null && writeAheadLog != null) {
+    if (transaction == null && config.useWal && writeAheadLog != null) {
       writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get(), false));
     }
 
@@ -483,7 +582,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
   private void startRecordOperation(OStorageTransaction transaction, boolean rollbackMode) throws IOException {
     if (transaction == null) {
-      if (writeAheadLog != null) {
+      if (config.useWal && writeAheadLog != null) {
         OOperationUnitId unitId = OOperationUnitId.generateId();
 
         OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(rollbackMode, unitId));
@@ -548,7 +647,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
       byte[] recordContent = new byte[readContentSize];
       System.arraycopy(fullContent, fullContentPosition, recordContent, 0, recordContent.length);
 
-      recordContent = COMPRESSION.uncompress(recordContent);
+      recordContent = compression.uncompress(recordContent);
       return new ORawBuffer(recordContent, recordVersion, recordType);
     } finally {
       releaseSharedLock();
@@ -636,7 +735,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         boolean isRecordSpreadAcrossSeveralPages = isRecordSpreadAcrossSeveralPages(pageIndex, recordPosition);
 
         final OLocalPage.TrackMode trackMode;
-        if (writeAheadLog == null)
+        if (!config.useWal || writeAheadLog == null)
           trackMode = OLocalPage.TrackMode.NONE;
         else if (transaction != null || isRecordSpreadAcrossSeveralPages)
           trackMode = OLocalPage.TrackMode.BOTH;
@@ -712,7 +811,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         if (fullEntryContent == null)
           return;
 
-        content = COMPRESSION.compress(content);
+        content = compression.compress(content);
 
         int updatedContentLength = content.length + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
             + OLongSerializer.LONG_SIZE;
@@ -727,14 +826,14 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         if (updatedContentLength <= fullEntryContent.length)
           recordEntry = new byte[fullEntryContent.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE];
         else {
-          int grownContent = (int) (content.length * RECORD_OVERFLOW_GROW_FACTOR);
+          int grownContent = (int) (content.length * config.recordOverflowGrowFactor);
           recordEntry = new byte[grownContent + OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE];
 
           isRecordSpreadAcrossSeveralPages = true;
         }
 
         final OLocalPage.TrackMode trackMode;
-        if (writeAheadLog == null)
+        if (!config.useWal || writeAheadLog == null)
           trackMode = OLocalPage.TrackMode.NONE;
         else if (transaction != null || isRecordSpreadAcrossSeveralPages)
           trackMode = OLocalPage.TrackMode.BOTH;
@@ -1164,7 +1263,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   }
 
   private void updateFreePagesList(int freePageIndex, long pageIndex) throws IOException {
-    if (writeAheadLog == null)
+    if (!config.useWal || writeAheadLog == null)
       freePageLists[freePageIndex] = pageIndex;
     else {
       final long prevPageIndex = freePageLists[freePageIndex];
@@ -1174,7 +1273,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   }
 
   private void logPageChanges(OLocalPage localPage, long pageIndex, boolean isNewPage) throws IOException {
-    if (writeAheadLog != null) {
+    if (config.useWal && writeAheadLog != null) {
       List<OPageDiff<?>> pageChanges = localPage.getPageChanges();
       if (pageChanges.isEmpty())
         return;
@@ -1227,7 +1326,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
         final long prevSize = size;
         final long prevRecordsSize = recordsSize;
 
-        if (writeAheadLog != null) {
+        if (config.useWal && writeAheadLog != null) {
           OOperationUnitId operationUnitId = OOperationUnitId.generateId();
           OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(false, operationUnitId));
           currentUnitId.set(operationUnitId);
@@ -1243,7 +1342,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
         logClusterState(prevSize, prevRecordsSize);
 
-        if (writeAheadLog != null) {
+        if (config.useWal && writeAheadLog != null) {
           writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get(), false));
 
           currentUnitId.set(null);
@@ -1675,7 +1774,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
 
     int offset = OIntegerSerializer.INT_SIZE;
 
-    if (writeAheadLog != null) {
+    if (config.useWal && writeAheadLog != null) {
       OLogSequenceNumber end = writeAheadLog.end();
 
       offset += OIntegerSerializer.INT_SIZE;
@@ -1857,7 +1956,7 @@ public class OLocalPaginatedCluster extends OSharedResourceAdaptive implements O
   }
 
   private void logClusterState(long prevSize, long prevRecordsSize) throws IOException {
-    if (writeAheadLog == null)
+    if (!config.useWal || writeAheadLog == null)
       return;
 
     OOperationUnitId operationUnitId = currentUnitId.get();

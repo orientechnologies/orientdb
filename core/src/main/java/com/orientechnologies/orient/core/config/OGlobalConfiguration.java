@@ -94,12 +94,6 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
-  RECORD_GROW_FACTOR("storage.record.growFactor", "Multiplier which is used to predict how much record will grow after creation.",
-      Float.class, 1.2),
-
-  RECORD_OVERFLOW_GROW_FACTOR("storage.record.overflowGrowFactor",
-      "Multiplier which is used to predict how much record will grow after update.", Float.class, 1.2),
-
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
       + "this queue is used to accumulate all pages that "
       + "should be written to the disk and then flush them in batch mode to minimize random IO overhead.", Integer.class, 15000),

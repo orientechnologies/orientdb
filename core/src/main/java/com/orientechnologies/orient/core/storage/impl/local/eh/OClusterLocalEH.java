@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -270,6 +271,26 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public boolean useWal() {
+    return false;
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public String compression() {
+    return ONothingCompression.NAME;
   }
 
   @Override

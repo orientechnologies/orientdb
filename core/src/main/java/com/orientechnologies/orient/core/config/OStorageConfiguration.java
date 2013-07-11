@@ -218,6 +218,10 @@ public class OStorageConfiguration implements OSerializableStream {
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
       else if (clusterType.equals("h")) {
         currentCluster = new OStorageEHClusterConfiguration(this, clusterId, clusterName, null, targetDataSegmentId);
+      } else if (clusterType.equals("d")) {
+        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
+            Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
+            read(values[index++]));
       } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
@@ -311,6 +315,15 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, "m");
       } else if (c instanceof OStorageEHClusterConfiguration) {
         write(buffer, "h");
+      } else if (c instanceof OStoragePaginatedClusterConfiguration) {
+        write(buffer, "d");
+
+        final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration = (OStoragePaginatedClusterConfiguration) c;
+
+        write(buffer, paginatedClusterConfiguration.useWal);
+        write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
+        write(buffer, paginatedClusterConfiguration.recordGrowFactor);
+        write(buffer, paginatedClusterConfiguration.compression);
       }
     }
 

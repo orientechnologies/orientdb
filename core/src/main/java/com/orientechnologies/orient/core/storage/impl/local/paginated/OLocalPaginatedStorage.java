@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -1996,18 +1996,22 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void addDefaultClusters() throws IOException {
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_INTERNAL_NAME));
+    String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadata.CLUSTER_INTERNAL_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_INDEX_NAME));
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length, OMetadata.CLUSTER_INDEX_NAME,
+        null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
 
-    defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        CLUSTER_DEFAULT_NAME));
+    defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
   }
 
   public ODiskCache getDiskCache() {
