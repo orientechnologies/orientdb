@@ -20,6 +20,9 @@ body div.container-studio {
 .nomargin {
     margin : 0px !important;
 }
+table.pointer>tbody>tr>td input{
+  width: 122px;
+}
 .accordion-scroll {
     height: 150px;
     overflow: auto;

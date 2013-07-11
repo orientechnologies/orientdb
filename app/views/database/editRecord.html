@@ -17,7 +17,7 @@
 										<td>
 											<a href=""><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
 										</td>
-										<td><a href="" ng-click="showModal()">{{out}}</a></td>
+										<td><a href="" ng-click="showModal(out)">{{out}}</a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -45,7 +45,7 @@
 							<table>
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
-										<td><a href="">{{out}}</a></td>
+										<td><a href="" ng-click="showModal(out)">{{out}}</a></td>
 										<td>
 											<a href=""><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
 

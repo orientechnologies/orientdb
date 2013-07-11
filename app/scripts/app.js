@@ -41,6 +41,11 @@ App.config(function ($routeProvider) {
     templateUrl: 'views/database/createRecord.html',
     controller: 'DocumentCreateController',
     resolve : DatabaseResolve
+  }).
+  when('/database/:database/browse/editclass/:clazz', {
+    templateUrl: 'views/database/editclass.html',
+    controller: 'ClassEditController',
+    resolve : DatabaseResolve
   })
   .when('/404' , {
     templateUrl: 'views/404.html'

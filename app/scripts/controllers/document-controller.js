@@ -4,15 +4,20 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 	var database = $routeParams.database;
 	var rid = $routeParams.rid;
 	$scope.fixed = Database.header;
+	$scope.canSave = true;
+	$scope.canDelete = true;
+	$scope.canCreate = true;
 	
-	
- 
+
 	// Toggle modal
-	$scope.showModal = function() {
-	  var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static'});
-	  $q.when(modalPromise).then(function(modalEl) {
-	    modalEl.modal('show');
-	  });
+	$scope.showModal = function(rid) {
+		modalScope = $scope.$new(true);	
+		modalScope.db = database;
+		modalScope.rid = rid;
+		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
+		$q.when(modalPromise).then(function(modalEl) {
+			modalEl.modal('show');
+		});
 	};
 	$scope.reload = function(){
 
@@ -68,22 +73,20 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 }]);
 DocController.controller("DocumentModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
-	var db = 'tinkerpop';
-	var rid = '#11:0';
+
 	$scope.reload = function(){
-		$scope.doc = DocumentApi.get({ database : db , document : rid},function(){
+		$scope.doc = DocumentApi.get({ database : $scope.db , document : $scope.rid},function(){
 			$scope.headers = Database.getPropertyFromDoc($scope.doc);
 		}, function(error){
 			Notification.push({content : JSON.stringify(error)});
 			$location.path('/404');
 		});
 	}
-	$scope.reload();
 	$scope.save = function(){
-		DocumentApi.updateDocument(db,rid,$scope.doc,function(data){
+		DocumentApi.updateDocument($scope.db,$scope.rid,$scope.doc,function(data){
 			Notification.push({content : data});
-			$scope.reload();
 		});
 		
 	}
+	$scope.reload();
 }]);
