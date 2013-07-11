@@ -58,7 +58,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			command = "DELETE EDGE FROM " + rid + " TO " + edge;
 		}
 		CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
-			
+			$scope.reload();
 		});
 		// var index = $scope.doc[group].indexOf(rid);
 		// $scope.doc[group].splice(index,1);
