@@ -1,5 +1,5 @@
 <div class="row-fluid" >
-	<div class = "span12 nomargin">
+	<div class = "nomargin">
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
 			<thead>
 				<tr>
@@ -12,26 +12,36 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="result in property | orderBy:predicate:reverse">
-					<td>{{result['name']}}</td>
-					<td>{{result['type']}}</td>
-					<td>{{result['linkedType']}}</td>
-					<td>{{result['linkedClass']}}</td>
 					<td>
-						<input type="checkbox" ng-model="result['mandatory']" ng-disabled="true">
+						<input type="text" ng-model="result['name']">
 					</td>
 					<td>
-						<input type="checkbox" ng-model="result['readonly']" ng-disabled="true">
+						<input type="text" ng-model="result['type']">
 					</td>
 					<td>
-						<input type="checkbox" ng-model="result['notNull']" ng-disabled="true">
+						<input type="text" ng-model="result['linkedType']"> 
 					</td>
-					<td>{{result['min']}}</td>
-					<td>{{result['max']}}</td>
-					
-				</tr>
-			</tbody>
-			{{clazz}}
+					<td><input type="text" ng-model="result['linkedClass']"></td>
+					<td>
+						<input type="checkbox" ng-model="result['mandatory']" >
+					</td>
+					<td>
+						<input type="checkbox" ng-model="result['readonly']" >
+					</td>
+					<td>
+						<input type="checkbox" ng-model="result['notNull']" >
+					</td>
+					<td>
+						<input type="text" ng-model="result['min']"> 
+					</td>
+					<td>
+						<input type="text" ng-model="result['max']">
+					</td>
 
-		</table>
-	</div>
-</div>
+						</tr>
+					</tbody>
+					{{clazz}}
+
+				</table>
+			</div>
+		</div>
