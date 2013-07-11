@@ -1,5 +1,5 @@
-var  DocController = angular.module('document.controller',[]);
-DocController.controller("DocumentEditController",['$scope','$routeParams','$location','$modal','$q','DocumentApi','Database','Notification',function($scope,$routeParams,$location,$modal,$q,DocumentApi,Database,Notification){
+var  GrapgController = angular.module('vertex.controller',[]);
+GrapgController.controller("VertexEditController",['$scope','$routeParams','$location','$modal','$q','DocumentApi','Database','CommandApi','Notification',function($scope,$routeParams,$location,$modal,$q,DocumentApi,Database,CommandApi,Notification){
 
 	var database = $routeParams.database;
 	var rid = $routeParams.rid;
@@ -50,9 +50,18 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 		}
 
 	}
-	$scope.deleteLink = function(group,rid) {
-		var index = $scope.doc[group].indexOf(rid);
-		$scope.doc[group].splice(index,1);
+	$scope.deleteLink = function(group,edge) {
+		var command =""
+		if($scope.doc[group] instanceof Array){
+			command = "DELETE EDGE " + edge;	
+		}else {
+			command = "DELETE EDGE FROM " + rid + " TO " + edge;
+		}
+		CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
+			
+		});
+		// var index = $scope.doc[group].indexOf(rid);
+		// $scope.doc[group].splice(index,1);
 	}
 	$scope.navigate = function(rid){
 		$location.path('/database/'+database + '/browse/edit/' + rid.replace('#',''));
@@ -61,7 +70,7 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 		$location.path('/database/'+database + '/browse/create/' + $scope.doc['@class']);
 	}
 }]);
-DocController.controller("DocumentCreateController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
+GrapgController.controller("VertexCreateController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
 
 	var database = $routeParams.database;
@@ -77,7 +86,7 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 		
 	}
 }]);
-DocController.controller("DocumentModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
+GrapgController.controller("VertexModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
 
 	$scope.reload = function(){
@@ -95,16 +104,4 @@ DocController.controller("DocumentModalController",['$scope','$routeParams','$lo
 		
 	}
 	$scope.reload();
-}]);
-DocController.controller("EditController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
-
-	var database = $routeParams.database;
-	var rid = $routeParams.rid;
-	$scope.doc = DocumentApi.get({ database : database , document : rid},function(){
-
-		$scope.template = Database.isGraph($scope.doc['@class']) ? '/views/database/editVertex.html' : '/views/database/editDocument.html'
-	}, function(error){
-		Notification.push({content : JSON.stringify(error)});
-		$location.path('/404');
-	});
 }]);

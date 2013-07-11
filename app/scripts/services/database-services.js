@@ -100,6 +100,26 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		getDateTimeFormat : function(){
 			return "yyyy-mm-dd HH:mm:ss";
 		},
+		getFieldType : function(clazz,field){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var type = undefined;
+			classes.forEach(function(element,index,array){
+				if(element.name.toUpperCase() == clazz.toUpperCase()){
+					if(element['properties']){
+						element['properties'].forEach(function(element,index,array){
+							if(element.name == field){
+								type = element.type;
+							}
+						});
+					}
+				}
+			});	
+			return type;
+		},
+		isLink : function(type){
+			return type == "LINKSET" || type == "LINK"
+		},
 		listField : function(clazz){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];
@@ -138,10 +158,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			var fields = new Array
 			for (var entry in classes){
 				var claq = classes[entry].name
-				// alert(claq);
-				fields.push(classes[entry])
-
-					
+				fields.push(classes[entry])					
 			}
 			return fields;
 		},
@@ -186,13 +203,16 @@ database.factory('Database', function(DatabaseApi,localStorageService){
  		* @return {Array} Property name Array.
  		*/
 		getPropertyFromDoc : function(doc){
-			var isGraph = this.isGraph(doc['@class']);
+			var c = doc['@class'];
+			var isGraph = this.isGraph(c);
 			var fixedHeader = this.header.concat(this.exclude);
+			var self = this;
 			var all = Object.keys(doc).filter(function(element,index,array){
 				if(isGraph){
-					return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in") && !element.startsWith("out")));
+					return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in") && !element.startsWith("out"))&& !self.isLink(type));
 				}else {
-					return (fixedHeader.indexOf(element) == -1);
+					var type = self.getFieldType(c,element);
+					return (fixedHeader.indexOf(element) == -1 && !self.isLink(type));
 				}
 			});
 			return all;
@@ -201,6 +221,15 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			
 			var all = Object.keys(doc).filter(function(element,index,array){
 				return element.startsWith(direction);
+			});
+			return all;
+		},
+
+		getLink : function(doc){
+			var self = this;
+			var all = Object.keys(doc).filter(function(element,index,array){
+				var type = self.getFieldType(doc['@class'],element);
+				return self.isLink(type);
 			});
 			return all;
 		},
@@ -229,7 +258,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			});
 			return all;
 		}
-
+		
 	};
 }) ;
 
@@ -257,7 +286,10 @@ database.factory('CommandApi', function($http,$resource,Notification){
 
 	resource.queryText = function(params,callback){
 		var startTime = new Date().getTime();
-		$http.post('/api/command/' + params.database + "/" + params.language + "/" + params.text + "/" + params.limit).success(function(data){
+		var limit = params.limit || 20;
+
+		var text = '/api/command/' + params.database + "/" + params.language + "/" +encodeURIComponent(params.text) + "/" + limit;
+		$http.post(text).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
 			var noti = "Query executed in " + time + " sec. Returned " + data.result.length + " record(s)"; 
 			Notification.push({content : noti});

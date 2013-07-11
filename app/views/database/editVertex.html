@@ -1,6 +1,6 @@
-<div class="row-fluid">
-	<div class="span3">
-		<form>
+<div class="row-fluid" ng-controller="VertexEditController">
+	<div class="span2 edgesList">
+		<form >
 			<legend>Incoming Edges</legend>
 			<div class="accordion row-fluid" id="accordion2">
 				<div class="accordion-group" ng-repeat="i in incomings">
@@ -15,9 +15,9 @@
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
 										<td>
-											<a href=""><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
 										</td>
-										<td><a href="" ng-click="showModal(out)">{{out}}</a></td>
+										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -27,10 +27,10 @@
 			</div>
 		</form>
 	</div>
-	<div class="span6">
+	<div class="span8 vertex">
 		<ng-include src="'/views/database/record.html'"  onload=""></ng-include>
 	</div>
-	<div class="span3">
+	<div class="span2 edgesList">
 		<form>
 			<legend>Outgoing Edges</legend>
 			<div class="accordion row-fluid" id="accordion1">
@@ -45,9 +45,10 @@
 							<table>
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
-										<td><a href="" ng-click="showModal(out)">{{out}}</a></td>
+										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
 										<td>
-											<a href=""><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
 
 										</td>
 									</tr>
