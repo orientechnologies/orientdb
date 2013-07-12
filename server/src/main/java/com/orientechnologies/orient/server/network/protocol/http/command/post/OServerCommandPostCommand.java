@@ -69,7 +69,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET"))
         throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
 
-      response = executor.execute(null);
+      response = db.command(cmd).execute();
 
       fetchPlan = executor.getFetchPlan();
 
