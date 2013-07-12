@@ -259,7 +259,8 @@ database.factory('CommandApi', function($http,$resource,Notification){
 		var startTime = new Date().getTime();
 		$http.post('/api/command/' + params.database + "/" + params.language + "/" + params.text + "/" + params.limit).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
-			var noti = "Query executed in " + time + " sec. Returned " + data.result.length + " record(s)"; 
+			var records = data.result ? data.result.length : "";
+			var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)"; 
 			Notification.push({content : noti});
 			callback(data);
 		}).error(function(data){
