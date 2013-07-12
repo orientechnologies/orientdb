@@ -49,6 +49,10 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRemoteTask<?> task = tasks.get(i);
+
+      // RESET QUEUE TO AVOID HOLES
+      serverInstance.getDistributedManager().resetOperationQueue(task.getRunId(), task.getOperationSerial() - 1);
+
       result[i] = task.call();
     }
 

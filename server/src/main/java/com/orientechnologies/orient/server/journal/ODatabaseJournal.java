@@ -309,7 +309,7 @@ public class ODatabaseJournal {
           // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
           uncommittedRecords.put(((OAbstractRecordReplicatedTask<?>) op).getRid(), fileOffset);
       }
-      
+
       fileOffset = getPreviousOperation(fileOffset);
     }
     return uncommittedRecords;

@@ -92,12 +92,13 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
           final OAbstractReplicatedTask<?> operation = log.getOperation(pos);
           if (operation == null) {
             ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-                "db '%s' skipped operation #%d.%d", databaseName, lastRunId, lastOperationId);
+                "db=%s skipped operation", databaseName);
             continue;
           }
 
           ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-              "db '%s' operation %s", databaseName, operation);
+              "aligning operation=%d.%d db=%s %s", operation.getRunId(), operation.getOperationSerial(), databaseName, operation
+                  .getName().toUpperCase());
 
           operation.setNodeSource(localNode);
           operation.setDatabaseName(databaseName);
@@ -114,7 +115,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
           aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
 
         ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-            "db '%s' aligned %d operations", databaseName, aligned);
+            "aligned %d operations db=%s", aligned, databaseName);
       } finally {
         alignmentLock.unlock();
       }
@@ -132,11 +133,17 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   protected int flushBufferedTasks(final ODistributedServerManager dManager, final OStorageSynchronizer synchronizer,
       final OMultipleRemoteTasks tasks, final List<Long> positions) throws IOException {
 
+    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+        "flushing aligning %d operations db=%s...", tasks.getTasks(), databaseName);
+
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     @SuppressWarnings("unused")
     final Object[] result = (Object[]) dManager.sendOperation2Node(getNodeSource(), tasks);
 
     final int aligned = tasks.getTasks();
+
+    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+        "flushed aligning %d operations db=%s...", aligned, databaseName);
 
     // REUSE THE MULTIPLE TASK
     tasks.clearTasks();

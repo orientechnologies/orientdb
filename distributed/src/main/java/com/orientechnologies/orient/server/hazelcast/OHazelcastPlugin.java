@@ -273,7 +273,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     String masterNodeId = null;
 
     try {
-      if (replicationData == null || (replicationData.synchReplicas == null && replicationData.synchReplicas == null)) {
+      if (replicationData == null) {
         // NO REPLICATION: LOCAL ONLY
         ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
         try {
@@ -624,8 +624,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
             continue;
 
-          ODistributedServerLog.warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
-              "send align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
+          ODistributedServerLog
+              .warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
+                  "sending align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0],
+                  lastOperationId[1]);
 
           synchronized (pendingAlignments) {
             for (String node : remoteClusterNodes.keySet()) {
@@ -970,6 +972,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throw new ODistributedException("Error on logging operation", e);
     }
     return operationLogOffset;
+  }
+
+  public void resetOperationQueue(long iCurrentRunId, long iOperationSerial) {
+    synchronized (lockQueue) {
+      final Long last = executionQueue.get(iCurrentRunId);
+      if (last == null || last != iOperationSerial) {
+        executionQueue.put(iCurrentRunId, iOperationSerial);
+        lockQueue.notifyAll();
+      }
+    }
   }
 
   private void waitForMyTurnInQueue(final OAbstractReplicatedTask<? extends Object> iTask) {

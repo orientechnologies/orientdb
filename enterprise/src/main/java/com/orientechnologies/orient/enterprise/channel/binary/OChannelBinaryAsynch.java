@@ -103,7 +103,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
             // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
             close();
-            throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
+            throw new OTimeoutException("Timeout on reading response from the server "
+                + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
           if (unreadResponse > maxUnreadResponses) {

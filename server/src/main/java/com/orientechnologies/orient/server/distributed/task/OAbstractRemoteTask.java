@@ -70,6 +70,7 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
   public OAbstractRemoteTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
       final EXECUTION_MODE iMode) {
     this.serverInstance = iServer;
+
     this.setNodeSource(iDistributedSrvMgr.getLocalNodeId());
     this.databaseName = databaseName;
     this.mode = iMode;

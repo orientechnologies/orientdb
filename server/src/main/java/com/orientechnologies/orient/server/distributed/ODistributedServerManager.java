@@ -112,4 +112,6 @@ public interface ODistributedServerManager {
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
   public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
+
+  public void resetOperationQueue(long iCurrentRunId, long iOperationSerial);
 }
