@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 /**
  * Running server instance.
@@ -97,6 +98,10 @@ public class ServerRun {
 
   protected String getDatabasePath(final String iDatabaseName) {
     return getDatabasePath(serverId, iDatabaseName);
+  }
+
+  public String getBinaryProtocolAddress() {
+    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress();
   }
 
   public static String getServerHome(final String iServerId) {
