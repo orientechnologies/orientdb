@@ -44,7 +44,7 @@ public class OStorageSynchronizer {
   private ODatabaseJournal             log;
   private OReplicationConflictResolver resolver;
 
-  public OStorageSynchronizer(final OServer iServer, ODistributedServerManager iCluster, final String storageName)
+  public OStorageSynchronizer(final OServer iServer, final ODistributedServerManager iCluster, final String storageName)
       throws IOException {
     server = iServer;
     cluster = iCluster;
@@ -52,7 +52,7 @@ public class OStorageSynchronizer {
 
     try {
       resolver = cluster.getConfictResolverClass().newInstance();
-      resolver.startup(server, storageName);
+      resolver.startup(server, iCluster, storageName);
     } catch (Exception e) {
       ODistributedServerLog.error(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "cannot create the conflict resolver instance of class '%s'", cluster.getConfictResolverClass(), e);
@@ -60,7 +60,7 @@ public class OStorageSynchronizer {
 
     final String logDirectory = OSystemVariableResolver.resolveSystemVariables(server.getDatabaseDirectory() + "/" + storageName);
 
-    log = new ODatabaseJournal(iServer, storage, logDirectory);
+    log = new ODatabaseJournal(iServer, cluster, storage, logDirectory);
   }
 
   public void recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException {
@@ -72,11 +72,18 @@ public class OStorageSynchronizer {
         if (getConflictResolver().existConflictsForRecord(rid))
           continue;
 
-        final String clusterName = ((ODistributedStorage) storage).getClusterNameFromRID(rid);
-        final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, clusterName, rid);
+        OCluster cl = storage.getClusterById(rid.getClusterId());
+        if (cl == null) {
+          ODistributedServerLog.warn(this, iCluster.getLocalNodeId(), null, DIRECTION.NONE,
+              "Cannot find cluster for RID %s, skip it", rid);
+          continue;
+        }
+
+        final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, cl.getName(), rid,
+            cluster.getLocalNodeId(), null);
 
         final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(server,
-            server.getDistributedManager(), storageName, rid), replicationData);
+            cluster, storageName, rid), replicationData);
 
         if (record == null)
           // DELETE IT

@@ -270,12 +270,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     String masterNodeId = null;
 
     try {
-      if (replicationData == null) {
+      if (replicationData == null || (replicationData.synchReplicas == null && replicationData.synchReplicas == null)) {
         // NO REPLICATION: LOCAL ONLY
         ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
         try {
           // EXECUTE IT LOCALLY
-          return ((OAbstractReplicatedTask<? extends Object>) iTask).executeOnLocalNode();
+          return ((OAbstractRemoteTask<? extends Object>) iTask).executeOnLocalNode();
         } finally {
           // SET LAST EXECUTION SERIAL
           ODistributedThreadLocal.INSTANCE.set(null);
@@ -334,7 +334,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               "local execution %s against db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
               iTask.getRunId(), iTask.getOperationSerial());
 
-          localResult = enqueueLocalExecution((OAbstractReplicatedTask<? extends Object>) iTask);
+          localResult = enqueueLocalExecution((OAbstractRemoteTask<? extends Object>) iTask);
 
           // CHECK CONFLICT
           if (remoteResult != null && localResult != null)
@@ -444,9 +444,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   /**
-   * Returns the replicaiton data, or null if replication is not active.
+   * Returns the replication data, or null if replication is not active.
    */
-  public OReplicationConfig getReplicationData(final String iDatabaseName, final String iClusterName, final Object iKey) {
+  public OReplicationConfig getReplicationData(final String iDatabaseName, final String iClusterName, final Object iKey,
+      final String iLocalNodeId, final String iRemoteNodeId) {
 
     final ODocument cfg = getDatabaseClusterConfiguration(iDatabaseName, iClusterName);
     final Boolean active = cfg.field("synchronization");
@@ -478,6 +479,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final boolean local = data.masterNode.equals(getLocalNodeId());
     ODistributedServerLog.debug(this, getLocalNodeId(), "?", DIRECTION.OUT,
         "network partition: get node master for key '%s' is assigned %s (local=%s)", iKey, data.masterNode, local);
+
+    final Set<String> targetNodes = getRemoteNodeIdsBut(iLocalNodeId, iRemoteNodeId);
+    if (!targetNodes.isEmpty())
+      data.synchReplicas = targetNodes.toArray(new String[targetNodes.size()]);
 
     return data;
   }
@@ -623,7 +628,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         try {
           final long[] lastOperationId = entry.getValue().getLog().getLastOperationId(true);
 
-          ODistributedServerLog.warn(this, getLocalNodeId(), remoteClusterNodes.toString(), DIRECTION.OUT,
+          ODistributedServerLog.warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
               "send align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
 
           synchronized (pendingAlignments) {
@@ -875,7 +880,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           Thread.interrupted();
         }
         // RE-READ THE KEY OWNER (IT COULD BE CHANGED DURING THE PAUSE)
-        final OReplicationConfig newReplicationConfig = getReplicationData(dbName, iClusterName, iKey);
+        final OReplicationConfig newReplicationConfig = getReplicationData(dbName, iClusterName, iKey, null, null);
 
         if (!newReplicationConfig.masterNode.equals(masterNodeId)) {
           ODistributedServerLog.warn(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
@@ -891,7 +896,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return masterNodeId;
   }
 
-  public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask) {
+  @Override
+  public Object enqueueLocalExecution(final OAbstractRemoteTask<? extends Object> iTask) throws Exception {
 
     // MANAGE ORDER
     while (true)

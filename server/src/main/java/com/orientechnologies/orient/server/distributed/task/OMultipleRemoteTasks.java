@@ -77,6 +77,24 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
     return "multiple_requests";
   }
 
+  @Override
+  public void setNodeDestination(final String masterNodeId) {
+    super.setNodeDestination(masterNodeId);
+    if (tasks != null)
+      for (OAbstractReplicatedTask<?> t : tasks) {
+        t.setNodeDestination(masterNodeId);
+      }
+  }
+
+  @Override
+  public void setNodeSource(final String nodeSource) {
+    super.setNodeSource(nodeSource);
+    if (tasks != null)
+      for (OAbstractReplicatedTask<?> t : tasks) {
+        t.setNodeSource(nodeSource);
+      }
+  }
+
   public int getTasks() {
     return tasks.size();
   }

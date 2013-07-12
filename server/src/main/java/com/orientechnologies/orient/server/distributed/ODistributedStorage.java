@@ -85,7 +85,7 @@ public class ODistributedStorage implements OStorage {
       return wrapped.command(iCommand);
 
     // ASSIGN DESTINATION NODE
-    final OReplicationConfig replicationData = dManager.getReplicationData(getName(), null, null);
+    final OReplicationConfig replicationData = dManager.getReplicationData(getName(), null, null, dManager.getLocalNodeId(), null);
 
     if (replicationData == null)
       // DON'T REPLICATE
@@ -137,7 +137,8 @@ public class ODistributedStorage implements OStorage {
     try {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameFromRID(iRecordId);
-      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId);
+      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId,
+          dManager.getLocalNodeId(), null);
 
       if (replicationData == null)
         // DON'T REPLICATE
@@ -167,7 +168,8 @@ public class ODistributedStorage implements OStorage {
 
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
-      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId);
+      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId,
+          dManager.getLocalNodeId(), null);
 
       if (replicationData == null)
         // DON'T REPLICATE
@@ -192,7 +194,8 @@ public class ODistributedStorage implements OStorage {
 
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
-      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId);
+      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId,
+          dManager.getLocalNodeId(), null);
 
       if (replicationData == null)
         // DON'T REPLICATE
@@ -219,7 +222,8 @@ public class ODistributedStorage implements OStorage {
 
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
-      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId);
+      final OReplicationConfig replicationData = dManager.getReplicationData(getName(), clusterName, iRecordId,
+          dManager.getLocalNodeId(), null);
 
       if (replicationData == null)
         // DON'T REPLICATE

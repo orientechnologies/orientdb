@@ -60,16 +60,10 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   public abstract String getPayload();
 
   /**
-   * Local node execution
-   * 
-   */
-  public abstract Object executeOnLocalNode();
-
-  /**
    * Remote node execution
    */
   @SuppressWarnings("unchecked")
-  public T call() {
+  public T call() throws Exception {
     // EXECUTE IT LOCALLY
     final Object localResult = getDistributedServerManager().enqueueLocalExecution(this);
 
@@ -114,6 +108,6 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   }
 
   public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, null);
+    dbSynchronizer.getLog().setOperationAsExecuted(operationLogOffset, null);
   }
 }

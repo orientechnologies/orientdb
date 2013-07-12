@@ -129,8 +129,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     if (!enabled)
       return;
 
-    super.startup();
     Orient.instance().addDbLifecycleListener(this);
+    super.startup();
   }
 
   @Override

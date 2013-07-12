@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Default conflict resolver.
@@ -45,28 +46,30 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
  */
 public class ODefaultReplicationConflictResolver implements OReplicationConflictResolver {
 
-  private static final String DISTRIBUTED_CONFLICT_CLASS = "ODistributedConflict";
-  private static final String FIELD_RECORD               = "record";
-  private static final String FIELD_NODE                 = "node";
-  private static final String FIELD_DATE                 = "date";
-  private static final String FIELD_OPERATION            = "operation";
-  private static final String FIELD_OTHER_RID            = "otherRID";
-  private static final String FIELD_CURRENT_VERSION      = "currentVersion";
-  private static final String FIELD_OTHER_VERSION        = "otherVersion";
+  private static final String       DISTRIBUTED_CONFLICT_CLASS = "ODistributedConflict";
+  private static final String       FIELD_RECORD               = "record";
+  private static final String       FIELD_NODE                 = "node";
+  private static final String       FIELD_DATE                 = "date";
+  private static final String       FIELD_OPERATION            = "operation";
+  private static final String       FIELD_OTHER_RID            = "otherRID";
+  private static final String       FIELD_CURRENT_VERSION      = "currentVersion";
+  private static final String       FIELD_OTHER_VERSION        = "otherVersion";
 
-  private boolean             ignoreIfSameContent;
-  private boolean             ignoreIfMergeOk;
-  private boolean             latestAlwaysWin;
+  private boolean                   ignoreIfSameContent;
+  private boolean                   ignoreIfMergeOk;
+  private boolean                   latestAlwaysWin;
 
-  private ODatabaseComplex<?> database;
-  private OIndex<?>           index                      = null;
-  private OServer             serverInstance;
+  private ODatabaseComplex<?>       database;
+  private OIndex<?>                 index                      = null;
+  private OServer                   serverInstance;
+  private ODistributedServerManager cluster;
 
   public ODefaultReplicationConflictResolver() {
   }
 
-  public void startup(final OServer iServer, final String iDatabaseName) {
+  public void startup(final OServer iServer, final ODistributedServerManager iCluster, final String iDatabaseName) {
     serverInstance = iServer;
+    cluster = iCluster;
 
     synchronized (this) {
       if (index != null)
@@ -106,7 +109,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleCreateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordId iOtherRID) {
-    ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Conflict on CREATE record %s/%s (other RID=%s)...", database.getName(), iCurrentRID, iOtherRID);
 
     if (!existConflictsForRecord(iCurrentRID)) {
@@ -124,7 +127,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   @Override
   public void handleUpdateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final ORecordVersion iCurrentVersion,
       final ORecordVersion iOtherVersion) {
-    ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Conflict on UDPATE record %s/%s (current=v%d, other=v%d)...", database.getName(), iCurrentRID,
         iCurrentVersion.getCounter(), iOtherVersion.getCounter());
 
@@ -143,7 +146,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleDeleteConflict(final String iRemoteNode, final ORecordId iCurrentRID) {
-    ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Conflict on DELETE record %s/%s (cannot be deleted on other node)", database.getName(), iCurrentRID);
 
     if (!existConflictsForRecord(iCurrentRID)) {
@@ -159,7 +162,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleCommandConflict(final String iRemoteNode, final Object iCommand, Object iLocalResult, Object iRemoteResult) {
-    ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Conflict on COMMAND execution on db '%s', cmd='%s' result local=%s, remote=%s", database.getName(), iCommand,
         iLocalResult, iRemoteResult);
   }
@@ -191,7 +194,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   public boolean existConflictsForRecord(final ORecordId iRID) {
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
     if (index == null) {
-      ODistributedServerLog.warn(this, serverInstance.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.warn(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "Index against %s is not available right now, searches will be slower", DISTRIBUTED_CONFLICT_CLASS);
 
       final List<?> result = database.query(new OSQLSynchQuery<Object>("select from " + DISTRIBUTED_CONFLICT_CLASS + " where "
@@ -200,7 +203,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
     }
 
     if (index.contains(iRID)) {
-      ODistributedServerLog.info(this, serverInstance.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.info(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "Conflict already present for record %s, skip it", iRID);
       return true;
     }
@@ -219,7 +222,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   protected void errorOnWriteConflict(final String iRemoteNode, final ODocument doc) {
-    ODistributedServerLog.error(this, serverInstance.getDistributedManager().getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.error(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
   }
 

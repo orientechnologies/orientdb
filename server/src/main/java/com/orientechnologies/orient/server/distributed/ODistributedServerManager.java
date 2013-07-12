@@ -24,7 +24,6 @@ import java.util.concurrent.locks.Lock;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -48,7 +47,8 @@ public interface ODistributedServerManager {
 
   public boolean isLocalNodeMaster(Object iKey);
 
-  public OReplicationConfig getReplicationData(String iDatabaseName, String iClusterName, Object iKey);
+  public OReplicationConfig getReplicationData(String iDatabaseName, String iClusterName, Object iKey, String iSourceNodeId,
+      String iDestinationNodeId);
 
   public Collection<String> getSynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
 
@@ -110,5 +110,5 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask);
+  public Object enqueueLocalExecution(OAbstractRemoteTask<?> iTask) throws Exception;
 }

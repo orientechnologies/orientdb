@@ -80,8 +80,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
             EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
 
-        Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId });
-        // for (Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId }); it.hasNext();) {
+        final Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId });
         while (it.hasNext()) {
           final long pos = it.next();
 

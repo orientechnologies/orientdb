@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -47,7 +48,8 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 /**
  * Writes all the non-idempotent operations against a database. Uses the classic IO API and NOT the MMAP to avoid the buffer is not
- * buffered by OS. The record is at variable size.<br/>
+ * buffered by OS. The record is at variable size. To find the most recent the browsing begins from the end of file and go back. On
+ * logging the status is always 0 (executing). Once the operation is executed the status is updated to 1 (executed).<br/>
  * <br/>
  * Record structure:<br/>
  * <code>
@@ -59,7 +61,7 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
  * <br/>
  * Where:
  * <ul>
- * <li> <b>STATUS</b> = [ 0 = doing, 1 = done ] </li>
+ * <li> <b>STATUS</b> = [ 0 = executing, 1 = executed ] </li>
  * <li> <b>OPERAT</b> = [ 1 = update, 2 = delete, 3 = create, 4 = sql command ] </li>
  * <li> <b>RUN ID</b> = is the running id. It's the timestamp the server is started, or inside a cluster is the timestamp when the cluster is started</li>
  * <li> <b>OPERAT ID</b> = is the unique id of the operation. First operation is 0</li>
@@ -86,6 +88,7 @@ public class ODatabaseJournal {
   private static final int                FIXED_SIZE            = 22;
 
   private OServer                         server;
+  private ODistributedServerManager       cluster;
   private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
                                                                     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
                                                                     0, true);
@@ -93,8 +96,10 @@ public class ODatabaseJournal {
   private OFile                           file;
   private boolean                         synchEnabled          = false;
 
-  public ODatabaseJournal(final OServer iServer, final OStorage iStorage, final String iStartingDirectory) throws IOException {
+  public ODatabaseJournal(final OServer iServer, final ODistributedServerManager iCluster, final OStorage iStorage,
+      final String iStartingDirectory) throws IOException {
     server = iServer;
+    cluster = iCluster;
     storage = iStorage;
 
     File osFile = new File(iStartingDirectory + "/" + DIRECTORY);
@@ -142,7 +147,7 @@ public class ODatabaseJournal {
   }
 
   /**
-   * Returns the last operation id.
+   * Returns the last uncommitted operation id.
    */
   private long[] getLastUnCommittedOperationId(final long iOffset) throws IOException {
     final int filled = file.getFilledUpTo();
@@ -211,8 +216,8 @@ public class ODatabaseJournal {
 
       final OAbstractRemoteTask<?> op = getOperation(fileOffset);
 
-      ODistributedServerLog.info(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
-          "db '%s' found uncommitted operation %s", storage.getName(), op);
+      ODistributedServerLog.info(this, cluster.getLocalNodeId(), null, DIRECTION.NONE, "db '%s' found uncommitted operation %s",
+          storage.getName(), op);
 
       if (op instanceof OAbstractRecordReplicatedTask<?>)
         // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
@@ -224,15 +229,16 @@ public class ODatabaseJournal {
   }
 
   /**
-   * Changes the status of an operation
+   * Changes the status of an operation to executed (=1). If RID is not null it's updated too (in case of record create when the RID
+   * changes).
    */
-  public void changeOperationStatus(final long iOffsetEndOperation, final ORecordId iRid) throws IOException {
+  public void setOperationAsExecuted(final long iOffsetEndOperation, final ORecordId iRid) throws IOException {
     lock.acquireExclusiveLock();
     try {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
@@ -291,14 +297,14 @@ public class ODatabaseJournal {
         varSize = ORecordId.PERSISTENT_SIZE;
         final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
 
-        ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
             "journaled operation %s against db '%s' rid %s as #%d.%d", iOperationType.toString(), storage.getName(), rid, iRunId,
             iOperationId);
 
-        if (needOverWrited(iRunId, iOperationId))
-          offset = getOverWriteStart(iRunId, iOperationId, iOperationType, varSize);
+        if (isUpdatingLast(iRunId, iOperationId))
+          offset = getOffset2Update(iRunId, iOperationId, iOperationType, varSize);
         else
-          offset = writeOperationLogHeader(iOperationType, varSize);
+          offset = appendOperationLogHeader(iOperationType, varSize);
 
         file.writeShort(offset + OFFSET_VARDATA, (short) rid.clusterId);
         file.writeLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT, rid.clusterPosition.longValue());
@@ -311,11 +317,11 @@ public class ODatabaseJournal {
         final byte[] cmdBinary = cmdText.getBytes();
         varSize = cmdBinary.length;
 
-        ODistributedServerLog.debug(this, server.getDistributedManager().getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
             "journaled operation %s against db '%s' cmd '%s' as #%d.%d", iOperationType.toString(), storage.getName(), cmdText,
             iRunId, iOperationId);
 
-        offset = writeOperationLogHeader(iOperationType, varSize);
+        offset = appendOperationLogHeader(iOperationType, varSize);
 
         file.write(offset + OFFSET_VARDATA, cmdText.getBytes());
         break;
@@ -335,9 +341,14 @@ public class ODatabaseJournal {
     }
   }
 
-  protected long writeOperationLogHeader(final OPERATION_TYPES iOperationType, final int varSize) throws IOException {
+  /**
+   * Appends a new log by writing the header without the payload (variable data)
+   * 
+   * @throws IOException
+   */
+  protected long appendOperationLogHeader(final OPERATION_TYPES iOperationType, final int varSize) throws IOException {
     final long offset = file.allocateSpace(FIXED_SIZE + varSize);
-    file.writeByte(offset + OFFSET_STATUS, (byte) 0);
+    file.writeByte(offset + OFFSET_STATUS, (byte) 0); // DOING, WILL BE SET TO 1 ONCE LOCAL OPERATION SUCCEED
     file.writeByte(offset + OFFSET_OPERATION_TYPE, (byte) iOperationType.ordinal());
     file.writeInt(offset + OFFSET_VARDATA + varSize, varSize);
     return offset;
@@ -354,14 +365,12 @@ public class ODatabaseJournal {
    * @return
    * @throws IOException
    */
-  private long getLongestUncommiteJournal(int num, long offset) throws IOException {
+  private long getLongestUncommiteJournal(final int num, final long offset) throws IOException {
     int index = 0;
     long longestOffset = offset;
-    long temp = offset;
-    while (temp > 0 && index < num) {
-      if (!this.getOperationStatus(temp))
-        longestOffset = this.getPreviousOperation(temp);
-      temp = this.getPreviousOperation(temp);
+    while (longestOffset > 0 && index < num) {
+      if (this.getOperationStatus(longestOffset))
+        longestOffset = this.getPreviousOperation(longestOffset);
       index++;
     }
     return longestOffset;
@@ -375,7 +384,7 @@ public class ODatabaseJournal {
    * @return
    * @throws IOException
    */
-  private boolean needOverWrited(final long runId, final long operationId) throws IOException {
+  private boolean isUpdatingLast(final long runId, final long operationId) throws IOException {
     long offset = file.getFilledUpTo();
     if (offset > 0) {
       long localRunId = file.readLong(offset - OFFSET_BACK_RUNID);
@@ -388,7 +397,7 @@ public class ODatabaseJournal {
   }
 
   /**
-   * check all the journal to find the last overwrite start point
+   * Checks all the journal entries to find the last record point.
    * 
    * @param runId
    * @param operationId
@@ -397,26 +406,29 @@ public class ODatabaseJournal {
    * @return
    * @throws IOException
    */
-  private long getOverWriteStart(final long runId, final long operationId, final OPERATION_TYPES iOperationType, final int varSize)
+  private long getOffset2Update(final long runId, final long operationId, final OPERATION_TYPES iOperationType, final int varSize)
       throws IOException {
     long currentOffset = file.getFilledUpTo();
     boolean foundMatch = false;
     while (currentOffset > 0) {
       long localRunId = file.readLong(currentOffset - OFFSET_BACK_RUNID);
       long localOperationId = file.readLong(currentOffset - OFFSET_BACK_OPERATID);
+
       if (localRunId == runId && localOperationId == operationId /* && !this.getOperationStatus(currentOffset) */) {
         foundMatch = true;
         break;
-      } else if (localOperationId < operationId || localRunId != runId) {
+      } else if (localOperationId < operationId || localRunId != runId)
         break;
-      }
+
       currentOffset = getPreviousOperation(currentOffset);
     }
+
     if (foundMatch) {
       int var = file.readInt(currentOffset - OFFSET_BACK_SIZE);
       return (currentOffset - OFFSET_BACK_SIZE - var - OFFSET_VARDATA);
     }
-    return writeOperationLogHeader(iOperationType, varSize);
+
+    return appendOperationLogHeader(iOperationType, varSize);
   }
 
   public OAbstractReplicatedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {

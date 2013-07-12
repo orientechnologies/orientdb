@@ -78,6 +78,16 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
   }
 
+  /**
+   * Local node execution
+   * 
+   * @throws Exception
+   * 
+   */
+  public Object executeOnLocalNode() throws Exception {
+    return call();
+  }
+
   public abstract String getName();
 
   /**

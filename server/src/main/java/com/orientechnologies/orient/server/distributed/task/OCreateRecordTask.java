@@ -153,7 +153,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
    */
   @Override
   public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().changeOperationStatus(operationLogOffset, rid);
+    dbSynchronizer.getLog().setOperationAsExecuted(operationLogOffset, rid);
   }
 
   @Override
