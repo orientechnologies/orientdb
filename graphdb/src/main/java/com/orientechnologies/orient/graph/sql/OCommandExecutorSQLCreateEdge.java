@@ -124,7 +124,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       for (ORecordId to : toIds) {
         final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
 
-        final String clsName = graph.getEdgeBaseType().equals(clazz) ? null : clazz.getName();
+        final String clsName = clazz.getName();
 
         if (fields != null)
           // EVALUATE FIELDS
