@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -73,9 +72,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
         "execute command=%s db=%s", text.toString(), databaseName);
 
     final ODatabaseDocumentTx db = openDatabase();
-    ODistributedThreadLocal.INSTANCE.set(getNodeSource());
     try {
-
       Object result = openDatabase().command(new OCommandSQL(text)).execute();
 
       if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
@@ -85,7 +82,6 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
       return null;
 
     } finally {
-      ODistributedThreadLocal.INSTANCE.set(null);
       closeDatabase(db);
     }
   }

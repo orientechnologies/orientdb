@@ -44,6 +44,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -86,6 +87,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected TimerTask                  alignmentTask;
   protected String                     membershipListenerRegistration;
   protected Map<Long, Long>            executionQueue            = new HashMap<Long, Long>();
+  protected Object                     lockQueue                 = new Object();
 
   protected volatile HazelcastInstance hazelcastInstance;
 
@@ -389,8 +391,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   private Object executeLocallyAndPropagate(final OAbstractReplicatedTask<? extends Object> iTask) throws Exception {
-    // LOG THE OPERATION BEFORE TO SEND TO OTHER NODES
-
     // LOCAL EXECUTION AVOID TO USE EXECUTORS
     final Object localResult = enqueueLocalExecution(iTask);
 
@@ -890,7 +890,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
       ODistributedServerLog.warn(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
-          "node %s is aligned. Flushing pending operations...");
+          "node aligned, flushing pending operations...");
     }
     return masterNodeId;
   }
@@ -898,18 +898,97 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask) throws Exception {
 
+    final OStorageSynchronizer dbSynchronizer = iTask.getDatabaseSynchronizer();
+
+    waitForMyTurnInQueue(iTask);
+    try {
+      ODistributedServerLog.debug(this, iTask.getNodeSource(), iTask.getNodeDestination(), DIRECTION.IN, "pop operation=%d:%d",
+          iTask.getRunId(), iTask.getOperationSerial());
+
+      final long operationLogOffset = logOperation2Journal(dbSynchronizer, iTask);
+
+      // EXECUTE IT LOCALLY
+      try {
+        final Object result = iTask.executeOnLocalNode();
+
+        // OK, SET AS COMMITTED
+        updateJournal(iTask, dbSynchronizer, operationLogOffset, true);
+
+        return result;
+
+      } catch (Exception e) {
+        // ERROR: SET AS CANCELED
+        updateJournal(iTask, dbSynchronizer, operationLogOffset, false);
+        throw e;
+      }
+
+    } finally {
+      updateQueue(iTask);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return getLocalNodeAlias();
+  }
+
+  private void updateQueue(final OAbstractReplicatedTask<? extends Object> iTask) {
+    // SET LAST EXECUTION SERIAL
+    ODistributedThreadLocal.INSTANCE.set(null);
+
+    synchronized (lockQueue) {
+      ODistributedServerLog.debug(this, iTask.getNodeSource(), iTask.getNodeDestination(), DIRECTION.IN,
+          "completed operation=%d:%d", iTask.getRunId(), iTask.getOperationSerial());
+
+      executionQueue.put(iTask.getRunId(), iTask.getOperationSerial());
+      lockQueue.notifyAll();
+    }
+  }
+
+  private void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
+      final long operationLogOffset, final boolean iSuccess) {
+    try {
+      if (iSuccess)
+        iTask.setAsCommitted(dbSynchronizer, operationLogOffset);
+      else
+        iTask.setAsCanceled(dbSynchronizer, operationLogOffset);
+    } catch (IOException e) {
+      ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
+          "error on changing the log status for %s db=%s %s", e, getName(), iTask.getDatabaseName(), iTask.getPayload());
+      throw new ODistributedException("Error on changing the log status", e);
+    }
+  }
+
+  private long logOperation2Journal(final OStorageSynchronizer dbSynchronizer, final OAbstractReplicatedTask<? extends Object> iTask) {
+    final long operationLogOffset;
+    try {
+      operationLogOffset = dbSynchronizer.getLog().append(iTask);
+
+    } catch (IOException e) {
+      ODistributedServerLog.error(this, iTask.getDistributedServerManager().getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
+          "error on logging operation %s db=%s %s", e, iTask.getName(), iTask.getDatabaseName(), iTask.getPayload());
+      throw new ODistributedException("Error on logging operation", e);
+    }
+    return operationLogOffset;
+  }
+
+  private void waitForMyTurnInQueue(final OAbstractReplicatedTask<? extends Object> iTask) {
     // MANAGE ORDER
     while (true)
-      synchronized (executionQueue) {
+      synchronized (lockQueue) {
         final Long last = executionQueue.get(iTask.getRunId());
-        if (last != null && last < iTask.getOperationSerial() - 1) {
+        if (last == null) {
+          // FIRST OPERATION
+          executionQueue.put(iTask.getRunId(), 0l);
+          break;
+        } else if (last != iTask.getOperationSerial() - 1) {
+          // SLEEP UNTIL NEXT OPERATION
           try {
-            // SLEEP UNTIL NEXT OPERATION
             ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
                 "waiting for %d tasks in queue %s. current=%d my=%d", (iTask.getOperationSerial() - last - 1), iTask.getRunId(),
                 last, iTask.getOperationSerial());
 
-            executionQueue.wait(1000);
+            lockQueue.wait(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsLong());
           } catch (InterruptedException e) {
           }
         } else
@@ -917,45 +996,5 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
     ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
-    try {
-
-      final long operationLogOffset;
-      final OStorageSynchronizer dbSynchronizer = iTask.getDatabaseSynchronizer();
-      try {
-        operationLogOffset = dbSynchronizer.getLog().append(iTask);
-
-      } catch (IOException e) {
-        ODistributedServerLog
-            .error(this, iTask.getDistributedServerManager().getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
-                "error on logging operation %s db=%s %s", e, iTask.getName(), iTask.getDatabaseName(), iTask.getPayload());
-        throw new ODistributedException("Error on logging operation", e);
-      }
-
-      // EXECUTE IT LOCALLY
-      final Object result = iTask.executeOnLocalNode();
-
-      try {
-        iTask.setAsCompleted(dbSynchronizer, operationLogOffset);
-      } catch (IOException e) {
-        ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
-            "error on changing the log status for %s db=%s %s", e, getName(), iTask.getDatabaseName(), iTask.getPayload());
-        throw new ODistributedException("Error on changing the log status", e);
-      }
-
-      return result;
-
-    } finally {
-      // SET LAST EXECUTION SERIAL
-      synchronized (executionQueue) {
-        executionQueue.put(iTask.getRunId(), iTask.getOperationSerial());
-        executionQueue.notifyAll();
-      }
-      ODistributedThreadLocal.INSTANCE.set(null);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getLocalNodeAlias();
   }
 }

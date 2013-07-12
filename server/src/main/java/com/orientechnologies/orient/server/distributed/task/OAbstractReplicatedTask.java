@@ -20,6 +20,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
@@ -56,6 +58,9 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     super(iServer, iDistributedSrvMgr, databaseName, iMode);
     // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
     this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
+
+    ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT, "creating unique msg id %d db=%s class=%s",
+        operationSerial, databaseName, getClass().getSimpleName());
   }
 
   public abstract OPERATION_TYPES getOperationType();
@@ -110,7 +115,12 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     mode = EXECUTION_MODE.values()[in.readByte()];
   }
 
-  public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
+  public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
     dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
   }
+
+  public void setAsCanceled(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
+    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.CANCELED);
+  }
+
 }

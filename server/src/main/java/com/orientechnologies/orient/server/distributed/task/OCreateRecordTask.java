@@ -77,7 +77,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
-    //rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(-1);
     try {
       record.fill(rid, version, content, true);
       if (rid.getClusterId() != -1)
@@ -153,7 +152,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
    * Write the status with the new RID too.
    */
   @Override
-  public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
+  public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
     dbSynchronizer.getLog().setOperationStatus(operationLogOffset, rid, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
   }
 
