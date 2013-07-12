@@ -487,7 +487,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         if (schemaVersion == null) {
           OLogManager
               .instance()
-              .error(this,
+              .error(
+                  this,
                   "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
           return null;
         } else if (schemaVersion.intValue() != CURRENT_VERSION_NUMBER) {
@@ -615,6 +616,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     db.getStorage().getConfiguration().update();
   }
 
+  public void close() {
+    classes.clear();
+    document.clear();
+  }
+
   public void saveInternal() {
     final ODatabaseRecord db = getDatabase();
 
@@ -682,11 +688,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
-  public void close() {
-    classes.clear();
-    document.clear();
   }
 
   private void saveInternal(final String iClusterName) {
