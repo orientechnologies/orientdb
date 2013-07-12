@@ -5,6 +5,7 @@ var deps = ['header.controller',
 'login.controller',
 'database.controller',
 'document.controller',
+'vertex.controller',
 'notification.controller',
 '$strap.directives',
 'ui.codemirror',
@@ -22,14 +23,19 @@ App.config(function ($routeProvider) {
     templateUrl: 'views/login.html',
     controller: 'LoginController'
   })
-  .when('/database/:database/:action', {
-    templateUrl: 'views/database/database.html',
-    controller: 'DatabaseController',
+  .when('/database/:database/browse', {
+    templateUrl: 'views/database/browse.html',
+    controller: 'BrowseController',
+    resolve : DatabaseResolve
+  })
+   .when('/database/:database/schema', {
+    templateUrl: 'views/database/schema.html',
+    controller: 'SchemaController',
     resolve : DatabaseResolve
   })
   .when('/database/:database/browse/edit/:rid', {
-    templateUrl: 'views/database/editRecord.html',
-    controller: 'DocumentEditController',
+    templateUrl: 'views/database/edit.html',
+    controller: 'EditController',
     resolve : DatabaseResolve
   })
   .when('/database/:database/browse/create/:clazz', {

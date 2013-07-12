@@ -1,0 +1,19 @@
+<div class="row-fluid"> 
+	<form  class="form-horizontal bs-docs-example">
+		<fieldset>
+			<div class="control-group">
+				<div class="controls doc-header controls-row">
+					<label class="span8">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
+					<button type="submit" ng-click="save()" class="btn pull-right" ng-show="canSave">Save</button>
+					<button type="submit" ng-click="create()" class="btn pull-right" ng-show="canCreate">Create</button>
+					<button type="submit" ng-click="save()" class="btn pull-right" ng-show="canDelete">Delete</button>
+				</div>
+			</div>
+			<div class="control-group" ng-repeat = "header in headers">
+				<label class="control-label" for="input{{header}}">{{header}}</label>
+				<div class="controls" render ng-model= "doc[header]" render-field = "{{header}}">
+				</div>
+			</div>
+		</fieldset>
+	</form>
+</div>

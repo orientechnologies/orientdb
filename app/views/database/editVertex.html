@@ -1,6 +1,6 @@
-<div class="row-fluid">
-	<div class="span3">
-		<form>
+<div class="row-fluid" ng-controller="VertexEditController">
+	<div class="span2 edgesList">
+		<form >
 			<legend>Incoming Edges</legend>
 			<div class="accordion row-fluid" id="accordion2">
 				<div class="accordion-group" ng-repeat="i in incomings">
@@ -15,9 +15,9 @@
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
 										<td>
-											<a href=""><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
 										</td>
-										<td>{{out}}</td>
+										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
 									</tr>
 								</tbody>
 							</table>
@@ -27,28 +27,10 @@
 			</div>
 		</form>
 	</div>
-	<div class="span6">
-		<div class="row-fluid"> 
-			<form  class="form-horizontal well">
-				<fieldset>
-					<div class="control-group">
-						<div class="controls doc-header controls-row">
-							<label class="span8">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
-							<button type="submit" ng-click="save()" class="btn pull-right">Save</button>
-							<button type="submit" ng-click="create()" class="btn pull-right">Create</button>
-							<button type="submit" ng-click="save()" class="btn pull-right">Delete</button>
-						</div>
-					</div>
-					<div class="control-group" ng-repeat = "header in headers">
-						<label class="control-label" for="input{{header}}">{{header}}</label>
-						<div class="controls" render ng-model= "doc[header]" render-field = "{{header}}">
-						</div>
-					</div>
-				</fieldset>
-			</form>
-		</div>
+	<div class="span8 vertex">
+		<ng-include src="'/views/database/record.html'"  onload=""></ng-include>
 	</div>
-	<div class="span3">
+	<div class="span2 edgesList">
 		<form>
 			<legend>Outgoing Edges</legend>
 			<div class="accordion row-fluid" id="accordion1">
@@ -63,9 +45,11 @@
 							<table>
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
-										<td>{{out}}</td>
+										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
 										<td>
-											<a href=""><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
+
 										</td>
 									</tr>
 								</tbody>

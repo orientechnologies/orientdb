@@ -3,7 +3,7 @@
 
 
 body div.container-studio {
-	padding-top :80px
+	padding-top :40px
 }
 .pointer {
 	cursor : pointer;
@@ -87,4 +87,14 @@ table.pointer>tbody>tr>td input{
     color: #333333;
     font-size: 21px;
     line-height: 40px;
+}
+div.document form.bs-docs-example:after {
+    content: "Document";
+}
+div.vertex form.bs-docs-example:after {
+    content: "Vertex";
+}
+
+.edgesList {
+    padding-top: 60px;
 }
