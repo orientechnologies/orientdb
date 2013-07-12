@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -40,63 +41,93 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 public class OStorageSynchronizer {
   private OServer                      server;
   private ODistributedServerManager    cluster;
-  private String                       storageName;
   private ODatabaseJournal             log;
   private OReplicationConflictResolver resolver;
 
-  public OStorageSynchronizer(final OServer iServer, final ODistributedServerManager iCluster, final String storageName)
+  public OStorageSynchronizer(final OServer iServer, final ODistributedServerManager iCluster, final String iStorageName)
       throws IOException {
     server = iServer;
     cluster = iCluster;
-    final OStorage storage = openStorage(storageName);
+    final OStorage storage = openStorage(iStorageName);
 
     try {
       resolver = cluster.getConfictResolverClass().newInstance();
-      resolver.startup(server, iCluster, storageName);
+      resolver.startup(server, iCluster, iStorageName);
     } catch (Exception e) {
       ODistributedServerLog.error(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "cannot create the conflict resolver instance of class '%s'", cluster.getConfictResolverClass(), e);
     }
 
-    final String logDirectory = OSystemVariableResolver.resolveSystemVariables(server.getDatabaseDirectory() + "/" + storageName);
+    final String logDirectory = OSystemVariableResolver.resolveSystemVariables(server.getDatabaseDirectory() + "/" + iStorageName);
 
     log = new ODatabaseJournal(iServer, cluster, storage, logDirectory);
   }
 
-  public void recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException {
+  public int recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException {
     final OStorage storage = openStorage(storageName);
 
+    ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "*", DIRECTION.OUT, "recovering uncommitted operations...");
+
+    int updated = 0;
+    int deleted = 0;
+
     // RECOVER ALL THE UNCOMMITTED RECORDS ASKING TO THE CURRENT SERVERS FOR THEM
-    for (ORecordId rid : log.getUncommittedOperations()) {
-      try {
-        if (getConflictResolver().existConflictsForRecord(rid))
-          continue;
+    try {
+      for (Entry<ORecordId, Long> entry : log.getUncommittedOperations().entrySet()) {
+        final ORecordId rid = entry.getKey();
+        final long offset = entry.getValue();
 
-        OCluster cl = storage.getClusterById(rid.getClusterId());
-        if (cl == null) {
-          ODistributedServerLog.warn(this, iCluster.getLocalNodeId(), null, DIRECTION.NONE,
-              "Cannot find cluster for RID %s, skip it", rid);
-          continue;
+        try {
+          if (getConflictResolver().existConflictsForRecord(rid))
+            // CONFLICT DETECTED, SKIPT IT
+            continue;
+
+          final OCluster recordCluster = storage.getClusterById(rid.getClusterId());
+          if (recordCluster == null) {
+            ODistributedServerLog.warn(this, iCluster.getLocalNodeId(), null, DIRECTION.NONE,
+                "Cannot find cluster for RID %s, skip it", rid);
+            continue;
+          }
+
+          final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, recordCluster.getName(), rid,
+              cluster.getLocalNodeId(), null);
+
+          final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(
+              server, cluster, storageName, rid), replicationData);
+
+          if (record == null) {
+            // DELETE IT
+            storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
+            ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "?", DIRECTION.IN, "restored record %s (delete)", rid);
+            deleted++;
+          } else {
+            // UPDATE IT
+            storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
+            ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "?", DIRECTION.IN, "restored record %s (update)", rid);
+            updated++;
+          }
+
+          // SET AS CANCELED
+          log.setOperationStatus(offset, null, ODatabaseJournal.OPERATION_STATUS.CANCELED);
+
+        } catch (ExecutionException e) {
+          ODistributedServerLog
+              .error(
+                  this,
+                  iCluster.getLocalNodeId(),
+                  null,
+                  DIRECTION.NONE,
+                  "error on acquiring uncommitted record %s from other servers. The database could not be unaligned with others nodes!",
+                  e, rid);
         }
-
-        final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, cl.getName(), rid,
-            cluster.getLocalNodeId(), null);
-
-        final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(server,
-            cluster, storageName, rid), replicationData);
-
-        if (record == null)
-          // DELETE IT
-          storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
-        else
-          // UPDATE IT
-          storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
-
-      } catch (ExecutionException e) {
-        ODistributedServerLog.error(this, iCluster.getLocalNodeId(), null, DIRECTION.NONE,
-            "error on acquiring uncommitted record %s from other servers. The database could be unaligned with others!", e, rid);
       }
+
+    } finally {
+      ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "*", DIRECTION.OUT,
+          "recovered %d operations: updated=%d deleted=%d", (updated + deleted), updated, deleted);
     }
+
+    return updated + deleted;
   }
 
   /**
@@ -114,7 +145,7 @@ public class OStorageSynchronizer {
 
   @Override
   public String toString() {
-    return storageName;
+    return log != null ? log.getStorage().getName() : "<no-log>";
   }
 
   public static String getClusterNameByRID(final OStorage iStorage, final ORecordId iRid) {

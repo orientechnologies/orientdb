@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Lock;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -110,5 +111,5 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(OAbstractRemoteTask<?> iTask) throws Exception;
+  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
 }

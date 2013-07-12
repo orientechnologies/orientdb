@@ -47,8 +47,8 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   public OAlignRequestTask() {
   }
 
-  public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final long iLastRunId, final long iLastOperationId) {
+  public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode, final long iLastRunId, final long iLastOperationId) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode);
     lastRunId = iLastRunId;
     lastOperationId = iLastOperationId;
@@ -56,8 +56,12 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
 
   @Override
   public Integer call() throws Exception {
-    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "db '%s' align request starting from %d.%d", databaseName, lastRunId, lastOperationId);
+    if (lastRunId == -1 && lastOperationId == -1)
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "db '%s' align request starting from the beginning (no log found)", databaseName, lastRunId, lastOperationId);
+    else
+      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "db '%s' align request starting from %d.%d", databaseName, lastRunId, lastOperationId);
 
     int aligned;
 
@@ -80,7 +84,8 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
             EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
 
-        final Iterator<Long> it = log.browse(new long[] { lastRunId, lastOperationId });
+        final Iterator<Long> it = log.browseLastOperations(new long[] { lastRunId, lastOperationId },
+            ODatabaseJournal.OPERATION_STATUS.COMMITTED, -1);
         while (it.hasNext()) {
           final long pos = it.next();
 
@@ -130,9 +135,6 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     @SuppressWarnings("unused")
     final Object[] result = (Object[]) dManager.sendOperation2Node(getNodeSource(), tasks);
-
-    for (int i = 0; i < positions.size(); ++i)
-      tasks.getTask(i).setAsCompleted(synchronizer, positions.get(i));
 
     final int aligned = tasks.getTasks();
 

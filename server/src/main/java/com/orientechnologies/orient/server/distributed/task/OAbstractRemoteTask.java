@@ -75,8 +75,10 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     this.mode = iMode;
 
     this.runId = iDistributedSrvMgr.getRunId();
-    this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
+    this.operationSerial = -1;
   }
+
+  public abstract String getName();
 
   /**
    * Local node execution
@@ -87,8 +89,6 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
   public Object executeOnLocalNode() throws Exception {
     return call();
   }
-
-  public abstract String getName();
 
   /**
    * Handles conflict between local and remote execution results.

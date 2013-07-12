@@ -33,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -153,7 +154,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
    */
   @Override
   public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationAsExecuted(operationLogOffset, rid);
+    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, rid, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
   }
 
   @Override

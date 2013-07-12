@@ -23,6 +23,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -53,6 +54,8 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
       final String databaseName, final EXECUTION_MODE iMode) {
     super(iServer, iDistributedSrvMgr, databaseName, iMode);
+    // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
+    this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
   }
 
   public abstract OPERATION_TYPES getOperationType();
@@ -108,6 +111,6 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   }
 
   public void setAsCompleted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationAsExecuted(operationLogOffset, null);
+    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
   }
 }
