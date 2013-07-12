@@ -655,6 +655,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Fills a document passing the field names/values.
    */
   public ODocument fields(final String iFieldName, final Object iFieldValue, final Object... iFields) {
+    if (iFields != null && iFields.length % 2 != 0)
+      throw new IllegalArgumentException("Fields must be passed in pairs as name and value");
+
     field(iFieldName, iFieldValue);
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {
