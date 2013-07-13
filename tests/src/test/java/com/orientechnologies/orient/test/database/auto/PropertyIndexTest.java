@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = { "index" })
@@ -50,6 +51,7 @@ public class PropertyIndexTest {
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("PropertyIndexTestClass");
+    oClass.createProperty("prop0", OType.LINK);
     oClass.createProperty("prop1", OType.STRING);
     oClass.createProperty("prop2", OType.INTEGER);
     oClass.createProperty("prop3", OType.BOOLEAN);
@@ -114,6 +116,7 @@ public class PropertyIndexTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
 
+    oClass.createIndex("propOne0", OClass.INDEX_TYPE.UNIQUE, "prop0", "prop1");
     oClass.createIndex("propOne1", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2");
     oClass.createIndex("propOne2", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop3");
     oClass.createIndex("propOne3", OClass.INDEX_TYPE.UNIQUE, "prop2", "prop3");
@@ -142,8 +145,9 @@ public class PropertyIndexTest {
     final OProperty propOne = oClass.getProperty("prop1");
 
     final Collection<OIndex<?>> indexes = propOne.getAllIndexes();
-    Assert.assertEquals(indexes.size(), 4);
+    Assert.assertEquals(indexes.size(), 5);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
+    Assert.assertNotNull(containsIndex(indexes, "propOne0"));
     Assert.assertNotNull(containsIndex(indexes, "propOne1"));
     Assert.assertNotNull(containsIndex(indexes, "propOne2"));
     Assert.assertNotNull(containsIndex(indexes, "propOne4"));
@@ -163,6 +167,36 @@ public class PropertyIndexTest {
     final OClass oClass = schema.getClass("PropertyIndexTestClass");
     final OProperty propOne = oClass.getProperty("prop1");
     Assert.assertTrue(propOne.isIndexed());
+  }
+
+  @Test(dependsOnMethods = { "testIsIndexedIndexedField" })
+  public void testIndexingCompositeRIDAndOthers() throws Exception {
+    long prev0 = database.getMetadata().getIndexManager().getIndex("propOne0").getSize();
+    long prev1 = database.getMetadata().getIndexManager().getIndex("propOne1").getSize();
+
+    ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3").save();
+    new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite1").save();
+    new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
+
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("propOne0").getSize(), prev0 + 1);
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("propOne1").getSize(), prev1);
+  }
+
+  @Test(dependsOnMethods = { "testIndexingCompositeRIDAndOthers" })
+  public void testIndexingCompositeRIDAndOthersInTx() throws Exception {
+    database.begin();
+
+    long prev0 = database.getMetadata().getIndexManager().getIndex("propOne0").getSize();
+    long prev1 = database.getMetadata().getIndexManager().getIndex("propOne1").getSize();
+
+    ODocument doc = new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34").save();
+    new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite33").save();
+    new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
+
+    database.commit();
+
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("propOne0").getSize(), prev0 + 1);
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("propOne1").getSize(), prev1);
   }
 
   @Test

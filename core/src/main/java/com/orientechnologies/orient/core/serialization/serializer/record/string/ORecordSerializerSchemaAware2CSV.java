@@ -462,15 +462,27 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
                 if (!value.isEmpty()) {
                   if (value.charAt(0) == OStringSerializerHelper.LINK) {
-                    type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
-                    linkedType = OType.LINK;
+                    // ASSURE ALL THE ITEMS ARE RID
+                    final List<String> items = OStringSerializerHelper.smartSplit(value, ',');
+                    boolean allLinks = true;
+                    for (String it : items)
+                      if (!it.startsWith("#")) {
+                        allLinks = false;
+                        break;
+                      }
 
-                    // GET THE CLASS NAME IF ANY
-                    int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-                    if (classSeparatorPos > -1) {
-                      String className = value.substring(1, classSeparatorPos);
-                      if (className != null)
-                        linkedClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
+                    if (allLinks) {
+                      type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
+                      linkedType = OType.LINK;
+
+                      // GET THE CLASS NAME IF ANY
+                      // TODO: CAN WE REMOVE THIS?
+                      int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+                      if (classSeparatorPos > -1) {
+                        String className = value.substring(1, classSeparatorPos);
+                        if (className != null)
+                          linkedClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
+                      }
                     }
                   } else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
                     linkedType = OType.EMBEDDED;
