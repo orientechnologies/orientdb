@@ -240,6 +240,15 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
     }
   }
 
+  public int getTotal() {
+    acquireSharedLock();
+    try {
+      return connections.size();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   /**
    * Pushes the distributed configuration to all the connected clients.
    */

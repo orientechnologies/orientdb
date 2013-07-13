@@ -321,6 +321,8 @@ public enum OGlobalConfiguration {
           + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
 
   // NETWORK
+  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
+
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),

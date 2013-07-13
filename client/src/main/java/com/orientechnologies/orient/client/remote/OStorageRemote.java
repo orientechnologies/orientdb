@@ -1561,7 +1561,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         connectionDbType = connectionOptions.get(PARAM_DB_TYPE).toString();
     }
 
-    setSessionId(-1);
+    setSessionId(-1); // -1 = OPEN A NEW DATABASE AT SERVER SIDE
     createConnectionPool();
 
     boolean availableConnections;
