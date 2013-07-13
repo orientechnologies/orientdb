@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -35,7 +36,7 @@ public class SimulateOperationsAgainstServer {
   protected static final int delay           = 0;
   protected final AtomicLong totalOperations = new AtomicLong();
   protected int              count           = 1000000;
-  protected int              threads         = 10;
+  protected int              threads         = 20;
   protected String[]         urls            = new String[] { "remote:localhost:2424/KidsAndIceCreams",
       "remote:localhost:2425/KidsAndIceCreams" };
   protected String           className       = "Customer";
@@ -102,10 +103,8 @@ public class SimulateOperationsAgainstServer {
 
   protected void createDocument(final int threadId, final int iCycle, final String dbUrl, final String className,
       final int iProperties) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    final ODatabaseDocumentTx db = getDatabase(dbUrl);
     try {
-      db.open(userName, userPassword);
-
       log(threadId, iCycle, dbUrl, " creating document: class=" + className);
 
       ODocument doc = new ODocument(className);
@@ -119,10 +118,8 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void queryClass(final int threadId, final int iCycle, final String dbUrl, final String className, final int iMax) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    final ODatabaseDocumentTx db = getDatabase(dbUrl);
     try {
-      db.open(userName, userPassword);
-
       log(threadId, iCycle, dbUrl, " query class=" + className);
 
       List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from " + className));
@@ -141,10 +138,8 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void updateDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    final ODatabaseDocumentTx db = getDatabase(dbUrl);
     try {
-      db.open(userName, userPassword);
-
       List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
 
       if (result == null || result.isEmpty())
@@ -164,10 +159,8 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected void deleteDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    final ODatabaseDocumentTx db = getDatabase(dbUrl);
     try {
-      db.open(userName, userPassword);
-
       List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
 
       if (result == null || result.isEmpty())
@@ -193,6 +186,10 @@ public class SimulateOperationsAgainstServer {
 
   protected void log(final int threadId, final int iCycle, final String dbUrl, final String iMessage) {
     System.out.println(String.format("%-12d [%2d:%-4d] %25s %s", totalOperations.get(), threadId, iCycle, dbUrl, iMessage));
+  }
+
+  protected ODatabaseDocumentTx getDatabase(final String dbUrl) {
+    return ODatabaseDocumentPool.global(threads, threads * 2).acquire(dbUrl, userName, userPassword);
   }
 
 }
