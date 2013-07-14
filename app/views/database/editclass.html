@@ -1,5 +1,8 @@
 <div class="row-fluid" >
 	<div class = "nomargin">
+		
+		<button ng-click="saveProperty(property)">Save</button>
+
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
 			<thead>
 				<tr>
@@ -11,37 +14,48 @@
 				
 			</thead>
 			<tbody>
-				<tr ng-repeat="result in property | orderBy:predicate:reverse">
+				<tr ng-repeat="result in property">
 					<td>
-						<input type="text" ng-model="result['name']">
+						{{result['name']}} 
 					</td>
 					<td>
-						<input type="text" ng-model="result['type']">
+						<select ng-model="result['type']" ng-options="p.toString() for p in list" >
+							<option value="">{{result['type']}}</option>
+						</select>
+						<!-- <input type="text" ng-model="result['type']" ng-change="modificato(result,'type')"> -->
 					</td>
 					<td>
-						<input type="text" ng-model="result['linkedType']"> 
+						<select ng-model="result['linkedType']" ng-options="p.toString() for p in list" >
+							<option value="">{{result['linkedType']}}</option>
+						</select>
+						<!-- <input type="text" ng-model="result['linkedType']" ng-change="modificato(result,'linkedType')">  -->
 					</td>
-					<td><input type="text" ng-model="result['linkedClass']"></td>
+					
 					<td>
-						<input type="checkbox" ng-model="result['mandatory']" >
-					</td>
-					<td>
-						<input type="checkbox" ng-model="result['readonly']" >
-					</td>
-					<td>
-						<input type="checkbox" ng-model="result['notNull']" >
-					</td>
-					<td>
-						<input type="text" ng-model="result['min']"> 
-					</td>
-					<td>
-						<input type="text" ng-model="result['max']">
-					</td>
+						<select ng-model="result['linkedClass']" ng-options="p.toString() for p in list" >
+							<option value="">{{result['linkedClass']}}</option>
+						</select>
+						<!-- <input type="text" ng-model="result['linkedClass']" ng-change="modificato(result,'linkedClass')"></td> -->
+						<td>
+							<input type="checkbox" ng-model="result['mandatory']" ng-change="modificato(result,'mandatory')">
+						</td>
+						<td>
+							<input type="checkbox" ng-model="result['readonly']" ng-change="modificato(result,'readonly')">
+						</td>
+						<td>
+							<input type="checkbox" ng-model="result['notNull']" ng-change="modificato(result,'notNull')">
+						</td>
+						<td>
+							<input type="text" ng-model="result['min']" ng-change="modificato(result,'min')"> 
+						</td>
+						<td>
+							<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')">
+						</td>
+					</tr>
+				</tbody>
+				
+				
 
-						</tr>
-					</tbody>
-					{{clazz}}
-
-				</table>
-			</div>
+			</table>
 		</div>
+	</div>
