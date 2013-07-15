@@ -13,7 +13,8 @@
     "angular-ui-codemirror": "latest",
     "angular-localstorage" : "latest",
     "bootstrap-datepicker" : "1.0.2",
-    "moment" : "latest"
+    "moment" : "latest",
+    "angular-ui-bootstrap-bower" : "latest"	
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

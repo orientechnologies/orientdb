@@ -94,6 +94,9 @@ div.document form.bs-docs-example:after {
 div.vertex form.bs-docs-example:after {
     content: "Vertex";
 }
+div.edge form.bs-docs-example:after {
+    content: "Edge";
+}
 
 .edgesList {
     padding-top: 60px;
