@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -280,6 +281,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void addIndexInternal(final OIndex<?> index) {
     acquireExclusiveLock();
     try {
+      if (!(getDatabase().getStorage() instanceof OStorageProxy))
+        getDatabase().registerListener(index.getInternal());
+
       indexes.put(index.getName().toLowerCase(), index);
 
       final OIndexDefinition indexDefinition = index.getDefinition();
@@ -394,8 +398,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
-    if (index instanceof OIndexInternal<?>) {
-      getDatabase().registerListener((OIndexInternal<?>) index);
+    if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
+      getDatabase().registerListener(index.getInternal());
 
       if (index instanceof OIndexMultiValues)
         return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));

@@ -16,8 +16,8 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,11 +72,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    * @param iName
    *          - name of index
    * @param iType
-   * @param iClusterIdsToIndex
+   * @param clusterIdsToIndex
    * @param iProgressListener
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+      final int[] clusterIdsToIndex, OProgressListener iProgressListener) {
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -96,7 +96,19 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         // ASSIGN DEFAULT PROGRESS LISTENER
         iProgressListener = new OIndexRebuildOutputListener(index);
 
-      index.create(iName, indexDefinition, getDatabase(), clusterName, iClusterIdsToIndex, true, iProgressListener);
+      Set<String> clustersToIndex = new HashSet<String>();
+      ODatabase database = getDatabase();
+      if (clusterIdsToIndex != null) {
+        for (int clusterId : clusterIdsToIndex) {
+          final String clusterNameToIndex = database.getClusterNameById(clusterId);
+          if (clusterNameToIndex == null)
+            throw new OIndexException("Cluster with id " + clusterId + " does not exist.");
+
+          clustersToIndex.add(clusterNameToIndex);
+        }
+      }
+
+      index.create(iName, indexDefinition, clusterName, clustersToIndex, true, iProgressListener);
       addIndexInternal(index);
 
       setDirty();
@@ -318,26 +330,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   String type = indexMetadata.getType();
 
                   if (indexName != null && indexDefinition != null && clusters != null && !clusters.isEmpty() && type != null) {
-                    int[] clustersToIndex = new int[clusters.size()];
-                    int clustersCounter = 0;
-
-                    for (String clusterName : clusters) {
-                      int clusterId = newDb.getClusterIdByName(clusterName);
-                      if (clusterId == -1)
-                        OLogManager.instance().error(this, "Cluster %s is required for index %s but is absent.", clusterName,
-                            indexName);
-                      else {
-                        clustersToIndex[clustersCounter] = clusterId;
-                        clustersCounter++;
-                      }
-                    }
-
-                    clustersToIndex = Arrays.copyOf(clustersToIndex, clustersCounter);
-
                     OLogManager.instance().info(this, "Start creation of index %s", indexName);
 
-                    index.create(indexName, indexDefinition, newDb, defaultClusterName, clustersToIndex, false,
-                        new OIndexRebuildOutputListener(index));
+                    index.create(indexName, indexDefinition, defaultClusterName, clusters, false, new OIndexRebuildOutputListener(
+                        index));
 
                     index.setRebuildingFlag();
                     addIndexInternal(index);

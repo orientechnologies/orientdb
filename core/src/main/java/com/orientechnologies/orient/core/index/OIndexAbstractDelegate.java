@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -49,9 +48,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return (OIndexInternal<T>) internal;
   }
 
-  public OIndex<T> create(final String iName, final OIndexDefinition indexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener) {
-    return delegate.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, rebuild, iProgressListener);
+  public OIndex<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
+      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
+    return delegate.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
   public Iterator<Entry<Object, T>> iterator() {
@@ -95,10 +94,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
     return delegate.remove(iKey, iRID);
-  }
-
-  public int remove(final OIdentifiable iRID) {
-    return delegate.remove(iRID);
   }
 
   public OIndex<T> clear() {
@@ -151,8 +146,9 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getSize();
   }
 
-  public OIndex<T> lazySave() {
-    return delegate.lazySave();
+  @Override
+  public void flush() {
+    delegate.flush();
   }
 
   public OIndex<T> delete() {

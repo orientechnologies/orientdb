@@ -17,12 +17,15 @@ package com.orientechnologies.orient.core.db.raw;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
@@ -66,14 +69,14 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-  protected String                      url;
-  protected OStorage                    storage;
-  protected STATUS                      status;
-  protected OIntent                     currentIntent;
+  protected String                     url;
+  protected OStorage                   storage;
+  protected STATUS                     status;
+  protected OIntent                    currentIntent;
 
-  private ODatabaseRecord               databaseOwner;
-  private final Map<String, Object>     properties = new HashMap<String, Object>();
-  private final List<ODatabaseListener> listeners  = new ArrayList<ODatabaseListener>();
+  private ODatabaseRecord              databaseOwner;
+  private final Map<String, Object>    properties = new HashMap<String, Object>();
+  private final Set<ODatabaseListener> listeners  = Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64));
 
   public ODatabaseRaw(final String iURL) {
     if (iURL == null)
@@ -503,20 +506,15 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void registerListener(final ODatabaseListener iListener) {
-    if (!listeners.contains(iListener))
-      listeners.add(iListener);
+    listeners.add(iListener);
   }
 
-  public void unregisterListener(final ODatabaseListener iListener) {
-    for (int i = 0; i < listeners.size(); ++i)
-      if (listeners.get(i) == iListener) {
-        listeners.remove(i);
-        break;
-      }
+  public void unregisterListener(final ODatabaseListener listener) {
+    listeners.remove(listener);
   }
 
   public List<ODatabaseListener> getListeners() {
-    return listeners;
+    return new ArrayList<ODatabaseListener>(listeners);
   }
 
   public OLevel2RecordCache getLevel2Cache() {

@@ -25,7 +25,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -99,9 +98,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     this.databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
   }
 
-  public OIndexRemote<T> create(final String iName, final OIndexDefinition iIndexDefinition, final ODatabaseRecord iDatabase,
-      final String iClusterIndexName, final int[] iClusterIdsToIndex, boolean rebuild, final OProgressListener iProgressListener) {
-    name = iName;
+  public OIndexRemote<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
+      final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
+    this.name = name;
     // final OCommandRequest cmd = formatCommand(QUERY_CREATE, name, wrappedType);
     // database.command(cmd).execute();
     return this;
@@ -310,11 +309,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return name;
   }
 
-  /**
-   * Do nothing.
-   */
-  public OIndexRemote<T> lazySave() {
-    return this;
+  @Override
+  public void flush() {
   }
 
   public String getType() {

@@ -29,22 +29,21 @@ public class OIndexDictionary extends OIndexOneValue {
 
   public static final String TYPE_ID = OClass.INDEX_TYPE.DICTIONARY.toString();
 
-  public OIndexDictionary() {
-    super(TYPE_ID);
+  public OIndexDictionary(OIndexEngine<OIdentifiable> engine) {
+    super(TYPE_ID, engine);
   }
 
-  public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
     modificationLock.requestModificationLock();
 
     try {
       acquireExclusiveLock();
       try {
-        checkForKeyType(iKey);
-
-        final OIdentifiable value = map.get(iKey);
+        checkForKeyType(key);
+        final OIdentifiable value = indexEngine.get(key);
 
         if (value == null || !value.equals(iSingleValue))
-          map.put(iKey, iSingleValue);
+          indexEngine.put(key, iSingleValue);
 
         return this;
 
@@ -60,7 +59,7 @@ public class OIndexDictionary extends OIndexOneValue {
    * Disables check of entries.
    */
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public void checkEntry(final OIdentifiable iRecord, final Object key) {
   }
 
   public boolean canBeUsedInEqualityOperators() {

@@ -66,8 +66,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     query = null;
     recordCount = 0;
@@ -155,7 +154,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           if (key != null)
             result = index.remove(key, (OIdentifiable) value);
           else
-            return index.remove((OIdentifiable) value);
+            throw new OCommandExecutionException("Key value should be provided to remove index entry.");
         else
           result = index.remove(key);
         return result ? 1 : 0;

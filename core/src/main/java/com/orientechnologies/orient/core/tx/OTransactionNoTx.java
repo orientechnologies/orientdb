@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -183,7 +184,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
     case REMOVE:
       if (iKey == null)
-        delegate.remove(iValue);
+        throw new OIndexException("Key value should be provided to remove index entry.");
       else
         delegate.remove(iKey, iValue);
       break;

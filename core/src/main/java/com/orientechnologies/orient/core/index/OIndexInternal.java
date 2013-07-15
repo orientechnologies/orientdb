@@ -40,11 +40,6 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public static final String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
 
   /**
-   * Flushes in-memory changes to disk.
-   */
-  public void flush();
-
-  /**
    * Loads the index giving the configuration.
    * 
    * @param iConfig

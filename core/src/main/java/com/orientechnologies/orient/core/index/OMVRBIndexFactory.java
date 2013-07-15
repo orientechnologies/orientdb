@@ -20,7 +20,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 
 /**
  * Default OrientDB index factory for indexes based on MVRBTree.<br>
@@ -33,7 +35,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
  * </ul>
  */
 public class OMVRBIndexFactory implements OIndexFactory {
-
   private static final Set<String> TYPES;
   static {
     final Set<String> types = new HashSet<String>();
@@ -57,19 +58,19 @@ public class OMVRBIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String indexType) throws OConfigurationException {
 
-    if (OIndexUnique.TYPE_ID.equals(iIndexType)) {
-      return new OIndexUnique();
-    } else if (OIndexNotUnique.TYPE_ID.equals(iIndexType)) {
-      return new OIndexNotUnique();
-    } else if (OIndexFullText.TYPE_ID.equals(iIndexType)) {
-      return new OIndexFullText();
-    } else if (OIndexDictionary.TYPE_ID.equals(iIndexType)) {
-      return new OIndexDictionary();
+    if (OIndexUnique.TYPE_ID.equals(indexType)) {
+      return new OIndexUnique(new OMVRBTreeIndexEngine<OIdentifiable>());
+    } else if (OIndexNotUnique.TYPE_ID.equals(indexType)) {
+      return new OIndexNotUnique(new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OIndexFullText.TYPE_ID.equals(indexType)) {
+      return new OIndexFullText(new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OIndexDictionary.TYPE_ID.equals(indexType)) {
+      return new OIndexDictionary(new OMVRBTreeIndexEngine<OIdentifiable>());
     }
 
-    throw new OConfigurationException("Unsupported type : " + iIndexType);
+    throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
 }

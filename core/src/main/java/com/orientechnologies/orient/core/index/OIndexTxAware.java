@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
-  protected ODatabaseRecord     database;
+  protected ODatabaseRecord database;
 
   public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
     super(iDelegate);
@@ -88,12 +88,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
-  }
-
-  @Override
-  public int remove(final OIdentifiable iRID) {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
-    return 1;
   }
 
   @Override

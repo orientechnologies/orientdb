@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -69,14 +69,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         Collections.sort(involvedIndexes);
 
       // LOCK INVOLVED INDEXES
-      List<OIndexMVRBTreeAbstract<?>> lockedIndexes = null;
+      List<OIndexAbstract<?>> lockedIndexes = null;
       try {
         if (involvedIndexes != null)
           for (String indexName : involvedIndexes) {
-            final OIndexMVRBTreeAbstract<?> index = (OIndexMVRBTreeAbstract<?>) database.getMetadata().getIndexManager()
+            final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager()
                 .getIndexInternal(indexName);
             if (lockedIndexes == null)
-              lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
+              lockedIndexes = new ArrayList<OIndexAbstract<?>>();
 
             index.acquireModificationLock();
             lockedIndexes.add(index);
@@ -96,7 +96,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         if (indexesToLock != null && !indexesToLock.isEmpty()) {
           if (lockedIndexes == null)
-            lockedIndexes = new ArrayList<OIndexMVRBTreeAbstract<?>>();
+            lockedIndexes = new ArrayList<OIndexAbstract<?>>();
 
           for (OIndex<?> index : indexesToLock) {
             for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
@@ -106,13 +106,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
                     && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
                   index.getInternal().acquireModificationLock();
-                  lockedIndexes.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
+                  lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
                 }
               }
             }
           }
 
-          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+          for (OIndexAbstract<?> index : lockedIndexes)
             index.acquireExclusiveLock();
         }
 
@@ -137,10 +137,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       } finally {
         // RELEASE INDEX LOCKS IF ANY
         if (lockedIndexes != null) {
-          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+          for (OIndexAbstract<?> index : lockedIndexes)
             index.releaseExclusiveLock();
 
-          for (OIndexMVRBTreeAbstract<?> index : lockedIndexes)
+          for (OIndexAbstract<?> index : lockedIndexes)
             index.releaseModificationLock();
 
         }

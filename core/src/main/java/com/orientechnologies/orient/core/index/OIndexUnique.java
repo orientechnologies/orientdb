@@ -30,26 +30,24 @@ public class OIndexUnique extends OIndexOneValue {
 
   public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE.toString();
 
-  public OIndexUnique() {
-    super(TYPE_ID);
+  public OIndexUnique(OIndexEngine<OIdentifiable> engine) {
+    super(TYPE_ID, engine);
   }
 
-  public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
 
     modificationLock.requestModificationLock();
-
     try {
       acquireExclusiveLock();
       try {
-        checkForKeyType(iKey);
-
-        final OIdentifiable value = map.get(iKey);
+        checkForKeyType(key);
+        final OIdentifiable value = indexEngine.get(key);
 
         if (value != null) {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue))
-            throw new ORecordDuplicatedException("Found duplicated key '" + iKey + "' on unique index '" + name + "' for record "
+            throw new ORecordDuplicatedException("Found duplicated key '" + key + "' on unique index '" + name + "' for record "
                 + iSingleValue.getIdentity() + ". The record already present in the index is " + value.getIdentity(),
                 value.getIdentity());
           else
@@ -59,7 +57,7 @@ public class OIndexUnique extends OIndexOneValue {
         if (!iSingleValue.getIdentity().isPersistent())
           ((ORecord<?>) iSingleValue.getRecord()).save();
 
-        map.put(iKey, iSingleValue.getIdentity());
+        indexEngine.put(key, iSingleValue.getIdentity());
         return this;
 
       } finally {

@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -13,10 +8,15 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-@Test
+@Test(enabled = false)
 public class OHashIndexTest {
   private ODatabaseDocumentTx db;
 
@@ -39,7 +39,6 @@ public class OHashIndexTest {
       db.close();
   }
 
-  @Test(enabled = false)
   public void testCreateAutomaticHashIndex() throws Exception {
     final OClass oClass = db.getMetadata().getSchema().createClass("testClass");
     oClass.createProperty("name", OType.STRING);
@@ -48,7 +47,6 @@ public class OHashIndexTest {
     Assert.assertNotNull(index);
   }
 
-  @Test
   public void testCreateManualHashIndex() throws Exception {
     final OIndex<?> index = db
         .getMetadata()
