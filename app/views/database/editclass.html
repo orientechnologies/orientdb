@@ -1,6 +1,6 @@
 <div class="row-fluid" >
 	<div class = "nomargin">
-		
+
 		<button ng-click="saveProperty(property)">Save</button>
 
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
@@ -30,7 +30,7 @@
 						</select>
 						<!-- <input type="text" ng-model="result['linkedType']" ng-change="modificato(result,'linkedType')">  -->
 					</td>
-					
+
 					<td>
 						<select ng-model="result['linkedClass']" ng-options="p.toString() for p in list" >
 							<option value="">{{result['linkedClass']}}</option>
@@ -46,7 +46,8 @@
 							<input type="checkbox" ng-model="result['notNull']" ng-change="modificato(result,'notNull')">
 						</td>
 						<td>
-							<input type="text" ng-model="result['min']" ng-change="modificato(result,'min')"> 
+							<input type="text"  bs-datepicker  ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] == 'STRING'">
+							 
 						</td>
 						<td>
 							<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')">
