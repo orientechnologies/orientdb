@@ -30,12 +30,13 @@
 		$scope.property = Database.listPropertiesForClass(clazz);
 		$scope.queryText = ""
 		$scope.modificati = new Array;
-		$scope.prova = new Array;
+		$scope.list = new Array;
 		
 		
 console.log($scope.property[0]['linkedType'])
 		$scope.modificato = function(result,prop){
 			var key = result['name'];
+			console.log(result[prop])
 			if($scope.modificati[result['name']] == undefined){
 				$scope.modificati[result['name']] = new Array(prop);
 			}
