@@ -44,13 +44,12 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
   public ODeleteRecordTask() {
   }
 
-  public ODeleteRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
+  public ODeleteRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
   }
 
-  public ODeleteRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid,
-      final ORecordVersion iVersion) {
+  public ODeleteRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final ORecordVersion iVersion) {
     super(iRunId, iOperationId, iRid, iVersion);
   }
 

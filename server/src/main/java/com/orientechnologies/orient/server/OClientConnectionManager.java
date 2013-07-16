@@ -258,7 +258,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
     acquireSharedLock();
     try {
 
-      Set<String> pushed = new HashSet<String>();
+      final Set<String> pushed = new HashSet<String>();
       for (OClientConnection c : connections.values()) {
         if (pushed.contains(c.getRemoteAddress()))
           // ALREADY SENT: JUMP IT

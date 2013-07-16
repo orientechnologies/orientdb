@@ -59,8 +59,8 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
     this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
 
-    ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT, "creating unique msg id %d db=%s class=%s",
-        operationSerial, databaseName, getClass().getSimpleName());
+    ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT,
+        "creating operation id %d.%d for db=%s class=%s", runId, operationSerial, databaseName, getClass().getSimpleName());
   }
 
   public abstract OPERATION_TYPES getOperationType();

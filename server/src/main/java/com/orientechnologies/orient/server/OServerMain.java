@@ -16,11 +16,19 @@
 package com.orientechnologies.orient.server;
 
 public class OServerMain {
+  private static OServer instance;
+
   public static OServer create() throws Exception {
-    return new OServer();
+    instance = new OServer();
+    return instance;
+  }
+
+  public static OServer server() {
+    return instance;
   }
 
   public static void main(final String[] args) throws Exception {
-    OServerMain.create().startup().activate();
+    instance = OServerMain.create();
+    instance.startup().activate();
   }
 }

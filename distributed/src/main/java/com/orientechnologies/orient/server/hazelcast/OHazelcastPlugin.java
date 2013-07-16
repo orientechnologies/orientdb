@@ -220,7 +220,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         @Override
         public void onFailure(Throwable t) {
           ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT,
-              "error on execution of operation in ASYNCH mode", t);
+              "error on execution of operation %d.%d in ASYNCH mode", t, iTask.getRunId(), iTask.getOperationSerial());
         }
       };
 
@@ -247,18 +247,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
 
         } else {
-          ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT, "error on execution of operation in %s mode",
-              e, EXECUTION_MODE.SYNCHRONOUS);
-          throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against node: "
-              + member, e);
+          ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT,
+              "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
+              EXECUTION_MODE.SYNCHRONOUS);
+          throw new ODistributedException("Error on executing remote operation " + iTask.getRunId() + "."
+              + iTask.getOperationSerial() + " in " + iTask.getMode() + " mode against node: " + member, e);
         }
 
       } catch (Exception e) {
         // WRAP IT
-        ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT, "error on execution of operation in %s mode",
-            e, iTask.getMode());
-        throw new ODistributedException("Error on executing remote operation in " + iTask.getMode() + " mode against node: "
-            + member, e);
+        ODistributedServerLog.error(this, getLocalNodeId(), iNodeId, DIRECTION.OUT,
+            "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(), iTask.getMode());
+        throw new ODistributedException("Error on executing remote operation " + iTask.getRunId() + "."
+            + iTask.getOperationSerial() + " in " + iTask.getMode() + " mode against node: " + member, e);
       }
     }
 
@@ -267,8 +268,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public Object execute(final String iClusterName, final Object iKey, final OAbstractRemoteTask<? extends Object> iTask,
       OReplicationConfig replicationData) throws ExecutionException {
-
-    final String dbName = iTask.getDatabaseName();
 
     String masterNodeId = null;
 
@@ -285,6 +284,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
       } else {
+        if (!checkOperationSequence(iTask))
+          return null;
+
+        final String dbName = iTask.getDatabaseName();
+
         if (replicationData != null) {
           // SET THE DESTINATION NODE
           iTask.setNodeDestination(replicationData.masterNode);
@@ -305,12 +309,29 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
-          "error on execution of operation in %s mode", e, EXECUTION_MODE.SYNCHRONOUS);
-      throw new ExecutionException("error on execution of operation in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node "
-          + masterNodeId, e);
+          "error on execution %d.%d of operation in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
+          EXECUTION_MODE.SYNCHRONOUS);
+      throw new ExecutionException("error on execution of operation " + iTask.getRunId() + "." + iTask.getOperationSerial()
+          + " in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node " + masterNodeId, e);
     }
 
     return null;
+  }
+
+  protected boolean checkOperationSequence(final OAbstractRemoteTask<? extends Object> iTask) {
+    final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iTask.getDatabaseName());
+    final long[] lastExecutedOperation = dbSynchronizer.getLog().getLastExecutedOperationId();
+    ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
+        "checking operation if %d.%d > last %d.%d", iTask.getRunId(), iTask.getOperationSerial(), lastExecutedOperation[0],
+        lastExecutedOperation[1]);
+    if (iTask.getRunId() == lastExecutedOperation[0] && iTask.getOperationSerial() <= lastExecutedOperation[1]) {
+      // ALREADY EXECUTED, SKIP IT
+      ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.IN,
+          "received operation %d.%d but it has already been executed: probably it's from an alignment? Ignore it.",
+          iTask.getRunId(), iTask.getOperationSerial());
+      return false;
+    }
+    return true;
   }
 
   @SuppressWarnings("unchecked")
@@ -359,8 +380,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       } catch (MemberLeftException e) {
         // RETRY
         ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-            "error on execution of operation in %s mode, because node left. Re-route it in transparent way", e,
-            EXECUTION_MODE.SYNCHRONOUS);
+            "error on execution of operation %d.%d in %s mode, because node left. Re-route it in transparent way", e,
+            iTask.getRunId(), iTask.getOperationSerial(), EXECUTION_MODE.SYNCHRONOUS);
 
         return execute(iClusterName, iKey, iTask, iReplicationData);
 
@@ -377,14 +398,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
         } else {
           ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-              "error on execution of operation in %s mode", e, EXECUTION_MODE.SYNCHRONOUS);
+              "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
+              EXECUTION_MODE.SYNCHRONOUS);
           throw e;
         }
       }
     }
 
     ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-        "error on execution %s in %s mode", iTask.getName(), EXECUTION_MODE.SYNCHRONOUS);
+        "error on execution of operation %d.%d type=%s in %s mode", iTask.getRunId(), iTask.getOperationSerial(), iTask.getName(),
+        EXECUTION_MODE.SYNCHRONOUS);
 
     // NEVER HAPPENS BECAUSE .error() THROWS AN EXCEPTION
     throw new ODistributedException("Error on execution " + iTask.getName() + " in " + EXECUTION_MODE.SYNCHRONOUS + " mode");
@@ -618,7 +641,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
         final String databaseName = entry.getKey();
         try {
-          final long[] lastOperationId = entry.getValue().getLog().getLastOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
+          final long[] lastOperationId = entry.getValue().getLog()
+              .getLastJournaledOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
 
           if (lastOperationId[0] == -1 && lastOperationId[1] == -1)
             // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
@@ -675,7 +699,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             long[] lastOperationId;
 
             try {
-              lastOperationId = synch.getLog().getLastOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
+              lastOperationId = synch.getLog().getLastJournaledOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
 
               ODistributedServerLog.info(this, getLocalNodeId(), node, DIRECTION.OUT, "resend alignment request db=%s from %d:%d",
                   databaseName, lastOperationId[0], lastOperationId[1]);
@@ -788,9 +812,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void entryUpdated(EntryEvent<String, Object> event) {
-    if (event.getKey().startsWith("node."))
+  public void entryUpdated(EntryEvent<String, Object> iEvent) {
+    if (iEvent.getKey().startsWith("node.")) {
+      final String nodeId = ((ODocument) iEvent.getValue()).field("id");
+      ODistributedServerLog.debug(this, getLocalNodeId(), nodeId, DIRECTION.NONE,
+          "received notification about update in the cluster: %s", iEvent);
+
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    }
   }
 
   @Override
@@ -899,6 +928,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask) throws Exception {
+
+    if (!checkOperationSequence(iTask))
+      return null;
 
     final OStorageSynchronizer dbSynchronizer = iTask.getDatabaseSynchronizer();
 

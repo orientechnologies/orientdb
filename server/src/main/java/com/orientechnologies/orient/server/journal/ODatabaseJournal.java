@@ -101,6 +101,7 @@ public class ODatabaseJournal {
   private OStorage                        storage;
   private OFile                           file;
   private boolean                         synchEnabled          = false;
+  private long[]                          lastExecuted          = new long[] { -1, -1 };
 
   public ODatabaseJournal(final OServer iServer, final ODistributedServerManager iCluster, final OStorage iStorage,
       final String iStartingDirectory) throws IOException {
@@ -192,10 +193,19 @@ public class ODatabaseJournal {
     return task;
   }
 
+  public long[] getLastExecutedOperationId() {
+    lock.acquireSharedLock();
+    try {
+      return lastExecuted;
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
   /**
    * Returns the last operation id with passed status
    */
-  public long[] getLastOperationId(final OPERATION_STATUS iStatus) throws IOException {
+  public long[] getLastJournaledOperationId(final OPERATION_STATUS iStatus) throws IOException {
     lock.acquireExclusiveLock();
     try {
       final int filled = file.getFilledUpTo();
@@ -377,8 +387,8 @@ public class ODatabaseJournal {
         final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
 
         ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-            "journaled operation %s against db '%s' rid %s as #%d.%d", iOperationType.toString(), storage.getName(), rid, iRunId,
-            iOperationId);
+            "- journaled operation=%d.%d type=%s db=%s rid=%s", iRunId, iOperationId, iOperationType.toString(), storage.getName(),
+            rid);
 
         if (isUpdatingLast(iRunId, iOperationId))
           offset = getOffset2Update(iRunId, iOperationId, iOperationType, varSize);
@@ -397,8 +407,8 @@ public class ODatabaseJournal {
         varSize = cmdBinary.length;
 
         ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-            "journaled operation %s against db '%s' cmd '%s' as #%d.%d", iOperationType.toString(), storage.getName(), cmdText,
-            iRunId, iOperationId);
+            "- journaled operation=%d.%d type=%s db=%s cmd=%s", iRunId, iOperationId, iOperationType.toString(), storage.getName(),
+            cmdText);
 
         offset = appendOperationLogHeader(iOperationType, varSize);
 
@@ -412,6 +422,10 @@ public class ODatabaseJournal {
 
       if (synchEnabled)
         file.synch();
+
+      // SAVE LAST
+      lastExecuted[0] = iRunId;
+      lastExecuted[1] = iOperationId;
 
       return offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_LONG;
 
