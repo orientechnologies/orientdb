@@ -155,7 +155,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     System.out.println("Threads started, waiting for the end");
 
     writerExecutor.shutdown();
-    Assert.assertTrue(writerExecutor.awaitTermination(300, TimeUnit.MINUTES));
+    Assert.assertTrue(writerExecutor.awaitTermination(90, TimeUnit.SECONDS));
 
     System.out.println("Writer threads finished, shutting down Reader threads...");
 
@@ -252,6 +252,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + database.getURL());
           Thread.currentThread().interrupt();
+          break;
+        } catch (Exception e) {
+          System.out.println("Writer received exception (db=" + database.getURL());
+          e.printStackTrace();
           break;
         } finally {
           database.close();

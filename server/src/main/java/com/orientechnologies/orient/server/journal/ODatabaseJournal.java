@@ -336,8 +336,8 @@ public class ODatabaseJournal {
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
       ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-          "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
-          file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
+          "operation #%d.%d db=%s update journal rid=%s", file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID),
+          file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), storage.getName(), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { (byte) iStatus.ordinal() });
 

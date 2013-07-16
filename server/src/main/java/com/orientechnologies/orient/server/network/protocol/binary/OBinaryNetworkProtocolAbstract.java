@@ -161,7 +161,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-    channel.acquireExclusiveLock();
+    channel.acquireWriteLock();
 
     try {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
@@ -199,7 +199,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       if (e instanceof SocketException)
         shutdown();
     } finally {
-      channel.releaseExclusiveLock();
+      channel.releaseWriteLock();
     }
   }
 

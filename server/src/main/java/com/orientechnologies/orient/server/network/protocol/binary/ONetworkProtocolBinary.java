@@ -1401,13 +1401,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected void endResponse() throws IOException {
-    channel.flush();
-    channel.releaseExclusiveLock();
+  protected void beginResponse() {
+    channel.acquireReadLock();
   }
 
-  protected void beginResponse() {
-    channel.acquireExclusiveLock();
+  protected void endResponse() throws IOException {
+    channel.flush();
+    channel.releaseReadLock();
   }
 
   protected void setDataCommandInfo(final String iCommandInfo) {

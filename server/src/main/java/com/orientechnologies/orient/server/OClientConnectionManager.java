@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -272,7 +273,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
         final OChannelBinary channel = (OChannelBinary) p.getChannel();
 
         try {
-          channel.acquireExclusiveLock();
+          channel.acquireWriteLock();
           try {
             channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
             channel.writeInt(Integer.MIN_VALUE);
@@ -284,10 +285,11 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
             OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
 
           } finally {
-            channel.releaseExclusiveLock();
+            channel.releaseWriteLock();
           }
         } catch (IOException e) {
-          OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", c.getRemoteAddress());
+          OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
+          disconnect(c);
         }
       }
 
@@ -313,13 +315,13 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
       for (OClientConnection c : connections.values()) {
         if (c != iExcludeConnection) {
           final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-          final OChannelBinary channel = (OChannelBinary) p.getChannel();
+          final OChannelBinaryAsynch channel = (OChannelBinaryAsynch) p.getChannel();
 
           if (c.database != null && c.database.getName().equals(dbName))
             synchronized (c) {
               try {
 
-                channel.acquireExclusiveLock();
+                channel.acquireWriteLock();
                 try {
 
                   channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
@@ -328,7 +330,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
                   p.writeIdentifiable(iRecord);
 
                 } finally {
-                  channel.releaseExclusiveLock();
+                  channel.releaseWriteLock();
                 }
               } catch (IOException e) {
                 OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());

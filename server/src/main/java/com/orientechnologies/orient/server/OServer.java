@@ -310,7 +310,7 @@ public class OServer {
       else if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
         dbURL = "plocal:" + dbPath;
       else
-        throw new OConfigurationException("Database '" + name + "' (" + dbName + ") is not configured on server");
+        throw new OConfigurationException("Database '" + name + "' is not configured on server");
     }
 
     return dbURL;

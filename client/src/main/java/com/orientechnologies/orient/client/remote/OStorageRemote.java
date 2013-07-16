@@ -81,7 +81,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OAsynchChannelServiceThread;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -102,7 +101,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private static final String              DRIVER_NAME          = "OrientDB Java";
 
   private final ExecutorService            asynchExecutor;
-  private OAsynchChannelServiceThread      serviceThread;
   private OContextConfiguration            clientConfiguration;
   private int                              connectionRetry;
   private int                              connectionRetryDelay;
@@ -261,11 +259,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       if (!checkForClose(iForce))
         return;
-
-      // CLOSE THE CHANNEL
-      if (serviceThread != null) {
-        serviceThread.sendShutdown();
-      }
 
       synchronized (networkPool) {
         for (OChannelBinaryClient n : networkPool)
@@ -1723,9 +1716,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       try {
         return new OChannelBinaryClient(remoteHost, remotePort, clientConfiguration,
-            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+            OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, asynchEventListener);
+
       } catch (Exception e) {
         // GET THE NEXT ONE IF ANY
+        e.printStackTrace();
       }
     }
 
@@ -1785,7 +1780,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         network = networkPool.get(networkPoolCursor);
 
         networkPoolCursor++;
-        if (network.getLockWrite().tryLock())
+        if (network.getLockWrite().getUnderlying().tryLock())
           break;
 
         network = null;
@@ -1884,7 +1879,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
     iNetwork.beginResponse(getSessionId());
 
-    if (iNetwork.getLockRead().getQueueLength() + 1 >= maxReadQueue)
+    if (iNetwork.getLockRead().getUnderlying().getQueueLength() + 1 >= maxReadQueue)
       synchronized (networkPool) {
         if (networkPool.size() < maxPool) {
           // CREATE NEW CONNECTION
@@ -2006,14 +2001,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       }
 
-      // CREATE THE CHANNEL POOL
-      if (networkPool.size() == 0) {
-        // ALWAYS CREATE AT LEAST ONE CONNECTION
-        final OChannelBinaryClient firstChannel = createNetworkConnection();
-        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, firstChannel, "OrientDB <- Asynch Client ("
-            + firstChannel.socket.getRemoteSocketAddress() + ")");
-        networkPool.add(firstChannel);
-      }
+      if (networkPool.isEmpty())
+        // ALWAYS CREATE THE FIRST CONNECTION
+        networkPool.add(createNetworkConnection());
 
       // CREATE THE MINIMUM POOL
       for (int i = networkPool.size(); i < minPool; ++i)

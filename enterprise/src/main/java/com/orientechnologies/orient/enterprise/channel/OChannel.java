@@ -21,7 +21,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceExternalTimeout;
+import com.orientechnologies.common.concur.resource.OAdaptiveLock;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
@@ -29,13 +29,17 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
-public abstract class OChannel extends OSharedResourceExternalTimeout {
+public abstract class OChannel {
   private static final OJVMProfiler PROFILER                     = Orient.instance().getProfiler();
 
   public Socket                     socket;
 
   public InputStream                inStream;
   public OutputStream               outStream;
+
+  protected final OAdaptiveLock     lockRead                     = new OAdaptiveLock();
+  protected final OAdaptiveLock     lockWrite                    = new OAdaptiveLock();
+  protected long                    timeout;
 
   public int                        socketBufferSize;
 
@@ -73,10 +77,25 @@ public abstract class OChannel extends OSharedResourceExternalTimeout {
   }
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
-    super(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsInteger());
     socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);
+  }
+
+  public void acquireWriteLock() {
+    lockWrite.lock();
+  }
+
+  public void releaseWriteLock() {
+    lockWrite.unlock();
+  }
+
+  public void acquireReadLock() {
+    lockRead.lock();
+  }
+
+  public void releaseReadLock() {
+    lockRead.unlock();
   }
 
   public void flush() throws IOException {
