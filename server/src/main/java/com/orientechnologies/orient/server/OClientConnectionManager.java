@@ -288,6 +288,8 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
             channel.releaseWriteLock();
           }
         } catch (IOException e) {
+          disconnect(c);
+        } catch (Exception e) {
           OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
           disconnect(c);
         }
