@@ -1,5 +1,5 @@
-var  GrapgController = angular.module('vertex.controller',[]);
-GrapgController.controller("VertexEditController",['$scope','$routeParams','$location','$modal','$q','DocumentApi','Database','CommandApi','Notification',function($scope,$routeParams,$location,$modal,$q,DocumentApi,Database,CommandApi,Notification){
+var  GrapgController = angular.module('vertex.controller',['ui.bootstrap']);
+GrapgController.controller("VertexEditController",['$scope','$routeParams','$location','$modal','$q','$dialog','DocumentApi','Database','CommandApi','Notification',function($scope,$routeParams,$location,$modal,$q,$dialog,DocumentApi,Database,CommandApi,Notification){
 
 	var database = $routeParams.database;
 	var rid = $routeParams.rid;
@@ -11,7 +11,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 
 	// Toggle modal
 	$scope.showModal = function(rid) {
-		modalScope = $scope.$new(true);	
+		var modalScope = $scope.$new(true);	
 		modalScope.db = database;
 		modalScope.rid = rid;
 		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
@@ -51,17 +51,29 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 
 	}
 	$scope.deleteLink = function(group,edge) {
-		var command =""
-		if($scope.doc[group] instanceof Array){
-			command = "DELETE EDGE " + edge;	
-		}else {
-			command = "DELETE EDGE FROM " + rid + " TO " + edge;
-		}
-		CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
-			$scope.reload();
+		
+		Utilities.confirm($scope,$dialog,{
+			title : 'Warning!',
+			body : 'You are removing edge '+ rid + '. Are you sure?',
+			success : function() {
+				var command =""
+				if($scope.doc[group] instanceof Array){
+					command = "DELETE EDGE " + edge;	
+				}else {
+					command = "DELETE EDGE FROM " + rid + " TO " + edge;
+				}
+				CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
+					$scope.reload();
+				});
+			}
 		});
+		
+		
 		// var index = $scope.doc[group].indexOf(rid);
 		// $scope.doc[group].splice(index,1);
+	}
+	$scope.addEdgeLabel = function(){
+		$scope.outgoings.push("New Relationship") ;
 	}
 	$scope.navigate = function(rid){
 		$location.path('/database/'+database + '/browse/edit/' + rid.replace('#',''));

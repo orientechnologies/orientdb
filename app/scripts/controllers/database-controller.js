@@ -1,5 +1,6 @@
 var dbModule = angular.module('database.controller',['database.services']);
 dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
+
 	$scope.database = Database;
 	$scope.limit = 20;
 	$scope.queries = new Array;
@@ -23,5 +24,10 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
 	}
 	$scope.openRecord = function(doc){
 		$location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#',''));
+	}
+
+	if($routeParams.query){
+		$scope.queryText = $routeParams.query;
+		$scope.query();
 	}
 }]);

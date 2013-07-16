@@ -28,6 +28,11 @@ App.config(function ($routeProvider) {
     controller: 'BrowseController',
     resolve : DatabaseResolve
   })
+  .when('/database/:database/browse/:query', {
+    templateUrl: 'views/database/browse.html',
+    controller: 'BrowseController',
+    resolve : DatabaseResolve
+  })
    .when('/database/:database/schema', {
     templateUrl: 'views/database/schema.html',
     controller: 'SchemaController',

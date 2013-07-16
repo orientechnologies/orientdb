@@ -11,3 +11,21 @@ if (!String.prototype.startsWith) {
     }
   });
 }
+
+Utilities = {};
+
+
+Utilities.confirm = function($scope,$dialog,params){
+
+	var title = params.title;
+	var msg = params.body;
+	var btns = [{result:'cancel', label: 'Cancel'}, {result:'ok', label: 'OK', cssClass: 'btn-primary'}];
+	var d = $dialog.messageBox(title, msg, btns);
+	d.open().then(function(result){
+		if(result ==  'ok')
+		{
+			params.success();
+		}
+	});
+}
+
