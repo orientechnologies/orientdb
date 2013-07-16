@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -69,7 +70,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId          = -1;
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet"                                     };
+      ".oef", ".oem", ".oet", OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION             };
+
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();

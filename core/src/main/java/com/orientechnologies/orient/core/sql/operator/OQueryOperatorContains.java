@@ -15,20 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -139,15 +131,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       if (iOperationType == INDEX_OPERATION_TYPE.GET)
         indexResult = index.get(key);
       else {
-        return index.count(key);
+        if (internalIndex.hasRangeQuerySupport())
+          return index.count(key);
+        else
+          return null;
       }
 
-      if (indexResult instanceof Collection)
-        result = (Collection<OIdentifiable>) indexResult;
-      else if (indexResult == null)
-        result = Collections.emptyList();
-      else
-        result = Collections.singletonList((OIdentifiable) indexResult);
+      result = convertIndexResult(indexResult);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -160,14 +150,42 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
+      if (internalIndex.hasRangeQuerySupport()) {
+        if (fetchLimit > -1)
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+        else
+          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+      } else {
+        int indexParamCount = indexDefinition.getParamCount();
+        if (indexParamCount == keyParams.size()) {
+          final Object indexResult;
+          if (iOperationType == INDEX_OPERATION_TYPE.GET)
+            indexResult = index.get(keyOne);
+          else {
+            if (internalIndex.hasRangeQuerySupport())
+              return index.count(keyOne);
+            else
+              return null;
+          }
 
-      if (fetchLimit > -1)
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-      else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true);
+          result = convertIndexResult(indexResult);
+        } else
+          return null;
+      }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
+    return result;
+  }
+
+  private Object convertIndexResult(Object indexResult) {
+    Object result;
+    if (indexResult instanceof Collection)
+      result = (Collection<OIdentifiable>) indexResult;
+    else if (indexResult == null)
+      result = Collections.emptyList();
+    else
+      result = Collections.singletonList((OIdentifiable) indexResult);
     return result;
   }
 

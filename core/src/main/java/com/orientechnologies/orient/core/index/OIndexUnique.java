@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
@@ -27,11 +26,8 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-
-  public static final String TYPE_ID = OClass.INDEX_TYPE.UNIQUE.toString();
-
-  public OIndexUnique(OIndexEngine<OIdentifiable> engine) {
-    super(TYPE_ID, engine);
+  public OIndexUnique(String typeId, OIndexEngine<OIdentifiable> engine) {
+    super(typeId, engine);
   }
 
   public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
@@ -74,6 +70,6 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   public boolean supportsOrderedIterations() {
-    return true;
+    return indexEngine.hasRangeQuerySupport();
   }
 }

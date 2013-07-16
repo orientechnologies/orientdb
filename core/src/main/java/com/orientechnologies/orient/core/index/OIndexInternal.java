@@ -86,6 +86,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    */
   public boolean canBeUsedInEqualityOperators();
 
+  public boolean hasRangeQuerySupport();
+
   /**
    * Prohibit index modifications. Only index read commands are allowed after this call.
    * 
@@ -114,6 +116,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public IndexMetadata loadMetadata(ODocument iConfig);
 
   public void setRebuildingFlag();
+
+  public void close();
 
   public final class IndexMetadata {
     private String           name;

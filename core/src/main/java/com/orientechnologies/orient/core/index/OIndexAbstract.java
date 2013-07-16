@@ -17,15 +17,8 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -98,6 +91,16 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     acquireSharedLock();
     try {
       indexEngine.flush();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public boolean hasRangeQuerySupport() {
+    acquireSharedLock();
+    try {
+      return indexEngine.hasRangeQuerySupport();
     } finally {
       releaseSharedLock();
     }
@@ -373,6 +376,16 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   @Override
   public void setRebuildingFlag() {
     rebuilding = true;
+  }
+
+  @Override
+  public void close() {
+    acquireSharedLock();
+    try {
+      indexEngine.close();
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   /**
@@ -814,7 +827,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     acquireSharedLock();
     try {
-      indexEngine.close();
+      indexEngine.closeDb();
     } finally {
       releaseSharedLock();
     }

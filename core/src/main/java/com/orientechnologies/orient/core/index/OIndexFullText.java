@@ -23,7 +23,6 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -37,8 +36,6 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public class OIndexFullText extends OIndexMultiValues {
 
-  public static final String  TYPE_ID                = OClass.INDEX_TYPE.FULLTEXT.toString();
-
   private static final String CONFIG_STOP_WORDS      = "stopWords";
   private static final String CONFIG_SEPARATOR_CHARS = "separatorChars";
   private static final String CONFIG_IGNORE_CHARS    = "ignoreChars";
@@ -51,8 +48,8 @@ public class OIndexFullText extends OIndexMultiValues {
   private final String        ignoreChars            = DEF_IGNORE_CHARS;
   private final Set<String>   stopWords;
 
-  public OIndexFullText(OIndexEngine<Set<OIdentifiable>> indexEngine) {
-    super(TYPE_ID, indexEngine);
+  public OIndexFullText(String typeId, OIndexEngine<Set<OIdentifiable>> indexEngine) {
+    super(typeId, indexEngine);
     stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 
@@ -154,7 +151,7 @@ public class OIndexFullText extends OIndexMultiValues {
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener, OStreamSerializer valueSerializer) {
 
     if (indexDefinition.getFields().size() > 1) {
-      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+      throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
 
     return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, valueSerializer);
@@ -164,7 +161,7 @@ public class OIndexFullText extends OIndexMultiValues {
   public OIndexMultiValues create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
     if (indexDefinition.getFields().size() > 1) {
-      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+      throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
     return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }

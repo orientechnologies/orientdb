@@ -250,9 +250,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     acquireExclusiveLock();
     try {
       flush();
-      for (final OIndex<?> idx : indexes.values())
-        if (idx instanceof OCloseable)
-          ((OCloseable) idx).close();
+      for (final OIndex<?> idx : indexes.values()) {
+        OIndexInternal<?> indexInternal = idx.getInternal();
+        if (indexInternal != null)
+          indexInternal.close();
+      }
 
       clearMetadata();
     } finally {

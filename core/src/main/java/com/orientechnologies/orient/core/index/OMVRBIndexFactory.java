@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Default OrientDB index factory for indexes based on MVRBTree.<br>
@@ -38,10 +39,10 @@ public class OMVRBIndexFactory implements OIndexFactory {
   private static final Set<String> TYPES;
   static {
     final Set<String> types = new HashSet<String>();
-    types.add(OIndexUnique.TYPE_ID);
-    types.add(OIndexNotUnique.TYPE_ID);
-    types.add(OIndexFullText.TYPE_ID);
-    types.add(OIndexDictionary.TYPE_ID);
+    types.add(OClass.INDEX_TYPE.UNIQUE.toString());
+    types.add(OClass.INDEX_TYPE.NOTUNIQUE.toString());
+    types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
+    types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
 
@@ -60,14 +61,14 @@ public class OMVRBIndexFactory implements OIndexFactory {
 
   public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String indexType) throws OConfigurationException {
 
-    if (OIndexUnique.TYPE_ID.equals(indexType)) {
-      return new OIndexUnique(new OMVRBTreeIndexEngine<OIdentifiable>());
-    } else if (OIndexNotUnique.TYPE_ID.equals(indexType)) {
-      return new OIndexNotUnique(new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
-    } else if (OIndexFullText.TYPE_ID.equals(indexType)) {
-      return new OIndexFullText(new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
-    } else if (OIndexDictionary.TYPE_ID.equals(indexType)) {
-      return new OIndexDictionary(new OMVRBTreeIndexEngine<OIdentifiable>());
+    if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
+      return new OIndexUnique(indexType, new OMVRBTreeIndexEngine<OIdentifiable>());
+    } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
+      return new OIndexNotUnique(indexType, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
+      return new OIndexFullText(indexType, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
+      return new OIndexDictionary(indexType, new OMVRBTreeIndexEngine<OIdentifiable>());
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);

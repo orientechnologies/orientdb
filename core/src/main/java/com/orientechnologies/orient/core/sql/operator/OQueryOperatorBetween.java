@@ -91,7 +91,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     final Object result;
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
+    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
     if (indexDefinition.getParamCount() == 1) {

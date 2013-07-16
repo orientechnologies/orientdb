@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.index;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Index implementation that allows multiple values for the same key.
@@ -28,10 +27,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public class OIndexNotUnique extends OIndexMultiValues {
 
-  public static final String TYPE_ID = OClass.INDEX_TYPE.NOTUNIQUE.toString();
-
-  public OIndexNotUnique(OIndexEngine<Set<OIdentifiable>> engine) {
-    super(TYPE_ID, engine);
+  public OIndexNotUnique(String typeId, OIndexEngine<Set<OIdentifiable>> engine) {
+    super(typeId, engine);
   }
 
   public boolean canBeUsedInEqualityOperators() {
@@ -40,6 +37,6 @@ public class OIndexNotUnique extends OIndexMultiValues {
 
   @Override
   public boolean supportsOrderedIterations() {
-    return true;
+    return indexEngine.hasRangeQuerySupport();
   }
 }

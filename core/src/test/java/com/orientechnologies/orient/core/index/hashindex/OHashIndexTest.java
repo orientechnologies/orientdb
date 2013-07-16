@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.core.index.hashindex;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -8,15 +13,10 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-@Test(enabled = false)
+@Test
 public class OHashIndexTest {
   private ODatabaseDocumentTx db;
 
@@ -42,7 +42,7 @@ public class OHashIndexTest {
   public void testCreateAutomaticHashIndex() throws Exception {
     final OClass oClass = db.getMetadata().getSchema().createClass("testClass");
     oClass.createProperty("name", OType.STRING);
-    final OIndex<?> index = oClass.createIndex("testClassNameIndex", OClass.INDEX_TYPE.UNIQUE_HASH, "name");
+    final OIndex<?> index = oClass.createIndex("testClassNameIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "name");
 
     Assert.assertNotNull(index);
   }
@@ -51,8 +51,8 @@ public class OHashIndexTest {
     final OIndex<?> index = db
         .getMetadata()
         .getIndexManager()
-        .createIndex("manualHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
-            null, null);
+        .createIndex("manualHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(),
+            new OSimpleKeyIndexDefinition(OType.STRING), null, null);
 
     Assert.assertNotNull(index);
   }

@@ -16,12 +16,18 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 /**
  * 
@@ -29,27 +35,51 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OHashIndexFactory implements OIndexFactory {
-  // public static final Set<String> SUPPORTED_TYPES = Collections.singleton(OUniqueHashIndex.TYPE_ID);
-
-  @Override
-  public Set<String> getTypes() {
-    return Collections.emptySet();// SUPPORTED_TYPES;
+  private static final Set<String> TYPES;
+  static {
+    final Set<String> types = new HashSet<String>();
+    types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
+    types.add(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString());
+    types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
+    types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
+    TYPES = Collections.unmodifiableSet(types);
   }
 
-  @Override
-  public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException {
-    // if (!(iDatabase.getStorage() instanceof OStorageLocalAbstract))
-    // throw new OConfigurationException("Given configuration works only for local storage.");
-    //
-    // final OStorageLocalAbstract storageLocal = (OStorageLocalAbstract) iDatabase.getStorage();
-    // final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    // if (directMemory == null)
-    // throw new OConfigurationException("There is no suitable direct memory implementation for this platform."
-    // + " Index creation was canceled.");
-    //
-    // if (OUniqueHashIndex.TYPE_ID.equals(iIndexType))
-    // return new OUniqueHashIndex();
+  /**
+   * Index types :
+   * <ul>
+   * <li>UNIQUE</li>
+   * <li>NOTUNIQUE</li>
+   * <li>FULLTEXT</li>
+   * <li>DICTIONARY</li>
+   * </ul>
+   */
+  public Set<String> getTypes() {
+    return TYPES;
+  }
 
-    throw new OConfigurationException("Unsupported type : " + iIndexType);
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType) throws OConfigurationException {
+    OStorage storage = database.getStorage();
+    OIndexEngine indexEngine;
+    if (storage instanceof OStorageMemory)
+      indexEngine = new OMemoryHashMapIndexEngine();
+    else if (storage instanceof OStorageLocalAbstract) {
+      indexEngine = new OLocalHashTableIndexEngine();
+    } else {
+      throw new OIndexException("Unsupported storage type : " + storage.getType());
+
+    }
+
+    if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType)) {
+      return new OIndexUnique(indexType, indexEngine);
+    } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
+      return new OIndexNotUnique(indexType, indexEngine);
+    } else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType)) {
+      return new OIndexFullText(indexType, indexEngine);
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
+      return new OIndexDictionary(indexType, indexEngine);
+    }
+
+    throw new OConfigurationException("Unsupported type : " + indexType);
   }
 }

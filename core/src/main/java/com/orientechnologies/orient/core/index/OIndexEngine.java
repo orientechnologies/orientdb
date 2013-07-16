@@ -53,6 +53,8 @@ public interface OIndexEngine<V> {
 
   void afterTxCommit();
 
+  void closeDb();
+
   void close();
 
   void beforeTxBegin();
@@ -82,6 +84,8 @@ public interface OIndexEngine<V> {
 
   long count(Object rangeFrom, final boolean fromInclusive, Object rangeTo, final boolean toInclusive, final int maxValuesToFetch,
       ValuesTransformer<V> transformer);
+
+  boolean hasRangeQuerySupport();
 
   interface ValuesTransformer<V> {
     Collection<OIdentifiable> transform(V value);
