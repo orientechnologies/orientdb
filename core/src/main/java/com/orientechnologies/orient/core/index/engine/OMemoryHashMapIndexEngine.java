@@ -116,22 +116,18 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void startTransaction() {
-    throw new UnsupportedOperationException("startTransaction");
   }
 
   @Override
   public void stopTransaction() {
-    throw new UnsupportedOperationException("stopTransaction");
   }
 
   @Override
   public void afterTxRollback() {
-    throw new UnsupportedOperationException("afterTxRollback");
   }
 
   @Override
   public void afterTxCommit() {
-    throw new UnsupportedOperationException("afterTxCommit");
   }
 
   @Override
@@ -144,7 +140,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void beforeTxBegin() {
-    throw new UnsupportedOperationException("beforeTxBegin");
   }
 
   @Override
