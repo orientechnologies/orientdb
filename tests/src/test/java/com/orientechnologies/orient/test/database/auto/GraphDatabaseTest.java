@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -457,10 +452,13 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 1);
 
     database.removeVertex(sourceDoc1);
+    targetDoc1.reload();
     database.removeVertex(targetDoc1);
+    targetDoc2.reload();
     database.removeVertex(targetDoc2);
   }
 
+  @SuppressWarnings("unchecked")
   public void nestedQuery() {
     ODocument countryDoc1 = database.createVertex().field("name", "UK").field("area", "Europe").field("code", "2").save();
     ODocument cityDoc1 = database.createVertex().field("name", "leicester").field("lat", "52.64640").field("long", "-1.13159")
@@ -471,10 +469,10 @@ public class GraphDatabaseTest {
     database.createEdge(countryDoc1, cityDoc2).field("label", "owns").save();
 
     String subquery = "select out[label='owns'].in from V where name = 'UK'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<ODocument>) result.get(0).field("out")).size(), 2);
+    Assert.assertEquals(((Collection<ODocument>) ((ODocument) result.get(0)).field("out")).size(), 2);
 
     subquery = "select expand(out[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
@@ -482,7 +480,7 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
       System.out.println("uno: " + result.get(i));
-      Assert.assertTrue(result.get(i).containsField("lat"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
     }
 
     String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out[label='owns'].in) from V where name = 'UK') order by distance";
@@ -491,8 +489,8 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
       System.out.println("dos: " + result.get(i));
-      Assert.assertTrue(result.get(i).containsField("lat"));
-      Assert.assertTrue(result.get(i).containsField("distance"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("distance"));
     }
   }
 

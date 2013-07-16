@@ -26,30 +26,30 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * 
  */
 public abstract class OServerHandlerAbstract implements OServerHandler {
-	public void startup() {
-	}
+  public void startup() {
+  }
 
-	public void shutdown() {
-	}
+  public void shutdown() {
+  }
 
-	public void sendShutdown() {
-	}
+  public void sendShutdown() {
+  }
 
-	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-	}
+  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+  }
 
-	public void onClientConnection(final OClientConnection iConnection) {
-	}
+  public void onClientConnection(final OClientConnection iConnection) {
+  }
 
-	public void onClientDisconnection(final OClientConnection iConnection) {
-	}
+  public void onClientDisconnection(final OClientConnection iConnection) {
+  }
 
-	public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-	}
+  public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+  }
 
-	public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-	}
+  public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
+  }
 
-	public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
-	}
+  public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
+  }
 }

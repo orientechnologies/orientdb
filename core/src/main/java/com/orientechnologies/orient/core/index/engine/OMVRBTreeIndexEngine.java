@@ -1,11 +1,6 @@
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
@@ -284,8 +279,9 @@ public class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imp
     acquireExclusiveLock();
     try {
       map.commitChanges(true);
-      map.unload();
-      Orient.instance().getMemoryWatchDog().removeListener(watchDog);
+
+      // TODO: GO IN DEEP WHY THE UNLOAD CAUSE LOOSE OF INDEX ENTRIES!
+      // map.unload();
     } finally {
       releaseExclusiveLock();
     }

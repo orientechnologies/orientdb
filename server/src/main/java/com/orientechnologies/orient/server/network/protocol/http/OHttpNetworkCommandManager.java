@@ -7,22 +7,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public class OHttpNetworkCommandManager {
-  private static final String                URL_PART_PATTERN    = "([a-zA-Z0-9%\\\\+]*)";
-  private static final String                REST_PARAM_PATTERN  = "\\{[a-zA-Z0-9%]*\\}";
+  private static final String               URL_PART_PATTERN   = "([a-zA-Z0-9%\\\\+]*)";
+  private static final String               REST_PARAM_PATTERN = "\\{[a-zA-Z0-9%]*\\}";
 
-  private final Map<String, OServerCommand>  exactCommands        = new HashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand>  wildcardCommands    = new HashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand>  restCommands        = new HashMap<String, OServerCommand>();
-  private OHttpNetworkCommandManager        parent;
+  private final Map<String, OServerCommand> exactCommands      = new HashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> wildcardCommands   = new HashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> restCommands       = new HashMap<String, OServerCommand>();
+  private final OHttpNetworkCommandManager  parent;
+  private final OServer                     server;
 
-  public OHttpNetworkCommandManager(final OHttpNetworkCommandManager iParent) {
+  public OHttpNetworkCommandManager(final OServer iServer, final OHttpNetworkCommandManager iParent) {
+    server = iServer;
     parent = iParent;
   }
 
-  public Object getCommand(String iName) {
+  public Object getCommand(final String iName) {
     OServerCommand cmd = exactCommands.get(iName);
 
     if (cmd == null) {
@@ -59,7 +62,7 @@ public class OHttpNetworkCommandManager {
    * 
    * @param iServerCommandInstance
    */
-  public void registerCommand(OServerCommand iServerCommandInstance) {
+  public void registerCommand(final OServerCommand iServerCommandInstance) {
     for (String name : iServerCommandInstance.getNames())
       if (OStringSerializerHelper.contains(name, '{')) {
         restCommands.put(name, iServerCommandInstance);
@@ -67,6 +70,7 @@ public class OHttpNetworkCommandManager {
         wildcardCommands.put(name, iServerCommandInstance);
       else
         exactCommands.put(name, iServerCommandInstance);
+    iServerCommandInstance.configure(server);
   }
 
   private boolean matches(String urlPattern, String requestUrl) {

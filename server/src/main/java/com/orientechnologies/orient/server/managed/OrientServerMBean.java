@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OClientConnection;
 
 public interface OrientServerMBean {
-	public OStorage[] getOpenedStorages();
+  public OStorage[] getOpenedStorages();
 
-	public OClientConnection[] getConnections();
+  public OClientConnection[] getConnections();
 }

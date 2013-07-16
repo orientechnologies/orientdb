@@ -15,16 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -336,18 +331,23 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     checkForRebuild();
     acquireSharedLock();
     try {
-      return new OMultiCollectionIterator<OIdentifiable>(indexEngine.valuesIterator());
+
+      return new OSharedResourceIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(
+          indexEngine.valuesIterator()));
+
     } finally {
       releaseSharedLock();
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
     checkForRebuild();
     acquireSharedLock();
     try {
-      return new OMultiCollectionIterator<OIdentifiable>(indexEngine.inverseValuesIterator());
+
+      return new OSharedResourceIterator(this, new OMultiCollectionIterator<OIdentifiable>(indexEngine.inverseValuesIterator()));
+
     } finally {
       releaseSharedLock();
     }

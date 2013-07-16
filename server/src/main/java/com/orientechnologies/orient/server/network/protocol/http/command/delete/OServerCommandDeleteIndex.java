@@ -24,43 +24,43 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
 public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
-	private static final String[]	NAMES	= { "DELETE|index/*" };
+  private static final String[] NAMES = { "DELETE|index/*" };
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: index/<database>/<index-name>/<key>/[<value>]");
 
-		iRequest.data.commandInfo = "Index remove";
+    iRequest.data.commandInfo = "Index remove";
 
-		ODatabaseDocumentTx db = null;
+    ODatabaseDocumentTx db = null;
 
-		try {
-			db = getProfiledDatabaseInstance(iRequest);
+    try {
+      db = getProfiledDatabaseInstance(iRequest);
 
-			final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
-			if (index == null)
-				throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
+      final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
+      if (index == null)
+        throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
-			final boolean found;
-			if (urlParts.length > 4)
-				found = index.remove(urlParts[3], new ORecordId(urlParts[3]));
-			else
-				found = index.remove(urlParts[3]);
+      final boolean found;
+      if (urlParts.length > 4)
+        found = index.remove(urlParts[3], new ORecordId(urlParts[3]));
+      else
+        found = index.remove(urlParts[3]);
 
-			if (found)
-			  iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-			else
-			  iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
-						null);
-		} finally {
-			if (db != null)
-			  db.close();
-		}
-		return false;
-	}
+      if (found)
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      else
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+            null, null);
+    } finally {
+      if (db != null)
+        db.close();
+    }
+    return false;
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

@@ -25,13 +25,13 @@ package com.orientechnologies.orient.server.schedule;
  * @author Carlo Pelliccia
  */
 
-public class OAlwaysTrueValueMatcher implements OValueMatcher{
+public class OAlwaysTrueValueMatcher implements OValueMatcher {
 
-	/**
-	 * Always true!
-	 */
-	public boolean match(int value) {
-		return true;
-	}
+  /**
+   * Always true!
+   */
+  public boolean match(int value) {
+    return true;
+  }
 
 }

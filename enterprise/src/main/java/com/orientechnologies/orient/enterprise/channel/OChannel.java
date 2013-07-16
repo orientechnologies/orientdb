@@ -30,9 +30,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
 public abstract class OChannel extends OSharedResourceExternalTimeout {
-  /**
-   * 
-   */
   private static final OJVMProfiler PROFILER                     = Orient.instance().getProfiler();
 
   public Socket                     socket;

@@ -29,14 +29,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.*;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
@@ -54,11 +47,6 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final char   DBNAME_DIR_SEPARATOR   = '$';
   public static final String SESSIONID_UNAUTHORIZED = "-";
   public static final String SESSIONID_LOGOUT       = "!";
-  private final OServer      server;
-
-  public OServerCommandAuthenticatedDbAbstract() {
-    server = OServerMain.server();
-  }
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {

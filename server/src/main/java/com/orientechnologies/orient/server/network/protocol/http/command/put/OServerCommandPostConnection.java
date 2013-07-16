@@ -41,7 +41,7 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
       OClientConnectionManager.instance().interrupt(Integer.parseInt(urlParts[2]));
     else
       throw new IllegalArgumentException("Connection command '" + urlParts[1] + "' is unknown. Supported are: kill, interrupt");
-    
+
     iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         null, null);
     return false;

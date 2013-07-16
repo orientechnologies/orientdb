@@ -18,12 +18,13 @@ package com.orientechnologies.orient.server.hazelcast;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.orientechnologies.orient.core.cache.OCache;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.OServerMain;
 
 /**
  * 2-Level cache based on the Hazelcast's distributed map
@@ -36,22 +37,26 @@ public class OHazelcastCache implements OCache, OServerLifecycleListener {
   private final int                      limit;
   private final String                   mapName;
   private IMap<ORID, ORecordInternal<?>> map;
+  private HazelcastInstance              hInstance;
+  private OServer                        server;
 
-  public OHazelcastCache(final String iStorageName, final int iLimit) {
+  public OHazelcastCache(final OServer iServer, final HazelcastInstance iInstance, final String iStorageName, final int iLimit) {
     mapName = iStorageName + ".level2cache";
     limit = iLimit;
-    OServerMain.server().registerLifecycleListener(this);
+    hInstance = iInstance;
+    server = iServer;
+    server.registerLifecycleListener(this);
   }
 
   @Override
   public void startup() {
-    if (map == null && OHazelcastPlugin.getHazelcastInstance() != null)
-      map = OHazelcastPlugin.getHazelcastInstance().getMap(mapName);
+    if (map == null && hInstance != null)
+      map = hInstance.getMap(mapName);
   }
 
   @Override
   public void shutdown() {
-    if (map != null && OHazelcastPlugin.getHazelcastInstance().getCluster().getMembers().size() <= 1)
+    if (map != null && hInstance.getCluster().getMembers().size() <= 1)
       // I'M LAST MEMBER: REMOVE ALL THE ENTRIES
       map.clear();
     map = null;

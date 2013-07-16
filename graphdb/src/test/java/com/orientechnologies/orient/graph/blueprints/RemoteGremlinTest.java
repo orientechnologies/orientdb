@@ -6,11 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -25,6 +22,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class RemoteGremlinTest {
   /**
@@ -131,6 +130,27 @@ public class RemoteGremlinTest {
       x.printStackTrace();
       System.out.println(graph.getRawGraph().isClosed());
     }
+  }
+
+  @Test
+  public void testRemoteDB() {
+    OrientGraphNoTx graph = new OrientGraphNoTx("remote:localhost/temp", "admin", "admin");
+
+    OrientVertex v1 = graph.addVertex("class:V");
+    OrientVertex v2 = graph.addVertex("class:V");
+    OrientVertex v3 = graph.addVertex("class:V");
+
+    v1.addEdge("rel", v2);
+    v2.addEdge("rel", v3);
+
+    graph.commit();
+
+    graph = new OrientGraphNoTx("remote:localhost/temp");
+
+    Assert.assertEquals(graph.countVertices(), 3);
+    Assert.assertEquals(graph.countEdges(), 2);
+
+    graph.shutdown();
   }
 
 }

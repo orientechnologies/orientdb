@@ -36,19 +36,17 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
-  protected final String                    url;
-  protected final String                    mode;
-  protected OStorageConfiguration           configuration;
-  protected String                          name;
-  protected AtomicLong                      version = new AtomicLong();
-  protected OLevel2RecordCache              level2Cache;
+  protected final String                          url;
+  protected final String                          mode;
+  protected OStorageConfiguration                 configuration;
+  protected String                                name;
+  protected AtomicLong                            version = new AtomicLong();
+  protected OLevel2RecordCache                    level2Cache;
 
-  protected volatile STATUS                 status  = STATUS.CLOSED;
-  protected OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
-                                                        OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-                                                        OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger(), true);
+  protected volatile STATUS                       status  = STATUS.CLOSED;
+  protected final OSharedResourceAdaptiveExternal lock;
 
-  public OStorageAbstract(final String iName, final String iURL, final String iMode) {
+  public OStorageAbstract(final String iName, final String iURL, final String iMode, final int iTimeout) {
     if (OStringSerializerHelper.contains(iName, '/'))
       name = iName.substring(iName.lastIndexOf("/") + 1);
     else
@@ -62,6 +60,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
     url = iURL;
     mode = iMode;
+
+    lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), iTimeout, true);
   }
 
   public OStorageConfiguration getConfiguration() {
@@ -101,16 +101,22 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     if (!checkForClose(iForce))
       return;
 
-    for (Object resource : sharedResources.values()) {
-      if (resource instanceof OSharedResource)
-        ((OSharedResource) resource).releaseExclusiveLock();
+    lock.acquireExclusiveLock();
+    try {
+      for (Object resource : sharedResources.values()) {
+        if (resource instanceof OSharedResource)
+          ((OSharedResource) resource).releaseExclusiveLock();
 
-      if (resource instanceof OCloseable)
-        ((OCloseable) resource).close();
+        if (resource instanceof OCloseable)
+          ((OCloseable) resource).close();
+      }
+      sharedResources.clear();
+
+      Orient.instance().unregisterStorage(this);
+
+    } finally {
+      lock.releaseExclusiveLock();
     }
-    sharedResources.clear();
-
-    Orient.instance().unregisterStorage(this);
   }
 
   /**
@@ -125,12 +131,17 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   protected boolean checkForClose(final boolean iForce) {
-    if (status == STATUS.CLOSED)
-      return false;
+    lock.acquireSharedLock();
+    try {
+      if (status == STATUS.CLOSED)
+        return false;
 
-    final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
+      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-    return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+      return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public int getUsers() {

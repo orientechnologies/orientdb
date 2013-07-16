@@ -23,7 +23,8 @@ import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.task.OAbstractDistributedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -41,30 +42,31 @@ public interface ODistributedServerManager {
 
   public boolean checkStatus(String string);
 
-  public void setStatus(final String iStatus);
+  public void setStatus(String iStatus);
 
-  public boolean isOfflineNode(final String iNodeId);
+  public boolean isOfflineNode(String iNodeId);
 
-  public boolean isLocalNodeMaster(final Object iKey);
+  public boolean isLocalNodeMaster(Object iKey);
 
-  public String getMasterNode(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public OReplicationConfig getReplicationData(String iDatabaseName, String iClusterName, Object iKey, String iSourceNodeId,
+      String iDestinationNodeId);
 
-  public Collection<String> getSynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public Collection<String> getSynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
 
-  public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey);
+  public Collection<String> getAsynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
 
-  public Object routeOperation2Node(String iClusterName, Object iKey, OAbstractDistributedTask<?> iTask) throws ExecutionException;
+  public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
+      throws ExecutionException;
 
-  public Object sendOperation2Node(String iNodeId, OAbstractDistributedTask<?> iTask) throws ODistributedException;
+  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask) throws ODistributedException;
 
-  public Map<String, Object> sendOperation2Nodes(Set<String> iNodeIds, OAbstractDistributedTask<?> iTask)
-      throws ODistributedException;
+  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractRemoteTask<?> iTask) throws ODistributedException;
 
   public String getLocalNodeId();
 
   public Set<String> getRemoteNodeIds();
 
-  public Set<String> getRemoteNodeIdsBut(String iNodeId);
+  public Set<String> getRemoteNodeIdsBut(String... iNodeId);
 
   public ODocument getDatabaseStatus(String iDatabaseName);
 
@@ -86,7 +88,7 @@ public interface ODistributedServerManager {
 
   public long getRunId();
 
-  public long incrementDistributedSerial(final String iDatabaseName);
+  public long incrementDistributedSerial(String iDatabaseName);
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 
@@ -108,4 +110,8 @@ public interface ODistributedServerManager {
   public Lock getLock(String iLockName);
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
+
+  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
+
+  public void resetOperationQueue(long iCurrentRunId, long iOperationSerial);
 }

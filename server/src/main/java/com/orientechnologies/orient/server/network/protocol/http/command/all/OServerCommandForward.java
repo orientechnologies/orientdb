@@ -28,40 +28,40 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
  * 
  */
 public class OServerCommandForward extends OServerCommandAbstract {
-	private final String[]	pattern;
-	private final String		prefix;
-	private String					forwardTo;
+  private final String[] pattern;
+  private final String   prefix;
+  private String         forwardTo;
 
-	public OServerCommandForward(final OServerCommandConfiguration iConfiguration) {
-		pattern = new String[] { iConfiguration.pattern };
-		prefix = iConfiguration.pattern.substring(iConfiguration.pattern.indexOf("|") + 1);
+  public OServerCommandForward(final OServerCommandConfiguration iConfiguration) {
+    pattern = new String[] { iConfiguration.pattern };
+    prefix = iConfiguration.pattern.substring(iConfiguration.pattern.indexOf("|") + 1);
 
-		// LOAD HTTP CACHE CONFIGURATION
-		for (OServerEntryConfiguration par : iConfiguration.parameters) {
-			if (par.name.equals("to"))
-				forwardTo = par.value;
-		}
-	}
+    // LOAD HTTP CACHE CONFIGURATION
+    for (OServerEntryConfiguration par : iConfiguration.parameters) {
+      if (par.name.equals("to"))
+        forwardTo = par.value;
+    }
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		final StringBuilder forwardURL = new StringBuilder("/");
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    final StringBuilder forwardURL = new StringBuilder("/");
 
-		forwardURL.append(forwardTo);
+    forwardURL.append(forwardTo);
 
-		if (prefix.endsWith("*")) {
-			final int prefixLength = prefix.length() - 1;
-			final int postfix = iRequest.url.indexOf(prefix.substring(0, prefixLength));
-			if (postfix > -1)
-				forwardURL.append(iRequest.url.substring(postfix + prefixLength));
-		}
+    if (prefix.endsWith("*")) {
+      final int prefixLength = prefix.length() - 1;
+      final int postfix = iRequest.url.indexOf(prefix.substring(0, prefixLength));
+      if (postfix > -1)
+        forwardURL.append(iRequest.url.substring(postfix + prefixLength));
+    }
 
-		iRequest.url = forwardURL.toString();
-		return true;
-	}
+    iRequest.url = forwardURL.toString();
+    return true;
+  }
 
-	@Override
-	public String[] getNames() {
-		return pattern;
-	}
+  @Override
+  public String[] getNames() {
+    return pattern;
+  }
 }

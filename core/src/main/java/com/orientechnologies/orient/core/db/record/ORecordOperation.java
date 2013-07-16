@@ -132,4 +132,16 @@ public class ORecordOperation implements OSerializableStream {
     }
     return operation;
   }
+
+  public static byte getId(String iName) {
+    iName = iName.toUpperCase();
+
+    if (iName.startsWith("CREAT"))
+      return ORecordOperation.CREATED;
+    else if (iName.startsWith("UPDAT"))
+      return ORecordOperation.UPDATED;
+    else if (iName.startsWith("DELET"))
+      return ORecordOperation.DELETED;
+    return -1;
+  }
 }

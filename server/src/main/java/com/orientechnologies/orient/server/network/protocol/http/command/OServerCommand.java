@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
@@ -49,4 +50,6 @@ public interface OServerCommand {
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
   public String[] getNames();
+
+  public void configure(OServer server);
 }

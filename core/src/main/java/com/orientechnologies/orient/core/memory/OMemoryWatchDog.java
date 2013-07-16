@@ -37,7 +37,7 @@ public class OMemoryWatchDog extends Thread {
   private final Map<ListenerWrapper, Object> listeners    = new WeakHashMap<ListenerWrapper, Object>(128);
   private static long                        lastGC       = 0;
   private int                                alertTimes   = 0;
-  protected ReferenceQueue<Object>           monitorQueue = new ReferenceQueue<Object>();
+  protected final ReferenceQueue<Object>     monitorQueue = new ReferenceQueue<Object>();
   protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
 
   /**
@@ -117,6 +117,9 @@ public class OMemoryWatchDog extends Thread {
         // WAITS FOR THE GC FREE
         monitorQueue.remove();
 
+        if (Thread.interrupted())
+          break;
+
         // GC is freeing memory!
         alertTimes++;
         long maxMemory = Runtime.getRuntime().maxMemory();
@@ -141,12 +144,21 @@ public class OMemoryWatchDog extends Thread {
 
         Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", "WatchDog free resources", timer);
 
+      } catch (InterruptedException e) {
+        break;
       } catch (Exception e) {
       } finally {
         // RE-INSTANTIATE THE MONITOR REF
         monitorRef = new SoftReference<Object>(new Object(), monitorQueue);
       }
     }
+
+    OLogManager.instance().debug(this, "[OMemoryWatchDog] shutdowning...");
+
+    synchronized (listeners) {
+      listeners.clear();
+    }
+    monitorRef = null;
   }
 
   public Listener addListener(final Listener listener) {

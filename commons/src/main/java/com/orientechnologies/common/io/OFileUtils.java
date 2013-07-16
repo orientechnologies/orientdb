@@ -16,7 +16,10 @@
 package com.orientechnologies.common.io;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.Locale;
 
 public class OFileUtils {
@@ -119,5 +122,41 @@ public class OFileUtils {
   public static void checkValidName(final String iFileName) throws IOException {
     if (iFileName.contains("..") || iFileName.contains("/") || iFileName.contains("\\"))
       throw new IOException("Invalid file name '" + iFileName + "'");
+  }
+
+  public static void deleteRecursively(final File iRootFile) {
+    if (iRootFile.exists()) {
+      if (iRootFile.isDirectory()) {
+        for (File f : iRootFile.listFiles()) {
+          if (f.isFile())
+            f.delete();
+          else
+            deleteRecursively(f);
+        }
+      }
+      iRootFile.delete();
+    }
+  }
+
+  @SuppressWarnings("resource")
+  public static final void copyFile(final File source, final File destination) throws IOException {
+    FileChannel sourceChannel = new FileInputStream(source).getChannel();
+    FileChannel targetChannel = new FileOutputStream(destination).getChannel();
+    sourceChannel.transferTo(0, sourceChannel.size(), targetChannel);
+    sourceChannel.close();
+    targetChannel.close();
+  }
+
+  public static final void copyDirectory(final File source, final File destination) throws IOException {
+    if (!destination.exists())
+      destination.mkdirs();
+
+    for (File f : source.listFiles()) {
+      final File target = new File(destination.getAbsolutePath() + "/" + f.getName());
+      if (f.isFile())
+        copyFile(f, target);
+      else
+        copyDirectory(f, target);
+    }
   }
 }

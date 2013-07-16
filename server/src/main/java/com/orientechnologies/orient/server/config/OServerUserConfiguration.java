@@ -22,21 +22,21 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "user")
 @XmlType(propOrder = { "resources", "password", "name" })
 public class OServerUserConfiguration {
-	@XmlAttribute
-	public String	name;
+  @XmlAttribute
+  public String name;
 
-	@XmlAttribute
-	public String	password;
+  @XmlAttribute
+  public String password;
 
-	@XmlAttribute
-	public String	resources;
+  @XmlAttribute
+  public String resources;
 
-	public OServerUserConfiguration() {
-	}
+  public OServerUserConfiguration() {
+  }
 
-	public OServerUserConfiguration(final String iName, final String iPassword, final String iResources) {
-		name = iName;
-		password = iPassword;
-		resources = iResources;
-	}
+  public OServerUserConfiguration(final String iName, final String iPassword, final String iResources) {
+    name = iName;
+    password = iPassword;
+    resources = iResources;
+  }
 }

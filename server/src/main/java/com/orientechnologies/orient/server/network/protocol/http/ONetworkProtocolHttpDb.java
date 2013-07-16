@@ -28,40 +28,10 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetProfiler;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportRecords;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostUploadSingleFile;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPostConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
@@ -79,9 +49,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
       // FIRST TIME REGISTERS THE STATELESS COMMANDS
       registerStatelessCommands(iStatelessCommands);
 
-    cmdManager = new OHttpNetworkCommandManager(sharedCmdManager);
+    cmdManager = new OHttpNetworkCommandManager(server, sharedCmdManager);
     for (Object cmdConfig : iStatefulCommands)
-      cmdManager.registerCommand(OServerNetworkListener.createCommand((OServerCommandConfiguration) cmdConfig));
+      cmdManager.registerCommand(OServerNetworkListener.createCommand(server, (OServerCommandConfiguration) cmdConfig));
 
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
@@ -100,7 +70,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   }
 
   protected void registerStatelessCommands(final List<?> iStatelessCommands) {
-    sharedCmdManager = new OHttpNetworkCommandManager(null);
+    sharedCmdManager = new OHttpNetworkCommandManager(server, null);
 
     sharedCmdManager.registerCommand(new OServerCommandGetConnect());
     sharedCmdManager.registerCommand(new OServerCommandGetDisconnect());

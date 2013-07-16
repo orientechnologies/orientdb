@@ -21,12 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -98,7 +93,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     return tree.iterator(iAutoConvertToRecord);
   }
 
-  public OLazyIterator<OIdentifiable> iterator() {
+  public Iterator<OIdentifiable> iterator() {
     return tree.iterator();
   }
 

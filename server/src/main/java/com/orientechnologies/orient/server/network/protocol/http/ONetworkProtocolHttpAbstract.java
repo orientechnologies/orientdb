@@ -22,12 +22,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -35,11 +30,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -55,26 +46,26 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String                  COMMAND_SEPARATOR  = "|";
-  private static int                          requestMaxContentLength;                  // MAX = 10Kb
+  private static final String                 COMMAND_SEPARATOR = "|";
+  private static int                          requestMaxContentLength;                // MAX = 10Kb
   private static int                          socketTimeout;
 
-  protected OClientConnection                  connection;
+  protected OClientConnection                 connection;
   protected OChannelTextServer                channel;
-  protected OUser                              account;
+  protected OUser                             account;
   protected OHttpRequest                      request;
-  protected OHttpResponse                      response;
+  protected OHttpResponse                     response;
 
-  private final StringBuilder                  requestContent    = new StringBuilder();
+  private final StringBuilder                 requestContent    = new StringBuilder();
   private String                              responseCharSet;
   private String[]                            additionalResponseHeaders;
   private String                              listeningAddress  = "?";
 
-  protected static OHttpNetworkCommandManager  sharedCmdManager;
+  protected static OHttpNetworkCommandManager sharedCmdManager;
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
-    super(Orient.getThreadGroup(), "IO-HTTP");
+    super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override

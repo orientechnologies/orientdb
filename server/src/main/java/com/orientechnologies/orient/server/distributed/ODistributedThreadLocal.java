@@ -21,9 +21,16 @@ package com.orientechnologies.orient.server.distributed;
  * @author Luca
  * 
  */
-public class ODistributedThreadLocal extends ThreadLocal<Boolean> {
-  public static ODistributedThreadLocal INSTANCE             = new ODistributedThreadLocal();
+public class ODistributedThreadLocal extends ThreadLocal<String> {
+  public static ODistributedThreadLocal INSTANCE = new ODistributedThreadLocal();
 
-  public boolean                        distributedExecution = false;
-  public String                         distributedRequestSource = null;
+  @Override
+  public void set(final String value) {
+    super.set(value);
+  }
+
+  @Override
+  public String get() {
+    return super.get();
+  }
 }

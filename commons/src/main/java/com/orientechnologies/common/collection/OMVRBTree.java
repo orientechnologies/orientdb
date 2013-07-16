@@ -18,20 +18,7 @@ package com.orientechnologies.common.collection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -51,7 +38,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   private static final OAlwaysLessKey      ALWAYS_LESS_KEY     = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey   ALWAYS_GREATER_KEY  = new OAlwaysGreaterKey();
 
-  boolean                                  pageItemFound       = false;
+  protected boolean                        pageItemFound       = false;
   protected int                            pageItemComparator  = 0;
   protected int                            pageIndex           = -1;
 
@@ -774,9 +761,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
         OMVRBTreeEntry<K, V> node = parentNode.getRight();
         OMVRBTreeEntry<K, V> prevNode = parentNode;
         int cmp = 0;
+        final K fk = newNode.getFirstKey();
         if (comparator != null)
           while (node != null) {
-            cmp = comparator.compare(newNode.getFirstKey(), node.getFirstKey());
+            cmp = comparator.compare(fk, node.getFirstKey());
             if (cmp < 0) {
               prevNode = node;
               node = node.getLeft();
@@ -789,7 +777,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
           }
         else
           while (node != null) {
-            cmp = compare(newNode.getFirstKey(), node.getFirstKey());
+            cmp = compare(fk, node.getFirstKey());
             if (cmp < 0) {
               prevNode = node;
               node = node.getLeft();

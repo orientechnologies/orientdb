@@ -17,12 +17,8 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -42,11 +38,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -75,7 +67,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServ
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.handler.OServerHandler;
@@ -150,12 +141,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     }
 
-    OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(connection, (byte) requestType);
+    OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
   }
 
   @Override
   protected void onAfterRequest() throws IOException {
-    OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(connection, (byte) requestType);
+    OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
@@ -482,7 +473,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.serverUser == null)
       throw new OSecurityAccessException("Server user not authenticated.");
 
-    if (!OServerMain.server().authenticate(connection.serverUser.name, null, iResource))
+    if (!server.authenticate(connection.serverUser.name, null, iResource))
       throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
           + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
   }
@@ -498,7 +489,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } catch (OSecurityException e) {
           // TRY WITH SERVER'S USER
           try {
-            connection.serverUser = OServerMain.server().serverLogin(iUser, iPassword, "database.passthrough");
+            connection.serverUser = server.serverLogin(iUser, iPassword, "database.passthrough");
           } catch (OSecurityException ex) {
             throw e;
           }
@@ -717,7 +708,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    connection.database = (ODatabaseDocumentTx) OServerMain.server().openDatabase(dbType, dbURL, user, passwd);
+    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
     connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
@@ -732,7 +723,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         sendDatabaseInformation();
 
-        final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
+        final OServerHandler plugin = server.getPlugin("cluster");
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
@@ -752,7 +743,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     readConnectionData();
 
-    connection.serverUser = OServerMain.server().serverLogin(channel.readString(), channel.readString(), "connect");
+    connection.serverUser = server.serverLogin(channel.readString(), channel.readString(), "connect");
 
     beginResponse();
     try {
@@ -772,7 +763,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    if (OServerMain.server().authenticate(user, passwd, "shutdown")) {
+    if (server.authenticate(user, passwd, "shutdown")) {
       OLogManager.instance().info(this, "Remote client %s:%d authenticated. Starting shutdown of server...",
           channel.socket.getInetAddress(), channel.socket.getPort());
 
@@ -783,7 +774,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         endResponse();
       }
       channel.close();
-      OServerMain.server().shutdown();
+      server.shutdown();
       System.exit(0);
     }
 
@@ -804,8 +795,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.copy");
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OServerMain.server().openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser,
-        dbPassword);
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(ODatabaseDocument.TYPE, dbUrl, dbUser, dbPassword);
 
     beginResponse();
     try {
@@ -863,7 +853,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IllegalArgumentException("Cluster operation is null");
 
     if (operation.equals("status")) {
-      final OServerHandler plugin = OServerMain.server().getPlugin("cluster");
+      final OServerHandler plugin = server.getPlugin("cluster");
       if (plugin != null && plugin instanceof ODistributedServerManager)
         response = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
@@ -1451,7 +1441,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   public void startup() {
     super.startup();
-    OServerHandlerHelper.invokeHandlerCallbackOnClientConnection(connection);
+    OServerHandlerHelper.invokeHandlerCallbackOnClientConnection(server, connection);
   }
 
   @Override
@@ -1461,7 +1451,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection == null)
       return;
 
-    OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(connection);
+    OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
 
     OClientConnectionManager.instance().disconnect(connection);
   }
@@ -1474,7 +1464,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private void listDatabases() throws IOException {
     checkServerAccess("server.dblist");
     final ODocument result = new ODocument();
-    result.field("databases", OServerMain.server().getAvailableStorageNames());
+    result.field("databases", server.getAvailableStorageNames());
 
     setDataCommandInfo("List databases");
 
@@ -1503,7 +1493,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   protected void handleConnectionError(final OChannelBinaryServer iChannel, final Throwable e) {
     super.handleConnectionError(channel, e);
-    OServerHandlerHelper.invokeHandlerCallbackOnClientError(connection, e);
+    OServerHandlerHelper.invokeHandlerCallbackOnClientError(server, connection, e);
   }
 
   public String getType() {

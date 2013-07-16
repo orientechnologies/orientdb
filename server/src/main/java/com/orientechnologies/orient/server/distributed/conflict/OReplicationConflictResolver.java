@@ -16,10 +16,10 @@
 
 package com.orientechnologies.orient.server.distributed.conflict;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public interface OReplicationConflictResolver {
-  public void startup(final ODistributedServerManager iDManager, String iStorageName);
+  public void startup(final OServer iServer, ODistributedServerManager iCluster, String iStorageName);
 
   public void shutdown();
 
@@ -40,7 +40,7 @@ public interface OReplicationConflictResolver {
 
   public void handleDeleteConflict(String iRemoteNodeId, ORecordId iCurrentRID);
 
-  public void handleCommandConflict(String iRemoteNodeId, OCommandRequest iCommand, Object iLocalResult, Object iRemoteResult);
+  public void handleCommandConflict(String iRemoteNodeId, Object iCommand, Object iLocalResult, Object iRemoteResult);
 
   public boolean existConflictsForRecord(final ORecordId iRID);
 }

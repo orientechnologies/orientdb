@@ -15,32 +15,27 @@
  */
 package com.orientechnologies.orient.server.config;
 
-import javax.xml.bind.annotation.XmlAnyElement;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 
 @XmlRootElement(name = "listener")
 @XmlType(propOrder = { "commands", "parameters", "protocol", "portRange", "ipAddress" })
 public class OServerNetworkListenerConfiguration {
 
-	@XmlAttribute(name = "ip-address", required = true)
-	public String														ipAddress	= "127.0.0.1";
+  @XmlAttribute(name = "ip-address", required = true)
+  public String                          ipAddress = "127.0.0.1";
 
-	@XmlAttribute(name = "port-range")
-	public String														portRange	= "2424-2430";
+  @XmlAttribute(name = "port-range")
+  public String                          portRange = "2424-2430";
 
-	@XmlAttribute
-	public String														protocol	= "binary";
+  @XmlAttribute
+  public String                          protocol  = "binary";
 
-	@XmlElementWrapper
-	@XmlElementRef(type = OServerParameterConfiguration.class)
-	public OServerParameterConfiguration[]	parameters;
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerParameterConfiguration.class)
+  public OServerParameterConfiguration[] parameters;
 
-	@XmlElementWrapper(required = false)
-	@XmlAnyElement
-	@XmlElementRef(type = OServerCommandConfiguration.class)
-	public OServerCommandConfiguration[]		commands;
+  @XmlElementWrapper(required = false)
+  @XmlAnyElement
+  @XmlElementRef(type = OServerCommandConfiguration.class)
+  public OServerCommandConfiguration[]   commands;
 }

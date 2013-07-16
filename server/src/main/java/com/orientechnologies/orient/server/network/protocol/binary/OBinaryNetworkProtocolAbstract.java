@@ -69,7 +69,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   private final boolean          logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
-    super(Orient.getThreadGroup(), iThreadName);
+    super(Orient.instance().getThreadGroup(), iThreadName);
     logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }
