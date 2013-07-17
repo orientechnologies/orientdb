@@ -521,10 +521,10 @@ public class GraphDatabaseTest {
     database.createEdge(playerDoc, teamDoc).field("label", "player").save();
 
     String query = "select expand(out[label='player'].in) from V where surname = 'Torres'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(query));
     for (int i = 0; i < result.size(); i++) {
-      Assert.assertTrue(result.get(i).containsField("team"));
-      Assert.assertTrue(result.get(i).field("team").equals("Chelsea"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("team"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).field("team").equals("Chelsea"));
     }
     database.removeVertex(playerDoc);
     database.removeVertex(teamDoc);

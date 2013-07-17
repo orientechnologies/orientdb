@@ -1015,7 +1015,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         final OCommandRequestText aquery = iCommand;
 
-        final boolean asynch = iCommand instanceof OCommandRequestAsynch;
+        final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
         OChannelBinaryClient network = null;
         try {
@@ -1078,7 +1078,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             case 'l':
               final int tot = network.readInt();
-              final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>();
+              final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
               for (int i = 0; i < tot; ++i) {
                 final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
                 if (resultItem instanceof ORecord<?>)
@@ -1093,6 +1093,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value),
                   value);
               break;
+
+            default:
+              OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
             }
           }
           break;
