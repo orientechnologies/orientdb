@@ -114,7 +114,7 @@ public class DbListenerTest {
 
     database.registerListener(new DbListener());
 
-    ODatabaseHelper.createDatabase(database, dbUrl);
+    ODatabaseHelper.createDatabase(database, dbUrl, "plocal");
 
     Assert.assertEquals(onCreate, 1);
 
