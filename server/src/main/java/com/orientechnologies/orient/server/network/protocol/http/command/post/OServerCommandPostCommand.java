@@ -73,7 +73,15 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
       fetchPlan = executor.getFetchPlan();
 
-      final String format = fetchPlan != null ? "fetchPlan:" + fetchPlan : null;
+      String format = null;
+      if (iRequest.parameters.get("format") != null)
+        format = iRequest.parameters.get("format");
+
+      if (fetchPlan != null)
+        if (format != null)
+          format += ",fetchPlan:" + fetchPlan;
+        else
+          format = "fetchPlan:" + fetchPlan;
 
       iResponse.writeResult(response, format);
 

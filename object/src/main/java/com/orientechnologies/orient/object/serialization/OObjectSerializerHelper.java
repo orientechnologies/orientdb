@@ -371,7 +371,7 @@ public class OObjectSerializerHelper {
     final OFetchListener listener = new OObjectFetchListener();
     final OFetchContext context = new OObjectFetchContext(iFetchPlan, iLazyLoading, iEntityManager, iObj2RecHandler);
     // BIND LINKS FOLLOWING THE FETCHING PLAN
-    OFetchHelper.fetch(iRecord, iPojo, OFetchHelper.buildFetchPlan(iFetchPlan), listener, context);
+    OFetchHelper.fetch(iRecord, iPojo, OFetchHelper.buildFetchPlan(iFetchPlan), listener, context, "");
 
     // CALL AFTER UNMARSHALLING
     invokeCallback(iPojo, iRecord, OAfterDeserialization.class);

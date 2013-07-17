@@ -17,8 +17,12 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -38,7 +42,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -1352,7 +1360,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
               final ODocument doc = (ODocument) record;
               final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
               final OFetchContext context = new ORemoteFetchContext();
-              OFetchHelper.fetch(doc, doc, fetchPlan, listener, context);
+              OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
               for (ODocument d : recordsToSend) {
@@ -1640,7 +1648,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           final ODocument doc = (ODocument) iRecord;
           final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
           final OFetchContext context = new ORemoteFetchContext();
-          OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context);
+          OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context, "");
         }
 
       } catch (IOException e) {
