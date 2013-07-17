@@ -127,7 +127,7 @@ public class OTxSegment extends OSingleFileSegment {
     lock.acquireExclusiveLock();
     try {
 
-      int offset = file.allocateSpace(size);
+      long offset = file.allocateSpace(size);
 
       file.writeByte(offset, STATUS_COMMITTING);
       offset += OBinaryProtocol.SIZE_BYTE;

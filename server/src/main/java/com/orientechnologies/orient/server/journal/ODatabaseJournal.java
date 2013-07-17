@@ -38,13 +38,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 /**
  * Writes all the non-idempotent operations against a database. Uses the classic IO API and NOT the MMAP to avoid the buffer is not
@@ -208,7 +202,7 @@ public class ODatabaseJournal {
   public long[] getLastJournaledOperationId(final OPERATION_STATUS iStatus) throws IOException {
     lock.acquireExclusiveLock();
     try {
-      final int filled = file.getFilledUpTo();
+      final int filled = (int) file.getFilledUpTo();
       if (filled == 0)
         // RETURN THE BEGIN
         return BEGIN_POSITION;
@@ -237,7 +231,7 @@ public class ODatabaseJournal {
   public long[] getOperationId(final long iOffset) throws IOException {
     lock.acquireExclusiveLock();
     try {
-      final int filled = file.getFilledUpTo();
+      final int filled = (int) file.getFilledUpTo();
       if (filled == 0 || iOffset <= 0 || iOffset > filled)
         return BEGIN_POSITION;
 
@@ -336,8 +330,8 @@ public class ODatabaseJournal {
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
       ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-          "operation #%d.%d db=%s update journal rid=%s", file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID),
-          file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), storage.getName(), iRid);
+          "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
+          file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { (byte) iStatus.ordinal() });
 

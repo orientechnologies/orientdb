@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
@@ -104,7 +105,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     databaseOwner = this;
 
     recordType = iRecordType;
-    level1Cache = new OLevel1RecordCache();
+    level1Cache = new OLevel1RecordCache(new OCacheLevelOneLocatorImpl());
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
@@ -156,6 +157,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+      if (metadata.getIndexManager().autoRecreateIndexesAfterCrash())
+        metadata.getIndexManager().recreateIndexes();
     } catch (OException e) {
       close();
       throw e;

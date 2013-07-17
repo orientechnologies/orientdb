@@ -509,6 +509,9 @@ public class OLocalPage {
   }
 
   public void setBinaryValue(int pageOffset, byte[] value) throws IOException {
+    if (value.length == 0)
+      return;
+
     if (trackMode.equals(TrackMode.FORWARD))
       pageChanges.add(new OBinaryPageDiff(value, pageOffset));
     else if (trackMode.equals(TrackMode.BOTH)) {
@@ -521,6 +524,9 @@ public class OLocalPage {
   }
 
   public void copyData(int from, int to, int len) throws IOException {
+    if (len == 0)
+      return;
+
     if (trackMode.equals(TrackMode.FORWARD)) {
       byte[] content = directMemory.get(pagePointer + from, len);
       pageChanges.add(new OBinaryPageDiff(content, to));

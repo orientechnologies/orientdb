@@ -201,7 +201,9 @@ public class ODataLocalHole extends OSingleFileSegment {
       if (hole.size > iRecordSize + ODataLocal.RECORD_FIX_SIZE + 50) {
         // GOOD MATCH SINCE THE HOLE IS BIG ENOUGH ALSO FOR ANOTHER RECORD: UPDATE THE HOLE WITH THE DIFFERENCE
         final long pos = hole.dataOffset;
-        Orient.instance().getProfiler()
+        Orient
+            .instance()
+            .getProfiler()
             .stopChrono(PROFILER_DATA_RECYCLED_PARTIAL, "Time to recycle the hole space partially in data segment", timer,
                 "db.*.data.recycled.partial");
         updateHole(hole, hole.dataOffset + iRecordSize, hole.size - iRecordSize);
@@ -209,7 +211,9 @@ public class ODataLocalHole extends OSingleFileSegment {
       }
     }
 
-    Orient.instance().getProfiler()
+    Orient
+        .instance()
+        .getProfiler()
         .stopChrono(PROFILER_DATA_RECYCLED_NOTFOUND, "Time to recycle a hole space in data segment, but without luck", timer,
             "db.*.data.notFound");
 
@@ -270,8 +274,7 @@ public class ODataLocalHole extends OSingleFileSegment {
       file.writeInt(holePosition + OBinaryProtocol.SIZE_LONG, iNewRecordSize);
 
     Orient.instance().getProfiler()
-        .stopChrono(PROFILER_DATA_HOLE_UPDATE, "Time to update a hole in data segment", timer,
-        "db.*.updateHole");
+        .stopChrono(PROFILER_DATA_HOLE_UPDATE, "Time to update a hole in data segment", timer, "db.*.updateHole");
   }
 
   /**
@@ -296,7 +299,7 @@ public class ODataLocalHole extends OSingleFileSegment {
   }
 
   public synchronized int getHoles() {
-    return (file.getFilledUpTo() / RECORD_SIZE);
+    return (int) (file.getFilledUpTo() / RECORD_SIZE);
   }
 
   @Override

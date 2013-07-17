@@ -587,7 +587,7 @@ public class FreezeMultiThreadingTestNonTX {
       for (final ODocument secondDoc : secondDocs) {
         if (firstDoc.equals(secondDoc)) {
           final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
-          Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord));
+          Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord, null));
           continue outer;
         }
       }

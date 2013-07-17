@@ -466,12 +466,7 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getStatus();
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    wrapped.changeRecordIdentity(originalId, newId);
-  }
-
-  @Override
+	@Override
   public void checkForClusterPermissions(final String iClusterName) {
     wrapped.checkForClusterPermissions(iClusterName);
   }

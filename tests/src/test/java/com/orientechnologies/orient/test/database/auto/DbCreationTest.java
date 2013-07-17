@@ -56,14 +56,14 @@ public class DbCreationTest {
       db.setProperty("security", Boolean.FALSE);
 
       ODatabaseHelper.dropDatabase(db, "server");
-      ODatabaseHelper.createDatabase(db, url);
+      ODatabaseHelper.createDatabase(db, url, "plocal");
       ODatabaseHelper.dropDatabase(db, "server");
 
       database = new OObjectDatabaseTx(url);
       database.setProperty("security", Boolean.FALSE);
 
       ODatabaseHelper.dropDatabase(database, "server");
-      ODatabaseHelper.createDatabase(database, url);
+      ODatabaseHelper.createDatabase(database, url, "plocal");
       ODatabaseHelper.dropDatabase(database, "server");
     }
   }
@@ -79,7 +79,7 @@ public class DbCreationTest {
     if (url.startsWith(OEngineMemory.NAME))
       OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
-    ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url);
+    ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, "plocal");
   }
 
   @Test(dependsOnMethods = { "testDbCreationDefault" })
@@ -146,7 +146,7 @@ public class DbCreationTest {
     } catch (OStorageException e) {
       Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
     }
-    ODatabaseHelper.createDatabase(db, u);
+    ODatabaseHelper.createDatabase(db, u, "plocal");
     db.open("admin", "admin");
     db.close();
 
@@ -172,7 +172,7 @@ public class DbCreationTest {
     } catch (OStorageException e) {
       Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
     }
-    ODatabaseHelper.createDatabase(db, u);
+    ODatabaseHelper.createDatabase(db, u, "plocal");
 
     db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
     if (u.startsWith("remote:"))
@@ -187,7 +187,7 @@ public class DbCreationTest {
 
     ODatabaseHelper.dropDatabase(db);
 
-    ODatabaseHelper.createDatabase(db, url);
+    ODatabaseHelper.createDatabase(db, url, "plocal");
     db.close();
     // Get connection from pool
     db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
@@ -199,7 +199,7 @@ public class DbCreationTest {
 
     // Re-create it so that the db exists for the pool
     db = new ODatabaseDocumentTx(url);
-    ODatabaseHelper.createDatabase(db, url);
+    ODatabaseHelper.createDatabase(db, url, "plocal");
     db.close();
 
     ODatabaseDocumentPool.global().close();
@@ -209,7 +209,7 @@ public class DbCreationTest {
   public void testOpenCloseConnectionPool() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(db)) {
-      ODatabaseHelper.createDatabase(db, url);
+      ODatabaseHelper.createDatabase(db, url, "plocal");
       db.close();
     }
 
@@ -239,7 +239,7 @@ public class DbCreationTest {
       } catch (OStorageException e) {
         Assert.assertTrue(e.getCause().getMessage().contains("doesn't exits."));
       }
-      ODatabaseHelper.createDatabase(db, ur);
+      ODatabaseHelper.createDatabase(db, ur, "plocal");
       Assert.assertTrue(ODatabaseHelper.existsDatabase(db));
       db.open("admin", "admin");
     }

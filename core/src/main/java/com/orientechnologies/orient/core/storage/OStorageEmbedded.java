@@ -21,6 +21,7 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorLocal;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -48,7 +49,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String             PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
-    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger(), new OCacheLevelTwoLocatorLocal());
     lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 
     PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
@@ -233,76 +234,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     return null;
   }
 
-  protected OPhysicalPosition moveRecord(ORID originalId, ORID newId) throws IOException {
-    final OCluster originalCluster = getClusterById(originalId.getClusterId());
-    final OCluster destinationCluster = getClusterById(newId.getClusterId());
-
-    if (destinationCluster.getDataSegmentId() != originalCluster.getDataSegmentId())
-      throw new OStorageException("Original and destination clusters use different data segment ids "
-          + originalCluster.getDataSegmentId() + "<->" + destinationCluster.getDataSegmentId());
-
-    if (!destinationCluster.isHashBased()) {
-      if (originalId.getClusterId() == newId.getClusterId())
-        throw new OStorageException("Record identity can not be moved inside of the same non LH based cluster.");
-
-      if (newId.getClusterPosition().compareTo(destinationCluster.getLastPosition()) <= 0)
-        throw new OStorageException("New position " + newId.getClusterPosition() + " of " + originalId + " record inside of "
-            + destinationCluster.getName() + " cluster and can not be used as destination");
-
-      if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean()
-          || OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean()) {
-        if (destinationCluster.getFirstPosition().longValue() != 0
-            || destinationCluster.getEntries() != destinationCluster.getLastPosition().longValue() + 1)
-          throw new OStorageException("Cluster " + destinationCluster.getName()
-              + " contains holes and can not be used as destination for " + originalId + " record.");
-      }
-    }
-
-    final OPhysicalPosition ppos = originalCluster.getPhysicalPosition(new OPhysicalPosition(originalId.getClusterPosition()));
-
-    if (ppos == null)
-      throw new OStorageException("Record with id " + originalId + " does not exist");
-
-    ppos.clusterPosition = newId.getClusterPosition();
-    if (destinationCluster.isHashBased()) {
-      if (!destinationCluster.addPhysicalPosition(ppos))
-        throw new OStorageException("Record with id " + newId + " has already exists in cluster " + destinationCluster.getName());
-    } else {
-      final int diff = (int) (newId.getClusterPosition().longValue() - destinationCluster.getLastPosition().longValue() - 1);
-
-      final OClusterPosition startPos = OClusterPositionFactory.INSTANCE
-          .valueOf(destinationCluster.getLastPosition().longValue() + 1);
-      OClusterPosition pos = startPos;
-
-      final OPhysicalPosition physicalPosition = new OPhysicalPosition(pos);
-      for (int i = 0; i < diff; i++) {
-        physicalPosition.clusterPosition = pos;
-
-        destinationCluster.addPhysicalPosition(physicalPosition);
-        pos = pos.inc();
-      }
-
-      destinationCluster.addPhysicalPosition(ppos);
-
-      pos = startPos;
-      for (int i = 0; i < diff; i++) {
-        destinationCluster.removePhysicalPosition(pos);
-        pos = pos.inc();
-      }
-    }
-
-    originalCluster.removePhysicalPosition(originalId.getClusterPosition());
-
-    ORecordInternal<?> recordInternal = getLevel2Cache().freeRecord(originalId);
-    if (recordInternal != null) {
-      recordInternal.setIdentity(newId.getClusterId(), newId.getClusterPosition());
-      getLevel2Cache().updateRecord(recordInternal);
-    }
-
-    return ppos;
-  }
-
-  /**
+	/**
    * Checks if the storage is open. If it's closed an exception is raised.
    */
   protected void checkOpeness() {

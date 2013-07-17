@@ -68,6 +68,8 @@ public class OClassDictionary {
       return OStorageFileConfiguration.class;
     case 'e':
       return OStorageEHClusterConfiguration.class;
+    case 'f':
+      return OStoragePhysicalClusterConfigurationLocal.class;
 
     }
 
@@ -107,6 +109,8 @@ public class OClassDictionary {
       return 'd';
     if (iClass.equals(OStorageEHClusterConfiguration.class))
       return 'e';
+    if (iClass.equals(OStoragePhysicalClusterConfigurationLocal.class))
+      return 'f';
 
     return null;
   }

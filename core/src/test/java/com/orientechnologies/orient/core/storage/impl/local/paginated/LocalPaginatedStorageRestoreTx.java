@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import org.testng.Assert;
@@ -101,7 +102,9 @@ public class LocalPaginatedStorageRestoreTx {
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
+		OStorage storage = baseDocumentTx.getStorage();
     baseDocumentTx.close();
+		storage.close();
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromTx");
     testDocumentTx.open("admin", "admin");

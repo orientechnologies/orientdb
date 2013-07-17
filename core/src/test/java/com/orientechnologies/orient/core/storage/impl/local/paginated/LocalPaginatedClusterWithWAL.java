@@ -285,6 +285,30 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     super.testGetPhysicalPosition();
   }
 
+  @Override
+  @Test(enabled = false)
+  public void testCompressionNothing() throws Exception {
+    super.testCompressionNothing();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testCompressionSnappy() throws Exception {
+    super.testCompressionSnappy();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testRecordGrowFactor() throws Exception {
+    super.testRecordGrowFactor();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void testRecordOverflowGrowFactor() throws Exception {
+    super.testRecordOverflowGrowFactor();
+  }
+
   private void assertFileRestoreFromWAL() throws IOException {
     paginatedCluster.close();
     writeAheadLog.close();
