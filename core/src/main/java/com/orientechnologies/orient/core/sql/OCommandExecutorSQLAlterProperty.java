@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest{
+public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER    = "ALTER";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
@@ -49,8 +49,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
   public OCommandExecutorSQLAlterProperty parse(final OCommandRequest iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 

@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbstract {
   public static final String KEYWORD_WHILE    = "WHILE";
   public static final String KEYWORD_TRAVERSE = "TRAVERSE";
+  public static final String KEYWORD_STRATEGY = "STRATEGY";
 
   // HANDLES ITERATION IN LAZY WAY
   private OTraverse          traverse         = new OTraverse();
@@ -101,7 +102,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT)) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
         final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
@@ -109,6 +110,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
           parseSkip(w);
         else if (w.equals(KEYWORD_TIMEOUT))
           parseTimeout(w);
+        else if (w.equals(KEYWORD_STRATEGY))
+          parseStrategy(w);
       }
     }
 
@@ -181,6 +184,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return this;
   }
 
+  public String getSyntax() {
+    return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
+  }
+
   protected int parseFields() {
     int currentPos = 0;
     final StringBuilder word = new StringBuilder();
@@ -218,7 +225,21 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return currentPos;
   }
 
-  public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [WHILE <condition>]";
+  /**
+   * Parses the strategy keyword if found.
+   */
+  protected boolean parseStrategy(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_STRATEGY))
+      return false;
+
+    parserNextWord(true);
+    final String strategyWord = parserGetLastWord();
+
+    try {
+      traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
+    } catch (IllegalArgumentException e) {
+      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + OTraverse.STRATEGY.values());
+    }
+    return true;
   }
 }
