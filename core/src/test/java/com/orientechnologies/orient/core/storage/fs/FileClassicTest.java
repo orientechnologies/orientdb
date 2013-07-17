@@ -2,13 +2,12 @@ package com.orientechnologies.orient.core.storage.fs;
 
 import java.io.File;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import junit.framework.Assert;
-
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * @author Andrey Lomakin
