@@ -46,8 +46,7 @@ public class TestLoadGraph {
 
     GraphMLReader.inputGraph(g, new FileInputStream(inputFile), 10000, null, null, null);
 
-    System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices()
-        + ", Edges: " + g.countEdges("E"));
+    System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
     g.shutdown();
   }

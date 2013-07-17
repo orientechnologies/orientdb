@@ -18,17 +18,17 @@ package com.orientechnologies.orient.graph.gremlin;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 
 public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
 
   public static OGremlinEngineThreadLocal INSTANCE = new OGremlinEngineThreadLocal();
 
-  public ScriptEngine get(final OrientGraph iGraph) {
+  public ScriptEngine get(final OrientBaseGraph iGraph) {
     ScriptEngine engine = super.get();
     if (engine != null) {
-      final OrientGraph currGraph = (OrientGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
+      final OrientBaseGraph currGraph = (OrientBaseGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
       if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL())))
         // REUSE IT
         return engine;
