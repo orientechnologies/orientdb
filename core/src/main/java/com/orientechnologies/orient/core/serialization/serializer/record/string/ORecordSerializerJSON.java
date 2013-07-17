@@ -575,7 +575,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       if (iRecord instanceof ORecordSchemaAware<?>) {
 
-        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context);
+        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context, iFormat);
       } else if (iRecord instanceof ORecordStringable) {
 
         // STRINGABLE

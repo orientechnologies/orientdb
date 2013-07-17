@@ -677,9 +677,6 @@ public class OServer {
         }
       }
 
-    // ALWAYS DISABLE LEVEl1 CACHE IN SERVER. IT WILL BE ENABLED IF NEEDED BY SINGLE COMMANDS
-    // database.getLevel1Cache().setEnable(false);
-
     return database;
   }
 

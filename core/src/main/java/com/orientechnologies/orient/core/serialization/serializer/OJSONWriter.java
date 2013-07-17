@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -126,7 +127,7 @@ public class OJSONWriter {
     format(iIdentLevel, iNewLine);
 
     if (iName != null && !iName.isEmpty()) {
-      out.append(writeValue(iName));
+      out.append(writeValue(iName, format));
       out.append(":");
     }
     out.append("[");
@@ -179,7 +180,13 @@ public class OJSONWriter {
 
     out.append(writeValue(iName, iFormat));
     out.append(":");
-    out.append(writeValue(iValue, iFormat));
+
+    if (iFormat.contains("graph") && (iValue == null || iValue instanceof OIdentifiable)
+        && (iName.startsWith("in_") || iName.startsWith("out_"))) {
+      // FORCE THE OUTPUT AS COLLECTION
+      out.append("[1]");
+    } else
+      out.append(writeValue(iValue, iFormat));
 
     firstAttribute = false;
     return this;
@@ -221,8 +228,12 @@ public class OJSONWriter {
         buffer.append('\"');
         linked.getIdentity().toString(buffer);
         buffer.append('\"');
-      } else
-        buffer.append(linked.getRecord().toJSON(iFormat));
+      } else {
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append("{}");
+        else
+          buffer.append(linked.getRecord().toJSON(iFormat));
+      }
 
     } else if (iValue.getClass().isArray()) {
 
@@ -230,16 +241,23 @@ public class OJSONWriter {
         buffer.append('\"');
         final byte[] source = (byte[]) iValue;
 
-        buffer.append(OBase64Utils.encodeBytes(source));
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append(source.length);
+        else
+          buffer.append(OBase64Utils.encodeBytes(source));
 
         buffer.append('\"');
       } else {
         buffer.append('[');
-        for (int i = 0; i < Array.getLength(iValue); ++i) {
-          if (i > 0)
-            buffer.append(",");
-          buffer.append(writeValue(Array.get(iValue, i), iFormat));
-        }
+        int size = Array.getLength(iValue);
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append(size);
+        else
+          for (int i = 0; i < size; ++i) {
+            if (i > 0)
+              buffer.append(",");
+            buffer.append(writeValue(Array.get(iValue, i), iFormat));
+          }
         buffer.append(']');
 
       }
@@ -288,12 +306,24 @@ public class OJSONWriter {
     return buffer.toString();
   }
 
-  protected static void iteratorToJSON(Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
+  protected static void iteratorToJSON(final Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
     buffer.append('[');
-    for (int i = 0; it.hasNext(); ++i) {
-      if (i > 0)
-        buffer.append(",");
-      buffer.append(writeValue(it.next(), iFormat));
+    if (iFormat != null && iFormat.contains("shallow")) {
+      if (it instanceof OMultiCollectionIterator<?>)
+        buffer.append(((OMultiCollectionIterator<?>) it).size());
+      else {
+        // COUNT THE MULTI VALUE
+        int i;
+        for (i = 0; it.hasNext(); ++i)
+          it.next();
+        buffer.append(i);
+      }
+    } else {
+      for (int i = 0; it.hasNext(); ++i) {
+        if (i > 0)
+          buffer.append(",");
+        buffer.append(writeValue(it.next(), iFormat));
+      }
     }
     buffer.append(']');
   }
@@ -350,20 +380,24 @@ public class OJSONWriter {
       // WRITE RECORDS
       json.beginCollection(0, false, null);
       if (iRecords != null) {
-        int counter = 0;
-        String objectJson;
-        for (OIdentifiable rec : iRecords) {
-          if (rec != null)
-            try {
-              objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
+        if (iFormat != null && iFormat.contains("shallow")) {
+          buffer.append("" + iRecords.size());
+        } else {
+          int counter = 0;
+          String objectJson;
+          for (OIdentifiable rec : iRecords) {
+            if (rec != null)
+              try {
+                objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
-              if (counter++ > 0)
-                buffer.append(",");
+                if (counter++ > 0)
+                  buffer.append(",");
 
-              buffer.append(objectJson);
-            } catch (Exception e) {
-              OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-            }
+                buffer.append(objectJson);
+              } catch (Exception e) {
+                OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+              }
+          }
         }
       }
       json.endCollection(0, false);

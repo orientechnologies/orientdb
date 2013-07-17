@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 public class OJSONFetchListener implements OFetchListener {
 
   public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
-      final OFetchContext iContext, final Object iusObject) {
+      final OFetchContext iContext, final Object iusObject, final String iFormat) {
     try {
       ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel(), true,
           iFieldName, iFieldValue);
