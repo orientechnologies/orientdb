@@ -162,6 +162,16 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			}
 			return fields;
 		},
+		listNameOfClasses : function(){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var fields = new Array
+			for (var entry in classes){
+				var claq = classes[entry]['name']
+				fields.push(claq)					
+			}
+			return fields;
+		},
 		classFromCluster : function(cluster){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];
