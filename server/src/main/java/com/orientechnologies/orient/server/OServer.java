@@ -20,7 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,7 +58,14 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
-import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.handler.OServerHandler;
@@ -297,7 +310,7 @@ public class OServer {
       else if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
         dbURL = "plocal:" + dbPath;
       else
-        throw new OConfigurationException("Database '" + name + "' (" + dbName + ") is not configured on server");
+        throw new OConfigurationException("Database '" + name + "' is not configured on server");
     }
 
     return dbURL;

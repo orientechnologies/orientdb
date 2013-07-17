@@ -4,25 +4,24 @@
 	required by applicable law or agreed to in writing, software ~ distributed under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES OR 
 	CONDITIONS OF ANY KIND, either express or implied. ~ See the License for the specific language governing permissions and ~ limitations under the License. -->
 
-<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.0.xsd"
-           xmlns="http://www.hazelcast.com/schema/config"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <group>
-        <name>orientdb</name>
-        <password>orientdb</password>
-    </group>
-    <network>
-        <port auto-increment="true">2434</port>
-        <join>
-            <multicast enabled="true">
-                <multicast-group>235.1.1.1</multicast-group>
-                <multicast-port>2434</multicast-port>
-            </multicast>
-        </join>
-    </network>
-    <executor-service>
-        <core-pool-size>1</core-pool-size>
-        <max-pool-size>16</max-pool-size>
-        <keep-alive-seconds>60</keep-alive-seconds>
-    </executor-service>
+<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.0.xsd" xmlns="http://www.hazelcast.com/schema/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<group>
+		<name>orientdb</name>
+		<password>orientdb</password>
+	</group>
+	<network>
+		<port auto-increment="true">2434</port>
+		<join>
+			<multicast enabled="true">
+				<multicast-group>235.1.1.1</multicast-group>
+				<multicast-port>2434</multicast-port>
+			</multicast>
+		</join>
+	</network>
+	<executor-service>
+		<core-pool-size>1</core-pool-size>
+		<max-pool-size>16</max-pool-size>
+		<keep-alive-seconds>60</keep-alive-seconds>
+	</executor-service>
 </hazelcast>

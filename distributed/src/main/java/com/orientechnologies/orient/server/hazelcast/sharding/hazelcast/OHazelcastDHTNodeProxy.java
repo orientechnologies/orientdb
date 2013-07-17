@@ -26,7 +26,7 @@ import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNo
  * @since 17.08.12
  */
 public class OHazelcastDHTNodeProxy implements ODHTNode {
-  private static final String     DHT_EXECUTOR = "OHazelcastDHTNodeProxy::DHT";
+	private static final String     DHT_EXECUTOR = "OHazelcastDHTNodeProxy::DHT";
   private final long              nodeId;
   private final Member            member;
   private final HazelcastInstance hazelcastInstance;

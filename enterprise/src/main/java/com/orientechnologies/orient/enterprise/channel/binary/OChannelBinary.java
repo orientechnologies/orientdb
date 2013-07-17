@@ -22,9 +22,13 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -418,32 +422,19 @@ public abstract class OChannelBinary extends OChannel {
     if (debug)
       OLogManager.instance().info(this, "%s - Closing socket...", socket.getRemoteSocketAddress());
 
-    boolean lockAcquired = false;
     try {
-      acquireExclusiveLock();
-      lockAcquired = true;
-    } catch (OTimeoutException e1) {
+      if (in != null)
+        in.close();
+    } catch (IOException e) {
     }
 
     try {
-      try {
-        if (in != null)
-          in.close();
-      } catch (IOException e) {
-      }
-
-      try {
-        if (out != null)
-          out.close();
-      } catch (IOException e) {
-      }
-
-      super.close();
-
-    } finally {
-      if (lockAcquired)
-        releaseExclusiveLock();
+      if (out != null)
+        out.close();
+    } catch (IOException e) {
     }
+
+    super.close();
   }
 
   public int readStatus() throws IOException {

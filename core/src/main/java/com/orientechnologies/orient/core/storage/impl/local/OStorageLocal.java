@@ -18,7 +18,13 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -36,7 +42,12 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -47,12 +58,17 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -70,9 +86,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId          = -1;
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet", OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION             };
-
+      ".oef", ".oem", ".oet"                                     };
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
@@ -1735,31 +1749,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     }
   }
 
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      final OPhysicalPosition ppos = moveRecord(originalId, newId);
-
-      final ODataLocal dataLocal = getDataSegmentById(ppos.dataSegmentId);
-      dataLocal.setRecordRid(ppos.dataSegmentPos, newId);
-
-    } catch (IOException e) {
-
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, e);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer,
-              "db.*.changeRecordIdentity");
-    }
-  }
-
-  @Override
+	@Override
   public boolean isHashClustersAreUsed() {
     return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }

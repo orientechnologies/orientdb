@@ -32,11 +32,11 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   private ORemoteServerEventListener remoteServerEventListener;
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
-      final OChannelBinaryClient iFirstChannel, final String iThreadName) {
-    super(Orient.instance().getThreadGroup(), iThreadName);
+      final OChannelBinaryClient iChannel) {
+    super(Orient.instance().getThreadGroup(), "OrientDB <- Asynch Client (" + iChannel.socket.getRemoteSocketAddress() + ")");
     sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
-    network = iFirstChannel;
+    network = iChannel;
     start();
   }
 
@@ -76,13 +76,11 @@ public class OAsynchChannelServiceThread extends OSoftThread {
     } catch (Exception e) {
       // OLogManager.instance().error(this, "Error in service thread", e);
       sendShutdown();
+      if (network != null) {
+        final OChannelBinaryClient n = network;
+        network = null;
+        n.close();
+      }
     }
-  }
-
-  @Override
-  public void sendShutdown() {
-    super.sendShutdown();
-    if (network != null)
-      network.close();
   }
 }

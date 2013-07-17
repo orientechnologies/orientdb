@@ -570,7 +570,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<Entry<Object, T>> inverseIterator() {
     checkForRebuild();
 

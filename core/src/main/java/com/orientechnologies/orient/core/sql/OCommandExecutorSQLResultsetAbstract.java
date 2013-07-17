@@ -15,8 +15,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -424,26 +431,26 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * @return optimized function, same function if no change
    */
   protected Object optimizeFunction(OSQLFunctionRuntime function) {
-    // boolean precalculate = true;
-    // for (int i = 0; i < function.configuredParameters.length; ++i) {
-    // if (function.configuredParameters[i] instanceof OSQLFilterItemField) {
-    // precalculate = false;
-    // } else if (function.configuredParameters[i] instanceof OSQLFunctionRuntime) {
-    // final Object res = optimizeFunction((OSQLFunctionRuntime) function.configuredParameters[i]);
-    // function.configuredParameters[i] = res;
-    // if (res instanceof OSQLFunctionRuntime || res instanceof OSQLFilterItemField) {
-    // // function might have been optimized but result is still not static
-    // precalculate = false;
-    // }
-    // }
-    // }
-    //
-    // if (precalculate) {
-    // // all fields are static, we can calculate it only once.
-    // return function.execute(null, null, null); // we can pass nulls here, they wont be used
-    // } else {
-    return function;
-    // }
+//    boolean precalculate = true;
+//    for (int i = 0; i < function.configuredParameters.length; ++i) {
+//      if (function.configuredParameters[i] instanceof OSQLFilterItemField) {
+//        precalculate = false;
+//      } else if (function.configuredParameters[i] instanceof OSQLFunctionRuntime) {
+//        final Object res = optimizeFunction((OSQLFunctionRuntime) function.configuredParameters[i]);
+//        function.configuredParameters[i] = res;
+//        if (res instanceof OSQLFunctionRuntime || res instanceof OSQLFilterItemField) {
+//          // function might have been optimized but result is still not static
+//          precalculate = false;
+//        }
+//      }
+//    }
+//
+//    if (precalculate) {
+//      // all fields are static, we can calculate it only once.
+//      return function.execute(null, null, null); // we can pass nulls here, they wont be used
+//    } else {
+      return function;
+//    }
   }
 
   protected void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {

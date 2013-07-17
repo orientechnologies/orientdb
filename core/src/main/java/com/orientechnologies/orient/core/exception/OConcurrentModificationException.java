@@ -69,8 +69,8 @@ public class OConcurrentModificationException extends ONeedRetryException {
     recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
   }
 
-  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
-      final ORecordVersion iRecordVersion, final int iRecordOperation) {
+  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion, final ORecordVersion iRecordVersion,
+      final int iRecordOperation) {
     if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 

@@ -71,11 +71,17 @@ public enum OGlobalConfiguration {
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
+  WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events when background flush thread"
+      + " will receive shutdown command and when background flush will be stopped (in ms.)", Integer.class, 10000),
+
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 36000),
 
-  WAL_CHECKPOINT_INTERVAL_TIMEOUT("storage.wal.checkpointIntervalTimeout",
-      "Timeout till DB will wait checkpoint is finished during DB close (in seconds))", Integer.class, 300),
+  WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
+      "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),
+
+  WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fullCheckpointShutdownTimeout",
+      "Timeout till DB will wait that full checkpoint is finished during DB close (in seconds))", Integer.class, 60 * 10),
 
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
@@ -87,12 +93,6 @@ public enum OGlobalConfiguration {
       "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
-
-  RECORD_GROW_FACTOR("storage.record.growFactor", "Multiplier which is used to predict how much record will grow after creation.",
-      Float.class, 1.2),
-
-  RECORD_OVERFLOW_GROW_FACTOR("storage.record.overflowGrowFactor",
-      "Multiplier which is used to predict how much record will grow after update.", Float.class, 1.2),
 
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
       + "this queue is used to accumulate all pages that "
@@ -112,8 +112,7 @@ public enum OGlobalConfiguration {
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
       Boolean.class, Boolean.TRUE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the local and remote storages",
-      Integer.class, 15000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),

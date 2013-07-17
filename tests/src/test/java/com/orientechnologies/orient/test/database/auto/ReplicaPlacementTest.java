@@ -76,7 +76,7 @@ public class ReplicaPlacementTest {
     final ODocument docTwo = dbTwo.load(docOne.getIdentity());
     Assert.assertNotNull(docTwo);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(1, propindex.getSize());
@@ -155,7 +155,7 @@ public class ReplicaPlacementTest {
     ODocument docTwo = dbTwo.load(docOne.getIdentity());
     Assert.assertNotNull(docTwo);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     docOne.field("prop", "value2");
@@ -166,7 +166,7 @@ public class ReplicaPlacementTest {
     docTwo = dbTwo.load(docOne.getIdentity());
     Assert.assertNotNull(docTwo);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(1, propindex.getSize());
@@ -216,7 +216,7 @@ public class ReplicaPlacementTest {
     ODocument docTwo = dbTwo.load(docOne.getIdentity());
     Assert.assertNotNull(docTwo);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbOne);
     docOne.field("prop", "value2");
@@ -236,7 +236,7 @@ public class ReplicaPlacementTest {
     Assert.assertEquals(0, docTwo.getRecordVersion().compareTo(oldVersion));
     Assert.assertEquals("value4", docTwo.field("prop"));
 
-    Assert.assertFalse(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertFalse(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(1, propindex.getSize());
@@ -308,7 +308,7 @@ public class ReplicaPlacementTest {
     docTwo = dbTwo.load(docOne.getIdentity());
 
     Assert.assertNotNull(docTwo);
-    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne));
+    Assert.assertTrue(ODocumentHelper.hasSameContentItem(docTwo, dbTwo, docOne, dbOne, null));
 
     final OIndex propindex = dbTwo.getMetadata().getIndexManager().getIndex("propindex");
     Assert.assertEquals(1, propindex.getSize());

@@ -119,4 +119,6 @@ public interface OIndexManager {
   public OIndex<?> getClassIndex(String className, String indexName);
 
   public void waitTillIndexRestore();
+
+	public boolean autoRecreateIndexesAfterCrash();
 }

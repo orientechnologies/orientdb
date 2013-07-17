@@ -16,7 +16,11 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 

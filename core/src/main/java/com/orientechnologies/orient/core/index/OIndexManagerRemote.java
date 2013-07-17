@@ -124,4 +124,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   @Override
   public void waitTillIndexRestore() {
   }
+
+	@Override
+	public boolean autoRecreateIndexesAfterCrash() {
+		return false;
+	}
 }

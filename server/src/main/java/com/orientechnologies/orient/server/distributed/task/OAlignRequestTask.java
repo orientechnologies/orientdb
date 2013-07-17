@@ -58,12 +58,12 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   public Integer call() throws Exception {
     if (lastRunId == -1 && lastOperationId == -1)
       ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "db '%s' align request starting from the beginning (no log found)", databaseName, lastRunId, lastOperationId);
+          "db=%s align request starting from the beginning (no log found)", databaseName);
     else
       ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "db '%s' align request starting from %d.%d", databaseName, lastRunId, lastOperationId);
+          "db=%s align request starting from operation %d.%d", databaseName, lastRunId, lastOperationId);
 
-    int aligned;
+    int totAligned;
 
     final ODistributedServerManager dManager = getDistributedServerManager();
 
@@ -79,7 +79,8 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
     final Lock alignmentLock = dManager.getLock("align." + databaseName);
     if (alignmentLock.tryLock())
       try {
-        aligned = 0;
+        totAligned = 0;
+        int aligned = 0;
         final OMultipleRemoteTasks tasks = new OMultipleRemoteTasks(serverInstance, dManager, databaseName,
             EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
@@ -92,13 +93,13 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
           final OAbstractReplicatedTask<?> operation = log.getOperation(pos);
           if (operation == null) {
             ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-                "db=%s skipped operation", databaseName);
+                "#%d db=%s skipped operation", aligned, databaseName);
             continue;
           }
 
           ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-              "aligning operation=%d.%d db=%s %s", operation.getRunId(), operation.getOperationSerial(), databaseName, operation
-                  .getName().toUpperCase());
+              "#%d aligning operation=%d.%d db=%s %s", aligned, operation.getRunId(), operation.getOperationSerial(), databaseName,
+              operation.getName().toUpperCase());
 
           operation.setNodeSource(localNode);
           operation.setDatabaseName(databaseName);
@@ -107,27 +108,29 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
           tasks.addTask(operation);
           positions.add(pos);
 
+          aligned++;
+
           if (tasks.getTasks() >= OP_BUFFER)
-            aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+            totAligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
         }
 
         if (tasks.getTasks() > 0)
-          aligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+          totAligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
 
         ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-            "aligned %d operations db=%s", aligned, databaseName);
+            "aligned %d operations db=%s", totAligned, databaseName);
       } finally {
         alignmentLock.unlock();
       }
     else
       // SEND BACK -1 TO RESEND THE UPDATED ALIGNMENT REQUEST
-      aligned = -1;
+      totAligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     dManager.sendOperation2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName,
-        EXECUTION_MODE.FIRE_AND_FORGET, aligned));
+        EXECUTION_MODE.FIRE_AND_FORGET, totAligned));
 
-    return aligned;
+    return totAligned;
   }
 
   protected int flushBufferedTasks(final ODistributedServerManager dManager, final OStorageSynchronizer synchronizer,
@@ -143,7 +146,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
     final int aligned = tasks.getTasks();
 
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-        "flushed aligning %d operations db=%s...", aligned, databaseName);
+        " flushed aligning %d operations db=%s...", aligned, databaseName);
 
     // REUSE THE MULTIPLE TASK
     tasks.clearTasks();

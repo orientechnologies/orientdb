@@ -39,8 +39,8 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
   public OAlignResponseTask() {
   }
 
-  public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final int iAligned) {
+  public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode);
     aligned = iAligned;
   }

@@ -3,24 +3,27 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 5/8/13
  */
 public class OWALPage {
-  public static final int     PAGE_SIZE         = 65536;
-  public static final int     MIN_RECORD_SIZE   = OIntegerSerializer.INT_SIZE + 3;
+  public static final int     PAGE_SIZE          = 65536;
+  public static final int     MIN_RECORD_SIZE    = OIntegerSerializer.INT_SIZE + 3;
 
-  public static final int     CRC_OFFSET        = 0;
-  private static final int    FREE_SPACE_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int     RECORDS_OFFSET    = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int     CRC_OFFSET         = 0;
+  public static final int     FLUSH_ID_OFFSET    = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int     FLUSH_INDEX_OFFSET = FLUSH_ID_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int    FREE_SPACE_OFFSET  = FLUSH_INDEX_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int     RECORDS_OFFSET     = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int    MAX_ENTRY_SIZE    = PAGE_SIZE - RECORDS_OFFSET;
+  private static final int    MAX_ENTRY_SIZE     = PAGE_SIZE - RECORDS_OFFSET;
 
   private final long          pagePointer;
 
-  private final ODirectMemory directMemory      = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final ODirectMemory directMemory       = ODirectMemoryFactory.INSTANCE.directMemory();
 
   public OWALPage(long pagePointer, boolean isNew) {
     this.pagePointer = pagePointer;

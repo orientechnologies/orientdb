@@ -175,8 +175,8 @@ public class BlueprintsConcurrentAddEdgeTest {
 
             } catch (OConcurrentModificationException e) {
               if (retry > 2)
-                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom
-                    + "->" + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
+                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->"
+                    + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
             } catch (Exception e) {
               System.err.println("Exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo
                   + ", retry " + retry + " Thread:" + Thread.currentThread().getName());

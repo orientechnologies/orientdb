@@ -19,4 +19,6 @@ public interface OCommandRequestAsynch {
 	public OCommandResultListener getResultListener();
 
 	public void setResultListener(OCommandResultListener iListener);
+	
+	public boolean isAsynchronous();
 }

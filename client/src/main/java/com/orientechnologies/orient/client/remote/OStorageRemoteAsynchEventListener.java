@@ -9,7 +9,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
   private OStorageRemote storage;
 
-  public OStorageRemoteAsynchEventListener(OStorageRemote storage) {
+  public OStorageRemoteAsynchEventListener(final OStorageRemote storage) {
     this.storage = storage;
   }
 

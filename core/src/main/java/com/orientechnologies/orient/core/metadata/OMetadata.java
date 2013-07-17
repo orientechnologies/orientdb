@@ -69,6 +69,7 @@ public class OMetadata {
 
       if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
         return;
+
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
           timer, "db.*.metadata.load");
@@ -78,9 +79,9 @@ public class OMetadata {
   public void create() throws IOException {
     init(false);
 
-    security.create();
     schema.create();
     indexManager.create();
+    security.create();
     functionLibrary.create();
     security.createClassTrigger();
     scheduler.create();

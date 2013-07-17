@@ -41,8 +41,8 @@ public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
   public OReadRecordTask() {
   }
 
-  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final ORecordId iRid) {
+  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String iDbName, final ORecordId iRid) {
     super(iServer, iDistributedSrvMgr, iDbName, EXECUTION_MODE.SYNCHRONOUS);
     rid = iRid;
   }

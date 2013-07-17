@@ -47,7 +47,7 @@ public class StorageTest {
 
     database = new ODatabaseDocumentTx(url);
     if (!ODatabaseHelper.existsDatabase(database))
-      ODatabaseHelper.createDatabase(database, url);
+      ODatabaseHelper.createDatabase(database, url, "plocal");
 
     database.open("admin", "admin");
 

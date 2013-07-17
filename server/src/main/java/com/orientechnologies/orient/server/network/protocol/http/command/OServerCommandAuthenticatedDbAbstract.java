@@ -29,7 +29,13 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.network.protocol.http.*;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in

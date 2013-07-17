@@ -34,8 +34,8 @@ public class OLevel1RecordCache extends OAbstractRecordCache {
   private String             CACHE_HIT;
   private String             CACHE_MISS;
 
-  public OLevel1RecordCache() {
-    super(new OCacheLocator().primaryCache());
+  public OLevel1RecordCache(OCacheLevelOneLocator cacheLocator) {
+    super(cacheLocator.threadLocalCache());
   }
 
   @Override

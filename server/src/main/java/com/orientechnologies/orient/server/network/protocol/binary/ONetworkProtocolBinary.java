@@ -239,10 +239,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       isLHClustersAreUsed();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY:
-      changeRecordIdentity();
-      break;
-
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
       addCluster();
       break;
@@ -615,28 +611,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected void changeRecordIdentity() throws IOException {
-    setDataCommandInfo("Move record from one cluster and cluster position to other");
-
-    checkDatabase();
-
-    final int originalClusterId = channel.readShort();
-    final OClusterPosition originalClusterPosition = channel.readClusterPosition();
-
-    final int destinationClusterId = channel.readShort();
-    final OClusterPosition destinationClusterPosition = channel.readClusterPosition();
-
-    connection.database.getStorage().changeRecordIdentity(new ORecordId(originalClusterId, originalClusterPosition),
-        new ORecordId(destinationClusterId, destinationClusterPosition));
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-    } finally {
-      endResponse();
-    }
-  }
-
   protected void isLHClustersAreUsed() throws IOException {
     setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");
 
@@ -897,15 +871,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.delete");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    final ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "plocal", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Dropped database '%s'", connection.database.getName());
+    if (databaseDocumentTx != null && databaseDocumentTx.exists()) {
+      OLogManager.instance().info(this, "Dropped database '%s'", databaseDocumentTx.getName());
 
-      if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (databaseDocumentTx.isClosed())
+        openDatabase(databaseDocumentTx, connection.serverUser.name, connection.serverUser.password);
 
-      connection.database.drop();
+      databaseDocumentTx.drop();
       connection.close();
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
@@ -925,12 +901,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.exists");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "plocal", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeByte((byte) (connection.database.exists() ? 1 : 0));
+      if (databaseDocumentTx == null)
+        channel.writeByte((byte) 0);
+      else
+        channel.writeByte((byte) (databaseDocumentTx.exists() ? 1 : 0));
     } finally {
       endResponse();
     }
@@ -948,9 +929,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.create");
     checkStorageExistence(dbName);
-    connection.database = getDatabaseInstance(dbName, dbType, storageType);
+    connection.database = getDatabaseInstance(dbName, dbType, storageType, true);
     createDatabase(connection.database, null, null);
-    connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+    connection.rawDatabase = (((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
 
     beginResponse();
     try {
@@ -1393,13 +1374,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  protected void endResponse() throws IOException {
-    channel.flush();
-    channel.releaseExclusiveLock();
+  protected void beginResponse() {
+    channel.acquireReadLock();
   }
 
-  protected void beginResponse() {
-    channel.acquireExclusiveLock();
+  protected void endResponse() throws IOException {
+    channel.flush();
+    channel.releaseReadLock();
   }
 
   protected void setDataCommandInfo(final String iCommandInfo) {
@@ -1516,15 +1497,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.freeze");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    final ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Freezing database '%s'", connection.database.getURL());
+    if (databaseDocumentTx != null && databaseDocumentTx.exists()) {
+      OLogManager.instance().info(this, "Freezing database '%s'", databaseDocumentTx.getURL());
 
-      if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (databaseDocumentTx.isClosed())
+        openDatabase(databaseDocumentTx, connection.serverUser.name, connection.serverUser.password);
 
-      connection.database.freeze(true);
+      databaseDocumentTx.freeze(true);
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }
@@ -1543,15 +1526,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "plocal", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
-    if (connection.database.exists()) {
-      OLogManager.instance().info(this, "Realising database '%s'", connection.database.getURL());
+    if (databaseDocumentTx != null && databaseDocumentTx.exists()) {
+      OLogManager.instance().info(this, "Realising database '%s'", databaseDocumentTx.getURL());
 
-      if (connection.database.isClosed())
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (databaseDocumentTx.isClosed())
+        openDatabase(databaseDocumentTx, connection.serverUser.name, connection.serverUser.password);
 
-      connection.database.release();
+      databaseDocumentTx.release();
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }
@@ -1571,16 +1556,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.freeze");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    final ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "plocal", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
-    if (connection.database.exists()) {
+    if (databaseDocumentTx != null && databaseDocumentTx.exists()) {
       OLogManager.instance().info(this, "Freezing database '%s' cluster %d", connection.database.getURL(), clusterId);
 
-      if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (databaseDocumentTx.isClosed()) {
+        openDatabase(databaseDocumentTx, connection.serverUser.name, connection.serverUser.password);
       }
 
-      connection.database.freezeCluster(clusterId);
+      databaseDocumentTx.freezeCluster(clusterId);
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }
@@ -1600,16 +1587,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.release");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "local");
+    ODatabaseDocumentTx databaseDocumentTx = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, "plocal", false);
+    if (databaseDocumentTx != null)
+      connection.database = databaseDocumentTx;
 
-    if (connection.database.exists()) {
+    if (databaseDocumentTx != null && databaseDocumentTx.exists()) {
       OLogManager.instance().info(this, "Realising database '%s' cluster %d", connection.database.getURL(), clusterId);
 
-      if (connection.database.isClosed()) {
-        openDatabase(connection.database, connection.serverUser.name, connection.serverUser.password);
+      if (databaseDocumentTx.isClosed()) {
+        openDatabase(databaseDocumentTx, connection.serverUser.name, connection.serverUser.password);
       }
 
-      connection.database.releaseCluster(clusterId);
+      databaseDocumentTx.releaseCluster(clusterId);
     } else {
       throw new OStorageException("Database with name '" + dbName + "' doesn't exits.");
     }

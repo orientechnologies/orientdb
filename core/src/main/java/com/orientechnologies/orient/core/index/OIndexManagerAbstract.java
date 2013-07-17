@@ -78,7 +78,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   @Override
   public OIndexManagerAbstract load() {
-    if (!OClassIndexManager.autoRecreateIndexesAfterCrash()) {
+    if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
 
@@ -227,8 +227,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   private OIndex<?> createDictionary() {
-    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
-        null);
+    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null);
   }
 
   public ODocument getConfiguration() {

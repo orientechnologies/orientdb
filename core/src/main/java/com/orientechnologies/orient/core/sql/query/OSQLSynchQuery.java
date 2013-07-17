@@ -79,7 +79,11 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     queryParams = fetchQueryParams(iArgs);
     resetNextRIDIfParametersWereChanged(queryParams);
 
-    super.run(iArgs);
+    final List<Object> res = (List<Object>) super.run(iArgs);
+    if (res != null && result.isEmpty()) {
+      for (Object r : res)
+        result.add((T) r);
+    }
 
     if (!result.isEmpty()) {
       previousQueryParams = new HashMap<Object, Object>(queryParams);
@@ -151,4 +155,10 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     execute();
     return ((Iterable<T>) getResult()).iterator();
   }
+
+  @Override
+  public boolean isAsynchronous() {
+    return false;
+  }
+
 }

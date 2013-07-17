@@ -55,11 +55,11 @@ public abstract class OAbstractFile implements OFile {
   protected volatile boolean  headerDirty            = false;
 
   protected int               incrementSize          = DEFAULT_INCREMENT_SIZE;
-  protected int               maxSize;
+  protected long              maxSize;
   protected byte[]            securityCode           = new byte[32];                // PART OF HEADER (32 bytes)
   protected String            mode;
   protected boolean           failCheck              = true;
-  protected volatile int      size;                                                 // PART OF HEADER (4 bytes)
+  protected volatile long     size;                                                 // PART OF HEADER (4 bytes)
 
   public static final int     HEADER_SIZE            = 1024;
   protected static final int  HEADER_DATA_OFFSET     = 128;
@@ -74,17 +74,17 @@ public abstract class OAbstractFile implements OFile {
   private static final int    LOCK_MAX_RETRIES       = 10;
 
   protected static final int  SIZE_OFFSET            = 0;
-  protected static final int  FILLEDUPTO_OFFSET      = 4;
-  protected static final int  SOFTLY_CLOSED_OFFSET   = 8;
+  protected static final int  FILLEDUPTO_OFFSET      = 8;
+  protected static final int  SOFTLY_CLOSED_OFFSET   = 16;
 
   private final ReadWriteLock lock                   = new ReentrantReadWriteLock();
   private boolean             wasSoftlyClosed        = true;
 
-  public abstract int getFileSize();
+  public abstract long getFileSize();
 
-  public abstract int getFilledUpTo();
+  public abstract long getFilledUpTo();
 
-  public abstract void setSize(int iSize) throws IOException;
+  public abstract void setSize(long iSize) throws IOException;
 
   public abstract void writeHeaderLong(int iPosition, long iValue) throws IOException;
 
@@ -114,7 +114,7 @@ public abstract class OAbstractFile implements OFile {
 
   protected abstract void init() throws IOException;
 
-  protected abstract void setFilledUpTo(int iHow) throws IOException;
+  protected abstract void setFilledUpTo(long iHow) throws IOException;
 
   protected abstract void flushHeader() throws IOException;
 
@@ -129,14 +129,14 @@ public abstract class OAbstractFile implements OFile {
       if (!osFile.exists())
         throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
 
-      openChannel((int) osFile.length());
+      openChannel(osFile.length());
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 
       init();
 
-      final int fileSize = getFileSize();
-      int filledUpTo = getFilledUpTo();
+      final long fileSize = getFileSize();
+      long filledUpTo = getFilledUpTo();
 
       if (filledUpTo > 0 && filledUpTo > fileSize) {
         OLogManager
@@ -364,13 +364,13 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
-  protected void checkSize(final int iSize) throws IOException {
+  protected void checkSize(final long iSize) throws IOException {
     acquireReadLock();
     try {
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
 
-      final int filledUpTo = getFilledUpTo();
+      final long filledUpTo = getFilledUpTo();
       if (iSize < filledUpTo)
         OLogManager.instance().error(
             this,
@@ -386,10 +386,10 @@ public abstract class OAbstractFile implements OFile {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#removeTail(int)
    */
-  public void removeTail(int iSizeToShrink) throws IOException {
+  public void removeTail(long iSizeToShrink) throws IOException {
     acquireWriteLock();
     try {
-      final int filledUpTo = getFilledUpTo();
+      final long filledUpTo = getFilledUpTo();
       if (filledUpTo < iSizeToShrink)
         iSizeToShrink = 0;
 
@@ -404,10 +404,10 @@ public abstract class OAbstractFile implements OFile {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#shrink(int)
    */
-  public void shrink(final int iSize) throws IOException {
+  public void shrink(final long iSize) throws IOException {
     acquireWriteLock();
     try {
-      final int filledUpTo = getFilledUpTo();
+      final long filledUpTo = getFilledUpTo();
       if (iSize >= filledUpTo)
         return;
 
@@ -424,11 +424,11 @@ public abstract class OAbstractFile implements OFile {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#allocateSpace(int)
    */
-  public int allocateSpace(final int iSize) throws IOException {
+  public long allocateSpace(final long iSize) throws IOException {
     acquireWriteLock();
     try {
-      final int offset = getFilledUpTo();
-      final int size = getFileSize();
+      final long offset = getFilledUpTo();
+      final long size = getFileSize();
 
       if (getFreeSpace() < iSize) {
         if (maxSize > 0 && maxSize - size < iSize)
@@ -436,14 +436,14 @@ public abstract class OAbstractFile implements OFile {
               + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
 
         // MAKE ROOM
-        int newFileSize = size;
+        long newFileSize = size;
 
         if (newFileSize == 0)
           // PROBABLY HAS BEEN LOST WITH HARD KILLS
           newFileSize = DEFAULT_SIZE;
 
         // GET THE STEP SIZE IN BYTES
-        int stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
+        long stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
 
         // FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
         while (newFileSize - offset <= iSize) {
@@ -469,7 +469,7 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
-  protected long checkRegions(final long iOffset, final int iLength) {
+  protected long checkRegions(final long iOffset, final long iLength) {
     acquireReadLock();
     try {
       if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
@@ -487,7 +487,7 @@ public abstract class OAbstractFile implements OFile {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getFreeSpace()
    */
-  public int getFreeSpace() {
+  public long getFreeSpace() {
     acquireReadLock();
     try {
       return getFileSize() - getFilledUpTo();
@@ -565,7 +565,7 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
-  protected void openChannel(final int iNewSize) throws IOException {
+  protected void openChannel(final long newSize) throws IOException {
     acquireWriteLock();
     try {
       OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: %d", osFile, osFile.length());
@@ -591,8 +591,8 @@ public abstract class OAbstractFile implements OFile {
       if (accessFile == null)
         throw new FileNotFoundException(osFile.getAbsolutePath());
 
-      if (accessFile.length() != iNewSize)
-        accessFile.setLength(iNewSize);
+      if (accessFile.length() != newSize)
+        accessFile.setLength(newSize);
 
       accessFile.seek(0);
       channel = accessFile.getChannel();
@@ -609,7 +609,7 @@ public abstract class OAbstractFile implements OFile {
    * 
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#getMaxSize()
    */
-  public int getMaxSize() {
+  public long getMaxSize() {
     acquireReadLock();
     try {
       return maxSize;

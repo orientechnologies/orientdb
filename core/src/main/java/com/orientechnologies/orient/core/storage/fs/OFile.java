@@ -69,7 +69,7 @@ public interface OFile {
    */
   public abstract void delete() throws IOException;
 
-  public abstract void setSize(int iSize) throws IOException;
+  public abstract void setSize(long iSize) throws IOException;
 
   public abstract void writeHeaderLong(int iPosition, long iValue) throws IOException;
 
@@ -114,18 +114,20 @@ public interface OFile {
   /**
    * Cuts bytes from the tail of the file reducing the filledUpTo size.
    * 
+   * 
    * @param iSizeToShrink
    * @throws IOException
    */
-  public abstract void removeTail(int iSizeToShrink) throws IOException;
+  public abstract void removeTail(long iSizeToShrink) throws IOException;
 
   /**
    * Shrink the file content (filledUpTo attribute only)
    * 
+   * 
    * @param iSize
    * @throws IOException
    */
-  public abstract void shrink(final int iSize) throws IOException;
+  public abstract void shrink(final long iSize) throws IOException;
 
   public abstract String getName();
 
@@ -135,19 +137,19 @@ public interface OFile {
 
   public abstract boolean renameTo(File newFile);
 
-  public abstract int allocateSpace(final int iSize) throws IOException;
+  public abstract long allocateSpace(final long iSize) throws IOException;
 
-  public abstract int getFreeSpace();
+  public abstract long getFreeSpace();
 
-  public abstract int getFileSize();
+  public abstract long getFileSize();
 
-  public abstract int getFilledUpTo();
+  public abstract long getFilledUpTo();
 
   public abstract boolean canOversize(final int iRecordSize);
 
   public abstract String toString();
 
-  public abstract int getMaxSize();
+  public abstract long getMaxSize();
 
   public abstract void setMaxSize(int maxSize);
 

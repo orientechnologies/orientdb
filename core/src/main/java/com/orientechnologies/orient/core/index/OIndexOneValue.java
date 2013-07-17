@@ -228,11 +228,11 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public long getSize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return indexEngine.size(null);
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -254,11 +254,11 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public long getKeySize() {
     checkForRebuild();
 
-    acquireSharedLock();
+    acquireExclusiveLock();
     try {
       return indexEngine.size(null);
     } finally {
-      releaseSharedLock();
+      releaseExclusiveLock();
     }
   }
 

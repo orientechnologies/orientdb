@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,13 +32,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-  private final ReentrantLock lockRead      = new ReentrantLock(true);
-  private final Condition     readCondition = lockRead.newCondition();
-  private final ReentrantLock lockWrite     = new ReentrantLock();
-  private volatile boolean    channelRead   = false;
-  private byte                currentStatus;
-  private int                 currentSessionId;
-  private final int           maxUnreadResponses;
+  private final Condition  readCondition = lockRead.getUnderlying().newCondition();
+  private volatile boolean channelRead   = false;
+  private byte             currentStatus;
+  private int              currentSessionId;
+  private final int        maxUnreadResponses;
 
   public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -47,12 +44,12 @@ public class OChannelBinaryAsynch extends OChannelBinary {
   }
 
   public void beginRequest() {
-    lockWrite.lock();
+    acquireWriteLock();
   }
 
   public void endRequest() throws IOException {
     flush();
-    lockWrite.unlock();
+    releaseWriteLock();
   }
 
   public void beginResponse(final int iRequesterId) throws IOException {
@@ -67,8 +64,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
       // WAIT FOR THE RESPONSE
       do {
         if (iTimeout <= 0)
-          lockRead.lock();
-        else if (!lockRead.tryLock(iTimeout, TimeUnit.MILLISECONDS))
+          acquireReadLock();
+        else if (!lockRead.getUnderlying().tryLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
         if (!channelRead) {
@@ -173,17 +170,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
     }
   }
 
-  public ReentrantLock getLockRead() {
-    return lockRead;
-  }
-
-  public ReentrantLock getLockWrite() {
-    return lockWrite;
-  }
-
   @Override
   public void close() {
-    if (lockRead.tryLock())
+    if (lockRead.getUnderlying().tryLock())
       try {
         readCondition.signalAll();
       } finally {

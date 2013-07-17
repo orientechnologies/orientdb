@@ -853,27 +853,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return size;
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      moveRecord(originalId, newId);
-    } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, ioe);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer,
-              "db.*.changeRecordIdentity");
-    }
-  }
-
-  @Override
+	@Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     if (ppos.dataSegmentId > 0)
       return false;

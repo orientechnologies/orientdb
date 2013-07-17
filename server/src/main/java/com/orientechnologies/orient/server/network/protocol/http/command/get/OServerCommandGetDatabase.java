@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;

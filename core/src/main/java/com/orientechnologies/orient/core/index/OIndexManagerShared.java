@@ -25,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -38,7 +39,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -51,6 +55,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   private static final long serialVersionUID      = 1L;
 
   protected volatile Thread recreateIndexesThread = null;
+  private volatile boolean  rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
     super(iDatabase);
@@ -366,6 +371,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
               }
             }
 
+            rebuildCompleted = true;
+
             newDb.close();
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
@@ -397,5 +404,24 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           OLogManager.instance().info(this, "Index rebuild task was interrupted.");
         }
     }
+  }
+
+  public boolean autoRecreateIndexesAfterCrash() {
+    if (rebuildCompleted)
+      return false;
+
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
+      return false;
+
+    OStorage storage = database.getStorage();
+
+    if (storage instanceof OStorageLocal)
+      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+    else if (storage instanceof OLocalPaginatedStorage) {
+      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
+    }
+
+    return false;
   }
 }

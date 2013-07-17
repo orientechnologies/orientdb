@@ -69,6 +69,11 @@
             <artifactId>orientdb-nativeos</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-distributed</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

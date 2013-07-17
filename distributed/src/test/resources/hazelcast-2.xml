@@ -9,33 +9,33 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <hazelcast
-        xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-2.1.xsd"
-        xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <group>
-        <name>orientdb</name>
-        <password>orientdb</password>
-    </group>
-    <network>
-        <port auto-increment="false">2436</port>
-        <join>
-            <multicast enabled="true">
-                <multicast-group>224.2.2.3</multicast-group>
-                <multicast-port>2434</multicast-port>
-            </multicast>
-        </join>
-    </network>
-    <executor-service>
-        <core-pool-size>1</core-pool-size>
-        <max-pool-size>16</max-pool-size>
-        <keep-alive-seconds>60</keep-alive-seconds>
-    </executor-service>
-    <!-- Add your own semaphore configurations here: <semaphore name="default">
-        <initial-permits>10</initial-permits> <semaphore-factory enabled="true">
-        <class-name>com.acme.MySemaphoreFactory</class-name> </semaphore-factory>
-        </semaphore> -->
+	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-2.1.xsd"
+	xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<group>
+		<name>orientdb</name>
+		<password>orientdb</password>
+	</group>
+	<network>
+		<port auto-increment="false">2436</port>
+		<join>
+			<multicast enabled="true">
+				<multicast-group>224.2.2.3</multicast-group>
+				<multicast-port>2434</multicast-port>
+			</multicast>
+		</join>
+	</network>
+	<executor-service>
+		<core-pool-size>1</core-pool-size>
+		<max-pool-size>16</max-pool-size>
+		<keep-alive-seconds>60</keep-alive-seconds>
+	</executor-service>
+	<!-- Add your own semaphore configurations here: <semaphore name="default"> 
+		<initial-permits>10</initial-permits> <semaphore-factory enabled="true"> 
+		<class-name>com.acme.MySemaphoreFactory</class-name> </semaphore-factory> 
+		</semaphore> -->
 
-    <!-- Add your own map merge policy implementations here: <merge-policies>
-        <map-merge-policy name="MY_MERGE_POLICY"> <class-name>com.acme.MyOwnMergePolicy</class-name>
-        </map-merge-policy> </merge-policies> -->
+	<!-- Add your own map merge policy implementations here: <merge-policies> 
+		<map-merge-policy name="MY_MERGE_POLICY"> <class-name>com.acme.MyOwnMergePolicy</class-name> 
+		</map-merge-policy> </merge-policies> -->
 
 </hazelcast>

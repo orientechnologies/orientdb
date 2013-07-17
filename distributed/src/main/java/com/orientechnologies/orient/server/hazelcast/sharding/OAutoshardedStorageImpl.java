@@ -385,12 +385,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.getStatus();
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    wrapped.changeRecordIdentity(originalId, newId);
-  }
-
-  @Override
+	@Override
   public boolean isHashClustersAreUsed() {
     return wrapped.isHashClustersAreUsed();
   }
