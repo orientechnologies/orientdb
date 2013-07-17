@@ -38,13 +38,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 /**
  * Writes all the non-idempotent operations against a database. Uses the classic IO API and NOT the MMAP to avoid the buffer is not
@@ -206,46 +200,9 @@ public class ODatabaseJournal {
    * Returns the last operation id with passed status
    */
   public long[] getOperationId(final long iOffset) throws IOException {
-    final int filled = (int) file.getFilledUpTo();
-    if (filled == 0 || iOffset <= 0 || iOffset > filled)
-      return new long[] { -1, -1 };
-
     lock.acquireExclusiveLock();
     try {
-      final int filled = file.getFilledUpTo();
-      if (filled == 0)
-        // RETURN THE BEGIN
-        return BEGIN_POSITION;
-
-      final Iterator<Long> iter = browseLastOperations(BEGIN_POSITION, iStatus, 1);
-
-      if (iter == null || !iter.hasNext())
-        // RETURN THE BEGIN
-        return BEGIN_POSITION;
-
-      final long[] ids = new long[2];
-      while (iter.hasNext()) {
-        long offset = iter.next();
-        ids[0] = file.readLong(offset - OFFSET_BACK_RUNID);
-        ids[1] = file.readLong(offset - OFFSET_BACK_OPERATID);
-      }
-      return ids;
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  /**
-   * Returns the last operation id.
-   */
-  private long[] getLastUnCommittedOperationId(final long iOffset) throws IOException {
-    final int filled = (int) file.getFilledUpTo();
-    if (filled == 0 || iOffset <= 0 || iOffset > filled)
-      return new long[] { -1, -1 };
-
-    lock.acquireExclusiveLock();
-    try {
-      final int filled = file.getFilledUpTo();
+      final int filled = (int) file.getFilledUpTo();
       if (filled == 0 || iOffset <= 0 || iOffset > filled)
         return BEGIN_POSITION;
 
