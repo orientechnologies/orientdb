@@ -81,13 +81,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
+        // CLEAR PREVIOUS STUFF
+        close();
 
         if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
           create();
-
-        // CLEAR PREVIOUS STUFF
-        clearMetadata();
 
         // RELOAD IT
         ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
@@ -227,7 +226,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   private OIndex<?> createDictionary() {
-    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null);
+    return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
+        null);
   }
 
   public ODocument getConfiguration() {

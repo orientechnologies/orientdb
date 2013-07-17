@@ -323,7 +323,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     try {
       return indexEngine.size(null);
     } finally {
-      releaseExclusiveLock();
+      releaseSharedLock();
     }
   }
 
