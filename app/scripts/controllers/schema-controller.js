@@ -3,8 +3,8 @@
 
 		$scope.database = Database;
 
-		$scope.list = $scope.database.listClasses();
 		
+		console.log(list);
 		$scope.headers = ['name','superClass','alias','abstract','clusters','defaultCluster','records'];
 
 		
@@ -21,7 +21,12 @@
 
 		var clazz = $routeParams.clazz;
 
+
 		$scope.database = Database;
+		$scope.list = $scope.database.getMetadata()['classes'];
+
+		$scope.listClasses = $scope.database.listClasses();
+
 		$scope.limit = 20;
 		$scope.queries = new Array;
 
@@ -30,10 +35,10 @@
 		$scope.property = Database.listPropertiesForClass(clazz);
 		$scope.queryText = ""
 		$scope.modificati = new Array;
-		$scope.list = new Array;
+		$scope.listTypes = ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMPAT','LINKSET','LONG','SHORT','STRING'];
 		
 		
-console.log($scope.property[0]['linkedType'])
+		console.log($scope.property[0]['linkedType'])
 		$scope.modificato = function(result,prop){
 			var key = result['name'];
 			console.log(result[prop])
@@ -73,7 +78,8 @@ console.log($scope.property[0]['linkedType'])
 		for(i in arrayToUpdate){
 
 			var prop = arrayToUpdate[i];
-			var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName +' ' +prop+ ' ' +properties[result][prop];
+			var newValue = properties[result][prop]!= '' ? properties[result][prop] : null; 
+			var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName +' ' +prop+ ' ' +newValue;
 			console.log(sql);
 							CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
 

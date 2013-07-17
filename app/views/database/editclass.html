@@ -19,21 +19,21 @@
 						{{result['name']}} 
 					</td>
 					<td>
-						<select ng-model="result['type']" ng-options="p.toString() for p in list" >
-							<option value="">{{result['type']}}</option>
+						<select ng-model="result['type']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'type')" >
+							
 						</select>
 						<!-- <input type="text" ng-model="result['type']" ng-change="modificato(result,'type')"> -->
 					</td>
 					<td>
-						<select ng-model="result['linkedType']" ng-options="p.toString() for p in list" >
-							<option value="">{{result['linkedType']}}</option>
+						<select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'linkedType')">
+							
 						</select>
 						<!-- <input type="text" ng-model="result['linkedType']" ng-change="modificato(result,'linkedType')">  -->
 					</td>
 
 					<td>
-						<select ng-model="result['linkedClass']" ng-options="p.toString() for p in list" >
-							<option value="">{{result['linkedClass']}}</option>
+						<select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses" ng-change="modificato(result,'linkedClass')">
+							
 						</select>
 						<!-- <input type="text" ng-model="result['linkedClass']" ng-change="modificato(result,'linkedClass')"></td> -->
 						<td>
@@ -43,14 +43,16 @@
 							<input type="checkbox" ng-model="result['readonly']" ng-change="modificato(result,'readonly')">
 						</td>
 						<td>
-							<input type="checkbox" ng-model="result['notNull']" ng-change="modificato(result,'notNull')">
+							<input type="checkbox" ng-model="result['notNull']" ng-change="modificato(result,'notNull')" >
 						</td>
 						<td>
-							<input type="text"  bs-datepicker  ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] == 'STRING'">
-							 
+							<input type="text"    ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
+							<input type="text"   bs-datepicker ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+
 						</td>
 						<td>
-							<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')">
+							<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')" ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
+							<input type="text"   bs-datepicker ng-model="result['max']"  ng-change="modificato(result,'max')" ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
 						</td>
 					</tr>
 				</tbody>

@@ -157,8 +157,8 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			var classes =  metadata['classes'];
 			var fields = new Array
 			for (var entry in classes){
-				var claq = classes[entry].name
-				fields.push(classes[entry])					
+				var claq = classes[entry]['name']
+				fields.push(claq)					
 			}
 			return fields;
 		},
