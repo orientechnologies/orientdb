@@ -206,4 +206,25 @@ public class OClusterRemote implements OCluster {
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     throw new UnsupportedOperationException("floorPositions()");
   }
+
+  @Override
+  public boolean useWal() {
+    throw new UnsupportedOperationException("useWal()");
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    throw new UnsupportedOperationException("recordGrowFactor()");
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    throw new UnsupportedOperationException("recordOverflowGrowFactor()");
+  }
+
+  @Override
+  public String compression() {
+    throw new UnsupportedOperationException("compression()");
+  }
+
 }

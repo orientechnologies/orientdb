@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocator;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -46,25 +47,25 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected volatile STATUS                       status  = STATUS.CLOSED;
   protected final OSharedResourceAdaptiveExternal lock;
 
-  public OStorageAbstract(final String iName, final String iURL, final String iMode, final int iTimeout) {
-    if (OStringSerializerHelper.contains(iName, '/'))
-      name = iName.substring(iName.lastIndexOf("/") + 1);
+  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout, final OCacheLevelTwoLocator cacheLocator) {
+    if (OStringSerializerHelper.contains(name, '/'))
+      this.name = name.substring(name.lastIndexOf("/") + 1);
     else
-      name = iName;
+      this.name = name;
 
-    if (OStringSerializerHelper.contains(iName, ','))
-      throw new IllegalArgumentException("Invalid character in storage name: " + name);
+    if (OStringSerializerHelper.contains(name, ','))
+      throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
 
-    level2Cache = new OLevel2RecordCache(this);
+    level2Cache = new OLevel2RecordCache(this, cacheLocator);
     level2Cache.startup();
 
-    url = iURL;
-    mode = iMode;
+    url = URL;
+    this.mode = mode;
 
-    lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), iTimeout, true);
+    lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
   }
 
-  public OStorageConfiguration getConfiguration() {
+	public OStorageConfiguration getConfiguration() {
     return configuration;
   }
 

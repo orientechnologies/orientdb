@@ -275,7 +275,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
 
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage() instanceof OStorageLocalAbstract ? "local" : "memory");
+        iDatabase.getStorage() instanceof OStorageLocalAbstract ? iDatabase.getStorage().getType() : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)
     // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -284,23 +284,27 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return iDatabase;
   }
 
-  protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iDbType, final String iStorageType) {
+  protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType,
+      boolean createIfAbsent) {
     String path;
 
-    final OStorage stg = Orient.instance().getStorage(iDbName);
+    final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
       path = stg.getURL();
-    else if (iStorageType.equals(OEngineLocal.NAME) || iStorageType.equals(OEngineLocalPaginated.NAME)) {
-      // if this storage was configured return always path from config file, otherwise return default path
-      path = server.getConfiguration().getStoragePath(iDbName);
-      if (path == null)
-        path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
-    } else if (iStorageType.equals(OEngineMemory.NAME)) {
-      path = iStorageType + ":" + iDbName;
+    else if (createIfAbsent) {
+      if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
+        // if this storage was configured return always path from config file, otherwise return default path
+        path = server.getConfiguration().getStoragePath(dbName);
+        if (path == null)
+          path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+      } else if (storageType.equals(OEngineMemory.NAME)) {
+        path = storageType + ":" + dbName;
+      } else
+        throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
     } else
-      throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageType + "' is not supported.");
+      return null;
 
-    return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+    return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
   }
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {

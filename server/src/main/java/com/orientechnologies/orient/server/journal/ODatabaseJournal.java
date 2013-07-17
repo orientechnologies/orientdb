@@ -205,7 +205,11 @@ public class ODatabaseJournal {
   /**
    * Returns the last operation id with passed status
    */
-  public long[] getLastJournaledOperationId(final OPERATION_STATUS iStatus) throws IOException {
+  public long[] getOperationId(final long iOffset) throws IOException {
+    final int filled = (int) file.getFilledUpTo();
+    if (filled == 0 || iOffset <= 0 || iOffset > filled)
+      return new long[] { -1, -1 };
+
     lock.acquireExclusiveLock();
     try {
       final int filled = file.getFilledUpTo();
@@ -234,7 +238,11 @@ public class ODatabaseJournal {
   /**
    * Returns the last operation id.
    */
-  public long[] getOperationId(final long iOffset) throws IOException {
+  private long[] getLastUnCommittedOperationId(final long iOffset) throws IOException {
+    final int filled = (int) file.getFilledUpTo();
+    if (filled == 0 || iOffset <= 0 || iOffset > filled)
+      return new long[] { -1, -1 };
+
     lock.acquireExclusiveLock();
     try {
       final int filled = file.getFilledUpTo();

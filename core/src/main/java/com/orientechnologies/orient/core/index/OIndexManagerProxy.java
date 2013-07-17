@@ -130,4 +130,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public void waitTillIndexRestore() {
     delegate.waitTillIndexRestore();
   }
+
+  @Override
+  public boolean autoRecreateIndexesAfterCrash() {
+    return delegate.autoRecreateIndexesAfterCrash();
+  }
 }

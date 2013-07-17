@@ -388,7 +388,7 @@ public class OMultiFileSegment extends OSegment {
       OFile file;
       int remainingSize = iSize;
       // IF SOME FILES ALREADY CREATED
-      int offset = -1;
+      long offset = -1;
       int fileNumber = -1;
       if (files.length > 0) {
         // CHECK IF THERE IS FREE SPACE IN LAST FILE IN CHAIN
@@ -407,17 +407,17 @@ public class OMultiFileSegment extends OSegment {
 
         // NOT FOUND FREE SPACE: CHECK IF CAN OVERSIZE LAST FILE
 
-        final int oversize = fileMaxSize - file.getFileSize();
+        final long oversize = fileMaxSize - file.getFileSize();
         if (oversize > 0 && remainingSize > 0) {
           fileNumber = files.length - 1;
           if (remainingSize > oversize) {
             remainingSize -= oversize;
-            int newOffset = file.allocateSpace(oversize);
+            long newOffset = file.allocateSpace(oversize);
             // SAVE OFFSET IF IT WASN'T SAVED EARLIER
             if (offset == -1)
               offset = newOffset;
           } else {
-            int newOffset = file.allocateSpace(remainingSize);
+            long newOffset = file.allocateSpace(remainingSize);
             if (offset == -1)
               offset = newOffset;
             if (fileNumber == -1) {
@@ -537,7 +537,7 @@ public class OMultiFileSegment extends OSegment {
           if (file.getFilledUpTo() < offset) {
             throw new ODatabaseException("range check! " + file.getFilledUpTo() + " " + offset);
           }
-          int toRead = file.getFilledUpTo() - (int) offset;
+          int toRead = (int) (file.getFilledUpTo() - offset);
           file.read(offset, iBuffer, toRead, iSize - remainingSize);
           remainingSize -= toRead;
         } else {

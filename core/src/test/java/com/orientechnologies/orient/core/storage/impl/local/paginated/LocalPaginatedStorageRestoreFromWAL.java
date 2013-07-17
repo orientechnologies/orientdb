@@ -17,6 +17,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -28,13 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * @author Andrey Lomakin
@@ -51,6 +52,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
   @BeforeClass
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
@@ -102,7 +104,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
+    OStorage baseStorage = baseDocumentTx.getStorage();
     baseDocumentTx.close();
+    baseStorage.close();
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromWAL");
     testDocumentTx.open("admin", "admin");

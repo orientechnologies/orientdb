@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -511,7 +506,7 @@ public class GraphDatabaseTest {
     }
     ODatabaseDocument db = new ODatabaseDocumentTx(iUrl);
 
-    ODatabaseHelper.createDatabase(db, iUrl);
+    ODatabaseHelper.createDatabase(db, iUrl, "plocal");
     db.close();
     OGraphDatabase database = new OGraphDatabase(iUrl);
     database.open("admin", "admin");

@@ -19,21 +19,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -50,9 +37,8 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -67,31 +53,12 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVe
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OClusterAwareWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -103,49 +70,34 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                          ONE_KB                     = 1024;
+  private static final int                          ONE_KB                               = 1024;
   private final int                                 DELETE_MAX_RETRIES;
   private final int                                 DELETE_WAIT_TIME;
 
-  private final Map<String, OLocalPaginatedCluster> clusterMap                 = new LinkedHashMap<String, OLocalPaginatedCluster>();
-  private OLocalPaginatedCluster[]                  clusters                   = new OLocalPaginatedCluster[0];
+  private final Map<String, OLocalPaginatedCluster> clusterMap                           = new LinkedHashMap<String, OLocalPaginatedCluster>();
+  private OLocalPaginatedCluster[]                  clusters                             = new OLocalPaginatedCluster[0];
 
   private String                                    storagePath;
   private final OStorageVariableParser              variableParser;
-  private int                                       defaultClusterId           = -1;
+  private int                                       defaultClusterId                     = -1;
 
-  private static String[]                           ALL_FILE_EXTENSIONS        = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                          };
+  private static String[]                           ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda",
+      ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr"                    };
 
-  private OModificationLock                         modificationLock           = new OModificationLock();
+  private OModificationLock                         modificationLock                     = new OModificationLock();
 
   private ODiskCache                                diskCache;
   private OWriteAheadLog                            writeAheadLog;
 
-  private final ScheduledExecutorService            fuzzyCheckpointExecutor    = Executors
-                                                                                   .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                     @Override
-                                                                                     public Thread newThread(Runnable r) {
-                                                                                       Thread thread = new Thread(r);
-                                                                                       thread.setDaemon(true);
-                                                                                       return thread;
-                                                                                     }
-                                                                                   });
-  private final ExecutorService                     checkpointExecutor         = Executors
-                                                                                   .newSingleThreadExecutor(new ThreadFactory() {
-                                                                                     @Override
-                                                                                     public Thread newThread(Runnable r) {
-                                                                                       Thread thread = new Thread(r);
-                                                                                       thread.setDaemon(true);
-                                                                                       return thread;
-                                                                                     }
-                                                                                   });
+  private ScheduledExecutorService                  fuzzyCheckpointExecutor;
+  private ExecutorService                           checkpointExecutor;
 
-  private boolean                                   storageRestoreWasPerformed = false;
+  private OStorageTransaction                       transaction                          = null;
 
-  private OStorageTransaction                       transaction                = null;
+  private volatile boolean                          wereDataRestoredAfterOpen            = false;
 
-  private volatile boolean                          wereDataRestoredAfterOpen  = false;
+  private boolean                                   makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                             .getValueAsBoolean();
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -173,6 +125,24 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
+      fuzzyCheckpointExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread thread = new Thread(r);
+          thread.setDaemon(true);
+          return thread;
+        }
+      });
+
+      checkpointExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          Thread thread = new Thread(r);
+          thread.setDaemon(true);
+          return thread;
+        }
+      });
+
       writeAheadLog = new OWriteAheadLog(this);
 
       final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
@@ -257,15 +227,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public boolean wereDataRestoredAfterClose() {
-    lock.acquireSharedLock();
-    try {
-      return storageRestoreWasPerformed;
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
   private void restoreIfNeeded() throws IOException {
     boolean wasSoftlyClosed = true;
     for (OCluster cluster : clusters)
@@ -275,7 +236,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!wasSoftlyClosed) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
-        storageRestoreWasPerformed = true;
         restoreFromWAL();
         makeFullCheckpoint();
       } catch (Exception e) {
@@ -677,15 +637,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       status = STATUS.CLOSING;
 
       makeFullCheckpoint();
-      fuzzyCheckpointExecutor.shutdown();
-      final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
-      if (!fuzzyCheckpointExecutor.awaitTermination(fuzzyCheckpointDelay * 10, TimeUnit.SECONDS))
-        throw new OStorageException("Can not terminate fuzzy checkpoint task");
+      if (writeAheadLog != null) {
+        fuzzyCheckpointExecutor.shutdown();
+        if (!fuzzyCheckpointExecutor.awaitTermination(
+            OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
+          throw new OStorageException("Can not terminate fuzzy checkpoint task");
 
-      checkpointExecutor.shutdown();
-      if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_CHECKPOINT_INTERVAL_TIMEOUT.getValueAsInteger(),
-          TimeUnit.SECONDS))
-        throw new OStorageException("Can not terminate full checkpoint task");
+        checkpointExecutor.shutdown();
+        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
+            TimeUnit.SECONDS))
+          throw new OStorageException("Can not terminate full checkpoint task");
+      }
 
       for (OLocalPaginatedCluster cluster : clusters)
         if (cluster != null)
@@ -838,6 +800,36 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return addDataSegment(iDataSegmentName, null);
   }
 
+  public void enableFullCheckPointAfterClusterCreate() {
+    checkOpeness();
+    lock.acquireExclusiveLock();
+    try {
+      makeFullCheckPointAfterClusterCreate = true;
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  public void disableFullCheckPointAfterClusterCreate() {
+    checkOpeness();
+    lock.acquireExclusiveLock();
+    try {
+      makeFullCheckPointAfterClusterCreate = false;
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  public boolean isMakeFullCheckPointAfterClusterCreate() {
+    checkOpeness();
+    lock.acquireSharedLock();
+    try {
+      return makeFullCheckPointAfterClusterCreate;
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
   public int addDataSegment(String segmentName, final String directory) {
     OLogManager.instance().error(
         this,
@@ -878,19 +870,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return addClusterInternal(clusterName, clusterPos, location, fullCheckPoint, parameters);
   }
 
-  public int addCluster(String clusterType, String clusterName, int iRequestedId, String location, String dataSegmentName,
+  public int addCluster(String clusterType, String clusterName, int requestedId, String location, String dataSegmentName,
       boolean forceListBased, Object... parameters) {
 
     lock.acquireExclusiveLock();
     try {
-      if (iRequestedId < 0) {
+      if (requestedId < 0) {
         throw new OConfigurationException("Cluster id must be positive!");
       }
-      if (iRequestedId < clusters.length && clusters[iRequestedId] != null) {
+      if (requestedId < clusters.length && clusters[requestedId] != null) {
         throw new OConfigurationException("Requested cluster ID is occupied!");
       }
 
-      return addClusterInternal(clusterName, iRequestedId, location, true, parameters);
+      return addClusterInternal(clusterName, requestedId, location, true, parameters);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
@@ -920,7 +912,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (cluster != null) {
       if (!cluster.exists()) {
         cluster.create(-1);
-        if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE.getValueAsBoolean() && fullCheckPoint)
+        if (makeFullCheckPointAfterClusterCreate && fullCheckPoint)
           makeFullCheckpoint();
       } else {
         cluster.open();
@@ -1050,7 +1042,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int dataSegmentId, final ORecordId rid,
-      final byte[] content, final ORecordVersion recordVersion, final byte recordType, final int mode,
+      final byte[] content, ORecordVersion recordVersion, final byte recordType, final int mode,
       final ORecordCallback<OClusterPosition> callback) {
     checkOpeness();
 
@@ -1068,7 +1060,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         try {
           lock.acquireSharedLock();
           try {
-            recordVersion.increment();
+            if (recordVersion.getCounter() > -1)
+              recordVersion.increment();
+            else
+              recordVersion = OVersionFactory.instance().createVersion();
+
             ppos = cluster.createRecord(content, recordVersion, recordType, transaction);
             rid.clusterPosition = ppos.clusterPosition;
 
@@ -1125,10 +1121,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
 
     return null;
-  }
-
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    throw new UnsupportedOperationException("changeRecordIdentity");
   }
 
   @Override
@@ -1623,9 +1615,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     checkOpeness();
 
     final long timer = Orient.instance().getProfiler().startChrono();
-
     lock.acquireExclusiveLock();
     try {
+      if (writeAheadLog != null) {
+        makeFullCheckpoint();
+        return;
+      }
+
       for (OCluster cluster : clusters)
         if (cluster != null)
           cluster.synch();
@@ -1859,6 +1855,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
+        writeAheadLog.flush();
         writeAheadLog.logFuzzyCheckPointStart();
         diskCache.forceSyncStoredChanges();
         diskCache.logDirtyPagesTable();
@@ -1883,6 +1880,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     lock.acquireExclusiveLock();
     try {
+      writeAheadLog.flush();
+      if (configuration != null)
+        configuration.synch();
+
       writeAheadLog.logFullCheckpointStart();
 
       for (OLocalPaginatedCluster cluster : clusters)
@@ -1913,7 +1914,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   @Override
   public String getType() {
-    return OEngineLocal.NAME;
+    return OEngineLocalPaginated.NAME;
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
@@ -1962,18 +1963,21 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void addDefaultClusters() throws IOException {
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_INTERNAL_NAME));
+    final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadata.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_INDEX_NAME));
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length, OMetadata.CLUSTER_INDEX_NAME,
+        null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
 
-    defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, -1,
-        CLUSTER_DEFAULT_NAME));
+    defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
   }
 
   public ODiskCache getDiskCache() {

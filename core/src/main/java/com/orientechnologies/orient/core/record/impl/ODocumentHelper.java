@@ -789,7 +789,7 @@ public class ODocumentHelper {
   }
 
   public static boolean hasSameContentItem(final Object iCurrent, ODatabaseRecord iMyDb, final Object iOther,
-      final ODatabaseRecord iOtherDb) {
+      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
     if (iCurrent instanceof ODocument) {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
@@ -798,12 +798,12 @@ public class ODocumentHelper {
             return false;
         } else {
           final ODocument otherDoc = iOtherDb.load((ORID) iOther);
-          if (!ODocumentHelper.hasSameContentOf(current, iMyDb, otherDoc, iOtherDb))
+          if (!ODocumentHelper.hasSameContentOf(current, iMyDb, otherDoc, iOtherDb, ridMapper))
             return false;
         }
-      } else if (!ODocumentHelper.hasSameContentOf(current, iMyDb, (ODocument) iOther, iOtherDb))
+      } else if (!ODocumentHelper.hasSameContentOf(current, iMyDb, (ODocument) iOther, iOtherDb, ridMapper))
         return false;
-    } else if (!compareScalarValues(iCurrent, iOther))
+    } else if (!compareScalarValues(iCurrent, iOther, ridMapper))
       return false;
     return true;
   }
@@ -819,7 +819,7 @@ public class ODocumentHelper {
    */
   @SuppressWarnings("unchecked")
   public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecord iMyDb, final ODocument iOther,
-      final ODatabaseRecord iOtherDb) {
+      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
     if (iOther == null)
       return false;
 
@@ -875,18 +875,18 @@ public class ODocumentHelper {
 
       if (myFieldValue != null)
         if (myFieldValue instanceof Set && otherFieldValue instanceof Set) {
-          if (!compareSets(iMyDb, (Set<?>) myFieldValue, iOtherDb, (Set<?>) otherFieldValue))
+          if (!compareSets(iMyDb, (Set<?>) myFieldValue, iOtherDb, (Set<?>) otherFieldValue, ridMapper))
             return false;
         } else if (myFieldValue instanceof Collection && otherFieldValue instanceof Collection) {
-          if (!compareCollections(iMyDb, (Collection<?>) myFieldValue, iOtherDb, (Collection<?>) otherFieldValue))
+          if (!compareCollections(iMyDb, (Collection<?>) myFieldValue, iOtherDb, (Collection<?>) otherFieldValue, ridMapper))
             return false;
         } else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
-          if (!compareMaps(iMyDb, (Map<Object, Object>) myFieldValue, iOtherDb, (Map<Object, Object>) otherFieldValue))
+          if (!compareMaps(iMyDb, (Map<Object, Object>) myFieldValue, iOtherDb, (Map<Object, Object>) otherFieldValue, ridMapper))
             return false;
         } else if (myFieldValue instanceof ODocument && otherFieldValue instanceof ODocument) {
-          return hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb);
+          return hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb, ridMapper);
         } else {
-          if (!compareScalarValues(myFieldValue, otherFieldValue))
+          if (!compareScalarValues(myFieldValue, otherFieldValue, ridMapper))
             return false;
         }
     }
@@ -895,7 +895,7 @@ public class ODocumentHelper {
   }
 
   public static boolean compareMaps(ODatabaseRecord iMyDb, Map<Object, Object> myFieldValue, ODatabaseRecord iOtherDb,
-      Map<Object, Object> otherFieldValue) {
+      Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
     // CHECK IF THE ORDER IS RESPECTED
     final Map<Object, Object> myMap = myFieldValue;
     final Map<Object, Object> otherMap = otherFieldValue;
@@ -956,7 +956,7 @@ public class ODocumentHelper {
             public ODocument call() {
               return (ODocument) otherMap.get(myEntry.getKey());
             }
-          }), iOtherDb))
+          }), iOtherDb, ridMapper))
             return false;
         } else {
           final Object myValue = makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
@@ -971,7 +971,7 @@ public class ODocumentHelper {
             }
           });
 
-          if (!compareScalarValues(myValue, otherValue))
+          if (!compareScalarValues(myValue, otherValue, ridMapper))
             return false;
         }
       }
@@ -986,7 +986,7 @@ public class ODocumentHelper {
   }
 
   public static boolean compareCollections(ODatabaseRecord iMyDb, Collection<?> myFieldValue, ODatabaseRecord iOtherDb,
-      Collection<?> otherFieldValue) {
+      Collection<?> otherFieldValue, RIDMapper ridMapper) {
     final Collection<?> myCollection = myFieldValue;
     final Collection<?> otherCollection = otherFieldValue;
 
@@ -1036,7 +1036,7 @@ public class ODocumentHelper {
           }
         });
 
-        if (!hasSameContentItem(myNextVal, iMyDb, otherNextVal, iOtherDb))
+        if (!hasSameContentItem(myNextVal, iMyDb, otherNextVal, iOtherDb, ridMapper))
           return false;
       }
       return true;
@@ -1049,7 +1049,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareSets(ODatabaseRecord iMyDb, Set<?> myFieldValue, ODatabaseRecord iOtherDb, Set<?> otherFieldValue) {
+  public static boolean compareSets(ODatabaseRecord iMyDb, Set<?> myFieldValue, ODatabaseRecord iOtherDb, Set<?> otherFieldValue,
+      RIDMapper ridMapper) {
     final Set<?> mySet = myFieldValue;
     final Set<?> otherSet = otherFieldValue;
 
@@ -1118,7 +1119,7 @@ public class ODocumentHelper {
             }
           });
 
-          found = hasSameContentItem(myNextVal, iMyDb, otherNextVal, iOtherDb);
+          found = hasSameContentItem(myNextVal, iMyDb, otherNextVal, iOtherDb, ridMapper);
         }
 
         if (!found)
@@ -1134,7 +1135,7 @@ public class ODocumentHelper {
     }
   }
 
-  private static boolean compareScalarValues(Object myValue, Object otherValue) {
+  private static boolean compareScalarValues(Object myValue, Object otherValue, RIDMapper ridMapper) {
     if (myValue == null && otherValue != null || myValue != null && otherValue == null)
       return false;
 
@@ -1167,6 +1168,12 @@ public class ODocumentHelper {
         return myNumberValue.longValue() == otherNumberValue.longValue();
       else if (isFloat(myNumberValue) && isFloat(otherNumberValue))
         return myNumberValue.doubleValue() == otherNumberValue.doubleValue();
+    }
+
+    if (ridMapper != null && myValue instanceof ORID && otherValue instanceof ORID && ((ORID) myValue).isPersistent()) {
+      ORID convertedValue = ridMapper.map((ORID) myValue);
+      if (convertedValue != null)
+        myValue = convertedValue;
     }
 
     return myValue.equals(otherValue);
@@ -1217,5 +1224,9 @@ public class ODocumentHelper {
 
   public static interface ODbRelatedCall<T> {
     public T call();
+  }
+
+  public static interface RIDMapper {
+    ORID map(ORID rid);
   }
 }

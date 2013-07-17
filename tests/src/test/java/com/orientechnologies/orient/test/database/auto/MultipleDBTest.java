@@ -20,11 +20,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -75,7 +71,7 @@ public class MultipleDBTest {
           OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
           ODatabaseHelper.deleteDatabase(tx);
-          ODatabaseHelper.createDatabase(tx, dbUrl);
+          ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");
@@ -170,7 +166,7 @@ public class MultipleDBTest {
           ODatabaseHelper.deleteDatabase(tx);
           System.out.println("Thread " + this + " is creating database " + dbUrl);
           System.out.flush();
-          ODatabaseHelper.createDatabase(tx, dbUrl);
+          ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");

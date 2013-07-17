@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, DATASEGMENT
+    NAME, DATASEGMENT, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
   }
 
   public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
@@ -133,6 +133,14 @@ public interface OCluster {
    * @return
    */
   public long getRecordsSize() throws IOException;
+
+	public boolean useWal();
+
+	public float recordGrowFactor();
+
+	public float recordOverflowGrowFactor();
+
+	public String compression();
 
   public boolean isHashBased();
 

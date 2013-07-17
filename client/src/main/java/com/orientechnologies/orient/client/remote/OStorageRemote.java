@@ -16,21 +16,10 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
+import java.util.*;
+import java.util.concurrent.*;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -45,6 +34,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorRemote;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -68,15 +58,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageAbstract;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -126,7 +108,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final int                        maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
+    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
     clientId = iClientId;
     configuration = null;
 
@@ -933,39 +915,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    checkConnection();
-
-    do {
-      try {
-        OChannelBinaryClient network = null;
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_CHANGE_IDENTITY);
-
-          network.writeShort((short) originalId.getClusterId());
-          network.writeClusterPosition(originalId.getClusterPosition());
-
-          network.writeShort((short) newId.getClusterId());
-          network.writeClusterPosition(newId.getClusterPosition());
-
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-          return;
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException("Error during changing identity of  " + originalId + " record to " + newId, e);
-      }
-    } while (true);
-  }
-
-  @Override
   public boolean isHashClustersAreUsed() {
     checkConnection();
 
@@ -1477,18 +1426,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
    * 
-   * @param iMessage
-   * @param iException
+   * @param message
+   * @param exception
    */
-  protected void handleException(final String iMessage, final Exception iException) {
-    if (iException instanceof OTimeoutException)
+  protected void handleException(final String message, final Exception exception) {
+    if (exception instanceof OTimeoutException)
       // TIMEOUT, AVOID LOOP, RE-THROW IT
-      throw (OTimeoutException) iException;
-    else if (iException instanceof OException)
+      throw (OTimeoutException) exception;
+    else if (exception instanceof SocketException)
+      throw new OStorageException("Can not  connect to remote database.", exception);
+    else if (exception instanceof OException)
       // RE-THROW IT
-      throw (OException) iException;
-    else if (!(iException instanceof IOException))
-      throw new OStorageException(iMessage, iException);
+      throw (OException) exception;
+    else if (!(exception instanceof IOException))
+      throw new OStorageException(message, exception);
 
     if (status != STATUS.OPEN)
       // STORAGE CLOSED: DON'T HANDLE RECONNECTION
@@ -1540,7 +1491,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-    throw new OStorageException(iMessage, iException);
+    throw new OStorageException(message, exception);
   }
 
   protected void openRemoteDatabase() throws IOException {
@@ -1647,7 +1598,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       addHost(url);
       name = url;
     } else {
-      name = url.substring(dbPos + 1);
+      name = url.substring(url.lastIndexOf("/") + 1);
       for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR))
         host = addHost(host);
     }
@@ -1767,11 +1718,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // FIND THE FIRST FREE CHANNEL AVAILABLE
     synchronized (networkPool) {
-      final int beginCursor = networkPoolCursor;
+      if (networkPoolCursor >= networkPool.size())
+        networkPoolCursor = networkPool.size() - 1;
 
+      final int beginCursor = networkPoolCursor;
       while (network == null) {
-        if (networkPool.size() == 0)
+        if (networkPool.size() == 0) {
           openRemoteDatabase();
+          networkPoolCursor = 0;
+        }
 
         if (networkPool.size() == 0)
           throw new ONetworkProtocolException("Connection pool closed");

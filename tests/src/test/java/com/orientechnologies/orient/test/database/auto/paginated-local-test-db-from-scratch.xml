@@ -15,6 +15,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCreationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.StorageTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ClusterMetadataTest"/>
         </classes>
     </test>
     <test name="Schema">
@@ -159,6 +160,8 @@
     <test name="DbTools">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbCheckTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCompareTest"/>
         </classes>
     </test>
     <test name="DbToolsDelete">

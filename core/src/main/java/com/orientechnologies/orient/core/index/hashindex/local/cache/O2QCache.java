@@ -183,6 +183,8 @@ public class O2QCache implements ODiskCache {
     if (lruEntry.isDirty)
       return;
 
+    assert pageIndex >= 0;
+
     dirtyPages.get(fileId).put(pageIndex, lruEntry.loadedLSN);
     lruEntry.isDirty = true;
   }
@@ -208,7 +210,7 @@ public class O2QCache implements ODiskCache {
   @Override
   public void release(long fileId, long pageIndex) {
     synchronized (syncObject) {
-      LRUEntry lruEntry = get(fileId, pageIndex);
+      LRUEntry lruEntry = get(fileId, pageIndex, false);
       if (lruEntry != null)
         lruEntry.usageCounter--;
       else
@@ -234,7 +236,7 @@ public class O2QCache implements ODiskCache {
 
       for (Iterator<Long> iterator = dirtyPages.keySet().iterator(); iterator.hasNext();) {
         Long pageIndex = iterator.next();
-        LRUEntry lruEntry = get(fileId, pageIndex);
+        LRUEntry lruEntry = get(fileId, pageIndex, false);
 
         if (lruEntry == null) {
           final Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
@@ -277,17 +279,19 @@ public class O2QCache implements ODiskCache {
       final SortedMap<Long, OLogSequenceNumber> fileDirtyPages = dirtyPages.get(fileId);
 
       for (Long pageIndex : sortedPageIndexes) {
-        LRUEntry lruEntry = get(fileId, pageIndex);
+        LRUEntry lruEntry = get(fileId, pageIndex, true);
         if (lruEntry != null) {
           if (lruEntry.usageCounter == 0) {
             lruEntry = remove(fileId, pageIndex);
 
-            if (flush)
-              flushData(fileId, pageIndex, lruEntry.dataPointer);
-
             fileDirtyPages.remove(pageIndex);
 
-            directMemory.free(lruEntry.dataPointer);
+            if (lruEntry.dataPointer != ODirectMemory.NULL_POINTER) {
+              if (flush)
+                flushData(fileId, pageIndex, lruEntry.dataPointer);
+
+              directMemory.free(lruEntry.dataPointer);
+            }
           } else
             throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
                 + "can not be freed because it is used.");
@@ -330,7 +334,7 @@ public class O2QCache implements ODiskCache {
     synchronized (syncObject) {
       final Set<Long> pageEntries = filePages.get(fileId);
       for (Long pageIndex : pageEntries) {
-        LRUEntry lruEntry = get(fileId, pageIndex);
+        LRUEntry lruEntry = get(fileId, pageIndex, true);
         if (lruEntry != null) {
           if (lruEntry.usageCounter == 0) {
             lruEntry = remove(fileId, pageIndex);
@@ -344,9 +348,15 @@ public class O2QCache implements ODiskCache {
         }
       }
 
-      dirtyPages.get(fileId).clear();
+      SortedMap<Long, OLogSequenceNumber> fileDirtyPages = dirtyPages.get(fileId);
+      for (long pageIndex : fileDirtyPages.keySet()) {
+        Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+        if (dataPointer != null)
+          directMemory.free(dataPointer);
+      }
 
       pageEntries.clear();
+			fileDirtyPages.clear();
       files.get(fileId).shrink(0);
     }
   }
@@ -739,11 +749,16 @@ public class O2QCache implements ODiskCache {
     }
   }
 
-  private LRUEntry get(long fileId, long pageIndex) {
+  private LRUEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     LRUEntry lruEntry = am.get(fileId, pageIndex);
 
-    if (lruEntry != null) {
+    if (lruEntry != null)
       return lruEntry;
+
+    if (useOutQueue) {
+      lruEntry = a1out.get(fileId, pageIndex);
+      if (lruEntry != null)
+        return lruEntry;
     }
 
     lruEntry = a1in.get(fileId, pageIndex);

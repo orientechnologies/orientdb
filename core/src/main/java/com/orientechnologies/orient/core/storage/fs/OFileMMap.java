@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
   // PART OF HEADER (4 bytes)
-  protected volatile int                     filledUpTo;
+  protected volatile long                    filledUpTo;
   protected volatile MappedByteBuffer        headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
@@ -104,11 +104,11 @@ public class OFileMMap extends OAbstractFile {
     }
   }
 
-  public int getFileSize() {
+  public long getFileSize() {
     return size;
   }
 
-  public int getFilledUpTo() {
+  public long getFilledUpTo() {
     return filledUpTo;
   }
 
@@ -547,9 +547,9 @@ public class OFileMMap extends OAbstractFile {
 
       boolean allFlushed = OMMapManagerLocator.getInstance().flushFile(this);
       flushHeader();
-      
+
       return allFlushed;
-      
+
     } finally {
       releaseWriteLock();
     }
@@ -623,8 +623,8 @@ public class OFileMMap extends OAbstractFile {
   }
 
   @Override
-  protected void openChannel(final int iNewSize) throws IOException {
-    super.openChannel(iNewSize);
+  protected void openChannel(final long newSize) throws IOException {
+    super.openChannel(newSize);
     headerBuffer = channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, 0, HEADER_SIZE);
   }
 
@@ -682,24 +682,24 @@ public class OFileMMap extends OAbstractFile {
   protected void init() {
     acquireWriteLock();
     try {
-      size = headerBuffer.getInt(SIZE_OFFSET);
-      filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+      size = headerBuffer.getLong(SIZE_OFFSET);
+      filledUpTo = headerBuffer.getLong(FILLEDUPTO_OFFSET);
     } finally {
       releaseWriteLock();
     }
   }
 
   @Override
-  protected void setFilledUpTo(final int iHow) {
+  protected void setFilledUpTo(final long iHow) {
     if (iHow != filledUpTo) {
       filledUpTo = iHow;
-      headerBuffer.putInt(FILLEDUPTO_OFFSET, filledUpTo);
+      headerBuffer.putLong(FILLEDUPTO_OFFSET, filledUpTo);
       setHeaderDirty();
     }
   }
 
   @Override
-  public void setSize(final int iSize) throws IOException {
+  public void setSize(final long iSize) throws IOException {
     acquireWriteLock();
     try {
       if (maxSize > 0 && iSize > maxSize)
@@ -708,7 +708,7 @@ public class OFileMMap extends OAbstractFile {
       if (iSize != size) {
         checkSize(iSize);
         size = iSize;
-        headerBuffer.putInt(SIZE_OFFSET, size);
+        headerBuffer.putLong(SIZE_OFFSET, size);
         setHeaderDirty();
       }
     } finally {
