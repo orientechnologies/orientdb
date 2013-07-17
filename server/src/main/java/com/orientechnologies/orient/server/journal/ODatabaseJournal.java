@@ -199,6 +199,35 @@ public class ODatabaseJournal {
   /**
    * Returns the last operation id with passed status
    */
+  public long[] getLastJournaledOperationId(final OPERATION_STATUS iStatus) throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+      final int filled = (int) file.getFilledUpTo();
+      if (filled == 0)
+        // RETURN THE BEGIN
+        return BEGIN_POSITION;
+
+      final Iterator<Long> iter = browseLastOperations(BEGIN_POSITION, iStatus, 1);
+
+      if (iter == null || !iter.hasNext())
+        // RETURN THE BEGIN
+        return BEGIN_POSITION;
+
+      final long[] ids = new long[2];
+      while (iter.hasNext()) {
+        long offset = iter.next();
+        ids[0] = file.readLong(offset - OFFSET_BACK_RUNID);
+        ids[1] = file.readLong(offset - OFFSET_BACK_OPERATID);
+      }
+      return ids;
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  /**
+   * Returns the last operation id.
+   */
   public long[] getOperationId(final long iOffset) throws IOException {
     lock.acquireExclusiveLock();
     try {
@@ -301,8 +330,8 @@ public class ODatabaseJournal {
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
       ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-          "operation #%d.%d db=%s update journal rid=%s", file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID),
-          file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), storage.getName(), iRid);
+          "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
+          file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { (byte) iStatus.ordinal() });
 
