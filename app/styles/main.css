@@ -101,3 +101,28 @@ div.edge form.bs-docs-example:after {
 .edgesList {
     padding-top: 60px;
 }
+
+.createEdge {
+  width: 80%; /* desired relative width */
+  left: 10%; /* (100%-width)/2 */
+  /* place center */
+  margin-left:auto;
+  margin-right:auto; 
+}
+.createEdge .modal-body {
+  width: 98%; 
+}
+.createEdge .modal-body {
+  width: 98%;
+  max-height: 200px; 
+}
+.createEdge .modal-body .CodeMirror {
+  height: 100px;
+}
+.createEdge .modal-body .table{
+  width: 96%; 
+  height: 100px;
+  overflow: auto;
+}
+
+

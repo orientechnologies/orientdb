@@ -8,14 +8,14 @@
 				<label>History</label>
 				<select ng-model="queryText" ng-options="q for q in queries"></select>
 				<label >Limit</label>
-				<input type="text" ng-model="limit"/>
+				<input type="text" class="input-small" ng-model="limit"/>
 				<button ng-click="query()" class="btn pull-right">Execute</button>
 			</form>
 		</div>
 	</div>
 	<div class = "row-fluid">
 		<form ng:submit="query()" class="form-inline">
-			<textarea ui-codemirror="editorOptions" ng-model="queryText"></textarea>
+			<textarea ui-codemirror="editorOptions"  ng-model="queryText"></textarea>
 		</form>
 	</div>
 	<div class = "row-fluid">

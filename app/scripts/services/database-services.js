@@ -196,6 +196,34 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			}
 			return sup == 'V' || sup == 'E';
 		},
+		isVertex : function(clazz){
+			var sup=clazz; 
+			var iterator = clazz;
+			while( (iterator = this.getSuperClazz(iterator)) != "") {
+			 	sup = iterator;
+			}
+			return sup == 'V';
+		},
+		isEdge : function(clazz){
+			var sup=clazz; 
+			var iterator = clazz;
+			while( (iterator = this.getSuperClazz(iterator)) != "") {
+			 	sup = iterator;
+			}
+			return sup == 'E';
+		},
+		getClazzEdge : function(){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var clazzes = new Array ;
+			for (var entry in classes){
+				var name = classes[entry]['name'];
+				if(this.isEdge(name)){
+					clazzes.push(name);
+				} 			
+			}
+			return clazzes;
+		},
 		/**
  		* Creates a new Array from a document with property name.
  		*
@@ -286,10 +314,11 @@ database.factory('CommandApi', function($http,$resource,Notification){
 
 	resource.queryText = function(params,callback){
 		var startTime = new Date().getTime();
-		var limit = params.limit || 20;
-
-		var text = '/api/command/' + params.database + "/" + params.language + "/" +encodeURIComponent(params.text) + "/" + limit;
-		$http.post(text).success(function(data){
+		var limit = params.limit ? (' limit ' + params.limit) : "";
+		//rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
+		var text = '/api/command/' + params.database + "/" + params.language + '?format=rid,type,version,class,shallow,graph' ;
+		var query = params.text + limit;
+		$http.post(text,query).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
 			var records = data.result ? data.result.length : "";
 			var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)"; 
