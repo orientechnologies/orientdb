@@ -324,10 +324,10 @@ database.factory('CommandApi', function($http,$resource,Notification){
 
 	resource.queryText = function(params,callback){
 		var startTime = new Date().getTime();
-		var limit = params.limit ? (' limit ' + params.limit) : "";
+		var limit = params.limit || 20;
 		//rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
-		var text = '/api/command/' + params.database + "/" + params.language + '?format=rid,type,version,class,shallow,graph' ;
-		var query = params.text + limit;
+		var text = '/api/command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version,class,shallow,graph' ;
+		var query = params.text ;
 		$http.post(text,query).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
 			var records = data.result ? data.result.length : "";

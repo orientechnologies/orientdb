@@ -7,6 +7,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 	$scope.canSave = true;
 	$scope.canDelete = true;
 	$scope.canCreate = true;
+	$scope.canAdd = true;
 	$scope.popover = {
 		title : 'Add edge'
 	}
@@ -53,18 +54,42 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 		});
 		
 	}
+	$scope.addField = function(name){
+		if(name){
+			$scope.doc[name] = null;
+			$scope.headers.push(name);	
+		}else {
+			var modalScope = $scope.$new(true);	
+			modalScope.addField = $scope.addField;
+			var modalPromise = $modal({template: '/views/database/newField.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
+			$q.when(modalPromise).then(function(modalEl) {
+				modalEl.modal('show');
+			});
+		}
+		
+	}
 	$scope.delete = function(){
 
 		var recordID = $scope.doc['@rid']
 		Utilities.confirm($scope,$dialog,{
 			title : 'Warning!',
-			body : 'You are removing vertex '+ recordID + '. Are you sure?',
+			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
 			success : function() {
 				var command = "DELETE Vertex " + recordID;
 				CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
 					var clazz = $scope.doc['@class'];
 					$location.path('/database/'+database + '/browse/' + 'select * from ' + clazz);
 				});
+			}
+		});
+	}
+	$scope.deleteField = function(name){
+		Utilities.confirm($scope,$dialog,{
+			title : 'Warning!',
+			body : 'You are removing field <strong> '+ name + ' </strong> from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
+			success : function() {
+				delete $scope.doc[name];
+				$scope.save();
 			}
 		});
 	}

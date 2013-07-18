@@ -26,7 +26,10 @@ Widget.directive('render', function($compile,Database) {
             
           break;
         }
-        return tpl;
+        var select = "<select class='span2' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
+        var del = "<a href='javascript:void(0)'' class='btn btn-mini' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
+        console.log(del);
+        return tpl +  select + del;
   }
 
   var linker = function(scope, element, attrs,ngModel) {
@@ -40,16 +43,16 @@ Widget.directive('render', function($compile,Database) {
   }
 
   var getStringTemplate = function(element){
-    return "<textarea class='input-xlarge' ng-model='" + element.attr('ng-model') + "' ></textarea>";
+    return "<textarea class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' ></textarea>";
   };
   var getNumberTemplate = function(element){
-    return "<input type='text' class='input-xlarge' ng-model='" + element.attr('ng-model') + "' />";
+    return "<input type='text' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' />";
   };
   var getDateTemplate = function (element,format){
-    return "<input type='text' class='input-xlarge' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='" + format+ "' bs-datepicker>";
+    return "<input type='text' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='" + format+ "' bs-datepicker>";
   };
   var getDateTimeTemplate = function(element,format){
-    return "<input type='text' class='input-xlarge' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='"+format+"' bs-datepicker>";
+    return "<input type='text' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='"+format+"' bs-datepicker>";
   };
   return {
     // A = attribute, E = Element, C = Class and M = HTML Comment

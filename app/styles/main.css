@@ -3,7 +3,7 @@
 
 
 body div.container-studio {
-	padding-top :40px
+	padding-top :20px
 }
 .pointer {
 	cursor : pointer;
@@ -87,6 +87,10 @@ table.pointer>tbody>tr>td input{
     color: #333333;
     font-size: 21px;
     line-height: 40px;
+}
+.doc-body   {
+   max-height: 300px;
+   overflow: auto;
 }
 div.document form.bs-docs-example:after {
     content: "Document";

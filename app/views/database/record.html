@@ -2,16 +2,27 @@
 	<form  class="form-horizontal bs-docs-example">
 		<fieldset>
 			<div class="control-group">
-				<div class="controls doc-header controls-row">
-					<label class="span8">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
-					<button type="submit" ng-click="save()" class="btn pull-right" ng-show="canSave">Save</button>
-					<button type="submit" ng-click="create()" class="btn pull-right" ng-show="canCreate">Create</button>
-					<button type="submit" ng-click="delete()" class="btn pull-right" ng-show="canDelete">Delete</button>
+				<div class="controls controls-row doc-header controls-row">
+					<label class="span9">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
+					<div class="span3">
+						<button class="btn btn-primary" ng-show="canSave" ng-click="save()" tooltip="Save"><i class="icon-ok icon-white" ></i> Save</button>
+						<div class="btn-group">
+							<a class="btn" href="javascript:void(0)">Actions</a>
+							<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+							<ul class="dropdown-menu">
+								<li><a href="javascript:void(0)" ng-click="create()"><i class="icon-plus-sign"></i> New</a></li>
+								<li><a href="javascript:void(0)" ng-click="addField()"><i class="icon-th-list"></i> Add field</a></li>
+								<li><a href="javascript:void(0)" ng-click="delete()"><i class="icon-trash"></i> Delete</a></li>
+							</ul>
+						</div>
+					</div>
 				</div>
 			</div>
-			<div class="control-group" ng-repeat = "header in headers">
-				<label class="control-label" for="input{{header}}">{{header}}</label>
-				<div class="controls" render ng-model= "doc[header]" render-field = "{{header}}">
+			<div class="doc-body">
+				<div class="control-group" ng-repeat = "header in headers">
+					<label class="control-label" for="input{{header}}">{{header}}</label>
+					<div class="controls controls-row" render ng-model= "doc[header]" render-field = "{{header}}">
+					</div>
 				</div>
 			</div>
 		</fieldset>
