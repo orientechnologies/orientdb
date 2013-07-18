@@ -47,8 +47,10 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
   public static final String                                  CONFIG_INDEXES     = "indexes";
   public static final String                                  DICTIONARY_NAME    = "dictionary";
+
   protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
   protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+
   protected String                                            defaultClusterName = OMetadata.CLUSTER_INDEX_NAME;
   protected String                                            manualClusterName  = OMetadata.CLUSTER_MANUAL_INDEX_NAME;
 
@@ -57,8 +59,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
     super(new ODocument());
   }
-
-  protected abstract OIndex<?> getIndexInstance(final OIndex<?> iIndex);
 
   protected void acquireSharedLock() {
     lock.readLock().lock();
@@ -81,9 +81,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
-        // CLEAR PREVIOUS STUFF
-        close();
-
         if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
           create();
@@ -98,7 +95,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return this;
   }
 
-  private void clearMetadata() {
+  protected void clearMetadata() {
     acquireExclusiveLock();
     try {
       indexes.clear();
@@ -158,9 +155,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public void flush() {
-    for (final OIndex<?> idx : indexes.values())
-      if (idx instanceof OIndexInternal<?>)
-        ((OIndexInternal<?>) idx).flush();
+    for (final OIndex<?> idx : indexes.values()) {
+      OIndexInternal indexInternal = idx.getInternal();
+      if (indexInternal != null)
+        indexInternal.flush();
+    }
   }
 
   public Collection<? extends OIndex<?>> getIndexes() {
@@ -251,8 +250,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       flush();
       for (final OIndex<?> idx : indexes.values()) {
         OIndexInternal<?> indexInternal = idx.getInternal();
-        if (indexInternal != null)
+        if (indexInternal != null) {
           indexInternal.close();
+          getDatabase().unregisterListener(indexInternal);
+        }
       }
 
       clearMetadata();
@@ -274,7 +275,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public OIndex<?> getIndex(final ORID iRID) {
     for (final OIndex<?> idx : indexes.values()) {
       if (idx.getIdentity().equals(iRID)) {
-        return getIndexInstance(idx);
+        return idx;
       }
     }
     return null;
@@ -404,11 +405,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       getDatabase().registerListener(index.getInternal());
 
       if (index instanceof OIndexMultiValues)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) getIndexInstance(index));
+        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) index);
       else if (index instanceof OIndexDictionary)
-        return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
+        return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
       else if (index instanceof OIndexOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) getIndexInstance(index));
+        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
     }
     return index;
   }

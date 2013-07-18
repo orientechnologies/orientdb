@@ -16,11 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -61,11 +57,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     super(iDatabase);
   }
 
-  public OIndex<?> getIndexInternal(final String iName) {
+  public OIndex<?> getIndexInternal(final String name) {
     acquireSharedLock();
     try {
-      final OIndex<?> index = indexes.get(iName.toLowerCase());
-      return getIndexInstance(index);
+      return indexes.get(name.toLowerCase());
     } finally {
       releaseSharedLock();
     }
@@ -119,7 +114,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       setDirty();
       save();
 
-      return getIndexInstance(index);
+      return index;
     } finally {
       releaseExclusiveLock();
     }
@@ -135,6 +130,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       if (idx != null) {
         removeClassPropertyIndex(idx);
 
+        getDatabase().unregisterListener(idx.getInternal());
         idx.delete();
         setDirty();
         save();
@@ -178,26 +174,66 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   protected void fromStream() {
     acquireExclusiveLock();
     try {
+      final Map<String, OIndex<?>> oldIndexes = new HashMap<String, OIndex<?>>(indexes);
+
+      clearMetadata();
       final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
 
       if (idxs != null) {
         OIndexInternal<?> index;
         boolean configUpdated = false;
-        for (final ODocument d : idxs) {
+        Iterator<ODocument> indexConfigurationIterator = idxs.iterator();
+        while (indexConfigurationIterator.hasNext()) {
+          final ODocument d = indexConfigurationIterator.next();
           try {
             index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-            if (((OIndexInternal<?>) index).loadFromConfiguration(d)) {
-              addIndexInternal(index);
-            } else
-              configUpdated = true;
 
+            OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
+            final String normalizedName = newIndexMetadata.getName().toLowerCase();
+
+            OIndex<?> oldIndex = oldIndexes.get(normalizedName);
+            if (oldIndex != null) {
+              OIndexInternal.IndexMetadata oldIndexMetadata = oldIndex.getInternal().loadMetadata(oldIndex.getConfiguration());
+              if (oldIndexMetadata.equals(newIndexMetadata)) {
+                addIndexInternal(oldIndex.getInternal());
+                oldIndexes.remove(normalizedName);
+              } else if (newIndexMetadata.getIndexDefinition() == null
+                  && d.field(OIndexAbstract.CONFIG_MAP_RID)
+                      .equals(oldIndex.getConfiguration().field(OIndexAbstract.CONFIG_MAP_RID))) {
+                // index is manual and index definition was just detected
+                addIndexInternal(oldIndex.getInternal());
+                oldIndexes.remove(normalizedName);
+              }
+            } else {
+              if (((OIndexInternal<?>) index).loadFromConfiguration(d)) {
+                addIndexInternal(index);
+              } else {
+                indexConfigurationIterator.remove();
+                configUpdated = true;
+              }
+            }
           } catch (Exception e) {
+            indexConfigurationIterator.remove();
+            configUpdated = true;
             OLogManager.instance().error(this, "Error on loading index by configuration: %s", e, d);
           }
         }
 
-        if (configUpdated)
+        for (OIndex<?> oldIndex : oldIndexes.values())
+          try {
+            OLogManager.instance().warn(this, "Index %s was not found after reload and will be removed", oldIndex.getName());
+
+            getDatabase().unregisterListener(oldIndex.getInternal());
+            oldIndex.delete();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on deletion of index %s", e, oldIndex.getName());
+          }
+
+        if (configUpdated) {
+          document.field(CONFIG_INDEXES, idxs);
           save();
+        }
+
       }
     } finally {
       releaseExclusiveLock();
@@ -230,11 +266,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  @Override
-  protected OIndex<?> getIndexInstance(final OIndex<?> index) {
-    return index;
   }
 
   @Override
@@ -324,6 +355,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
                     ok++;
                   } else {
+                    getDatabase().unregisterListener(index.getInternal());
                     index.delete();
                     errors++;
                   }

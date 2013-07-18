@@ -483,10 +483,16 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void registerListener(final ODatabaseListener iListener) {
+    if (iListener == null)
+      return;
+
     listeners.add(iListener);
   }
 
   public void unregisterListener(final ODatabaseListener listener) {
+    if (listener == null)
+      return;
+
     listeners.remove(listener);
   }
 

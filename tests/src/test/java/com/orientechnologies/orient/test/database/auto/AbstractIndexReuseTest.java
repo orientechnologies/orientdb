@@ -29,10 +29,7 @@ public abstract class AbstractIndexReuseTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    if (!database.exists())
-      database.create();
-    else
-      database.open("admin", "admin");
+    database.open("admin", "admin");
 
     profiler = getProfilerInstance();
     database.close();

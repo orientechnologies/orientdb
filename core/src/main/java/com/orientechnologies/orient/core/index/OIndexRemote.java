@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -101,14 +97,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public OIndexRemote<T> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     this.name = name;
-    // final OCommandRequest cmd = formatCommand(QUERY_CREATE, name, wrappedType);
-    // database.command(cmd).execute();
     return this;
   }
 
   public OIndexRemote<T> delete() {
-    // final OCommandRequest cmd = formatCommand(QUERY_DROP, name);
-    // database.command(cmd).execute();
     return this;
   }
 
@@ -118,12 +110,12 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
     final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-    return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
     final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
@@ -150,7 +142,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
     final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
+    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
@@ -159,7 +151,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
     else
       cmd = formatCommand(QUERY_GET_VALUE_MAJOR, name);
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(fromKey);
+    return getDatabase().command(cmd).execute(fromKey);
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
@@ -168,7 +160,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       cmd = formatCommand(QUERY_GET_MAJOR_EQUALS, name);
     else
       cmd = formatCommand(QUERY_GET_MAJOR, name);
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(fromKey);
+    return getDatabase().command(cmd).execute(fromKey);
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
@@ -177,7 +169,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
     else
       cmd = formatCommand(QUERY_GET_VALUE_MINOR, name);
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(toKey);
+    return getDatabase().command(cmd).execute(toKey);
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
@@ -186,7 +178,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       cmd = formatCommand(QUERY_GET_MINOR_EQUALS, name);
     else
       cmd = formatCommand(QUERY_GET_MINOR, name);
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(toKey);
+    return getDatabase().command(cmd).execute(toKey);
   }
 
   public boolean contains(final Object iKey) {

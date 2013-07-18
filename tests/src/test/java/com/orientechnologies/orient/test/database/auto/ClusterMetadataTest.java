@@ -82,7 +82,6 @@ public class ClusterMetadataTest {
       databaseDocumentTx.command(new OCommandSQL("alter cluster clusterTest use_wal truef")).execute();
       Assert.fail();
     } catch (OException e) {
-      e.printStackTrace();
     }
 
     databaseDocumentTx.dropCluster(clusterId, false);

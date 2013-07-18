@@ -26,9 +26,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    if (!database.exists())
-      database.create();
-
     if (database.isClosed())
       database.open("admin", "admin");
 
@@ -2234,9 +2231,22 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
       Assert.assertEquals(containsDocument(result, document), 1);
     }
 
-    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
-    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3"), oldcompositeIndexUsed3);
+    long indexUsed = profiler.getCounter("db.demo.query.indexUsed");
+    long compositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long compositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+
+    if (indexUsed < 0)
+      indexUsed = 0;
+
+    if (compositeIndexUsed < 0)
+      compositeIndexUsed = 0;
+
+    if (compositeIndexUsed3 < 0)
+      compositeIndexUsed3 = 0;
+
+    Assert.assertEquals(indexUsed, oldIndexUsage);
+    Assert.assertEquals(compositeIndexUsed, oldcompositeIndexUsed);
+    Assert.assertEquals(compositeIndexUsed3, oldcompositeIndexUsed3);
   }
 
   @Test
