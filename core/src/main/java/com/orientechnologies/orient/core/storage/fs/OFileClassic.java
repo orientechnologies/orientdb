@@ -263,17 +263,26 @@ public class OFileClassic extends OAbstractFile {
 
   @Override
   protected void setFilledUpTo(final long value) throws IOException {
+    setFilledUpTo(value, false);
+  }
+
+  @Override
+  protected void setFilledUpTo(long iHow, boolean force) {
     acquireWriteLock();
     try {
-      size = value;
+      size = iHow;
     } finally {
       releaseWriteLock();
     }
-
   }
 
   @Override
   public void setSize(final long iSize) throws IOException {
+    setSize(iSize, false);
+  }
+
+  @Override
+  protected void setSize(long size, boolean force) throws IOException {
   }
 
   @Override
@@ -303,7 +312,12 @@ public class OFileClassic extends OAbstractFile {
   public boolean isSoftlyClosed() throws IOException {
     acquireReadLock();
     try {
-      final ByteBuffer buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+      final ByteBuffer buffer;
+      if (version == 0)
+        buffer = readData(SOFTLY_CLOSED_OFFSET_V_0, 1);
+      else
+        buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+
       return buffer.get(0) > 0;
     } finally {
       releaseReadLock();
@@ -364,5 +378,18 @@ public class OFileClassic extends OAbstractFile {
       return (ByteBuffer) internalWriteBuffer.rewind();
 
     return getBuffer(iLenght);
+  }
+
+  @Override
+  protected void setVersion(int version) throws IOException {
+    acquireWriteLock();
+    try {
+      final ByteBuffer buffer = getWriteBuffer(OBinaryProtocol.SIZE_BYTE);
+      buffer.put((byte) version);
+      writeBuffer(buffer, VERSION_OFFSET);
+      setHeaderDirty();
+    } finally {
+      releaseWriteLock();
+    }
   }
 }

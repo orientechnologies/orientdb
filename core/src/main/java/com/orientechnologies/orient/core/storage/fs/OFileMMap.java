@@ -611,6 +611,9 @@ public class OFileMMap extends OAbstractFile {
   public boolean isSoftlyClosed() throws IOException {
     acquireReadLock();
     try {
+      if (version == 0)
+        return headerBuffer.get(SOFTLY_CLOSED_OFFSET_V_0) > 0;
+
       return headerBuffer.get(SOFTLY_CLOSED_OFFSET) > 0;
     } finally {
       releaseReadLock();
@@ -682,8 +685,13 @@ public class OFileMMap extends OAbstractFile {
   protected void init() {
     acquireWriteLock();
     try {
-      size = headerBuffer.getLong(SIZE_OFFSET);
-      filledUpTo = headerBuffer.getLong(FILLEDUPTO_OFFSET);
+      if (version == 0) {
+        size = headerBuffer.getInt(SIZE_OFFSET_V_0);
+        filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET_V_0);
+      } else {
+        size = headerBuffer.getLong(SIZE_OFFSET);
+        filledUpTo = headerBuffer.getLong(FILLEDUPTO_OFFSET);
+      }
     } finally {
       releaseWriteLock();
     }
@@ -691,23 +699,47 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   protected void setFilledUpTo(final long iHow) {
-    if (iHow != filledUpTo) {
-      filledUpTo = iHow;
-      headerBuffer.putLong(FILLEDUPTO_OFFSET, filledUpTo);
+    setFilledUpTo(iHow, false);
+  }
+
+  protected void setFilledUpTo(final long iHow, boolean force) {
+    acquireWriteLock();
+    try {
+      if (force || iHow != filledUpTo) {
+        filledUpTo = iHow;
+        headerBuffer.putLong(FILLEDUPTO_OFFSET, filledUpTo);
+        setHeaderDirty();
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  protected void setVersion(int version) throws IOException {
+    acquireWriteLock();
+    try {
+      headerBuffer.put(VERSION_OFFSET, (byte) version);
       setHeaderDirty();
+    } finally {
+      releaseWriteLock();
     }
   }
 
   @Override
   public void setSize(final long iSize) throws IOException {
+    setSize(iSize, false);
+  }
+
+  protected void setSize(final long size, final boolean force) throws IOException {
     acquireWriteLock();
     try {
-      if (maxSize > 0 && iSize > maxSize)
-        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize)
-            + " because the max is " + OFileUtils.getSizeAsString(maxSize));
-      if (iSize != size) {
-        checkSize(iSize);
-        size = iSize;
+      if (maxSize > 0 && size > maxSize)
+        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(size) + " because the max is "
+            + OFileUtils.getSizeAsString(maxSize));
+      if (force || this.size != size) {
+        checkSize(size);
+        this.size = size;
         headerBuffer.putLong(SIZE_OFFSET, size);
         setHeaderDirty();
       }
