@@ -102,7 +102,7 @@ public class OTraverseContext extends OBasicCommandContext {
       final String status = process.getStatus();
 
       if (status != null) {
-        if (buffer.length() > 0)
+        if (buffer.length() > 0 && !status.startsWith("["))
           buffer.append('.');
         buffer.append(status);
       }

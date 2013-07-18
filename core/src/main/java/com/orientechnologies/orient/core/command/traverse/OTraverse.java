@@ -38,6 +38,11 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   private long                              resultCount = 0;
   private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
+  private STRATEGY                          strategy    = STRATEGY.DEPTH_FIRST;
+
+  public enum STRATEGY {
+    DEPTH_FIRST, BREADTH_FIRST
+  };
 
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
@@ -190,5 +195,13 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public OIdentifiable getLastTraversed() {
     return lastTraversed;
+  }
+
+  public STRATEGY getStrategy() {
+    return strategy;
+  }
+
+  public void setStrategy(STRATEGY strategy) {
+    this.strategy = strategy;
   }
 }
