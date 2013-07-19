@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
@@ -391,6 +392,25 @@ public class CRUDObjectPhysicalTest {
         cal.set(Calendar.DAY_OF_MONTH, (j + 1));
         Assert.assertEquals(loadedJavaObj.getDateField()[i], cal.getTime());
       }
+
+      database.close();
+
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      loadedJavaObj = database.load(id);
+      doc = database.getRecordByUserObject(loadedJavaObj, false);
+
+      Assert.assertTrue(((Collection<?>) doc.field("text")).iterator().next() instanceof String);
+      Assert.assertTrue(((Collection<?>) doc.field("enumeration")).iterator().next() instanceof String);
+      Assert.assertTrue(((Collection<?>) doc.field("numberSimple")).iterator().next() instanceof Integer);
+      Assert.assertTrue(((Collection<?>) doc.field("longSimple")).iterator().next() instanceof Long);
+      Assert.assertTrue(((Collection<?>) doc.field("doubleSimple")).iterator().next() instanceof Double);
+      Assert.assertTrue(((Collection<?>) doc.field("floatSimple")).iterator().next() instanceof Float);
+      Assert.assertTrue(((Collection<?>) doc.field("byteSimple")).iterator().next() instanceof Byte);
+      Assert.assertTrue(((Collection<?>) doc.field("flagSimple")).iterator().next() instanceof Boolean);
+      Assert.assertTrue(((Collection<?>) doc.field("dateField")).iterator().next() instanceof Date);
+
+      // TODO - remove this delete to test simple type collections JSON import/export
+      database.delete(id);
     } finally {
       database.close();
     }
