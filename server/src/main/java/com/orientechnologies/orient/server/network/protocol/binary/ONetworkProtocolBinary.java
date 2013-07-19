@@ -1052,7 +1052,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
           channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecord<?>> entry : tx.getCreatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getCreatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeRID(entry.getValue().getIdentity());
 
@@ -1063,7 +1063,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
           channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecord<?>> entry : tx.getUpdatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
@@ -1078,6 +1078,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
       // Error during TX initialization, possibly index constraints violation.
+      tx.rollback();
       tx.close();
       sendError(clientTxId, e);
     }
@@ -1383,12 +1384,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void beginResponse() {
-    channel.acquireReadLock();
+    channel.acquireWriteLock();
   }
 
   protected void endResponse() throws IOException {
     channel.flush();
-    channel.releaseReadLock();
+    channel.releaseWriteLock();
   }
 
   protected void setDataCommandInfo(final String iCommandInfo) {

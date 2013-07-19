@@ -18,8 +18,20 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -58,7 +70,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -332,14 +352,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-                  System.out.println("BEGIN ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
                   beginResponse(network);
                   result = network.readClusterPosition();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readVersion();
                 } finally {
                   endResponse(network);
-                  System.out.println("END   ASYNCH READ " + OStorageRemoteThreadLocal.INSTANCE.get().sessionId);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
                 }
                 iCallback.call(iRid, result);
@@ -1738,7 +1756,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         network = networkPool.get(networkPoolCursor);
 
         networkPoolCursor++;
-        if (network.getLockWrite().getUnderlying().tryLock())
+        if (network.getLockWrite().tryAcquireLock())
           break;
 
         network = null;
@@ -1807,7 +1825,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       throw e;
     } finally {
 
-      iNetwork.getLockWrite().unlock();
+      iNetwork.releaseWriteLock();
 
       if (debug)
         System.out.println("<- req: " + getSessionId());

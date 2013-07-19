@@ -82,14 +82,29 @@ public class OAdaptiveLock {
           throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
               + timeout);
         }
-        throw new OTimeoutException("Timeout on acquiring  lock against resource of class: " + getClass() + " with timeout="
+        throw new OTimeoutException("Timeout on acquiring lock against resource of class: " + getClass() + " with timeout="
             + timeout);
       } else
         lock.lock();
   }
 
   public boolean tryAcquireLock() {
-    return concurrent || lock.tryLock();
+    return tryAcquireLock(timeout, TimeUnit.MILLISECONDS);
+  }
+
+  public boolean tryAcquireLock(final long iTimeout, final TimeUnit iUnit) {
+    if (concurrent)
+      if (timeout > 0)
+        try {
+          return lock.tryLock(iTimeout, iUnit);
+        } catch (InterruptedException e) {
+          throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+              + timeout);
+        }
+      else
+        return lock.tryLock();
+
+    return true;
   }
 
   public void unlock() {
