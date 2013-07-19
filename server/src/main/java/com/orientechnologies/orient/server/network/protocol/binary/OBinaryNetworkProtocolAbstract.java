@@ -162,8 +162,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
     channel.acquireWriteLock();
-
     try {
+      
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
 
