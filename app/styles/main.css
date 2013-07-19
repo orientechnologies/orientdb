@@ -20,7 +20,8 @@ body div.container-studio {
 .nomargin {
     margin : 0px !important;
 }
-table.pointer>tbody>tr>td input{
+table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select{
+
   width: 110px;
 }
 .accordion-scroll {

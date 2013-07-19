@@ -55,7 +55,8 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				current.username = currentDb.currentUser;
 				current.metadata = currentDb;
 				localStorageService.add("CurrentDB",current);
-				callback();
+				if(callback)
+					callback();
 			});
 		},
 		isConnected : function(){

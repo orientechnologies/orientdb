@@ -12,7 +12,7 @@
 				
 			</thead>
 			<tbody>
-				<tr ng-repeat="result in list | orderBy:predicate:reverse" ng-click="openClass(result)">
+				<tr ng-repeat="result in listClasses | orderBy:predicate:reverse" ng-click="openClass(result)">
 					<td>{{result['name']}}</td>
 					<td>{{result['type']}}</td>
 					<td>{{result['mandatory']}}</td>

@@ -1,8 +1,9 @@
 <div class="row-fluid" >
 	<div class = "nomargin">
 
-		<button ng-click="saveProperty(property)">Save</button>
-
+		<button class="btn btn-primary" ng-click="saveProperty(property)">Save</button>
+		<button class="btn" ng-click="newProperty()">New Property</button>
+		<br>
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
 			<thead>
 				<tr>
@@ -14,7 +15,7 @@
 				
 			</thead>
 			<tbody>
-				<tr ng-repeat="result in property">
+				<tr ng-repeat="result in property |  orderBy:'name'">
 					<td>
 						{{result['name']}} 
 					</td>
@@ -26,18 +27,18 @@
 					</td>
 					<td>
 						<select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'linkedType')">
-							
+							<option value=""></option>
 						</select>
 						<!-- <input type="text" ng-model="result['linkedType']" ng-change="modificato(result,'linkedType')">  -->
 					</td>
 
 					<td>
 						<select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses" ng-change="modificato(result,'linkedClass')">
-							
+							<option value=""></option>
 						</select>
 						<!-- <input type="text" ng-model="result['linkedClass']" ng-change="modificato(result,'linkedClass')"></td> -->
 						<td>
-							<input type="checkbox" ng-model="result['mandatory']" ng-change="modificato(result,'mandatory')">
+							<input type="checkbox"  ng-model="result['mandatory']" ng-change="modificato(result,'mandatory')">
 						</td>
 						<td>
 							<input type="checkbox" ng-model="result['readonly']" ng-change="modificato(result,'readonly')">
@@ -53,6 +54,9 @@
 						<td>
 							<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')" ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
 							<input type="text"   bs-datepicker ng-model="result['max']"  ng-change="modificato(result,'max')" ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+						</td>
+						<td>
+							<a href="#" class="btn btn-danger btn-small"><i class="icon-white icon-trash"></i> Drop</a>
 						</td>
 					</tr>
 				</tbody>
