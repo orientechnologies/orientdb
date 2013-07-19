@@ -3,7 +3,7 @@
 
 
 body div.container-studio {
-	padding-top :40px
+	padding-top :20px
 }
 .pointer {
 	cursor : pointer;
@@ -89,6 +89,10 @@ table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select{
     font-size: 21px;
     line-height: 40px;
 }
+.doc-body   {
+   max-height: 300px;
+   overflow: auto;
+}
 div.document form.bs-docs-example:after {
     content: "Document";
 }
@@ -102,3 +106,28 @@ div.edge form.bs-docs-example:after {
 .edgesList {
     padding-top: 60px;
 }
+
+.createEdge {
+  width: 80%; /* desired relative width */
+  left: 10%; /* (100%-width)/2 */
+  /* place center */
+  margin-left:auto;
+  margin-right:auto; 
+}
+.createEdge .modal-body {
+  width: 98%; 
+}
+.createEdge .modal-body {
+  width: 98%;
+  max-height: 200px; 
+}
+.createEdge .modal-body .CodeMirror {
+  height: 100px;
+}
+.createEdge .modal-body .table{
+  width: 96%; 
+  height: 100px;
+  overflow: auto;
+}
+
+

@@ -16,8 +16,10 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
     };
 	$scope.query = function(){
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
-			$scope.headers = Database.getPropertyTableFromResults(data.result);
-			$scope.results = data.result;
+			if(data.result){
+				$scope.headers = Database.getPropertyTableFromResults(data.result);
+				$scope.results = data.result;
+			}
 			if($scope.queries.indexOf($scope.queryText)==-1)
 				$scope.queries.push($scope.queryText);
 		});
@@ -31,3 +33,4 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
 		$scope.query();
 	}
 }]);
+

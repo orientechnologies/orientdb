@@ -1,12 +1,13 @@
 <div class="row-fluid" ng-controller="VertexEditController">
 	<div class="span2 edgesList">
 		<form >
-			<legend>Incoming Edges</legend>
+			<legend>Incoming Edges <a href="javascript:void(0)" ng-init="init('incomings')" ng-controller="VertexPopoverLabelController" data-placement="right" bs-popover="'views/vertex/addLabel.html'"><i class="icon-plus-sign" ></i></a> </legend>
 			<div class="accordion row-fluid" id="accordion2">
 				<div class="accordion-group" ng-repeat="i in incomings">
 					<div class="accordion-heading">
 						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{i}}">
 							{{i}}
+							<i class="icon-plus-sign" data-placement="right" ng-click="showModalConnection(i)"></i>
 						</a>
 					</div>
 					<div id="{{i}}" class="accordion-body collapse">
@@ -16,6 +17,7 @@
 									<tr ng-repeat="out in filterArray(doc[i])">
 										<td>
 											<a href="javascript:void(0)"><i class="icon-chevron-left" ng-click="navigate(out)"></i></a> 
+											<a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a> 
 										</td>
 										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
 									</tr>
@@ -32,12 +34,13 @@
 	</div>
 	<div class="span2 edgesList">
 		<form>
-			<legend>Outgoing Edges <a href="javascript:void(0)"><i class="icon-plus-sign" ng-click="addEdgeLabel()"></i></a> </legend>
+			<legend>Outgoing Edges <a href="javascript:void(0)" ng-init="init('outgoings')" ng-controller="VertexPopoverLabelController" data-placement="left" bs-popover="'views/vertex/addLabel.html'"><i class="icon-plus-sign" ></i></a> </legend>
 			<div class="accordion row-fluid" id="accordion1">
 				<div class="accordion-group" ng-repeat="i in outgoings">
 					<div class="accordion-heading">
 						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{i}}">
 							{{i}}
+							<i class="icon-plus-sign" data-placement="left" ng-click="showModalConnection(i)"></i>
 						</a>
 					</div>
 					<div id="{{i}}" class="accordion-body collapse">

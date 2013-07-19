@@ -79,7 +79,7 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 }]);
 DocController.controller("DocumentModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
-
+	$scope.canAdd = true;
 	$scope.reload = function(){
 		$scope.doc = DocumentApi.get({ database : $scope.db , document : $scope.rid},function(){
 			$scope.headers = Database.getPropertyFromDoc($scope.doc);
