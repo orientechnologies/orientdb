@@ -153,6 +153,24 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			}
 			return fields;
 		},
+		listIndexesForClass : function(clazz){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var fields = new Array
+			for (var entry in classes){
+				var defaultCluster = classes[entry]['indexes'];
+				if(clazz.toUpperCase() == classes[entry].name.toUpperCase()){
+					var props = classes[entry]['indexes'];
+					for (var f in props) {
+						
+				console.log(props[f])
+						fields.push(props[f]);
+					};
+					break;
+				}				
+			}
+			return fields;
+		},
 		listClasses : function(){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];

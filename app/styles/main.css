@@ -24,6 +24,12 @@ table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select{
 
   width: 110px;
 }
+
+div.scroll-editclass {
+  overflow: auto;
+  height: 300px;
+  padding-top: 8px;
+}
 .accordion-scroll {
     height: 150px;
     overflow: auto;
