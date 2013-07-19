@@ -834,20 +834,15 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   }
 
   protected void checkForKeyType(final Object iKey) {
-    acquireExclusiveLock();
-    try {
-      if (indexDefinition == null) {
-        // RECOGNIZE THE KEY TYPE AT RUN-TIME
+    if (indexDefinition == null) {
+      // RECOGNIZE THE KEY TYPE AT RUN-TIME
 
-        final OType type = OType.getTypeByClass(iKey.getClass());
-        if (type == null)
-          return;
+      final OType type = OType.getTypeByClass(iKey.getClass());
+      if (type == null)
+        return;
 
-        indexDefinition = new OSimpleKeyIndexDefinition(type);
-        updateConfiguration();
-      }
-    } finally {
-      releaseExclusiveLock();
+      indexDefinition = new OSimpleKeyIndexDefinition(type);
+      updateConfiguration();
     }
   }
 

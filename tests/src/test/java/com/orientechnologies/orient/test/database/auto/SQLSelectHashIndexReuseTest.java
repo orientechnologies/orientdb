@@ -3,6 +3,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.*;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -11,6 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
@@ -138,6 +140,18 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
         document.save();
       }
     }
+    database.close();
+  }
+
+  @AfterClass
+  public void afterClass() throws Exception {
+    if (database.isClosed())
+      database.open("admin", "admin");
+
+    database.command(new OCommandSQL("drop class sqlSelectHashIndexReuseTestClass")).execute();
+    database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
+
     database.close();
   }
 

@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbs
  * @author Andrey Lomakin
  * @since 6/29/13
  */
-public class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
+public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
   private int                                  maxUpdatesBeforeSave;
   private OMemoryWatchDog.Listener             watchDog;
   private OMVRBTreeDatabaseLazySave<Object, V> map;

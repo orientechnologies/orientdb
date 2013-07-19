@@ -252,7 +252,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         OIndexInternal<?> indexInternal = idx.getInternal();
         if (indexInternal != null) {
           indexInternal.close();
-          getDatabase().unregisterListener(indexInternal);
+
+          final ODatabaseRecord databaseRecord = getDatabase();
+          if (databaseRecord != null)
+            databaseRecord.unregisterListener(indexInternal);
         }
       }
 

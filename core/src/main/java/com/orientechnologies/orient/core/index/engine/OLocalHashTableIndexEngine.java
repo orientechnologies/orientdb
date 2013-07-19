@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author Andrey Lomakin
  * @since 15.07.13
  */
-public class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
+public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   public static final String                     METADATA_FILE_EXTENSION = ".him";
   public static final String                     TREE_FILE_EXTENSION     = ".hit";
   public static final String                     BUCKET_FILE_EXTENSION   = ".hib";

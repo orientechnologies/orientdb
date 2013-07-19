@@ -24,10 +24,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
+import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 /**
  * 
@@ -61,24 +60,25 @@ public class OHashIndexFactory implements OIndexFactory {
   public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType) throws OConfigurationException {
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
-    if (storage instanceof OStorageMemory)
+
+    final String storageType = storage.getType();
+    if (storageType.equals("memory"))
       indexEngine = new OMemoryHashMapIndexEngine();
-    else if (storage instanceof OStorageLocalAbstract) {
+    else if (storageType.equals("local") || storageType.equals("plocal"))
       indexEngine = new OLocalHashTableIndexEngine();
-    } else {
-      throw new OIndexException("Unsupported storage type : " + storage.getType());
+    else if (storageType.equals("remote"))
+      indexEngine = new ORemoteIndexEngine();
+    else
+      throw new OIndexException("Unsupported storage type : " + storageType);
 
-    }
-
-    if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType)) {
+    if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexUnique(indexType, indexEngine);
-    } else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)) {
+    else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexNotUnique(indexType, indexEngine);
-    } else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType)) {
+    else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
       return new OIndexFullText(indexType, indexEngine);
-    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType)) {
+    else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
       return new OIndexDictionary(indexType, indexEngine);
-    }
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

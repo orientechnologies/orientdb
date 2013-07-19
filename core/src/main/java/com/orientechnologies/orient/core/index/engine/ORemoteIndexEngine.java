@@ -18,27 +18,19 @@ package com.orientechnologies.orient.core.index.engine;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
  * @author Andrey Lomakin
- * @since 15.07.13
+ * @since 18.07.13
  */
-public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
-  private final ConcurrentMap<Object, V> concurrentHashMap = new ConcurrentHashMap<Object, V>();
-  private volatile ORID                  identity;
-
+public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public void init() {
   }
@@ -50,11 +42,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic) {
-    final ODatabaseRecord database = getDatabase();
-    final ORecordBytes identityRecord = new ORecordBytes();
-
-    database.save(identityRecord, clusterIndexName);
-    identity = identityRecord.getIdentity();
   }
 
   @Override
@@ -67,47 +54,46 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public boolean contains(Object key) {
-    return concurrentHashMap.containsKey(key);
+    return false;
   }
 
   @Override
   public boolean remove(Object key) {
-    return concurrentHashMap.remove(key) != null;
+    return false;
   }
 
   @Override
   public ORID getIdentity() {
-    return identity;
+    return null;
   }
 
   @Override
   public void clear() {
-    concurrentHashMap.clear();
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> iterator() {
-    return concurrentHashMap.entrySet().iterator();
+  public Iterator<Map.Entry> iterator() {
+    return null;
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> inverseIterator() {
-    throw new UnsupportedOperationException("inverseIterator");
+  public Iterator<Map.Entry> inverseIterator() {
+    return null;
   }
 
   @Override
-  public Iterator<V> valuesIterator() {
-    throw new UnsupportedOperationException("valuesIterator");
+  public Iterator valuesIterator() {
+    return null;
   }
 
   @Override
-  public Iterator<V> inverseValuesIterator() {
-    throw new UnsupportedOperationException("inverseValuesIterator");
+  public Iterator inverseValuesIterator() {
+    return null;
   }
 
   @Override
   public Iterable<Object> keys() {
-    return concurrentHashMap.keySet();
+    return null;
   }
 
   @Override
@@ -143,77 +129,63 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public V get(Object key) {
-    return concurrentHashMap.get(key);
+  public Object get(Object key) {
+    return null;
   }
 
   @Override
-  public void put(Object key, V value) {
-    concurrentHashMap.put(key, value);
+  public void put(Object key, Object value) {
   }
 
   @Override
   public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesBetween");
+      int maxValuesToFetch, ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesMajor");
+      ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
   public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesMinor");
+      ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
   public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesMajor");
+      ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
   public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesMinor");
+      ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesBetween");
+      ValuesTransformer transformer) {
+    return null;
   }
 
   @Override
-  public long size(ValuesTransformer<V> transformer) {
-    if (transformer == null)
-      return concurrentHashMap.size();
-    else {
-      long counter = 0;
-      for (V value : concurrentHashMap.values()) {
-        counter += transformer.transform(value).size();
-      }
-      return counter;
-    }
+  public long size(ValuesTransformer transformer) {
+    return 0;
   }
 
   @Override
   public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("count");
+      ValuesTransformer transformer) {
+    return 0;
   }
 
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }
-
-  private ODatabaseRecord getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
 }
