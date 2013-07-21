@@ -1112,11 +1112,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           // FORCE THE SERVER'S TIMEOUT
           command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
-        ((OCommandRequestInternal) connection.database.command(command)).execute();
-
         // ASSIGNED THE PARSED FETCHPLAN
         listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
 
+        ((OCommandRequestInternal) connection.database.command(command)).execute();
+        
+        
         if (empty.get())
           try {
             sendOk(clientTxId);
