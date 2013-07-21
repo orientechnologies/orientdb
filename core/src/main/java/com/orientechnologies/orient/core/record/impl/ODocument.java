@@ -418,7 +418,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    return ODocumentHelper.hasSameContentOf(this, getDatabase(), iOther, getDatabase(), null);
+    final ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
   @Override
