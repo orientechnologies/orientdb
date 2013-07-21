@@ -102,7 +102,8 @@ public class OReflectionHelper {
    * @return The classes
    * @throws ClassNotFoundException
    */
-  private static List<Class<?>> findClasses(final File iDirectory, String iPackageName, ClassLoader iClassLoader) throws ClassNotFoundException {
+  private static List<Class<?>> findClasses(final File iDirectory, String iPackageName, ClassLoader iClassLoader)
+      throws ClassNotFoundException {
     final List<Class<?>> classes = new ArrayList<Class<?>>();
     if (!iDirectory.exists())
       return classes;

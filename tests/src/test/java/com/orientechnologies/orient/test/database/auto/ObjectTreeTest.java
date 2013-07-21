@@ -474,6 +474,68 @@ public class ObjectTreeTest {
   }
 
   @Test(dependsOnMethods = "testQueryMultiCircular")
+  public void testCollectionsRemove() {
+    JavaComplexTestClass a = database.newInstance(JavaComplexTestClass.class);
+
+    // LIST TEST
+    Child first = database.newInstance(Child.class);
+    first.setName("1");
+    Child second = database.newInstance(Child.class);
+    second.setName("2");
+    Child third = database.newInstance(Child.class);
+    third.setName("3");
+    Child fourth = database.newInstance(Child.class);
+    fourth.setName("4");
+    Child fifth = database.newInstance(Child.class);
+    fifth.setName("5");
+
+    a.getList().add(first);
+    a.getList().add(second);
+    a.getList().add(third);
+    a.getList().add(fourth);
+    a.getList().add(fifth);
+
+    a.getSet().add(first);
+    a.getSet().add(second);
+    a.getSet().add(third);
+    a.getSet().add(fourth);
+    a.getSet().add(fifth);
+
+    a.getList().remove(third);
+    a.getSet().remove(fourth);
+
+    Assert.assertEquals(a.getList().size(), 4);
+    Assert.assertEquals(a.getSet().size(), 4);
+    ODocument doc = database.getRecordByUserObject(a, false);
+    Assert.assertEquals(((Collection<?>) doc.field("list")).size(), 4);
+    Assert.assertEquals(((Collection<?>) doc.field("set")).size(), 4);
+
+    a = database.save(a);
+    ORID rid = database.getIdentity(a);
+
+    Assert.assertEquals(a.getList().size(), 4);
+    Assert.assertEquals(a.getSet().size(), 4);
+    doc = database.getRecordByUserObject(a, false);
+    Assert.assertEquals(((Collection<?>) doc.field("list")).size(), 4);
+    Assert.assertEquals(((Collection<?>) doc.field("set")).size(), 4);
+
+    database.close();
+
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
+    JavaComplexTestClass loadedObj = database.load(rid);
+
+    Assert.assertEquals(loadedObj.getList().size(), 4);
+    Assert.assertEquals(loadedObj.getSet().size(), 4);
+    doc = database.getRecordByUserObject(loadedObj, false);
+    Assert.assertEquals(((Collection<?>) doc.field("list")).size(), 4);
+    Assert.assertEquals(((Collection<?>) doc.field("set")).size(), 4);
+
+    database.delete(rid);
+
+  }
+
+  @Test(dependsOnMethods = "testCollectionsRemove")
   public void testCascadeDeleteSimpleObject() {
     JavaCascadeDeleteTestClass test = database.newInstance(JavaCascadeDeleteTestClass.class);
     JavaSimpleTestClass simple = database.newInstance(JavaSimpleTestClass.class);
