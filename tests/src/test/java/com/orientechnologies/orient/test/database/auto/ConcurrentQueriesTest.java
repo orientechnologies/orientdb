@@ -64,6 +64,7 @@ public class ConcurrentQueriesTest {
                 break;
               } catch (ONeedRetryException e) {
                 System.out.println("Retry " + retry + "/" + MAX_RETRIES + "...");
+                Thread.sleep(retry * 10);
               }
             }
           } finally {

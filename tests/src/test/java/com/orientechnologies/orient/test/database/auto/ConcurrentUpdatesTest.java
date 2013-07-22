@@ -18,7 +18,11 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -79,6 +83,7 @@ public class ConcurrentUpdatesTest {
               break;
             } catch (ONeedRetryException e) {
               System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+              Thread.sleep(retry * 10);
             }
           }
           fieldValue += ";" + i;
