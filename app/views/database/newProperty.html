@@ -23,7 +23,7 @@
 					<div class="control-group">
 						<label class="control-label" >Linked Type</label>
 						<div class="controls">
-							<select ng-model="property['linkedType']" ng-options="p.toString() for p in listTypes" ng-disabled="checkDisable('linkedClass')">
+							<select ng-model="property['linkedType']" ng-options="p.toString() for p in listTypes" ng-disabled="checkDisableLinkedType(property['type'])">
 								<option value=""></option>
 
 							</select>
@@ -32,7 +32,7 @@
 					<div class="control-group">
 						<label class="control-label" >Linked Class</label>
 						<div class="controls">
-							<select ng-model="property['linkedClass']" ng-options="p.toString() for p in listClasses" ng-disabled="checkDisable('linkedType')">1
+							<select ng-model="property['linkedClass']" ng-options="p.toString() for p in listClasses" ng-disabled="checkDisableLinkedClass('linkedType')">1
 								<option value=""></option>
 
 							</select>

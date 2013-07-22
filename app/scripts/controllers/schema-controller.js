@@ -35,6 +35,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	$scope.property = Database.listPropertiesForClass(clazz);
 
 	$scope.indexes = Database.listIndexesForClass(clazz);
+
 	console.log($scope.indexes);
 	$scope.queryText = ""
 	$scope.modificati = new Array;
@@ -189,9 +190,40 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 
 	$scope.checkDisable = function(entry){
 		if($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == ""){
+			console.log('false');
 			return false;
 		}
+		console.log('true')
 		return true;
 	}
+	$scope.checkDisableLinkedType = function(entry){
+
+		var occupato =  $scope.checkDisable('linkedClass');
+		if(occupato){
+$scope.property['linkedType'] = null;
+			return true;
+		}
+		if($scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP' ){
+			return false;
+		}
+		$scope.property['linkedType'] = null;
+		return true;
+	}
+	$scope.checkDisableLinkedClass = function(entry){
+
+		var occupatoType =  $scope.checkDisable('linkedType');
+		if(occupatoType){
+		$scope.property['linkedClass'] = null;
+			return true;
+		}
+		
+		if($scope.property['type'] == 'LINKLIST' || $scope.property['type'] =='LINKSET' || $scope.property['type'] =='LINKMAP' || $scope.property['type'] =='EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP'){
+			return false;
+		}
+		
+		$scope.property['linkedClass'] = null;
+		return true;
+	}
+
 
 }]);
