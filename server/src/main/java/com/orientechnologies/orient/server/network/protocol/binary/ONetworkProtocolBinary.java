@@ -1121,8 +1121,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
 
         ((OCommandRequestInternal) connection.database.command(command)).execute();
-        
-        
+
         if (empty.get())
           try {
             sendOk(clientTxId);
