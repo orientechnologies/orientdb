@@ -154,9 +154,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           if (key != null)
             result = index.remove(key, (OIdentifiable) value);
           else
-            throw new OCommandExecutionException("Key value should be provided to remove index entry.");
+            return index.remove((OIdentifiable) value);
         else
           result = index.remove(key);
+
         return result ? 1 : 0;
       }
     }

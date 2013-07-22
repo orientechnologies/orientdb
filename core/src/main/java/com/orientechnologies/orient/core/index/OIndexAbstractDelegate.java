@@ -92,6 +92,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.remove(iKey);
   }
 
+  @Override
+  public int remove(OIdentifiable iRID) {
+    return delegate.remove(iRID);
+  }
+
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
     return delegate.remove(iKey, iRID);
   }

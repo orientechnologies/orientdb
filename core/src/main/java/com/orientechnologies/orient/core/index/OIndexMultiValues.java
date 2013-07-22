@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -103,6 +109,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       }
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  public int remove(final OIdentifiable iRecord) {
+    checkForRebuild();
+
+    acquireExclusiveLock();
+    try {
+      return indexEngine.removeValue(iRecord, MultiValuesTransformer.INSTANCE);
+    } finally {
+      releaseExclusiveLock();
     }
   }
 
@@ -357,8 +374,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override
-    public Collection<OIdentifiable> transform(Set<OIdentifiable> value) {
+    public Collection<OIdentifiable> transformFromValue(Set<OIdentifiable> value) {
       return value;
+    }
+
+    @Override
+    public Set<OIdentifiable> transformToValue(Collection<OIdentifiable> collection) {
+      return (Set<OIdentifiable>) collection;
     }
   }
 }

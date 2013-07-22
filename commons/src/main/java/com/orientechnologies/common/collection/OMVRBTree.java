@@ -18,7 +18,20 @@ package com.orientechnologies.common.collection;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -2209,7 +2222,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the first Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
    * empty.
    */
-  protected OMVRBTreeEntry<K, V> getFirstEntry() {
+  public OMVRBTreeEntry<K, V> getFirstEntry() {
     OMVRBTreeEntry<K, V> p = root;
     if (p != null) {
       if (p.getSize() > 0)

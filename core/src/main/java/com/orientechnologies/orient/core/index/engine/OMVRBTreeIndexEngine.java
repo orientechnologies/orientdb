@@ -15,10 +15,17 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -203,6 +210,51 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     acquireExclusiveLock();
     try {
       return map.remove(key) != null;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
+    acquireExclusiveLock();
+    try {
+      Map<Object, V> entriesToUpdate = new TreeMap<Object, V>(ODefaultComparator.INSTANCE);
+      final OMVRBTreeEntry<Object, V> firstEntry = map.getFirstEntry();
+      if (firstEntry == null)
+        return 0;
+
+      OMVRBTreeEntry<Object, V> entry = firstEntry;
+      while (entry != null) {
+        final Object key = entry.getKey();
+        final V value = entry.getValue();
+
+        if (transformer != null) {
+          Collection<OIdentifiable> rids = transformer.transformFromValue(value);
+          if (rids.remove(valueToRemove)) {
+            entriesToUpdate.put(key, transformer.transformToValue(rids));
+          }
+        } else if (value.equals(valueToRemove)) {
+          entriesToUpdate.put(key, value);
+        }
+
+        entry = OMVRBTree.next(entry);
+      }
+
+      for (Map.Entry<Object, V> entryToUpdate : entriesToUpdate.entrySet()) {
+        V value = entryToUpdate.getValue();
+        if (value instanceof Collection) {
+          Collection col = (Collection) value;
+          if (col.isEmpty())
+            map.remove(entryToUpdate.getKey());
+          else
+            map.put(entryToUpdate.getKey(), value);
+        } else
+          map.remove(entryToUpdate.getKey());
+
+      }
+
+      return entriesToUpdate.size();
     } finally {
       releaseExclusiveLock();
     }
@@ -601,7 +653,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       map.setPageIndex(0);
 
       while (currentEntry != null) {
-        size += valuesTransformer.transform(currentEntry.getValue()).size();
+        size += valuesTransformer.transformFromValue(currentEntry.getValue()).size();
         currentEntry = OMVRBTree.next(currentEntry);
       }
 
@@ -609,7 +661,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       currentEntry = OMVRBTree.previous(rootEntry);
 
       while (currentEntry != null) {
-        size += valuesTransformer.transform(currentEntry.getValue()).size();
+        size += valuesTransformer.transformFromValue(currentEntry.getValue()).size();
         currentEntry = OMVRBTree.previous(currentEntry);
       }
 
@@ -662,7 +714,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
         final V value = entry.getValue();
         if (transformer != null)
-          count += transformer.transform(value).size();
+          count += transformer.transformFromValue(value).size();
         else
           count++;
 
@@ -705,7 +757,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
 
   private void addToResult(ValuesTransformer<V> transformer, Set<OIdentifiable> result, V value, int maxValuesToFetch) {
     if (transformer != null) {
-      Collection<OIdentifiable> transformResult = transformer.transform(value);
+      Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
       for (OIdentifiable transformedValue : transformResult) {
 
         result.add(transformedValue);
@@ -719,7 +771,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
 
   private void addToEntriesResult(ValuesTransformer<V> transformer, Set<ODocument> result, Object key, V value, int maxValuesToFetch) {
     if (transformer != null) {
-      Collection<OIdentifiable> transformResult = transformer.transform(value);
+      Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
       for (OIdentifiable transformedValue : transformResult) {
         final ODocument document = new ODocument();
         document.field("key", key);

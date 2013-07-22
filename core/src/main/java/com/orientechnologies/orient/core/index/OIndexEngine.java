@@ -63,6 +63,8 @@ public interface OIndexEngine<V> {
 
   void put(Object key, V value);
 
+  int removeValue(OIdentifiable value, ValuesTransformer<V> transformer);
+
   Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       int maxValuesToFetch, ValuesTransformer<V> transformer);
 
@@ -88,6 +90,8 @@ public interface OIndexEngine<V> {
   boolean hasRangeQuerySupport();
 
   interface ValuesTransformer<V> {
-    Collection<OIdentifiable> transform(V value);
+    Collection<OIdentifiable> transformFromValue(V value);
+
+    V transformToValue(Collection<OIdentifiable> collection);
   }
 }

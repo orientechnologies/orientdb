@@ -111,6 +111,15 @@ public interface OIndex<T> {
   boolean remove(Object iKey);
 
   /**
+   * Removes a value in all the index entries.
+   * 
+   * @param iRID
+   *          Record id to search
+   * @return Times the record was found, 0 if not found at all
+   */
+  int remove(OIdentifiable iRID);
+
+  /**
    * Removes an entry by its key and value.
    * 
    * @param iKey

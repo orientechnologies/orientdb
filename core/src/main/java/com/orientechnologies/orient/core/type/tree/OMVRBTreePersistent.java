@@ -780,7 +780,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
    * empty.
    */
   @Override
-  protected OMVRBTreeEntry<K, V> getFirstEntry() {
+  public OMVRBTreeEntry<K, V> getFirstEntry() {
     if (!entryPoints.isEmpty()) {
       // FIND THE FIRST ELEMENT STARTING FROM THE FIRST ENTRY-POINT IN MEMORY
       final Map.Entry<K, OMVRBTreeEntryPersistent<K, V>> entry = entryPoints.firstEntry();

@@ -17,8 +17,15 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -506,6 +513,24 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   }
 
+  @Override
+  public int remove(OIdentifiable iRID) {
+    checkForRebuild();
+
+    modificationLock.requestModificationLock();
+
+    try {
+      acquireExclusiveLock();
+      try {
+        return indexEngine.removeValue(iRID, null);
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
+
   public boolean remove(final Object key) {
     checkForRebuild();
 
@@ -739,7 +764,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
               put(key, value);
             else if (operation == OPERATION.REMOVE.ordinal()) {
               if (key.equals("*"))
-                throw new OIndexException("Key value should be provided to remove index entry.");
+                remove(value);
               else if (value == null)
                 remove(key);
               else

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,6 +154,34 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
+    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
+
+    for (Map.Entry<Object, V> entry : concurrentHashMap.entrySet()) {
+      if (transformer != null) {
+        Collection<OIdentifiable> rids = transformer.transformFromValue(entry.getValue());
+        if (rids.remove(valueToRemove))
+          entriesToUpdate.put(entry.getKey(), transformer.transformToValue(rids));
+      } else if (entry.getValue().equals(valueToRemove))
+        entriesToUpdate.put(entry.getKey(), entry.getValue());
+    }
+
+    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
+      V value = entry.getValue();
+      if (value instanceof Collection) {
+        Collection col = (Collection) value;
+        if (col.isEmpty())
+          concurrentHashMap.remove(entry.getKey());
+        else
+          concurrentHashMap.put(entry.getKey(), value);
+      } else
+        concurrentHashMap.remove(entry.getKey());
+    }
+
+    return entriesToUpdate.size();
+  }
+
+  @Override
   public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       int maxValuesToFetch, ValuesTransformer<V> transformer) {
     throw new UnsupportedOperationException("getValuesBetween");
@@ -195,7 +224,7 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
     else {
       long counter = 0;
       for (V value : concurrentHashMap.values()) {
-        counter += transformer.transform(value).size();
+        counter += transformer.transformFromValue(value).size();
       }
       return counter;
     }

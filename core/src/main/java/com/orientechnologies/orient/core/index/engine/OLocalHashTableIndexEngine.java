@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -147,6 +148,42 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
+    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
+    OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
+    if (firstEntry == null)
+      return 0;
+
+    OHashIndexBucket.Entry<Object, V>[] entries = hashTable.ceilingEntries(firstEntry.key);
+
+    while (entries.length > 0) {
+      for (OHashIndexBucket.Entry<Object, V> entry : entries)
+        if (transformer != null) {
+          Collection<OIdentifiable> rids = transformer.transformFromValue(entry.value);
+          if (rids.remove(valueToRemove))
+            entriesToUpdate.put(entry.key, transformer.transformToValue(rids));
+        } else if (entry.value.equals(valueToRemove))
+          entriesToUpdate.put(entry.key, entry.value);
+
+      entries = hashTable.higherEntries(entries[entries.length - 1].key);
+    }
+
+    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
+      V value = entry.getValue();
+      if (value instanceof Collection) {
+        Collection col = (Collection) value;
+        if (col.isEmpty())
+          hashTable.remove(entry.getKey());
+        else
+          hashTable.put(entry.getKey(), value);
+      } else
+        hashTable.remove(entry.getKey());
+    }
+
+    return entriesToUpdate.size();
+  }
+
+  @Override
   public long size(ValuesTransformer<V> transformer) {
     if (transformer == null)
       return hashTable.size();
@@ -160,7 +197,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       while (entries.length > 0) {
         for (OHashIndexBucket.Entry<Object, V> entry : entries)
-          counter += transformer.transform(entry.value).size();
+          counter += transformer.transformFromValue(entry.value).size();
 
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
       }

@@ -138,6 +138,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public int removeValue(OIdentifiable value, ValuesTransformer transformer) {
+    return 0;
+  }
+
+  @Override
   public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       int maxValuesToFetch, ValuesTransformer transformer) {
     return null;
