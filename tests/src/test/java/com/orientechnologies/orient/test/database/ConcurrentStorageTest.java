@@ -12,15 +12,15 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * @author edegtyarenko
@@ -79,7 +79,7 @@ public class ConcurrentStorageTest {
 
           for (int i = 0; i < 1000; i++) {
             if (url.startsWith("remote")) {
-              new OServerAdmin(url).connect("admin", "admin").freezeCluster(testClusterId);
+              new OServerAdmin(url).connect("admin", "admin").freezeCluster(testClusterId, "plocal");
             } else {
               connection.freezeCluster(testClusterId);
             }
@@ -94,7 +94,7 @@ public class ConcurrentStorageTest {
 
             System.out.println("released " + System.currentTimeMillis());
             if (url.startsWith("remote")) {
-              new OServerAdmin(url).connect("admin", "admin").releaseCluster(testClusterId);
+              new OServerAdmin(url).connect("admin", "admin").releaseCluster(testClusterId, "plocal");
             } else {
               connection.releaseCluster(testClusterId);
             }

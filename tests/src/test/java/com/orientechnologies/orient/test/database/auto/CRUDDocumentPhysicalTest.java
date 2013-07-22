@@ -799,7 +799,7 @@ public class CRUDDocumentPhysicalTest {
         database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
           public void call(ORecordId iRID, OClusterPosition iParameter) {
-            System.out.println("asynchInsertion callback for record " + iRID + ": " + callBackCalled.incrementAndGet());
+            callBackCalled.incrementAndGet();
           }
         }, null);
       }

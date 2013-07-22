@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -669,7 +670,7 @@ public class OObjectEntitySerializer {
       Class<?> fieldClass = iFieldValue.getClass();
 
       if (fieldClass.isArray()) {
-        if (iType.equals(OType.BINARY))
+        if (iType != null && iType.equals(OType.BINARY))
           return iFieldValue;
         // ARRAY
         final int arrayLength = Array.getLength(iFieldValue);
@@ -875,13 +876,18 @@ public class OObjectEntitySerializer {
       return null;
     if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
       Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
-      if (f.getType().isArray())
+      if (f.getType().isArray()) {
         if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
           return OType.BINARY;
         } else {
-          return OType.getTypeByClass(f.getType());
+          if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+              || OReflectionHelper.isJavaType(genericMultiValueType)) {
+            return OType.EMBEDDEDLIST;
+          } else {
+            return OType.LINKLIST;
+          }
         }
-      else if (Collection.class.isAssignableFrom(f.getType())) {
+      } else if (Collection.class.isAssignableFrom(f.getType())) {
         if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
             || OReflectionHelper.isJavaType(genericMultiValueType))
           return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;

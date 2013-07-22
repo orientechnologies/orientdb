@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
@@ -41,6 +42,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -427,18 +431,27 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object manageArraySave(final String iFieldName, final Object[] value) {
     if (value.length > 0) {
       final Object o = ((Object[]) value)[0];
-      if (o instanceof Proxy) {
-        ODocument[] newValue = new ODocument[value.length];
-        for (int i = 0; i < value.length; i++) {
-          newValue[i] = value[i] != null ? OObjectEntitySerializer.getDocument((Proxy) value[i]) : null;
-        }
+      if (o instanceof Proxy || o.getClass().isEnum()) {
+        Object[] newValue = new Object[value.length];
+        convertArray(value, newValue, o.getClass().isEnum());
         doc.field(iFieldName, newValue);
       }
     }
     return value;
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings("rawtypes")
+  protected void convertArray(final Object[] value, Object[] newValue, boolean isEnum) {
+    for (int i = 0; i < value.length; i++) {
+      if (isEnum) {
+        newValue[i] = value[i] != null ? ((Enum) value[i]).name() : null;
+      } else {
+        newValue[i] = value[i] != null ? OObjectEntitySerializer.getDocument((Proxy) value[i]) : null;
+      }
+    }
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   protected Object manageMapSave(final Object self, final Field f, Map<?, ?> value, final boolean customSerialization) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
     if (customSerialization) {
@@ -546,7 +559,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     } else if (docValue instanceof Map<?, ?>) {
       docValue = manageMapLoad(f, self, docValue, customSerialization);
     } else if (docValue.getClass().isArray() && !docValue.getClass().getComponentType().isPrimitive()) {
-      docValue = manageArrayLoad(docValue);
+      docValue = manageArrayLoad(docValue, f);
     } else if (customSerialization) {
       docValue = OObjectEntitySerializer.deserializeFieldValue(OObjectEntitySerializer.getField(fieldName, self.getClass())
           .getType(), docValue);
@@ -562,9 +575,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     return docValue;
   }
 
-  protected Object manageArrayLoad(Object value) {
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  protected Object manageArrayLoad(Object value, Field f) {
     if (((Object[]) value).length > 0) {
-      final Object o = ((Object[]) value)[0];
+      Object o = ((Object[]) value)[0];
       if (o instanceof OIdentifiable) {
         Object[] newValue = new Object[((Object[]) value).length];
         for (int i = 0; i < ((Object[]) value).length; i++) {
@@ -572,6 +586,20 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           newValue[i] = OObjectEntitySerializer.getDocument((Proxy) doc);
         }
         value = newValue;
+      } else {
+        final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
+        if (genericType.isEnum()) {
+          Object newValue = Array.newInstance(genericType, ((Object[]) value).length);
+          for (int i = 0; i < ((Object[]) value).length; i++) {
+            o = ((Object[]) value)[i];
+            if (o instanceof Number)
+              o = genericType.getEnumConstants()[((Number) o).intValue()];
+            else
+              o = Enum.valueOf(genericType, o.toString());
+            ((Enum[]) newValue)[i] = (Enum) o;
+          }
+          value = newValue;
+        }
       }
     }
     return value;
@@ -580,7 +608,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   protected Object manageMapLoad(final Field f, final Object self, Object value, final boolean customSerialization) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
-    if (value instanceof ORecordLazyMap) {
+    if (value instanceof ORecordLazyMap
+        || (value instanceof OTrackedMap<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
       value = new OObjectLazyMap(self, (ORecordLazyMap) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
           f.getName()));
     } else if (customSerialization) {
@@ -594,10 +624,15 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   protected Object manageCollectionLoad(final Field f, final Object self, Object value, final boolean customSerialization) {
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
-    if (value instanceof ORecordLazyList) {
-      value = new OObjectLazyList(self, (ORecordLazyList) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+    if (value instanceof ORecordLazyList
+        || (value instanceof OTrackedList<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
+      value = new OObjectLazyList(self, (List<OIdentifiable>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
           f.getName()));
-    } else if (value instanceof ORecordLazySet || value instanceof OMVRBTreeRIDSet) {
+    } else if (value instanceof ORecordLazySet
+        || value instanceof OMVRBTreeRIDSet
+        || (value instanceof OTrackedSet<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
       value = new OObjectLazySet(self, (Set) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), f.getName()));
     } else if (customSerialization) {
       if (value instanceof List<?>) {

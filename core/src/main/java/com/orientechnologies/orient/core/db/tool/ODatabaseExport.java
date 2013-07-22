@@ -477,6 +477,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       try {
         if (rec.getIdentity().isValid())
           rec.reload();
+        
+        if( useLineFeedForRecords )
+          writer.append("\n");
 
         if (recordExported > 0)
           writer.append(",");

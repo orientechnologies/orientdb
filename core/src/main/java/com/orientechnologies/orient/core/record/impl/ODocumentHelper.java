@@ -826,35 +826,39 @@ public class ODocumentHelper {
     if (!iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
       return false;
 
-    makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-      public Object call() {
-        if (iCurrent.getInternalStatus() == STATUS.NOT_LOADED)
-          iCurrent.reload();
-        return null;
-      }
-    });
+    if (iMyDb != null)
+      makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
+        public Object call() {
+          if (iCurrent.getInternalStatus() == STATUS.NOT_LOADED)
+            iCurrent.reload();
+          return null;
+        }
+      });
 
-    makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-      public Object call() {
-        if (iOther.getInternalStatus() == STATUS.NOT_LOADED)
-          iOther.reload();
-        return null;
-      }
-    });
+    if (iOtherDb != null)
+      makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+        public Object call() {
+          if (iOther.getInternalStatus() == STATUS.NOT_LOADED)
+            iOther.reload();
+          return null;
+        }
+      });
 
-    makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-      public Object call() {
-        iCurrent.checkForFields();
-        return null;
-      }
-    });
+    if (iMyDb != null)
+      makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
+        public Object call() {
+          iCurrent.checkForFields();
+          return null;
+        }
+      });
 
-    makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-      public Object call() {
-        iOther.checkForFields();
-        return null;
-      }
-    });
+    if (iOtherDb != null)
+      makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+        public Object call() {
+          iOther.checkForFields();
+          return null;
+        }
+      });
 
     if (iCurrent._fieldValues.size() != iOther._fieldValues.size())
       return false;

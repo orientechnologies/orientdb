@@ -21,11 +21,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterator<Object>> {
+public class OTraverseMultiValueDepthFirstProcess extends OTraverseAbstractProcess<Iterator<Object>> {
   protected Object value;
   protected int    index = -1;
 
-  public OTraverseMultiValueProcess(final OTraverse iCommand, final Iterator<Object> iTarget) {
+  public OTraverseMultiValueDepthFirstProcess(final OTraverse iCommand, final Iterator<Object> iTarget) {
     super(iCommand, iTarget);
   }
 
@@ -52,7 +52,7 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
 
   @Override
   public String getStatus() {
-    return null;
+    return toString();
   }
 
   @Override

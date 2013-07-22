@@ -45,23 +45,23 @@ public class ODatabaseHelper {
     }
   }
 
-  public static void deleteDatabase(final ODatabase database) throws IOException {
-    deleteDatabase(database, "server");
+  public static void deleteDatabase(final ODatabase database, String storageType) throws IOException {
+    deleteDatabase(database, "server", storageType);
   }
 
   @Deprecated
-  public static void deleteDatabase(final ODatabase database, final String iDirectory) throws IOException {
-    dropDatabase(database, iDirectory);
+  public static void deleteDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
+    dropDatabase(database, directory, storageType);
   }
 
-  public static void dropDatabase(final ODatabase database) throws IOException {
-    dropDatabase(database, "server");
+  public static void dropDatabase(final ODatabase database, String storageType) throws IOException {
+    dropDatabase(database, "server", storageType);
   }
 
-  public static void dropDatabase(final ODatabase database, final String iDirectory) throws IOException {
-    if (existsDatabase(database)) {
+  public static void dropDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
+    if (existsDatabase(database, storageType)) {
       if (database.getURL().startsWith("remote:")) {
-        new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(iDirectory)).dropDatabase();
+        new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory)).dropDatabase(storageType);
       } else {
         if (database.isClosed())
           database.open("admin", "admin");
@@ -70,9 +70,9 @@ public class ODatabaseHelper {
     }
   }
 
-  public static boolean existsDatabase(final ODatabase database) throws IOException {
+  public static boolean existsDatabase(final ODatabase database, String storageType) throws IOException {
     if (database.getURL().startsWith("remote")) {
-      return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase();
+      return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase(storageType);
     } else {
       return database.exists();
     }
@@ -81,7 +81,7 @@ public class ODatabaseHelper {
   public static void freezeDatabase(final ODatabase database) throws IOException {
     if (database.getURL().startsWith("remote")) {
       final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
-      serverAdmin.connect("root", getServerRootPassword()).freezeDatabase();
+      serverAdmin.connect("root", getServerRootPassword()).freezeDatabase("plocal");
       serverAdmin.close();
     } else {
       database.freeze();
@@ -91,7 +91,7 @@ public class ODatabaseHelper {
   public static void releaseDatabase(final ODatabase database) throws IOException {
     if (database.getURL().startsWith("remote")) {
       final OServerAdmin serverAdmin = new OServerAdmin(database.getURL());
-      serverAdmin.connect("root", getServerRootPassword()).releaseDatabase();
+      serverAdmin.connect("root", getServerRootPassword()).releaseDatabase("plocal");
       serverAdmin.close();
     } else {
       database.release();

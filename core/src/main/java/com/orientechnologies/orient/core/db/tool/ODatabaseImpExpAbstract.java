@@ -46,6 +46,7 @@ public abstract class ODatabaseImpExpAbstract {
   protected boolean                includeRecords            = true;
   protected boolean                includeIndexDefinitions   = true;
   protected boolean                includeManualIndexes      = true;
+  protected boolean                useLineFeedForRecords     = false;
 
   protected OCommandOutputListener listener;
 
@@ -118,6 +119,9 @@ public abstract class ODatabaseImpExpAbstract {
         } else if (option.equalsIgnoreCase("-includeManualIndexes")) {
           includeManualIndexes = Boolean.parseBoolean(items.get(0));
 
+        } else if (option.equalsIgnoreCase("-useLineFeedForRecords")) {
+          useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
+
         }
       }
     }
@@ -128,7 +132,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClusters;
   }
 
-  public void setIncludeClusters(Set<String> includeClusters) {
+  public void setIncludeClusters(final Set<String> includeClusters) {
     this.includeClusters = includeClusters;
   }
 
@@ -136,7 +140,7 @@ public abstract class ODatabaseImpExpAbstract {
     return excludeClusters;
   }
 
-  public void setExcludeClusters(Set<String> excludeClusters) {
+  public void setExcludeClusters(final Set<String> excludeClusters) {
     this.excludeClusters = excludeClusters;
   }
 
@@ -144,7 +148,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClasses;
   }
 
-  public void setIncludeClasses(Set<String> includeClasses) {
+  public void setIncludeClasses(final Set<String> includeClasses) {
     this.includeClasses = includeClasses;
   }
 
@@ -152,7 +156,7 @@ public abstract class ODatabaseImpExpAbstract {
     return excludeClasses;
   }
 
-  public void setExcludeClasses(Set<String> excludeClasses) {
+  public void setExcludeClasses(final Set<String> excludeClasses) {
     this.excludeClasses = excludeClasses;
   }
 
@@ -160,7 +164,7 @@ public abstract class ODatabaseImpExpAbstract {
     return listener;
   }
 
-  public void setListener(OCommandOutputListener listener) {
+  public void setListener(final OCommandOutputListener listener) {
     this.listener = listener;
   }
 
@@ -176,7 +180,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeSchema;
   }
 
-  public void setIncludeSchema(boolean includeSchema) {
+  public void setIncludeSchema(final boolean includeSchema) {
     this.includeSchema = includeSchema;
   }
 
@@ -184,7 +188,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeRecords;
   }
 
-  public void setIncludeRecords(boolean includeRecords) {
+  public void setIncludeRecords(final boolean includeRecords) {
     this.includeRecords = includeRecords;
   }
 
@@ -192,7 +196,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeIndexDefinitions;
   }
 
-  public void setIncludeIndexDefinitions(boolean includeIndexDefinitions) {
+  public void setIncludeIndexDefinitions(final boolean includeIndexDefinitions) {
     this.includeIndexDefinitions = includeIndexDefinitions;
   }
 
@@ -200,7 +204,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeManualIndexes;
   }
 
-  public void setIncludeManualIndexes(boolean includeManualIndexes) {
+  public void setIncludeManualIndexes(final boolean includeManualIndexes) {
     this.includeManualIndexes = includeManualIndexes;
   }
 
@@ -208,7 +212,15 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClusterDefinitions;
   }
 
-  public void setIncludeClusterDefinitions(boolean includeClusterDefinitions) {
+  public void setIncludeClusterDefinitions(final boolean includeClusterDefinitions) {
     this.includeClusterDefinitions = includeClusterDefinitions;
+  }
+
+  public boolean isUseLineFeedForRecords() {
+    return useLineFeedForRecords;
+  }
+
+  public void setUseLineFeedForRecords(final boolean useLineFeedForRecords) {
+    this.useLineFeedForRecords = useLineFeedForRecords;
   }
 }

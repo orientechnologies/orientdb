@@ -389,7 +389,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    return ODocumentHelper.hasSameContentOf(this, getDatabase(), iOther, getDatabase(), null);
+    final ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
   @Override
@@ -493,7 +494,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldValues == null || _fieldValues.size() == 0)
       return EMPTY_STRINGS;
 
-    return _fieldValues.keySet().toArray(new String[_fieldValues.keySet().size()]);
+    return _fieldValues.keySet().toArray(new String[_fieldValues.size()]);
   }
 
   /**
@@ -503,7 +504,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     checkForLoading();
     checkForFields();
 
-    return _fieldValues.values().toArray(new Object[_fieldValues.values().size()]);
+    return _fieldValues.values().toArray(new Object[_fieldValues.size()]);
   }
 
   public <RET> RET rawField(final String iFieldName) {
