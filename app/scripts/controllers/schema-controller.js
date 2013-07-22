@@ -133,6 +133,42 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 			}
 			
 		});
+	}
+	$scope.checkDisable = function(res,entry){
+		if(res[entry] == null || res[entry] == undefined || res[entry] == ""){
+			console.log('false');
+			return false;
+		}
+		console.log('true')
+		return true;
+	}
+	$scope.checkTypeEdit = function(res){
+
+		var occupato =  $scope.checkDisable(res,'linkedClass');
+		if(occupato){
+		res['linkedType'] = null;
+			return true;
+		}
+		if(res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP' ){
+			return false;
+		}
+		res['linkedType'] = null;
+		return true;
+	}
+	$scope.checkClassEdit = function(res){
+
+		var occupatoType =  $scope.checkDisable(res,'linkedType');
+		if(occupatoType){
+		res['linkedClass'] = null;
+			return true;
+		}
+		
+		if(res['type'] == 'LINKLIST' || res['type'] =='LINKSET' || res['type'] =='LINKMAP' || res['type'] =='EMBEDDED' || res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP'){
+			return false;
+		}
+		
+		res['linkedClass'] = null;
+		return true;
 	}	
 
 }]);
@@ -200,7 +236,7 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 
 		var occupato =  $scope.checkDisable('linkedClass');
 		if(occupato){
-$scope.property['linkedType'] = null;
+		$scope.property['linkedType'] = null;
 			return true;
 		}
 		if($scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP' ){

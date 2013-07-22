@@ -29,14 +29,14 @@
 							<!-- <input type="text" ng-model="result['type']" ng-change="modificato(result,'type')"> -->
 						</td>
 						<td>
-							<select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'linkedType')">
+							<select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'linkedType')" ng-disabled="checkTypeEdit(result)">
 								<option value=""></option>
 							</select>
 
 						</td>
 
 						<td>
-							<select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses" ng-change="modificato(result,'linkedClass')">
+							<select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses" ng-change="modificato(result,'linkedClass')" ng-disabled="checkClassEdit(result)">
 								<option value=""></option>
 							</select>
 
