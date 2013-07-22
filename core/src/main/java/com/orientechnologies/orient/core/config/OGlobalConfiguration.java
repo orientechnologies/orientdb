@@ -75,7 +75,7 @@ public enum OGlobalConfiguration {
       + " will receive shutdown command and when background flush will be stopped (in ms.)", Integer.class, 10000),
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
-      Integer.class, 36000),
+      Integer.class, 2592000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),

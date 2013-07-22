@@ -20,11 +20,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -37,6 +37,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * @author Michael Hiess
@@ -70,7 +74,7 @@ public class MultipleDBTest {
         public Void call() throws InterruptedException, IOException {
           OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
-          ODatabaseHelper.deleteDatabase(tx);
+          ODatabaseHelper.deleteDatabase(tx, "plocal");
           ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
 
           try {
@@ -125,7 +129,7 @@ public class MultipleDBTest {
           } finally {
             System.out.println("(" + getDbId(tx) + ") " + "Dropping");
             System.out.flush();
-            ODatabaseHelper.deleteDatabase(tx);
+            ODatabaseHelper.deleteDatabase(tx, "plocal");
             System.out.println("(" + getDbId(tx) + ") " + "Dropped");
             System.out.flush();
           }
@@ -163,7 +167,7 @@ public class MultipleDBTest {
         public Void call() throws InterruptedException, IOException {
           ODatabaseDocumentTx tx = new ODatabaseDocumentTx(dbUrl);
 
-          ODatabaseHelper.deleteDatabase(tx);
+          ODatabaseHelper.deleteDatabase(tx, "plocal");
           System.out.println("Thread " + this + " is creating database " + dbUrl);
           System.out.flush();
           ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
@@ -228,7 +232,7 @@ public class MultipleDBTest {
 
             System.out.println("Thread " + this + "  is dropping database " + dbUrl);
             System.out.flush();
-            ODatabaseHelper.deleteDatabase(tx);
+            ODatabaseHelper.deleteDatabase(tx, "plocal");
           }
           return null;
         }

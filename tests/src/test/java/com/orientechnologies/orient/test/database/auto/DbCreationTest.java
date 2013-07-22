@@ -55,16 +55,16 @@ public class DbCreationTest {
       ODatabaseDocument db = new ODatabaseDocumentTx(url);
       db.setProperty("security", Boolean.FALSE);
 
-      ODatabaseHelper.dropDatabase(db, "server");
+      ODatabaseHelper.dropDatabase(db, "server", "plocal");
       ODatabaseHelper.createDatabase(db, url, "plocal");
-      ODatabaseHelper.dropDatabase(db, "server");
+      ODatabaseHelper.dropDatabase(db, "server", "plocal");
 
       database = new OObjectDatabaseTx(url);
       database.setProperty("security", Boolean.FALSE);
 
-      ODatabaseHelper.dropDatabase(database, "server");
+      ODatabaseHelper.dropDatabase(database, "server", "plocal");
       ODatabaseHelper.createDatabase(database, url, "plocal");
-      ODatabaseHelper.dropDatabase(database, "server");
+      ODatabaseHelper.dropDatabase(database, "server", "plocal");
     }
   }
 
@@ -84,7 +84,7 @@ public class DbCreationTest {
 
   @Test(dependsOnMethods = { "testDbCreationDefault" })
   public void testDbExists() throws IOException {
-    Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url)));
+    Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url), "plocal"));
   }
 
   @Test(dependsOnMethods = { "testDbExists" })
@@ -142,7 +142,7 @@ public class DbCreationTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
     try {
-      ODatabaseHelper.dropDatabase(db);
+      ODatabaseHelper.dropDatabase(db, "plocal");
     } catch (OStorageException e) {
       Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
     }
@@ -150,7 +150,7 @@ public class DbCreationTest {
     db.open("admin", "admin");
     db.close();
 
-    ODatabaseHelper.dropDatabase(db);
+    ODatabaseHelper.dropDatabase(db, "plocal");
   }
 
   @Test(dependsOnMethods = { "testChangeLocale" })
@@ -168,7 +168,7 @@ public class DbCreationTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
     try {
-      ODatabaseHelper.dropDatabase(db);
+      ODatabaseHelper.dropDatabase(db, "plocal");
     } catch (OStorageException e) {
       Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
     }
@@ -178,14 +178,14 @@ public class DbCreationTest {
     if (u.startsWith("remote:"))
       db.close();
 
-    ODatabaseHelper.dropDatabase(db);
+    ODatabaseHelper.dropDatabase(db, "plocal");
   }
 
   @Test
   public void testCreateAndConnectionPool() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
-    ODatabaseHelper.dropDatabase(db);
+    ODatabaseHelper.dropDatabase(db, "plocal");
 
     ODatabaseHelper.createDatabase(db, url, "plocal");
     db.close();
@@ -195,7 +195,7 @@ public class DbCreationTest {
 
     // Destroy db in the back of the pool
     db = new ODatabaseDocumentTx(url);
-    ODatabaseHelper.dropDatabase(db);
+    ODatabaseHelper.dropDatabase(db, "plocal");
 
     // Re-create it so that the db exists for the pool
     db = new ODatabaseDocumentTx(url);
@@ -208,7 +208,7 @@ public class DbCreationTest {
   @Test
   public void testOpenCloseConnectionPool() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    if (!ODatabaseHelper.existsDatabase(db)) {
+    if (!ODatabaseHelper.existsDatabase(db, "plocal")) {
       ODatabaseHelper.createDatabase(db, url, "plocal");
       db.close();
     }
@@ -235,21 +235,21 @@ public class DbCreationTest {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
 
       try {
-        ODatabaseHelper.dropDatabase(db);
+        ODatabaseHelper.dropDatabase(db, "plocal");
       } catch (OStorageException e) {
         Assert.assertTrue(e.getCause().getMessage().contains("doesn't exits."));
       }
       ODatabaseHelper.createDatabase(db, ur, "plocal");
-      Assert.assertTrue(ODatabaseHelper.existsDatabase(db));
+      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, "plocal"));
       db.open("admin", "admin");
     }
 
     for (int i = 0; i < 3; ++i) {
       String ur = u + "/" + i + "$db";
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
-      Assert.assertTrue(ODatabaseHelper.existsDatabase(db));
-      ODatabaseHelper.dropDatabase(db);
-      Assert.assertFalse(ODatabaseHelper.existsDatabase(db));
+      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, "plocal"));
+      ODatabaseHelper.dropDatabase(db, "plocal");
+      Assert.assertFalse(ODatabaseHelper.existsDatabase(db, "plocal"));
     }
 
   }

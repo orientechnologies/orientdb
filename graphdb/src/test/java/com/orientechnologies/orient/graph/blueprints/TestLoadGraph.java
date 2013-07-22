@@ -36,7 +36,7 @@ public class TestLoadGraph {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
     OGraphDatabase db = new OGraphDatabase(DBURL);
-    ODatabaseHelper.deleteDatabase(db);
+    ODatabaseHelper.deleteDatabase(db, "plocal");
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);
 

@@ -541,7 +541,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Freeze database and flush on the disk")
-  public void freezeDatabase() throws IOException {
+  public void freezeDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -552,7 +554,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase();
+      if (storageType == null)
+        storageType = "plocal";
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase(
+          storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.freeze();
@@ -562,7 +568,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Release database after freeze")
-  public void releaseDatabase() throws IOException {
+  public void releaseDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -573,7 +581,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase();
+      if (storageType == null)
+        storageType = "plocal";
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase(
+          storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.release();
@@ -584,7 +596,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Freeze clusters and flush on the disk")
   public void freezeCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName)
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
       throws IOException {
     checkForDatabase();
 
@@ -596,8 +609,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeCluster(
-          clusterId);
+          clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.freezeCluster(clusterId);
@@ -608,7 +624,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Release cluster after freeze")
   public void releaseCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName)
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
       throws IOException {
     checkForDatabase();
 
@@ -620,8 +637,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
-          clusterId);
+          clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.releaseCluster(clusterId);
@@ -796,7 +816,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Delete the current database")
-  public void dropDatabase() throws IOException {
+  public void dropDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -807,9 +829,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       // REMOTE CONNECTION
       final String dbURL = currentDatabase.getURL().substring(OEngineRemote.NAME.length() + 1);
-      new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase();
+      new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase(storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.drop();
@@ -824,13 +849,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void dropDatabase(
       @ConsoleParameter(name = "database-url", description = "The url of the database to drop in the format '<mode>:<path>'") String iDatabaseURL,
       @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
-      @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword) throws IOException {
+      @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
 
     if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
       final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
       serverAdmin = new OServerAdmin(dbURL).connect(iUserName, iUserPassword);
-      serverAdmin.dropDatabase();
+      serverAdmin.dropDatabase(storageType);
       disconnect();
     } else {
       // LOCAL CONNECTION

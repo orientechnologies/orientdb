@@ -18,11 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -35,7 +31,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 public class ConcurrentUpdatesTest {
 
   private final static int CYCLES       = 50;
-  private final static int MAX_RETRIES  = 50;
+  private final static int MAX_RETRIES  = 100;
 
   protected String         url;
   private boolean          level1CacheEnabled;

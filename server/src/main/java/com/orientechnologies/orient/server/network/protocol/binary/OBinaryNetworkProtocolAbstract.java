@@ -163,7 +163,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
     channel.acquireWriteLock();
     try {
-      
+
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
 
@@ -284,25 +284,21 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return iDatabase;
   }
 
-  protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType,
-      boolean createIfAbsent) {
+  protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
 
     final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
       path = stg.getURL();
-    else if (createIfAbsent) {
-      if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
-        // if this storage was configured return always path from config file, otherwise return default path
-        path = server.getConfiguration().getStoragePath(dbName);
-        if (path == null)
-          path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
-      } else if (storageType.equals(OEngineMemory.NAME)) {
-        path = storageType + ":" + dbName;
-      } else
-        throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
+    else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
+      // if this storage was configured return always path from config file, otherwise return default path
+      path = server.getConfiguration().getStoragePath(dbName);
+      if (path == null)
+        path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+    } else if (storageType.equals(OEngineMemory.NAME)) {
+      path = storageType + ":" + dbName;
     } else
-      return null;
+      throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
     return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
   }
