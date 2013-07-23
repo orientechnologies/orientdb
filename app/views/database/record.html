@@ -1,11 +1,11 @@
 <div class="row-fluid"> 
-	<form  class="form-horizontal bs-docs-example">
+	<form  class="form-horizontal bs-docs-example css-form" name="docForm" >
 		<fieldset>
 			<div class="control-group">
 				<div class="controls controls-row doc-header controls-row">
 					<label class="span9">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
 					<div class="span3">
-						<button class="btn btn-primary" ng-show="canSave" ng-click="save()" tooltip="Save"><i class="icon-ok icon-white" ></i> Save</button>
+						<button type="submit" class="btn btn-primary" ng-show="canSave" ng-click="save(docForm)" ng-disabled="!docValid" tooltip="Save"><i class="icon-ok icon-white" ></i> Save</button>
 						<div class="btn-group">
 							<a class="btn" href="javascript:void(0)">Actions</a>
 							<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
@@ -18,12 +18,13 @@
 					</div>
 				</div>
 			</div>
-			<div class="doc-body">
-				<div class="control-group" ng-repeat = "header in headers">
+			<div class="doc-body" docform >
+				<!-- <div class="control-group" ng-repeat = "header in headers">
 					<label class="control-label" for="input{{header}}">{{header}}</label>
 					<div class="controls controls-row" render ng-model= "doc[header]" render-field = "{{header}}">
 					</div>
-				</div>
+
+				</div>  -->
 			</div>
 		</fieldset>
 	</form>

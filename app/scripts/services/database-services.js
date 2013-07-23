@@ -27,6 +27,8 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 
 		exclude : ["@type","@fieldTypes"],
 
+		listTypes : ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAP','LINKSET','LONG','SHORT','STRING'],
+
 		getMetadata : function() {
 			if(current.metadata ==null){
 				var tmp = localStorageService.get("CurrentDB");
@@ -48,6 +50,9 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		},
 		getName : function() {
 			return current !=null ? current.name : current;
+		},
+		getSupportedTypes : function(){
+			return this.listTypes;
 		},
 		refreshMetadata : function(database,callback){
 			var currentDb = DatabaseApi.get({database : database},function(){ 
@@ -93,7 +98,11 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 					};
 				}
 			}
-			return "STRING"
+			var type = "STRING";
+			if(typeof value === 'number'){
+     		   type = "INTEGER";
+    		}
+			return type;
 		},
 		getDateFormat : function(){
 			return "yyyy-mm-dd"
