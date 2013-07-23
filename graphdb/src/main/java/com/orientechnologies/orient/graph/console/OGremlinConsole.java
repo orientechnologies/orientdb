@@ -69,13 +69,17 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     OGremlinHelper.global().create();
   }
 
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
   public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
     checkForDatabase();
 
     if (iScriptText == null || iScriptText.length() == 0)
       return;
-
 
     currentResultSet.clear();
 
