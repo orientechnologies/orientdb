@@ -20,13 +20,12 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
  * @since 25.02.13
  */
-class LRUList implements Iterable<LRUEntry> {
+class LRUList implements Iterable<OCacheEntry> {
   private static final int SEED = 362498820;
 
   private LRUEntry         head;
@@ -42,26 +41,31 @@ class LRUList implements Iterable<LRUEntry> {
     nextThreshold = (int) (entries.length * 0.75);
   }
 
-  public LRUEntry get(long fileId, long pageIndex) {
+  public OCacheEntry get(long fileId, long pageIndex) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
-    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.pageIndex != pageIndex || lruEntry.fileId != fileId))
+    while (lruEntry != null
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.pageIndex != pageIndex || lruEntry.cacheEntry.fileId != fileId))
       lruEntry = lruEntry.next;
 
-    return lruEntry;
+    if (lruEntry == null)
+      return null;
+
+    return lruEntry.cacheEntry;
   }
 
-  public LRUEntry remove(long fileId, long pageIndex) {
+  public OCacheEntry remove(long fileId, long pageIndex) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
-    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.fileId != fileId || lruEntry.pageIndex != pageIndex)) {
+    while (lruEntry != null
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.fileId != fileId || lruEntry.cacheEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -84,7 +88,7 @@ class LRUList implements Iterable<LRUEntry> {
 
     size--;
 
-    return lruEntry;
+    return lruEntry.cacheEntry;
   }
 
   private void removeFromLRUList(LRUEntry lruEntry) {
@@ -102,14 +106,18 @@ class LRUList implements Iterable<LRUEntry> {
       tail = lruEntry.before;
   }
 
-  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty, OLogSequenceNumber loadedLSN) {
-    long hashCode = hashCode(fileId, pageIndex);
+  public void putToMRU(OCacheEntry cacheEntry) {
+    final long fileId = cacheEntry.fileId;
+    final long pageIndex = cacheEntry.pageIndex;
+
+    long hashCode = hashCode(cacheEntry.fileId, cacheEntry.pageIndex);
     int index = index(hashCode);
 
     LRUEntry lruEntry = entries[index];
 
     LRUEntry prevEntry = null;
-    while (lruEntry != null && (lruEntry.hashCode != hashCode || lruEntry.fileId != fileId || lruEntry.pageIndex != pageIndex)) {
+    while (lruEntry != null
+        && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.fileId != fileId || lruEntry.cacheEntry.pageIndex != pageIndex)) {
       prevEntry = lruEntry;
       lruEntry = lruEntry.next;
     }
@@ -120,8 +128,6 @@ class LRUList implements Iterable<LRUEntry> {
     if (lruEntry == null) {
       lruEntry = new LRUEntry();
 
-      lruEntry.pageIndex = pageIndex;
-      lruEntry.fileId = fileId;
       lruEntry.hashCode = hashCode;
 
       if (prevEntry == null)
@@ -132,9 +138,7 @@ class LRUList implements Iterable<LRUEntry> {
       size++;
     }
 
-    lruEntry.dataPointer = dataPointer;
-    lruEntry.isDirty = isDirty;
-    lruEntry.loadedLSN = loadedLSN;
+    lruEntry.cacheEntry = cacheEntry;
 
     removeFromLRUList(lruEntry);
 
@@ -157,8 +161,6 @@ class LRUList implements Iterable<LRUEntry> {
 
     if (size >= nextThreshold)
       rehash();
-
-    return lruEntry;
   }
 
   public void clear() {
@@ -218,24 +220,24 @@ class LRUList implements Iterable<LRUEntry> {
     return size;
   }
 
-  public LRUEntry removeLRU() {
+  public OCacheEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove != null && entryToRemove.usageCounter != 0) {
+    while (entryToRemove != null && entryToRemove.cacheEntry.usageCounter != 0) {
       entryToRemove = entryToRemove.after;
     }
     if (entryToRemove != null) {
-      return remove(entryToRemove.fileId, entryToRemove.pageIndex);
+      return remove(entryToRemove.cacheEntry.fileId, entryToRemove.cacheEntry.pageIndex);
     } else {
       return null;
     }
   }
 
-  public LRUEntry getLRU() {
-    return head;
+  public OCacheEntry getLRU() {
+    return head.cacheEntry;
   }
 
   @Override
-  public Iterator<LRUEntry> iterator() {
+  public Iterator<OCacheEntry> iterator() {
     return new MRUEntryIterator();
   }
 
@@ -251,7 +253,7 @@ class LRUList implements Iterable<LRUEntry> {
     return OMurmurHash3.murmurHash3_x64_64(result, SEED);
   }
 
-  private final class MRUEntryIterator implements Iterator<LRUEntry> {
+  private final class MRUEntryIterator implements Iterator<OCacheEntry> {
     private LRUEntry current = tail;
 
     @Override
@@ -260,14 +262,14 @@ class LRUList implements Iterable<LRUEntry> {
     }
 
     @Override
-    public LRUEntry next() {
+    public OCacheEntry next() {
       if (!hasNext())
         throw new NoSuchElementException();
 
       LRUEntry entry = current;
       current = entry.before;
 
-      return entry;
+      return entry.cacheEntry;
     }
 
     @Override

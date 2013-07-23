@@ -2,10 +2,10 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
@@ -16,128 +16,129 @@ public class LRUListTest {
   public void testSingleAdd() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), 1, 10, 100);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
   }
 
   public void testAddTwo() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(1, 20, 200, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 2);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), 1, 20, 200);
-    assertLRUEntry(entryIterator.next(), 1, 10, 100);
-
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
   }
 
   public void testAddThree() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(1, 20, 200, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(3, 30, 300, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 3);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), 3, 30, 300);
-    assertLRUEntry(entryIterator.next(), 1, 20, 200);
-    assertLRUEntry(entryIterator.next(), 1, 10, 100);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
   }
 
   public void testAddThreePutMiddleToTop() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(1, 20, 200, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(3, 30, 300, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
 
-    lruList.putToMRU(1, 20, 200, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 3);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), 1, 20, 200);
-    assertLRUEntry(entryIterator.next(), 3, 30, 300);
-    assertLRUEntry(entryIterator.next(), 1, 10, 100);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
   }
 
   public void testAddThreePutMiddleToTopChangePointer() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(1, 20, 200, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(3, 30, 300, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(1, 20, 200, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
 
-    lruList.putToMRU(1, 20, 400, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 20, 400, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 3);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    assertLRUEntry(entryIterator.next(), 1, 20, 400);
-    assertLRUEntry(entryIterator.next(), 3, 30, 300);
-    assertLRUEntry(entryIterator.next(), 1, 10, 100);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, 400, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, 300, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
   }
 
   public void testAddElevenPutMiddleToTopChangePointer() {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
-    lruList.putToMRU(1, 50, 500, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 50, 500, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 11);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    assertLRUEntry(entryIterator.next(), 1, 50, 500);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 50, 500, false, new OLogSequenceNumber(0, 0)));
 
     for (int i = 10; i >= 0; i--) {
       if (i == 5)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
   public void testAddOneRemoveLRU() {
     LRUList lruList = new LRUList();
 
-    lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0)));
     lruList.removeLRU();
 
     Assert.assertEquals(lruList.size(), 0);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertFalse(entryIterator.hasNext());
   }
 
   public void testRemoveLRUShouldReturnNullIfAllRecordsAreUsed() {
     LRUList lruList = new LRUList();
 
-    LRUEntry lruEntry = lruList.putToMRU(1, 10, 100, false, new OLogSequenceNumber(0, 0));
-    lruEntry.usageCounter++;
-    LRUEntry removedLRU = lruList.removeLRU();
+    OCacheEntry cacheEntry = new OCacheEntry(1, 10, 100, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(cacheEntry);
+    cacheEntry.usageCounter++;
+
+    OCacheEntry removedLRU = lruList.removeLRU();
 
     Assert.assertNull(removedLRU);
   }
@@ -146,18 +147,18 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
     lruList.removeLRU();
 
     Assert.assertEquals(lruList.size(), 10);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
 
     for (int i = 10; i > 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -165,21 +166,21 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
-    assertLRUEntry(lruList.remove(1, 50), 1, 50, 500);
+    Assert.assertEquals(lruList.remove(1, 50), new OCacheEntry(1, 50, 500, false, new OLogSequenceNumber(0, 0)));
     Assert.assertNull(lruList.remove(1, 500));
 
     Assert.assertEquals(lruList.size(), 10);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 10; i >= 0; i--) {
       if (i == 5)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -187,20 +188,20 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 11; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
     Assert.assertTrue(lruList.contains(1, 50));
-    assertLRUEntry(lruList.get(1, 50), 1, 50, 500);
+    Assert.assertEquals(lruList.get(1, 50), new OCacheEntry(1, 50, 500, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertFalse(lruList.contains(2, 50));
 
     Assert.assertEquals(lruList.size(), 11);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 10; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -208,15 +209,15 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
     Assert.assertEquals(lruList.size(), 9128);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -224,18 +225,18 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
     Assert.assertEquals(lruList.size(), 9128);
 
     for (int i = 0; i < 9128; i++)
-      assertLRUEntry(lruList.get(1, i * 10), 1, i * 10, i * 100);
+      Assert.assertEquals(lruList.get(1, i * 10), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -243,18 +244,18 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
     for (int i = 4564; i < 9128; i++)
-      assertLRUEntry(lruList.remove(1, i * 10), 1, i * 10, i * 100);
+      Assert.assertEquals(lruList.remove(1, i * 10), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 4564);
 
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 4563; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
   }
 
@@ -262,31 +263,25 @@ public class LRUListTest {
     LRUList lruList = new LRUList();
 
     for (int i = 0; i < 9128; i++) {
-      lruList.putToMRU(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
 
-    lruList.putToMRU(1, 0, 0, false, new OLogSequenceNumber(0, 0));
-    lruList.putToMRU(1, 4500 * 10, 4500 * 100, false, new OLogSequenceNumber(0, 0));
+    lruList.putToMRU(new OCacheEntry(1, 0, 0, false, new OLogSequenceNumber(0, 0)));
+    lruList.putToMRU(new OCacheEntry(1, 4500 * 10, 4500 * 100, false, new OLogSequenceNumber(0, 0)));
 
     Assert.assertEquals(lruList.size(), 9128);
-    Iterator<LRUEntry> entryIterator = lruList.iterator();
+    Iterator<OCacheEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    assertLRUEntry(entryIterator.next(), 1, 4500 * 10, 4500 * 100);
-    assertLRUEntry(entryIterator.next(), 1, 0, 0);
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 4500 * 10, 4500 * 100, false, new OLogSequenceNumber(0, 0)));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 0, 0, false, new OLogSequenceNumber(0, 0)));
 
     for (int i = 9127; i >= 1; i--) {
       if (i == 4500)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      assertLRUEntry(entryIterator.next(), 1, i * 10, i * 100);
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, i * 100, false, new OLogSequenceNumber(0, 0)));
     }
-  }
-
-  private void assertLRUEntry(LRUEntry lruEntry, long fileId, long filePosition, long dataPointer) {
-    Assert.assertEquals(lruEntry.fileId, fileId);
-    Assert.assertEquals(lruEntry.pageIndex, filePosition);
-    Assert.assertEquals(lruEntry.dataPointer, dataPointer);
   }
 }

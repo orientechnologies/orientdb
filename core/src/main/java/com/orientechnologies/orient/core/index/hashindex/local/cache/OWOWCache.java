@@ -17,40 +17,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 /**
  * @author Andrey Lomakin
- * @since 25.02.13
+ * @since 7/23/13
  */
-class LRUEntry {
-  OCacheEntry cacheEntry;
-
-  long        hashCode;
-
-  LRUEntry    next;
-
-  LRUEntry    after;
-  LRUEntry    before;
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
-    LRUEntry lruEntry = (LRUEntry) o;
-
-    if (!cacheEntry.equals(lruEntry.cacheEntry))
-      return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return cacheEntry.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return "LRUEntry{" + "cacheEntry=" + cacheEntry + ", hashCode=" + hashCode + '}';
-  }
+public class OWOWCache {
 }

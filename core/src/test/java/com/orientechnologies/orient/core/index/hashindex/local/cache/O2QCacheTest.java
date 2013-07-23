@@ -139,7 +139,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -189,17 +189,17 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 2; i < 4; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
   }
@@ -236,12 +236,12 @@ public class O2QCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 6; i < 10; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
@@ -255,17 +255,17 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 8; i < 10; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -309,7 +309,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -328,7 +328,7 @@ public class O2QCacheTest {
 
     Assert.assertEquals(am.size(), 0);
     Assert.assertEquals(a1out.size(), 0);
-    LRUEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
+    OCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
@@ -355,7 +355,7 @@ public class O2QCacheTest {
 
     buffer.flushFile(fileId);
 
-    LRUEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
+    OCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
@@ -382,7 +382,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -416,7 +416,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -475,7 +475,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -509,12 +509,12 @@ public class O2QCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 0; i < 2; i++) {
-      LRUEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
       Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
     }
 
     for (int i = 2; i < 6; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -839,18 +839,12 @@ public class O2QCacheTest {
     fileClassic.close();
   }
 
-  private LRUEntry generateDirtyEntry(long fileId, long pageIndex, long pointer, OLogSequenceNumber lsn) {
+  private OCacheEntry generateDirtyEntry(long fileId, long pageIndex, long pointer, OLogSequenceNumber lsn) {
     return generateEntry(fileId, pageIndex, pointer, true, lsn);
   }
 
-  private LRUEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
-    LRUEntry entry = new LRUEntry();
-    entry.fileId = fileId;
-    entry.pageIndex = pageIndex;
-    entry.dataPointer = pointer;
-    entry.isDirty = dirty;
-    entry.loadedLSN = lsn;
-    return entry;
+  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
+    return new OCacheEntry(fileId, pageIndex, pointer, dirty, lsn);
   }
 
   private void setLsn(long dataPointer, OLogSequenceNumber lsn) {
