@@ -35,6 +35,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	$scope.property = Database.listPropertiesForClass(clazz);
 
 	$scope.indexes = Database.listIndexesForClass(clazz);
+
 	console.log($scope.indexes);
 	$scope.queryText = ""
 	$scope.modificati = new Array;
@@ -132,6 +133,42 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 			}
 			
 		});
+	}
+	$scope.checkDisable = function(res,entry){
+		if(res[entry] == null || res[entry] == undefined || res[entry] == ""){
+			console.log('false');
+			return false;
+		}
+		console.log('true')
+		return true;
+	}
+	$scope.checkTypeEdit = function(res){
+
+		var occupato =  $scope.checkDisable(res,'linkedClass');
+		if(occupato){
+		res['linkedType'] = null;
+			return true;
+		}
+		if(res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP' ){
+			return false;
+		}
+		res['linkedType'] = null;
+		return true;
+	}
+	$scope.checkClassEdit = function(res){
+
+		var occupatoType =  $scope.checkDisable(res,'linkedType');
+		if(occupatoType){
+		res['linkedClass'] = null;
+			return true;
+		}
+		
+		if(res['type'] == 'LINKLIST' || res['type'] =='LINKSET' || res['type'] =='LINKMAP' || res['type'] =='EMBEDDED' || res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP'){
+			return false;
+		}
+		
+		res['linkedClass'] = null;
+		return true;
 	}	
 
 }]);
@@ -189,9 +226,40 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 
 	$scope.checkDisable = function(entry){
 		if($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == ""){
+			console.log('false');
 			return false;
 		}
+		console.log('true')
 		return true;
 	}
+	$scope.checkDisableLinkedType = function(entry){
+
+		var occupato =  $scope.checkDisable('linkedClass');
+		if(occupato){
+		$scope.property['linkedType'] = null;
+			return true;
+		}
+		if($scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP' ){
+			return false;
+		}
+		$scope.property['linkedType'] = null;
+		return true;
+	}
+	$scope.checkDisableLinkedClass = function(entry){
+
+		var occupatoType =  $scope.checkDisable('linkedType');
+		if(occupatoType){
+		$scope.property['linkedClass'] = null;
+			return true;
+		}
+		
+		if($scope.property['type'] == 'LINKLIST' || $scope.property['type'] =='LINKSET' || $scope.property['type'] =='LINKMAP' || $scope.property['type'] =='EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP'){
+			return false;
+		}
+		
+		$scope.property['linkedClass'] = null;
+		return true;
+	}
+
 
 }]);
