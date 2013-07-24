@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -403,7 +404,7 @@ public class OMultiValue {
   public static Object remove(Object iObject, final Object iToRemove, final boolean iAllOccurrences) {
     if (iObject != null) {
       if (iObject instanceof OMultiCollectionIterator<?>) {
-        final Collection<Object> list = new ArrayList<Object>(OMultiValue.getSize(iObject));
+        final Collection<Object> list = new LinkedList<Object>();
         for (Object o : ((OMultiCollectionIterator<?>) iObject))
           list.add(o);
         iObject = list;
