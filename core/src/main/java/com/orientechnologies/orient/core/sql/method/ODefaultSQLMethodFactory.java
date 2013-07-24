@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLength;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemoveAll;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodReplace;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRight;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSize;
@@ -81,6 +82,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     methods.put(OSQLMethodPrefix.NAME, new OSQLMethodPrefix());
     methods.put(OSQLMethodReplace.NAME, new OSQLMethodReplace());
     methods.put(OSQLMethodRemove.NAME, new OSQLMethodRemove());
+    methods.put(OSQLMethodRemoveAll.NAME, new OSQLMethodRemoveAll());
     methods.put(OSQLMethodRight.NAME, new OSQLMethodRight());
     methods.put(OSQLMethodSize.NAME, new OSQLMethodSize());
     methods.put(OSQLMethodSubString.NAME, new OSQLMethodSubString());
