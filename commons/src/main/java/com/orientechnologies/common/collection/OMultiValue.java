@@ -19,6 +19,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -442,13 +443,18 @@ public class OMultiValue {
           if (iToRemove instanceof OMultiCollectionIterator<?>)
             ((OMultiCollectionIterator<?>) iToRemove).reset();
 
-          for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
-            final Object itemToRemove = it.next();
-            while (coll.remove(itemToRemove))
-              if (!iAllOccurrences)
-                // REMOVE ONLY THE FIRST ITEM
-                break;
-            // REMOVE ALL THE ITEM
+          if (iAllOccurrences) {
+            OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;
+            batchRemove(coll, it);
+          } else {
+            for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
+              final Object itemToRemove = it.next();
+              while (coll.remove(itemToRemove))
+                if (!iAllOccurrences)
+                  // REMOVE ONLY THE FIRST ITEM
+                  break;
+              // REMOVE ALL THE ITEM
+            }
           }
         } else
           coll.remove(iToRemove);
@@ -494,6 +500,41 @@ public class OMultiValue {
     }
 
     return iObject;
+  }
+
+  private static void batchRemove(Collection<Object> coll, Iterator<?> it) {
+    int approximateRemainingSize;
+    if (it instanceof OSizeable) {
+      approximateRemainingSize = ((OSizeable) it).size();
+    } else {
+      approximateRemainingSize = -1;
+    }
+
+    while (it.hasNext()) {
+      Set batch = prepareBatch(it, approximateRemainingSize);
+      coll.removeAll(batch);
+      approximateRemainingSize -= batch.size();
+    }
+  }
+
+  private static Set prepareBatch(Iterator<?> it, int approximateRemainingSize) {
+    final HashSet batch;
+    if (approximateRemainingSize > -1) {
+      if (approximateRemainingSize > 10000)
+        batch = new HashSet(13400);
+      else
+        batch = new HashSet((int) (approximateRemainingSize / 0.75));
+    } else {
+      batch = new HashSet();
+    }
+
+    int count = 0;
+    while (count < 10000 && it.hasNext()) {
+      batch.add(it.next());
+      count++;
+    }
+
+    return batch;
   }
 
   public static Object[] array(final Object iValue) {
