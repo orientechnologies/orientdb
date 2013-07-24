@@ -248,7 +248,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 .instance()
                 .warn(
                     this,
-                    "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another database instance.",
+                    "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
                     iRecord.getIdentity());
 
           txRecord.record = iRecord;
