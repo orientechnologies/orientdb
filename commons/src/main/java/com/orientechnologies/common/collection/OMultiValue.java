@@ -402,13 +402,21 @@ public class OMultiValue {
    *          True if the all occurrences must be removed or false of only the first one (Like java.util.Collection.remove())
    * @return
    */
-  public static Object remove(Object iObject, final Object iToRemove, final boolean iAllOccurrences) {
+  public static Object remove(Object iObject, Object iToRemove, final boolean iAllOccurrences) {
     if (iObject != null) {
       if (iObject instanceof OMultiCollectionIterator<?>) {
         final Collection<Object> list = new LinkedList<Object>();
         for (Object o : ((OMultiCollectionIterator<?>) iObject))
           list.add(o);
         iObject = list;
+      }
+
+      if (iToRemove instanceof OMultiCollectionIterator<?>) {
+        // TRANSFORM IN SET ONCE TO OPTIMIZE LOOPS DURING REMOVE
+        final Set<Object> set = new HashSet<Object>();
+        for (Object o : ((OMultiCollectionIterator<?>) iToRemove))
+          set.add(o);
+        iToRemove = set;
       }
 
       if (iObject instanceof Collection<?>) {
