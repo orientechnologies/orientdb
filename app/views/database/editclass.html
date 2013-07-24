@@ -3,6 +3,7 @@
 		<h3>Properties</h3>
 		<button class="btn btn-primary" ng-click="saveProperty(property)">Save</button>
 		<button class="btn" ng-click="newProperty()">New Property</button>
+		<a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-refresh"></i> Refresh</a>
 		
 
 		<div class= "scroll-editclass">
@@ -73,7 +74,10 @@
 	<div class="row-fluid" >
 		<div class = "nomargin">
 			<h3>Indexes</h3>
-			<button class="btn btn-primary">Add Index</button>
+			
+
+			<a href="javascript:void(0)" class="btn" ng-click="newIndex()"> <i class="icon-plus"></i> Add Index</a>
+
 			<div class= "scroll-indexes">
 				<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
 					<thead>
@@ -98,16 +102,16 @@
 <tbody>
 					<tr ng-repeat="index in indexes |  orderBy:'name'">
 						<td>
-							{{indexes[0]['name']}} 
+							{{index.name}} 
 						</td>
 						<td>
-							{{indexes[0]['type']}} 
+							{{index.type}} 
 						</td>
 						<td>
-							{{indexes[0]['fields']}} 
+							{{index.fields}} 
 						</td>
 						<td>
-							<a href="javascript:void(0)" class="btn btn-danger btn-small" > <i class="icon-white icon-trash" ></i> Drop</a>
+							<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index.name)" > <i class="icon-white icon-trash" ></i> Drop</a>
 						</td>
 					</tr>
 				</tbody>

@@ -15,7 +15,7 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 		$location.path("/database/" + $scope.database.getName() + "/browse/editclass/" + clazz.name);
 	}
 }]);
-schemaModule.controller("ClassEditController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$dialog',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$dialog){
+schemaModule.controller("ClassEditController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$dialog','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$dialog,$route){
 
 
 	var clazz = $routeParams.clazz;
@@ -33,10 +33,17 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	$scope.classClickedHeaders = ['name','type','linkedType','linkedClass','mandatory','readonly','notNull','min','max',''];
 
 	$scope.property = Database.listPropertiesForClass(clazz);
+	
+	$scope.propertyNames = new Array;
+	for(inn in $scope.property){
+			$scope.propertyNames.push($scope.property[inn]['name'])
+	}
+	// console.log($scope.propertyNames)
 
 	$scope.indexes = Database.listIndexesForClass(clazz);
-
-	console.log($scope.indexes);
+	// for(zz in $scope.indexes)
+	// 	console.log(zz)
+	
 	$scope.queryText = ""
 	$scope.modificati = new Array;
 	$scope.listTypes = ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAP','LINKSET','LONG','SHORT','STRING'];
@@ -45,7 +52,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	
 	$scope.modificato = function(result,prop){
 		var key = result['name'];
-		console.log(result[prop])
+		// console.log(result[prop])
 		if($scope.modificati[result['name']] == undefined){
 			$scope.modificati[result['name']] = new Array(prop);
 		}
@@ -68,11 +75,24 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		}
 
 	}
+	$scope.newIndex = function() {
+		modalScope = $scope.$new(true);	
+		modalScope.db = database;
+		modalScope.classInject = clazz;
+		modalScope.parentScope = $scope;
+		modalScope.propertiesName = $scope.propertyNames ;
+		// modalScope.rid = rid;
+		var modalPromise = $modal({template: '/views/database/newIndex.html', scope: modalScope});
+		$q.when(modalPromise).then(function(modalEl) {
+			modalEl.modal('show');
+		});
+	};	
 	$scope.newProperty = function() {
 		modalScope = $scope.$new(true);	
 		modalScope.db = database;
 		modalScope.classInject = clazz;
 		modalScope.parentScope = $scope;
+		modalScope.propertiesName = $scope.propertyNames ;
 		// modalScope.rid = rid;
 		var modalPromise = $modal({template: '/views/database/newProperty.html', scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
@@ -87,31 +107,56 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		for (result in properties ){
 
 		//il nome da andare a cercare nella lista dei modificati
-		var keyName = properties[result]['name'];
-		//l'array da modificare
-		var arrayToUpdate = $scope.modificati[keyName];
+			var keyName = properties[result]['name'];
+			//l'array da modificare
+			var arrayToUpdate = $scope.modificati[keyName];
 
-		if(arrayToUpdate != undefined){
+			if(arrayToUpdate != undefined){
 
-			for(i in arrayToUpdate){
+				for(i in arrayToUpdate){
 
-				var prop = arrayToUpdate[i];
-				var newValue = properties[result][prop]!= '' ? properties[result][prop] : null; 
-				var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName +' ' +prop+ ' ' +newValue;
-			// console.log(sql);
-			CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+					var prop = arrayToUpdate[i];
+					var newValue = properties[result][prop]!= '' ? properties[result][prop] : null; 
+					var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName +' ' +prop+ ' ' +newValue;
+				// console.log(sql);
+					CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
 
-			});
+					});
+				}
+			}
 		}
-	}
-}
 		//clear
 		$scope.modificati = new Array;
 	}
+	$scope.dropIndex = function(nameIndex){
+		
+		
+		
+		
 
+
+		Utilities.confirm($scope,$dialog,{
+
+			title : 'Warning!',
+			body : 'You are dropping index '+ nameIndex + '. Are you sure?',
+			success : function() {
+				var sql = 'DROP INDEX ' + nameIndex;
+
+				CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+
+				});
+				var index = $scope.indexes.indexOf($scope.indexes[nameIndex])
+				$scope.indexes.splice(index,1)
+				$scope.indexes.splice()
+
+			}
+			
+		});
+
+	}
 
 	$scope.dropProperty = function(result,elementName){
-		console.log(result);
+		// console.log(result);
 		Utilities.confirm($scope,$dialog,{
 
 			title : 'Warning!',
@@ -121,7 +166,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 
 				for(entry in $scope.property ){
 					if($scope.property[entry]['name'] == elementName){
-						console.log($scope.property[entry])
+						// console.log($scope.property[entry])
 						var index = $scope.property.indexOf($scope.property[entry])
 						$scope.property.splice(index,1)
 					}
@@ -136,10 +181,10 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	}
 	$scope.checkDisable = function(res,entry){
 		if(res[entry] == null || res[entry] == undefined || res[entry] == ""){
-			console.log('false');
+			// console.log('false');
 			return false;
 		}
-		console.log('true')
+		// console.log('true')
 		return true;
 	}
 	$scope.checkTypeEdit = function(res){
@@ -169,12 +214,79 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		
 		res['linkedClass'] = null;
 		return true;
-	}	
+
+
+	}
+	$scope.refreshPage = function(){
+		
+		$route.reload();
+	}
+		
+
+
 
 }]);
 
 
+schemaModule.controller("IndexController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
 
+
+
+	$scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE' ];
+	$scope.newIndex = 	{"name": "", "type": "", "fields": "" }
+	$scope.namesProp = $scope.propertiesName;
+	$scope.prop2add = new Array;
+
+	// for(zz in $scope.namesProp )
+	// console.log($scope.namesProp[zz])
+
+	$scope.addedField = function(nameField){
+		var index = $scope.prop2add.indexOf(nameField);
+		console.log(index)
+		if(index==-1){
+			$scope.prop2add.push(nameField)
+		}
+		else{
+			$scope.prop2add.splice(index,1)
+		}
+		console.log($scope.prop2add);
+	}
+
+	$scope.saveNewIndex = function(){
+		
+		if($scope.newIndex['name']==undefined || $scope.newIndex['name']=="" || $scope.newIndex['name']==null)
+			return;
+		if($scope.newIndex['type']==undefined || $scope.newIndex['type']=="" || $scope.newIndex['type']==null)
+			return;
+		if($scope.prop2add.length == 0)
+			return;
+		var proppps = '';
+		var first = true
+		for(entry in $scope.prop2add){
+			if(first){
+				proppps = proppps + $scope.prop2add[entry] ;
+				first=!first
+			}
+			else{
+				proppps = proppps + ',' + $scope.prop2add[entry];
+			}
+			console.log(proppps);
+
+		}
+
+		var sql = 'CREATE INDEX '+$scope.newIndex['name'] + ' ON ' + $scope.classInject + ' ( ' + proppps+ ' ) ' +   $scope.newIndex['type'];
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+		$scope.hide();
+		$scope.parentScope.refreshPage();
+		});
+
+		
+		
+	}
+
+
+
+}]);
 
 
 schemaModule.controller("PropertyController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
@@ -226,10 +338,10 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 
 	$scope.checkDisable = function(entry){
 		if($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == ""){
-			console.log('false');
+			// console.log('false');
 			return false;
 		}
-		console.log('true')
+		// console.log('true')
 		return true;
 	}
 	$scope.checkDisableLinkedType = function(entry){
