@@ -1,21 +1,29 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-public class OCacheEntry {
-  long               fileId;
-  long               pageIndex;
+class OCacheEntry {
+  final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  OLogSequenceNumber loadedLSN;
+  long                fileId;
+  long                pageIndex;
 
-  long               dataPointer;
+  OLogSequenceNumber  loadedLSN;
 
-  boolean            isDirty;
-  int                usageCounter;
+  long                dataPointer;
+
+  boolean             isDirty;
+  int                 usageCounter;
+
+  boolean             inReadCache;
+  boolean             inWriteCache;
 
   public OCacheEntry(long fileId, long pageIndex, long dataPointer, boolean dirty, OLogSequenceNumber loadedLSN) {
     this.fileId = fileId;
@@ -23,6 +31,14 @@ public class OCacheEntry {
     this.loadedLSN = loadedLSN;
     this.dataPointer = dataPointer;
     isDirty = dirty;
+  }
+
+  public void acquireExclusiveLock() {
+    lock.writeLock().lock();
+  }
+
+  public void releaseExclusiveLock() {
+    lock.writeLock().unlock();
   }
 
   @Override

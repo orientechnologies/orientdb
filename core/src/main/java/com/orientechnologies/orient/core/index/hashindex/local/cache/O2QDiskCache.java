@@ -37,7 +37,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -50,7 +50,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Artem Loginov
  * @since 14.03.13
  */
-public class O2QCache implements ODiskCache {
+public class O2QDiskCache implements ODiskCache {
   public static final long                                     MAGIC_NUMBER = 0xFACB03FEL;
 
   public final int                                             writeQueueLength;
@@ -91,9 +91,8 @@ public class O2QCache implements ODiskCache {
 
   private final boolean                                        syncOnPageFlush;
   private long                                                 fileCounter  = 1;
-  private int                                                  crcOffset;
 
-  public O2QCache(long maxMemory, int writeQueueLength, ODirectMemory directMemory, OWriteAheadLog writeAheadLog, int pageSize,
+  public O2QDiskCache(long maxMemory, int writeQueueLength, ODirectMemory directMemory, OWriteAheadLog writeAheadLog, int pageSize,
       OStorageLocalAbstract storageLocal, boolean syncOnPageFlush) {
 
     this.writeQueueLength = writeQueueLength;
@@ -543,13 +542,13 @@ public class O2QCache implements ODiskCache {
   private void increaseCacheSize() {
     String message = "All records in aIn queue in 2q cache are used!";
     OLogManager.instance().warn(this, message);
-    if (OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean()) {
+    if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
       OLogManager.instance().warn(this, "Cache size will be increased.");
-      maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_STEP.getValueAsFloat()));
+      maxSize = (int) Math.ceil(maxSize * (1 + OGlobalConfiguration.SERVER_CACHE_INCREASE_STEP.getValueAsFloat()));
       K_IN = maxSize >> 2;
       K_OUT = maxSize >> 1;
     } else {
-      throw new OAllLRUListEntriesAreUsedException(message);
+      throw new OAllCacheEntriesAreUsedException(message);
     }
   }
 

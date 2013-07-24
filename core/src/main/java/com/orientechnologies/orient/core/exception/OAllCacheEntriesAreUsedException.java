@@ -16,12 +16,12 @@
 
 package com.orientechnologies.orient.core.exception;
 
-public class OAllLRUListEntriesAreUsedException extends ODatabaseException {
-  public OAllLRUListEntriesAreUsedException(String string) {
+public class OAllCacheEntriesAreUsedException extends ODatabaseException {
+  public OAllCacheEntriesAreUsedException(String string) {
     super(string);
   }
 
-  public OAllLRUListEntriesAreUsedException(String message, Throwable cause) {
+  public OAllCacheEntriesAreUsedException(String message, Throwable cause) {
     super(message, cause);
   }
 }

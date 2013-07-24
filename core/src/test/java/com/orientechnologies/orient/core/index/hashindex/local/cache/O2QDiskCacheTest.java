@@ -15,7 +15,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -33,10 +33,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test
-public class O2QCacheTest {
+public class O2QDiskCacheTest {
   private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-  private O2QCache               buffer;
+  private O2QDiskCache           buffer;
   private OLocalPaginatedStorage storageLocal;
   private ODirectMemory          directMemory;
   private String                 fileName;
@@ -53,7 +53,7 @@ public class O2QCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QDiskCacheTest");
 
     fileName = "o2QCacheTest.tst";
 
@@ -111,7 +111,7 @@ public class O2QCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
+    buffer = new O2QDiskCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "o2QCacheTest", 0);
@@ -527,9 +527,9 @@ public class O2QCacheTest {
   }
 
   public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
     long[] pointers;
@@ -554,13 +554,13 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
   public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
     long[] pointers;
@@ -585,14 +585,14 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
-  @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)
+  @Test(expectedExceptions = OAllCacheEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(false);
     long fileId = buffer.openFile(fileName);
 
     long[] pointers;
@@ -612,7 +612,7 @@ public class O2QCacheTest {
         buffer.release(fileId, i);
       }
 
-      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+      OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
     }
   }
 
@@ -715,7 +715,7 @@ public class O2QCacheTest {
         "o2QCacheTest", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new O2QDiskCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
     long fileId = buffer.openFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
@@ -750,7 +750,7 @@ public class O2QCacheTest {
         "o2QCacheTest", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new O2QDiskCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
 
     long fileId = buffer.openFile(fileName);
     for (int i = 0; i < 8; i++) {
@@ -820,7 +820,7 @@ public class O2QCacheTest {
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 
-    Assert.assertEquals(magicNumber, O2QCache.MAGIC_NUMBER);
+    Assert.assertEquals(magicNumber, O2QDiskCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
     crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
         - OLongSerializer.LONG_SIZE);
