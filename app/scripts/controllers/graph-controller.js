@@ -47,20 +47,25 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 		});
 	}
 	$scope.reload();
-	$scope.save = function(){
-		DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
-			Notification.push({content : data});
-			$scope.reload();
-		});
+	$scope.save = function(docForm){
+		console.log($scope);
+		// DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
+		// 	Notification.push({content : data});
+		// 	$scope.reload();
+		// });
 		
 	}
-	$scope.addField = function(name){
+	$scope.addField = function(name,type){
 		if(name){
 			$scope.doc[name] = null;
+			var types = $scope.doc['@fieldTypes'];
+			types = types + ',' + name + '=' + type;
+			$scope.doc['@fieldTypes'] = types;
 			$scope.headers.push(name);	
 		}else {
 			var modalScope = $scope.$new(true);	
 			modalScope.addField = $scope.addField;
+			modalScope.types = Database.getSupportedTypes();
 			var modalPromise = $modal({template: '/views/database/newField.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
 			$q.when(modalPromise).then(function(modalEl) {
 				modalEl.modal('show');
@@ -86,7 +91,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 	$scope.deleteField = function(name){
 		Utilities.confirm($scope,$dialog,{
 			title : 'Warning!',
-			body : 'You are removing field <strong> '+ name + ' </strong> from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
+			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
 			success : function() {
 				delete $scope.doc[name];
 				$scope.save();
