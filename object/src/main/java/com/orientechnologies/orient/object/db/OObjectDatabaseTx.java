@@ -558,7 +558,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             break;
 
           case ORecordOperation.DELETED:
-            unregisterPojo(pojo, (ODocument) entry.getRecord());
+            final ORecordInternal<?> rec = entry.getRecord();
+            if (rec instanceof ODocument)
+              unregisterPojo(pojo, (ODocument) rec);
             break;
           }
         }
