@@ -1484,6 +1484,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+        OLogManager.instance().error(this, "Error during transaction commit, transaction will be rolled back", e);
         rollback(clientTx);
         if (e instanceof OException)
           throw ((OException) e);
