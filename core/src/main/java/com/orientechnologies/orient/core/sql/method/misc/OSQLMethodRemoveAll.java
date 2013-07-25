@@ -22,17 +22,17 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * Remove the first occurrence of elements from a collection.
+ * Remove all the occurrences of elements from a collection.
  * 
- * @see OSQLMethodRemoveAll
+ * @see OSQLMethodRemove
  * 
  * @author Luca Garulli
  */
-public class OSQLMethodRemove extends OAbstractSQLMethod {
+public class OSQLMethodRemoveAll extends OAbstractSQLMethod {
 
-  public static final String NAME = "remove";
+  public static final String NAME = "removeall";
 
-  public OSQLMethodRemove() {
+  public OSQLMethodRemoveAll() {
     super(NAME, 1, -1);
   }
 
@@ -50,7 +50,7 @@ public class OSQLMethodRemove extends OAbstractSQLMethod {
       });
 
     for (Object o : iMethodParams) {
-      ioResult = OMultiValue.remove(ioResult, o, false);
+      ioResult = OMultiValue.remove(ioResult, o, true);
     }
 
     return ioResult;

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -90,8 +91,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     // exclude automatically generated clusters
     excludeClusters.add("orids");
-    excludeClusters.add("index");
-    excludeClusters.add("manindex");
+    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -142,8 +143,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               if (rid == null)
                 return null;
 
-							if (!rid.isPersistent())
-								return null;
+              if (!rid.isPersistent())
+                return null;
 
               final OIdentifiable result = exportImportHashTable.get(rid);
               if (result == null)

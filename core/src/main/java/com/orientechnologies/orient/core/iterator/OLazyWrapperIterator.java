@@ -19,18 +19,26 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Iterator that created wrapped objects during browsing.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
+public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable {
   protected final Iterator<?> iterator;
   protected T                 nextElement;
+  protected final int         size;       // -1 = UNKNOWN
 
   public OLazyWrapperIterator(final Iterator<?> iterator) {
     this.iterator = iterator;
+    this.size = -1;
+  }
+
+  public OLazyWrapperIterator(final Iterator<?> iterator, final int iSize) {
+    this.iterator = iterator;
+    this.size = iSize;
   }
 
   public abstract boolean filter(T iObject);
@@ -41,6 +49,16 @@ public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T
   public Iterator<T> iterator() {
     reset();
     return this;
+  }
+
+  public int size() {
+    if (size > -1)
+      return size;
+
+    if (iterator instanceof OSizeable)
+      return ((OSizeable) iterator).size();
+
+    return 0;
   }
 
   @Override

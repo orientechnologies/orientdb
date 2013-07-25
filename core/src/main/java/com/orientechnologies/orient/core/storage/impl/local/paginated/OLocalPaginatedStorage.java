@@ -1484,6 +1484,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+        OLogManager.instance().info(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
+            clientTx.getId());
         rollback(clientTx);
         if (e instanceof OException)
           throw ((OException) e);
@@ -1527,6 +1529,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     case ORecordOperation.CREATED: {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
       byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
+        break;
+      }
 
       final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
@@ -1559,6 +1565,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     case ORecordOperation.UPDATED: {
       byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
+        break;
+      }
+
       txEntry
           .getRecord()
           .getRecordVersion()

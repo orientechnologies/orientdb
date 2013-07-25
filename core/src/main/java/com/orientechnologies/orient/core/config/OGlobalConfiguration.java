@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
@@ -170,7 +171,7 @@ public enum OGlobalConfiguration {
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
-      "manindex"),
+      OMetadata.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
