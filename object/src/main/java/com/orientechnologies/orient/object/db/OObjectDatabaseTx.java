@@ -77,6 +77,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   protected OEntityManager      entityManager;
   protected boolean             saveOnlyDirty;
   protected boolean             lazyLoading;
+  protected boolean             automaticSchemaGeneration;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -475,6 +476,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return this;
   }
 
+  public ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
+    OObjectEntitySerializer.generateSchema(iClass, underlying);
+    return this;
+  }
+
   private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
@@ -643,6 +649,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public void setSaveOnlyDirty(boolean saveOnlyDirty) {
     this.saveOnlyDirty = saveOnlyDirty;
+  }
+
+  public boolean isAutomaticSchemaGeneration() {
+    return automaticSchemaGeneration;
+  }
+
+  public void setAutomaticSchemaGeneration(boolean automaticSchemaGeneration) {
+    this.automaticSchemaGeneration = automaticSchemaGeneration;
   }
 
   public Object newInstance() {
