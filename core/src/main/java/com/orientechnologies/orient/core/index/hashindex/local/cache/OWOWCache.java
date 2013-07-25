@@ -527,23 +527,28 @@ public class OWOWCache {
           return;
 
         int writeGroupsToFlush;
-
+        boolean useForceSync = false;
         double threshold = ((double) cacheSize.get()) / cacheMaxSize;
-        if (threshold > 0.8)
+        if (threshold > 0.8) {
           writeGroupsToFlush = (int) (0.2 * writeGroups.size());
-        else if (threshold > 0.9)
+          useForceSync = true;
+        } else if (threshold > 0.9) {
           writeGroupsToFlush = (int) (0.4 * writeGroups.size());
-        else
+          useForceSync = true;
+        } else
+          writeGroupsToFlush = 1;
+
+        if (writeGroupsToFlush < 1)
           writeGroupsToFlush = 1;
 
         int flushedGroups = 0;
 
         flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, false);
 
-        if (flushedGroups < writeGroupsToFlush)
+        if (flushedGroups < writeGroupsToFlush && useForceSync)
           flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, true);
 
-        if (flushedGroups < writeGroupsToFlush) {
+        if (flushedGroups < writeGroupsToFlush && cacheSize.get() > cacheMaxSize) {
           if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
             final long oldCacheMaxSize = cacheMaxSize;
 
@@ -585,7 +590,7 @@ public class OWOWCache {
 
         lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
         try {
-          if (group.recencyBit && group.creationTime - currentTime < groupTTL || forceFlush)
+          if (group.recencyBit && group.creationTime - currentTime < groupTTL && !forceFlush)
             group.recencyBit = false;
           else {
             for (int i = 0; i < 16; i++) {

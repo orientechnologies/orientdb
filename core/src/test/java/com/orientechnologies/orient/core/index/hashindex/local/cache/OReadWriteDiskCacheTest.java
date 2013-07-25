@@ -8,6 +8,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -26,17 +32,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 @Test
-public class O2QDiskCacheTest {
+public class OReadWriteDiskCacheTest {
   private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-  private O2QDiskCache           buffer;
+  private OReadWriteDiskCache    buffer;
   private OLocalPaginatedStorage storageLocal;
   private ODirectMemory          directMemory;
   private String                 fileName;
@@ -53,7 +53,7 @@ public class O2QDiskCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QDiskCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/OReadWriteDiskCacheTest");
 
     fileName = "o2QCacheTest.tst";
 
@@ -111,7 +111,8 @@ public class O2QDiskCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QDiskCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "o2QCacheTest", 0);
@@ -255,7 +256,7 @@ public class O2QDiskCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
@@ -328,33 +329,6 @@ public class O2QDiskCacheTest {
 
     Assert.assertEquals(am.size(), 0);
     Assert.assertEquals(a1out.size(), 0);
-    OCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
-
-    Assert.assertEquals(a1in.size(), 1);
-    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
-  }
-
-  public void testFlushFileShouldClearDirtyPagesFlag() throws Exception {
-    long fileId = buffer.openFile(fileName);
-    byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
-
-    long pointer = buffer.load(fileId, 0);
-    buffer.markDirty(fileId, 0);
-
-    directMemory.set(pointer + systemOffset, value, 0, 8);
-    buffer.release(fileId, 0);
-
-    Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
-
-    LRUList am = buffer.getAm();
-    LRUList a1in = buffer.getA1in();
-    LRUList a1out = buffer.getA1out();
-
-    Assert.assertEquals(am.size(), 0);
-    Assert.assertEquals(a1out.size(), 0);
-
-    buffer.flushFile(fileId);
-
     OCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
@@ -715,7 +689,8 @@ public class O2QDiskCacheTest {
         "o2QCacheTest", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QDiskCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true);
 
     long fileId = buffer.openFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
@@ -735,6 +710,7 @@ public class O2QDiskCacheTest {
     Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
   }
 
+  @Test(enabled = false)
   public void testLogDirtyTables() throws Exception {
     closeBufferAndDeleteFile();
 
@@ -750,7 +726,8 @@ public class O2QDiskCacheTest {
         "o2QCacheTest", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QDiskCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true);
 
     long fileId = buffer.openFile(fileName);
     for (int i = 0; i < 8; i++) {

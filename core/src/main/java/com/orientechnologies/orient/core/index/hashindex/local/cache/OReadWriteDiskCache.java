@@ -42,22 +42,14 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   private final Object               syncObject;
 
-  public OReadWriteDiskCache(long maxMemory, int pageSize, int writeGroupTTL, int pageFlushInterval,
-      OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush) {
+  public OReadWriteDiskCache(long readCacheMaxMemory, long writeCacheMaxMemory, int pageSize, int writeGroupTTL,
+      int pageFlushInterval, OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush) {
     this.filePages = new HashMap<Long, Set<Long>>();
 
-    long tmpMaxSize = maxMemory / pageSize;
-    if (tmpMaxSize >= Integer.MAX_VALUE) {
-      maxSize = Integer.MAX_VALUE;
-    } else {
-      maxSize = (int) tmpMaxSize;
-    }
+    maxSize = normalizeMemory(readCacheMaxMemory, pageSize);
 
-    int writeMaxSize = maxSize / 16;
-    maxSize = maxSize - writeMaxSize;
-
-    this.writeCache = new OWOWCache(syncOnPageFlush, pageSize, writeGroupTTL, writeAheadLog, pageFlushInterval, writeMaxSize,
-        storageLocal);
+    this.writeCache = new OWOWCache(syncOnPageFlush, pageSize, writeGroupTTL, writeAheadLog, pageFlushInterval, normalizeMemory(
+        writeCacheMaxMemory, pageSize), storageLocal);
 
     K_IN = maxSize >> 2;
     K_OUT = maxSize >> 1;
@@ -250,8 +242,6 @@ public class OReadWriteDiskCache implements ODiskCache {
       a1out.clear();
       am.clear();
       a1in.clear();
-
-      filePages.clear();
     }
   }
 
@@ -441,5 +431,14 @@ public class OReadWriteDiskCache implements ODiskCache {
     if (cacheEntry != null && cacheEntry.usageCounter > 1)
       throw new IllegalStateException("Record cannot be removed because it is used!");
     return cacheEntry;
+  }
+
+  private int normalizeMemory(long maxSize, int pageSize) {
+    long tmpMaxSize = maxSize / pageSize;
+    if (tmpMaxSize >= Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    } else {
+      return (int) tmpMaxSize;
+    }
   }
 }
