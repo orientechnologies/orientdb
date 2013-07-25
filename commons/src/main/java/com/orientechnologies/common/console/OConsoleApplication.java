@@ -46,22 +46,22 @@ public class OConsoleApplication {
     OK, ERROR, EXIT
   };
 
-  protected InputStream         in             = System.in;                    // System.in;
-  protected PrintStream         out            = System.out;
-  protected PrintStream         err            = System.err;
+  protected InputStream           in              = System.in;                       // System.in;
+  protected PrintStream           out             = System.out;
+  protected PrintStream           err             = System.err;
 
-  protected String              wordSeparator  = " ";
-  protected String[]            helpCommands   = { "help", "?" };
-  protected String[]            exitCommands   = { "exit", "bye", "quit" };
+  protected String                wordSeparator   = " ";
+  protected String[]              helpCommands    = { "help", "?" };
+  protected String[]              exitCommands    = { "exit", "bye", "quit" };
 
-  protected Map<String, String> properties     = new HashMap<String, String>();
+  protected Map<String, String>   properties      = new HashMap<String, String>();
 
   // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader      reader         = new DefaultConsoleReader();
-  protected boolean             interactiveMode;
-  protected String[]            args;
+  protected OConsoleReader        reader          = new DefaultConsoleReader();
+  protected boolean               interactiveMode;
+  protected String[]              args;
 
-  protected static final String COMMENT_PREFIX = "#";
+  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" };
 
   public void setReader(OConsoleReader iReader) {
     this.reader = iReader;
@@ -129,13 +129,17 @@ public class OConsoleApplication {
     try {
       String commandLine = null;
 
-      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)");
+      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)|\n");
+
       while (iScanner.hasNext()) {
 
         commandLine = iScanner.next().trim();
 
-        if (commandLine.startsWith("--") || commandLine.startsWith("//"))
-          // SKIP COMMENTS
+        if (commandLine.isEmpty())
+          // EMPTY LINE
+          continue;
+
+        if (isComment(commandLine))
           continue;
 
         // SCRIPT CASE: MANAGE ENSEMBLING ALL TOGETHER
@@ -175,6 +179,13 @@ public class OConsoleApplication {
     return true;
   }
 
+  protected boolean isComment(final String commandLine) {
+    for (String comment : COMMENT_PREFIXS)
+      if (commandLine.startsWith(comment))
+        return true;
+    return false;
+  }
+
   protected boolean isCollectingCommands(final String iLine) {
     return false;
   }
@@ -186,7 +197,7 @@ public class OConsoleApplication {
       // NULL LINE: JUMP IT
       return RESULT.OK;
 
-    if (iCommand.startsWith(COMMENT_PREFIX))
+    if (isComment(iCommand))
       // COMMENT: JUMP IT
       return RESULT.OK;
 
@@ -304,8 +315,8 @@ public class OConsoleApplication {
   }
 
   protected void syntaxError(String iCommand, Method m) {
-    out.print("!Wrong syntax. If you're using a file make sure all commands are delimited by ';'\n\r\n\r Expected: " + iCommand
-        + " ");
+    out.print("!Wrong syntax. If you're using a file make sure all commands are delimited by semicolon (;) or a linefeed (\\n)\n\r\n\r Expected: "
+        + iCommand + " ");
 
     String paramName = null;
     String paramDescription = null;

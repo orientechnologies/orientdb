@@ -1067,11 +1067,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             if (network.getSrvProtocolVersion() >= 17) {
               // LOAD THE FETCHED RECORDS IN CACHE
-              final int tot = network.readInt();
-              for (int i = 0; i < tot; ++i) {
-                final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                if (resultItem instanceof ORecordInternal<?>)
-                  database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
+              byte status;
+              while ((status = network.readByte()) > 0) {
+                final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                if (record != null && status == 2)
+                  // PUT IN THE CLIENT LOCAL CACHE
+                  database.getLevel1Cache().updateRecord(record);
               }
             }
           }
