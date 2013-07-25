@@ -1064,6 +1064,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             default:
               OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
             }
+
+            if (network.getSrvProtocolVersion() >= 17) {
+              // LOAD THE FETCHED RECORDS IN CACHE
+              final int tot = network.readInt();
+              for (int i = 0; i < tot; ++i) {
+                final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
+                if (resultItem instanceof ORecordInternal<?>)
+                  database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
+              }
+            }
           }
           break;
         } finally {

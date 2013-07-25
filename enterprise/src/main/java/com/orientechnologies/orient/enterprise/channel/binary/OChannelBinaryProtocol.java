@@ -100,7 +100,7 @@ public class OChannelBinaryProtocol {
   public static final short RECORD_NULL                            = -2;
   public static final short RECORD_RID                             = -3;
 
-  public static final int   CURRENT_PROTOCOL_VERSION               = 16; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   CURRENT_PROTOCOL_VERSION               = 17; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
     final int classId = network.readShort();
