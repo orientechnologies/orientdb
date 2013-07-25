@@ -36,6 +36,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
 
   public abstract String getType();
 
+  public abstract int getVersion();
+
   public abstract OChannel getChannel();
 
   public String getListeningAddress() {

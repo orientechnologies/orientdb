@@ -66,7 +66,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
-  private static final String ORIENT_SERVER_DB = "OrientDB Server v." + OConstants.getVersion();
+  private static final String ORIENT_SERVER_DB         = "OrientDB Server v." + OConstants.getVersion();
+  private static final int    CURRENT_PROTOCOL_VERSION = 10;
 
   @Override
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
@@ -87,6 +88,11 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
     super.config(server, iSocket, iConfiguration, iStatelessCommands, iStatefulCommands);
     connection.data.serverInfo = ORIENT_SERVER_DB;
+  }
+
+  @Override
+  public int getVersion() {
+    return CURRENT_PROTOCOL_VERSION;
   }
 
   @Override

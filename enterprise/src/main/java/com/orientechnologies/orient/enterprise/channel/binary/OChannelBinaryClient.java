@@ -78,7 +78,8 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
       OLogManager.instance().warn(
           this,
           "The Client driver version is different than Server version: client=" + iProtocolVersion + ", server="
-              + srvProtocolVersion + ". This could cause problems. Assure to have the same versions on both");
+              + srvProtocolVersion
+              + ". You could not use the full features of the newer version. Assure to have the same versions on both");
       // close();
       // throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
       // + ", server=" + srvProtocolVersion);
