@@ -13,29 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.record;
 
-import java.util.Iterator;
+package com.orientechnologies.common.util;
 
-import com.orientechnologies.common.util.OSizeable;
-
-public interface ORecordLazyMultiValue extends ODetachable, OSizeable {
-  public Iterator<OIdentifiable> rawIterator();
-
-  /**
-   * Browse all the set to convert all the items into records.
-   */
-  public void convertLinks2Records();
-
-  /**
-   * Browse all the set to convert all the items into links.
-   * 
-   * @return
-   */
-  public boolean convertRecords2Links();
-
-  public boolean isAutoConvertToRecord();
-
-  public void setAutoConvertToRecord(boolean convertToRecord);
-
+/**
+ * Interface that support size()
+ */
+public interface OSizeable {
+  public int size();
 }

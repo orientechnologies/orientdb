@@ -19,7 +19,9 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,6 +30,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -74,8 +77,8 @@ public class OMultiValue {
     if (iObject == null)
       return 0;
 
-    if (iObject instanceof OMultiCollectionIterator<?>)
-      return ((OMultiCollectionIterator<?>) iObject).size();
+    if (iObject instanceof OSizeable)
+      return ((OSizeable) iObject).size();
 
     if (!isMultiValue(iObject))
       return 0;
@@ -395,15 +398,25 @@ public class OMultiValue {
    *          MultiValue where to add value(s)
    * @param iToRemove
    *          Single value, array of values or collections of values. Map are not supported.
+   * @param iAllOccurrences
+   *          True if the all occurrences must be removed or false of only the first one (Like java.util.Collection.remove())
    * @return
    */
-  public static Object remove(Object iObject, final Object iToRemove) {
+  public static Object remove(Object iObject, Object iToRemove, final boolean iAllOccurrences) {
     if (iObject != null) {
       if (iObject instanceof OMultiCollectionIterator<?>) {
-        final Collection<Object> list = new ArrayList<Object>(OMultiValue.getSize(iObject));
+        final Collection<Object> list = new LinkedList<Object>();
         for (Object o : ((OMultiCollectionIterator<?>) iObject))
           list.add(o);
         iObject = list;
+      }
+
+      if (iToRemove instanceof OMultiCollectionIterator<?>) {
+        // TRANSFORM IN SET ONCE TO OPTIMIZE LOOPS DURING REMOVE
+        final Set<Object> set = new HashSet<Object>();
+        for (Object o : ((OMultiCollectionIterator<?>) iToRemove))
+          set.add(o);
+        iToRemove = set;
       }
 
       if (iObject instanceof Collection<?>) {
@@ -414,7 +427,7 @@ public class OMultiValue {
           // COLLECTION - COLLECTION
           for (Object o : (Collection<Object>) iToRemove) {
             if (isMultiValue(o))
-              remove(coll, o);
+              remove(coll, o, iAllOccurrences);
             else
               coll.remove(o);
           }
@@ -425,7 +438,7 @@ public class OMultiValue {
           for (int i = 0; i < Array.getLength(iToRemove); ++i) {
             Object o = Array.get(iToRemove, i);
             if (isMultiValue(o))
-              remove(coll, o);
+              remove(coll, o, iAllOccurrences);
             else
               coll.remove(o);
           }
@@ -439,11 +452,18 @@ public class OMultiValue {
           if (iToRemove instanceof OMultiCollectionIterator<?>)
             ((OMultiCollectionIterator<?>) iToRemove).reset();
 
-          for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
-            final Object itemToRemove = it.next();
-            while (coll.remove(itemToRemove))
+          if (iAllOccurrences) {
+            OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;
+            batchRemove(coll, it);
+          } else {
+            for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
+              final Object itemToRemove = it.next();
+              while (coll.remove(itemToRemove))
+                if (!iAllOccurrences)
+                  // REMOVE ONLY THE FIRST ITEM
+                  break;
               // REMOVE ALL THE ITEM
-              ;
+            }
           }
         } else
           coll.remove(iToRemove);
@@ -489,6 +509,41 @@ public class OMultiValue {
     }
 
     return iObject;
+  }
+
+  private static void batchRemove(Collection<Object> coll, Iterator<?> it) {
+    int approximateRemainingSize;
+    if (it instanceof OSizeable) {
+      approximateRemainingSize = ((OSizeable) it).size();
+    } else {
+      approximateRemainingSize = -1;
+    }
+
+    while (it.hasNext()) {
+      Set batch = prepareBatch(it, approximateRemainingSize);
+      coll.removeAll(batch);
+      approximateRemainingSize -= batch.size();
+    }
+  }
+
+  private static Set prepareBatch(Iterator<?> it, int approximateRemainingSize) {
+    final HashSet batch;
+    if (approximateRemainingSize > -1) {
+      if (approximateRemainingSize > 10000)
+        batch = new HashSet(13400);
+      else
+        batch = new HashSet((int) (approximateRemainingSize / 0.75));
+    } else {
+      batch = new HashSet();
+    }
+
+    int count = 0;
+    while (count < 10000 && it.hasNext()) {
+      batch.add(it.next());
+      count++;
+    }
+
+    return batch;
   }
 
   public static Object[] array(final Object iValue) {

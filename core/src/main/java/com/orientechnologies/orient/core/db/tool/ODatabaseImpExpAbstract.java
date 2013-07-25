@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -61,8 +62,8 @@ public abstract class ODatabaseImpExpAbstract {
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<String>();
-    excludeClusters.add("index");
-    excludeClusters.add("manindex");
+    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public ODatabaseImpExpAbstract setOptions(final String iOptions) {

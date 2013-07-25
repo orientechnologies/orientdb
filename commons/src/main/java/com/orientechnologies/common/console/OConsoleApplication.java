@@ -138,8 +138,8 @@ public class OConsoleApplication {
           // SKIP COMMENTS
           continue;
 
-        // JS CASE: MANAGE ENSEMBLING ALL TOGETHER
-        if (commandLine.startsWith("js")) {
+        // SCRIPT CASE: MANAGE ENSEMBLING ALL TOGETHER
+        if (isCollectingCommands(commandLine)) {
           // BEGIN: START TO COLLECT
           commandBuffer.append(commandLine);
           commandLine = null;
@@ -173,6 +173,10 @@ public class OConsoleApplication {
       iScanner.close();
     }
     return true;
+  }
+
+  protected boolean isCollectingCommands(final String iLine) {
+    return false;
   }
 
   protected RESULT execute(String iCommand) {

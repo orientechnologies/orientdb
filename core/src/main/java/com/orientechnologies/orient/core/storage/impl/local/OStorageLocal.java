@@ -1697,7 +1697,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     try {
       if (!cluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with given id " + new ORecordId(rid.clusterId, ppos.clusterPosition)
-            + " has already exists.");
+            + " already exists.");
 
       rid.clusterPosition = ppos.clusterPosition;
 

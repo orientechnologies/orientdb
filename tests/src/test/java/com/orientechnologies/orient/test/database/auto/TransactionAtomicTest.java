@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest {
@@ -186,6 +187,43 @@ public class TransactionAtomicTest {
     }
 
     Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+
+    db.close();
+  }
+
+  @Test
+  public void testTransactionalSQL() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    db.open("admin", "admin");
+
+    long prev = db.countClusterElements("Account");
+
+    db.command(new OCommandSQL("transactional insert into Account set name = 'txTest1'")).execute();
+
+    Assert.assertEquals(db.countClusterElements("Account"), prev + 1);
+    db.close();
+  }
+
+  @Test
+  public void testTransactionalSQLJoinTx() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    db.open("admin", "admin");
+
+    long prev = db.countClusterElements("Account");
+
+    db.begin();
+
+    db.command(new OCommandSQL("transactional insert into Account set name = 'txTest2'")).execute();
+
+    Assert.assertTrue(db.getTransaction().isActive());
+
+    if (!url.startsWith("remote"))
+      Assert.assertEquals(db.countClusterElements("Account"), prev);
+
+    db.commit();
+
+    Assert.assertFalse(db.getTransaction().isActive());
+    Assert.assertEquals(db.countClusterElements("Account"), prev + 1);
 
     db.close();
   }
