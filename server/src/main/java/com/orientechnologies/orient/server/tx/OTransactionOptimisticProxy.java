@@ -88,8 +88,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         case ORecordOperation.UPDATED:
           entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
 
-          // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
-          updatedRecords.put(rid, entry.getRecord());
           break;
 
         case ORecordOperation.DELETED:
@@ -126,6 +124,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
             loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
             entry.getValue().record = loadedRecord;
+            
+            // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
+            updatedRecords.put((ORecordId)entry.getKey(), entry.getValue().getRecord());
+            
           }
         }
 
