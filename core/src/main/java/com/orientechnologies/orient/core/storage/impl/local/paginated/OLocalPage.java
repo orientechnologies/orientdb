@@ -81,6 +81,15 @@ public class OLocalPage {
 
   private final TrackMode     trackMode;
 
+  public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemory directMemory, long dataPointer) {
+    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + (2 * OIntegerSerializer.INT_SIZE));
+    final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
+        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+
+    return new OLogSequenceNumber(segment, position);
+  }
+
   public OLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
     this.pagePointer = pagePointer;
     this.trackMode = trackMode;
