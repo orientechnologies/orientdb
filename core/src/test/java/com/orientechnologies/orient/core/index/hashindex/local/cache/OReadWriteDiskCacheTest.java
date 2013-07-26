@@ -45,7 +45,6 @@ public class OReadWriteDiskCacheTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
-
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -55,7 +54,7 @@ public class OReadWriteDiskCacheTest {
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/OReadWriteDiskCacheTest");
 
-    fileName = "o2QCacheTest.tst";
+    fileName = "readWriteDiskCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
@@ -81,7 +80,7 @@ public class OReadWriteDiskCacheTest {
       writeAheadLog = null;
     }
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
     if (file.exists()) {
       boolean delete = file.delete();
       Assert.assertTrue(delete);
@@ -102,7 +101,7 @@ public class OReadWriteDiskCacheTest {
 
     storageLocal.delete();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
     if (file.exists()) {
       Assert.assertTrue(file.delete());
       file.getParentFile().delete();
@@ -113,10 +112,6 @@ public class OReadWriteDiskCacheTest {
   private void initBuffer() throws IOException {
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
         writeAheadLog, true);
-
-    final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
-    segmentConfiguration.fileType = OFileFactory.CLASSIC;
   }
 
   public void testAddFourItems() throws IOException {
@@ -208,7 +203,7 @@ public class OReadWriteDiskCacheTest {
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
     buffer.openFile(fileName);
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
 
     Assert.assertTrue(file.exists());
     Assert.assertTrue(file.isFile());
@@ -420,7 +415,7 @@ public class OReadWriteDiskCacheTest {
     buffer.flushBuffer();
 
     for (int i = 0; i < 4; i++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
       Assert.assertFalse(file.exists());
     }
   }
@@ -633,12 +628,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertTrue(pageErrors[0].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertTrue(pageErrors[1].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testCheckSumIsBroken() throws Exception {
@@ -668,12 +663,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertFalse(pageErrors[0].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertFalse(pageErrors[1].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testFlushTillLSN() throws Exception {
@@ -686,7 +681,7 @@ public class OReadWriteDiskCacheTest {
     writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
+        "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
@@ -757,7 +752,7 @@ public class OReadWriteDiskCacheTest {
     Set<ODirtyPage> dirtyPages = buffer.logDirtyPagesTable();
     Set<ODirtyPage> expectedDirtyPages = new HashSet<ODirtyPage>();
     for (int i = 7; i >= 2; i--)
-      expectedDirtyPages.add(new ODirtyPage("o2QCacheTest.tst", i, pageLSN));
+      expectedDirtyPages.add(new ODirtyPage("readWriteDiskCacheTest.tst", i, pageLSN));
 
     Assert.assertEquals(dirtyPages, expectedDirtyPages);
 
@@ -773,7 +768,7 @@ public class OReadWriteDiskCacheTest {
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "rw");
@@ -785,7 +780,7 @@ public class OReadWriteDiskCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "r");
