@@ -6,20 +6,18 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QDiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
  * @author Andrey Lomakin
@@ -32,7 +30,6 @@ public class LocalHashTableIterationTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
-  private O2QDiskCache                     buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -47,9 +44,6 @@ public class LocalHashTableIterationTest {
     }
 
     databaseDocumentTx.create();
-
-    buffer = new O2QDiskCache(400 * 1024 * 1024, 15000, ODirectMemoryFactory.INSTANCE.directMemory(), null,
-        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OHashFunction<Integer> hashFunction = new OHashFunction<Integer>() {
       @Override
@@ -68,8 +62,6 @@ public class LocalHashTableIterationTest {
   public void afterClass() throws Exception {
     localHashTable.clear();
     localHashTable.delete();
-    buffer.clear();
-    buffer.close();
     databaseDocumentTx.drop();
   }
 
