@@ -92,12 +92,11 @@ public class OClientConnectionManager {
   /**
    * Create a connection.
    * 
-   * @param iSocket
-   * @param iProtocol
-   * @return
+   * @param iProtocol protocol which will be used by connection
+   * @return new connection
    * @throws IOException
    */
-  public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
+  public OClientConnection connect(final ONetworkProtocol iProtocol) throws IOException {
 
     final OClientConnection connection;
 
@@ -110,24 +109,41 @@ public class OClientConnectionManager {
     return connection;
   }
 
-  public OClientConnection getConnection(final Socket socket, final int iChannelId) {
-    OClientConnection conn = null;
-
+  /**
+   * Retrieves the connection by id.
+   *
+   * @param iChannelId id of connection
+   * @return The connection if any, otherwise null
+   */
+  public OClientConnection getConnection(final int iChannelId) {
     // SEARCH THE CONNECTION BY ID
-    conn = connections.get(iChannelId);
+    return connections.get(iChannelId);
 
     // COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
     // if (conn != null && conn.getChannel().socket != socket)
     // throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
     // + " while it's tied to connection " + conn.getChannel().socket);
+  }
 
-    return conn;
+  /**
+   * Retrieves the connection by address/port.
+   *
+   * @param iAddress
+   *          The address as string in the format address as format <ip>:<port>
+   * @return The connection if any, otherwise null
+   */
+  public OClientConnection getConnection(final String iAddress) {
+    for (OClientConnection conn : connections.values()) {
+      if (iAddress.equals(conn.getRemoteAddress()))
+        return conn;
+    }
+    return null;
   }
 
   /**
    * Disconnects and kill the associated network manager.
    * 
-   * @param iChannelId
+   * @param iChannelId id of connection
    */
   public void kill(final int iChannelId) {
     final OClientConnection connection = connections.get(iChannelId);
@@ -144,7 +160,7 @@ public class OClientConnectionManager {
   /**
    * Interrupt the associated network manager.
    * 
-   * @param iChannelId
+   * @param iChannelId id of connection
    */
   public void interrupt(final int iChannelId) {
     final OClientConnection connection = connections.get(iChannelId);
@@ -159,7 +175,7 @@ public class OClientConnectionManager {
   /**
    * Disconnects a client connections
    * 
-   * @param iChannelId
+   * @param iChannelId id of connection
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
@@ -282,20 +298,5 @@ public class OClientConnectionManager {
       }
     }
 
-  }
-
-  /**
-   * Retrieves the connection by address/port.
-   * 
-   * @param iAddress
-   *          The address as string in the format address as format <ip>:<port>
-   * @return The connection if any, otherwise null
-   */
-  public OClientConnection getConnection(final String iAddress) {
-    for (OClientConnection conn : connections.values()) {
-      if (iAddress.equals(conn.getRemoteAddress()))
-        return conn;
-    }
-    return null;
   }
 }

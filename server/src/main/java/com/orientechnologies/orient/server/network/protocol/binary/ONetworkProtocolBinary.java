@@ -97,7 +97,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
       final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(iSocket, this);
+    connection = OClientConnectionManager.instance().connect(this);
 
     super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
 
@@ -117,7 +117,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   @Override
   protected void onBeforeRequest() throws IOException {
-    connection = OClientConnectionManager.instance().getConnection(channel.socket, clientTxId);
+    connection = OClientConnectionManager.instance().getConnection(clientTxId);
 
     if (clientTxId < 0) {
       short protocolId = 0;
@@ -125,7 +125,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (connection != null)
         protocolId = connection.data.protocolVersion;
 
-      connection = OClientConnectionManager.instance().connect(channel.socket, this);
+      connection = OClientConnectionManager.instance().connect(this);
 
       if (connection != null)
         connection.data.protocolVersion = protocolId;
