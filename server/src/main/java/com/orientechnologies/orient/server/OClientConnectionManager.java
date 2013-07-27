@@ -17,10 +17,18 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
@@ -34,13 +42,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
-public class OClientConnectionManager extends OSharedResourceAbstract {
-  protected Map<Integer, OClientConnection>     connections             = new HashMap<Integer, OClientConnection>();
-  protected int                                 connectionSerial        = 0;
+public class OClientConnectionManager {
+  protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
+  protected AtomicInteger                             connectionSerial = new AtomicInteger(0);
 
-  private long                                  metricActiveConnections = 0;
-
-  private static final OClientConnectionManager instance                = new OClientConnectionManager();
+  private static final OClientConnectionManager       instance         = new OClientConnectionManager();
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -49,29 +55,25 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
 
       @Override
       public void run() {
-        acquireExclusiveLock();
-        try {
-          final HashMap<Integer, OClientConnection> localConnections = new HashMap<Integer, OClientConnection>(connections);
-          for (Entry<Integer, OClientConnection> entry : localConnections.entrySet()) {
+        final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+        while (iterator.hasNext()) {
+          final Entry<Integer, OClientConnection> entry = iterator.next();
 
-            final Socket socket;
-            if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
-              socket = null;
-            else
-              socket = entry.getValue().protocol.getChannel().socket;
+          final Socket socket;
+          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+            socket = null;
+          else
+            socket = entry.getValue().protocol.getChannel().socket;
 
-            if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-              OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
-                  entry.getKey(), socket);
-              try {
-                entry.getValue().close();
-              } catch (Exception e) {
-              }
-              connections.remove(entry.getKey());
+          if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+            OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
+                entry.getKey(), socket);
+            try {
+              entry.getValue().close();
+            } catch (Exception e) {
             }
+            iterator.remove();
           }
-        } finally {
-          releaseExclusiveLock();
         }
       }
     }, delay, delay);
@@ -82,7 +84,7 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
         .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
-                return metricActiveConnections;
+                return connections.size();
               }
             });
   }
@@ -96,19 +98,12 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @throws IOException
    */
   public OClientConnection connect(final Socket iSocket, final ONetworkProtocol iProtocol) throws IOException {
-    metricActiveConnections++;
 
     final OClientConnection connection;
 
-    acquireExclusiveLock();
-    try {
-      connection = new OClientConnection(++connectionSerial, iProtocol);
+    connection = new OClientConnection(connectionSerial.incrementAndGet(), iProtocol);
 
-      connections.put(connection.id, connection);
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    connections.put(connection.id, connection);
 
     OLogManager.instance().config(this, "Remote client connected from: " + connection);
 
@@ -116,23 +111,17 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public OClientConnection getConnection(final Socket socket, final int iChannelId) {
-    acquireSharedLock();
-    try {
-      OClientConnection conn = null;
+    OClientConnection conn = null;
 
-      // SEARCH THE CONNECTION BY ID
-      conn = connections.get(iChannelId);
+    // SEARCH THE CONNECTION BY ID
+    conn = connections.get(iChannelId);
 
-      // COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
-      // if (conn != null && conn.getChannel().socket != socket)
-      // throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
-      // + " while it's tied to connection " + conn.getChannel().socket);
+    // COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
+    // if (conn != null && conn.getChannel().socket != socket)
+    // throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
+    // + " while it's tied to connection " + conn.getChannel().socket);
 
-      return conn;
-
-    } finally {
-      releaseSharedLock();
-    }
+    return conn;
   }
 
   /**
@@ -141,19 +130,14 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @param iChannelId
    */
   public void kill(final int iChannelId) {
-    acquireExclusiveLock();
-    try {
-      final OClientConnection connection = connections.get(iChannelId);
-      if (connection != null) {
-        final ONetworkProtocol protocol = connection.protocol;
+    final OClientConnection connection = connections.get(iChannelId);
+    if (connection != null) {
+      final ONetworkProtocol protocol = connection.protocol;
 
-        disconnect(iChannelId);
+      disconnect(iChannelId);
 
-        // KILL THE NEWTORK MANAGER TOO
-        protocol.sendShutdown();
-      }
-    } finally {
-      releaseExclusiveLock();
+      // KILL THE NEWTORK MANAGER TOO
+      protocol.sendShutdown();
     }
   }
 
@@ -163,17 +147,12 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @param iChannelId
    */
   public void interrupt(final int iChannelId) {
-    acquireExclusiveLock();
-    try {
-      final OClientConnection connection = connections.get(iChannelId);
-      if (connection != null) {
-        final ONetworkProtocol protocol = connection.protocol;
-        if (protocol != null)
-          // INTERRUPT THE NEWTORK MANAGER TOO
-          protocol.interrupt();
-      }
-    } finally {
-      releaseExclusiveLock();
+    final OClientConnection connection = connections.get(iChannelId);
+    if (connection != null) {
+      final ONetworkProtocol protocol = connection.protocol;
+      if (protocol != null)
+        // INTERRUPT THE NEWTORK MANAGER TOO
+        protocol.interrupt();
     }
   }
 
@@ -184,42 +163,30 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
-    acquireExclusiveLock();
-    try {
-      final OClientConnection connection = connections.remove(iChannelId);
+    final OClientConnection connection = connections.remove(iChannelId);
 
-      if (connection != null) {
-        metricActiveConnections--;
-        connection.close();
+    if (connection != null) {
+      connection.close();
 
-        // CHECK IF THERE ARE OTHER CONNECTIONS
-        for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
-          if (entry.getValue().getProtocol().equals(connection.getProtocol()))
-            return false;
-        }
-        return true;
+      // CHECK IF THERE ARE OTHER CONNECTIONS
+      for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
+        if (entry.getValue().getProtocol().equals(connection.getProtocol()))
+          return false;
       }
-
-    } finally {
-      releaseExclusiveLock();
+      return true;
     }
+
     return false;
   }
 
   public void disconnect(final OClientConnection connection) {
-    metricActiveConnections--;
     connection.close();
 
-    acquireExclusiveLock();
-    try {
-      for (Entry<Integer, OClientConnection> entry : new HashMap<Integer, OClientConnection>(connections).entrySet()) {
-        if (entry.getValue().equals(connection))
-          connections.remove(entry.getKey());
-      }
-
-    } finally {
-      releaseExclusiveLock();
+    for (Entry<Integer, OClientConnection> entry : new HashMap<Integer, OClientConnection>(connections).entrySet()) {
+      if (entry.getValue().equals(connection))
+        connections.remove(entry.getKey());
     }
+
   }
 
   public static OClientConnectionManager instance() {
@@ -227,21 +194,11 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public List<OClientConnection> getConnections() {
-    acquireSharedLock();
-    try {
-      return new ArrayList<OClientConnection>(connections.values());
-    } finally {
-      releaseSharedLock();
-    }
+    return new ArrayList<OClientConnection>(connections.values());
   }
 
   public int getTotal() {
-    acquireSharedLock();
-    try {
-      return connections.size();
-    } finally {
-      releaseSharedLock();
-    }
+    return connections.size();
   }
 
   /**
@@ -250,47 +207,40 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   public void pushDistribCfg2Clients(final ODocument iConfig) {
     final byte[] content = iConfig.toStream();
 
-    acquireSharedLock();
-    try {
+    final Set<String> pushed = new HashSet<String>();
+    for (OClientConnection c : connections.values()) {
+      if (pushed.contains(c.getRemoteAddress()))
+        // ALREADY SENT: JUMP IT
+        continue;
 
-      final Set<String> pushed = new HashSet<String>();
-      for (OClientConnection c : connections.values()) {
-        if (pushed.contains(c.getRemoteAddress()))
-          // ALREADY SENT: JUMP IT
-          continue;
+      if (!(c.protocol instanceof ONetworkProtocolBinary))
+        // INVOLVE ONLY BINAR PROTOCOLS
+        continue;
 
-        if (!(c.protocol instanceof ONetworkProtocolBinary))
-          // INVOLVE ONLY BINAR PROTOCOLS
-          continue;
+      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
+      final OChannelBinary channel = (OChannelBinary) p.getChannel();
 
-        final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-        final OChannelBinary channel = (OChannelBinary) p.getChannel();
-
+      try {
+        channel.acquireWriteLock();
         try {
-          channel.acquireWriteLock();
-          try {
-            channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-            channel.writeInt(Integer.MIN_VALUE);
-            channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
-            channel.writeBytes(content);
-            channel.flush();
+          channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+          channel.writeInt(Integer.MIN_VALUE);
+          channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
+          channel.writeBytes(content);
+          channel.flush();
 
-            pushed.add(c.getRemoteAddress());
-            OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
+          pushed.add(c.getRemoteAddress());
+          OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
 
-          } finally {
-            channel.releaseWriteLock();
-          }
-        } catch (IOException e) {
-          disconnect(c);
-        } catch (Exception e) {
-          OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
-          disconnect(c);
+        } finally {
+          channel.releaseWriteLock();
         }
+      } catch (IOException e) {
+        disconnect(c);
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
+        disconnect(c);
       }
-
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -304,42 +254,34 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    */
   public void pushRecord2Clients(final ORecordInternal<?> iRecord, final OClientConnection iExcludeConnection)
       throws InterruptedException, IOException {
-    acquireSharedLock();
-    try {
-      final String dbName = iRecord.getDatabase().getName();
+    final String dbName = iRecord.getDatabase().getName();
 
-      for (OClientConnection c : connections.values()) {
-        if (c != iExcludeConnection) {
-          final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-          final OChannelBinaryAsynch channel = (OChannelBinaryAsynch) p.getChannel();
+    for (OClientConnection c : connections.values()) {
+      if (c != iExcludeConnection) {
+        final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
+        final OChannelBinaryAsynch channel = (OChannelBinaryAsynch) p.getChannel();
 
-          if (c.database != null && c.database.getName().equals(dbName))
-            synchronized (c) {
+        if (c.database != null && c.database.getName().equals(dbName))
+          synchronized (c) {
+            try {
+              channel.acquireWriteLock();
               try {
-
-                channel.acquireWriteLock();
-                try {
-
-                  channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-                  channel.writeInt(Integer.MIN_VALUE);
-                  channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
-                  p.writeIdentifiable(iRecord);
-
-                } finally {
-                  channel.releaseWriteLock();
-                }
-              } catch (IOException e) {
-                OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());
+                channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
+                channel.writeInt(Integer.MIN_VALUE);
+                channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
+                p.writeIdentifiable(iRecord);
+              } finally {
+                channel.releaseWriteLock();
               }
-
+            } catch (IOException e) {
+              OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());
             }
 
-        }
-      }
+          }
 
-    } finally {
-      releaseSharedLock();
+      }
     }
+
   }
 
   /**
@@ -350,15 +292,10 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
    * @return The connection if any, otherwise null
    */
   public OClientConnection getConnection(final String iAddress) {
-    acquireSharedLock();
-    try {
-      for (OClientConnection conn : connections.values()) {
-        if (iAddress.equals(conn.getRemoteAddress()))
-          return conn;
-      }
-      return null;
-    } finally {
-      releaseSharedLock();
+    for (OClientConnection conn : connections.values()) {
+      if (iAddress.equals(conn.getRemoteAddress()))
+        return conn;
     }
+    return null;
   }
 }
