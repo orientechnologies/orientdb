@@ -25,7 +25,6 @@ import java.util.Set;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
@@ -33,8 +32,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OSharedResourceAdaptive implements
-    OResourcePoolListener<String, DB>, OOrientListener {
+public abstract class ODatabasePoolAbstract<DB extends ODatabase> implements OResourcePoolListener<String, DB>, OOrientListener {
 
   private final HashMap<String, OResourcePool<String, DB>> pools = new HashMap<String, OResourcePool<String, DB>>();
   private int                                              maxSize;
@@ -46,9 +44,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   }
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize, final int iTimeout) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
-        .getValueAsInteger(), true);
-
     maxSize = iMaxSize;
     timeout = iTimeout;
     owner = iOwner;
@@ -63,9 +58,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       throws OLockException {
     final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
 
-    acquireExclusiveLock();
-    try {
-
+    synchronized (pools) {
       OResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
         // CREATE A NEW ONE
@@ -76,9 +69,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
       pools.put(dbPooledName, pool);
       return db;
-
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
@@ -86,17 +76,12 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
     final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
         + iDatabase.getURL() : iDatabase.getURL();
 
-    acquireSharedLock();
-    try {
-
+    synchronized (pools) {
       final OResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
         throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
 
       pool.returnResource(iDatabase);
-
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -105,23 +90,14 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   }
 
   public Map<String, OResourcePool<String, DB>> getPools() {
-    acquireSharedLock();
-    try {
-
-      return Collections.unmodifiableMap(pools);
-
-    } finally {
-      releaseSharedLock();
-    }
+    return Collections.unmodifiableMap(pools);
   }
 
   /**
    * Closes all the databases.
    */
   public void close() {
-    acquireSharedLock();
-    try {
-
+    synchronized (pools) {
       for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
         for (DB db : pool.getValue().getResources()) {
           pool.getValue().close();
@@ -134,9 +110,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
           }
         }
       }
-
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -145,9 +118,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   }
 
   public void remove(final String iPoolName) {
-    acquireExclusiveLock();
-    try {
-
+    synchronized (pools) {
       final OResourcePool<String, DB> pool = pools.get(iPoolName);
 
       if (pool != null) {
@@ -165,9 +136,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
         pool.close();
         pools.remove(iPoolName);
       }
-
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
@@ -184,8 +152,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   public void onStorageUnregistered(final OStorage iStorage) {
     final String storageURL = iStorage.getURL();
 
-    acquireSharedLock();
-    try {
+    synchronized (pools) {
       Set<String> poolToClose = null;
 
       for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
@@ -202,9 +169,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       if (poolToClose != null)
         for (String pool : poolToClose)
           remove(pool);
-
-    } finally {
-      releaseExclusiveLock();
     }
   }
 }
