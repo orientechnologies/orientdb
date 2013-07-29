@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1462,8 +1461,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (exception instanceof OTimeoutException)
       // TIMEOUT, AVOID LOOP, RE-THROW IT
       throw (OTimeoutException) exception;
-    else if (exception instanceof SocketException)
-      throw new OStorageException("Can not  connect to remote database.", exception);
+    // else if (exception instanceof SocketException)
+    // throw new OStorageException("Cannot connect to remote database", exception);
     else if (exception instanceof OException)
       // RE-THROW IT
       throw (OException) exception;
@@ -1702,8 +1701,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, asynchEventListener);
 
       } catch (Exception e) {
-        // GET THE NEXT ONE IF ANY
-        e.printStackTrace();
+        OLogManager.instance().debug(this, "Error on connecting to %s", e, server);
       }
     }
 
