@@ -291,11 +291,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             || value.getClass().isArray()) {
           final Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(
               fieldName, self.getClass()));
-          if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
+          if (genericMultiValueType == null || !OReflectionHelper.isJavaType(genericMultiValueType)) {
             final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
             if (OObjectEntitySerializer.isSerializedType(f) && !(value instanceof OLazyObjectCustomSerializer)) {
               value = manageSerializedCollections(self, fieldName, value);
-            } else if (genericMultiValueType.isEnum() && !(value instanceof OLazyObjectEnumSerializer)) {
+            } else if (genericMultiValueType != null && genericMultiValueType.isEnum()
+                && !(value instanceof OLazyObjectEnumSerializer)) {
               value = manageEnumCollections(self, f.getName(), genericMultiValueType, value);
             } else {
               value = manageObjectCollections(self, fieldName, value);
@@ -459,7 +460,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       doc.field(f.getName(), map, OType.EMBEDDEDMAP);
       value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, map,
           (Map<Object, Object>) value);
-    } else if (genericType.isEnum()) {
+    } else if (genericType != null && genericType.isEnum()) {
       Map<Object, Object> map = new HashMap<Object, Object>();
       doc.field(f.getName(), map, OType.EMBEDDEDMAP);
       value = new OObjectEnumLazyMap(genericType, doc, map, (Map<Object, Object>) value);
@@ -490,7 +491,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         doc.field(f.getName(), set, OType.EMBEDDEDSET);
         value = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), doc, set, (Set<Object>) value);
       }
-    } else if (genericType.isEnum()) {
+    } else if (genericType != null && genericType.isEnum()) {
       if (value instanceof List<?>) {
         final List<Object> list = new ArrayList<Object>();
         doc.field(f.getName(), list, OType.EMBEDDEDLIST);

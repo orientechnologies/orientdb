@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import javassist.util.proxy.Proxy;
 
@@ -43,7 +44,9 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -63,6 +66,7 @@ import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.Event;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
+import com.orientechnologies.orient.test.domain.base.JavaCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
@@ -1792,7 +1796,165 @@ public class CRUDObjectPhysicalTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "mapStringObjectTest")
+  public void testNoGenericCollections() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      Child c1 = new Child();
+      c1.setName("1");
+      Child c2 = new Child();
+      c2.setName("2");
+      Child c3 = new Child();
+      c3.setName("3");
+      Child c4 = new Child();
+      c4.setName("4");
+      p.getList().add(c1);
+      p.getList().add(c2);
+      p.getList().add(c3);
+      p.getList().add(c4);
+      p.getSet().add(c1);
+      p.getSet().add(c2);
+      p.getSet().add(c3);
+      p.getSet().add(c4);
+      p.getMap().put("1", c1);
+      p.getMap().put("2", c2);
+      p.getMap().put("3", c3);
+      p.getMap().put("4", c4);
+      p = database.save(p);
+      ORID rid = database.getIdentity(p);
+      database.close();
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      p = database.load(rid);
+      Assert.assertEquals(p.getList().size(), 4);
+      Assert.assertEquals(p.getSet().size(), 4);
+      Assert.assertEquals(p.getMap().size(), 4);
+      for (int i = 0; i < 4; i++) {
+        Object o = p.getList().get(i);
+        Assert.assertTrue(o instanceof Child);
+        Assert.assertEquals(((Child) o).getName(), (i + 1) + "");
+        o = p.getMap().get((i + 1) + "");
+        Assert.assertTrue(o instanceof Child);
+        Assert.assertEquals(((Child) o).getName(), (i + 1) + "");
+      }
+      for (Object o : p.getSet()) {
+        Assert.assertTrue(o instanceof Child);
+        int nameToInt = Integer.valueOf(((Child) o).getName());
+        Assert.assertTrue(nameToInt > 0 && nameToInt < 5);
+      }
+      JavaSimpleTestClass other = new JavaSimpleTestClass();
+      p.getList().add(other);
+      p.getSet().add(other);
+      p.getMap().put("5", other);
+      database.save(p);
+      database.close();
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      p = database.load(rid);
+      Assert.assertEquals(p.getList().size(), 5);
+      Object o = p.getList().get(4);
+      Assert.assertTrue(o instanceof JavaSimpleTestClass);
+      o = p.getMap().get("5");
+      Assert.assertTrue(o instanceof JavaSimpleTestClass);
+      boolean hasOther = false;
+      for (Object obj : p.getSet()) {
+        hasOther = hasOther || (obj instanceof JavaSimpleTestClass);
+      }
+      Assert.assertTrue(hasOther);
+    } finally {
+      database.close();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test(dependsOnMethods = "testNoGenericCollections")
+  public void testNoGenericCollectionsWrongAdding() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    OLogManager.instance().log(this, Level.INFO, "Serialization error test, this will log errors.", null);
+    try {
+      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      // OBJECT ADDING
+      boolean throwedEx = false;
+      try {
+        p.getList().add(new Object());
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getSet().add(new Object());
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getMap().put("1", new Object());
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+
+      // JAVA TYPE ADDING
+      try {
+        p.getList().add(1);
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getList().add("asd");
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getSet().add(1);
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getSet().add("asd");
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+
+      try {
+        p.getMap().put("1", 1);
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      throwedEx = false;
+      try {
+        p.getMap().put("1", "ASF");
+      } catch (Throwable ose) {
+        if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
+          throwedEx = true;
+      }
+      Assert.assertTrue(throwedEx);
+      OLogManager.instance().log(this, Level.INFO, "Serialization error test ended.", null);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testNoGenericCollectionsWrongAdding")
   public void oidentifableFieldsTest() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
