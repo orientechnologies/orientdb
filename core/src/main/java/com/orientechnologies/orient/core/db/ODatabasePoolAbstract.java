@@ -23,9 +23,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.concur.resource.OAdaptiveLock;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OSharedResourceAdaptive implements
+public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
 
   private final HashMap<String, OResourcePool<String, DB>> pools = new HashMap<String, OResourcePool<String, DB>>();
@@ -63,7 +63,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       throws OLockException {
     final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
 
-    acquireExclusiveLock();
+    lock();
     try {
 
       OResourcePool<String, DB> pool = pools.get(dbPooledName);
@@ -78,7 +78,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       return db;
 
     } finally {
-      releaseExclusiveLock();
+      unlock();
     }
   }
 
@@ -86,7 +86,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
     final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
         + iDatabase.getURL() : iDatabase.getURL();
 
-    acquireSharedLock();
+    lock();
     try {
 
       final OResourcePool<String, DB> pool = pools.get(dbPooledName);
@@ -96,7 +96,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       pool.returnResource(iDatabase);
 
     } finally {
-      releaseSharedLock();
+      unlock();
     }
   }
 
@@ -105,13 +105,13 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   }
 
   public Map<String, OResourcePool<String, DB>> getPools() {
-    acquireSharedLock();
+    lock();
     try {
 
       return Collections.unmodifiableMap(pools);
 
     } finally {
-      releaseSharedLock();
+      unlock();
     }
   }
 
@@ -119,7 +119,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
    * Closes all the databases.
    */
   public void close() {
-    acquireSharedLock();
+    lock();
     try {
 
       for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
@@ -136,7 +136,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       }
 
     } finally {
-      releaseSharedLock();
+      unlock();
     }
   }
 
@@ -145,7 +145,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   }
 
   public void remove(final String iPoolName) {
-    acquireExclusiveLock();
+    lock();
     try {
 
       final OResourcePool<String, DB> pool = pools.get(iPoolName);
@@ -167,7 +167,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
       }
 
     } finally {
-      releaseExclusiveLock();
+      unlock();
     }
   }
 
@@ -184,7 +184,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
   public void onStorageUnregistered(final OStorage iStorage) {
     final String storageURL = iStorage.getURL();
 
-    acquireSharedLock();
+    lock();
     try {
       Set<String> poolToClose = null;
 
@@ -204,7 +204,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OShare
           remove(pool);
 
     } finally {
-      releaseExclusiveLock();
+      unlock();
     }
   }
 }
