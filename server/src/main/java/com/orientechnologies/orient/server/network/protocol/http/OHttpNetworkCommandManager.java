@@ -11,8 +11,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public class OHttpNetworkCommandManager {
-  private static final String               URL_PART_PATTERN   = "([a-zA-Z0-9%\\\\+]*)";
-  private static final String               REST_PARAM_PATTERN = "\\{[a-zA-Z0-9%]*\\}";
+
+  private static final String               URL_PART_PATTERN    = "([a-zA-Z0-9%:\\\\+]*)";
+  private static final String               REST_PARAM_PATTERN  = "\\{[a-zA-Z0-9%:]*\\}";
 
   private final Map<String, OServerCommand> exactCommands      = new HashMap<String, OServerCommand>();
   private final Map<String, OServerCommand> wildcardCommands   = new HashMap<String, OServerCommand>();
