@@ -44,6 +44,13 @@
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
         </classes>
     </test>
+    <test name="PopulationObjectSchemaFull">
+     		<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
+    </test>
     <test name="Tx">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest"/>

@@ -1133,15 +1133,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           } catch (IOException e1) {
           }
 
-        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-        for (ODocument doc : listener.getFetchedRecordsToSend()) {
-          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-          // ISN'T PART OF THE
-          // RESULT SET
-          writeIdentifiable(doc);
-        }
-
-        channel.writeByte((byte) 0); // NO MORE RECORDS
       } else {
         // SYNCHRONOUS
         sendOk(clientTxId);
@@ -1169,14 +1160,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
         }
+      }
 
-        if (connection.data.protocolVersion >= 17) {
-          // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-          final Set<ODocument> fetchedRecordsToSend = listener.getFetchedRecordsToSend();
-          channel.writeInt(fetchedRecordsToSend.size());
-          for (ODocument doc : fetchedRecordsToSend)
-            writeIdentifiable(doc);
+      if (asynch || connection.data.protocolVersion >= 17) {
+        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+        for (ODocument doc : listener.getFetchedRecordsToSend()) {
+          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+          // ISN'T PART OF THE
+          // RESULT SET
+          writeIdentifiable(doc);
         }
+
+        channel.writeByte((byte) 0); // NO MORE RECORDS
       }
 
     } finally {

@@ -23,6 +23,8 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -40,22 +42,25 @@ import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
+import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaGeneration;
+import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
 
 @Test(groups = { "crud", "object" }, sequential = true)
-public class CRUDObjectInheritanceTest {
+public class CRUDObjectInheritanceTestSchemaFull {
   protected static final int TOT_RECORDS = 10;
   protected long             startRecordNumber;
   private OObjectDatabaseTx  database;
   private City               redmond     = new City(new Country("Washington"), "Redmond");
 
   @Parameters(value = "url")
-  public CRUDObjectInheritanceTest(String iURL) {
+  public CRUDObjectInheritanceTestSchemaFull(String iURL) {
     database = new OObjectDatabaseTx(iURL);
   }
 
   @Test
   public void create() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     database.command(new OCommandSQL("delete from Company")).execute();
 
@@ -76,6 +81,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "create")
   public void testCreate() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
 
@@ -85,6 +91,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "testCreate")
   public void queryByBaseType() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
@@ -110,6 +117,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "queryByBaseType")
   public void queryPerSuperType() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
 
@@ -127,6 +135,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "queryPerSuperType")
   public void deleteFirst() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     startRecordNumber = database.countClusterElements("Company");
 
@@ -147,6 +156,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "deleteFirst")
   public void testSuperclassInheritanceCreation() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
     database.close();
@@ -164,6 +174,7 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "testSuperclassInheritanceCreation")
   public void testIdFieldInheritance() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClass(Musician.class);
     database.getEntityManager().registerEntityClass(Instrument.class);
@@ -184,6 +195,9 @@ public class CRUDObjectInheritanceTest {
   @Test(dependsOnMethods = "testIdFieldInheritance")
   public void testIdFieldInheritanceFirstSubClass() {
     database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
+    database.command(new OCommandSQL("delete from InheritanceTestBaseClass")).execute();
+    database.command(new OCommandSQL("delete from InheritanceTestClass")).execute();
 
     database.getEntityManager().registerEntityClass(InheritanceTestClass.class);
     database.getEntityManager().registerEntityClass(InheritanceTestBaseClass.class);
@@ -198,4 +212,117 @@ public class CRUDObjectInheritanceTest {
     database.close();
   }
 
+  @Test(dependsOnMethods = "testIdFieldInheritanceFirstSubClass")
+  public void testSchemaGeneration() {
+    database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
+
+    database.generateSchema(Musician.class);
+    OClass musicianClass = database.getMetadata().getSchema().getClass(Musician.class);
+    OClass instrumentClass = database.getMetadata().getSchema().getClass(Instrument.class);
+    checkNotExistsProperty(musicianClass, "id");
+    checkNotExistsProperty(musicianClass, "version");
+    checkNotExistsProperty(instrumentClass, "id");
+    checkNotExistsProperty(instrumentClass, "version");
+    checkProperty(musicianClass, "name", OType.STRING);
+    checkProperty(musicianClass, "instruments", OType.LINKLIST, instrumentClass);
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "testSchemaGeneration")
+  public void testAutomaticSchemaGeneration() {
+    database.open("admin", "admin");
+    database.setAutomaticSchemaGeneration(true);
+
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.schemageneration");
+    OClass testSchemaClass = database.getMetadata().getSchema().getClass(JavaTestSchemaGeneration.class);
+    OClass childClass = database.getMetadata().getSchema().getClass(TestSchemaGenerationChild.class);
+
+    checkNotExistsProperty(testSchemaClass, "id");
+    checkNotExistsProperty(testSchemaClass, "version");
+
+    // Test simple types
+    checkProperty(testSchemaClass, "text", OType.STRING);
+    checkProperty(testSchemaClass, "enumeration", OType.STRING);
+    checkProperty(testSchemaClass, "numberSimple", OType.INTEGER);
+    checkProperty(testSchemaClass, "longSimple", OType.LONG);
+    checkProperty(testSchemaClass, "doubleSimple", OType.DOUBLE);
+    checkProperty(testSchemaClass, "floatSimple", OType.FLOAT);
+    checkProperty(testSchemaClass, "byteSimple", OType.BYTE);
+    checkProperty(testSchemaClass, "flagSimple", OType.BOOLEAN);
+    checkProperty(testSchemaClass, "dateField", OType.DATETIME);
+
+    // Test complex types
+    checkProperty(testSchemaClass, "stringMap", OType.EMBEDDEDMAP, OType.STRING);
+    checkProperty(testSchemaClass, "stringListMap", OType.EMBEDDEDMAP, OType.EMBEDDEDLIST);
+    checkProperty(testSchemaClass, "enumList", OType.EMBEDDEDLIST, OType.STRING);
+    checkProperty(testSchemaClass, "enumSet", OType.EMBEDDEDSET, OType.STRING);
+    checkProperty(testSchemaClass, "stringSet", OType.EMBEDDEDSET, OType.STRING);
+    checkProperty(testSchemaClass, "enumMap", OType.EMBEDDEDMAP, OType.STRING);
+
+    // Test linked types
+    checkNotExistsProperty(testSchemaClass, "document");
+    checkNotExistsProperty(testSchemaClass, "mapObject ");
+    checkNotExistsProperty(testSchemaClass, "byteArray");
+    checkProperty(testSchemaClass, "list", OType.LINKLIST, childClass);
+    checkProperty(testSchemaClass, "set", OType.LINKSET, childClass);
+    checkProperty(testSchemaClass, "children", OType.LINKMAP, childClass);
+    checkProperty(testSchemaClass, "child", OType.LINK, childClass);
+    checkProperty(testSchemaClass, "enumMap", OType.EMBEDDEDMAP, OType.STRING);
+
+    // Test embedded types
+    checkNotExistsProperty(testSchemaClass, "embeddedDocument");
+    checkProperty(testSchemaClass, "embeddedSet", OType.EMBEDDEDSET, childClass);
+    checkProperty(testSchemaClass, "embeddedChildren", OType.EMBEDDEDMAP, childClass);
+    checkProperty(testSchemaClass, "embeddedChild", OType.EMBEDDED, childClass);
+    checkProperty(testSchemaClass, "embeddedList", OType.EMBEDDEDLIST, childClass);
+
+    database.setAutomaticSchemaGeneration(false);
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "testAutomaticSchemaGeneration")
+  public void testMultipleSchemaGeneration() {
+    database.open("admin", "admin");
+    try {
+      database.generateSchema(Musician.class);
+      database.generateSchema(JavaTestSchemaGeneration.class);
+      database.generateSchema(TestSchemaGenerationChild.class);
+    } catch (Exception e) {
+      Assert.fail("Shouldn't throw exceptions");
+    }
+    database.close();
+  }
+
+  protected void checkNotExistsProperty(OClass iClass, String iPropertyName) {
+    OProperty prop = iClass.getProperty(iPropertyName);
+    Assert.assertNull(prop);
+  }
+
+  protected void checkProperty(OClass iClass, String iPropertyName, OType iType) {
+    OProperty prop = iClass.getProperty(iPropertyName);
+    Assert.assertNotNull(prop);
+    Assert.assertEquals(prop.getType(), iType);
+  }
+
+  protected void checkProperty(OClass iClass, String iPropertyName, OType iType, OClass iLinkedClass) {
+    OProperty prop = iClass.getProperty(iPropertyName);
+    Assert.assertNotNull(prop);
+    Assert.assertEquals(prop.getType(), iType);
+    Assert.assertEquals(prop.getLinkedClass(), iLinkedClass);
+  }
+
+  protected void checkProperty(OClass iClass, String iPropertyName, OType iType, OType iLinkedType) {
+    OProperty prop = iClass.getProperty(iPropertyName);
+    Assert.assertNotNull(prop);
+    Assert.assertEquals(prop.getType(), iType);
+    Assert.assertEquals(prop.getLinkedType(), iLinkedType);
+  }
+
+  protected void checkNoLinkedProperty(OClass iClass, String iPropertyName, OType iType) {
+    OProperty prop = iClass.getProperty(iPropertyName);
+    Assert.assertNotNull(prop);
+    Assert.assertNull(prop.getLinkedType());
+    Assert.assertNull(prop.getLinkedClass());
+  }
 }
