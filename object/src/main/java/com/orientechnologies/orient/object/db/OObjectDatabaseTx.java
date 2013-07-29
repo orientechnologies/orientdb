@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -59,6 +60,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
+import com.orientechnologies.orient.object.enhancement.OObjectSchemaGenerator;
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
@@ -117,9 +119,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
-      RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-          iEnclosingClass, underlying.newInstance(iClassName), null, iArgs);
-      return (RET) enhanced;
+      Class<?> entityClass = entityManager.getEntityClass(iClassName);
+      if (entityClass != null) {
+        RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
+            iEnclosingClass, underlying.newInstance(iClassName), null, iArgs);
+        return (RET) enhanced;
+      } else {
+        throw new OSerializationException("Type " + iClassName
+            + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+      }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
     }
@@ -137,9 +145,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
-      RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-          iEnclosingClass, iDocument, null, iArgs);
-      return (RET) enhanced;
+      Class<?> entityClass = entityManager.getEntityClass(iClassName);
+      if (entityClass != null) {
+        RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
+            iEnclosingClass, iDocument, null, iArgs);
+        return (RET) enhanced;
+      } else {
+        throw new OSerializationException("Type " + iClassName
+            + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+      }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
     }
@@ -479,7 +493,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
-    OObjectEntitySerializer.generateSchema(iClass, underlying);
+    OObjectSchemaGenerator.generateSchema(iClass, underlying);
     return this;
   }
 

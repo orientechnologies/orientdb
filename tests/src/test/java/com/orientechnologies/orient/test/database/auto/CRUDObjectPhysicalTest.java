@@ -66,8 +66,8 @@ import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.Event;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
-import com.orientechnologies.orient.test.domain.base.JavaCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
@@ -1801,7 +1801,7 @@ public class CRUDObjectPhysicalTest {
   public void testNoGenericCollections() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
-      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       Child c1 = new Child();
       c1.setName("1");
       Child c2 = new Child();
@@ -1872,7 +1872,7 @@ public class CRUDObjectPhysicalTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     OLogManager.instance().log(this, Level.INFO, "Serialization error test, this will log errors.", null);
     try {
-      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       // OBJECT ADDING
       boolean throwedEx = false;
       try {

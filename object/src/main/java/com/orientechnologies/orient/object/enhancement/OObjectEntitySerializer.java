@@ -54,7 +54,6 @@ import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -72,7 +71,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
@@ -88,7 +86,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectEntitySerializer {
 
   private static final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
-  private static final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
+  static final HashMap<Class<?>, List<String>>                 allFields           = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         embeddedFields      = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         directAccessFields  = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
@@ -354,91 +352,6 @@ public class OObjectEntitySerializer {
   }
 
   /**
-   * Generate/updates the SchemaClass and properties from given Class<?>.
-   * 
-   * @param iClass
-   *          :- the Class<?> to generate
-   */
-  public static synchronized void generateSchema(final Class<?> iClass, ODatabaseRecord database) {
-    registerClass(iClass);
-    List<String> fields = allFields.get(iClass);
-    OClass schema = database.getMetadata().getSchema().getClass(iClass);
-    for (String field : fields) {
-      if (schema.existsProperty(field))
-        continue;
-      if (isVersionField(iClass, field) || isIdField(iClass, field))
-        continue;
-      Field f = getField(field, iClass);
-      if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
-        continue;
-      }
-      OType t = getTypeByClass(iClass, field, f);
-      if (t == null) {
-        if (f.getType().isEnum())
-          t = OType.STRING;
-        else {
-          t = OType.LINK;
-        }
-      }
-      switch (t) {
-
-      case LINK:
-        Class<?> linkedClazz = f.getType();
-        generateLinkProperty(database, schema, field, t, linkedClazz);
-        break;
-      case LINKLIST:
-      case LINKMAP:
-      case LINKSET:
-        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        if (linkedClazz != null)
-          generateLinkProperty(database, schema, field, t, linkedClazz);
-        break;
-
-      case EMBEDDED:
-        linkedClazz = f.getType();
-        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-            || f.getType().equals(ORecordBytes.class)) {
-          continue;
-        } else {
-          generateLinkProperty(database, schema, field, t, linkedClazz);
-        }
-        break;
-
-      case EMBEDDEDLIST:
-      case EMBEDDEDSET:
-      case EMBEDDEDMAP:
-        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-            || f.getType().equals(ORecordBytes.class)) {
-          continue;
-        } else {
-          if (OReflectionHelper.isJavaType(linkedClazz)) {
-            schema.createProperty(field, t, OType.getTypeByClass(linkedClazz));
-          } else if (linkedClazz.isEnum()) {
-            schema.createProperty(field, t, OType.STRING);
-          } else {
-            generateLinkProperty(database, schema, field, t, linkedClazz);
-          }
-        }
-        break;
-
-      default:
-        schema.createProperty(field, t);
-        break;
-      }
-    }
-  }
-
-  protected static void generateLinkProperty(ODatabaseRecord database, OClass schema, String field, OType t, Class<?> linkedClazz) {
-    OClass linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-    if (linkedClass == null) {
-      registerClass(linkedClazz);
-      linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-    }
-    schema.createProperty(field, t, linkedClass);
-  }
-
-  /**
    * Registers the class informations that will be used in serialization, deserialization and lazy loading of it. If already
    * registered does nothing.
    * 
@@ -447,7 +360,8 @@ public class OObjectEntitySerializer {
    */
   @SuppressWarnings("unchecked")
   public static synchronized void registerClass(final Class<?> iClass) {
-    if (Proxy.class.isAssignableFrom(iClass) || classes.contains(iClass))
+    if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
+        || iClass.isAnonymousClass() || classes.contains(iClass))
       return;
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
@@ -635,7 +549,7 @@ public class OObjectEntitySerializer {
       }
 
       if (automaticSchemaGeneration && !iClass.equals(Object.class) && !iClass.equals(ODocument.class)) {
-        generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+        OObjectSchemaGenerator.generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();

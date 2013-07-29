@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -45,7 +46,7 @@ import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass
 import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaGeneration;
 import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
 
-@Test(groups = { "crud", "object" }, sequential = true)
+@Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
   protected static final int TOT_RECORDS = 10;
   protected long             startRecordNumber;
@@ -54,17 +55,23 @@ public class CRUDObjectInheritanceTestSchemaFull {
 
   @Parameters(value = "url")
   public CRUDObjectInheritanceTestSchemaFull(String iURL) {
-    database = new OObjectDatabaseTx(iURL);
+    database = new OObjectDatabaseTx(iURL + "_objectschema");
+    database.create();
+    database.close();
+  }
+
+  @BeforeClass
+  public void init() {
+
   }
 
   @Test
   public void create() {
     database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
-
-    database.command(new OCommandSQL("delete from Company")).execute();
-
-    startRecordNumber = database.countClusterElements("Company");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    startRecordNumber = 0;
 
     Company company;
 
@@ -252,11 +259,11 @@ public class CRUDObjectInheritanceTestSchemaFull {
     checkProperty(testSchemaClass, "dateField", OType.DATETIME);
 
     // Test complex types
-    checkProperty(testSchemaClass, "stringMap", OType.EMBEDDEDMAP, OType.STRING);
     checkProperty(testSchemaClass, "stringListMap", OType.EMBEDDEDMAP, OType.EMBEDDEDLIST);
     checkProperty(testSchemaClass, "enumList", OType.EMBEDDEDLIST, OType.STRING);
     checkProperty(testSchemaClass, "enumSet", OType.EMBEDDEDSET, OType.STRING);
     checkProperty(testSchemaClass, "stringSet", OType.EMBEDDEDSET, OType.STRING);
+    checkProperty(testSchemaClass, "stringMap", OType.EMBEDDEDMAP, OType.STRING);
     checkProperty(testSchemaClass, "enumMap", OType.EMBEDDEDMAP, OType.STRING);
 
     // Test linked types

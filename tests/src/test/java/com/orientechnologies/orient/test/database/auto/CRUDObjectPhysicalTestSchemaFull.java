@@ -67,8 +67,8 @@ import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.Event;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
-import com.orientechnologies.orient.test.domain.base.JavaCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
+import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
@@ -82,7 +82,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "crud", "object" })
+@Test(groups = { "crud", "object", "schemafull", "physicalSchemaFull" }, dependsOnGroups = "inheritanceSchemaFull")
 public class CRUDObjectPhysicalTestSchemaFull {
   protected static final int TOT_RECORDS = 100;
   protected long             startRecordNumber;
@@ -92,42 +92,13 @@ public class CRUDObjectPhysicalTestSchemaFull {
 
   @Parameters(value = "url")
   public CRUDObjectPhysicalTestSchemaFull(String iURL) {
-    url = iURL;
+    url = iURL + "_objectschema";
   }
 
   @Test
   public void create() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    database.command(new OCommandSQL("delete from Account")).execute();
-    database.command(new OCommandSQL("delete from Address")).execute();
-    database.command(new OCommandSQL("delete from City")).execute();
-    database.command(new OCommandSQL("delete from Country")).execute();
-    database.command(new OCommandSQL("delete from Profile")).execute();
-    database.command(new OCommandSQL("delete from Child")).execute();
     database.command(new OCommandSQL("delete from Company")).execute();
-    database.command(new OCommandSQL("delete from IdentityChild")).execute();
-    database.command(new OCommandSQL("delete from Agenda")).execute();
-    database.command(new OCommandSQL("delete from Animal")).execute();
-    database.command(new OCommandSQL("delete from ComplicatedPerson")).execute();
-    database.command(new OCommandSQL("delete from CustomMethodFilterTestClass")).execute();
-    database.command(new OCommandSQL("delete from EmbeddedChild")).execute();
-    database.command(new OCommandSQL("delete from Event")).execute();
-    database.command(new OCommandSQL("delete from IdObject")).execute();
-    database.command(new OCommandSQL("delete from Instrument")).execute();
-    database.command(new OCommandSQL("delete from JavaAttachDetachTestClass")).execute();
-    database.command(new OCommandSQL("delete from JavaCascadeDeleteTestClass")).execute();
-    database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
-    database.command(new OCommandSQL("delete from JavaSimpleArraysTestClass")).execute();
-    database.command(new OCommandSQL("delete from JavaSimpleTestClass")).execute();
-    database.command(new OCommandSQL("delete from JavaTestInterface")).execute();
-    database.command(new OCommandSQL("delete from Musician")).execute();
-    database.command(new OCommandSQL("delete from Parent")).execute();
-    database.command(new OCommandSQL("delete from PersonTest")).execute();
-    database.command(new OCommandSQL("delete from Planet")).execute();
-    database.command(new OCommandSQL("delete from Satellite")).execute();
-    database.command(new OCommandSQL("delete from SimplePerson")).execute();
-    database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     database.setAutomaticSchemaGeneration(true);
     try {
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
@@ -168,7 +139,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
   public void testSimpleTypes() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -576,7 +547,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(dependsOnMethods = "create")
+  @Test(dependsOnMethods = "testCreate")
   public void readAndBrowseDescendingAndCheckHoleUtilization() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -610,7 +581,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(dependsOnMethods = "create")
+  @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
   public void synchQueryCollectionsFetch() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -644,7 +615,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(dependsOnMethods = "create")
+  @Test(dependsOnMethods = "synchQueryCollectionsFetch")
   public void synchQueryCollectionsFetchNoLazyLoad() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -679,7 +650,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
+  @Test(dependsOnMethods = "collectionsDocumentTypeTestPhaseThree")
   public void mapEnumAndInternalObjects() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -1798,7 +1769,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
   public void testNoGenericCollections() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
-      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       Child c1 = new Child();
       c1.setName("1");
       Child c2 = new Child();
@@ -1869,7 +1840,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     OLogManager.instance().log(this, Level.INFO, "Serialization error test, this will log errors.", null);
     try {
-      JavaCollectionsTestClass p = database.newInstance(JavaCollectionsTestClass.class);
+      JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       // OBJECT ADDING
       boolean throwedEx = false;
       try {
@@ -2190,6 +2161,24 @@ public class CRUDObjectPhysicalTestSchemaFull {
   }
 
   @Test(dependsOnMethods = "testUpdate")
+  public void testSaveMultiCircular() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      startRecordNumber = database.countClusterElements("Profile");
+
+      Profile bObama = database.newInstance(Profile.class, "ThePresident", "Barack", "Obama", null);
+      bObama.setLocation(database.newInstance(Address.class, "Residence",
+          database.newInstance(City.class, database.newInstance(Country.class, "Hawaii"), "Honolulu"), "unknown"));
+      bObama.addFollower(database.newInstance(Profile.class, "PresidentSon1", "Malia Ann", "Obama", bObama));
+      bObama.addFollower(database.newInstance(Profile.class, "PresidentSon2", "Natasha", "Obama", bObama));
+
+      database.save(bObama);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testSaveMultiCircular")
   public void createLinked() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2321,7 +2310,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void commandWithPositionalParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2338,7 +2327,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithPositionalParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2354,7 +2343,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithRidAsParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2373,7 +2362,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithRidStringAsParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2398,7 +2387,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void commandWithNamedParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2420,7 +2409,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(expectedExceptions = OQueryParsingException.class)
+  @Test(dependsOnMethods = "createLinked", expectedExceptions = OQueryParsingException.class)
   public void commandWithWrongNamedParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2442,7 +2431,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithNamedParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2464,7 +2453,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithObjectAsParameter() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2491,7 +2480,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryWithListOfObjectAsParameter() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2516,7 +2505,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryConcatAttrib() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2533,7 +2522,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryPreparredTwice() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2558,7 +2547,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void commandPreparredTwice() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2584,6 +2573,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
   }
 
   @SuppressWarnings("deprecation")
+  @Test(dependsOnMethods = "update")
   public void testOldObjectImplementation() {
     ODatabaseObjectTx db = new ODatabaseObjectTx(url).open("admin", "admin");
     try {
@@ -2684,6 +2674,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
+  @Test(dependsOnMethods = "testUpdate")
   public void testEmbeddedBinary() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2714,7 +2705,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test
+  @Test(dependsOnMethods = "createLinked")
   public void queryById() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {

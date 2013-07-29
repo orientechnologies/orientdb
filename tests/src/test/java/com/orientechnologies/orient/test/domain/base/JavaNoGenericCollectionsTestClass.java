@@ -31,22 +31,15 @@ import javax.persistence.Version;
  * @author luca.molino
  * 
  */
-public class JavaCollectionsTestClass {
+public class JavaNoGenericCollectionsTestClass {
   @Id
   private String id;
   @Version
   private Object version;
 
-  private Map    map          = new HashMap();
-  private List   list         = new ArrayList();
-  private Set    set          = new HashSet();
-
-  @Embedded
-  private Map    embeddedMap  = new HashMap();
-  @Embedded
-  private List   embeddedList = new ArrayList();
-  @Embedded
-  private Set    embeddedSet  = new HashSet();
+  private Map    map  = new HashMap();
+  private List   list = new ArrayList();
+  private Set    set  = new HashSet();
 
   public String getId() {
     return id;
