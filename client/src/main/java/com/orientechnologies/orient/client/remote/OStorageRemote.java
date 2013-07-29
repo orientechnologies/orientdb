@@ -1629,7 +1629,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } else {
       name = url.substring(url.lastIndexOf("/") + 1);
       for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR))
-        host = addHost(host);
+        addHost(host);
     }
 
     if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
@@ -1913,6 +1913,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
         serverURLs.clear();
+
+        parseServerURLs();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("id"))) {
