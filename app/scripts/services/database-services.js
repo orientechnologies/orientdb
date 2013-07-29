@@ -29,6 +29,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 
 		listTypes : ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAP','LINKSET','LONG','SHORT','STRING'],
 
+		mapping : { 'BINARY' : 'b','DATE' : 'a','DATETIME' : 't'},
 		getMetadata : function() {
 			if(current.metadata ==null){
 				var tmp = localStorageService.get("CurrentDB");
@@ -38,6 +39,20 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		},
 		setMetadata : function(metadata){
 			current.metadata = metadata;
+		},
+		getMappingFor : function(type){
+			return this.mapping[type];
+		},
+		getMappingForKey : function(key){
+			var self = this;
+			var type = "STRING";
+			Object.keys(this.mapping).forEach(function(elem,index,array){
+				if(self.mapping[elem] == key){
+					type = elem;
+				}
+			});
+			
+			return type;
 		},
 		currentUser : function() {
 			return current !=null ? current.username : null;
@@ -162,6 +177,23 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			}
 			return fields;
 		},
+		listPropertyForClass : function(clazz,field){
+			var metadata = this.getMetadata();
+			var classes =  metadata['classes'];
+			var property = undefined;
+			classes.forEach(function(element,index,array){
+				if(element.name.toUpperCase() == clazz.toUpperCase()){
+					if(element['properties']){
+						element['properties'].forEach(function(element,index,array){
+							if(element.name == field){
+								property = element;
+							}
+						});
+					}
+				}
+			});	
+			return property;
+		},
 		listIndexesForClass : function(clazz){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];
@@ -216,15 +248,15 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		getSuperClazz : function(clazz){
 			var metadata = this.getMetadata();
 			var classes =  metadata['classes'];
-			var clazz ;
+			var clazzReturn = "" ;
 			for (var entry in classes){
 				var name = classes[entry]['name'];
 				if(clazz == name){
-					clazz =  classes[entry].superClass;
+					clazzReturn =  classes[entry].superClass;
 					break;
 				}				
 			}
-			return clazz;
+			return clazzReturn;
 		},
 		isGraph : function(clazz){
 			var sup=clazz; 

@@ -45,7 +45,7 @@ App.config(function ($routeProvider) {
   })
   .when('/database/:database/browse/create/:clazz', {
     templateUrl: 'views/database/createRecord.html',
-    controller: 'DocumentCreateController',
+    controller: 'CreateController',
     resolve : DatabaseResolve
   }).
   when('/database/:database/browse/editclass/:clazz', {

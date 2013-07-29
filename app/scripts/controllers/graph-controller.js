@@ -46,22 +46,28 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			$location.path('/404');
 		});
 	}
-	$scope.reload();
-	$scope.save = function(docForm){
-		console.log($scope);
-		// DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
-		// 	Notification.push({content : data});
-		// 	$scope.reload();
-		// });
-		
+	if(!$scope.doc){
+		$scope.reload();
+	}else {
+		$scope.headers = Database.getPropertyFromDoc($scope.doc);
+		$scope.isGraph = Database.isGraph($scope.doc['@class']);
+		$scope.incomings = Database.getEdge($scope.doc,'in');
+		$scope.outgoings = Database.getEdge($scope.doc,'out');
+		$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
 	}
+	
 	$scope.addField = function(name,type){
 		if(name){
 			$scope.doc[name] = null;
 			var types = $scope.doc['@fieldTypes'];
-			types = types + ',' + name + '=' + type;
+			if(types){
+				types = types + ',' + name + '=' + Database.getMappingFor(type);
+			}else {
+				types = name + '=' + Database.getMappingFor(type);	
+			}
+			
 			$scope.doc['@fieldTypes'] = types;
-			$scope.headers.push(name);	
+			$scope.headers.push(name);
 		}else {
 			var modalScope = $scope.$new(true);	
 			modalScope.addField = $scope.addField;
@@ -72,6 +78,19 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			});
 		}
 		
+	}
+	$scope.save = function(docForm){
+		if(!$scope.isNew){
+			DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
+				Notification.push({content : data});
+				$scope.reload();
+			});
+		}else {
+			DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
+				Notification.push({content : JSON.stringify(data)});
+				$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
+			});
+		}
 	}
 	$scope.delete = function(){
 
