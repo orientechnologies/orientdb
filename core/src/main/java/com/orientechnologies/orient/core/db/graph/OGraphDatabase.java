@@ -73,7 +73,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
   private boolean            useCustomTypes         = true;
   private boolean            safeMode               = false;
-  private LOCK_MODE          lockMode               = LOCK_MODE.DATABASE_LEVEL_LOCKING;
+  private LOCK_MODE          lockMode               = LOCK_MODE.NO_LOCKING;
   protected OClass           vertexBaseClass;
   protected OClass           edgeBaseClass;
 
