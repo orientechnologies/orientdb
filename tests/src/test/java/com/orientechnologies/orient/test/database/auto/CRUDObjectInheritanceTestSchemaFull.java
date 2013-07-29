@@ -215,9 +215,8 @@ public class CRUDObjectInheritanceTestSchemaFull {
   @Test(dependsOnMethods = "testIdFieldInheritanceFirstSubClass")
   public void testSchemaGeneration() {
     database.open("admin", "admin");
-    database.setAutomaticSchemaGeneration(true);
 
-    database.generateSchema(Musician.class);
+    database.generateSchema("com.orientechnologies.orient.test.domain.base");
     OClass musicianClass = database.getMetadata().getSchema().getClass(Musician.class);
     OClass instrumentClass = database.getMetadata().getSchema().getClass(Instrument.class);
     checkNotExistsProperty(musicianClass, "id");

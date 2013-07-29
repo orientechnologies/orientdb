@@ -24,7 +24,9 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -476,8 +478,40 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return this;
   }
 
-  public ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
+  public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
     OObjectEntitySerializer.generateSchema(iClass, underlying);
+    return this;
+  }
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName) {
+    return generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
+
+    List<Class<?>> classes = null;
+    try {
+      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
+    }
+    for (Class<?> c : classes) {
+      generateSchema(c);
+    }
+
     return this;
   }
 
