@@ -17,8 +17,14 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -207,11 +213,12 @@ public class OClientConnectionManager extends OSharedResourceAbstract {
   }
 
   public void disconnect(final OClientConnection connection) {
-    metricActiveConnections--;
     connection.close();
 
     acquireExclusiveLock();
     try {
+      metricActiveConnections--;
+
       for (Entry<Integer, OClientConnection> entry : new HashMap<Integer, OClientConnection>(connections).entrySet()) {
         if (entry.getValue().equals(connection))
           connections.remove(entry.getKey());

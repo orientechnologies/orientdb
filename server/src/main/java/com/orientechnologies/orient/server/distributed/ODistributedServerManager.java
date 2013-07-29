@@ -66,7 +66,7 @@ public interface ODistributedServerManager {
 
   public Set<String> getRemoteNodeIds();
 
-  public Set<String> getRemoteNodeIdsBut(String... iNodeId);
+  public Set<String> getOnlineRemoteNodeIdsBut(String... iNodeId);
 
   public ODocument getDatabaseStatus(String iDatabaseName);
 
