@@ -87,7 +87,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
       rid = (ORecordId) record.getIdentity();
 
       ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "assigned new rid %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+          "assigned new rid %s/%s v.%d oper=%d.%d", databaseName, rid.toString(), record.getVersion(), runId, operationSerial);
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {
