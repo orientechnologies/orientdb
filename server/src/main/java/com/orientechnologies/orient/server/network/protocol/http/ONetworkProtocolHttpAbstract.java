@@ -76,7 +76,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       additionalResponseHeaders = addHeaders.split(";");
 
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(iSocket, this);
+    connection = OClientConnectionManager.instance().connect(this);
 
     server = iServer;
     requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
