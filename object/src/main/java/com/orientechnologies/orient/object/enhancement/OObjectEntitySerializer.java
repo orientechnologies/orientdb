@@ -380,37 +380,27 @@ public class OObjectEntitySerializer {
           t = OType.LINK;
         }
       }
-      OClass linkedClass;
       switch (t) {
 
       case LINK:
+        Class<?> linkedClazz = f.getType();
+        generateLinkProperty(database, schema, field, t, linkedClazz);
+        break;
       case LINKLIST:
       case LINKMAP:
       case LINKSET:
-        Class<?> linkedClazz;
-        if (t.equals(OType.LINK))
-          linkedClazz = f.getType();
-        else
-          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-        if (linkedClass == null) {
-          registerClass(linkedClazz);
-          linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-        }
-        schema.createProperty(field, t, linkedClass);
+        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+        if (linkedClazz != null)
+          generateLinkProperty(database, schema, field, t, linkedClazz);
         break;
 
       case EMBEDDED:
         linkedClazz = f.getType();
-        if (linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
+        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+            || f.getType().equals(ORecordBytes.class)) {
           continue;
         } else {
-          linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-          if (linkedClass == null) {
-            registerClass(linkedClazz);
-            linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-          }
-          schema.createProperty(field, t, linkedClass);
+          generateLinkProperty(database, schema, field, t, linkedClazz);
         }
         break;
 
@@ -418,7 +408,8 @@ public class OObjectEntitySerializer {
       case EMBEDDEDSET:
       case EMBEDDEDMAP:
         linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        if (linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
+        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+            || f.getType().equals(ORecordBytes.class)) {
           continue;
         } else {
           if (OReflectionHelper.isJavaType(linkedClazz)) {
@@ -426,12 +417,7 @@ public class OObjectEntitySerializer {
           } else if (linkedClazz.isEnum()) {
             schema.createProperty(field, t, OType.STRING);
           } else {
-            linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-            if (linkedClass == null) {
-              registerClass(linkedClazz);
-              linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
-            }
-            schema.createProperty(field, t, linkedClass);
+            generateLinkProperty(database, schema, field, t, linkedClazz);
           }
         }
         break;
@@ -441,6 +427,15 @@ public class OObjectEntitySerializer {
         break;
       }
     }
+  }
+
+  protected static void generateLinkProperty(ODatabaseRecord database, OClass schema, String field, OType t, Class<?> linkedClazz) {
+    OClass linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
+    if (linkedClass == null) {
+      registerClass(linkedClazz);
+      linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
+    }
+    schema.createProperty(field, t, linkedClass);
   }
 
   /**
@@ -985,22 +980,28 @@ public class OObjectEntitySerializer {
         if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
           return OType.BINARY;
         } else {
-          if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
-              || OReflectionHelper.isJavaType(genericMultiValueType)) {
+          if (isSerializedType(f)
+              || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+              || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                  .isJavaType(genericMultiValueType)))) {
             return OType.EMBEDDEDLIST;
           } else {
             return OType.LINKLIST;
           }
         }
       } else if (Collection.class.isAssignableFrom(f.getType())) {
-        if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
-            || OReflectionHelper.isJavaType(genericMultiValueType))
+        if (isSerializedType(f)
+            || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+            || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                .isJavaType(genericMultiValueType))))
           return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
         else
           return Set.class.isAssignableFrom(f.getType()) ? OType.LINKSET : OType.LINKLIST;
       } else {
-        if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
-            || OReflectionHelper.isJavaType(genericMultiValueType))
+        if (isSerializedType(f)
+            || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+            || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                .isJavaType(genericMultiValueType))))
           return OType.EMBEDDEDMAP;
         else
           return OType.LINKMAP;
