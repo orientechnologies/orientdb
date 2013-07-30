@@ -1545,9 +1545,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
 
     while (availableConnections) {
+      OChannelBinaryClient network = null;
       try {
 
-        OChannelBinaryClient network = null;
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_OPEN);
 
@@ -1591,8 +1591,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       } catch (IOException e) {
         OLogManager.instance().debug(this, "Error while reading response on creation of connection ", e);
+        
+        if (network != null)
+          synchronized (networkPool) {
+            network.close();
+            networkPool.remove(network);
+          }
       } catch (OTimeoutException e) {
         OLogManager.instance().debug(this, "Error while reading response on creation of connection ", e);
+
+        if (network != null)
+          synchronized (networkPool) {
+            network.close();
+            networkPool.remove(network);
+          }
       } catch (Exception e) {
         handleException("Cannot create a connection to remote server address(es): " + serverURLs, e);
       }
@@ -1744,12 +1756,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       System.out.println("-> req: " + getSessionId());
 
     // FIND THE FIRST FREE CHANNEL AVAILABLE
-    synchronized (networkPool) {
-      if (networkPoolCursor >= networkPool.size())
-        networkPoolCursor = networkPool.size() - 1;
 
-      final int beginCursor = networkPoolCursor;
-      while (network == null) {
+    final int beginCursor = networkPoolCursor;
+    while (network == null) {
+      synchronized (networkPool) {
+        if (networkPoolCursor >= networkPool.size())
+          networkPoolCursor = networkPool.size() - 1;
+
         if (networkPool.size() == 0) {
           openRemoteDatabase();
           networkPoolCursor = 0;
