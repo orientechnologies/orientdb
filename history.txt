@@ -41,7 +41,7 @@ VERSION 1.5.0 - (July, 30th 2013)
 - Distributed configuration
 - Bug fixing
 
-Full list: https://github.com/orientechnologies/orientdb/issues?milestone=7&page=1&state=closed
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=5&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.4.2 - (July, 29th 2013)
