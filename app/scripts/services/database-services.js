@@ -370,8 +370,15 @@ database.factory('DatabaseApi', function($http,$resource){
 		$http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
 		$http.get('/api/connect/' + database).success(callback);
 	}
-	resource.disconnect = function(database,username,password,callback) {		
-		$http.get('/api/disconnect').success(function(){
+	resource.createDatabase = function(name,type,stype,username,password,callback) {
+		$http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+		$http.post('/api/database/' + name + "/" + stype + "/"+ type).success(function(data){
+			$http.defaults.headers.common['Authorization'] = null;
+			callback(data);
+		});	
+	}
+	resource.disconnect = function(database,username,password,callback) {	
+		$http.post('/api/disconnect').success(function(){
 			$http.defaults.headers.common['Authorization'] = null;
 			callback();
 		});
