@@ -56,13 +56,16 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  private OJSONWriter     writer;
-  private long            recordExported;
+  protected OJSONWriter   writer;
+  protected long          recordExported;
   public static final int VERSION = 6;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, iFileName, iListener);
+
+    if (fileName == null)
+      throw new IllegalArgumentException("file name missing");
 
     if (!fileName.endsWith(".gz")) {
       fileName += ".gz";
@@ -484,10 +487,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         if (rec.getIdentity().isValid())
           rec.reload();
 
+        if (useLineFeedForRecords)
+          writer.append("\n");
+
         if (recordExported > 0)
           writer.append(",");
 
-        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes"));
+        writer.append(rec.toJSON("rid,type,version,class,attribSameRow,keepTypes,alwaysFetchEmbedded,dateAsLong"));
 
         recordExported++;
         recordNum++;

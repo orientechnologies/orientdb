@@ -18,26 +18,39 @@ package com.orientechnologies.common.collection;
 import java.util.ConcurrentModificationException;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.common.util.OResettable;
+
 /**
  * Base class for OMVRBTree Iterators
  */
-public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T> {
+public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>, OResettable {
   OMVRBTree<K, V>      tree;
+  OMVRBTreeEntry<K, V> begin;
   OMVRBTreeEntry<K, V> next;
   OMVRBTreeEntry<K, V> lastReturned;
   int                  expectedModCount;
   int                  pageIndex;
 
   AbstractEntryIterator(final OMVRBTreeEntry<K, V> start) {
-    if (start == null)
+    begin = start;
+    init();
+  }
+
+  private void init() {
+    if (begin == null)
       // IN CASE OF ABSTRACTMAP.HASHCODE()
       return;
 
-    tree = start.getTree();
-    next = start;
+    tree = begin.getTree();
+    next = begin;
     expectedModCount = tree.modCount;
     lastReturned = null;
-    pageIndex = start.getTree().getPageIndex() > -1 ? start.getTree().getPageIndex() - 1 : -1;
+    pageIndex = begin.getTree().getPageIndex() > -1 ? begin.getTree().getPageIndex() - 1 : -1;
+  }
+
+  @Override
+  public void reset() {
+    init();
   }
 
   public boolean hasNext() {

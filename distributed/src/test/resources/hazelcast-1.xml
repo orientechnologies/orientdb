@@ -9,19 +9,23 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <hazelcast
-	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-2.1.xsd"
+	xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.0.xsd"
 	xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<group>
 		<name>orientdb</name>
 		<password>orientdb</password>
 	</group>
 	<network>
-		<port auto-increment="false">2434</port>
+		<port auto-increment="false">2435</port>
 		<join>
-			<multicast enabled="true">
+			<multicast enabled="false">
 				<multicast-group>224.2.2.3</multicast-group>
 				<multicast-port>2434</multicast-port>
 			</multicast>
+			<tcp-ip enabled="true">
+				<member>127.0.0.1:2434</member>
+				<interface>127.0.0.1</interface>
+			</tcp-ip>
 		</join>
 	</network>
 	<executor-service>

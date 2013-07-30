@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.orientechnologies</groupId>
 		<artifactId>orientdb-parent</artifactId>
-		<version>1.4.1</version>
+		<version>1.5.0</version>
 		<relativePath>../</relativePath>
 	</parent>
 
@@ -64,14 +64,13 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.codehaus</groupId>
+			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy</artifactId>
 			<version>1.8.9</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/groovy-1.8.9.jar</systemPath>
 		</dependency>
 
 		<!-- TINKERPOP STACK -->
+<!-- 		
 		<dependency>
 			<groupId>com.tinkerpop.blueprints</groupId>
 			<artifactId>blueprints-core</artifactId>
@@ -108,15 +107,34 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/gremlin-groovy-${blueprints.version}.jar</systemPath>
 		</dependency>
-		<!-- <dependency> <groupId>com.tinkerpop.blueprints</groupId> <artifactId>blueprints-core</artifactId> 
-			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.blueprints</groupId> 
-			<artifactId>blueprints-orient-graph</artifactId> <version>${blueprints.version}</version> 
-			</dependency> <dependency> <groupId>com.tinkerpop</groupId> <artifactId>pipes</artifactId> 
-			<version>${blueprints.version}</version> <type>jar</type> <scope>compile</scope> 
-			</dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> <artifactId>gremlin-java</artifactId> 
-			<version>${blueprints.version}</version> </dependency> <dependency> <groupId>com.tinkerpop.gremlin</groupId> 
-			<artifactId>gremlin-groovy</artifactId> <version>${blueprints.version}</version> 
-			</dependency> -->
+ -->
+		<dependency>
+			<groupId>com.tinkerpop.blueprints</groupId>
+			<artifactId>blueprints-core</artifactId>
+			<version>${blueprints.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.blueprints</groupId>
+			<artifactId>blueprints-orient-graph</artifactId>
+			<version>${blueprints.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop</groupId>
+			<artifactId>pipes</artifactId>
+			<version>${blueprints.version}</version>
+			<type>jar</type>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.gremlin</groupId>
+			<artifactId>gremlin-java</artifactId>
+			<version>${blueprints.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.tinkerpop.gremlin</groupId>
+			<artifactId>gremlin-groovy</artifactId>
+			<version>${blueprints.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>asm</groupId>
 			<artifactId>asm</artifactId>
@@ -147,12 +165,14 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>-Xss2048k</argLine> <!--IBM JDK StackOverflowException fix -->
+					<argLine>-Xss2048k</argLine>
+					<!--IBM JDK StackOverflowException fix -->
 					<systemPropertyVariables>
 						<ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
 					</systemPropertyVariables>
 					<suiteXmlFiles>
-						<suiteXmlFile>${basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
+						<suiteXmlFile>
+							${basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
 						</suiteXmlFile>
 					</suiteXmlFiles>
 				</configuration>

@@ -17,7 +17,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.hazelcast.sharding.OAutoshardedStorageImpl;
@@ -35,6 +34,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   private boolean          enabled = true;
   private ServerInstance   serverInstance;
   private DHTConfiguration dhtConfiguration;
+  private OServer          server;
 
   @Override
   public String getName() {
@@ -42,8 +42,9 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   }
 
   @Override
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    oServer.setVariable("OAutoshardingPlugin", this);
+  public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
+    server = iServer;
+    server.setVariable("OAutoshardingPlugin", this);
 
     String configFile = "/hazelcast.xml";
     for (OServerParameterConfiguration param : iParams) {
@@ -57,9 +58,9 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
       }
     }
 
-    dhtConfiguration = new DHTConfiguration();
+    dhtConfiguration = new DHTConfiguration(server);
 
-    serverInstance = new ServerInstance(configFile);
+    serverInstance = new ServerInstance(server, configFile);
     serverInstance.setDHTConfiguration(dhtConfiguration);
   }
 
@@ -75,7 +76,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   }
 
   @Override
-  public void onOpen(ODatabase iDatabase) {
+  public void onOpen(final ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex<?>) {
       iDatabase.replaceStorage(new OAutoshardedStorageImpl(serverInstance, (OStorageEmbedded) iDatabase.getStorage(),
           dhtConfiguration));
@@ -89,8 +90,10 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   public static class DHTConfiguration implements ODHTConfiguration {
 
     private final HashSet<String> undistributableClusters;
+    private final OServer         server;
 
-    public DHTConfiguration() {
+    public DHTConfiguration(final OServer iServer) {
+      server = iServer;
       undistributableClusters = new HashSet<String>();
 
       undistributableClusters.add(OStorage.CLUSTER_DEFAULT_NAME.toLowerCase());
@@ -107,7 +110,7 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
 
     @Override
     public Set<String> getDistributedStorageNames() {
-      return OServerMain.server().getAvailableStorageNames().keySet();
+      return server.getAvailableStorageNames().keySet();
     }
 
     @Override

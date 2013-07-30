@@ -16,16 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.util.OCaseIncentiveComparator;
 import com.orientechnologies.common.util.OCollections;
@@ -706,13 +697,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid date format", e);
+          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
         }
       } else if (type == OType.DATETIME) {
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid datetime format", e);
+          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
         }
       }
   }

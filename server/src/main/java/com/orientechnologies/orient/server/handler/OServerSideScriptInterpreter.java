@@ -30,40 +30,41 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * 
  */
 public class OServerSideScriptInterpreter extends OServerHandlerAbstract {
-	private boolean	enabled	= false;
+  private boolean enabled = false;
 
-	@Override
-	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-		for (OServerParameterConfiguration param : iParams) {
-			if (param.name.equalsIgnoreCase("enabled")) {
-				if (Boolean.parseBoolean(param.value))
-					// ENABLE IT
-					enabled = true;
-			}
-		}
-	}
+  @Override
+  public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
+    for (OServerParameterConfiguration param : iParams) {
+      if (param.name.equalsIgnoreCase("enabled")) {
+        if (Boolean.parseBoolean(param.value))
+          // ENABLE IT
+          enabled = true;
+      }
+    }
+  }
 
-	@Override
-	public String getName() {
-		return "script-interpreter";
-	}
+  @Override
+  public String getName() {
+    return "script-interpreter";
+  }
 
-	@Override
-	public void startup() {
-		if (!enabled)
-			return;
+  @Override
+  public void startup() {
+    if (!enabled)
+      return;
 
-		OLogManager.instance().info(this, "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server.");
+    OLogManager.instance().info(this,
+        "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server.");
 
-		// REGISTER THE SECURE COMMAND SCRIPT
-		OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
-	}
+    // REGISTER THE SECURE COMMAND SCRIPT
+    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
+  }
 
-	@Override
-	public void shutdown() {
-		if (!enabled)
-			return;
+  @Override
+  public void shutdown() {
+    if (!enabled)
+      return;
 
-		OCommandManager.instance().unregisterExecutor(OCommandScript.class);
-	}
+    OCommandManager.instance().unregisterExecutor(OCommandScript.class);
+  }
 }

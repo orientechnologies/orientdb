@@ -27,9 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.db.OSharedDocumentDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -68,7 +66,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeProperties(final OJSONWriter json) throws IOException {
     json.beginCollection(2, true, "properties");
-    for (OServerEntryConfiguration entry : OServerMain.server().getConfiguration().properties) {
+    for (OServerEntryConfiguration entry : server.getConfiguration().properties) {
       json.beginObject(3, true, null);
       json.writeAttribute(4, false, "name", entry.name);
       json.writeAttribute(4, false, "value", entry.value);
@@ -94,7 +92,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeDatabases(final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    Map<String, OResourcePool<String, ODatabaseDocumentTx>> dbPool = OSharedDocumentDatabase.getDatabasePools();
+    Map<String, OResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
     for (Entry<String, OResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
       for (ODatabaseDocumentTx db : entry.getValue().getResources()) {
 

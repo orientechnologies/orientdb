@@ -26,6 +26,31 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.5.0 - (July, 30th 2013)
+---------------------------------------------------------------------------------------------------
+
+- New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
+  of MMAP) and supports better concurrency on parallel transactions
+- New Hash Index type with better performance on lookups. It does not support ranges
+- New "transactional" SQL command to execute commands inside a transaction. This is useful for
+  "create edge" SQL command to avoid the graph get corrupted
+- Import now migrates RIDs allowing to import databases in a different one from the original
+- "Breadth first" strategy added on traversing (Java and SQL APIs)
+- Server can limit maximum live connections (to prevent DOS)
+- Fetch plan support in SQL statements and in binary protocol for synchronous commands too
+- Distributed configuration
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=7&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.2 - (July, 29th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=7&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.4.1 - (June, 18th 2013)
 ---------------------------------------------------------------------------------------------------
 - Bug fixing

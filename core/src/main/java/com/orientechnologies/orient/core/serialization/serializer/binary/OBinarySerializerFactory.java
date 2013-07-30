@@ -20,25 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.common.serialization.types.OBooleanSerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OCharSerializer;
-import com.orientechnologies.common.serialization.types.ODateSerializer;
-import com.orientechnologies.common.serialization.types.ODateTimeSerializer;
-import com.orientechnologies.common.serialization.types.ODecimalSerializer;
-import com.orientechnologies.common.serialization.types.ODoubleSerializer;
-import com.orientechnologies.common.serialization.types.OFloatSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.ONullSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterPositionSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPositionSerializer;
@@ -85,6 +72,8 @@ public class OBinarySerializerFactory {
     registerSerializer(OStreamSerializerRID.INSTANCE, null);
     registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
     registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
+
+    registerSerializer(OStreamSerializerListRID.INSTANCE, null);
 
     registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
     registerSerializer(OClusterPositionSerializer.INSTANCE, null);

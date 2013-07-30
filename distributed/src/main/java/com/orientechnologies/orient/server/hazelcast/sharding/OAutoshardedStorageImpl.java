@@ -33,16 +33,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -152,7 +143,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback) {
-    if (ODistributedThreadLocal.INSTANCE.distributedExecution || undistributedClusters.contains(iRecordId.getClusterId())) {
+    if (ODistributedThreadLocal.INSTANCE.get() != null || undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
 
@@ -188,12 +179,13 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.existsResource(iName);
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T removeResource(final String iName) {
-    return wrapped.removeResource(iName);
+    return (T) wrapped.removeResource(iName);
   }
 
   public <T> T getResource(final String iName, final Callable<T> iCallback) {
-    return wrapped.getResource(iName, iCallback);
+    return (T) wrapped.getResource(iName, iCallback);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -393,12 +385,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.getStatus();
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    wrapped.changeRecordIdentity(originalId, newId);
-  }
-
-  @Override
+	@Override
   public boolean isHashClustersAreUsed() {
     return wrapped.isHashClustersAreUsed();
   }

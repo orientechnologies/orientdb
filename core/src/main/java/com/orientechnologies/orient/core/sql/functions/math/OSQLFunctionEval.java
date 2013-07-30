@@ -40,7 +40,7 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
   public Object execute(final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (predicate == null)
-      predicate = new OSQLPredicate((String) iParameters[0]);
+      predicate = new OSQLPredicate((String) iParameters[0].toString());
 
     try {
       return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, (ODocument) iCurrentResult, iContext);

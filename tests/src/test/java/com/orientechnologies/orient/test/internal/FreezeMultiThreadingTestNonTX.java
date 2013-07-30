@@ -29,10 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -46,6 +42,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 @Test
 public class FreezeMultiThreadingTestNonTX {
@@ -498,9 +498,9 @@ public class FreezeMultiThreadingTestNonTX {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
 
       System.out.println("Recreating database");
-      if (ODatabaseHelper.existsDatabase(db)) {
+      if (ODatabaseHelper.existsDatabase(db, "plocal")) {
         db.setProperty("security", Boolean.FALSE);
-        ODatabaseHelper.dropDatabase(db, URL);
+        ODatabaseHelper.dropDatabase(db, URL, "plocal");
       }
       ODatabaseHelper.createDatabase(db, URL);
       db.close();
@@ -587,7 +587,7 @@ public class FreezeMultiThreadingTestNonTX {
       for (final ODocument secondDoc : secondDocs) {
         if (firstDoc.equals(secondDoc)) {
           final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
-          Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord));
+          Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord, null));
           continue outer;
         }
       }

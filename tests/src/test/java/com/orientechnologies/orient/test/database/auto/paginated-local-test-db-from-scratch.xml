@@ -15,6 +15,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCreationTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.StorageTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ClusterMetadataTest"/>
         </classes>
     </test>
     <test name="Schema">
@@ -32,6 +33,7 @@
     <test name="Hook">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.HookTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.HookTxTest"/>
         </classes>
     </test>
     <test name="Population">
@@ -50,8 +52,16 @@
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
         </classes>
     </test>
+    <test name="Tx">
+        <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.TransactionOptimisticTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest"/>
+        </classes>
+    </test>
     <test name="Index">
         <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectHashIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexCustomKeyTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest"/>
@@ -68,6 +78,12 @@
             <class name="com.orientechnologies.orient.test.database.auto.PropertyIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CollectionIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectCompositeIndexDirectSearchTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.MapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
@@ -75,26 +91,28 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
         </classes>
     </test>
-
     <test name="Dictionary">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DictionaryTest"/>
         </classes>
     </test>
-
+    <test name="Query">
+        <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest"/>
+        </classes>
+    </test>
     <test name="Parsing">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.JSONTest"/>
         </classes>
     </test>
-
     <test name="Graph">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest"/>
-            <!-- <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexAndEdgeTest"/> -->
+            <!--  <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexAndEdgeTest"/> -->
         </classes>
     </test>
-
     <test name="GEO">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.GEOTest"/>
@@ -143,6 +161,8 @@
     <test name="DbTools">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbCheckTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.DbCompareTest"/>
         </classes>
     </test>
     <test name="DbToolsDelete">
@@ -150,7 +170,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest"/>
         </classes>
     </test>
-
     <test name="End">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbClosedTest"/>

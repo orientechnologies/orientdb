@@ -52,8 +52,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      response = (List<OIdentifiable>) db.command(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan))
-          .execute();
+      response = (List<OIdentifiable>) db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan));
 
       iResponse.writeRecords(response, fetchPlan);
 

@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -49,11 +48,11 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-  private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  private final Map<ORecordId, ORecord<?>>  createdRecords = new HashMap<ORecordId, ORecord<?>>();
-  private final Map<ORecordId, ORecord<?>>  updatedRecords = new HashMap<ORecordId, ORecord<?>>();
-  private final int                         clientTxId;
-  private final OChannelBinary              channel;
+  private final Map<ORID, ORecordOperation>        tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
+  private final Map<ORecordId, ORecordInternal<?>> createdRecords = new HashMap<ORecordId, ORecordInternal<?>>();
+  private final Map<ORecordId, ORecordInternal<?>> updatedRecords = new HashMap<ORecordId, ORecordInternal<?>>();
+  private final int                                clientTxId;
+  private final OChannelBinary                     channel;
 
   public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
     super(iDatabase);
@@ -75,12 +74,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         final ORecordId rid = channel.readRID();
 
         final byte recordType = channel.readByte();
-        final ORecordOperation entry;
+        final ORecordOperation entry = new OTransactionEntryProxy(recordType);
+        entry.type = recordStatus;
+
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          entry = new OTransactionEntryProxy(recordType);
-          entry.type = recordStatus;
-
           entry.getRecord().fill(rid, OVersionFactory.instance().createVersion(), channel.readBytes(), true);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
@@ -88,34 +86,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           break;
 
         case ORecordOperation.UPDATED:
-          final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-          newRecord.fill(rid, channel.readVersion(), channel.readBytes(), true);
+          entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
 
-          final ORecordInternal<?> currentRecord;
-          if (newRecord.getRecordType() == ODocument.RECORD_TYPE) {
-            currentRecord = getDatabase().load(rid);
-
-            if (currentRecord == null)
-              throw new ORecordNotFoundException(rid.toString());
-
-            if (currentRecord.getRecordType() == ODocument.RECORD_TYPE)
-              ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
-
-          } else
-            currentRecord = newRecord;
-
-          currentRecord.getRecordVersion().copyFrom(newRecord.getRecordVersion());
-
-          entry = new ORecordOperation(currentRecord, recordStatus);
-
-          // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
-          updatedRecords.put(rid, currentRecord);
           break;
 
         case ORecordOperation.DELETED:
-          entry = new OTransactionEntryProxy(recordType);
-          entry.type = recordStatus;
-
           entry.getRecord().fill(rid, channel.readVersion(), null, false);
           break;
 
@@ -136,6 +111,26 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
       for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
+
+        if (entry.getValue().type == ORecordOperation.UPDATED) {
+          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE UNDEXES)
+
+          final ORecordInternal<?> record = entry.getValue().record.getRecord();
+          final ORecordInternal<?> loadedRecord = record.getIdentity().copy().getRecord();
+          if (loadedRecord == null)
+            throw new ORecordNotFoundException(record.getIdentity().toString());
+
+          if (loadedRecord.getRecordType() == ODocument.RECORD_TYPE && loadedRecord.getRecordType() == record.getRecordType()) {
+            ((ODocument) loadedRecord).merge((ODocument) record, false, false);
+            loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
+            entry.getValue().record = loadedRecord;
+            
+            // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
+            updatedRecords.put((ORecordId)entry.getKey(), entry.getValue().getRecord());
+            
+          }
+        }
+
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null);
       }
       tempEntries.clear();
@@ -143,7 +138,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
       for (ORecord<?> record : createdRecords.values())
         unmarshallRecord(record);
-      for (ORecord<?> record : updatedRecords.values())
+      for (ORecordInternal<?> record : updatedRecords.values())
         unmarshallRecord(record);
 
     } catch (IOException e) {
@@ -241,11 +236,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     }
   }
 
-  public Map<ORecordId, ORecord<?>> getCreatedRecords() {
+  public Map<ORecordId, ORecordInternal<?>> getCreatedRecords() {
     return createdRecords;
   }
 
-  public Map<ORecordId, ORecord<?>> getUpdatedRecords() {
+  public Map<ORecordId, ORecordInternal<?>> getUpdatedRecords() {
     return updatedRecords;
   }
 

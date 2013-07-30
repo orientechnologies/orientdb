@@ -390,13 +390,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getName();
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    delegate.setSessionId(sessionId);
-    delegate.changeRecordIdentity(originalId, newId);
-  }
-
-  @Override
+	@Override
   public boolean isHashClustersAreUsed() {
     delegate.setSessionId(sessionId);
     return delegate.isHashClustersAreUsed();

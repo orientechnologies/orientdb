@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -73,6 +74,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
@@ -84,7 +86,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectEntitySerializer {
 
   private static final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
-  private static final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
+  static final HashMap<Class<?>, List<String>>                 allFields           = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         embeddedFields      = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         directAccessFields  = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
@@ -358,14 +360,19 @@ public class OObjectEntitySerializer {
    */
   @SuppressWarnings("unchecked")
   public static synchronized void registerClass(final Class<?> iClass) {
-    if (Proxy.class.isAssignableFrom(iClass) || classes.contains(iClass))
+    if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
+        || iClass.isAnonymousClass() || classes.contains(iClass))
       return;
     boolean reloadSchema = false;
+    boolean automaticSchemaGeneration = false;
 
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
         && !ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
       ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().createClass(iClass.getSimpleName());
       reloadSchema = true;
+      if (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof OObjectDatabaseTx)
+        automaticSchemaGeneration = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner())
+            .isAutomaticSchemaGeneration();
     }
 
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
@@ -540,6 +547,10 @@ public class OObjectEntitySerializer {
         registerCallbacks(currentClass);
 
       }
+
+      if (automaticSchemaGeneration && !iClass.equals(Object.class) && !iClass.equals(ODocument.class)) {
+        OObjectSchemaGenerator.generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+      }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
 
@@ -669,7 +680,7 @@ public class OObjectEntitySerializer {
       Class<?> fieldClass = iFieldValue.getClass();
 
       if (fieldClass.isArray()) {
-        if (iType.equals(OType.BINARY))
+        if (iType != null && iType.equals(OType.BINARY))
           return iFieldValue;
         // ARRAY
         final int arrayLength = Array.getLength(iFieldValue);
@@ -871,25 +882,40 @@ public class OObjectEntitySerializer {
 
   public static OType getTypeByClass(final Class<?> iClass, final String fieldName) {
     Field f = getField(fieldName, iClass);
+    return getTypeByClass(iClass, fieldName, f);
+  }
+
+  protected static OType getTypeByClass(final Class<?> iClass, final String fieldName, Field f) {
     if (f == null)
       return null;
     if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
       Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
-      if (f.getType().isArray())
+      if (f.getType().isArray()) {
         if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
           return OType.BINARY;
         } else {
-          return OType.getTypeByClass(f.getType());
+          if (isSerializedType(f)
+              || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+              || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                  .isJavaType(genericMultiValueType)))) {
+            return OType.EMBEDDEDLIST;
+          } else {
+            return OType.LINKLIST;
+          }
         }
-      else if (Collection.class.isAssignableFrom(f.getType())) {
-        if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
-            || OReflectionHelper.isJavaType(genericMultiValueType))
+      } else if (Collection.class.isAssignableFrom(f.getType())) {
+        if (isSerializedType(f)
+            || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+            || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                .isJavaType(genericMultiValueType))))
           return Set.class.isAssignableFrom(f.getType()) ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
         else
           return Set.class.isAssignableFrom(f.getType()) ? OType.LINKSET : OType.LINKLIST;
       } else {
-        if (genericMultiValueType.isEnum() || isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
-            || OReflectionHelper.isJavaType(genericMultiValueType))
+        if (isSerializedType(f)
+            || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName)
+            || (genericMultiValueType != null && (genericMultiValueType.isEnum() || OReflectionHelper
+                .isJavaType(genericMultiValueType))))
           return OType.EMBEDDEDMAP;
         else
           return OType.LINKMAP;

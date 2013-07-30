@@ -28,8 +28,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
  * 
  */
 public abstract class OSharedResourceTimeout {
-  protected final ReadWriteLock lock = new ReentrantReadWriteLock();
-  protected int                 timeout;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  protected int               timeout;
 
   public OSharedResourceTimeout(final int timeout) {
     this.timeout = timeout;

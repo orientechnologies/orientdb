@@ -39,10 +39,10 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
     POP_RECORD, COPY_RECORD
   }
 
-  public OLevel2RecordCache(final OStorage iStorage) {
-    super(new OCacheLocator().secondaryCache(iStorage.getName()));
+  public OLevel2RecordCache(final OStorage storage, OCacheLevelTwoLocator cacheLocator) {
+    super(cacheLocator.primaryCache(storage.getName()));
 
-    profilerPrefix = "db." + iStorage.getName() + ".cache.level2.";
+    profilerPrefix = "db." + storage.getName() + ".cache.level2.";
     profilerMetadataPrefix = "db.*.cache.level2.";
 
     CACHE_HIT = profilerPrefix + "cache.found";
@@ -97,7 +97,6 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
    * 
    * @param iRID
    *          record identity
-   * @param iRemove
    * @return record if exists in cache, {@code null} otherwise
    */
   protected ORecordInternal<?> retrieveRecord(final ORID iRID) {

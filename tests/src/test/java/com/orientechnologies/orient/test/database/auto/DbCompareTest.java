@@ -26,26 +26,32 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 
 @Test(groups = "db")
 public class DbCompareTest implements OCommandOutputListener {
-	final private String	url;
-	final private String	testPath;
+  final private String url;
+  final private String testPath;
 
-	@Parameters(value = { "url", "testPath" })
-	public DbCompareTest(final String iURL,final String iTestPath) {
-		url = iURL;
-		testPath = iTestPath;
-	}
+  @Parameters(value = { "url", "testPath" })
+  public DbCompareTest(final String iURL, final String iTestPath) {
+    url = iURL;
+    testPath = iTestPath;
+  }
 
   @Test
-	public void testCompareDatabases() throws IOException {
-		final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, "local:" + testPath + "/" + DbImportExportTest.NEW_DB_URL,
-						"admin", "admin", this);
-		databaseCompare.setCompareEntriesForAutomaticIndexes(true);
-		Assert.assertTrue(databaseCompare.compare());
-	}
+  public void testCompareDatabases() throws IOException {
+    String urlPrefix;
+    if (url.startsWith("local:"))
+      urlPrefix = "local:";
+    else
+      urlPrefix = "plocal:";
 
-	@Test(enabled = false)
-	public void onMessage(final String iText) {
-		System.out.print(iText);
-		System.out.flush();
-	}
+    final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
+        "admin", "admin", this);
+    databaseCompare.setCompareEntriesForAutomaticIndexes(true);
+    Assert.assertTrue(databaseCompare.compare());
+  }
+
+  @Test(enabled = false)
+  public void onMessage(final String iText) {
+    System.out.print(iText);
+    System.out.flush();
+  }
 }

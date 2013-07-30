@@ -78,8 +78,8 @@ public class OPhysicalPosition implements OSerializableStream, Comparable<OPhysi
 
   @Override
   public String toString() {
-    return "cluster(?:" + clusterPosition + ") data(" + dataSegmentId + ":" + dataSegmentPos + ") record(type:" + recordType
-        + " size:" + recordSize + " v:" + recordVersion + ")";
+    return "rid(?:" + clusterPosition + ") data(" + dataSegmentId + ":" + dataSegmentPos + ") record(type:" + recordType + " size:"
+        + recordSize + " v:" + recordVersion + ")";
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {

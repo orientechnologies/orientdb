@@ -22,13 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +56,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -74,7 +71,6 @@ import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -143,6 +139,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     System.exit(result);
+  }
+
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return iLine.startsWith("js");
   }
 
   @Override
@@ -481,6 +482,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Executes a command inside a transaction")
+  public void transactional(@ConsoleParameter(name = "command-text", description = "The command to execute") String iCommandText) {
+    sqlCommand("transactional", iCommandText, "\nResult: '%s'. Executed in %f sec(s).\n", true);
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
   public void insert(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("insert", iCommandText, "\nInserted record '%s' in %f sec(s).\n", true);
@@ -541,7 +547,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Freeze database and flush on the disk")
-  public void freezeDatabase() throws IOException {
+  public void freezeDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -552,7 +560,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase();
+      if (storageType == null)
+        storageType = "plocal";
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeDatabase(
+          storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.freeze();
@@ -562,7 +574,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Release database after freeze")
-  public void releaseDatabase() throws IOException {
+  public void releaseDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -573,7 +587,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase();
+      if (storageType == null)
+        storageType = "plocal";
+
+      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseDatabase(
+          storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.release();
@@ -584,7 +602,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Freeze clusters and flush on the disk")
   public void freezeCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName)
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
       throws IOException {
     checkForDatabase();
 
@@ -596,8 +615,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).freezeCluster(
-          clusterId);
+          clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.freezeCluster(clusterId);
@@ -608,7 +630,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Release cluster after freeze")
   public void releaseCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName)
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
       throws IOException {
     checkForDatabase();
 
@@ -620,8 +643,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword).releaseCluster(
-          clusterId);
+          clusterId, storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.releaseCluster(clusterId);
@@ -796,7 +822,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Delete the current database")
-  public void dropDatabase() throws IOException {
+  public void dropDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -807,9 +835,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         return;
       }
 
+      if (storageType == null)
+        storageType = "plocal";
+
       // REMOTE CONNECTION
       final String dbURL = currentDatabase.getURL().substring(OEngineRemote.NAME.length() + 1);
-      new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase();
+      new OServerAdmin(dbURL).connect(currentDatabaseUserName, currentDatabaseUserPassword).dropDatabase(storageType);
     } else {
       // LOCAL CONNECTION
       currentDatabase.drop();
@@ -824,13 +855,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void dropDatabase(
       @ConsoleParameter(name = "database-url", description = "The url of the database to drop in the format '<mode>:<path>'") String iDatabaseURL,
       @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
-      @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword) throws IOException {
+      @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
 
     if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
       final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
       serverAdmin = new OServerAdmin(dbURL).connect(iUserName, iUserPassword);
-      serverAdmin.dropDatabase();
+      serverAdmin.dropDatabase(storageType);
       disconnect();
     } else {
       // LOCAL CONNECTION
@@ -1290,35 +1323,28 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Gets the replication journal for a database against a remote server")
   public void replicationGetJournal(
       @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
+      @ConsoleParameter(name = "limit", description = "Limit as maximum number of records starting from the end", optional = true) final String iLimit)
       throws IOException {
 
     checkForRemoteServer();
 
-    try {
-      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName);
+    final long start = System.currentTimeMillis();
 
-      if (response.fieldNames().length == 0)
+    int limit = iLimit == null ? -1 : Integer.parseInt(iLimit);
+
+    try {
+      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName, limit);
+      currentResultSet = response.field("result");
+      if (currentResultSet.size() == 0)
         out.println("Replication journal for database '" + iDatabaseName + "' is empty");
       else {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        float elapsedSeconds = getElapsedSecs(start);
 
-        out.println("Replication journal for database '" + iDatabaseName + "'\n");
-        out.printf("+-----------+-----------+---------------+-------------------------+\n");
-        out.printf("| SERIAL    | OPERATION | RECORD ID     | DATE                    |\n");
-        out.printf("+-----------+-----------+---------------+-------------------------+\n");
-        for (String k : response.fieldNames()) {
-          final long opSerial = Long.parseLong(k);
+        new OTableFormatter(out).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
+            .writeRecords(currentResultSet, -1);
 
-          final String[] split = ((String) response.field(k)).split("-");
-          final byte opType = Byte.valueOf((byte) Integer.parseInt(split[0]));
-          final String opRID = split[1];
-          final String date = split[2];
-
-          out.printf("| %-10d| %9s | %-14s| %23s |\n", opSerial, ORecordOperation.getName(opType), opRID,
-              format.format(new Date(Long.parseLong(date))));
-        }
-        out.printf("+-----------+--------+---------------+-------------------------+\n");
+        out.println("\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
       }
       out.println();
 
@@ -1353,23 +1379,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     try {
       final ODocument response = serverAdmin.getReplicationConflicts(iDatabaseName);
-      final List<ODocument> entries = response.field("entries");
+      currentResultSet = response.field("result");
 
-      if (entries == null || entries.size() == 0)
+      if (currentResultSet == null || currentResultSet.size() == 0)
         out.println("There are not replication conflicts for database '" + iDatabaseName + "'");
       else {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-        out.println("Replication conflicts for database '" + iDatabaseName + "'. Found " + entries.size() + " entries.\n");
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
-        out.printf("| RECORD ID     | SERVER NODE        |OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER RID      |\n");
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
-        for (ODocument doc : entries) {
-          out.printf("| %-14s| %18s | %-8s | %23s | %-12d | %-13d | %-14s |\n", doc.field("record", OType.LINK), doc.field("node"),
-              ORecordOperation.getName((Byte) doc.field("operation")), format.format(new Date((Long) doc.field("date"))),
-              doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherRID"));
-        }
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
+        new OTableFormatter(out).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
+            .writeRecords(currentResultSet, -1);
       }
       out.println();
 
@@ -1432,10 +1448,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Compare two databases")
-  public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
+  public void compareDatabases(
+      @ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
       @ConsoleParameter(name = "user-name", description = "User name", optional = true) final String iUserName,
-      @ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword)
+      @ConsoleParameter(name = "user-password", description = "User password", optional = true) final String iUserPassword,
+      @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk.", optional = true) Boolean autoDiscoveringMappingData)
       throws IOException {
     try {
       final ODatabaseCompare compare;
@@ -1444,6 +1462,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       else
         compare = new ODatabaseCompare(iDb1URL, iDb1URL, iUserName, iUserPassword, this);
 
+      compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? autoDiscoveringMappingData : true);
       compare.compare();
     } catch (ODatabaseExportException e) {
       printError(e);
@@ -1451,19 +1470,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
-  public void importDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text)
       throws IOException {
     checkForDatabase();
 
-    out.println("Importing database " + iText + "...");
+    out.println("Importing database " + text + "...");
 
-    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
-    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
-    final String options = fileName != null ? iText.substring(
-        ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
     try {
-      new ODatabaseImport(currentDatabase, fileName, this).setOptions(options).importDatabase().close();
+      ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
+
+      databaseImport.setOptions(options).importDatabase();
+
+      databaseImport.close();
     } catch (ODatabaseImportException e) {
       printError(e);
     }

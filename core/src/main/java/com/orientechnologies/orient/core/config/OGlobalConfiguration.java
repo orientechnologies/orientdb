@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
@@ -71,22 +72,28 @@ public enum OGlobalConfiguration {
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
-  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
-      Integer.class, 36000),
+  WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events when background flush thread"
+      + " will receive shutdown command and when background flush will be stopped (in ms.)", Integer.class, 10000),
 
-  WAL_CHECKPOINT_INTERVAL_TIMEOUT("storage.wal.checkpointIntervalTimeout",
-      "Timeout till DB will wait checkpoint is finished during DB close (in seconds))", Integer.class, 300),
+  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
+      Integer.class, 2592000),
+
+  WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
+      "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),
+
+  WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fullCheckpointShutdownTimeout",
+      "Timeout till DB will wait that full checkpoint is finished during DB close (in seconds))", Integer.class, 60 * 10),
 
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
 
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
-
-  RECORD_GROW_FACTOR("storage.record.growFactor", "Multiplier which is used to predict how much record will grow after creation.",
-      Float.class, 1.2),
-
-  RECORD_OVERFLOW_GROW_FACTOR("storage.record.overflowGrowFactor",
-      "Multiplier which is used to predict how much record will grow after update.", Float.class, 1.2),
 
   DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
       + "this queue is used to accumulate all pages that "
@@ -104,9 +111,9 @@ public enum OGlobalConfiguration {
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.FALSE),
+      Boolean.class, Boolean.TRUE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 5000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),
@@ -117,11 +124,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
   CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -164,11 +171,15 @@ public enum OGlobalConfiguration {
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
-      "manindex"),
+      OMetadata.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
       true),
+
+  TX_AUTO_RETRY("tx.autoRetry",
+      "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
+      Integer.class, 10),
 
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
@@ -314,11 +325,13 @@ public enum OGlobalConfiguration {
           + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
 
   // NETWORK
+  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
+
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
@@ -396,7 +409,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 5),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 20),
 
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
       "Maximum time which client should wait connection from the pool", Integer.class, 5000),

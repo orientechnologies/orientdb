@@ -23,29 +23,30 @@ import java.text.ParseException;
 import java.util.Date;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodAsDate extends OAbstractSQLMethod {
 
-    public static final String NAME = "asdate";
+  public static final String NAME = "asdate";
 
-    public OSQLMethodAsDate() {
-        super(NAME);
+  public OSQLMethodAsDate() {
+    super(NAME);
+  }
+
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams)
+      throws ParseException {
+
+    if (ioResult != null) {
+      if (ioResult instanceof Number) {
+        ioResult = new Date(((Number) ioResult).longValue());
+      } else if (!(ioResult instanceof Date)) {
+        ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+            .parse(ioResult.toString());
+      }
     }
-
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) throws ParseException{
-
-        if (ioResult != null) {
-            if (ioResult instanceof Number) {
-                ioResult = new Date(((Number) ioResult).longValue());
-            } else if (!(ioResult instanceof Date)) {
-                ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
-                        .parse(ioResult.toString());
-            }
-        }
-        return ioResult;
-    }
+    return ioResult;
+  }
 }

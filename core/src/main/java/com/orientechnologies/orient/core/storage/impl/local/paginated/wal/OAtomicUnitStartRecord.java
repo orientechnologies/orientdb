@@ -17,24 +17,22 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecord implements OWALRecord, OClusterAwareWALRecord {
+public class OAtomicUnitStartRecord extends OOperationUnitRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
-  private int                clusterId;
 
   private boolean            isRollbackSupported;
 
   public OAtomicUnitStartRecord() {
   }
 
-  public OAtomicUnitStartRecord(boolean isRollbackSupported, int clusterId) {
+  public OAtomicUnitStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) {
+    super(unitId);
     this.isRollbackSupported = isRollbackSupported;
-    this.clusterId = clusterId;
   }
 
   public boolean isRollbackSupported() {
@@ -43,11 +41,10 @@ public class OAtomicUnitStartRecord implements OWALRecord, OClusterAwareWALRecor
 
   @Override
   public int toStream(byte[] content, int offset) {
-    isRollbackSupported = content[offset] > 0;
-    offset++;
+    offset = super.toStream(content, offset);
 
-    OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    content[offset] = isRollbackSupported ? (byte) 1 : 0;
+    offset++;
 
     return offset;
 
@@ -55,23 +52,17 @@ public class OAtomicUnitStartRecord implements OWALRecord, OClusterAwareWALRecor
 
   @Override
   public int fromStream(byte[] content, int offset) {
-    content[offset] = isRollbackSupported ? (byte) 1 : 0;
-    offset++;
+    offset = super.fromStream(content, offset);
 
-    clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    isRollbackSupported = content[offset] > 0;
+    offset++;
 
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-  }
-
-  @Override
-  public int getClusterId() {
-    return clusterId;
+    return super.serializedSize() + OByteSerializer.BYTE_SIZE;
   }
 
   @Override

@@ -86,14 +86,17 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     FUNCTIONS.put(OSQLFunctionDistance.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDistance());
   }
 
+  @Override
   public Set<String> getFunctionNames() {
     return FUNCTIONS.keySet();
   }
 
+  @Override
   public boolean hasFunction(final String name) {
     return FUNCTIONS.containsKey(name);
   }
 
+  @Override
   public OSQLFunction createFunction(final String name) {
     final Object obj = FUNCTIONS.get(name);
 

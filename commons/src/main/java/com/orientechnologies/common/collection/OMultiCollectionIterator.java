@@ -23,13 +23,14 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable {
   private Collection<Object> sources;
   private Iterator<?>        iteratorOfInternalCollections;
   private Iterator<T>        partialIterator;
@@ -117,7 +118,15 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           size += ((Collection<?>) o).size();
         else if (o instanceof Map<?, ?>)
           size += ((Map<?, ?>) o).size();
-        else
+        else if (o instanceof OSizeable)
+          size += ((OSizeable) o).size();
+        else if (o instanceof Iterator<?> && o instanceof OResettable) {
+          while (((Iterator<?>) o).hasNext()) {
+            size++;
+            ((Iterator<?>) o).next();
+          }
+          ((OResettable) o).reset();
+        } else
           size++;
     }
     return size;

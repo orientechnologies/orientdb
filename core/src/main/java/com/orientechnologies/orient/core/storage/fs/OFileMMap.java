@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
   // PART OF HEADER (4 bytes)
-  protected volatile int                     filledUpTo;
+  protected volatile long                    filledUpTo;
   protected volatile MappedByteBuffer        headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
@@ -104,11 +104,11 @@ public class OFileMMap extends OAbstractFile {
     }
   }
 
-  public int getFileSize() {
+  public long getFileSize() {
     return size;
   }
 
-  public int getFilledUpTo() {
+  public long getFilledUpTo() {
     return filledUpTo;
   }
 
@@ -547,9 +547,9 @@ public class OFileMMap extends OAbstractFile {
 
       boolean allFlushed = OMMapManagerLocator.getInstance().flushFile(this);
       flushHeader();
-      
+
       return allFlushed;
-      
+
     } finally {
       releaseWriteLock();
     }
@@ -611,6 +611,9 @@ public class OFileMMap extends OAbstractFile {
   public boolean isSoftlyClosed() throws IOException {
     acquireReadLock();
     try {
+      if (version == 0)
+        return headerBuffer.get(SOFTLY_CLOSED_OFFSET_V_0) > 0;
+
       return headerBuffer.get(SOFTLY_CLOSED_OFFSET) > 0;
     } finally {
       releaseReadLock();
@@ -623,8 +626,8 @@ public class OFileMMap extends OAbstractFile {
   }
 
   @Override
-  protected void openChannel(final int iNewSize) throws IOException {
-    super.openChannel(iNewSize);
+  protected void openChannel(final long newSize) throws IOException {
+    super.openChannel(newSize);
     headerBuffer = channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, 0, HEADER_SIZE);
   }
 
@@ -682,33 +685,62 @@ public class OFileMMap extends OAbstractFile {
   protected void init() {
     acquireWriteLock();
     try {
-      size = headerBuffer.getInt(SIZE_OFFSET);
-      filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
+      if (version == 0) {
+        size = headerBuffer.getInt(SIZE_OFFSET_V_0);
+        filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET_V_0);
+      } else {
+        size = headerBuffer.getLong(SIZE_OFFSET);
+        filledUpTo = headerBuffer.getLong(FILLEDUPTO_OFFSET);
+      }
     } finally {
       releaseWriteLock();
     }
   }
 
   @Override
-  protected void setFilledUpTo(final int iHow) {
-    if (iHow != filledUpTo) {
-      filledUpTo = iHow;
-      headerBuffer.putInt(FILLEDUPTO_OFFSET, filledUpTo);
-      setHeaderDirty();
+  protected void setFilledUpTo(final long iHow) {
+    setFilledUpTo(iHow, false);
+  }
+
+  protected void setFilledUpTo(final long iHow, boolean force) {
+    acquireWriteLock();
+    try {
+      if (force || iHow != filledUpTo) {
+        filledUpTo = iHow;
+        headerBuffer.putLong(FILLEDUPTO_OFFSET, filledUpTo);
+        setHeaderDirty();
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
   @Override
-  public void setSize(final int iSize) throws IOException {
+  protected void setVersion(int version) throws IOException {
     acquireWriteLock();
     try {
-      if (maxSize > 0 && iSize > maxSize)
-        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize)
-            + " because the max is " + OFileUtils.getSizeAsString(maxSize));
-      if (iSize != size) {
-        checkSize(iSize);
-        size = iSize;
-        headerBuffer.putInt(SIZE_OFFSET, size);
+      headerBuffer.put(VERSION_OFFSET, (byte) version);
+      setHeaderDirty();
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setSize(final long iSize) throws IOException {
+    setSize(iSize, false);
+  }
+
+  protected void setSize(final long size, final boolean force) throws IOException {
+    acquireWriteLock();
+    try {
+      if (maxSize > 0 && size > maxSize)
+        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(size) + " because the max is "
+            + OFileUtils.getSizeAsString(maxSize));
+      if (force || this.size != size) {
+        checkSize(size);
+        this.size = size;
+        headerBuffer.putLong(SIZE_OFFSET, size);
         setHeaderDirty();
       }
     } finally {

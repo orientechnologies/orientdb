@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -77,32 +78,20 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private final int                     DELETE_MAX_RETRIES;
-
   private final int                     DELETE_WAIT_TIME;
-
   private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
-
   private OCluster[]                    clusters                  = new OCluster[0];
-
   private ODataLocal[]                  dataSegments              = new ODataLocal[0];
-
   private final OStorageLocalTxExecuter txManager;
-
   private String                        storagePath;
-
   private final OStorageVariableParser  variableParser;
-
   private int                           defaultClusterId          = -1;
-
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet"                                     };
-
+      ".oef", ".oem", ".oet", OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION             };
   private long                          positionGenerator         = 1;
-
   private OModificationLock             modificationLock          = new OModificationLock();
-
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
-
   private final ODiskCache              diskCache;
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
@@ -1304,14 +1293,15 @@ public class OStorageLocal extends OStorageLocalAbstract {
           if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
             synch();
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
           // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+          OLogManager.instance().info(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
+              iTx.getId());
           rollback(iTx);
-          throw e;
-        } catch (IOException e) {
-          // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-          rollback(iTx);
-          throw new OException(e);
+          if (e instanceof OException)
+            throw ((OException) e);
+          else
+            throw new OStorageException("Error during transaction commit.", e);
         } finally {
           try {
             txManager.clearLogEntries(iTx);
@@ -1725,7 +1715,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     try {
       if (!cluster.addPhysicalPosition(ppos))
         throw new OStorageException("Record with given id " + new ORecordId(rid.clusterId, ppos.clusterPosition)
-            + " has already exists.");
+            + " already exists.");
 
       rid.clusterPosition = ppos.clusterPosition;
 
@@ -1759,30 +1749,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer, "db.*.createRecord");
-    }
-  }
-
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      final OPhysicalPosition ppos = moveRecord(originalId, newId);
-
-      final ODataLocal dataLocal = getDataSegmentById(ppos.dataSegmentId);
-      dataLocal.setRecordRid(ppos.dataSegmentPos, newId);
-
-    } catch (IOException e) {
-
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, e);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in local database", timer,
-              "db.*.changeRecordIdentity");
     }
   }
 
@@ -2070,7 +2036,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     modificationLock.allowModifications();
   }
 
-  public boolean isClusterSoftlyClosed(String clusterName) {
+  public boolean wasClusterSoftlyClosed(String clusterName) {
     final OCluster indexCluster = clusterMap.get(clusterName);
     return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }

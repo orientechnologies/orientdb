@@ -23,12 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -43,6 +37,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test
 public class GraphDatabaseTest {
@@ -194,9 +194,6 @@ public class GraphDatabaseTest {
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
-    if (url.startsWith("plocal:"))
-      return;
-
     OClass oc = database.getVertexType("vertexA");
     if (oc == null)
       oc = database.createVertexType("vertexA");
@@ -252,9 +249,6 @@ public class GraphDatabaseTest {
   }
 
   public void testEdgesIterationInTX() {
-    if (url.startsWith("plocal:"))
-      return;
-
     database.createVertexType("vertexAA");
     database.createVertexType("vertexBB");
     database.createEdgeType("edgeAB");
@@ -281,9 +275,6 @@ public class GraphDatabaseTest {
    * @author bill@tobecker.com
    */
   public void testTxField() {
-    if (url.startsWith("plocal:"))
-      return;
-
     if (database.getVertexType("PublicCert") == null)
       database.createVertexType("PublicCert");
 
@@ -430,7 +421,7 @@ public class GraphDatabaseTest {
     final int v1Edges = database.getOutEdges(v1).size();
     final int v2Edges = database.getInEdges(v2).size();
 
-    ODocument e = (ODocument) database.command(new OCommandSQL("insert into E SET out = ?, in = ?")).execute(v1, v2);
+    ODocument e = database.command(new OCommandSQL("insert into E SET out = ?, in = ?")).execute(v1, v2);
     database.command(new OCommandSQL("update " + v1.getIdentity() + " ADD out = " + e.getIdentity())).execute();
     database.command(new OCommandSQL("update " + v2.getIdentity() + " ADD in = " + e.getIdentity())).execute();
 
@@ -466,10 +457,13 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 1);
 
     database.removeVertex(sourceDoc1);
+    targetDoc1.reload();
     database.removeVertex(targetDoc1);
+    targetDoc2.reload();
     database.removeVertex(targetDoc2);
   }
 
+  @SuppressWarnings("unchecked")
   public void nestedQuery() {
     ODocument countryDoc1 = database.createVertex().field("name", "UK").field("area", "Europe").field("code", "2").save();
     ODocument cityDoc1 = database.createVertex().field("name", "leicester").field("lat", "52.64640").field("long", "-1.13159")
@@ -480,10 +474,10 @@ public class GraphDatabaseTest {
     database.createEdge(countryDoc1, cityDoc2).field("label", "owns").save();
 
     String subquery = "select out[label='owns'].in from V where name = 'UK'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<ODocument>) result.get(0).field("out")).size(), 2);
+    Assert.assertEquals(((Collection<ODocument>) ((ODocument) result.get(0)).field("out")).size(), 2);
 
     subquery = "select expand(out[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
@@ -491,7 +485,7 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
       System.out.println("uno: " + result.get(i));
-      Assert.assertTrue(result.get(i).containsField("lat"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
     }
 
     String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out[label='owns'].in) from V where name = 'UK') order by distance";
@@ -500,8 +494,8 @@ public class GraphDatabaseTest {
     Assert.assertEquals(result.size(), 2);
     for (int i = 0; i < result.size(); i++) {
       System.out.println("dos: " + result.get(i));
-      Assert.assertTrue(result.get(i).containsField("lat"));
-      Assert.assertTrue(result.get(i).containsField("distance"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("distance"));
     }
   }
 
@@ -517,7 +511,7 @@ public class GraphDatabaseTest {
     }
     ODatabaseDocument db = new ODatabaseDocumentTx(iUrl);
 
-    ODatabaseHelper.createDatabase(db, iUrl);
+    ODatabaseHelper.createDatabase(db, iUrl, "plocal");
     db.close();
     OGraphDatabase database = new OGraphDatabase(iUrl);
     database.open("admin", "admin");
@@ -527,16 +521,16 @@ public class GraphDatabaseTest {
     database.createEdge(playerDoc, teamDoc).field("label", "player").save();
 
     String query = "select expand(out[label='player'].in) from V where surname = 'Torres'";
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(query));
     for (int i = 0; i < result.size(); i++) {
-      Assert.assertTrue(result.get(i).containsField("team"));
-      Assert.assertTrue(result.get(i).field("team").equals("Chelsea"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("team"));
+      Assert.assertTrue(((ODocument) result.get(i).getRecord()).field("team").equals("Chelsea"));
     }
     database.removeVertex(playerDoc);
     database.removeVertex(teamDoc);
 
     database.close();
-    ODatabaseHelper.deleteDatabase(database);
+    ODatabaseHelper.deleteDatabase(database, "plocal");
   }
 
   //

@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -33,13 +33,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * 
  */
 public class OChannelBinaryAsynch extends OChannelBinary {
-  private final ReentrantLock lockRead      = new ReentrantLock(true);
-  private final Condition     readCondition = lockRead.newCondition();
-  private final ReentrantLock lockWrite     = new ReentrantLock();
-  private boolean             channelRead   = false;
-  private byte                currentStatus;
-  private int                 currentSessionId;
-  private final int           maxUnreadResponses;
+  private final Condition  readCondition = lockRead.getUnderlying().newCondition();
+  private volatile boolean channelRead   = false;
+  private byte             currentStatus;
+  private int              currentSessionId;
+  private final int        maxUnreadResponses;
 
   public OChannelBinaryAsynch(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -47,12 +45,12 @@ public class OChannelBinaryAsynch extends OChannelBinary {
   }
 
   public void beginRequest() {
-    lockWrite.lock();
+    acquireWriteLock();
   }
 
   public void endRequest() throws IOException {
     flush();
-    lockWrite.unlock();
+    releaseWriteLock();
   }
 
   public void beginResponse(final int iRequesterId) throws IOException {
@@ -67,8 +65,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
       // WAIT FOR THE RESPONSE
       do {
         if (iTimeout <= 0)
-          lockRead.lock();
-        else if (!lockRead.tryLock(iTimeout, TimeUnit.MILLISECONDS))
+          acquireReadLock();
+        else if (!lockRead.tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
         if (!channelRead) {
@@ -84,9 +82,9 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
           } catch (IOException e) {
             // UNLOCK THE RESOURCE AND PROPAGATES THE EXCEPTION
-            readCondition.signalAll();
-            lockRead.unlock();
             channelRead = false;
+            readCondition.signalAll();
+            releaseReadLock();
             throw e;
           }
         }
@@ -103,7 +101,8 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
             // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
             close();
-            throw new OTimeoutException("Timeout on reading response from the server for the request " + iRequesterId);
+            throw new OTimeoutException("Timeout on reading response from the server "
+                + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
           if (unreadResponse > maxUnreadResponses) {
@@ -137,7 +136,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
           Thread.currentThread().interrupt();
 
         } finally {
-          lockRead.unlock();
+          releaseReadLock();
         }
       } while (true);
 
@@ -145,7 +144,7 @@ public class OChannelBinaryAsynch extends OChannelBinary {
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
       handleStatus(currentStatus, currentSessionId);
-    } catch (InterruptedException e) {
+    } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
       e.printStackTrace();
@@ -165,28 +164,20 @@ public class OChannelBinaryAsynch extends OChannelBinary {
     }
 
     try {
-      lockRead.unlock();
+      releaseReadLock();
     } catch (IllegalMonitorStateException e) {
       // IGNORE IT
       OLogManager.instance().debug(this, "Error on unlocking network channel after reading response");
     }
   }
 
-  public ReentrantLock getLockRead() {
-    return lockRead;
-  }
-
-  public ReentrantLock getLockWrite() {
-    return lockWrite;
-  }
-
   @Override
   public void close() {
-    if (lockRead.tryLock())
+    if (lockRead.tryAcquireLock())
       try {
         readCondition.signalAll();
       } finally {
-        lockRead.unlock();
+        releaseReadLock();
       }
 
     super.close();
@@ -194,11 +185,11 @@ public class OChannelBinaryAsynch extends OChannelBinary {
 
   @Override
   public void clearInput() throws IOException {
-    lockRead.lock();
+    acquireReadLock();
     try {
       super.clearInput();
     } finally {
-      lockRead.unlock();
+      releaseReadLock();
     }
   }
 }

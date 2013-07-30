@@ -94,9 +94,6 @@ public class CollectionIndexTest {
   }
 
   public void testIndexCollectionInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     try {
       database.begin();
       Collector collector = new Collector();
@@ -144,9 +141,6 @@ public class CollectionIndexTest {
   }
 
   public void testIndexCollectionUpdateInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);
@@ -219,9 +213,6 @@ public class CollectionIndexTest {
   }
 
   public void testIndexCollectionUpdateAddItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Collector collector = new Collector();
     collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
@@ -277,9 +268,6 @@ public class CollectionIndexTest {
   }
 
   public void testIndexCollectionUpdateRemoveItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Collector collector = new Collector();
     collector.setStringCollection(new ArrayList<String>(Arrays.asList("spam", "eggs")));
     collector = database.save(collector);
@@ -368,9 +356,6 @@ public class CollectionIndexTest {
   }
 
   public void testIndexCollectionRemoveInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     Collector collector = new Collector();
     collector.setStringCollection(Arrays.asList("spam", "eggs"));
     collector = database.save(collector);

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
  * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
@@ -27,24 +26,21 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public static final String TYPE_ID = OClass.INDEX_TYPE.DICTIONARY.toString();
-
-  public OIndexDictionary() {
-    super(TYPE_ID);
+  public OIndexDictionary(String typeId, OIndexEngine<OIdentifiable> engine) {
+    super(typeId, engine);
   }
 
-  public OIndexOneValue put(final Object iKey, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
     modificationLock.requestModificationLock();
 
     try {
       acquireExclusiveLock();
       try {
-        checkForKeyType(iKey);
-
-        final OIdentifiable value = map.get(iKey);
+        checkForKeyType(key);
+        final OIdentifiable value = indexEngine.get(key);
 
         if (value == null || !value.equals(iSingleValue))
-          map.put(iKey, iSingleValue);
+          indexEngine.put(key, iSingleValue);
 
         return this;
 
@@ -60,7 +56,7 @@ public class OIndexDictionary extends OIndexOneValue {
    * Disables check of entries.
    */
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public void checkEntry(final OIdentifiable iRecord, final Object key) {
   }
 
   public boolean canBeUsedInEqualityOperators() {

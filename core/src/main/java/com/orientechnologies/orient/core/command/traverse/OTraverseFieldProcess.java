@@ -42,9 +42,22 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Obj
       if (fieldValue != null) {
         final OTraverseAbstractProcess<?> subProcess;
 
-        if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue))
-          subProcess = new OTraverseMultiValueProcess(command, OMultiValue.getMultiValueIterator(fieldValue));
-        else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument)
+        if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
+          final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
+
+          switch (command.getStrategy()) {
+          case BREADTH_FIRST:
+            subProcess = new OTraverseMultiValueBreadthFirstProcess(command, coll);
+            break;
+
+          case DEPTH_FIRST:
+            subProcess = new OTraverseMultiValueDepthFirstProcess(command, coll);
+            break;
+
+          default:
+            throw new IllegalArgumentException("Traverse strategy not supported: " + command.getStrategy());
+          }
+        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument)
           subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord());
         else
           continue;

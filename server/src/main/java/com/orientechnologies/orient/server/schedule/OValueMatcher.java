@@ -21,20 +21,19 @@ package com.orientechnologies.orient.server.schedule;
 
 /**
  * <p>
- * This interface describes the ValueMatcher behavior. A ValueMatcher is an
- * object that validate an integer value against a set of rules.
+ * This interface describes the ValueMatcher behavior. A ValueMatcher is an object that validate an integer value against a set of
+ * rules.
  * </p>
  * 
  * @author Carlo Pelliccia
  */
 public interface OValueMatcher {
-	/**
-	 * Validate the given integer value against a set of rules.
-	 * 
-	 * @param value
-	 *            The value.
-	 * @return true if the given value matches the rules of the ValueMatcher,
-	 *         false otherwise.
-	 */
-	public boolean match(int value);
+  /**
+   * Validate the given integer value against a set of rules.
+   * 
+   * @param value
+   *          The value.
+   * @return true if the given value matches the rules of the ValueMatcher, false otherwise.
+   */
+  public boolean match(int value);
 }

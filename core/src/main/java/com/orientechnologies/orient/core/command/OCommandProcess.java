@@ -24,7 +24,7 @@ package com.orientechnologies.orient.core.command;
  */
 public abstract class OCommandProcess<C extends OCommand, T, R> {
   protected final C command;
-  protected final T target;
+  protected T       target;
 
   /**
    * Create the process defining command and target.

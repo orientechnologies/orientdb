@@ -69,7 +69,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   private final boolean          logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
-    super(Orient.getThreadGroup(), iThreadName);
+    super(Orient.instance().getThreadGroup(), iThreadName);
     logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }
@@ -161,9 +161,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-    channel.acquireExclusiveLock();
-
+    channel.acquireWriteLock();
     try {
+
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
 
@@ -199,7 +199,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       if (e instanceof SocketException)
         shutdown();
     } finally {
-      channel.releaseExclusiveLock();
+      channel.releaseWriteLock();
     }
   }
 
@@ -275,7 +275,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
 
     OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage() instanceof OStorageLocalAbstract ? "local" : "memory");
+        iDatabase.getStorage() instanceof OStorageLocalAbstract ? iDatabase.getStorage().getType() : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)
     // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -284,23 +284,23 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return iDatabase;
   }
 
-  protected ODatabaseDocumentTx getDatabaseInstance(final String iDbName, final String iDbType, final String iStorageType) {
+  protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
 
-    final OStorage stg = Orient.instance().getStorage(iDbName);
+    final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
       path = stg.getURL();
-    else if (iStorageType.equals(OEngineLocal.NAME) || iStorageType.equals(OEngineLocalPaginated.NAME)) {
+    else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
-      path = server.getConfiguration().getStoragePath(iDbName);
+      path = server.getConfiguration().getStoragePath(dbName);
       if (path == null)
-        path = iStorageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + iDbName;
-    } else if (iStorageType.equals(OEngineMemory.NAME)) {
-      path = iStorageType + ":" + iDbName;
+        path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+    } else if (storageType.equals(OEngineMemory.NAME)) {
+      path = storageType + ":" + dbName;
     } else
-      throw new IllegalArgumentException("Cannot create database: storage mode '" + iStorageType + "' is not supported.");
+      throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
 
-    return Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+    return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
   }
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {

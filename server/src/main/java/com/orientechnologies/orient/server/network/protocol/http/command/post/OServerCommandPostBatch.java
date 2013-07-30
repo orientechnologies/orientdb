@@ -27,7 +27,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 
 /**
  * Executes a batch of operations in a single call. This is useful to reduce network latency issuing multiple commands as multiple
- * requests. Batch command supports transactions as well.<br><br>
+ * requests. Batch command supports transactions as well.<br>
+ * <br>
  * Format: { "transaction" : &lt;true|false&gt;, "operations" : [ { "type" : "&lt;type&gt;" }* ] }<br>
  * Where:
  * <ul>

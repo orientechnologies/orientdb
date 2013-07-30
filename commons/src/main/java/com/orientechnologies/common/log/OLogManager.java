@@ -3,11 +3,7 @@ package com.orientechnologies.common.log;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 import com.orientechnologies.common.exception.OException;
 
@@ -36,7 +32,15 @@ public class OLogManager {
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
-      if (log.isLoggable(iLevel)) {
+      if (log == null) {
+        // USE SYSERR
+        try {
+          System.err.println(String.format(iMessage, iAdditionalArgs));
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Error on formatting message", e);
+        }
+      } else if (log.isLoggable(iLevel)) {
+        // USE THE LOG
         try {
           final String msg = String.format(iMessage, iAdditionalArgs);
           if (iException != null)

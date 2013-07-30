@@ -22,10 +22,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
-import java.util.Date;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.List;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -33,11 +30,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -72,7 +65,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
-    super(Orient.getThreadGroup(), "IO-HTTP");
+    super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override
@@ -83,7 +76,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       additionalResponseHeaders = addHeaders.split(";");
 
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(iSocket, this);
+    connection = OClientConnectionManager.instance().connect(this);
 
     server = iServer;
     requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
@@ -134,6 +127,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       final String commandString = getCommandString(command);
 
       final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
+      Map<String, String> requestParams = cmdManager.extractUrlTokens(commandString);
+      if (requestParams != null) {
+        if (request.parameters == null) {
+          request.parameters = new HashMap<String, String>();
+        }
+        for (Map.Entry<String, String> entry : requestParams.entrySet()) {
+          request.parameters.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
+        }
+      }
+
       if (cmd != null)
         try {
           if (cmd.beforeExecute(request, response))

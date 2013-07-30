@@ -20,11 +20,14 @@ import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
 public abstract class OServerCommandAbstract implements OServerCommand {
+
+  protected OServer server;
 
   /**
    * Default constructor. Disable cache of content at HTTP level
@@ -76,5 +79,13 @@ public abstract class OServerCommandAbstract implements OServerCommand {
     } catch (Exception ex) {
       throw new OException(ex);
     }
+  }
+
+  public OServer getServer() {
+    return server;
+  }
+
+  public void configure(final OServer server) {
+    this.server = server;
   }
 }

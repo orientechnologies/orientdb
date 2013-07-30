@@ -21,27 +21,26 @@ package com.orientechnologies.orient.server.schedule;
 
 /**
  * <p>
- * This kind of exception is thrown if an invalid scheduling pattern is
- * encountered by the scheduler.
+ * This kind of exception is thrown if an invalid scheduling pattern is encountered by the scheduler.
  * </p>
  * 
  * @author Carlo Pelliccia
  */
 public class OInvalidPatternException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	/**
-	 * Package-reserved construction.
-	 */
-	OInvalidPatternException() {
-	}
+  /**
+   * Package-reserved construction.
+   */
+  OInvalidPatternException() {
+  }
 
-	/**
-	 * Package-reserved construction.
-	 */
-	OInvalidPatternException(String message) {
-		super(message);
-	}
+  /**
+   * Package-reserved construction.
+   */
+  OInvalidPatternException(String message) {
+    super(message);
+  }
 
 }

@@ -121,9 +121,6 @@ public class DictionaryTest {
 
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryInTx() throws IOException {
-    if (url.startsWith("plocal:"))
-      return;
-
     ODatabaseFlat database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 

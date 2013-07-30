@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,34 +36,44 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Import data from a file into a database.
@@ -70,16 +81,22 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  private Map<OPropertyImpl, String> linkedClasses       = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, String>        superClasses        = new HashMap<OClass, String>();
-  private OJSONReader                jsonReader;
-  private ORecordInternal<?>         record;
-  private List<String>               recordToDelete      = new ArrayList<String>();
-  private boolean                    schemaImported      = false;
-  private int                        exporterVersion     = -1;
-  private boolean                    hashClustersAreUsed = false;
-  private ORID                       schemaRecordId;
-  private ORID                       indexMgrRecordId;
+  public static final String                            EXPORT_IMPORT_MAP_NAME           = "exportImportRIDMap";
+  public static final String                            EXPORT_IMPORT_MAP_METADATA_EXT   = ".eihtmcf";
+  public static final String                            EXPORT_IMPORT_MAP_TREE_STATE_EXT = ".eihtsf";
+  public static final String                            EXPORT_IMPORT_MAP_BF_EXT         = ".eihtb";
+
+  protected Map<OPropertyImpl, String>                  linkedClasses                    = new HashMap<OPropertyImpl, String>();
+  protected Map<OClass, String>                         superClasses                     = new HashMap<OClass, String>();
+  protected OJSONReader                                 jsonReader;
+  protected ORecordInternal<?>                          record;
+  protected boolean                                     schemaImported                   = false;
+  protected int                                         exporterVersion                  = -1;
+  protected ORID                                        schemaRecordId;
+  protected ORID                                        indexMgrRecordId;
+  protected boolean                                     deleteRIDMapping                 = true;
+
+  private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
 
   public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -95,6 +112,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       inStream = bf;
     }
 
+    OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>();
+    keyHashFunction.setValueSerializer(OLinkSerializer.INSTANCE);
+
+    exportImportHashTable = new OLocalHashTable<OIdentifiable, OIdentifiable>(EXPORT_IMPORT_MAP_METADATA_EXT,
+        EXPORT_IMPORT_MAP_TREE_STATE_EXT, EXPORT_IMPORT_MAP_BF_EXT, keyHashFunction);
+
     jsonReader = new OJSONReader(new InputStreamReader(inStream));
     database.declareIntent(new OIntentMassiveInsert());
   }
@@ -109,12 +132,24 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public ODatabaseImport setOptions(String iOptions) {
     super.setOptions(iOptions);
-
     return this;
+  }
+
+  @Override
+  protected void parseSetting(final String option, final List<String> items) {
+    if (option.equalsIgnoreCase("-deleteRIDMapping"))
+      deleteRIDMapping = Boolean.parseBoolean(items.get(0));
+    else
+      super.parseSetting(option, items);
   }
 
   public ODatabaseImport importDatabase() {
     try {
+      if (!(database.getStorage() instanceof OStorageLocalAbstract)) {
+        listener.onMessage("\nError ! Only local databases with local storage can be imported. Import is terminated !");
+        return this;
+      }
+
       listener.onMessage("\nStarted import of database '" + database.getURL() + "' from " + fileName + "...");
 
       long time = System.currentTimeMillis();
@@ -126,7 +161,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.setMVCC(false);
       database.setValidationEnabled(false);
 
-      hashClustersAreUsed = database.getStorage().isHashClustersAreUsed();
+      exportImportHashTable.create(EXPORT_IMPORT_MAP_NAME, OLinkSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+          (OStorageLocalAbstract) database.getStorage());
 
       database.setStatus(STATUS.IMPORTING);
 
@@ -148,9 +184,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importManualIndexes();
       }
 
-      deleteHoleRecords();
-
+      database.getStorage().synch();
+      exportImportHashTable.close();
       database.setStatus(STATUS.OPEN);
+
+      if (isDeleteRIDMapping())
+        removeExportImportRIDsMap();
 
       listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
@@ -164,22 +203,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return this;
-  }
-
-  /**
-   * Delete all the temporary records created to fill the holes and to mantain the same record ID
-   */
-  private void deleteHoleRecords() {
-    listener.onMessage("\nDelete temporary records...");
-
-    final ORecordId rid = new ORecordId();
-    final ODocument doc = new ODocument(rid);
-    for (String recId : recordToDelete) {
-      doc.reset();
-      rid.fromString(recId);
-      doc.delete();
-    }
-    listener.onMessage("OK (" + recordToDelete.size() + " records)");
   }
 
   private void importInfo() throws IOException, ParseException {
@@ -239,13 +262,21 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         if (!value.isEmpty()) {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
+          doc.setLazyLoad(false);
 
-          if (!doc.<Boolean> field("binary"))
-            index.put(doc.field("key"), doc.<OIdentifiable> field("rid"));
-          else {
+          if (!doc.<Boolean> field("binary")) {
+            final ORID newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
+            assert newRid != null;
+
+            index.put(doc.field("key"), newRid);
+          } else {
             ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition = (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
-            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), doc.<OIdentifiable> field("rid"));
+
+            final ORID newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
+            assert newRid != null;
+
+            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), newRid);
           }
           tot++;
         }
@@ -490,6 +521,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
+    boolean makeFullCheckPointAfterClusterCreation = false;
+    if (database.getStorage() instanceof OLocalPaginatedStorage) {
+      makeFullCheckPointAfterClusterCreation = ((OLocalPaginatedStorage) database.getStorage())
+          .isMakeFullCheckPointAfterClusterCreate();
+      ((OLocalPaginatedStorage) database.getStorage()).disableFullCheckPointAfterClusterCreate();
+    }
+
     boolean recreateManualIndex = false;
     if (exporterVersion <= 4) {
       removeDefaultClusters();
@@ -543,9 +581,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (database.countClusterElements(clusterId - 1) == 0) {
           listener.onMessage("Found previous version: migrating old clusters...");
           database.dropCluster(name, true);
-          clusterId = database.addCluster(type, "temp_" + clusterId, null, null);
+          database.addCluster(type, "temp_" + clusterId, null, null);
           clusterId = database.addCluster(type, name, null, null);
-          // recreateManualIndex = true;
         } else
           throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
               + " different from the original: " + id + ". To continue the import drop the cluster '"
@@ -574,6 +611,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     listener.onMessage("\nDone. Imported " + total + " clusters");
+
+    if (database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId)) == null) {
+      ODocument indexDocument = new ODocument();
+      indexDocument.save(OMetadata.CLUSTER_INTERNAL_NAME);
+
+      database.getStorage().getConfiguration().indexMgrRecordId = indexDocument.getIdentity().toString();
+      database.getStorage().getConfiguration().update();
+    }
+
+    if (database.getStorage() instanceof OLocalPaginatedStorage && makeFullCheckPointAfterClusterCreation)
+      ((OLocalPaginatedStorage) database.getStorage()).enableFullCheckPointAfterClusterCreate();
 
     return total;
   }
@@ -642,10 +690,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
 
         ++totalRecords;
-      } else
-        lastClusterId = 0;
+      }
       record = null;
     }
+
+    rewriteLinksInImportedDocuments();
 
     listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
 
@@ -705,16 +754,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           return null;
       }
 
-      final String rid = record.getIdentity().toString();
-      final int clusterId = record.getIdentity().getClusterId();
+      if (record.getIdentity().equals(indexMgrRecordId))
+        return null;
 
-      if (hashClustersAreUsed && (clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster))
-        storeHashClusterRecord(new ORecordId(rid));
-      else
-        storeLocalClusterRecord();
+      final ORID rid = record.getIdentity();
 
-      if (!record.getIdentity().toString().equals(rid))
-        throw new OSchemaException("Imported record '" + record.getIdentity() + "' has rid different from the original: " + rid);
+      final int clusterId = rid.getClusterId();
+
+      if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
+        record.getRecordVersion().copyFrom(OVersionFactory.instance().createVersion());
+        record.setDirty();
+        record.setIdentity(new ORecordId());
+
+        record.save(database.getClusterNameById(clusterId));
+
+        exportImportHashTable.put(rid, record.getIdentity());
+      }
+
     } catch (Exception t) {
       if (record != null)
         System.err.println("Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber()
@@ -731,54 +787,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return record.getIdentity();
   }
 
-  private void storeLocalClusterRecord() {
-    long nextAvailablePos = database.getStorage().getClusterDataRange(record.getIdentity().getClusterId())[1].longValue() + 1;
-
-    // SAVE THE RECORD
-    if (record.getIdentity().getClusterPosition().longValue() < nextAvailablePos) {
-      // REWRITE PREVIOUS RECORD WITH THE SAME VERSION, SO USE A NEGATIVE NUMBER
-      record.getRecordVersion().setRollbackMode();
-
-      if (record instanceof ODocument)
-        record.save();
-      else
-        ((ODatabaseRecord) database.getUnderlying()).save(record);
-    } else {
-      String clusterName = database.getClusterNameById(record.getIdentity().getClusterId());
-
-      if (record.getIdentity().getClusterPosition().longValue() > nextAvailablePos) {
-        // CREATE HOLES
-        int holes = (int) (record.getIdentity().getClusterPosition().longValue() - nextAvailablePos);
-
-        ODocument tempRecord = new ODocument();
-        for (int i = 0; i < holes; ++i) {
-          tempRecord.reset();
-          ((ODatabaseRecord) database.getUnderlying()).save(tempRecord, clusterName);
-          recordToDelete.add(tempRecord.getIdentity().toString());
-        }
-      }
-
-      // APPEND THE RECORD
-      record.setIdentity(-1, ORecordId.CLUSTER_POS_INVALID);
-      if (record instanceof ODocument)
-        record.save(clusterName);
-      else
-        ((ODatabaseRecord) database.getUnderlying()).save(record, clusterName);
-    }
-  }
-
-  private void storeHashClusterRecord(final ORecordId rid) {
-    ORecordInternal<?> recordInternal = database.load(rid);
-    if (recordInternal != null)
-      recordInternal.delete();
-
-    record.setIdentity(rid);
-    record.save(true);
-  }
-
   private void importIndexes() throws IOException, ParseException {
     listener.onMessage("\nImporting indexes ...");
-    database.load(new ORecordId(indexMgrRecordId)).clear().save();
+
+    database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId)).clear().save();
 
     OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
     indexManager.reload();
@@ -876,7 +888,288 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return indexDefinition;
   }
 
+  private void rewriteLinksInImportedDocuments() throws IOException {
+    listener.onMessage("\nLinks are going to be updated according to new RIDs");
+
+    Collection<String> clusterNames = database.getClusterNames();
+    for (String clusterName : clusterNames) {
+      if (OMetadata.CLUSTER_INDEX_NAME.equals(clusterName) || OMetadata.CLUSTER_INTERNAL_NAME.equals(clusterName)
+          || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(clusterName))
+        continue;
+
+      long documents = 0;
+
+      listener.onMessage("\nRewrite links for " + clusterName + " cluster...");
+
+      int clusterId = database.getClusterIdByName(clusterName);
+      OCluster cluster = database.getStorage().getClusterById(clusterId);
+
+      OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(0)));
+      while (positions.length > 0) {
+        for (OPhysicalPosition position : positions) {
+          ORecord<?> record = database.load(new ORecordId(clusterId, position.clusterPosition));
+          if (record instanceof ODocument) {
+            ODocument document = (ODocument) record;
+            rewriteLinksInDocument(document);
+            documents++;
+
+            if (documents % 10000 == 0)
+              listener.onMessage("\n" + documents + " documents were processed...");
+          }
+        }
+
+        positions = cluster.higherPositions(positions[positions.length - 1]);
+      }
+      listener.onMessage("\nLinks for " + clusterName + " cluster were updated, " + documents + " were processed...");
+    }
+
+    listener.onMessage("\nLinks are successfully updated.");
+  }
+
+  private void rewriteLinksInDocument(ODocument document) {
+    RewritersFactory.INSTANCE.setExportImportHashTable(exportImportHashTable);
+
+    DocumentRewriter documentRewriter = new DocumentRewriter();
+    document = documentRewriter.rewriteValue(document);
+    if (document != null)
+      document.save();
+  }
+
+  public ODatabaseImport removeExportImportRIDsMap() {
+    listener.onMessage("\nDeleting RID Mapping table...");
+    exportImportHashTable.delete();
+    listener.onMessage("OK\n");
+    return this;
+  }
+
   public void close() {
     database.declareIntent(null);
+  }
+
+  public boolean isDeleteRIDMapping() {
+    return deleteRIDMapping;
+  }
+
+  public void setDeleteRIDMapping(boolean deleteRIDMapping) {
+    this.deleteRIDMapping = deleteRIDMapping;
+  }
+
+  private static class RewritersFactory {
+    public static final RewritersFactory                  INSTANCE = new RewritersFactory();
+
+    private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
+
+    @SuppressWarnings("unchecked")
+    public <T> FieldRewriter<T> findRewriter(ODocument document, String fieldName, T value) {
+      if (value == null)
+        return new IdentityRewriter<T>();
+
+      OType fieldType = null;
+
+      if (document != null) {
+        OClass docClass = document.getSchemaClass();
+        if (docClass != null) {
+          OProperty property = docClass.getProperty(fieldName);
+          if (property != null)
+            fieldType = property.getType();
+        } else {
+          fieldType = document.fieldType(fieldName);
+        }
+      }
+
+      if (fieldType == null) {
+        if (value instanceof ODocument)
+          return (FieldRewriter<T>) new DocumentRewriter();
+        else if (value instanceof List)
+          return (FieldRewriter<T>) new ListRewriter();
+        else if (value instanceof Map)
+          return (FieldRewriter<T>) new MapRewriter();
+        else if (value instanceof OMVRBTreeRIDSet)
+          return (FieldRewriter<T>) new LinkSetRewriter();
+        else if (value instanceof ORID)
+          return (FieldRewriter<T>) new LinkRewriter(exportImportHashTable);
+        else if (value instanceof Set)
+          return (FieldRewriter<T>) new SetRewriter();
+        else
+          return new IdentityRewriter<T>();
+      }
+
+      switch (fieldType) {
+      case EMBEDDED:
+        return (FieldRewriter<T>) new DocumentRewriter();
+      case LINKLIST:
+        return (FieldRewriter<T>) new ListRewriter();
+      case LINKMAP:
+        return (FieldRewriter<T>) new MapRewriter();
+      case LINKSET:
+        return (FieldRewriter<T>) new LinkSetRewriter();
+      case LINK:
+        return (FieldRewriter<T>) new LinkRewriter(exportImportHashTable);
+      case EMBEDDEDLIST:
+        return (FieldRewriter<T>) new ListRewriter();
+      case EMBEDDEDMAP:
+        return (FieldRewriter<T>) new MapRewriter();
+      case EMBEDDEDSET:
+        return (FieldRewriter<T>) new SetRewriter();
+      }
+
+      return new IdentityRewriter<T>();
+    }
+
+    private void setExportImportHashTable(OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable) {
+      this.exportImportHashTable = exportImportHashTable;
+    }
+  }
+
+  private interface FieldRewriter<T> {
+    T rewriteValue(T value);
+  }
+
+  private static class IdentityRewriter<T> implements FieldRewriter<T> {
+    @Override
+    public T rewriteValue(T value) {
+      return null;
+    }
+  }
+
+  private static class ListRewriter implements FieldRewriter<List<?>> {
+    @Override
+    public List<?> rewriteValue(List<?> listValue) {
+      boolean wasRewritten = false;
+      List<Object> result = new ArrayList<Object>(listValue.size());
+      for (Object listItem : listValue) {
+        FieldRewriter<Object> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(null, null, listItem);
+        Object rewrittenItem = fieldRewriter.rewriteValue(listItem);
+        if (rewrittenItem != null) {
+          wasRewritten = true;
+          result.add(rewrittenItem);
+        } else
+          result.add(listItem);
+      }
+
+      if (!wasRewritten)
+        return null;
+
+      return result;
+    }
+  }
+
+  private static class DocumentRewriter implements FieldRewriter<ODocument> {
+    @Override
+    public ODocument rewriteValue(ODocument documentValue) {
+      boolean wasRewritten = false;
+      documentValue.setLazyLoad(false);
+      for (String fieldName : documentValue.fieldNames()) {
+        Object fieldValue = documentValue.field(fieldName);
+
+        FieldRewriter<Object> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(documentValue, fieldName, fieldValue);
+        Object newFieldValue = fieldRewriter.rewriteValue(fieldValue);
+        if (newFieldValue != null) {
+          documentValue.field(fieldName, newFieldValue);
+          wasRewritten = true;
+        }
+      }
+
+      if (wasRewritten)
+        return documentValue;
+
+      return null;
+    }
+  }
+
+  private static class MapRewriter implements FieldRewriter<Map<String, Object>> {
+    @Override
+    public Map<String, Object> rewriteValue(Map<String, Object> mapValue) {
+      boolean wasRewritten = false;
+      Map<String, Object> result = new HashMap<String, Object>();
+      for (Map.Entry<String, Object> entry : mapValue.entrySet()) {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+
+        FieldRewriter<Object> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(null, null, value);
+        Object newValue = fieldRewriter.rewriteValue(value);
+
+        if (newValue != null) {
+          result.put(key, newValue);
+          wasRewritten = true;
+        } else
+          result.put(key, value);
+      }
+
+      if (wasRewritten)
+        return result;
+
+      return null;
+    }
+  }
+
+  private static class LinkSetRewriter implements FieldRewriter<OMVRBTreeRIDSet> {
+
+    @Override
+    public OMVRBTreeRIDSet rewriteValue(OMVRBTreeRIDSet setValue) {
+      setValue.setAutoConvertToRecord(false);
+
+      OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
+      result.setAutoConvertToRecord(false);
+
+      boolean wasRewritten = false;
+      for (OIdentifiable identifiable : setValue) {
+        FieldRewriter<ORID> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(null, null, identifiable.getIdentity());
+        ORID newRid = fieldRewriter.rewriteValue(identifiable.getIdentity());
+        if (newRid != null) {
+          wasRewritten = true;
+          result.add(newRid);
+        } else
+          result.add(identifiable);
+      }
+
+      if (wasRewritten)
+        return result;
+
+      result.clear();
+      return null;
+    }
+  }
+
+  private static class SetRewriter implements FieldRewriter<Set<?>> {
+    @Override
+    public Set<?> rewriteValue(Set<?> setValue) {
+      boolean wasRewritten = false;
+      Set<Object> result = new HashSet<Object>();
+      for (Object item : setValue) {
+        FieldRewriter<Object> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(null, null, item);
+        Object newItem = fieldRewriter.rewriteValue(item);
+
+        if (newItem != null) {
+          wasRewritten = true;
+          result.add(newItem);
+        } else
+          result.add(item);
+      }
+
+      if (wasRewritten)
+        return result;
+
+      return null;
+    }
+  }
+
+  private static class LinkRewriter implements FieldRewriter<ORID> {
+    private final OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
+
+    private LinkRewriter(OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable) {
+      this.exportImportHashTable = exportImportHashTable;
+    }
+
+    @Override
+    public ORID rewriteValue(ORID value) {
+      if (!value.isPersistent())
+        return null;
+
+      final OIdentifiable result = exportImportHashTable.get(value);
+
+      assert result != null;
+      return result.getIdentity();
+    }
   }
 }

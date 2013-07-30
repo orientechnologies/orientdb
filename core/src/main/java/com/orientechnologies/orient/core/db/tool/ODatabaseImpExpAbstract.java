@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -46,6 +47,7 @@ public abstract class ODatabaseImpExpAbstract {
   protected boolean                includeRecords            = true;
   protected boolean                includeIndexDefinitions   = true;
   protected boolean                includeManualIndexes      = true;
+  protected boolean                useLineFeedForRecords     = false;
 
   protected OCommandOutputListener listener;
 
@@ -60,8 +62,8 @@ public abstract class ODatabaseImpExpAbstract {
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<String>();
-    excludeClusters.add("index");
-    excludeClusters.add("manindex");
+    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public ODatabaseImpExpAbstract setOptions(final String iOptions) {
@@ -77,48 +79,7 @@ public abstract class ODatabaseImpExpAbstract {
         final String option = o.substring(0, sep);
         final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
 
-        if (option.equalsIgnoreCase("-includeClass")) {
-          includeClasses = new HashSet<String>();
-          for (String item : items)
-            includeClasses.add(item.toUpperCase());
-
-        } else if (option.equalsIgnoreCase("-excludeClass")) {
-          excludeClasses = new HashSet<String>(items);
-          for (String item : items)
-            excludeClasses.add(item.toUpperCase());
-
-        } else if (option.equalsIgnoreCase("-includeCluster")) {
-          includeClusters = new HashSet<String>(items);
-          for (String item : items)
-            includeClusters.add(item.toUpperCase());
-
-        } else if (option.equalsIgnoreCase("-excludeCluster")) {
-          excludeClusters = new HashSet<String>(items);
-          for (String item : items)
-            excludeClusters.add(item.toUpperCase());
-
-        } else if (option.equalsIgnoreCase("-includeInfo")) {
-          includeInfo = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeClusterDefinitions")) {
-          includeClusterDefinitions = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeSchema")) {
-          includeSchema = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeSecurity")) {
-          includeSecurity = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeRecords")) {
-          includeRecords = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeIndexDefinitions")) {
-          includeIndexDefinitions = Boolean.parseBoolean(items.get(0));
-
-        } else if (option.equalsIgnoreCase("-includeManualIndexes")) {
-          includeManualIndexes = Boolean.parseBoolean(items.get(0));
-
-        }
+        parseSetting(option, items);
       }
     }
     return this;
@@ -128,7 +89,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClusters;
   }
 
-  public void setIncludeClusters(Set<String> includeClusters) {
+  public void setIncludeClusters(final Set<String> includeClusters) {
     this.includeClusters = includeClusters;
   }
 
@@ -136,7 +97,7 @@ public abstract class ODatabaseImpExpAbstract {
     return excludeClusters;
   }
 
-  public void setExcludeClusters(Set<String> excludeClusters) {
+  public void setExcludeClusters(final Set<String> excludeClusters) {
     this.excludeClusters = excludeClusters;
   }
 
@@ -144,7 +105,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClasses;
   }
 
-  public void setIncludeClasses(Set<String> includeClasses) {
+  public void setIncludeClasses(final Set<String> includeClasses) {
     this.includeClasses = includeClasses;
   }
 
@@ -152,7 +113,7 @@ public abstract class ODatabaseImpExpAbstract {
     return excludeClasses;
   }
 
-  public void setExcludeClasses(Set<String> excludeClasses) {
+  public void setExcludeClasses(final Set<String> excludeClasses) {
     this.excludeClasses = excludeClasses;
   }
 
@@ -160,7 +121,7 @@ public abstract class ODatabaseImpExpAbstract {
     return listener;
   }
 
-  public void setListener(OCommandOutputListener listener) {
+  public void setListener(final OCommandOutputListener listener) {
     this.listener = listener;
   }
 
@@ -176,7 +137,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeSchema;
   }
 
-  public void setIncludeSchema(boolean includeSchema) {
+  public void setIncludeSchema(final boolean includeSchema) {
     this.includeSchema = includeSchema;
   }
 
@@ -184,7 +145,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeRecords;
   }
 
-  public void setIncludeRecords(boolean includeRecords) {
+  public void setIncludeRecords(final boolean includeRecords) {
     this.includeRecords = includeRecords;
   }
 
@@ -192,7 +153,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeIndexDefinitions;
   }
 
-  public void setIncludeIndexDefinitions(boolean includeIndexDefinitions) {
+  public void setIncludeIndexDefinitions(final boolean includeIndexDefinitions) {
     this.includeIndexDefinitions = includeIndexDefinitions;
   }
 
@@ -200,7 +161,7 @@ public abstract class ODatabaseImpExpAbstract {
     return includeManualIndexes;
   }
 
-  public void setIncludeManualIndexes(boolean includeManualIndexes) {
+  public void setIncludeManualIndexes(final boolean includeManualIndexes) {
     this.includeManualIndexes = includeManualIndexes;
   }
 
@@ -208,7 +169,63 @@ public abstract class ODatabaseImpExpAbstract {
     return includeClusterDefinitions;
   }
 
-  public void setIncludeClusterDefinitions(boolean includeClusterDefinitions) {
+  public void setIncludeClusterDefinitions(final boolean includeClusterDefinitions) {
     this.includeClusterDefinitions = includeClusterDefinitions;
+  }
+
+  public boolean isUseLineFeedForRecords() {
+    return useLineFeedForRecords;
+  }
+
+  public void setUseLineFeedForRecords(final boolean useLineFeedForRecords) {
+    this.useLineFeedForRecords = useLineFeedForRecords;
+  }
+
+  protected void parseSetting(final String option, final List<String> items) {
+    if (option.equalsIgnoreCase("-includeClass")) {
+      includeClasses = new HashSet<String>();
+      for (String item : items)
+        includeClasses.add(item.toUpperCase());
+
+    } else if (option.equalsIgnoreCase("-excludeClass")) {
+      excludeClasses = new HashSet<String>(items);
+      for (String item : items)
+        excludeClasses.add(item.toUpperCase());
+
+    } else if (option.equalsIgnoreCase("-includeCluster")) {
+      includeClusters = new HashSet<String>(items);
+      for (String item : items)
+        includeClusters.add(item.toUpperCase());
+
+    } else if (option.equalsIgnoreCase("-excludeCluster")) {
+      excludeClusters = new HashSet<String>(items);
+      for (String item : items)
+        excludeClusters.add(item.toUpperCase());
+
+    } else if (option.equalsIgnoreCase("-includeInfo")) {
+      includeInfo = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeClusterDefinitions")) {
+      includeClusterDefinitions = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeSchema")) {
+      includeSchema = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeSecurity")) {
+      includeSecurity = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeRecords")) {
+      includeRecords = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeIndexDefinitions")) {
+      includeIndexDefinitions = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-includeManualIndexes")) {
+      includeManualIndexes = Boolean.parseBoolean(items.get(0));
+
+    } else if (option.equalsIgnoreCase("-useLineFeedForRecords")) {
+      useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
+
+    }
   }
 }

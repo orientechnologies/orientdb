@@ -29,12 +29,12 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  */
 public class OHttpMultipartFileToRecordContentParser implements OHttpMultipartContentParser<ORID> {
 
-	@Override
-	public ORID parse(final OHttpRequest iRequest, final Map<String, String> headers, final OHttpMultipartContentInputStream in,
-			ODatabaseRecord database) throws IOException {
-		final ORecordBytes record = new ORecordBytes();
-		record.fromInputStream(in);
-		record.save();
-		return record.getIdentity();
-	}
+  @Override
+  public ORID parse(final OHttpRequest iRequest, final Map<String, String> headers, final OHttpMultipartContentInputStream in,
+      ODatabaseRecord database) throws IOException {
+    final ORecordBytes record = new ORecordBytes();
+    record.fromInputStream(in);
+    record.save();
+    return record.getIdentity();
+  }
 }

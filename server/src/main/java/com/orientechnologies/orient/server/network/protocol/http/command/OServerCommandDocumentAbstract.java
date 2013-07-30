@@ -23,35 +23,35 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
 public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthenticatedDbAbstract {
 
-	protected String bindToFields(final OHttpRequest iRequest, final Map<String, String> iFields, final ORecordId iRid)
-			throws Exception {
-		if (iRequest.content == null)
-			throw new IllegalArgumentException("HTTP Request content is empty");
+  protected String bindToFields(final OHttpRequest iRequest, final Map<String, String> iFields, final ORecordId iRid)
+      throws Exception {
+    if (iRequest.content == null)
+      throw new IllegalArgumentException("HTTP Request content is empty");
 
-		final String req = iRequest.content;
+    final String req = iRequest.content;
 
-		// PARSE PARAMETERS
-		String className = null;
+    // PARSE PARAMETERS
+    String className = null;
 
-		final String[] params = req.split("&");
-		String value;
+    final String[] params = req.split("&");
+    String value;
 
-		for (String p : params) {
-			if (OStringSerializerHelper.contains(p, '=')) {
-				String[] pairs = p.split("=");
-				value = pairs.length == 1 ? null : pairs[1];
+    for (String p : params) {
+      if (OStringSerializerHelper.contains(p, '=')) {
+        String[] pairs = p.split("=");
+        value = pairs.length == 1 ? null : pairs[1];
 
-				if ("0".equals(pairs[0]) && iRid != null)
-					iRid.fromString(value);
-				else if ("1".equals(pairs[0]))
-					className = value;
-				else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
-					continue;
-				else if (iFields != null) {
-					iFields.put(pairs[0], value);
-				}
-			}
-		}
-		return className;
-	}
+        if ("0".equals(pairs[0]) && iRid != null)
+          iRid.fromString(value);
+        else if ("1".equals(pairs[0]))
+          className = value;
+        else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
+          continue;
+        else if (iFields != null) {
+          iFields.put(pairs[0], value);
+        }
+      }
+    }
+    return className;
+  }
 }

@@ -25,6 +25,8 @@ public interface ODiskCache {
 
   void closeFile(long fileId) throws IOException;
 
+  void closeFile(long fileId, boolean flush) throws IOException;
+
   void deleteFile(long fileId) throws IOException;
 
   void renameFile(long fileId, String oldFileName, String newFileName) throws IOException;

@@ -19,57 +19,58 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public abstract class AbstractIndexReuseTest {
-	protected final ODatabaseDocumentTx	database;
-	private JMXConnector								jmxConnector;
-	protected OProfilerMBean						profiler;
+  protected final ODatabaseDocumentTx database;
+  private JMXConnector                jmxConnector;
+  protected OProfilerMBean            profiler;
 
-	public AbstractIndexReuseTest(final String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  public AbstractIndexReuseTest(final String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@BeforeClass
-	public void setUp() throws Exception {
-		database.open("admin", "admin");
-		profiler = getProfilerInstance();
-		database.close();
+  @BeforeClass
+  public void setUp() throws Exception {
+    database.open("admin", "admin");
 
-		if (!profiler.isRecording()) {
-			profiler.startRecording();
-		}
-	}
+    profiler = getProfilerInstance();
+    database.close();
 
-	@BeforeMethod
-	public void beforeMethod() {
-		if (database.isClosed()) {
-			database.open("admin", "admin");
-		}
-	}
+    if (!profiler.isRecording()) {
+      profiler.startRecording();
+    }
+  }
 
-	@AfterMethod
-	public void afterMethod() {
-		database.close();
-	}
+  @BeforeMethod
+  public void beforeMethod() {
+    if (database.isClosed()) {
+      database.open("admin", "admin");
+    }
+  }
 
-	@AfterClass
-	public void closeJMXConnector() throws Exception {
-		if (isRemoteStorage()) {
-			jmxConnector.close();
-		}
-	}
+  @AfterMethod
+  public void afterMethod() {
+    database.close();
+  }
 
-	private boolean isRemoteStorage() {
-		return database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread;
-	}
+  @AfterClass
+  public void closeJMXConnector() throws Exception {
+    if (isRemoteStorage()) {
+      jmxConnector.close();
+    }
+  }
 
-	private OProfilerMBean getProfilerInstance() throws Exception {
-		if (isRemoteStorage()) {
-			final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:10005/jmxrmi");
-			jmxConnector = JMXConnectorFactory.connect(url, null);
-			final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
-			final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
-			return JMX.newMBeanProxy(mbsc, onProfiler, OProfilerMBean.class, false);
-		} else {
+  private boolean isRemoteStorage() {
+    return database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread;
+  }
+
+  private OProfilerMBean getProfilerInstance() throws Exception {
+    if (isRemoteStorage()) {
+      final JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:10005/jmxrmi");
+      jmxConnector = JMXConnectorFactory.connect(url, null);
+      final MBeanServerConnection mbsc = jmxConnector.getMBeanServerConnection();
+      final ObjectName onProfiler = new ObjectName("OrientDB:type=Profiler");
+      return JMX.newMBeanProxy(mbsc, onProfiler, OProfilerMBean.class, false);
+    } else {
       return Orient.instance().getProfiler();
-		}
-	}
+    }
+  }
 }

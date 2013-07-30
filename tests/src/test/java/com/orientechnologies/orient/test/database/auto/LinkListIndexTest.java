@@ -95,9 +95,6 @@ public class LinkListIndexTest {
   }
 
   public void testIndexCollectionInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -161,9 +158,6 @@ public class LinkListIndexTest {
   }
 
   public void testIndexCollectionUpdateInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -267,9 +261,6 @@ public class LinkListIndexTest {
   }
 
   public void testIndexCollectionUpdateAddItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -344,9 +335,6 @@ public class LinkListIndexTest {
   }
 
   public void testIndexCollectionUpdateRemoveItemInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -460,9 +448,6 @@ public class LinkListIndexTest {
   }
 
   public void testIndexCollectionRemoveInTx() throws Exception {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     final ODocument docOne = new ODocument();
     docOne.save();
 

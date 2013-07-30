@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 public class OConcurrentModificationException extends ONeedRetryException {
 
+  private static final String MESSAGE_OPERATION      = "are";
   private static final String MESSAGE_RECORD_VERSION = "your=v";
   private static final String MESSAGE_DB_VERSION     = "db=v";
 
@@ -52,17 +53,24 @@ public class OConcurrentModificationException extends ONeedRetryException {
     int endPos = message.indexOf(' ', beginPos);
     rid = new ORecordId(message.substring(beginPos, endPos));
 
+    // EXTRACT THE OPERATION
+    beginPos = message.indexOf(MESSAGE_OPERATION, endPos) + MESSAGE_OPERATION.length() + 1;
+    endPos = message.indexOf("ing", beginPos);
+    recordOperation = ORecordOperation.getId(message.substring(beginPos, endPos).toUpperCase() + "E");
+
+    // EXTRACT THE DB VERSION
     beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
     endPos = message.indexOf(' ', beginPos);
     databaseVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
 
+    // EXTRACT MY VERSION
     beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
     endPos = message.indexOf(')', beginPos);
     recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
   }
 
-  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
-      final ORecordVersion iRecordVersion, final int iRecordOperation) {
+  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion, final ORecordVersion iRecordVersion,
+      final int iRecordOperation) {
     if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
@@ -72,12 +80,12 @@ public class OConcurrentModificationException extends ONeedRetryException {
     recordOperation = iRecordOperation;
   }
 
-	@Deprecated
+  @Deprecated
   public int getDatabaseVersion() {
     return databaseVersion.getCounter();
   }
 
-	@Deprecated
+  @Deprecated
   public int getRecordVersion() {
     return recordVersion.getCounter();
   }

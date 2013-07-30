@@ -1015,9 +1015,6 @@ public class IndexTest {
 
   @Test(dependsOnMethods = "linkedIndexedProperty")
   public void testLinkedIndexedPropertyInTx() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1063,9 +1060,6 @@ public class IndexTest {
   }
 
   public void testConcurrentRemoveDelete() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1357,7 +1351,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTx() {
-    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
@@ -1397,7 +1391,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTxRecursiveStore() {
-    if (database.getURL().startsWith("plocal:") || database.getURL().startsWith("remote:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();

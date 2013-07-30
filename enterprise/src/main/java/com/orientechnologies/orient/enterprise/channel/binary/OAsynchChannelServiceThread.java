@@ -32,11 +32,11 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   private ORemoteServerEventListener remoteServerEventListener;
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
-      final OChannelBinaryClient iFirstChannel, final String iThreadName) {
-    super(Orient.getThreadGroup(), iThreadName);
+      final OChannelBinaryClient iChannel) {
+    super(Orient.instance().getThreadGroup(), "OrientDB <- Asynch Client (" + iChannel.socket.getRemoteSocketAddress() + ")");
     sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
-    network = iFirstChannel;
+    network = iChannel;
     start();
   }
 
@@ -44,45 +44,35 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   protected void execute() throws Exception {
     try {
       network.beginResponse(sessionId, 0);
-      try {
-        final byte request = network.readByte();
+      final byte request = network.readByte();
 
-        Object obj = null;
+      Object obj = null;
 
-        switch (request) {
-        case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-          obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-          break;
+      switch (request) {
+      case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+        obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+        break;
 
-        case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
-          obj = network.readBytes();
-          break;
-        }
-
-        if (remoteServerEventListener != null)
-          remoteServerEventListener.onRequest(request, obj);
-
-      } catch (IOException ioe) {
-        // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
-        sendShutdown();
-        network.close();
-        network = null;
-
-      } finally {
-        if (network != null)
-          network.endResponse();
+      case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
+        obj = network.readBytes();
+        break;
       }
 
-    } catch (Exception e) {
-      // OLogManager.instance().error(this, "Error in service thread", e);
-      sendShutdown();
-    }
-  }
+      if (remoteServerEventListener != null)
+        remoteServerEventListener.onRequest(request, obj);
 
-  @Override
-  public void sendShutdown() {
-    super.sendShutdown();
-    if (network != null)
-      network.close();
+    } catch (IOException ioe) {
+      // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
+      sendShutdown();
+      if (network != null) {
+        final OChannelBinaryClient n = network;
+        network = null;
+        n.close();
+      }
+
+    } finally {
+      if (network != null)
+        network.endResponse();
+    }
   }
 }

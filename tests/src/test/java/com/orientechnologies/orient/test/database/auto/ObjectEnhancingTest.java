@@ -41,25 +41,28 @@ public class ObjectEnhancingTest {
   @Test()
   public void testCustomMethodFilter() {
     OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    OObjectEntityEnhancer.getInstance().registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
-    CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
-    testClass.setStandardField("testStandard");
-    testClass.setUPPERCASEFIELD("testUpperCase");
-    testClass.setTransientNotDefinedField("testTransient");
-    Assert.assertNull(testClass.getStandardFieldAsList());
-    Assert.assertNull(testClass.getStandardFieldAsMap());
-    database.save(testClass);
-    ORID rid = database.getIdentity(testClass);
-    database.close();
-    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    testClass = database.load(rid);
-    Assert.assertEquals(testClass.getStandardField(), "testStandard");
-    Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");
-    Assert.assertNull(testClass.getStandardFieldAsList());
-    Assert.assertNull(testClass.getStandardFieldAsMap());
-    ODocument doc = database.getRecordByUserObject(testClass, false);
-    Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
-    database.close();
+    try {
+      OObjectEntityEnhancer.getInstance().registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
+      CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
+      testClass.setStandardField("testStandard");
+      testClass.setUPPERCASEFIELD("testUpperCase");
+      testClass.setTransientNotDefinedField("testTransient");
+      Assert.assertNull(testClass.getStandardFieldAsList());
+      Assert.assertNull(testClass.getStandardFieldAsMap());
+      database.save(testClass);
+      ORID rid = database.getIdentity(testClass);
+      database.close();
+      database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      testClass = database.load(rid);
+      Assert.assertEquals(testClass.getStandardField(), "testStandard");
+      Assert.assertEquals(testClass.getUPPERCASEFIELD(), "testUpperCase");
+      Assert.assertNull(testClass.getStandardFieldAsList());
+      Assert.assertNull(testClass.getStandardFieldAsMap());
+      ODocument doc = database.getRecordByUserObject(testClass, false);
+      Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
+    } finally {
+      database.close();
+    }
   }
 
   public class CustomMethodFilter extends OObjectMethodFilter {

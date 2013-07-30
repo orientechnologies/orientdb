@@ -19,21 +19,21 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 
 public abstract class OServerCommandAuthenticatedPatternAbstract extends OServerCommandAuthenticatedDbAbstract {
 
-	private String[]	pattern;
+  private String[] pattern;
 
-	public OServerCommandAuthenticatedPatternAbstract(final OServerCommandConfiguration iConfig) {
-		if (iConfig.pattern == null)
-			throw new IllegalArgumentException("Command pattern missed");
+  public OServerCommandAuthenticatedPatternAbstract(final OServerCommandConfiguration iConfig) {
+    if (iConfig.pattern == null)
+      throw new IllegalArgumentException("Command pattern missed");
 
-		pattern = iConfig.pattern.split(" ");
-	}
+    pattern = iConfig.pattern.split(" ");
+  }
 
-	public OServerCommandAuthenticatedPatternAbstract(String[] pattern) {
-		this.pattern = pattern;
-	}
+  public OServerCommandAuthenticatedPatternAbstract(String[] pattern) {
+    this.pattern = pattern;
+  }
 
-	@Override
-	public String[] getNames() {
-		return pattern;
-	}
+  @Override
+  public String[] getNames() {
+    return pattern;
+  }
 }

@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.db.graph;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -50,6 +52,15 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
     checkForGraphSchema();
+
+    try {
+      ODatabase current = underlying;
+      while (!(current instanceof ODatabaseRaw) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplex<?>) current).getUnderlying();
+      ((ODatabaseRaw) current).callOnOpenListeners();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on reusing database '%s' in pool", e, getName());
+    }
   }
 
   @Override
@@ -92,7 +103,11 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
     }
 
     try {
-      ((ODatabaseRaw) underlying.getUnderlying()).callOnCloseListeners();
+      ODatabase current = underlying;
+      while (!(current instanceof ODatabaseRaw) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplex<?>) current).getUnderlying();
+
+      ((ODatabaseRaw) current).callOnCloseListeners();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }

@@ -58,8 +58,14 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final String[] labels;
-    if (iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(OStringSerializerHelper.getStringContent(iParameters[0]), String.class);
+    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+
+        @Override
+        public Object call(final Object iArgument) {
+          return OStringSerializerHelper.getStringContent(iArgument);
+        }
+      });
     else
       labels = null;
 

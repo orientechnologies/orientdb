@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.tool;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -26,30 +27,39 @@ import java.util.Set;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedCall;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
-  private OStorage            storage1;
-  private OStorage            storage2;
+  private OStorage                                      storage1;
+  private OStorage                                      storage2;
 
-  private ODatabaseDocumentTx databaseDocumentTxOne;
-  private ODatabaseDocumentTx databaseDocumentTxTwo;
+  private ODatabaseDocumentTx                           databaseDocumentTxOne;
+  private ODatabaseDocumentTx                           databaseDocumentTxTwo;
 
-  private boolean             compareEntriesForAutomaticIndexes = false;
+  private boolean                                       compareEntriesForAutomaticIndexes = false;
+  private boolean                                       autoDetectExportImportMap         = true;
 
-  private int                 differences                       = 0;
+  private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
+  private int                                           differences                       = 0;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -81,12 +91,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     // exclude automatically generated clusters
     excludeClusters.add("orids");
-    excludeClusters.add("index");
-    excludeClusters.add("manindex");
+    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
     return compareEntriesForAutomaticIndexes;
+  }
+
+  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
+    this.autoDetectExportImportMap = autoDetectExportImportMap;
   }
 
   public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
@@ -107,11 +121,50 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     }
 
     try {
+      ODocumentHelper.RIDMapper ridMapper = null;
+      if (autoDetectExportImportMap) {
+        listener
+            .onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
+        File file = new File(databaseDocumentTxTwo.getStorage().getConfiguration().getDirectory() + File.separator
+            + ODatabaseImport.EXPORT_IMPORT_MAP_NAME + ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT);
+        if (file.exists()) {
+          listener.onMessage("\nMapping data were found and will be loaded.");
+          OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>();
+          keyHashFunction.setValueSerializer(OLinkSerializer.INSTANCE);
+
+          exportImportHashTable = new OLocalHashTable<OIdentifiable, OIdentifiable>(ODatabaseImport.EXPORT_IMPORT_MAP_METADATA_EXT,
+              ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT, ODatabaseImport.EXPORT_IMPORT_MAP_BF_EXT, keyHashFunction);
+          exportImportHashTable.load(ODatabaseImport.EXPORT_IMPORT_MAP_NAME,
+              (OStorageLocalAbstract) databaseDocumentTxTwo.getStorage());
+
+          ridMapper = new ODocumentHelper.RIDMapper() {
+            @Override
+            public ORID map(ORID rid) {
+              if (rid == null)
+                return null;
+
+              if (!rid.isPersistent())
+                return null;
+
+              final OIdentifiable result = exportImportHashTable.get(rid);
+              if (result == null)
+                return null;
+
+              return result.getIdentity();
+            }
+          };
+        } else
+          listener.onMessage("\nMapping data were not found.");
+      }
+
       compareClusters();
-      compareRecords();
+      compareRecords(ridMapper);
 
       if (isDocumentDatabases())
-        compareIndexes();
+        compareIndexes(ridMapper);
+
+      if (exportImportHashTable != null)
+        exportImportHashTable.close();
 
       if (differences == 0) {
         listener.onMessage("\n\nDatabases match.");
@@ -131,7 +184,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  private void compareIndexes() {
+  private void compareIndexes(ODocumentHelper.RIDMapper ridMapper) {
     listener.onMessage("\nStarting index comparison:");
 
     boolean ok = true;
@@ -294,7 +347,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             }
           });
 
-          final Object indexOneValue = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+          Object indexOneValue = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
             public Object call() {
               return indexOneEntry.getValue();
             }
@@ -317,7 +370,20 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
             final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
 
-            if (!ODocumentHelper.compareSets(databaseDocumentTxOne, indexOneValueSet, databaseDocumentTxTwo, indexTwoValueSet)) {
+            if (!ODocumentHelper.compareSets(databaseDocumentTxOne, indexOneValueSet, databaseDocumentTxTwo, indexTwoValueSet,
+                ridMapper)) {
+              ok = false;
+              reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
+            }
+          } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
+            if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
+              OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
+              assert identifiable != null;
+
+              if (identifiable != null)
+                indexOneValue = identifiable.getIdentity();
+            }
+            if (!indexOneValue.equals(indexTwoValue)) {
               ok = false;
               reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
             }
@@ -390,7 +456,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     return true;
   }
 
-  private boolean compareRecords() {
+  private boolean compareRecords(ODocumentHelper.RIDMapper ridMapper) {
     listener.onMessage("\nStarting deep comparison record by record. This may take a few minutes. Wait please...");
 
     int clusterId;
@@ -409,9 +475,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       OClusterPosition[] db1Range = storage1.getClusterDataRange(clusterId);
       OClusterPosition[] db2Range = storage2.getClusterDataRange(clusterId);
-
-      final OClusterPosition db1Min = db1Range[0];
-      final OClusterPosition db2Min = db2Range[0];
 
       final OClusterPosition db1Max = db1Range[1];
       final OClusterPosition db2Max = db2Range[1];
@@ -447,7 +510,16 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             continue;
 
           final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false).getResult();
-          final ORawBuffer buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
+          final ORawBuffer buffer2;
+          if (ridMapper == null)
+            buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
+          else {
+            final ORID newRid = ridMapper.map(rid);
+            if (newRid == null)
+              buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
+            else
+              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false).getResult();
+          }
 
           if (buffer1 == null && buffer2 == null)
             // BOTH RECORD NULL, OK
@@ -515,7 +587,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                   });
                 }
 
-                if (!ODocumentHelper.hasSameContentOf(doc1, databaseDocumentTxOne, doc2, databaseDocumentTxTwo)) {
+                if (!ODocumentHelper.hasSameContentOf(doc1, databaseDocumentTxOne, doc2, databaseDocumentTxTwo, ridMapper)) {
                   listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " document content is different");
                   listener.onMessage("\n--- REC1: " + new String(buffer1.buffer));
                   listener.onMessage("\n--- REC2: " + new String(buffer2.buffer));

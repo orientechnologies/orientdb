@@ -39,14 +39,17 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
     this.maxParams = iMaxParams;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public int getMinParams() {
     return minParams;
   }
 
+  @Override
   public int getMaxParams() {
     return maxParams;
   }
@@ -56,28 +59,35 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
     return name + "()";
   }
 
+  @Override
   public void config(final Object[] iConfiguredParameters) {
   }
 
+  @Override
   public boolean aggregateResults() {
     return false;
   }
 
+  @Override
   public boolean filterResult() {
     return false;
   }
 
+  @Override
   public Object getResult() {
     return null;
   }
 
+  @Override
   public void setResult(final Object iResult) {
   }
 
+  @Override
   public boolean shouldMergeDistributedResult() {
     return false;
   }
 
+  @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
     throw new IllegalStateException("By default SQL function execution result can not be merged");
   }

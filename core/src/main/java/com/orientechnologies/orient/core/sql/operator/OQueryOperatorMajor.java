@@ -21,17 +21,12 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
 
 /**
  * MAJOR operator.
@@ -68,8 +63,9 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
+    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
+
     final Object result;
 
     if (indexDefinition.getParamCount() == 1) {
@@ -83,7 +79,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesMajor(key, false).size();
+        result = index.count(key, false, null, false, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesMajor(key, false, fetchLimit);
       else
@@ -107,7 +103,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValuesBetween(keyOne, false, keyTwo, true).size();
+        result = index.count(keyOne, false, keyTwo, true, fetchLimit);
       else if (fetchLimit > -1)
         result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
       else

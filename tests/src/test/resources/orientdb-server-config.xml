@@ -46,7 +46,6 @@
         </listeners>
     </network>
     <storages>
-        <storage loaded-at-startup="true" userPassword="admin" userName="admin" path="memory:temp" name="temp"/>
     </storages>
     <users>
         <user resources="*" password="D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3" name="root"/>

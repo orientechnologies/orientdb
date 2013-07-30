@@ -66,8 +66,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     query = null;
     recordCount = 0;
@@ -158,6 +157,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             return index.remove((OIdentifiable) value);
         else
           result = index.remove(key);
+
         return result ? 1 : 0;
       }
     }

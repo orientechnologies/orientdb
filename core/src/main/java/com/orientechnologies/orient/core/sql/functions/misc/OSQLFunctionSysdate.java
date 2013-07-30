@@ -22,6 +22,7 @@ import java.util.TimeZone;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 /**
  * Returns the current date time.
@@ -44,7 +45,8 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
     now = new Date();
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     if (iParameters.length == 0)
       return now;
 
@@ -52,6 +54,8 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
       format = new SimpleDateFormat((String) iParameters[0]);
       if (iParameters.length == 2)
         format.setTimeZone(TimeZone.getTimeZone(iParameters[1].toString()));
+      else
+        format.setTimeZone(ODateHelper.getDatabaseTimeZone());
     }
 
     return format.format(now);

@@ -1118,7 +1118,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         }
 
         if (bucket.addEntry(key, value)) {
-          assert bucket.getEntry(bucket.getIndex(key)).value.equals(value);
+          // assert bucket.getEntry(bucket.getIndex(key)).value.equals(value);
           markPageAsDirty(pageIndex, fileLevel);
 
           size++;

@@ -15,45 +15,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -418,7 +389,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    return ODocumentHelper.hasSameContentOf(this, getDatabase(), iOther, getDatabase());
+    final ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
   @Override
@@ -522,7 +494,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldValues == null || _fieldValues.size() == 0)
       return EMPTY_STRINGS;
 
-    return _fieldValues.keySet().toArray(new String[_fieldValues.keySet().size()]);
+    return _fieldValues.keySet().toArray(new String[_fieldValues.size()]);
   }
 
   /**
@@ -532,7 +504,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     checkForLoading();
     checkForFields();
 
-    return _fieldValues.values().toArray(new Object[_fieldValues.values().size()]);
+    return _fieldValues.values().toArray(new Object[_fieldValues.size()]);
   }
 
   public <RET> RET rawField(final String iFieldName) {
@@ -567,10 +539,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_lazyLoad && value instanceof ORID && t != OType.LINK && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
-      removeCollectionChangeListener(iFieldName);
-      removeCollectionTimeLine(iFieldName);
-      _fieldValues.put(iFieldName, value);
-      addCollectionChangeListener(iFieldName, value);
+      if (!iFieldName.contains(".")) {
+        removeCollectionChangeListener(iFieldName);
+        removeCollectionTimeLine(iFieldName);
+        _fieldValues.put(iFieldName, value);
+        addCollectionChangeListener(iFieldName, value);
+      }
     }
 
     // CHECK FOR CONVERSION
@@ -653,6 +627,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Fills a document passing the field names/values.
    */
   public ODocument fields(final String iFieldName, final Object iFieldValue, final Object... iFields) {
+    if (iFields != null && iFields.length % 2 != 0)
+      throw new IllegalArgumentException("Fields must be passed in pairs as name and value");
+
     field(iFieldName, iFieldValue);
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {

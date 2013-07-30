@@ -40,11 +40,6 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public static final String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
 
   /**
-   * Flushes in-memory changes to disk.
-   */
-  public void flush();
-
-  /**
    * Loads the index giving the configuration.
    * 
    * @param iConfig
@@ -91,6 +86,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    */
   public boolean canBeUsedInEqualityOperators();
 
+  public boolean hasRangeQuerySupport();
+
   /**
    * Prohibit index modifications. Only index read commands are allowed after this call.
    * 
@@ -120,11 +117,13 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 
   public void setRebuildingFlag();
 
+  public void close();
+
   public final class IndexMetadata {
-    private String           name;
-    private OIndexDefinition indexDefinition;
-    private Set<String>      clustersToIndex;
-    private String           type;
+    private final String           name;
+    private final OIndexDefinition indexDefinition;
+    private final Set<String>      clustersToIndex;
+    private final String           type;
 
     public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type) {
       this.name = name;
@@ -147,6 +146,36 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
 
     public String getType() {
       return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      IndexMetadata that = (IndexMetadata) o;
+
+      if (!clustersToIndex.equals(that.clustersToIndex))
+        return false;
+      if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null)
+        return false;
+      if (!name.equals(that.name))
+        return false;
+      if (!type.equals(that.type))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + (indexDefinition != null ? indexDefinition.hashCode() : 0);
+      result = 31 * result + clustersToIndex.hashCode();
+      result = 31 * result + type.hashCode();
+      return result;
     }
   }
 }

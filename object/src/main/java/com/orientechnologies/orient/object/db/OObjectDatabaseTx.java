@@ -24,7 +24,9 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -40,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -57,6 +60,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
+import com.orientechnologies.orient.object.enhancement.OObjectSchemaGenerator;
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
@@ -77,6 +81,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   protected OEntityManager      entityManager;
   protected boolean             saveOnlyDirty;
   protected boolean             lazyLoading;
+  protected boolean             automaticSchemaGeneration;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -114,9 +119,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
-      RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-          iEnclosingClass, underlying.newInstance(iClassName), null, iArgs);
-      return (RET) enhanced;
+      Class<?> entityClass = entityManager.getEntityClass(iClassName);
+      if (entityClass != null) {
+        RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
+            iEnclosingClass, underlying.newInstance(iClassName), null, iArgs);
+        return (RET) enhanced;
+      } else {
+        throw new OSerializationException("Type " + iClassName
+            + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+      }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
     }
@@ -134,9 +145,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
-      RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
-          iEnclosingClass, iDocument, null, iArgs);
-      return (RET) enhanced;
+      Class<?> entityClass = entityManager.getEntityClass(iClassName);
+      if (entityClass != null) {
+        RET enhanced = (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(entityManager.getEntityClass(iClassName),
+            iEnclosingClass, iDocument, null, iArgs);
+        return (RET) enhanced;
+      } else {
+        throw new OSerializationException("Type " + iClassName
+            + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+      }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on creating object of class " + iClassName, e, ODatabaseException.class);
     }
@@ -475,6 +492,43 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return this;
   }
 
+  public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
+    OObjectSchemaGenerator.generateSchema(iClass, underlying);
+    return this;
+  }
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName) {
+    return generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
+
+    List<Class<?>> classes = null;
+    try {
+      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
+    }
+    for (Class<?> c : classes) {
+      generateSchema(c);
+    }
+
+    return this;
+  }
+
   private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
@@ -558,7 +612,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             break;
 
           case ORecordOperation.DELETED:
-            unregisterPojo(pojo, (ODocument) entry.getRecord());
+            final ORecordInternal<?> rec = entry.getRecord();
+            if (rec instanceof ODocument)
+              unregisterPojo(pojo, (ODocument) rec);
             break;
           }
         }
@@ -641,6 +697,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public void setSaveOnlyDirty(boolean saveOnlyDirty) {
     this.saveOnlyDirty = saveOnlyDirty;
+  }
+
+  public boolean isAutomaticSchemaGeneration() {
+    return automaticSchemaGeneration;
+  }
+
+  public void setAutomaticSchemaGeneration(boolean automaticSchemaGeneration) {
+    this.automaticSchemaGeneration = automaticSchemaGeneration;
   }
 
   public Object newInstance() {

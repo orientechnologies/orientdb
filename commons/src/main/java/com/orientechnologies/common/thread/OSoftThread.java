@@ -3,81 +3,79 @@ package com.orientechnologies.common.thread;
 import com.orientechnologies.common.util.OService;
 
 public abstract class OSoftThread extends Thread implements OService {
-	public OSoftThread() {
-	}
+  private volatile boolean shutdownFlag;
 
-	public OSoftThread(final ThreadGroup iThreadGroup) {
-		super(iThreadGroup, OSoftThread.class.getSimpleName());
-		setDaemon(true);
-	}
+  public OSoftThread() {
+  }
 
-	public OSoftThread(final String name) {
-		super(name);
-		setDaemon(true);
-	}
+  public OSoftThread(final ThreadGroup iThreadGroup) {
+    super(iThreadGroup, OSoftThread.class.getSimpleName());
+    setDaemon(true);
+  }
 
-	public OSoftThread(final ThreadGroup group, final String name) {
-		super(group, name);
-		setDaemon(true);
-	}
+  public OSoftThread(final String name) {
+    super(name);
+    setDaemon(true);
+  }
 
-	protected abstract void execute() throws Exception;
+  public OSoftThread(final ThreadGroup group, final String name) {
+    super(group, name);
+    setDaemon(true);
+  }
 
-	public void startup() {
-	}
+  protected abstract void execute() throws Exception;
 
-	public void shutdown() {
-	}
+  public void startup() {
+  }
 
-	public void sendShutdown() {
-		interrupt();
-	}
+  public void shutdown() {
+  }
 
-	@Override
-	public void run() {
-		startup();
+  public void sendShutdown() {
+    shutdownFlag = true;
+  }
 
-		while (!isInterrupted()) {
-			try {
-				beforeExecution();
-				execute();
-				afterExecution();
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
-		}
+  @Override
+  public void run() {
+    startup();
 
-		shutdown();
-	}
+    while (!shutdownFlag && !isInterrupted()) {
+      try {
+        beforeExecution();
+        execute();
+        afterExecution();
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+    }
 
-	public boolean isRunning() {
-		return !interrupted();
-	}
+    shutdown();
+  }
 
-	/**
-	 * Pauses current thread until iTime timeout or a wake up by another thread.
-	 * 
-	 * @param iTime
-	 * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
-	 */
-	public static boolean pauseCurrentThread(long iTime) {
-		try {
-			if (iTime <= 0)
-				iTime = Long.MAX_VALUE;
+  /**
+   * Pauses current thread until iTime timeout or a wake up by another thread.
+   * 
+   * @param iTime
+   * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
+   */
+  public static boolean pauseCurrentThread(long iTime) {
+    try {
+      if (iTime <= 0)
+        iTime = Long.MAX_VALUE;
 
-			Thread.sleep(iTime);
-			return true;
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			return false;
-		}
-	}
+      Thread.sleep(iTime);
+      return true;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    }
+  }
 
-	protected void beforeExecution() throws InterruptedException {
-		return;
-	}
+  protected void beforeExecution() throws InterruptedException {
+    return;
+  }
 
-	protected void afterExecution() throws InterruptedException {
-		return;
-	}
+  protected void afterExecution() throws InterruptedException {
+    return;
+  }
 }

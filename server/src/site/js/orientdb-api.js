@@ -187,7 +187,8 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setDatabaseInfo(this.transformResponse(msg));
+				if( msg )
+				  this.setDatabaseInfo(this.transformResponse(msg));
 			},
 			error : function(msg, textStatus, errorThrown) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);

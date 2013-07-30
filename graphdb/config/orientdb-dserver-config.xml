@@ -14,6 +14,10 @@
 				<parameter name="alignment.startup" value="true" />
 				<parameter name="alignment.timer" value="120000" />
 				<parameter name="conflict.resolver.impl" value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
+					
+				<!-- REPLICATION STRATEGIES -->
+				<parameter name="replication.strategy.auto"
+					value="com.orientechnologies.orient.server.hazelcast.strategy.OAutoReplicationStrategy" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
@@ -83,8 +87,6 @@
 		</cluster>
 	</network>
 	<storages>
-		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
 	</storages>
 	<users>
 	</users>

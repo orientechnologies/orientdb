@@ -35,6 +35,7 @@ import javax.script.ScriptEngine;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -42,29 +43,30 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
-  private static final String                        PARAM_OUTPUT = "output";
-  private static Object                              ONE          = new Object();
-  private static GremlinGroovyScriptEngineFactory    factory      = new GremlinGroovyScriptEngineFactory();
-  private static OGremlinHelper                      instance     = new OGremlinHelper();
+  private static final String                            PARAM_OUTPUT = "output";
+  private static GremlinGroovyScriptEngineFactory        factory      = new GremlinGroovyScriptEngineFactory();
+  private static OGremlinHelper                          instance     = new OGremlinHelper();
 
-  private int                                        maxEngines   = 0;
-  private int                                        maxGraphs    = 0;
+  private int                                            maxPool      = 50;
 
-  private OResourcePool<OGraphDatabase, OrientGraph> graphPool;
+  private OResourcePool<OGraphDatabase, OrientBaseGraph> graphPool;
+  private long                                           timeout;
 
   public static interface OGremlinCallback {
-    public boolean call(ScriptEngine iEngine, OrientGraph iGraph);
+    public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
   }
 
   public OGremlinHelper() {
     OCommandManager.instance().registerRequester("gremlin", OCommandGremlin.class);
     OCommandManager.instance().registerExecutor(OCommandGremlin.class, OCommandGremlinExecutor.class);
+    timeout = OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsLong();
   }
 
   /**
@@ -74,19 +76,20 @@ public class OGremlinHelper {
     if (graphPool != null)
       // ALREADY CREATED
       return;
-    graphPool = new OResourcePool<OGraphDatabase, OrientGraph>(maxGraphs, new OResourcePoolListener<OGraphDatabase, OrientGraph>() {
+    graphPool = new OResourcePool<OGraphDatabase, OrientBaseGraph>(maxPool,
+        new OResourcePoolListener<OGraphDatabase, OrientBaseGraph>() {
 
-      @Override
-      public OrientGraph createNewResource(final OGraphDatabase iKey, final Object... iAdditionalArgs) {
-        return new OrientGraph(iKey);
-      }
+          @Override
+          public OrientGraph createNewResource(final OGraphDatabase iKey, final Object... iAdditionalArgs) {
+            return new OrientGraph(iKey);
+          }
 
-      @Override
-      public boolean reuseResource(final OGraphDatabase iKey, final Object[] iAdditionalArgs, final OrientGraph iReusedGraph) {
-        iReusedGraph.reuse(iKey);
-        return true;
-      }
-    });
+          @Override
+          public boolean reuseResource(final OGraphDatabase iKey, final Object[] iAdditionalArgs, final OrientBaseGraph iReusedGraph) {
+            iReusedGraph.reuse(iKey);
+            return true;
+          }
+        });
   }
 
   /**
@@ -94,7 +97,7 @@ public class OGremlinHelper {
    */
   public void destroy() {
     if (graphPool != null) {
-      for (OrientGraph graph : graphPool.getResources()) {
+      for (OrientBaseGraph graph : graphPool.getResources()) {
         graph.shutdown();
       }
       graphPool.close();
@@ -114,20 +117,28 @@ public class OGremlinHelper {
 
   public OrientGraph acquireGraph(final OGraphDatabase iDatabase) {
     checkStatus();
-    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase, Long.MAX_VALUE));
+    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase, timeout));
   }
 
-  public void releaseGraph(final OrientGraph iGraph) {
+  public void releaseGraph(final OrientBaseGraph iGraph) {
     checkStatus();
     graphPool.returnResource(iGraph);
   }
 
+  @SuppressWarnings("unchecked")
   public static Object execute(final OGraphDatabase iDatabase, final String iText, final Map<Object, Object> iConfiguredParameters,
       Map<Object, Object> iCurrentParameters, final List<Object> iResult, final OGremlinCallback iBeforeExecution,
       final OGremlinCallback iAfterExecution) {
-    final OrientGraph graph = OGremlinHelper.global().acquireGraph(iDatabase);
+    return execute(OGremlinHelper.global().acquireGraph(iDatabase), iText, iConfiguredParameters, iCurrentParameters, iResult,
+        iBeforeExecution, iAfterExecution);
+  }
+
+  public static Object execute(final OrientBaseGraph graph, final String iText, final Map<Object, Object> iConfiguredParameters,
+      Map<Object, Object> iCurrentParameters, final List<Object> iResult, final OGremlinCallback iBeforeExecution,
+      final OGremlinCallback iAfterExecution) {
     try {
       final ScriptEngine engine = getGremlinEngine(graph);
+
       try {
         final String output = OGremlinHelper.bindParameters(engine, iConfiguredParameters, iCurrentParameters);
 
@@ -207,7 +218,7 @@ public class OGremlinHelper {
     }
   }
 
-  protected static ScriptEngine getGremlinEngine(final OrientGraph graph) {
+  protected static ScriptEngine getGremlinEngine(final OrientBaseGraph graph) {
     return OGremlinEngineThreadLocal.INSTANCE.get(graph);
   }
 
@@ -225,14 +236,15 @@ public class OGremlinHelper {
       }
 
     String output = null;
-    for (Entry<Object, Object> param : iCurrentParameters.entrySet()) {
-      final String paramName = param.getKey().toString().trim();
-      if (paramName.equals(PARAM_OUTPUT)) {
-        output = param.getValue().toString();
-        continue;
+    if (iCurrentParameters != null)
+      for (Entry<Object, Object> param : iCurrentParameters.entrySet()) {
+        final String paramName = param.getKey().toString().trim();
+        if (paramName.equals(PARAM_OUTPUT)) {
+          output = param.getValue().toString();
+          continue;
+        }
+        iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
       }
-      iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
-    }
     return output;
   }
 
@@ -240,6 +252,7 @@ public class OGremlinHelper {
    * Tries to clone any Java object by using 3 techniques: - instanceof (most verbose but faster performance) - reflection (medium
    * performance) - serialization (applies for any object type but has a performance overhead)
    */
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   public static Object cloneObject(final Object objectToClone, final Object previousClone) {
 
     // ***************************************************************************************************************************************
@@ -252,7 +265,7 @@ public class OGremlinHelper {
         recycledMap = new HashMap();
       else
         recycledMap.clear();
-      recycledMap.putAll((Map) objectToClone);
+      recycledMap.putAll((Map<?, ?>) objectToClone);
       return recycledMap;
 
       // Clone any collection (shallow clone should be enough at this level)
@@ -262,7 +275,7 @@ public class OGremlinHelper {
         recycledCollection = new ArrayList();
       else
         recycledCollection.clear();
-      recycledCollection.addAll((Collection) objectToClone);
+      recycledCollection.addAll((Collection<?>) objectToClone);
       return recycledCollection;
 
       // Clone String
@@ -281,7 +294,7 @@ public class OGremlinHelper {
       // ***************************************************************************************************************************************
       try {
         Object newClone = null;
-        for (Class obj = objectToClone.getClass(); !obj.equals(Object.class); obj = obj.getSuperclass()) {
+        for (Class<?> obj = objectToClone.getClass(); !obj.equals(Object.class); obj = obj.getSuperclass()) {
           Method m[] = obj.getDeclaredMethods();
           for (int i = 0; i < m.length; i++) {
             if (m[i].getName().equals("clone")) {
@@ -328,20 +341,13 @@ public class OGremlinHelper {
     return instance;
   }
 
-  public int getMaxEngines() {
-    return maxEngines;
+  public int getMaxPool() {
+    return maxPool;
   }
 
-  public void setMaxEngines(int maxEngines) {
-    this.maxEngines = maxEngines;
-  }
-
-  public int getMaxGraphs() {
-    return maxGraphs;
-  }
-
-  public void setMaxGraphs(int maxGraphs) {
-    this.maxGraphs = maxGraphs;
+  public OGremlinHelper setMaxGraphPool(final int maxGraphs) {
+    this.maxPool = maxGraphs;
+    return this;
   }
 
   private void checkStatus() {

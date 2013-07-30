@@ -15,15 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.raw;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
@@ -47,13 +40,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -66,14 +54,14 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-  protected String                      url;
-  protected OStorage                    storage;
-  protected STATUS                      status;
-  protected OIntent                     currentIntent;
+  protected String                     url;
+  protected OStorage                   storage;
+  protected STATUS                     status;
+  protected OIntent                    currentIntent;
 
-  private ODatabaseRecord               databaseOwner;
-  private final Map<String, Object>     properties = new HashMap<String, Object>();
-  private final List<ODatabaseListener> listeners  = new ArrayList<ODatabaseListener>();
+  private ODatabaseRecord              databaseOwner;
+  private final Map<String, Object>    properties = new HashMap<String, Object>();
+  private final Set<ODatabaseListener> listeners  = Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64));
 
   public ODatabaseRaw(final String iURL) {
     if (iURL == null)
@@ -102,16 +90,8 @@ public class ODatabaseRaw implements ODatabase {
 
       status = STATUS.OPEN;
 
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onOpen(getDatabaseOwner());
-
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : listeners)
-        try {
-          listener.onOpen(this);
-        } catch (Throwable t) {
-        }
+      callOnOpenListeners();
 
     } catch (OException e) {
       // PASS THROUGH
@@ -503,20 +483,21 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void registerListener(final ODatabaseListener iListener) {
-    if (!listeners.contains(iListener))
-      listeners.add(iListener);
+    if (iListener == null)
+      return;
+
+    listeners.add(iListener);
   }
 
-  public void unregisterListener(final ODatabaseListener iListener) {
-    for (int i = 0; i < listeners.size(); ++i)
-      if (listeners.get(i) == iListener) {
-        listeners.remove(i);
-        break;
-      }
+  public void unregisterListener(final ODatabaseListener listener) {
+    if (listener == null)
+      return;
+
+    listeners.remove(listener);
   }
 
   public List<ODatabaseListener> getListeners() {
-    return listeners;
+    return new ArrayList<ODatabaseListener>(listeners);
   }
 
   public OLevel2RecordCache getLevel2Cache() {
@@ -742,6 +723,20 @@ public class ODatabaseRaw implements ODatabase {
   @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
+  }
+
+  public void callOnOpenListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onOpen(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
   }
 
   public void callOnCloseListeners() {

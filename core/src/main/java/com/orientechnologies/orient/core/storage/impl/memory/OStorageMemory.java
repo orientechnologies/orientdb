@@ -16,14 +16,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -42,14 +35,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -751,7 +737,7 @@ public class OStorageMemory extends OStorageEmbedded {
       }
 
       // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-      OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getAllRecordEntries(), true);
+      OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
     } catch (IOException e) {
       rollback(iTx);
 
@@ -867,27 +853,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return size;
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      moveRecord(originalId, newId);
-    } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, ioe);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer,
-              "db.*.changeRecordIdentity");
-    }
-  }
-
-  @Override
+	@Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     if (ppos.dataSegmentId > 0)
       return false;
@@ -921,7 +887,12 @@ public class OStorageMemory extends OStorageEmbedded {
     case ORecordOperation.CREATED:
       if (rid.isNew()) {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-        byte[] stream = txEntry.getRecord().toStream();
+        final byte[] stream = txEntry.getRecord().toStream();
+
+        if (stream == null) {
+          OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
+          break;
+        }
 
         if (rid.isNew()) {
           final ORecordId oldRID = rid.copy();
@@ -948,7 +919,12 @@ public class OStorageMemory extends OStorageEmbedded {
       break;
 
     case ORecordOperation.UPDATED:
-      byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = txEntry.getRecord().toStream();
+
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
+        break;
+      }
 
       txEntry
           .getRecord()

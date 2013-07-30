@@ -15,7 +15,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -131,6 +130,12 @@ public class OIndexProxy<T> implements OIndex<T> {
     final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
     return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
+  }
+
+  @Override
+  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
+      final int maxValuesToFetch) {
+    return lastIndex.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
   }
 
   /**
@@ -382,8 +387,8 @@ public class OIndexProxy<T> implements OIndex<T> {
   // Following methods are not allowed for proxy.
   //
 
-  public OIndex<T> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase, String iClusterIndexName,
-      int[] iClusterIdsToIndex, boolean rebuild, OProgressListener iProgressListener) {
+  public OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
+      boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -483,7 +488,8 @@ public class OIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public OIndex<T> lazySave() {
+  @Override
+  public void flush() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

@@ -1,13 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * @author Andrey Lomakin
@@ -54,6 +52,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
   @BeforeClass
   public void beforeClass() {
     OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
@@ -76,8 +75,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
     if (baseDocumentTx.exists()) {
       baseDocumentTx.open("admin", "admin");
       baseDocumentTx.drop();
-    } else
-      baseDocumentTx.create();
+    }
+
+    baseDocumentTx.create();
 
     createSchema(baseDocumentTx);
   }
@@ -104,7 +104,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
+    OStorage baseStorage = baseDocumentTx.getStorage();
     baseDocumentTx.close();
+    baseStorage.close();
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromWAL");
     testDocumentTx.open("admin", "admin");
@@ -122,27 +124,29 @@ public class LocalPaginatedStorageRestoreFromWAL {
   }
 
   private void copyDataFromTestWithoutClose() throws Exception {
-    final Path testStoragePath = Paths.get(baseDocumentTx.getURL().substring("plocal:".length()));
-    Path buildPath = Paths.get(buildDir.toURI());
+    final String testStoragePath = baseDocumentTx.getURL().substring("plocal:".length());
+    final String copyTo = buildDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL";
 
-    final Path copyTo = buildPath.resolve("testLocalPaginatedStorageRestoreFromWAL");
+    final File testStorageDir = new File(testStoragePath);
+    final File copyToDir = new File(copyTo);
 
-    Files.copy(testStoragePath, copyTo);
+    Assert.assertTrue(!copyToDir.exists());
+    Assert.assertTrue(copyToDir.mkdir());
 
-    Files.walkFileTree(testStoragePath, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Path fileToCopy = copyTo.resolve(testStoragePath.relativize(file));
-        if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWAL.wmr");
-        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWAL.0.wal");
+    File[] storageFiles = testStorageDir.listFiles();
+    Assert.assertNotNull(storageFiles);
 
-        Files.copy(file, fileToCopy);
+    for (File storageFile : storageFiles) {
+      String copyToPath;
+      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
+      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
+      else
+        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
 
-        return FileVisitResult.CONTINUE;
-      }
-    });
+      copyFile(storageFile.getAbsolutePath(), copyToPath);
+    }
   }
 
   private void createSchema(ODatabaseDocumentTx databaseDocumentTx) {
@@ -166,72 +170,94 @@ public class LocalPaginatedStorageRestoreFromWAL {
     public Void call() throws Exception {
 
       Random random = new Random();
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
 
-      List<ORID> testTwoList = new ArrayList<ORID>();
-      List<ORID> firstDocs = new ArrayList<ORID>();
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(baseDocumentTx.getURL());
+      db.open("admin", "admin");
+      try {
+        List<ORID> testTwoList = new ArrayList<ORID>();
+        List<ORID> firstDocs = new ArrayList<ORID>();
 
-      OClass classOne = baseDocumentTx.getMetadata().getSchema().getClass("TestOne");
-      OClass classTwo = baseDocumentTx.getMetadata().getSchema().getClass("TestTwo");
+        OClass classOne = db.getMetadata().getSchema().getClass("TestOne");
+        OClass classTwo = db.getMetadata().getSchema().getClass("TestTwo");
 
-      for (int i = 0; i < 1000; i++) {
-        ODocument docOne = new ODocument(classOne);
-        docOne.field("intProp", random.nextInt());
+        for (int i = 0; i < 5000; i++) {
+          ODocument docOne = new ODocument(classOne);
+          docOne.field("intProp", random.nextInt());
 
-        byte[] stringData = new byte[256];
-        random.nextBytes(stringData);
-        String stringProp = new String(stringData);
+          byte[] stringData = new byte[256];
+          random.nextBytes(stringData);
+          String stringProp = new String(stringData);
 
-        docOne.field("stringProp", stringProp);
+          docOne.field("stringProp", stringProp);
 
-        Set<String> stringSet = new HashSet<String>();
-        for (int n = 0; n < 5; n++) {
-          stringSet.add("str" + random.nextInt());
-        }
-        docOne.field("stringSet", stringSet);
-
-        docOne.save();
-
-        firstDocs.add(docOne.getIdentity());
-
-        if (random.nextBoolean()) {
-          ODocument docTwo = new ODocument(classTwo);
-
-          List<String> stringList = new ArrayList<String>();
-
+          Set<String> stringSet = new HashSet<String>();
           for (int n = 0; n < 5; n++) {
-            stringList.add("strnd" + random.nextInt());
+            stringSet.add("str" + random.nextInt());
           }
+          docOne.field("stringSet", stringSet);
 
-          docTwo.field("stringList", stringList);
-          docTwo.save();
-
-          testTwoList.add(docTwo.getIdentity());
-        }
-
-        if (!testTwoList.isEmpty()) {
-          int startIndex = random.nextInt(testTwoList.size());
-          int endIndex = random.nextInt(testTwoList.size() - startIndex) + startIndex;
-
-          Map<String, ORID> linkMap = new HashMap<String, ORID>();
-
-          for (int n = startIndex; n < endIndex; n++) {
-            ORID docTwoRid = testTwoList.get(n);
-            linkMap.put(docTwoRid.toString(), docTwoRid);
-          }
-
-          docOne.field("linkMap", linkMap);
           docOne.save();
-        }
 
-        boolean deleteDoc = random.nextDouble() <= 0.2;
-        if (deleteDoc) {
-          ORID rid = firstDocs.remove(random.nextInt(firstDocs.size()));
-          baseDocumentTx.delete(rid);
+          firstDocs.add(docOne.getIdentity());
+
+          if (random.nextBoolean()) {
+            ODocument docTwo = new ODocument(classTwo);
+
+            List<String> stringList = new ArrayList<String>();
+
+            for (int n = 0; n < 5; n++) {
+              stringList.add("strnd" + random.nextInt());
+            }
+
+            docTwo.field("stringList", stringList);
+            docTwo.save();
+
+            testTwoList.add(docTwo.getIdentity());
+          }
+
+          if (!testTwoList.isEmpty()) {
+            int startIndex = random.nextInt(testTwoList.size());
+            int endIndex = random.nextInt(testTwoList.size() - startIndex) + startIndex;
+
+            Map<String, ORID> linkMap = new HashMap<String, ORID>();
+
+            for (int n = startIndex; n < endIndex; n++) {
+              ORID docTwoRid = testTwoList.get(n);
+              linkMap.put(docTwoRid.toString(), docTwoRid);
+            }
+
+            docOne.field("linkMap", linkMap);
+            docOne.save();
+          }
+
+          boolean deleteDoc = random.nextDouble() <= 0.2;
+          if (deleteDoc) {
+            ORID rid = firstDocs.remove(random.nextInt(firstDocs.size()));
+            db.delete(rid);
+          }
         }
+      } finally {
+        db.close();
       }
 
       return null;
     }
+  }
+
+  private static void copyFile(String from, String to) throws IOException {
+    final File fromFile = new File(from);
+    FileInputStream fromInputStream = new FileInputStream(fromFile);
+    BufferedInputStream fromBufferedStream = new BufferedInputStream(fromInputStream);
+
+    FileOutputStream toOutputStream = new FileOutputStream(to);
+    byte[] data = new byte[1024];
+    int bytesRead = fromBufferedStream.read(data);
+    while (bytesRead > 0) {
+      toOutputStream.write(data, 0, bytesRead);
+      bytesRead = fromBufferedStream.read(data);
+    }
+
+    fromBufferedStream.close();
+    toOutputStream.close();
   }
 }
