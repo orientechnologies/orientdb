@@ -192,7 +192,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   @Override
   public ODocument reset() {
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
-    final int deleted = database.command(new OSQLSynchQuery<OIdentifiable>("delete from " + DISTRIBUTED_CONFLICT_CLASS));
+    final int deleted = (Integer) database.command(new OSQLSynchQuery<OIdentifiable>("delete from " + DISTRIBUTED_CONFLICT_CLASS))
+        .execute();
     return new ODocument().field("result", deleted);
   }
 
