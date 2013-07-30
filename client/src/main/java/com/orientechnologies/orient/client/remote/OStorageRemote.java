@@ -1591,7 +1591,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       } catch (IOException e) {
         OLogManager.instance().debug(this, "Error while reading response on creation of connection ", e);
-        
+
         if (network != null)
           synchronized (networkPool) {
             network.close();
@@ -1760,7 +1760,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     final int beginCursor = networkPoolCursor;
     while (network == null) {
       synchronized (networkPool) {
-        if (networkPoolCursor >= networkPool.size())
+        if (networkPoolCursor < 0)
+          networkPoolCursor = 0;
+        else if (networkPoolCursor >= networkPool.size())
           networkPoolCursor = networkPool.size() - 1;
 
         if (networkPool.size() == 0) {
