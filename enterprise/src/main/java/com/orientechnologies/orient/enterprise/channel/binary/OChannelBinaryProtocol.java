@@ -100,6 +100,7 @@ public class OChannelBinaryProtocol {
   public static final short RECORD_NULL                            = -2;
   public static final short RECORD_RID                             = -3;
 
+  // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
   public static final int   CURRENT_PROTOCOL_VERSION               = 17; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
