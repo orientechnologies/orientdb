@@ -43,4 +43,6 @@ public interface OReplicationConflictResolver {
   public void handleCommandConflict(String iRemoteNodeId, Object iCommand, Object iLocalResult, Object iRemoteResult);
 
   public boolean existConflictsForRecord(final ORecordId iRID);
+
+  public ODocument reset();
 }

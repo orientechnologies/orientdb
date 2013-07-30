@@ -799,9 +799,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (dManager == null)
       throw new OConfigurationException("No distributed manager configured");
 
+    final String operation = request.field("operation");
+
     ODocument response = null;
 
-    final String operation = request.field("operation");
     if (operation.equals("start")) {
       checkServerAccess("server.replication.start");
 
@@ -814,16 +815,30 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("getJournal")) {
       checkServerAccess("server.replication.getJournal");
 
+      final Integer limit = request.field("limit");
+
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+
+      final Iterable<ODocument> result = dbSynch.getLog().query(null, limit != null ? limit : -1);
+      response = new ODocument().field("result", result, OType.EMBEDDEDLIST);
+
     } else if (operation.equals("resetJournal")) {
       checkServerAccess("server.replication.resetJournal");
+
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+      dbSynch.getLog().reset();
 
     } else if (operation.equals("getAllConflicts")) {
       final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
       response = dbSynch.getConflictResolver().getAllConflicts();
 
-    }
+    } else if (operation.equals("resetConflicts")) {
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+      response = dbSynch.getConflictResolver().reset();
 
+    }
     sendResponse(response);
+
   }
 
   protected void distributedCluster() throws IOException {

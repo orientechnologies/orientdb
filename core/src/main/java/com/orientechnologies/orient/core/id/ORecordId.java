@@ -285,6 +285,9 @@ public class ORecordId implements ORID {
 
   @SuppressWarnings("unchecked")
   public <T extends ORecord<?>> T getRecord() {
+    if (!isValid())
+      return null;
+
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db == null)
       throw new ODatabaseException(

@@ -749,8 +749,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     OIdentifiable resultRid = null;
     ORID rid;
 
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-
     if (iLinked instanceof ORID) {
       // JUST THE REFERENCE
       rid = (ORID) iLinked;
@@ -759,6 +757,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         // SAVE AT THE FLY AND STORE THE NEW RID
         final ORecord<?> record = rid.getRecord();
 
+        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (database.getTransaction().isActive()) {
           // USE THE DEFAULT CLUSTER
           database.save((ORecordInternal<?>) record);
@@ -789,6 +788,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       rid = iLinkedRecord.getIdentity();
 
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
+        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
           final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
           database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getDefaultClusterId()) : null);
@@ -802,6 +802,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         resultRid = iLinkedRecord;
       }
 
+      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (iParentRecord != null && database instanceof ODatabaseRecord) {
         final ODatabaseRecord db = database;
         if (!db.isRetainRecords())
