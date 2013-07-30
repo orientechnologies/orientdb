@@ -144,6 +144,7 @@
         <copy todir="${db.release}" file="license.txt"/>
         <copy tofile="${db.release}/readme.txt" file="readme.txt"/>
         <copy tofile="${db.release}/history.txt" file="history.txt"/>
+        <copy tofile="${db.release}/upgrade.txt" file="upgrade.txt"/>
 
         <copy todir="${db.release}/bin/" flatten="true">
             <fileset dir="."
