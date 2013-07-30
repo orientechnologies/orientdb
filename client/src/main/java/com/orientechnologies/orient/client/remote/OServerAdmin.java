@@ -466,12 +466,13 @@ public class OServerAdmin {
    *         involved. Example {"10022":"1#10:3"}
    * @throws IOException
    */
-  public synchronized ODocument getReplicationJournal(final String iDatabaseName, final String iRemoteServer) throws IOException {
+  public synchronized ODocument getReplicationJournal(final String iDatabaseName, final String iRemoteServer, final int iMaxRecords)
+      throws IOException {
     OLogManager.instance().debug(this, "Retrieving the replication log for database '%s' from server '%s'...", iDatabaseName,
         storage.getURL());
 
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION,
-        new ODocument().field("operation", "getJournal").field("node", iRemoteServer).field("db", iDatabaseName),
+        new ODocument().fields("operation", "getJournal", "node", iRemoteServer, "db", iDatabaseName, "limit", iMaxRecords),
         "Retrieve replication log");
 
     OLogManager.instance().debug(this,

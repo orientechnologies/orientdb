@@ -26,7 +26,9 @@ import java.util.Map;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -123,6 +125,15 @@ public class ODatabaseJournal {
       file.create(DEF_START_SIZE);
   }
 
+  public void reset() throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+      file.shrink(0);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
   public OStorage getStorage() {
     return storage;
   }
@@ -183,6 +194,9 @@ public class ODatabaseJournal {
         task = new OSQLCommandTask(runId, operationId, new String(buffer));
         break;
       }
+
+      default:
+        return null;
       }
 
       if (task != null)
@@ -280,7 +294,7 @@ public class ODatabaseJournal {
       while ((localOperationId[0] > iRemoteLastOperationId[0])
           || (localOperationId[0] == iRemoteLastOperationId[0] && localOperationId[1] > iRemoteLastOperationId[1])) {
 
-        if (getOperationStatus(fileOffset) == iStatus && !rids.contains(fileOffset)) {
+        if ((iStatus == null || iStatus == getOperationStatus(fileOffset)) && !rids.contains(fileOffset)) {
           // COLLECT CURRENT POSITION AS GOOD
           result.add(fileOffset);
           rids.add(fileOffset);
@@ -435,6 +449,97 @@ public class ODatabaseJournal {
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  public Iterable<ODocument> query(final OPERATION_STATUS iStatus, final int iMaxItems) throws IOException {
+    LinkedList<ODocument> result = new LinkedList<ODocument>();
+
+    lock.acquireExclusiveLock();
+    try {
+
+      final Iterator<Long> iter = browseLastOperations(new long[] { -1, -1 }, null, iMaxItems);
+      while (iter.hasNext()) {
+        final long pos = iter.next();
+
+        final long runId = file.readLong(pos - OFFSET_BACK_RUNID);
+        final long operationId = file.readLong(pos - OFFSET_BACK_OPERATID);
+        final int varSize = file.readInt(pos - OFFSET_BACK_SIZE);
+        final long offset = pos - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
+
+        final OPERATION_STATUS status = OPERATION_STATUS.values()[file.readByte(offset)];
+
+        if (iStatus != null && status != iStatus)
+          continue;
+
+        final OPERATION_TYPES operationType = OPERATION_TYPES.values()[file.readByte(offset + OFFSET_OPERATION_TYPE)];
+
+        final ODocument doc = new ODocument();
+        doc.setIdentity(-2, new OClusterPositionLong(result.size()));
+        doc.fields("serial", runId + "." + operationId, "status", status, "type", operationType.toString());
+
+        switch (operationType) {
+        case RECORD_CREATE: {
+          final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA),
+              OClusterPositionFactory.INSTANCE.valueOf(file.readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+          if (rid.isNew())
+            // GET LAST RID
+            rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
+
+          doc.fields("rid", "" + rid);
+
+          final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
+          if (record != null)
+            doc.fields("size", record.buffer.length, "version", record.version, "recordType", record.recordType);
+
+          break;
+        }
+
+        case RECORD_UPDATE: {
+          final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA),
+              OClusterPositionFactory.INSTANCE.valueOf(file.readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+          doc.fields("rid", rid);
+
+          final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
+          if (record != null)
+            doc.fields("size", record.buffer.length, "version", record.version, "recordType", record.recordType);
+
+          break;
+        }
+
+        case RECORD_DELETE: {
+          final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA),
+              OClusterPositionFactory.INSTANCE.valueOf(file.readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+          doc.fields("rid", rid);
+
+          final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
+          if (record != null)
+            doc.fields("version", record.version);
+          break;
+        }
+
+        case SQL_COMMAND: {
+          final byte[] buffer = new byte[varSize];
+          file.read(offset + OFFSET_VARDATA, buffer, buffer.length);
+          doc.fields("command", new String(buffer));
+          break;
+        }
+        }
+
+        if (iMaxItems > -1 && result.size() >= iMaxItems)
+          // LIMIT REACHED
+          break;
+
+        if (doc != null)
+          result.add(0, doc);
+      }
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+
+    return result;
   }
 
   /**

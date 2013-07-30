@@ -174,15 +174,26 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
         + DISTRIBUTED_CONFLICT_CLASS));
 
     // EARLY LOAD CONTENT
-    final ODocument result = new ODocument().field("entries", entries);
+    final ODocument result = new ODocument().field("result", entries);
     for (int i = 0; i < entries.size(); ++i) {
       final ODocument record = entries.get(i).getRecord();
       record.setClassName(null);
       record.addOwner(result);
       record.getIdentity().reset();
+
+      final Byte operation = record.field("operation");
+      record.field("operation", ORecordOperation.getName(operation));
+
       entries.set(i, record);
     }
     return result;
+  }
+
+  @Override
+  public ODocument reset() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    final int deleted = database.command(new OSQLSynchQuery<OIdentifiable>("delete from " + DISTRIBUTED_CONFLICT_CLASS));
+    return new ODocument().field("result", deleted);
   }
 
   /**
