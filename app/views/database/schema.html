@@ -1,5 +1,8 @@
 <div class="row-fluid" ng-controller="SchemaController">
 	<div class = "span12 nomargin">
+		<div>
+			<a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-plus"></i> Create Class</a>
+		</div>
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="headers">
 			<thead>
 				<tr>
@@ -12,18 +15,25 @@
 				
 			</thead>
 			<tbody>
-				<tr ng-repeat="result in listClasses | orderBy:predicate:reverse" ng-click="openClass(result)">
-					<td>{{result['name']}}</td>
-					<td>{{result['type']}}</td>
-					<td>{{result['mandatory']}}</td>
-					<td>
+				<tr ng-repeat="result in listClasses | orderBy:predicate:reverse" >
+					<td ng-click="openClass(result)">{{result['name']}}</td>
+					<td ng-click="openClass(result)">{{result['type']}}</td>
+					<td ng-click="openClass(result)">{{result['mandatory']}}</td>
+					<td ng-click="openClass(result)">
 						<input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
 					</td>
-					<td>{{result['clusters']}}</td>
-					<td>{{result['defaultCluster']}}</td>
-					<td>{{result['records']}}</td>
+					<td ng-click="openClass(result)">{{result['clusters']}}</td>
+					<td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
+					<td ng-click="openClass(result)">{{result['records']}}</td>
+					<td>
+						<a href="javascript:void(0)" class="btn btn-small" ng-click="queryAll(result['name'])" > <i class="icon-question-sign" ></i> Query All</a>
+						<a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])" > <i class="icon-plus" ></i> Create Record</a>
+						<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropClass(result['name'])" > <i class="icon-white icon-trash" ></i> Drop</a>
+					</td>
 				</tr>
+
 			</tbody>
+
 
 
 

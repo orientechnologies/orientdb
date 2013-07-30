@@ -1,0 +1,46 @@
+<div ng-controller="IndexController">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h3>Index:{{newIndex['name']}}</h3>
+	</div>
+	<div class="modal-body edge">
+		<div class="row-fluid">
+			<div class="span12">
+				<form class="form-horizontal">
+					<div class="control-group">
+						<label class="control-label" for="inputName">Name *</label>
+						<div class="controls">
+							<input type="text" id="inputName" ng-model="nameIndexToShow" value="{{nameIndexToShow}}"/>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" >Type * </label>
+						<div class="controls">
+							<select ng-model="newIndex['type']" ng-options="p.toString() for p in listTypeIndex">
+							</select>
+						</div>
+					</div>
+					<div class="control-group" ng-show="namesProp"> 
+						<label class="control-label" >Fields</label>
+						<div class="controls controls-row">
+
+							<div ng-repeat="zz in namesProp" class="span4">
+								<input type='checkbox' ng-model="namesProp[zz]" value="{{zz}}"  ng-change="addedField(zz)"> {{zz}}<br/>
+							</div>
+							
+						</div>
+
+					</div>
+					
+
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button type="submit" class="btn btn-primary" ng-click="saveNewIndex()">Save</button>
+
+		<button type="button" class="btn" ng-click="hide()">Close</button>
+
+	</div>
+

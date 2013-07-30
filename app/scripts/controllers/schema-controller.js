@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller',['database.services']);
-schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
+schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi','$dialog',function($scope,$routeParams,$location,Database,CommandApi,$dialog){
 
 	$scope.database = Database;
 	$scope.listClasses = $scope.database.listClasses();
@@ -14,12 +14,44 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 	$scope.openClass = function(clazz){
 		$location.path("/database/" + $scope.database.getName() + "/browse/editclass/" + clazz.name);
 	}
+
+	$scope.dropClass = function(nameClass){
+		
+		Utilities.confirm($scope,$dialog,{
+
+			title : 'Warning!',
+			body : 'You are dropping class '+ nameClass + '. Are you sure?',
+			success : function() {
+				var sql = 'DROP CLASS ' + nameClass;
+
+				CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+
+				var elem = $scope.listClasses.indexOf($scope.listClasses[nameClass])
+				$scope.listClasses.splice(elem,1)
+				$scope.listClasses.splice()
+				});
+
+			}
+			
+		});
+
+	}
+
+	$scope.queryAll = function(className){
+		$location.path("/database/" + $scope.database.getName() + "/browse/select * from "+className );
+	}
+	$scope.createRecord = function(className){
+		$location.path("/database/" + $scope.database.getName() + "/browse/create/"+className );
+	}
+
+
 }]);
 schemaModule.controller("ClassEditController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$dialog','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$dialog,$route){
 
 
 	var clazz = $routeParams.clazz;
 
+	$scope.class2show = clazz;
 
 	$scope.database = Database;
 
@@ -222,7 +254,19 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		$route.reload();
 	}
 		
-
+	$scope.rebuildIndex = function(indexName){
+		var sql = 'REBUILD INDEX ' + indexName;
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+		// $scope.hide();
+		// $scope.parentScope.refreshPage();
+		});
+	}
+	$scope.rebuildAllIndexes = function(){
+		var sql = 'REBUILD INDEX *' ;
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+		
+		});
+	}
 
 
 }]);
@@ -236,25 +280,39 @@ schemaModule.controller("IndexController",['$scope','$routeParams','$location','
 	$scope.newIndex = 	{"name": "", "type": "", "fields": "" }
 	$scope.namesProp = $scope.propertiesName;
 	$scope.prop2add = new Array;
+	$scope.nameIndexToShow = $scope.classInject + '.';
 
 	// for(zz in $scope.namesProp )
 	// console.log($scope.namesProp[zz])
 
 	$scope.addedField = function(nameField){
 		var index = $scope.prop2add.indexOf(nameField);
-		console.log(index)
+		
 		if(index==-1){
 			$scope.prop2add.push(nameField)
 		}
 		else{
 			$scope.prop2add.splice(index,1)
 		}
-		console.log($scope.prop2add);
+		var first = true;
+		$scope.nameIndexToShow = $scope.classInject + '_';
+
+		for(entry in $scope.prop2add){
+			if(first){
+				$scope.nameIndexToShow = $scope.nameIndexToShow + $scope.prop2add[entry] ;
+				first=!first
+			}
+			else{
+				$scope.nameIndexToShow = $scope.nameIndexToShow + '_' + $scope.prop2add[entry];
+			}
+
+		}
+
 	}
 
 	$scope.saveNewIndex = function(){
 		
-		if($scope.newIndex['name']==undefined || $scope.newIndex['name']=="" || $scope.newIndex['name']==null)
+		if($scope.nameIndexToShow==undefined || $scope.nameIndexToShow=="" || $scope.nameIndexToShow==null)
 			return;
 		if($scope.newIndex['type']==undefined || $scope.newIndex['type']=="" || $scope.newIndex['type']==null)
 			return;
@@ -270,19 +328,26 @@ schemaModule.controller("IndexController",['$scope','$routeParams','$location','
 			else{
 				proppps = proppps + ',' + $scope.prop2add[entry];
 			}
-			console.log(proppps);
+			// console.log(proppps);
+
 
 		}
+		var nameInddd = proppps;
+		nameInddd.replace(')','');
 
-		var sql = 'CREATE INDEX '+$scope.newIndex['name'] + ' ON ' + $scope.classInject + ' ( ' + proppps+ ' ) ' +   $scope.newIndex['type'];
+		var sql = 'CREATE INDEX ' +$scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps+ ' ) ' +   $scope.newIndex['type'];
+
+
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
 		$scope.hide();
 		$scope.parentScope.refreshPage();
 		});
-
+console.log(sql);
 		
 		
 	}
+
+	
 
 
 
