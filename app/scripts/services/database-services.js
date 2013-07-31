@@ -3,7 +3,6 @@ var database = angular.module('database.services', ['ngResource']);
 DatabaseResolve = {
 	current : function (Database,$q,$route,$location){
 		var deferred = $q.defer();
-
 		Database.refreshMetadata($route.current.params.database,function(){
 			deferred.resolve();
 		})
@@ -82,22 +81,26 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		isConnected : function(){
 			return current.username !=null;
 		},
-		connect : function (database,username,password,callback){
+		connect : function (database,username,password,callback,error){
 			var self = this;
 			DatabaseApi.connect(database,username,password,function(){
 				callback();
+			},function(){
+				error();
 			});
 		},
-		disconnect : function(){
+		disconnect : function(callback){
 			DatabaseApi.disconnect(function(){
-				
+				delete current.name;
+				delete current.username;
+				delete current.metadata;
+				localStorageService.clearAll();
+				localStorageService.cookie.clearAll();
+				document.cookie = "";
+				console.log(document.cookie);
+				callback();
 			});
-			delete current.name;
-			delete current.username;
-			delete current.metadata;
-			localStorageService.clearAll();
-			localStorageService.cookie.clearAll();
-			document.cookie = "";
+			
 		},
 		findType : function(clazz,value,field){
 			var metadata = this.getMetadata();
@@ -366,9 +369,9 @@ database.factory('DatabaseApi', function($http,$resource){
 	resource.listDatabases = function(callback) {
 		$http.get('/api/listDatabases').success(callback);
 	}
-	resource.connect = function(database,username,password,callback) {
+	resource.connect = function(database,username,password,callback,error) {
 		$http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
-		$http.get('/api/connect/' + database).success(callback);
+		$http.get('/api/connect/' + database).success(callback).error(error);
 	}
 	resource.createDatabase = function(name,type,stype,username,password,callback) {
 		$http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
@@ -377,8 +380,11 @@ database.factory('DatabaseApi', function($http,$resource){
 			callback(data);
 		});	
 	}
-	resource.disconnect = function(database,username,password,callback) {	
-		$http.post('/api/disconnect').success(function(){
+	resource.disconnect = function(callback) {	
+		$http.get('/api/disconnect').success(function(){
+			$http.defaults.headers.common['Authorization'] = null;
+			callback();
+		}).error(function(){
 			$http.defaults.headers.common['Authorization'] = null;
 			callback();
 		});

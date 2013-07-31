@@ -17,7 +17,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 		var modalScope = $scope.$new(true);
 		modalScope.db = database;
 		modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
+		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'editEdge'});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
@@ -113,7 +113,9 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
 			success : function() {
 				delete $scope.doc[name];
-				$scope.save();
+				var idx = $scope.headers.indexOf(name);
+				$scope.headers.splice(idx,1);
+				//$scope.save();
 			}
 		});
 	}

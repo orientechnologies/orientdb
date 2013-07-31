@@ -11,7 +11,9 @@ angular.module('header.controller',['database.services']).controller("HeaderCont
 	});
 	
 	$scope.logout = function(){
-		Database.disconnect();
-		$location.path("/");
+		Database.disconnect(function(){
+			$scope.menus = [];
+			$location.path("/");	
+		});
 	}
 }]);

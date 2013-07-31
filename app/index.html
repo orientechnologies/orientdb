@@ -34,9 +34,14 @@
     <div ng-controller="HeaderController">
       <div ng-include src="'views/header.html'"></div>
      </div>
-  
+
     <!-- Add your site or application content here -->
     <div class="container-fluid container-studio" >
+      <!--  <div class="row-fluid">
+            <div ng-controller="BreadcrumbController">
+      <div ng-include src="'views/breadcrumb.html'"></div>
+      </div>
+     </div> -->
       <div class="row-fluid">
             <div ng-controller="NotificationController">
       <div ng-include src="'views/notification.html'"></div>
@@ -68,6 +73,7 @@
     <script src="scripts/app.js"></script>
     <script src="scripts/controllers/main.js"></script>
     <script src="scripts/controllers/header-controller.js"></script>
+    <script src="scripts/controllers/breadcrumb-controller.js"></script>
     <script src="scripts/controllers/schema-controller.js"></script>
     <script src="scripts/controllers/login-controller.js"></script>
     <script src="scripts/controllers/database-controller.js"></script>
@@ -76,6 +82,7 @@
     <script src="scripts/controllers/graph-controller.js"></script>
     <script src="scripts/services/database-services.js"></script>
     <script src="scripts/services/notification-services.js"></script>
+    <script src="scripts/services/breadcrumb-service.js"></script>
     <script src="scripts/filters/filter.js"></script>
     <script src="scripts/widgets/widget.js"></script>
     <script src="scripts/util/library.js"></script>
