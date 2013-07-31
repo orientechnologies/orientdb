@@ -22,6 +22,7 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -58,6 +59,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public static final String ONCREATE_FIELD         = "onCreate.fields";
 
   public OSecurityShared() {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
+        .getValueAsInteger(), true);
   }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {

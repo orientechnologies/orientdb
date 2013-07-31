@@ -54,8 +54,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * Persistent MVRB-Tree Set implementation.
  * 
  */
-public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements OTrackedMultiValue<OIdentifiable, OIdentifiable>,
-    ORecordLazyMultiValue {
+public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements
+    OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordLazyMultiValue {
   private IdentityHashMap<ORecord<?>, Object>                          newEntries;
   private boolean                                                      autoConvertToRecord = true;
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
@@ -66,7 +66,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   private static OSharedResourceAdaptiveExternal                       lock                = new OSharedResourceAdaptiveExternal(
                                                                                                OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                                                    .getValueAsBoolean(),
-                                                                                               0, true);
+                                                                                               OGlobalConfiguration.MVRBTREE_TIMEOUT
+                                                                                                   .getValueAsInteger(), true);
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
     this();
@@ -74,7 +75,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   public OMVRBTreeRID() {
-    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
+    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(
+        OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
   }
 
   public OMVRBTreeRID(final ODocument iRecord) {
@@ -121,7 +123,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       newEntries = null;
       super.load();
       if (root != null)
-        setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider()).getTreeSize());
+        setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
+            .getTreeSize());
       else
         setSize(0);
       return this;
@@ -160,7 +163,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       final OIdentifiable oldValue = super.internalPut(e, null);
 
       if (oldValue != null)
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, v, oldValue));
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+            e, v, oldValue));
 
       return oldValue;
 
@@ -205,8 +209,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
           removed = null;
       }
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
-          (OIdentifiable) o, null, (OIdentifiable) o));
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
 
       return removed;
 
@@ -287,8 +291,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
       if (origValues != null) {
         for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet())
-          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
-              item.getKey(), null, item.getValue()));
+          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+              OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
       } else
         setDirty();
 
@@ -386,7 +390,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
           return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
 
         // MIX PERSISTENT AND NEW TOGETHER
-        return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) }, iAutoConvertToRecord);
+        return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
+            iAutoConvertToRecord);
       }
 
       return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
@@ -724,7 +729,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
       final Map<OIdentifiable, OIdentifiable> reverted = new HashMap<OIdentifiable, OIdentifiable>(this);
 
-      final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = changeEvents.listIterator(changeEvents.size());
+      final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = changeEvents
+          .listIterator(changeEvents.size());
 
       while (listIterator.hasPrevious()) {
         final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();

@@ -86,14 +86,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public static final String                            EXPORT_IMPORT_MAP_TREE_STATE_EXT = ".eihtsf";
   public static final String                            EXPORT_IMPORT_MAP_BF_EXT         = ".eihtb";
 
-  private Map<OPropertyImpl, String>                    linkedClasses                    = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, String>                           superClasses                     = new HashMap<OClass, String>();
-  private OJSONReader                                   jsonReader;
-  private ORecordInternal<?>                            record;
-  private boolean                                       schemaImported                   = false;
-  private int                                           exporterVersion                  = -1;
-  private ORID                                          schemaRecordId;
-  private ORID                                          indexMgrRecordId;
+  protected Map<OPropertyImpl, String>                  linkedClasses                    = new HashMap<OPropertyImpl, String>();
+  protected Map<OClass, String>                         superClasses                     = new HashMap<OClass, String>();
+  protected OJSONReader                                 jsonReader;
+  protected ORecordInternal<?>                          record;
+  protected boolean                                     schemaImported                   = false;
+  protected int                                         exporterVersion                  = -1;
+  protected ORID                                        schemaRecordId;
+  protected ORID                                        indexMgrRecordId;
+  protected boolean                                     deleteRIDMapping                 = true;
 
   private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
 
@@ -131,8 +132,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   @Override
   public ODatabaseImport setOptions(String iOptions) {
     super.setOptions(iOptions);
-
     return this;
+  }
+
+  @Override
+  protected void parseSetting(final String option, final List<String> items) {
+    if (option.equalsIgnoreCase("-deleteRIDMapping"))
+      deleteRIDMapping = Boolean.parseBoolean(items.get(0));
+    else
+      super.parseSetting(option, items);
   }
 
   public ODatabaseImport importDatabase() {
@@ -179,6 +187,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.getStorage().synch();
       exportImportHashTable.close();
       database.setStatus(STATUS.OPEN);
+
+      if (isDeleteRIDMapping())
+        removeExportImportRIDsMap();
 
       listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
@@ -896,7 +907,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       OPhysicalPosition[] positions = cluster.ceilingPositions(new OPhysicalPosition(OClusterPositionFactory.INSTANCE.valueOf(0)));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
-          ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
+          ORecord<?> record = database.load(new ORecordId(clusterId, position.clusterPosition));
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
             rewriteLinksInDocument(document);
@@ -925,12 +936,22 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public ODatabaseImport removeExportImportRIDsMap() {
+    listener.onMessage("\nDeleting RID Mapping table...");
     exportImportHashTable.delete();
-		return this;
+    listener.onMessage("OK\n");
+    return this;
   }
 
   public void close() {
     database.declareIntent(null);
+  }
+
+  public boolean isDeleteRIDMapping() {
+    return deleteRIDMapping;
+  }
+
+  public void setDeleteRIDMapping(boolean deleteRIDMapping) {
+    this.deleteRIDMapping = deleteRIDMapping;
   }
 
   private static class RewritersFactory {
@@ -938,6 +959,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
 
+    @SuppressWarnings("unchecked")
     public <T> FieldRewriter<T> findRewriter(ODocument document, String fieldName, T value) {
       if (value == null)
         return new IdentityRewriter<T>();
@@ -1010,9 +1032,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  private static class ListRewriter implements FieldRewriter<List> {
+  private static class ListRewriter implements FieldRewriter<List<?>> {
     @Override
-    public List rewriteValue(List listValue) {
+    public List<?> rewriteValue(List<?> listValue) {
       boolean wasRewritten = false;
       List<Object> result = new ArrayList<Object>(listValue.size());
       for (Object listItem : listValue) {
@@ -1109,11 +1131,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  private static class SetRewriter implements FieldRewriter<Set> {
+  private static class SetRewriter implements FieldRewriter<Set<?>> {
     @Override
-    public Set rewriteValue(Set setValue) {
+    public Set<?> rewriteValue(Set<?> setValue) {
       boolean wasRewritten = false;
-      Set result = new HashSet();
+      Set<Object> result = new HashSet<Object>();
       for (Object item : setValue) {
         FieldRewriter<Object> fieldRewriter = RewritersFactory.INSTANCE.findRewriter(null, null, item);
         Object newItem = fieldRewriter.rewriteValue(item);

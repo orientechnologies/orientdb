@@ -1470,8 +1470,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
-  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text,
-      @ConsoleParameter(name = "delete-rid-mapping", description = "User password", optional = true) final boolean deleteRIDMapping)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text)
       throws IOException {
     checkForDatabase();
 
@@ -1485,8 +1484,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
 
       databaseImport.setOptions(options).importDatabase();
-      if (deleteRIDMapping)
-        databaseImport.removeExportImportRIDsMap();
 
       databaseImport.close();
     } catch (ODatabaseImportException e) {
