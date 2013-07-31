@@ -73,7 +73,7 @@
 		</div>
 	</div>
 	<div class="row-fluid" >
-		<div >
+		<div class = "nomargin">
 			<h3>{{class2show}}: Indexes</h3>
 			
 
@@ -98,6 +98,10 @@
 							<th >
 								
 							</th>
+							<th >
+								
+							</th>
+
 						</tr>
 
 					</thead>
@@ -114,10 +118,11 @@
 							</td>
 							<td>
 								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index.name)" > <i class="icon-white icon-trash" ></i> Drop</a>
-								<a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)" > <i class="icon-refresh" ></i> Rebuild</a>
-							</td>
-						</tr>
-					</tbody>
-				</div>
-
+							</td><td>
+							<a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)" > <i class="icon-refresh" ></i> Rebuild</a>
+						</td>
+					</tr>
+				</tbody>
 			</div>
+
+		</div>

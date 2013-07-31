@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller',['database.services']);
-schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi','$dialog',function($scope,$routeParams,$location,Database,CommandApi,$dialog){
+schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi','$dialog','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$dialog,$modal,$q){
 
 	$scope.database = Database;
 	$scope.listClasses = $scope.database.listClasses();
@@ -42,6 +42,18 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 	}
 	$scope.createRecord = function(className){
 		$location.path("/database/" + $scope.database.getName() + "/browse/create/"+className );
+	}
+	$scope.createNewClass = function(){
+		modalScope = $scope.$new(true);	
+		modalScope.db = database;
+		
+		modalScope.parentScope = $scope;
+		// modalScope.propertiesName = $scope.propertyNames ;
+		// modalScope.rid = rid;
+		var modalPromise = $modal({template: '/views/database/newClass.html', scope: modalScope});
+		$q.when(modalPromise).then(function(modalEl) {
+			modalEl.modal('show');
+		});
 	}
 
 
@@ -438,5 +450,93 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 		return true;
 	}
 
+
+}]);
+schemaModule.controller("NewClassController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
+
+
+	$scope.property = {"name": "","type": "" ,"linkedType": "","linkedClass": "" , "mandatory": "false","readonly": "false","notNull": "false" ,"min": null,"max": null}
+
+	$scope.listTypes = ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAp','LINKSET','LONG','SHORT','STRING'];
+
+	$scope.database = Database;
+
+	$scope.listClasses = $scope.database.listNameOfClasses();
+
+
+	$scope.salvaProperty = function(){
+
+
+		var prop= $scope.property;
+
+		var propName = $scope.property['name'];
+
+		var propType = $scope.property['type'];
+
+		if(propName == undefined || propType == undefined)
+			return;
+
+		var linkedType = prop['linkedType'];
+		var linkedClass = prop['linkedClass'];
+		var sql = 'CREATE PROPERTY ' +$scope.classInject + '.'+propName + ' ' +  propType + ' '+  linkedType+ ' ' +linkedClass ;
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+
+		});
+
+		var i = 1;
+		for(entry in prop){
+			var sql = 'ALTER PROPERTY ' +$scope.classInject + '.' + propName +' ' +entry+ ' ' +prop[entry];			
+			CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+				i++;
+				if(i == 5){
+					$scope.database.refreshMetadata($routeParams.database,function(){
+						$scope.parentScope.addProperties(prop);
+					});
+					$scope.hide();
+				}
+			});
+		}
+
+	}
+
+	$scope.checkDisable = function(entry){
+		if($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == ""){
+			// console.log('false');
+			return false;
+		}
+		// console.log('true')
+		return true;
+	}
+	$scope.checkDisableLinkedType = function(entry){
+
+		var occupato =  $scope.checkDisable('linkedClass');
+		if(occupato){
+		$scope.property['linkedType'] = null;
+			return true;
+		}
+		if($scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP' ){
+			return false;
+		}
+		$scope.property['linkedType'] = null;
+		return true;
+	}
+	$scope.checkDisableLinkedClass = function(entry){
+
+		var occupatoType =  $scope.checkDisable('linkedType');
+		if(occupatoType){
+		$scope.property['linkedClass'] = null;
+			return true;
+		}
+		
+		if($scope.property['type'] == 'LINKLIST' || $scope.property['type'] =='LINKSET' || $scope.property['type'] =='LINKMAP' || $scope.property['type'] =='EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP'){
+			return false;
+		}
+		
+		$scope.property['linkedClass'] = null;
+		return true;
+	}
+	$scope.saveNewClass = function(){
+		
+	}
 
 }]);

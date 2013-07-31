@@ -1,16 +1,18 @@
 <div class="row-fluid" ng-controller="SchemaController">
 	<div class = "span12 nomargin">
 		<div>
-			<a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-plus"></i> Create Class</a>
+			<a href="javascript:void(0)" class="btn" ng-click="createNewClass()"> <i class="icon-plus"></i> Create Class</a>
 		</div>
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="headers">
 			<thead>
 				<tr>
 
 					<th ng-repeat="header in headers">
-						<a href="">{{header}}</a>
-						(<a href="">^</a>)
+						{{header}}
 					</th>
+					<th>Query</th>
+					<th>Create Record</th>
+					<th>Drop</th>
 				</tr>
 				
 			</thead>
@@ -27,7 +29,11 @@
 					<td ng-click="openClass(result)">{{result['records']}}</td>
 					<td>
 						<a href="javascript:void(0)" class="btn btn-small" ng-click="queryAll(result['name'])" > <i class="icon-question-sign" ></i> Query All</a>
+					</td>
+					<td>
 						<a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])" > <i class="icon-plus" ></i> Create Record</a>
+					</td>
+					<td>
 						<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropClass(result['name'])" > <i class="icon-white icon-trash" ></i> Drop</a>
 					</td>
 				</tr>
