@@ -74,7 +74,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	$scope.limit = 20;
 	$scope.queries = new Array;
 
-	$scope.classClickedHeaders = ['name','type','linkedType','linkedClass','mandatory','readonly','notNull','min','max',''];
+	$scope.classClickedHeaders = ['name','type','linkedType','linkedClass','mandatory','readonly','notNull','min','max','Actions'];
 
 	$scope.property = Database.listPropertiesForClass(clazz);
 	
@@ -208,15 +208,16 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 			success : function() {
 				var sql = 'DROP PROPERTY ' + clazz + '.' + elementName;
 
-				for(entry in $scope.property ){
+				
+				CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+					for(entry in $scope.property ){
 					if($scope.property[entry]['name'] == elementName){
 						// console.log($scope.property[entry])
 						var index = $scope.property.indexOf($scope.property[entry])
 						$scope.property.splice(index,1)
 					}
 				}
-				CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
-
+					$route.reload();
 				});
 
 			}
@@ -288,7 +289,7 @@ schemaModule.controller("IndexController",['$scope','$routeParams','$location','
 
 
 
-	$scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE' ];
+	$scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE','DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX' ];
 	$scope.newIndex = 	{"name": "", "type": "", "fields": "" }
 	$scope.namesProp = $scope.propertiesName;
 	$scope.prop2add = new Array;
@@ -455,9 +456,9 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 schemaModule.controller("NewClassController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
 
 
-	$scope.property = {"name": "","type": "" ,"linkedType": "","linkedClass": "" , "mandatory": "false","readonly": "false","notNull": "false" ,"min": null,"max": null}
+	$scope.property = {"name": "","alias":"","superclass":""}
 
-	$scope.listTypes = ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAp','LINKSET','LONG','SHORT','STRING'];
+
 
 	$scope.database = Database;
 
@@ -467,76 +468,16 @@ schemaModule.controller("NewClassController",['$scope','$routeParams','$location
 	$scope.salvaProperty = function(){
 
 
-		var prop= $scope.property;
-
-		var propName = $scope.property['name'];
-
-		var propType = $scope.property['type'];
-
-		if(propName == undefined || propType == undefined)
-			return;
-
-		var linkedType = prop['linkedType'];
-		var linkedClass = prop['linkedClass'];
-		var sql = 'CREATE PROPERTY ' +$scope.classInject + '.'+propName + ' ' +  propType + ' '+  linkedType+ ' ' +linkedClass ;
-		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
-
-		});
-
-		var i = 1;
-		for(entry in prop){
-			var sql = 'ALTER PROPERTY ' +$scope.classInject + '.' + propName +' ' +entry+ ' ' +prop[entry];			
-			CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
-				i++;
-				if(i == 5){
-					$scope.database.refreshMetadata($routeParams.database,function(){
-						$scope.parentScope.addProperties(prop);
-					});
-					$scope.hide();
-				}
-			});
-		}
-
-	}
-
-	$scope.checkDisable = function(entry){
-		if($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == ""){
-			// console.log('false');
-			return false;
-		}
-		// console.log('true')
-		return true;
-	}
-	$scope.checkDisableLinkedType = function(entry){
-
-		var occupato =  $scope.checkDisable('linkedClass');
-		if(occupato){
-		$scope.property['linkedType'] = null;
-			return true;
-		}
-		if($scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP' ){
-			return false;
-		}
-		$scope.property['linkedType'] = null;
-		return true;
-	}
-	$scope.checkDisableLinkedClass = function(entry){
-
-		var occupatoType =  $scope.checkDisable('linkedType');
-		if(occupatoType){
-		$scope.property['linkedClass'] = null;
-			return true;
-		}
 		
-		if($scope.property['type'] == 'LINKLIST' || $scope.property['type'] =='LINKSET' || $scope.property['type'] =='LINKMAP' || $scope.property['type'] =='EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP'){
-			return false;
-		}
-		
-		$scope.property['linkedClass'] = null;
-		return true;
 	}
+	
 	$scope.saveNewClass = function(){
-		
+		var sql = 'CREATE CLASS ' +$scope.property['name'];
+		console.log(sql);
+		console.log($scope.property['superclass']);
+		// CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+
+		// });
 	}
 
 }]);

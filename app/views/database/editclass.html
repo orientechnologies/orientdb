@@ -3,7 +3,7 @@
 		<h3>{{class2show}}: Properties</h3>
 		<div>
 			<button class="btn btn-primary" ng-click="saveProperty(property)">Save</button>
-			<button class="btn" ng-click="newProperty()">New Property</button>
+			<a href="javascript:void(0)" class="btn" ng-click="newProperty()"> <i class="icon-plus"></i> New Property</a>
 			<a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-refresh"></i> Refresh</a>
 		</div>
 
@@ -77,7 +77,7 @@
 			<h3>{{class2show}}: Indexes</h3>
 			
 
-			<a href="javascript:void(0)" class="btn" ng-click="newIndex()"> <i class="icon-plus"></i> Add Index</a>
+			<a href="javascript:void(0)" class="btn" ng-click="newIndex()"> <i class="icon-plus"></i> New Index</a>
 			<a href="javascript:void(0)" class="btn" ng-click="rebuildAllIndexes()"> <i class="icon-refresh"></i> Rebuild All Indexes</a>
 
 			<div class= "scroll-indexes">
@@ -96,10 +96,7 @@
 								Properties
 							</th>
 							<th >
-								
-							</th>
-							<th >
-								
+							Actions
 							</th>
 
 						</tr>
@@ -117,9 +114,9 @@
 								{{index.fields}} 
 							</td>
 							<td>
-								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index.name)" > <i class="icon-white icon-trash" ></i> Drop</a>
-							</td><td>
 							<a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)" > <i class="icon-refresh" ></i> Rebuild</a>
+								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index.name)" > <i class="icon-white icon-trash" ></i> Drop</a>
+							
 						</td>
 					</tr>
 				</tbody>

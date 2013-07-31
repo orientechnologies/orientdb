@@ -16,20 +16,21 @@
 					<div class="control-group">
 						<label class="control-label" >Super Class</label>
 						<div class="controls">
-							<select ng-model="property['type']" ng-options="p.toString() for p in listClasses">
+							<select ng-model="property['superclass']" ng-options="p.toString() for p in listClasses">
+								<option value=""></option>
 							</select>
 						</div>
 					</div>
 					<div class="control-group">
 						<label class="control-label"> Alias</label>
 						<div class="controls">
-							<input type="text" id="inputName" ng-model="property['name']" />
+							<input type="text" id="inputName" ng-model="property['alias']" />
 						</div>
 					</div>
 					<div class="control-group">
 						<label class="control-label" >Abstract</label>
 						<div class="controls">
-							<input type="checkbox" ng-model="property['mandatory']" >
+							<input type="checkbox" ng-model="property['alias']" >
 						</div>
 					</div>
 					

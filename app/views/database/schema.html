@@ -10,9 +10,8 @@
 					<th ng-repeat="header in headers">
 						{{header}}
 					</th>
-					<th>Query</th>
-					<th>Create Record</th>
-					<th>Drop</th>
+					<th>Actions</th>
+					
 				</tr>
 				
 			</thead>
@@ -29,11 +28,9 @@
 					<td ng-click="openClass(result)">{{result['records']}}</td>
 					<td>
 						<a href="javascript:void(0)" class="btn btn-small" ng-click="queryAll(result['name'])" > <i class="icon-question-sign" ></i> Query All</a>
-					</td>
-					<td>
-						<a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])" > <i class="icon-plus" ></i> Create Record</a>
-					</td>
-					<td>
+					
+						<a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])" > <i class="icon-plus" ></i> New Record</a>
+					
 						<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropClass(result['name'])" > <i class="icon-white icon-trash" ></i> Drop</a>
 					</td>
 				</tr>

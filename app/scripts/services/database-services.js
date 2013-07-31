@@ -389,7 +389,7 @@ database.factory('CommandApi', function($http,$resource,Notification){
 
 	var resource = $resource('/api/command/:database');
 
-	resource.queryText = function(params,callback){
+	resource.queryText = function(params,callback,error){
 		var startTime = new Date().getTime();
 		var limit = params.limit || 20;
 		//rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
@@ -403,6 +403,7 @@ database.factory('CommandApi', function($http,$resource,Notification){
 			callback(data);
 		}).error(function(data){
 			Notification.push({content : data});
+			if(error) error(data);
 		});
 	}
 	return resource;
