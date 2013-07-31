@@ -103,7 +103,7 @@ DocController.controller("DocumentCreateController",['$scope','$routeParams','$l
 }]);
 DocController.controller("DocumentModalController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
-	$scope.canAdd = true;
+	$scope.types = Database.getSupportedTypes();
 	$scope.reload = function(){
 		$scope.doc = DocumentApi.get({ database : $scope.db , document : $scope.rid},function(){
 			$scope.headers = Database.getPropertyFromDoc($scope.doc);
@@ -117,6 +117,25 @@ DocController.controller("DocumentModalController",['$scope','$routeParams','$lo
 			Notification.push({content : data});
 		});
 		
+	}
+	$scope.addField = function(name,type){
+		if(name){
+			$scope.doc[name] = null;
+			var types = $scope.doc['@fieldTypes'];
+			if(types){
+				types = types + ',' + name + '=' + Database.getMappingFor(type);
+			}else {
+				types = name + '=' + Database.getMappingFor(type);	
+			}
+			
+			$scope.doc['@fieldTypes'] = types;
+			$scope.headers.push(name);
+		}
+	}
+	$scope.deleteField = function(name){
+		delete $scope.doc[name];
+		var idx = $scope.headers.indexOf(name);
+		$scope.headers.splice(idx,1);
 	}
 	$scope.reload();
 }]);

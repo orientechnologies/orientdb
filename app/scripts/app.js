@@ -2,6 +2,7 @@
 
 
 var deps = ['header.controller',
+'breadcrumb.controller',
 'login.controller',
 'database.controller',
 'document.controller',

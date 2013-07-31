@@ -119,7 +119,6 @@ var linker = function(scope, element, attrs) {
     scope.docValid = validity;
   });
   scope.$watch('headers.length',function(h){
-
     var docHtml = '<ng-form name="formID">{{formID.$valid}}'
     angular.forEach(scope.headers,function(el){
       docHtml = docHtml +'<div class="control-group" ><label class="control-label">'+ el +' </label> <div class="controls controls-row" >' + getTemplate(scope,el,element) + '</div></div>'

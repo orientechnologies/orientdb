@@ -138,12 +138,25 @@ div.edge form.bs-docs-example:after {
   overflow: auto;
 }
 
+.editEdge {
+  width: 60%; /* desired relative width */
+  left: 20%; /* (100%-width)/2 */
+  /* place center */
+  margin-left:auto;
+  margin-right:auto; 
+}
 .css-form input.ng-invalid.ng-dirty {
         background-color: #FA787E;
 }
     
 .css-form input.ng-valid.ng-dirty {
         background-color: #78FA89;
+}
+
+.breadcrumb > li + li:before {
+padding: 0 5px;
+color: #cccccc;
+content: "/\00a0";
 }
 
 
