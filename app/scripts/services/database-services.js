@@ -44,7 +44,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		},
 		getMappingForKey : function(key){
 			var self = this;
-			var type = "STRING";
+			var type = undefined;
 			Object.keys(this.mapping).forEach(function(elem,index,array){
 				if(self.mapping[elem] == key){
 					type = elem;

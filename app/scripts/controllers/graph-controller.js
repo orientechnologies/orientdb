@@ -60,13 +60,17 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 		if(name){
 			$scope.doc[name] = null;
 			var types = $scope.doc['@fieldTypes'];
-			if(types){
-				types = types + ',' + name + '=' + Database.getMappingFor(type);
-			}else {
-				types = name + '=' + Database.getMappingFor(type);	
+			if(type == 'BOOLEAN'){
+				$scope.doc[name] = false;
 			}
-			
-			$scope.doc['@fieldTypes'] = types;
+			if(Database.getMappingFor(type)){
+				if(types){
+					types = types + ',' + name + '=' + Database.getMappingFor(type);
+				}else {
+					types = name + '=' + Database.getMappingFor(type);	
+				}
+				$scope.doc['@fieldTypes'] = types;
+			}
 			$scope.headers.push(name);
 		}else {
 			var modalScope = $scope.$new(true);	
