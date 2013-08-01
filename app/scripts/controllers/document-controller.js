@@ -7,14 +7,14 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 	$scope.canSave = true;
 	$scope.canDelete = true;
 	$scope.canCreate = true;
-	
+	$scope.canAdd = true;
 
 	// Toggle modal
 	$scope.showModal = function(rid) {
 		modalScope = $scope.$new(true);	
 		modalScope.db = database;
 		modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
+		var modalPromise = $modal({template: '/views/document/modalEdit.html', persist: true, show: false, backdrop: 'static',modalClass : 'editEdge',scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});

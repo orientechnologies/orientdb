@@ -72,44 +72,59 @@ Widget.directive('docform', function($compile,Database) {
     if(!property){
       var fieldTypes = scope.doc['@fieldTypes'];
       if(fieldTypes){
+        var found = true;
         fieldTypes.split(",").forEach(function(element,index,array){
-            element.split("=").forEach(function(elem,i,a){
-               if(i==0 && elem == name){
-                type = Database.getMappingForKey(a[1]); 
-               }
-            });
+          element.split("=").forEach(function(elem,i,a){
+           if(i==0 && elem == name){
+            type = Database.getMappingForKey(a[1]); 
+          }
         });
-      } else {
+        });
+        if(!found){
+          var value = scope.doc[name];
+          console.log(value);
+          if(typeof value === 'number'){
+           type = "INTEGER";
+         }else if(typeof value === 'boolean') {
+           type = "BOOLEAN";
+         }
+       }
+     } else {
+      var value = scope.doc[name];
+      console.log(value);
       if(typeof value === 'number'){
        type = "INTEGER";
+     }else if(typeof value === 'boolean') {
+       type = "BOOLEAN";
      }
    }
-     property = new Object;
-     property.name = name;
-   }else {
-    type = property.type;
-  }
-  switch(type){          
-    case "STRING":
-    tpl = getStringTemplate(property);
-    break;
-    case "INTEGER":
-    tpl = getNumberTemplate(property);
-    break;
-    case "DATE":
-    var format = Database.getDateFormat();
-    tpl = getDateTemplate(format,property);           
-    break;
-    case "DATETIME":
-    var format = Database.getDateTimeFormat();
-    tpl = getDateTimeTemplate(format,property);
-    break;
-  }
-
-
-  var select = "<select class='span2' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
-  var del = "<a href='javascript:void(0)'' class='btn btn-mini pull-right' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
-  return  tpl +  select + del ;
+   property = new Object;
+   property.name = name;
+ }else {
+  type = property.type;
+}
+switch(type){          
+  case "STRING":
+  tpl = getStringTemplate(property);
+  break;
+  case "INTEGER":
+  tpl = getNumberTemplate(property);
+  break;
+  case "DATE":
+  var format = Database.getDateFormat();
+  tpl = getDateTemplate(format,property);           
+  break;
+  case "DATETIME":
+  var format = Database.getDateTimeFormat();
+  tpl = getDateTimeTemplate(format,property);
+  break;
+  case "BOOLEAN":
+  tpl = getBooleanTemplate(property);
+  break;
+}
+var select = "<select class='span3 form-control' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
+var del = "<a href='javascript:void(0)'' class='btn btn-mini pull-right' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
+return  tpl +  select + del ;
 }
 
 var linker = function(scope, element, attrs) {
@@ -133,6 +148,11 @@ var linker = function(scope, element, attrs) {
 var getStringTemplate = function(property){
   var required = property.mandatory ? "required" : "";
   var tpl = "<textarea class='input-xlarge span6' " + required + " ng-model='doc[\""+ property.name + "\"]' ></textarea>";
+  return tpl;
+};
+var getBooleanTemplate = function(property){
+  var required = property.mandatory ? "required" : "";
+  var tpl = "<input type='checkbox' class='input-xlarge span6' name='" +property.name+ "'  "+ required +" ng-model='doc[\""+ property.name +"\"]' />";
   return tpl;
 };
 var getNumberTemplate = function(property){
