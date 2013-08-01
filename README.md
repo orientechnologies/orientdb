@@ -54,3 +54,7 @@ Start to learn about OrientDB from the [WiKi Main page](https://github.com/nuvol
 [![](http://mac.softpedia.com/base_img/softpedia_free_award_f.gif)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/9018143ed32dcd8f0d6561aa3826698e "githalytics.com")](http://githalytics.com/nuvolabase/orientdb)
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/orientechnologies/orientdb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
