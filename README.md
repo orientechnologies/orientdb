@@ -4,13 +4,13 @@
 
 ## What is Orient?
 
-**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store up to 150,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](https://github.com/nuvolabase/orientdb/wiki/SQLQuery) amongst the query languages. Thanks to the [SQL](https://github.com/nuvolabase/orientdb/wiki/SQLQuery) layer it's straightforward to use for people skilled in the Relational world.
+**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store up to 150,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) amongst the query languages. Thanks to the [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) layer it's straightforward to use for people skilled in the Relational world.
 
-Look also at [Presentations](https://github.com/nuvolabase/orientdb/wiki/Presentations) with video and slides introducing OrientDB.
+Look also at [Presentations](https://github.com/orientechnologies/orientdb/wiki/Presentations) with video and slides introducing OrientDB.
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/nuvolabase/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
 
 # Scalability: the database is the bottleneck of most of applications
 
@@ -22,15 +22,15 @@ OrientDB has been designed to be very fast. It inherits the best features and co
 
 ## Why yet another NoSQL?
 
-It all began on 2009 when [Luca Garulli](https://github.com/nuvolabase/orientdb/wiki/Team) was searching for super fast and flexible storage for an ambitious project. After having tried different RDBMSs he worked on the available NoSQL products. Not one had all the features he needed. So in a weekend he got the challenge to see if the "old" low-level storage algorithms of Orient ODBMS, an Object Database Luca created in 1999 written in C++, could be reused in Java to develop a brand new graph-document DBMS. It worked! And this is the reason OrientDB exists today.
+It all began on 2009 when [Luca Garulli](https://github.com/orientechnologies/orientdb/wiki/Team) was searching for super fast and flexible storage for an ambitious project. After having tried different RDBMSs he worked on the available NoSQL products. Not one had all the features he needed. So in a weekend he got the challenge to see if the "old" low-level storage algorithms of Orient ODBMS, an Object Database Luca created in 1999 written in C++, could be reused in Java to develop a brand new graph-document DBMS. It worked! And this is the reason OrientDB exists today.
 
 ## But wasn't OrientDB an ODBMS?
 
-Orient ODBMS was the very first version of the Orient engine developed in C++ in 1998. Today OrientDB has been totally rewritten in Java in the form of a Document database but with the previous main goal: performance. However, now you can find the [Object Database], but it's a wrapper built on top of the [Document Database](https://github.com/nuvolabase/orientdb/wiki/Document-Database). It maps transparently OrientDB document records to POJOs.
+Orient ODBMS was the very first version of the Orient engine developed in C++ in 1998. Today OrientDB has been totally rewritten in Java in the form of a Document database but with the previous main goal: performance. However, now you can find the [Object Database], but it's a wrapper built on top of the [Document Database](https://github.com/orientechnologies/orientdb/wiki/Document-Database). It maps transparently OrientDB document records to POJOs.
 
 ## How does it compare with other products?
 
-Take a look at [GraphDB comparison](https://github.com/nuvolabase/orientdb/wiki/GraphDB-Comparison) and [DocumentDB comparison](https://github.com/nuvolabase/orientdb/wiki/DocumentDB-Comparison).
+Take a look at [GraphDB comparison](https://github.com/orientechnologies/orientdb/wiki/GraphDB-Comparison) and [DocumentDB comparison](https://github.com/orientechnologies/orientdb/wiki/DocumentDB-Comparison).
 
 ## Easy to install and use
 
@@ -49,12 +49,11 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 
 ## Know more
 
-Start to learn about OrientDB from the [WiKi Main page](https://github.com/nuvolabase/orientdb/wiki). For any questions visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm). Need help? Go to the [Online support](http://chat.stackoverflow.com/rooms/6625/orientdb). Do you want to hear about OrientDB in a conference? Take a look at the [Events](https://github.com/nuvolabase/orientdb/wiki/) page.
+Start to learn about OrientDB from the [WiKi Main page](https://github.com/orientechnologies/orientdb/wiki). For any questions visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm). Need help? Go to the [Online support](http://chat.stackoverflow.com/rooms/6625/orientdb). Do you want to hear about OrientDB in a conference? Take a look at the [Events](https://github.com/orientechnologies/orientdb/wiki/) page.
 
 [![](http://mac.softpedia.com/base_img/softpedia_free_award_f.gif)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/9018143ed32dcd8f0d6561aa3826698e "githalytics.com")](http://githalytics.com/nuvolabase/orientdb)
-
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/56a16d9c5e47a25019e0be3a52d8a366 "githalytics.com")](http://githalytics.com/orientechnologies/orientdb)
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/orientechnologies/orientdb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
