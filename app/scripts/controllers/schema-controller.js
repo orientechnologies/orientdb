@@ -454,10 +454,10 @@ console.log(propName)
 
 
 }]);
-schemaModule.controller("NewClassController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
+schemaModule.controller("NewClassController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$route){
 
 
-	$scope.property = {"name": "","alias":"","superclass":""}
+	$scope.property = {"name": "","alias":"","superclass":null,"abstract":false}
 
 
 
@@ -466,19 +466,22 @@ schemaModule.controller("NewClassController",['$scope','$routeParams','$location
 	$scope.listClasses = $scope.database.listNameOfClasses();
 
 
-	$scope.salvaProperty = function(){
-
-
-		
-	}
-	
 	$scope.saveNewClass = function(){
 		var sql = 'CREATE CLASS ' +$scope.property['name'];
-		console.log(sql);
-		console.log($scope.property['superclass']);
-		// CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
 
-		// });
+		var abstract = $scope.property['abstract'] ? ' ABSTRACT ' : '';
+		
+		sql= sql + abstract;
+
+		var supercl = $scope.property['superclass']!= null? ' extends ' + $scope.property['superclass'] : '';
+		
+		sql= sql + supercl;
+		console.log(sql)
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+			$route.reload();
+			$scope.hide();
+
+		});
 	}
 
 }]);

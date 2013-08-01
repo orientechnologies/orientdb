@@ -27,10 +27,10 @@ table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select{
 
 div.scroll-editclass, div.scroll-indexes{
   overflow: auto;
-  height: 300px;
+  max-height: 300px;
   margin-top: 26px;
-  border-top: 1px solid grey;
-  border-bottom: 1px solid grey;
+  /*border-top: 1px solid grey;*/
+  /*border-bottom: 1px solid grey;*/
 }
 .accordion-scroll {
     height: 150px;
@@ -103,6 +103,12 @@ div.scroll-editclass, div.scroll-indexes{
 }
 div.document form.bs-docs-example:after {
     content: "Document";
+}
+div.properties .bs-docs-example:after {
+    content: "Properties";
+}
+div.indexes .bs-docs-example:after {
+    content: "Indexes";
 }
 div.vertex form.bs-docs-example:after {
     content: "Vertex";
