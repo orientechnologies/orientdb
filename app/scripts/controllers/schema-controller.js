@@ -385,15 +385,16 @@ schemaModule.controller("PropertyController",['$scope','$routeParams','$location
 		var prop= $scope.property;
 
 		var propName = $scope.property['name'];
-
+console.log(propName)
 		var propType = $scope.property['type'];
 
 		if(propName == undefined || propType == undefined)
 			return;
 
-		var linkedType = prop['linkedType'];
-		var linkedClass = prop['linkedClass'];
+		var linkedType = prop['linkedType']!=null ? prop['linkedType'] : '';
+		var linkedClass = prop['linkedClass']!=null ? prop['linkedClass'] : '';
 		var sql = 'CREATE PROPERTY ' +$scope.classInject + '.'+propName + ' ' +  propType + ' '+  linkedType+ ' ' +linkedClass ;
+		console.log(sql);
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
 
 		});
