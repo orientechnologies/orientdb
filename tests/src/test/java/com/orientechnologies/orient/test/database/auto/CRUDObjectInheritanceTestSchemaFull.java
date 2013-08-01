@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.Assert;
@@ -23,6 +26,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -52,9 +60,11 @@ public class CRUDObjectInheritanceTestSchemaFull {
   protected long             startRecordNumber;
   private OObjectDatabaseTx  database;
   private City               redmond     = new City(new Country("Washington"), "Redmond");
+  private String             url;
 
   @Parameters(value = "url")
   public CRUDObjectInheritanceTestSchemaFull(String iURL) {
+    url = iURL;
     database = new OObjectDatabaseTx(iURL + "_objectschema");
     database.create();
     database.close();
@@ -62,12 +72,46 @@ public class CRUDObjectInheritanceTestSchemaFull {
 
   @BeforeClass
   public void init() {
+    try {
+      ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);
+      exportDatabase.open("admin", "admin");
+
+      OCommandOutputListener listener = new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+
+        }
+      };
+      ODatabaseExport export = new ODatabaseExport(exportDatabase, "objectSchemaTest/target/database.export.gz", listener);
+      export.exportDatabase();
+      export.close();
+      exportDatabase.close();
+      ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
+      importDatabase.open("admin", "admin");
+      ODatabaseImport impor = new ODatabaseImport(importDatabase, "objectSchemaTest/target/database.export.gz", listener);
+
+      // UNREGISTER ALL THE HOOKS
+      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks())) {
+        importDatabase.unregisterHook(hook);
+      }
+
+      impor.setDeleteRIDMapping(false);
+      impor.importDatabase();
+      impor.close();
+
+      importDatabase.close();
+      final File importDir = new File("objectSchemaTest/target/database.export.gz");
+      importDir.delete();
+    } catch (IOException e) {
+      Assert.fail("Export import didn't go as expected", e);
+    }
 
   }
 
   @Test
   public void create() {
     database.open("admin", "admin");
+    database.getEntityManager().deregisterEntityClasses("com.orientechnologies.orient.test.domain");
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");

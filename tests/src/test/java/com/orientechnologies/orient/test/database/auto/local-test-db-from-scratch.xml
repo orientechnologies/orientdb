@@ -165,6 +165,15 @@
             <class name="com.orientechnologies.orient.test.database.auto.DbCompareTest"/>
         </classes>
     </test>
+     <test name="PopulationObjectSchemaFull">
+      <classes>
+     		<class name="com.orientechnologies.orient.test.database.auto.CRUDObjectInheritanceTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CRUDObjectPhysicalTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectTreeTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTestSchemaFull"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTestSchemaFull"/>
+      </classes>
+    </test>
     <test name="DbToolsDelete">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbDeleteTest"/>
