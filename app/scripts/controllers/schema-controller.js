@@ -55,6 +55,12 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 			modalEl.modal('show');
 		});
 	}
+	$scope.rebuildAllIndexes = function(){
+		var sql = 'REBUILD INDEX *' ;
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+		
+		});
+	}
 
 
 }]);
@@ -274,12 +280,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		// $scope.parentScope.refreshPage();
 		});
 	}
-	$scope.rebuildAllIndexes = function(){
-		var sql = 'REBUILD INDEX *' ;
-		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
-		
-		});
-	}
+	
 
 
 }]);

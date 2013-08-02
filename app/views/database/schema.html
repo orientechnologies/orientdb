@@ -1,7 +1,9 @@
 <div class="row-fluid" ng-controller="SchemaController">
+
 	<div class = "span12 nomargin">
 		<div>
-			<a href="javascript:void(0)" class="btn" ng-click="createNewClass()"> <i class="icon-plus"></i> Create Class</a>
+			<a href="javascript:void(0)" class="btn" ng-click="createNewClass()"> <i class="icon-plus"></i> New Class</a>
+			<a href="javascript:void(0)" class="btn" ng-click="rebuildAllIndexes()"> <i class="icon-refresh"></i> Rebuild All Indexes</a>
 		</div>
 		<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="headers">
 			<thead>
