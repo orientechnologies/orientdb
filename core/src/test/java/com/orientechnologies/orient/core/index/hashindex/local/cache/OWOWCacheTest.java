@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 import java.util.zip.CRC32;
 
 import org.testng.Assert;
@@ -26,7 +25,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
 /**
- * @author LomakiA <a href="mailto:Andrey.Lomakin@exigenservices.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin
  * @since 26.07.13
  */
 @Test
@@ -77,7 +76,7 @@ public class OWOWCacheTest {
       writeAheadLog = null;
     }
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + fileName);
+    File file = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
     if (file.exists()) {
       boolean delete = file.delete();
       Assert.assertTrue(delete);
@@ -87,10 +86,13 @@ public class OWOWCacheTest {
   @AfterClass
   public void afterClass() throws IOException {
     closeCacheAndDeleteFile();
+
+    File file = new File(storageLocal.getConfiguration().getDirectory());
+    Assert.assertTrue(file.delete());
   }
 
   private void initBuffer() throws IOException {
-    wowCache = new OWOWCache(true, pageSize, pageSize * 10, writeAheadLog, -1, 150000, storageLocal);
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
   }
 
   public void testPutGet() throws IOException {
@@ -119,6 +121,107 @@ public class OWOWCacheTest {
     }
 
     wowCache.flush();
+
+    for (int i = 0; i < pagePointers.length; i++) {
+      byte[] dataContent = directMemory.get(pagePointers[i] + systemOffset, 8);
+      assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
+    }
+
+    for (long pagePointer : pagePointers) {
+      directMemory.free(pagePointer);
+    }
+  }
+
+  public void testDataUpdate() throws Exception {
+    final NavigableMap<Long, Long> pageIndexDataMap = new TreeMap<Long, Long>();
+    long fileId = wowCache.openFile(fileName);
+
+    Random random = new Random();
+
+    for (int i = 0; i < 600; i++) {
+      long pageIndex = random.nextInt(2048);
+
+      byte[] data = new byte[8];
+      random.nextBytes(data);
+
+      long pagePointer = directMemory.allocate(new byte[pageSize]);
+      directMemory.set(pagePointer + systemOffset, data, 0, data.length);
+
+      pageIndexDataMap.put(pageIndex, pagePointer);
+
+      wowCache.put(fileId, pageIndex, pagePointer);
+    }
+
+    for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
+      long pageIndex = entry.getKey();
+      long pagePointer = entry.getValue();
+
+      byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
+      byte[] dataTwo = directMemory.get(wowCache.get(fileId, pageIndex) + systemOffset, 8);
+
+      Assert.assertEquals(dataTwo, dataOne);
+    }
+
+    for (int i = 0; i < 300; i++) {
+      long desiredIndex = random.nextInt(2048);
+
+      Long pageIndex = pageIndexDataMap.ceilingKey(desiredIndex);
+      if (pageIndex == null)
+        pageIndex = pageIndexDataMap.floorKey(desiredIndex);
+
+      long pagePointer = pageIndexDataMap.get(pageIndex);
+
+      byte[] data = new byte[8];
+      random.nextBytes(data);
+
+      directMemory.set(pagePointer + systemOffset, data, 0, data.length);
+      wowCache.put(fileId, pageIndex, pagePointer);
+    }
+
+    for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
+      long pageIndex = entry.getKey();
+      long pagePointer = entry.getValue();
+
+      byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
+      byte[] dataTwo = directMemory.get(wowCache.get(fileId, pageIndex) + systemOffset, 8);
+
+      Assert.assertEquals(dataTwo, dataOne);
+    }
+
+    for (long pagePointer : pageIndexDataMap.values())
+      directMemory.free(pagePointer);
+  }
+
+  public void testFlushAllContentEventually() throws Exception {
+    closeCacheAndDeleteFile();
+
+    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
+
+    Random random = new Random();
+
+    long[] pagePointers = new long[200];
+    long fileId = wowCache.openFile(fileName);
+
+    for (int i = 0; i < pagePointers.length; i++) {
+      byte[] data = new byte[8];
+      random.nextBytes(data);
+
+      pagePointers[i] = directMemory.allocate(new byte[pageSize]);
+      directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
+
+      wowCache.put(fileId, i, pagePointers[i]);
+    }
+
+    for (int i = 0; i < pagePointers.length; i++) {
+      long dataPointer = pagePointers[i];
+
+      byte[] dataOne = directMemory.get(dataPointer + systemOffset, 8);
+      byte[] dataTwo = directMemory.get(wowCache.get(fileId, i) + systemOffset, 8);
+
+      Assert.assertEquals(dataTwo, dataOne);
+    }
+
+    Thread.sleep(200 * 10 + 1000);
 
     for (int i = 0; i < pagePointers.length; i++) {
       byte[] dataContent = directMemory.get(pagePointers[i] + systemOffset, 8);

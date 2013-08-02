@@ -17,19 +17,8 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -55,6 +44,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 7/23/13
  */
 public class OWOWCache {
+  public static final int                                   MIN_CACHE_SIZE = 16;
+
   public static final long                                  MAGIC_NUMBER   = 0xFACB03FEL;
 
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups    = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
@@ -68,7 +59,7 @@ public class OWOWCache {
   private final OWriteAheadLog                              writeAheadLog;
 
   private final AtomicInteger                               cacheSize      = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread>              lockManager    = new OLockManager<GroupKey, Thread>(true, 1000);
+  private final OLockManager<GroupKey, Thread>              lockManager    = new OLockManager<GroupKey, Thread>(true, 60000);
 
   private volatile int                                      cacheMaxSize;
 
@@ -76,6 +67,8 @@ public class OWOWCache {
 
   private final Object                                      syncObject     = new Object();
   private long                                              fileCounter    = 1;
+
+  private GroupKey                                          lastGroupKey   = new GroupKey(0, -1);
 
   private final ScheduledExecutorService                    commitExecutor = Executors
                                                                                .newSingleThreadScheduledExecutor(new ThreadFactory() {
@@ -89,7 +82,7 @@ public class OWOWCache {
                                                                                });
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      int cacheMaxSize, OStorageLocalAbstract storageLocal) {
+      int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
     this.files = new HashMap<Long, OFileClassic>();
     this.syncOnPageFlush = syncOnPageFlush;
     this.pageSize = pageSize;
@@ -97,6 +90,9 @@ public class OWOWCache {
     this.writeAheadLog = writeAheadLog;
     this.cacheMaxSize = cacheMaxSize;
     this.storageLocal = storageLocal;
+
+    if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
+      this.cacheMaxSize = MIN_CACHE_SIZE;
 
     if (pageFlushInterval > 0)
       commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
@@ -288,11 +284,6 @@ public class OWOWCache {
     synchronized (syncObject) {
       flush();
 
-      for (OFileClassic fileClassic : files.values()) {
-        if (fileClassic.isOpen())
-          fileClassic.close();
-      }
-
       if (!commitExecutor.isShutdown()) {
         commitExecutor.shutdown();
         try {
@@ -304,6 +295,11 @@ public class OWOWCache {
           Thread.interrupted();
           throw new OException("Data flush thread was interrupted", e);
         }
+      }
+
+      for (OFileClassic fileClassic : files.values()) {
+        if (fileClassic.isOpen())
+          fileClassic.close();
       }
     }
   }
@@ -352,6 +348,11 @@ public class OWOWCache {
     final int crc32 = calculatePageCrc(content);
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
     final OFileClassic fileClassic = files.get(fileId);
+    final long startPosition = pageIndex * pageSize;
+    final long endPosition = startPosition + pageSize;
+
+    if (fileClassic.getFilledUpTo() < endPosition)
+      fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
 
     fileClassic.write(pageIndex * pageSize, content);
 
@@ -518,7 +519,6 @@ public class OWOWCache {
   }
 
   private final class PeriodicFlushTask implements Runnable {
-    private GroupKey lastGroupKey = new GroupKey(0, -1);
 
     @Override
     public void run() {
@@ -569,8 +569,10 @@ public class OWOWCache {
       if (!subMap.isEmpty()) {
         flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, 0, forceFlush);
         if (flushedGroups < writeGroupsToFlush) {
-          subMap = writeGroups.headMap(subMap.firstKey(), false);
-          flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, flushedGroups, forceFlush);
+          if (!subMap.isEmpty()) {
+            subMap = writeGroups.headMap(subMap.firstKey(), false);
+            flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, flushedGroups, forceFlush);
+          }
         }
       } else
         flushedGroups = iterateBySubRing(writeGroups, writeGroupsToFlush, flushedGroups, forceFlush);

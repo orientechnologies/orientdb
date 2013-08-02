@@ -25,12 +25,7 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 @Test
 public class OReadWriteDiskCacheTest {
@@ -111,7 +106,7 @@ public class OReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException {
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
-        writeAheadLog, true);
+        writeAheadLog, true, false);
   }
 
   public void testAddFourItems() throws IOException {
@@ -685,7 +680,7 @@ public class OReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
-        writeAheadLog, true);
+        writeAheadLog, true, false);
 
     long fileId = buffer.openFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
@@ -722,7 +717,7 @@ public class OReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
-        writeAheadLog, true);
+        writeAheadLog, true, false);
 
     long fileId = buffer.openFile(fileName);
     for (int i = 0; i < 8; i++) {

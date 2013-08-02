@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 7/24/13
  */
 public class OReadWriteDiskCache implements ODiskCache {
+  public static final int            MIN_CACHE_SIZE = 256;
+
   private int                        maxSize;
   private int                        K_IN;
   private int                        K_OUT;
@@ -31,7 +33,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   private LRUList                    a1out;
   private LRUList                    a1in;
 
-  private final ODirectMemory        directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final ODirectMemory        directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final OWOWCache            writeCache;
 
@@ -42,14 +44,17 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   private final Object               syncObject;
 
-  public OReadWriteDiskCache(long readCacheMaxMemory, long writeCacheMaxMemory, int pageSize, int writeGroupTTL,
-      int pageFlushInterval, OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush) {
+  public OReadWriteDiskCache(long readCacheMaxMemory, long writeCacheMaxMemory, int pageSize, long writeGroupTTL,
+      int pageFlushInterval, OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush,
+      boolean checkMinSize) {
     this.filePages = new HashMap<Long, Set<Long>>();
 
     maxSize = normalizeMemory(readCacheMaxMemory, pageSize);
+    if (checkMinSize && maxSize < MIN_CACHE_SIZE)
+      maxSize = MIN_CACHE_SIZE;
 
     this.writeCache = new OWOWCache(syncOnPageFlush, pageSize, writeGroupTTL, writeAheadLog, pageFlushInterval, normalizeMemory(
-        writeCacheMaxMemory, pageSize), storageLocal);
+        writeCacheMaxMemory, pageSize), storageLocal, checkMinSize);
 
     K_IN = maxSize >> 2;
     K_OUT = maxSize >> 1;

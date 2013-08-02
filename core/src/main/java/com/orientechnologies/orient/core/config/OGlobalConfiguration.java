@@ -54,7 +54,15 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
-  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 3 * 1024),
+
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 7),
+
+  DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
+      "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
+
+  DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 200),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
@@ -93,10 +101,6 @@ public enum OGlobalConfiguration {
       "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
-
-  DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
-      + "this queue is used to accumulate all pages that "
-      + "should be written to the disk and then flush them in batch mode to minimize random IO overhead.", Integer.class, 15000),
 
   DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
       "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
