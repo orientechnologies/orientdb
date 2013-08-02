@@ -457,7 +457,7 @@ console.log(propName)
 schemaModule.controller("NewClassController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$route){
 
 
-	$scope.property = {"name": "","alias":"","superclass":null,"abstract":false}
+	$scope.property = {"name": "","alias":null,"superclass":null,"abstract":false}
 
 
 
@@ -471,17 +471,30 @@ schemaModule.controller("NewClassController",['$scope','$routeParams','$location
 
 		var abstract = $scope.property['abstract'] ? ' ABSTRACT ' : '';
 		
+		var alias = $scope.property['alias']==null ||$scope.property['alias']=='' ?  null :$scope.property['alias'];
+
+
 		sql= sql + abstract;
 
 		var supercl = $scope.property['superclass']!= null? ' extends ' + $scope.property['superclass'] : '';
 		
 		sql= sql + supercl;
-		console.log(sql)
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
-			$route.reload();
-			$scope.hide();
+			if(alias!= null){
+				sql= 'ALTER CLASS ' +$scope.property['name'] + ' SHORTNAME ' + alias;
+				CommandApi.queryText({database : $routeParams.database, language : 'sql', text : sql, limit : $scope.limit},function(data){
+					$route.reload();
+					$scope.hide();
+				});
+			}
+			else{
+				$route.reload();
+				$scope.hide();
+			}
 
 		});
+
+
 	}
 
 }]);

@@ -18,8 +18,8 @@
 			<tbody>
 				<tr ng-repeat="result in listClasses | orderBy:predicate:reverse" >
 					<td ng-click="openClass(result)">{{result['name']}}</td>
-					<td ng-click="openClass(result)">{{result['type']}}</td>
-					<td ng-click="openClass(result)">{{result['mandatory']}}</td>
+					<td ng-click="openClass(result)">{{result['superClass']}}</td>
+					<td ng-click="openClass(result)">{{result['alias']}}</td>
 					<td ng-click="openClass(result)">
 						<input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
 					</td>
