@@ -79,6 +79,11 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
         OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)));
   }
 
+  public OMVRBTreeRID(int binaryThreshold) {
+    this(new OMVRBTreeRIDProvider(null, ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(
+        OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME), binaryThreshold));
+  }
+
   public OMVRBTreeRID(final ODocument iRecord) {
     this(new OMVRBTreeRIDProvider(((OIdentifiable) iRecord.field("root")).getIdentity()));
     load();
