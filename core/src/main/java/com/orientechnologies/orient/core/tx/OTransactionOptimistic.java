@@ -204,8 +204,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (txRecord != null)
       return txRecord;
 
+    if (iRid.isTemporary())
+      return null;
+
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false);
+    final ORecordInternal<?> record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false);
+
+    if (record != null)
+      addRecord(record, ORecordOperation.LOADED, null);
+
+    return record;
   }
 
   public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {

@@ -52,6 +52,9 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
 
   private OMVRBTreeRID                tree;
   private boolean                     embeddedStreaming     = true;                           // KEEP THE STREAMING MODE
+  private int                         binaryThreshold       = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD
+                                                                .getValueAsInteger();
+
   private final StringBuilder         buffer                = new StringBuilder();
   private boolean                     marshalling           = true;
 
@@ -84,6 +87,13 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
     record.unsetDirty();
+  }
+
+  public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, int binaryThreshold) {
+    this(iStorage, getDatabase().getClusterNameById(iClusterId));
+    marshalling = false;
+    record.unsetDirty();
+    this.binaryThreshold = binaryThreshold;
   }
 
   public OMVRBTreeRIDProvider(final String iClusterName) {
@@ -314,7 +324,6 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
         // FORCE STREAMING BECAUSE TX
         return true;
 
-      final int binaryThreshold = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger();
       if (binaryThreshold > 0 && getSize() > binaryThreshold && tree != null) {
         // CHANGE TO EXTERNAL BINARY
         tree.setDirtyOwner();

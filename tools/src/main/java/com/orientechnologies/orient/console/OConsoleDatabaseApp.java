@@ -1784,6 +1784,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         value = rec.field(fieldName);
         if (value instanceof byte[])
           value = "byte[" + ((byte[]) value).length + "]";
+        else if (value instanceof Iterator<?>) {
+          final List<Object> coll = new ArrayList<Object>();
+          while (((Iterator<?>) value).hasNext())
+            coll.add(((Iterator<?>) value).next());
+          value = coll;
+        }
+
         out.printf("%20s : %-20s\n", fieldName, value);
       }
 

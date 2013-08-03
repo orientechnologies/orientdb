@@ -1247,7 +1247,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private void handleNoTarget() {
     if (parsedTarget == null)
       // ONLY LET, APPLY TO THEM
-      handleResult(ORuntimeResult.createProjectionDocument(resultCount), true);
+      addResult(ORuntimeResult.createProjectionDocument(resultCount));
   }
 
   private void handleGroupBy() {
@@ -1297,7 +1297,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     parserNextWord(true);
     fetchPlan = OStringSerializerHelper.getStringContent(parserGetLastWord());
-    request.setFetchPlan( fetchPlan );
+    request.setFetchPlan(fetchPlan);
 
     return true;
   }
