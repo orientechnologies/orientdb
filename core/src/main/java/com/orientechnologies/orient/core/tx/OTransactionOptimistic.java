@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.tx;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -71,7 +73,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       if (involvedIndexes != null)
         Collections.sort(involvedIndexes);
 
-      for (int retry = 0; retry < autoRetries; ++retry) {
+      for (int retry = 1; retry <= autoRetries; ++retry) {
         try {
 
           // LOCK INVOLVED INDEXES
@@ -159,8 +161,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (autoRetries == 0) {
             OLogManager.instance().debug(this, "Caught timeout exception during commit, but no automatic retry has been set", e);
             throw e;
-          } else
+          } else if (retry == autoRetries) {
+            OLogManager.instance().debug(this, "Caught timeout exception during %d/%d. Retry limit is exceeded.", retry,
+                autoRetries);
+            throw e;
+          } else {
             OLogManager.instance().debug(this, "Caught timeout exception during commit retrying %d/%d...", retry, autoRetries);
+          }
         }
       }
     }
@@ -357,6 +364,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         database.callbackHooks(TYPE.DELETE_FAILED, iRecord);
         break;
       }
+
+      if (t instanceof RuntimeException)
+        throw (RuntimeException) t;
+      else
+        throw new ODatabaseException("Error on saving record " + iRecord.getIdentity(), t);
     }
   }
 
