@@ -239,7 +239,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
       break;
     case ORecordOperation.LOADED:
-      database.callbackHooks(TYPE.BEFORE_READ, iRecord);
+      /**
+       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}
+       * .
+       */
       break;
     case ORecordOperation.UPDATED:
       database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
@@ -351,7 +354,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
         break;
       case ORecordOperation.LOADED:
-        database.callbackHooks(TYPE.AFTER_READ, iRecord);
+        /**
+         * Read hooks already invoked in
+         * {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}.
+         */
         break;
       case ORecordOperation.UPDATED:
         database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
