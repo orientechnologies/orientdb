@@ -2,7 +2,11 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.TreeMap;
 import java.util.zip.CRC32;
 
 import org.testng.Assert;
@@ -108,14 +112,27 @@ public class OWOWCacheTest {
       pagePointers[i] = directMemory.allocate(new byte[pageSize]);
       directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
 
-      wowCache.put(fileId, i, pagePointers[i]);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
+      wowCache.put(fileId, i, cachePointer);
     }
 
     for (int i = 0; i < pagePointers.length; i++) {
       long dataPointer = pagePointers[i];
 
       byte[] dataOne = directMemory.get(dataPointer + systemOffset, 8);
-      byte[] dataTwo = directMemory.get(wowCache.get(fileId, i) + systemOffset, 8);
+
+      OCachePointer cachePointer;
+      wowCache.acquireFlushLock(fileId, i);
+      try {
+        cachePointer = wowCache.get(fileId, i);
+        cachePointer.incrementReferrer();
+      } finally {
+        wowCache.releaseFlushLock(fileId, i);
+      }
+
+      byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
+      cachePointer.decrementReferrer();
+      cachePointer = null;
 
       Assert.assertEquals(dataTwo, dataOne);
     }
@@ -149,7 +166,8 @@ public class OWOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, pagePointer);
 
-      wowCache.put(fileId, pageIndex, pagePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
+      wowCache.put(fileId, pageIndex, cachePointer);
     }
 
     for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
@@ -157,8 +175,19 @@ public class OWOWCacheTest {
       long pagePointer = entry.getValue();
 
       byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
-      byte[] dataTwo = directMemory.get(wowCache.get(fileId, pageIndex) + systemOffset, 8);
 
+      OCachePointer cachePointer;
+      wowCache.acquireFlushLock(fileId, pageIndex);
+      try {
+        cachePointer = wowCache.get(fileId, pageIndex);
+        cachePointer.incrementReferrer();
+      } finally {
+        wowCache.releaseFlushLock(fileId, pageIndex);
+      }
+
+      byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
+
+      cachePointer.decrementReferrer();
       Assert.assertEquals(dataTwo, dataOne);
     }
 
@@ -175,7 +204,8 @@ public class OWOWCacheTest {
       random.nextBytes(data);
 
       directMemory.set(pagePointer + systemOffset, data, 0, data.length);
-      wowCache.put(fileId, pageIndex, pagePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
+      wowCache.put(fileId, pageIndex, cachePointer);
     }
 
     for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
@@ -183,7 +213,18 @@ public class OWOWCacheTest {
       long pagePointer = entry.getValue();
 
       byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
-      byte[] dataTwo = directMemory.get(wowCache.get(fileId, pageIndex) + systemOffset, 8);
+
+      OCachePointer cachePointer;
+      wowCache.acquireFlushLock(fileId, pageIndex);
+      try {
+        cachePointer = wowCache.get(fileId, pageIndex);
+        cachePointer.incrementReferrer();
+      } finally {
+        wowCache.releaseFlushLock(fileId, pageIndex);
+      }
+
+      byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
+      cachePointer.decrementReferrer();
 
       Assert.assertEquals(dataTwo, dataOne);
     }
@@ -193,10 +234,6 @@ public class OWOWCacheTest {
   }
 
   public void testFlushAllContentEventually() throws Exception {
-    closeCacheAndDeleteFile();
-
-    wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
-
     Random random = new Random();
 
     long[] pagePointers = new long[200];
@@ -209,19 +246,31 @@ public class OWOWCacheTest {
       pagePointers[i] = directMemory.allocate(new byte[pageSize]);
       directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
 
-      wowCache.put(fileId, i, pagePointers[i]);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
+      wowCache.put(fileId, i, cachePointer);
     }
 
     for (int i = 0; i < pagePointers.length; i++) {
       long dataPointer = pagePointers[i];
 
       byte[] dataOne = directMemory.get(dataPointer + systemOffset, 8);
-      byte[] dataTwo = directMemory.get(wowCache.get(fileId, i) + systemOffset, 8);
+
+      OCachePointer cachePointer;
+      wowCache.acquireFlushLock(fileId, i);
+      try {
+        cachePointer = wowCache.get(fileId, i);
+        cachePointer.incrementReferrer();
+      } finally {
+        wowCache.releaseFlushLock(fileId, i);
+      }
+
+      byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
+      cachePointer.decrementReferrer();
 
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(200 * 10 + 1000);
+    Thread.sleep(5000);
 
     for (int i = 0; i < pagePointers.length; i++) {
       byte[] dataContent = directMemory.get(pagePointers[i] + systemOffset, 8);

@@ -38,7 +38,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -198,20 +197,21 @@ public class O2QDiskCache implements ODiskCache {
   @Override
   public long load(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
-      final OCacheEntry cacheEntry = updateCache(fileId, pageIndex);
-      cacheEntry.usageCounter++;
-      return cacheEntry.dataPointer;
+      // final OCacheEntry cacheEntry = updateCache(fileId, pageIndex);
+      // cacheEntry.usageCounter++;
+      // return cacheEntry.dataPointer;
+      return -1;
     }
   }
 
   @Override
   public void release(long fileId, long pageIndex) {
     synchronized (syncObject) {
-      OCacheEntry cacheEntry = get(fileId, pageIndex, false);
-      if (cacheEntry != null)
-        cacheEntry.usageCounter--;
-      else
-        throw new IllegalStateException("record should be released is already free!");
+      // OCacheEntry cacheEntry = get(fileId, pageIndex, false);
+      // if (cacheEntry != null)
+      // cacheEntry.usageCounter--;
+      // else
+      // throw new IllegalStateException("record should be released is already free!");
     }
   }
 
@@ -242,13 +242,13 @@ public class O2QDiskCache implements ODiskCache {
             iterator.remove();
           }
         } else {
-          if (cacheEntry.usageCounter == 0) {
-            flushData(fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
-            iterator.remove();
-            cacheEntry.isDirty = false;
-          } else {
-            throw new OBlockedPageException("Unable to perform flush file because some pages is in use.");
-          }
+          // if (cacheEntry.usageCounter == 0) {
+          // flushData(fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
+          // iterator.remove();
+          // cacheEntry.isDirty = false;
+          // } else {
+          // throw new OBlockedPageException("Unable to perform flush file because some pages is in use.");
+          // }
         }
       }
 
@@ -275,34 +275,34 @@ public class O2QDiskCache implements ODiskCache {
 
       final SortedMap<Long, OLogSequenceNumber> fileDirtyPages = dirtyPages.get(fileId);
 
-      for (Long pageIndex : sortedPageIndexes) {
-        OCacheEntry cacheEntry = get(fileId, pageIndex, true);
-        if (cacheEntry != null) {
-          if (cacheEntry.usageCounter == 0) {
-            cacheEntry = remove(fileId, pageIndex);
-
-            fileDirtyPages.remove(pageIndex);
-
-            if (cacheEntry.dataPointer != ODirectMemory.NULL_POINTER) {
-              if (flush)
-                flushData(fileId, pageIndex, cacheEntry.dataPointer);
-
-              directMemory.free(cacheEntry.dataPointer);
-            }
-          } else
-            throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
-                + "can not be freed because it is used.");
-
-        } else {
-          Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
-          if (dataPointer != null) {
-            if (flush)
-              flushData(fileId, pageIndex, dataPointer);
-
-            fileDirtyPages.remove(pageIndex);
-          }
-        }
-      }
+      // for (Long pageIndex : sortedPageIndexes) {
+      // OCacheEntry cacheEntry = get(fileId, pageIndex, true);
+      // if (cacheEntry != null) {
+      // if (cacheEntry.usageCounter == 0) {
+      // cacheEntry = remove(fileId, pageIndex);
+      //
+      // fileDirtyPages.remove(pageIndex);
+      //
+      // if (cacheEntry.dataPointer != ODirectMemory.NULL_POINTER) {
+      // if (flush)
+      // flushData(fileId, pageIndex, cacheEntry.dataPointer);
+      //
+      // directMemory.free(cacheEntry.dataPointer);
+      // }
+      // } else
+      // throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
+      // + "can not be freed because it is used.");
+      //
+      // } else {
+      // Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
+      // if (dataPointer != null) {
+      // if (flush)
+      // flushData(fileId, pageIndex, dataPointer);
+      //
+      // fileDirtyPages.remove(pageIndex);
+      // }
+      // }
+      // }
 
       pageIndexes.clear();
       fileClassic.close();
@@ -333,11 +333,11 @@ public class O2QDiskCache implements ODiskCache {
       for (Long pageIndex : pageEntries) {
         OCacheEntry cacheEntry = get(fileId, pageIndex, true);
         if (cacheEntry != null) {
-          if (cacheEntry.usageCounter == 0) {
-            cacheEntry = remove(fileId, pageIndex);
-            if (cacheEntry.dataPointer != ODirectMemory.NULL_POINTER)
-              directMemory.free(cacheEntry.dataPointer);
-          }
+          // if (cacheEntry.usageCounter == 0) {
+          // cacheEntry = remove(fileId, pageIndex);
+          // if (cacheEntry.dataPointer != ODirectMemory.NULL_POINTER)
+          // directMemory.free(cacheEntry.dataPointer);
+          // }
         } else {
           Long dataPointer = evictedPages.remove(new FileLockKey(fileId, pageIndex));
           if (dataPointer != null)
@@ -462,8 +462,8 @@ public class O2QDiskCache implements ODiskCache {
 
       CacheResult cacheResult = cacheFileContent(fileId, pageIndex);
 
-      assert cacheEntry.usageCounter == 0;
-      cacheEntry.dataPointer = cacheResult.dataPointer;
+      // assert cacheEntry.usageCounter == 0;
+      // cacheEntry.dataPointer = cacheResult.dataPointer;
       cacheEntry.isDirty = cacheResult.isDirty;
 
       OLogSequenceNumber lsn;
@@ -492,7 +492,7 @@ public class O2QDiskCache implements ODiskCache {
     else
       lsn = getLogSequenceNumberFromPage(cacheResult.dataPointer);
 
-    cacheEntry = new OCacheEntry(fileId, pageIndex, cacheResult.dataPointer, cacheResult.isDirty, lsn);
+    // cacheEntry = new OCacheEntry(fileId, pageIndex, cacheResult.dataPointer, cacheResult.isDirty, lsn);
     a1in.putToMRU(cacheEntry);
 
     filePages.get(fileId).add(pageIndex);
@@ -507,12 +507,12 @@ public class O2QDiskCache implements ODiskCache {
         if (removedFromAInEntry == null) {
           increaseCacheSize();
         } else {
-          assert removedFromAInEntry.usageCounter == 0;
-
-          evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
-              removedFromAInEntry.isDirty);
-
-          removedFromAInEntry.dataPointer = ODirectMemory.NULL_POINTER;
+          // assert removedFromAInEntry.usageCounter == 0;
+          //
+          // evictFileContent(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex, removedFromAInEntry.dataPointer,
+          // removedFromAInEntry.isDirty);
+          //
+          // removedFromAInEntry.dataPointer = ODirectMemory.NULL_POINTER;
           removedFromAInEntry.isDirty = false;
           removedFromAInEntry.loadedLSN = null;
 
@@ -520,7 +520,7 @@ public class O2QDiskCache implements ODiskCache {
         }
         if (a1out.size() > K_OUT) {
           OCacheEntry removedEntry = a1out.removeLRU();
-          assert removedEntry.usageCounter == 0;
+          // assert removedEntry.usageCounter == 0;
           Set<Long> pageEntries = filePages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
         }
@@ -530,8 +530,8 @@ public class O2QDiskCache implements ODiskCache {
         if (removedEntry == null) {
           increaseCacheSize();
         } else {
-          assert removedEntry.usageCounter == 0;
-          evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
+          // assert removedEntry.usageCounter == 0;
+          // evictFileContent(removedEntry.fileId, removedEntry.pageIndex, removedEntry.dataPointer, removedEntry.isDirty);
           Set<Long> pageEntries = filePages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
         }
@@ -778,8 +778,8 @@ public class O2QDiskCache implements ODiskCache {
   private OCacheEntry remove(long fileId, long pageIndex) {
     OCacheEntry cacheEntry = am.remove(fileId, pageIndex);
     if (cacheEntry != null) {
-      if (cacheEntry.usageCounter > 1)
-        throw new IllegalStateException("Record cannot be removed because it is used!");
+      // if (cacheEntry.usageCounter > 1)
+      // throw new IllegalStateException("Record cannot be removed because it is used!");
       return cacheEntry;
     }
 
@@ -788,8 +788,8 @@ public class O2QDiskCache implements ODiskCache {
       return cacheEntry;
     }
     cacheEntry = a1in.remove(fileId, pageIndex);
-    if (cacheEntry != null && cacheEntry.usageCounter > 1)
-      throw new IllegalStateException("Record cannot be removed because it is used!");
+    // if (cacheEntry != null && cacheEntry.usageCounter > 1)
+    // throw new IllegalStateException("Record cannot be removed because it is used!");
     return cacheEntry;
   }
 

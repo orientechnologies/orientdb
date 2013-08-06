@@ -17,8 +17,19 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -51,6 +62,9 @@ public class OWOWCache {
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups    = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
 
   private final Map<Long, OFileClassic>                     files;
+
+  private final OLockManager<PageKey, Thread>               pageFlushLockManger;
+
   private final ODirectMemory                               directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final boolean                                     syncOnPageFlush;
@@ -90,6 +104,8 @@ public class OWOWCache {
     this.writeAheadLog = writeAheadLog;
     this.cacheMaxSize = cacheMaxSize;
     this.storageLocal = storageLocal;
+    this.pageFlushLockManger = new OLockManager<PageKey, Thread>(true,
+        OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT.getValueAsInteger());
 
     if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
       this.cacheMaxSize = MIN_CACHE_SIZE;
@@ -117,27 +133,33 @@ public class OWOWCache {
     }
   }
 
-  public void put(final long fileId, final long pageIndex, final long srcDataPointer) {
+  public void put(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
       try {
-        writeGroups.putIfAbsent(groupKey, new WriteGroup(System.currentTimeMillis()));
         WriteGroup writeGroup = writeGroups.get(groupKey);
+        if (writeGroup == null) {
+          writeGroup = new WriteGroup(System.currentTimeMillis());
+          writeGroups.put(groupKey, writeGroup);
+        }
 
         int entryIndex = (int) (pageIndex & 15);
 
-        final long dataPointer;
-        if (writeGroup.pages[entryIndex] == ODirectMemory.NULL_POINTER) {
-          dataPointer = directMemory.allocate(pageSize);
+        if (writeGroup.pages[entryIndex] == null) {
+          dataPointer.incrementReferrer();
           writeGroup.pages[entryIndex] = dataPointer;
 
           cacheSize.incrementAndGet();
         } else {
-          dataPointer = writeGroup.pages[entryIndex];
+          if (!writeGroup.pages[entryIndex].equals(dataPointer)) {
+            writeGroup.pages[entryIndex].decrementReferrer();
+            dataPointer.incrementReferrer();
+
+            writeGroup.pages[entryIndex] = dataPointer;
+          }
         }
 
-        directMemory.copyData(srcDataPointer, dataPointer, pageSize);
         writeGroup.recencyBit = true;
       } finally {
         lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
@@ -157,7 +179,7 @@ public class OWOWCache {
     }
   }
 
-  public long get(long fileId, long pageIndex) throws IOException {
+  public OCachePointer get(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.SHARED);
@@ -168,18 +190,23 @@ public class OWOWCache {
           return cacheFileContent(fileId, pageIndex);
 
         final int entryIndex = (int) (pageIndex & 15);
-        long pagePointer = writeGroup.pages[entryIndex];
-        if (pagePointer == ODirectMemory.NULL_POINTER)
+        OCachePointer pagePointer = writeGroup.pages[entryIndex];
+        if (pagePointer == null)
           return cacheFileContent(fileId, pageIndex);
-
-        pagePointer = directMemory.allocate(pageSize);
-        directMemory.copyData(writeGroup.pages[entryIndex], pagePointer, pageSize);
 
         return pagePointer;
       } finally {
         lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.SHARED);
       }
     }
+  }
+
+  public void acquireFlushLock(long fileId, long pageIndex) {
+    pageFlushLockManger.acquireLock(Thread.currentThread(), new PageKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
+  }
+
+  public void releaseFlushLock(long fileId, long pageIndex) {
+    pageFlushLockManger.releaseLock(Thread.currentThread(), new PageKey(fileId, pageIndex), OLockManager.LOCK.EXCLUSIVE);
   }
 
   public void flush(long fileId) {
@@ -316,19 +343,19 @@ public class OWOWCache {
     }
   }
 
-  private long cacheFileContent(long fileId, long pageIndex) throws IOException {
+  private OCachePointer cacheFileContent(long fileId, long pageIndex) throws IOException {
     final OFileClassic fileClassic = files.get(fileId);
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
     byte[] content = new byte[pageSize];
-    long dataPointer;
+    OCachePointer dataPointer;
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length);
-      dataPointer = directMemory.allocate(content);
+      dataPointer = new OCachePointer(content);
     } else {
       fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
-      dataPointer = directMemory.allocate(content);
+      dataPointer = new OCachePointer(content);
     }
 
     return dataPointer;
@@ -585,7 +612,7 @@ public class OWOWCache {
       Iterator<Map.Entry<GroupKey, WriteGroup>> entriesIterator = subMap.entrySet().iterator();
       long currentTime = System.currentTimeMillis();
 
-      while (entriesIterator.hasNext() && flushedWriteGroups < writeGroupsToFlush) {
+      groupsLoop: while (entriesIterator.hasNext() && flushedWriteGroups < writeGroupsToFlush) {
         Map.Entry<GroupKey, WriteGroup> entry = entriesIterator.next();
         final WriteGroup group = entry.getValue();
         final GroupKey groupKey = entry.getKey();
@@ -595,22 +622,39 @@ public class OWOWCache {
           if (group.recencyBit && group.creationTime - currentTime < groupTTL && !forceFlush)
             group.recencyBit = false;
           else {
+            List<PageKey> lockedPages = new ArrayList<PageKey>();
             for (int i = 0; i < 16; i++) {
-              final long pagePointer = group.pages[i];
-
-              if (pagePointer != ODirectMemory.NULL_POINTER) {
-                flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer);
-                directMemory.free(pagePointer);
-                cacheSize.decrementAndGet();
-              }
+              final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+              pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
+              lockedPages.add(pageKey);
             }
 
-            lastGroupKey = entry.getKey();
-            entriesIterator.remove();
+            try {
+              for (OCachePointer pagePointer : group.pages) {
+                if (pagePointer != null && pagePointer.getUsagesCount() > 0)
+                  continue groupsLoop;
+              }
 
-            flushedWriteGroups++;
+              for (int i = 0; i < 16; i++) {
+                final OCachePointer pagePointer = group.pages[i];
+
+                if (pagePointer != null) {
+                  flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer.getDataPointer());
+                  pagePointer.decrementReferrer();
+
+                  cacheSize.decrementAndGet();
+                }
+              }
+
+              lastGroupKey = entry.getKey();
+              entriesIterator.remove();
+
+              flushedWriteGroups++;
+            } finally {
+              for (PageKey pageKey : lockedPages)
+                pageFlushLockManger.releaseLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
+            }
           }
-
         } finally {
           lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
         }
@@ -641,17 +685,34 @@ public class OWOWCache {
         try {
           WriteGroup writeGroup = entry.getValue();
           GroupKey groupKey = entry.getKey();
+          List<PageKey> lockedPages = new ArrayList<PageKey>();
           for (int i = 0; i < 16; i++) {
-            long pagePointer = writeGroup.pages[i];
-
-            if (pagePointer != ODirectMemory.NULL_POINTER) {
-              flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer);
-              directMemory.free(pagePointer);
-              cacheSize.decrementAndGet();
-            }
+            final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+            pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
+            lockedPages.add(pageKey);
           }
-          entryIterator.remove();
 
+          try {
+            for (OCachePointer pagePointer : writeGroup.pages) {
+              if (pagePointer != null && pagePointer.getUsagesCount() > 0)
+                throw new OException("Pages in write group with index " + groupKey.groupIndex + " are used and can not be flushed.");
+            }
+
+            for (int i = 0; i < 16; i++) {
+              OCachePointer pagePointer = writeGroup.pages[i];
+
+              if (pagePointer != null) {
+                flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer.getDataPointer());
+                pagePointer.decrementReferrer();
+
+                cacheSize.decrementAndGet();
+              }
+            }
+            entryIterator.remove();
+          } finally {
+            for (PageKey pageKey : lockedPages)
+              pageFlushLockManger.releaseLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
+          }
         } finally {
           lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
         }
@@ -682,11 +743,32 @@ public class OWOWCache {
         lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
         try {
           WriteGroup writeGroup = entry.getValue();
-          for (long pagePointer : writeGroup.pages) {
-            if (pagePointer != ODirectMemory.NULL_POINTER) {
-              directMemory.free(pagePointer);
-              cacheSize.decrementAndGet();
+          GroupKey groupKey = entry.getKey();
+
+          List<PageKey> lockedPages = new ArrayList<PageKey>();
+          for (int i = 0; i < 16; i++) {
+            final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+            pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
+            lockedPages.add(pageKey);
+          }
+
+          try {
+
+            for (OCachePointer pagePointer : writeGroup.pages) {
+              if (pagePointer != null && pagePointer.getUsagesCount() > 0)
+                throw new OException("Pages in write group with index " + groupKey.groupIndex + " are used and can not be removed.");
             }
+
+            for (OCachePointer pagePointer : writeGroup.pages) {
+              if (pagePointer != null) {
+                pagePointer.decrementReferrer();
+
+                cacheSize.decrementAndGet();
+              }
+            }
+          } finally {
+            for (PageKey pageKey : lockedPages)
+              pageFlushLockManger.releaseLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
           }
 
           entryIterator.remove();
@@ -696,6 +778,45 @@ public class OWOWCache {
       }
 
       return null;
+    }
+  }
+
+  private static final class PageKey {
+    private final long fileId;
+    private final long pageIndex;
+
+    public PageKey(long fileId, long pageIndex) {
+      this.fileId = fileId;
+      this.pageIndex = pageIndex;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      PageKey pageKey = (PageKey) o;
+
+      if (fileId != pageKey.fileId)
+        return false;
+      if (pageIndex != pageKey.pageIndex)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (fileId ^ (fileId >>> 32));
+      result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "PageKey{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + '}';
     }
   }
 }

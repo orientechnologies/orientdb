@@ -56,13 +56,16 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 3 * 1024),
 
-  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 7),
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 20),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
 
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
-      "Interval between flushing of pages from write cache in ms.", Integer.class, 200),
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
+
+  DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
+      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, 10000),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),

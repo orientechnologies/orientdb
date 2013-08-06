@@ -19,35 +19,36 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QDiskCache;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
 /**
  * @author Artem Loginov
  */
 @Test
-public class O2QCacheConcurrentTest {
+public class OReadWriteCacheConcurrentTest {
   private final int                                  systemOffset    = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private static final int                           THREAD_COUNT    = 4;
   private static final int                           PAGE_COUNT      = 20;
   private static final int                           FILE_COUNT      = 8;
-  private O2QDiskCache                               buffer;
+  private OReadWriteDiskCache                        buffer;
   private OLocalPaginatedStorage                     storageLocal;
   private ODirectMemory                              directMemory;
+
   private String[]                                   fileNames;
   private byte                                       seed;
   private final ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
@@ -69,7 +70,8 @@ public class O2QCacheConcurrentTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QCacheConcurrentTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage(
+        "plocal:" + buildDirectory + "/OReadWriteCacheConcurrentTest");
 
     prepareFilesForTest(FILE_COUNT);
 
@@ -78,7 +80,7 @@ public class O2QCacheConcurrentTest {
   private void prepareFilesForTest(int filesCount) {
     fileNames = new String[filesCount];
     for (int i = 0; i < fileNames.length; i++) {
-      fileNames[i] = "o2QCacheTest" + i + ".tst";
+      fileNames[i] = "readWriteCacheTest" + i + ".tst";
     }
   }
 
@@ -97,7 +99,8 @@ public class O2QCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QDiskCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        null, true, false);
   }
 
   @AfterClass
@@ -110,7 +113,7 @@ public class O2QCacheConcurrentTest {
 
   private void deleteUsedFiles(int filesCount) {
     for (int k = 0; k < filesCount; k++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest" + k + ".tst");
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst");
       if (file.exists())
         Assert.assertTrue(file.delete());
     }
@@ -188,7 +191,7 @@ public class O2QCacheConcurrentTest {
   }
 
   private void validateFileContent(byte version, int k) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest" + k + ".tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "r");

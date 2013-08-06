@@ -222,7 +222,8 @@ class LRUList implements Iterable<OCacheEntry> {
 
   public OCacheEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove != null && entryToRemove.cacheEntry.usageCounter != 0) {
+    while (entryToRemove != null
+        && (entryToRemove.cacheEntry.dataPointer != null && entryToRemove.cacheEntry.dataPointer.getUsagesCount() != 0)) {
       entryToRemove = entryToRemove.after;
     }
     if (entryToRemove != null) {

@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
@@ -10,35 +7,21 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @since 7/23/13
  */
 class OCacheEntry {
-  final ReadWriteLock lock = new ReentrantReadWriteLock();
+  final long         fileId;
+  final long         pageIndex;
 
-  long                fileId;
-  long                pageIndex;
+  OLogSequenceNumber loadedLSN;
 
-  OLogSequenceNumber  loadedLSN;
+  OCachePointer      dataPointer;
 
-  long                dataPointer;
+  boolean            isDirty;
 
-  boolean             isDirty;
-  int                 usageCounter;
-
-  boolean             inReadCache;
-  boolean             inWriteCache;
-
-  public OCacheEntry(long fileId, long pageIndex, long dataPointer, boolean dirty, OLogSequenceNumber loadedLSN) {
+  public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty, OLogSequenceNumber loadedLSN) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
     this.loadedLSN = loadedLSN;
     this.dataPointer = dataPointer;
     isDirty = dirty;
-  }
-
-  public void acquireExclusiveLock() {
-    lock.writeLock().lock();
-  }
-
-  public void releaseExclusiveLock() {
-    lock.writeLock().unlock();
   }
 
   @Override
@@ -50,11 +33,13 @@ class OCacheEntry {
 
     OCacheEntry that = (OCacheEntry) o;
 
-    if (dataPointer != that.dataPointer)
-      return false;
     if (fileId != that.fileId)
       return false;
+    if (isDirty != that.isDirty)
+      return false;
     if (pageIndex != that.pageIndex)
+      return false;
+    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
     if (loadedLSN != null ? !loadedLSN.equals(that.loadedLSN) : that.loadedLSN != null)
       return false;
@@ -67,13 +52,14 @@ class OCacheEntry {
     int result = (int) (fileId ^ (fileId >>> 32));
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (loadedLSN != null ? loadedLSN.hashCode() : 0);
-    result = 31 * result + (int) (dataPointer ^ (dataPointer >>> 32));
+    result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
+    result = 31 * result + (isDirty ? 1 : 0);
     return result;
   }
 
   @Override
   public String toString() {
     return "OCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", loadedLSN=" + loadedLSN + ", dataPointer="
-        + dataPointer + ", isDirty=" + isDirty + ", usageCounter=" + usageCounter + '}';
+        + dataPointer + ", isDirty=" + isDirty + '}';
   }
 }

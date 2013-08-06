@@ -25,7 +25,12 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
 @Test
 public class OReadWriteDiskCacheTest {
@@ -130,7 +135,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -185,7 +190,7 @@ public class OReadWriteDiskCacheTest {
     }
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
@@ -227,12 +232,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 6; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
@@ -251,12 +256,12 @@ public class OReadWriteDiskCacheTest {
     }
 
     for (int i = 6; i < 8; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 8; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -346,7 +351,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -380,7 +385,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -439,7 +444,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -473,12 +478,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 0; i < 2; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OCacheEntry entry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
     }
 
     for (int i = 2; i < 6; i++) {
-      OCacheEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -811,7 +816,11 @@ public class OReadWriteDiskCacheTest {
   }
 
   private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
-    return new OCacheEntry(fileId, pageIndex, pointer, dirty, lsn);
+    return new OCacheEntry(fileId, pageIndex, new OCachePointer(pointer), dirty, lsn);
+  }
+
+  private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
+    return new OCacheEntry(fileId, pageIndex, null, false, null);
   }
 
   private void setLsn(long dataPointer, OLogSequenceNumber lsn) {

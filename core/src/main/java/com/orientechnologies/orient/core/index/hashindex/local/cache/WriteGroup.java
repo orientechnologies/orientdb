@@ -5,10 +5,10 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
  * @since 7/24/13
  */
 class WriteGroup {
-  public long[]  pages = new long[16];
+  public OCachePointer[] pages = new OCachePointer[16];
 
-  public boolean recencyBit;
-  public long    creationTime;
+  public boolean         recencyBit;
+  public long            creationTime;
 
   WriteGroup(long creationTime) {
     this.creationTime = creationTime;
