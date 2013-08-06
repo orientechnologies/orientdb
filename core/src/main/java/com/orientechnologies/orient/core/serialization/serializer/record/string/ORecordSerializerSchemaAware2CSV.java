@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,11 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -42,11 +45,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
-  private static final long                            serialVersionUID    = 1L;
-  public static final String                           NAME                = "ORecordDocument2csv";
-  public static final ORecordSerializerSchemaAware2CSV INSTANCE            = new ORecordSerializerSchemaAware2CSV();
-
-  private static final AtomicLong                      nextSerializationId = new AtomicLong(0);
+  private static final long                            serialVersionUID = 1L;
+  public static final String                           NAME             = "ORecordDocument2csv";
+  public static final ORecordSerializerSchemaAware2CSV INSTANCE         = new ORecordSerializerSchemaAware2CSV();
 
   @Override
   public ORecordSchemaAware<?> newObject(String iClassName) {
@@ -60,7 +61,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Set<Long> iMarshalledRecords, final boolean iOnlyDelta,
+      OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
@@ -71,19 +72,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final ODocument record = (ODocument) iRecord;
 
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-
-    if (record.getSerializationId() < 0) {
-      long serializationId = nextSerializationId.getAndIncrement();
-      record.setSerializationId(serializationId);
-    }
-
-    final Long identityRecord = record.getSerializationId();
-
     if (iMarshalledRecords != null)
-      if (iMarshalledRecords.contains(identityRecord)) {
+      if (iMarshalledRecords.contains(record)) {
         return iOutput;
       } else
-        iMarshalledRecords.add(identityRecord);
+        iMarshalledRecords.add(record);
 
     if (!iOnlyDelta && record.getSchemaClass() != null) {
       // MARSHALL THE CLASSNAME
@@ -298,7 +291,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     }
 
     if (iMarshalledRecords != null)
-      iMarshalledRecords.remove(identityRecord);
+      iMarshalledRecords.remove(record);
 
     // GET THE OVERSIZE IF ANY
     final float overSize;
