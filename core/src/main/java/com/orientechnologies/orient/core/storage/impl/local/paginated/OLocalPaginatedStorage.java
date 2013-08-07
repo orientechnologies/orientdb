@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -915,6 +916,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       cluster = new OLocalPaginatedCluster();
       cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
+
+      if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {
+        cluster.set(OCluster.ATTRIBUTES.USE_WAL, false);
+        cluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 5);
+        cluster.set(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR, 2);
+      }
+
     } else {
       cluster = null;
     }
@@ -1458,6 +1466,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+        OLogManager.instance().info(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
+            clientTx.getId());
         rollback(clientTx);
         if (e instanceof OException)
           throw ((OException) e);
@@ -1501,6 +1511,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     case ORecordOperation.CREATED: {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
       byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
+        break;
+      }
 
       final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
@@ -1533,6 +1547,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     case ORecordOperation.UPDATED: {
       byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
+        break;
+      }
+
       txEntry
           .getRecord()
           .getRecordVersion()

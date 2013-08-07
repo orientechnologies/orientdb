@@ -75,7 +75,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value)) {
+        if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
           // DISABLE IT
           enabled = false;
           return;

@@ -99,7 +99,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
 
           ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
               "#%d aligning operation=%d.%d db=%s %s", aligned, operation.getRunId(), operation.getOperationSerial(), databaseName,
-              operation.getName().toUpperCase());
+              operation);
 
           operation.setNodeSource(localNode);
           operation.setDatabaseName(databaseName);

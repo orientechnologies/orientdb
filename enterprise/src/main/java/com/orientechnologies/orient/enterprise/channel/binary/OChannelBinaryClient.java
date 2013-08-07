@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import com.orientechnologies.common.concur.resource.OAdaptiveLock;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
@@ -73,10 +74,15 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
           + ": " + e);
     }
 
-    if (Math.abs(srvProtocolVersion - iProtocolVersion) > 2) {
-      close();
-      throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
-          + ", server=" + srvProtocolVersion);
+    if (srvProtocolVersion != iProtocolVersion) {
+      OLogManager.instance().warn(
+          this,
+          "The Client driver version is different than Server version: client=" + iProtocolVersion + ", server="
+              + srvProtocolVersion
+              + ". You could not use the full features of the newer version. Assure to have the same versions on both");
+      // close();
+      // throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
+      // + ", server=" + srvProtocolVersion);
     }
 
     if (asynchEventListener != null)

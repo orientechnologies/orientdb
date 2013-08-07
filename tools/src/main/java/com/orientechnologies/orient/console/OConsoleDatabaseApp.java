@@ -22,13 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +56,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -74,7 +71,6 @@ import com.orientechnologies.orient.core.iterator.OIdentifiableIterator;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -143,6 +139,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     System.exit(result);
+  }
+
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return iLine.startsWith("js");
   }
 
   @Override
@@ -479,6 +480,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (result != null && result instanceof ODocument) {
       out.printf(((ODocument) result).toJSON());
     }
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Executes a command inside a transaction")
+  public void transactional(@ConsoleParameter(name = "command-text", description = "The command to execute") String iCommandText) {
+    sqlCommand("transactional", iCommandText, "\nResult: '%s'. Executed in %f sec(s).\n", true);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Insert a new record into the database")
@@ -1317,35 +1323,28 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Gets the replication journal for a database against a remote server")
   public void replicationGetJournal(
       @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
+      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
+      @ConsoleParameter(name = "limit", description = "Limit as maximum number of records starting from the end", optional = true) final String iLimit)
       throws IOException {
 
     checkForRemoteServer();
 
-    try {
-      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName);
+    final long start = System.currentTimeMillis();
 
-      if (response.fieldNames().length == 0)
+    int limit = iLimit == null ? -1 : Integer.parseInt(iLimit);
+
+    try {
+      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName, limit);
+      currentResultSet = response.field("result");
+      if (currentResultSet.size() == 0)
         out.println("Replication journal for database '" + iDatabaseName + "' is empty");
       else {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        float elapsedSeconds = getElapsedSecs(start);
 
-        out.println("Replication journal for database '" + iDatabaseName + "'\n");
-        out.printf("+-----------+-----------+---------------+-------------------------+\n");
-        out.printf("| SERIAL    | OPERATION | RECORD ID     | DATE                    |\n");
-        out.printf("+-----------+-----------+---------------+-------------------------+\n");
-        for (String k : response.fieldNames()) {
-          final long opSerial = Long.parseLong(k);
+        new OTableFormatter(out).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
+            .writeRecords(currentResultSet, -1);
 
-          final String[] split = ((String) response.field(k)).split("-");
-          final byte opType = Byte.valueOf((byte) Integer.parseInt(split[0]));
-          final String opRID = split[1];
-          final String date = split[2];
-
-          out.printf("| %-10d| %9s | %-14s| %23s |\n", opSerial, ORecordOperation.getName(opType), opRID,
-              format.format(new Date(Long.parseLong(date))));
-        }
-        out.printf("+-----------+--------+---------------+-------------------------+\n");
+        out.println("\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
       }
       out.println();
 
@@ -1380,23 +1379,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     try {
       final ODocument response = serverAdmin.getReplicationConflicts(iDatabaseName);
-      final List<ODocument> entries = response.field("entries");
+      currentResultSet = response.field("result");
 
-      if (entries == null || entries.size() == 0)
+      if (currentResultSet == null || currentResultSet.size() == 0)
         out.println("There are not replication conflicts for database '" + iDatabaseName + "'");
       else {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-
-        out.println("Replication conflicts for database '" + iDatabaseName + "'. Found " + entries.size() + " entries.\n");
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
-        out.printf("| RECORD ID     | SERVER NODE        |OPERATION | DATE                    | CURR VERSION | OTHER VERSION | OTHER RID      |\n");
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
-        for (ODocument doc : entries) {
-          out.printf("| %-14s| %18s | %-8s | %23s | %-12d | %-13d | %-14s |\n", doc.field("record", OType.LINK), doc.field("node"),
-              ORecordOperation.getName((Byte) doc.field("operation")), format.format(new Date((Long) doc.field("date"))),
-              doc.field("currentVersion"), doc.field("otherVersion"), doc.field("otherRID"));
-        }
-        out.printf("+---------------+--------------------+----------+-------------------------+--------------+---------------+----------------+\n");
+        new OTableFormatter(out).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
+            .writeRecords(currentResultSet, -1);
       }
       out.println();
 

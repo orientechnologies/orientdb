@@ -17,8 +17,14 @@ package com.orientechnologies.orient.server.hazelcast;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -26,7 +32,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.ExecutionCallback;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberLeftException;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -36,8 +51,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
+import com.orientechnologies.orient.server.distributed.OReplicationConfig;
+import com.orientechnologies.orient.server.distributed.OServerOfflineException;
+import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -396,7 +417,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // LOCAL EXECUTION AVOID TO USE EXECUTORS
     final Object localResult = enqueueLocalExecution(iTask);
 
-    final Set<String> targetNodes = getRemoteNodeIdsBut(iTask.getNodeSource(), iTask.getNodeDestination());
+    final Set<String> targetNodes = getOnlineRemoteNodeIdsBut(iTask.getNodeSource(), iTask.getNodeDestination());
     if (!targetNodes.isEmpty()) {
       // RESET THE SOURCE TO AVOID LOOPS
       iTask.setNodeSource(getLocalNodeId());
@@ -466,7 +487,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         iClusterName != null ? "cluster=" + iClusterName + " " : "", iKey != null ? "key=" + iKey : "", iClusterName == null
             && iKey == null ? "default operation" : "", data.masterNode, local);
 
-    final Set<String> targetNodes = getRemoteNodeIdsBut(iLocalNodeId, iRemoteNodeId);
+    final Set<String> targetNodes = getOnlineRemoteNodeIdsBut(iLocalNodeId, iRemoteNodeId);
     if (!targetNodes.isEmpty())
       data.synchReplicas = targetNodes.toArray(new String[targetNodes.size()]);
 
@@ -734,11 +755,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return remoteClusterNodes.keySet();
   }
 
-  public Set<String> getRemoteNodeIdsBut(final String... iExcludeNodes) {
+  public Set<String> getOnlineRemoteNodeIdsBut(final String... iExcludeNodes) {
     final Set<String> otherNodes = remoteClusterNodes.keySet();
 
     final Set<String> set = new HashSet<String>(otherNodes.size());
     for (String item : remoteClusterNodes.keySet()) {
+      if (isOfflineNode(item))
+        // SKIP IT BECAUSE IS NOT ONLINE YET
+        // TODO: SPEED UP THIS CHECKING THE NODE IN ALIGNMENT STATES?
+        continue;
+
       boolean include = true;
       for (String excludeNode : iExcludeNodes)
         if (item.equals(excludeNode)) {
@@ -811,6 +837,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public boolean isOfflineNode(final String iNodeId) {
+    synchronized (pendingAlignments) {
+      if (pendingAlignments.containsKey(iNodeId))
+        // ALIGNMENT STATUS
+        return true;
+    }
+
     final ODocument cfg = getNodeConfiguration(iNodeId);
     return cfg == null || !cfg.field("status").equals("online");
   }

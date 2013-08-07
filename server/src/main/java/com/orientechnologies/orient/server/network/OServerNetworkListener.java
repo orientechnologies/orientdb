@@ -17,7 +17,13 @@ package com.orientechnologies.orient.server.network;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.*;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +32,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -44,6 +51,7 @@ public class OServerNetworkListener extends Thread {
   private OContextConfiguration             configuration;
   private OServer                           server;
   private ONetworkProtocol                  protocol;
+  private int                               protocolVersion   = -1;
 
   public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
       final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
@@ -51,6 +59,15 @@ public class OServerNetworkListener extends Thread {
     super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":"
         + iHostPortRange);
     server = iServer;
+
+    // DETERMINE THE PROTOCOL VERSION BY CREATING A NEW ONE AND THEN THROW IT AWAY
+    // TODO: CREATE PROTOCOL FACTORIES INSTEAD
+    try {
+      protocolVersion = iProtocol.newInstance().getVersion();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class,
+          protocolType);
+    }
 
     listen(iHostName, iHostPortRange, iProtocolName);
     protocolType = iProtocol;
@@ -104,7 +121,7 @@ public class OServerNetworkListener extends Thread {
           OLogManager.instance().info(
               this,
               "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort());
+                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ")");
           return;
         }
       } catch (BindException be) {

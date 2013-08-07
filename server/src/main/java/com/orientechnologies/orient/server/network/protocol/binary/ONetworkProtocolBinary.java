@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOException;
@@ -31,7 +30,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -99,7 +97,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
       final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(iSocket, this);
+    connection = OClientConnectionManager.instance().connect(this);
 
     super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
 
@@ -113,8 +111,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
+  public int getVersion() {
+    return OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
+  }
+
+  @Override
   protected void onBeforeRequest() throws IOException {
-    connection = OClientConnectionManager.instance().getConnection(channel.socket, clientTxId);
+    connection = OClientConnectionManager.instance().getConnection(clientTxId);
 
     if (clientTxId < 0) {
       short protocolId = 0;
@@ -122,7 +125,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (connection != null)
         protocolId = connection.data.protocolVersion;
 
-      connection = OClientConnectionManager.instance().connect(channel.socket, this);
+      connection = OClientConnectionManager.instance().connect(this);
 
       if (connection != null)
         connection.data.protocolVersion = protocolId;
@@ -796,9 +799,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (dManager == null)
       throw new OConfigurationException("No distributed manager configured");
 
+    final String operation = request.field("operation");
+
     ODocument response = null;
 
-    final String operation = request.field("operation");
     if (operation.equals("start")) {
       checkServerAccess("server.replication.start");
 
@@ -811,16 +815,30 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("getJournal")) {
       checkServerAccess("server.replication.getJournal");
 
+      final Integer limit = request.field("limit");
+
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+
+      final Iterable<ODocument> result = dbSynch.getLog().query(null, limit != null ? limit : -1);
+      response = new ODocument().field("result", result, OType.EMBEDDEDLIST);
+
     } else if (operation.equals("resetJournal")) {
       checkServerAccess("server.replication.resetJournal");
+
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+      dbSynch.getLog().reset();
 
     } else if (operation.equals("getAllConflicts")) {
       final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
       response = dbSynch.getConflictResolver().getAllConflicts();
 
-    }
+    } else if (operation.equals("resetConflicts")) {
+      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
+      response = dbSynch.getConflictResolver().reset();
 
+    }
     sendResponse(response);
+
   }
 
   protected void distributedCluster() throws IOException {
@@ -1103,44 +1121,35 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     // connection.database.getLevel1Cache().setEnable(true);
     beginResponse();
     try {
+      final OAbstractCommandResultListener listener;
+
+      if (asynch) {
+        listener = new OAsyncCommandResultListener(this, clientTxId);
+        command.setResultListener(listener);
+      } else
+        listener = new OSyncCommandResultListener();
+
+      final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+
+      if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
+        // FORCE THE SERVER'S TIMEOUT
+        command.setTimeout(serverTimeout, command.getTimeoutStrategy());
+
+      // ASSIGNED THE PARSED FETCHPLAN
+      listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
+
+      final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
+
       if (asynch) {
         // ASYNCHRONOUS
-        final AtomicBoolean empty = new AtomicBoolean(true);
-        final Set<ODocument> recordsToSend = new HashSet<ODocument>();
-
-        final AsyncResultListener listener = new AsyncResultListener(empty, clientTxId, recordsToSend);
-        command.setResultListener(listener);
-
-        final long serverTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-
-        if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
-          // FORCE THE SERVER'S TIMEOUT
-          command.setTimeout(serverTimeout, command.getTimeoutStrategy());
-
-        // ASSIGNED THE PARSED FETCHPLAN
-        listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
-
-        ((OCommandRequestInternal) connection.database.command(command)).execute();
-
-        if (empty.get())
+        if (listener.isEmpty())
           try {
             sendOk(clientTxId);
           } catch (IOException e1) {
           }
 
-        // SEND RECORDS TO LOAD IN CLIENT CACHE
-        for (ODocument doc : recordsToSend) {
-          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-          // ISN'T PART OF THE
-          // RESULT SET
-          writeIdentifiable(doc);
-        }
-
-        channel.writeByte((byte) 0); // NO MORE RECORDS
       } else {
         // SYNCHRONOUS
-        final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
-
         sendOk(clientTxId);
 
         if (result == null) {
@@ -1149,24 +1158,39 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } else if (result instanceof OIdentifiable) {
           // RECORD
           channel.writeByte((byte) 'r');
+          listener.result(result);
           writeIdentifiable((OIdentifiable) result);
         } else if (OMultiValue.isMultiValue(result)) {
           channel.writeByte((byte) 'l');
           channel.writeInt(OMultiValue.getSize(result));
           for (Object o : OMultiValue.getMultiValueIterable(result)) {
+            listener.result(o);
             writeIdentifiable((OIdentifiable) o);
           }
         } else {
           // ANY OTHER (INCLUDING LITERALS)
           channel.writeByte((byte) 'a');
           final StringBuilder value = new StringBuilder();
+          listener.result(result);
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
         }
       }
+
+      if (asynch || connection.data.protocolVersion >= 17) {
+        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+        for (ODocument doc : listener.getFetchedRecordsToSend()) {
+          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+          // ISN'T PART OF THE
+          // RESULT SET
+          writeIdentifiable(doc);
+        }
+
+        channel.writeByte((byte) 0); // NO MORE RECORDS
+      }
+
     } finally {
       endResponse();
-      // connection.database.getLevel1Cache().setEnable(false);
     }
   }
 
@@ -1640,54 +1664,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
     } finally {
       endResponse();
-    }
-  }
-
-  public class AsyncResultListener implements OCommandResultListener {
-
-    private final AtomicBoolean  empty;
-    private final int            txId;
-    private final Set<ODocument> recordsToSend;
-    private Map<String, Integer> fetchPlan;
-
-    public AsyncResultListener(AtomicBoolean empty, int txId, Set<ODocument> recordsToSend) {
-      this.empty = empty;
-      this.txId = txId;
-      this.recordsToSend = recordsToSend;
-    }
-
-    @Override
-    public boolean result(final Object iRecord) {
-      if (empty.compareAndSet(true, false))
-        try {
-          sendOk(txId);
-        } catch (IOException e1) {
-        }
-
-      try {
-        channel.writeByte((byte) 1); // ONE MORE RECORD
-        writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
-
-        if (fetchPlan != null && iRecord instanceof ODocument) {
-          final ODocument doc = (ODocument) iRecord;
-          final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
-          final OFetchContext context = new ORemoteFetchContext();
-          OFetchHelper.fetch(doc, iRecord, fetchPlan, listener, context, "");
-        }
-
-      } catch (IOException e) {
-        return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public void end() {
-    }
-
-    public void setFetchPlan(final String iText) {
-      fetchPlan = iText != null ? OFetchHelper.buildFetchPlan(iText) : null;
     }
   }
 }

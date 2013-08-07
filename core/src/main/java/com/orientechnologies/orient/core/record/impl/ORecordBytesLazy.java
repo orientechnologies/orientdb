@@ -25,32 +25,36 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class ORecordBytesLazy extends ORecordBytes {
-	private OSerializableStream	serializableContent;
+  private OSerializableStream serializableContent;
 
-	public ORecordBytesLazy() {
-	}
+  public ORecordBytesLazy() {
+  }
 
-	public ORecordBytesLazy(final OSerializableStream iSerializable) {
-		this.serializableContent = iSerializable;
-	}
+  public ORecordBytesLazy(final OSerializableStream iSerializable) {
+    this.serializableContent = iSerializable;
+  }
 
-	@Override
-	public byte[] toStream() {
-		if (_source == null)
-			_source = serializableContent.toStream();
-		return _source;
-	}
+  @Override
+  public byte[] toStream() {
+    if (_source == null)
+      _source = serializableContent.toStream();
+    return _source;
+  }
 
-	@Override
-	public ORecordBytesLazy copy() {
-		return (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
-	}
+  @Override
+  public ORecordBytesLazy copy() {
+    final ORecordBytesLazy c = (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
+    final Boolean pinned = isPinned();
+    if (pinned != null && !pinned)
+      c.unpin();
+    return c;
+  }
 
-	public OSerializableStream getSerializableContent() {
-		return serializableContent;
-	}
+  public OSerializableStream getSerializableContent() {
+    return serializableContent;
+  }
 
-	public void recycle(final OSerializableStream iSerializableContent) {
-		this.serializableContent = iSerializableContent;
-	}
+  public void recycle(final OSerializableStream iSerializableContent) {
+    this.serializableContent = iSerializableContent;
+  }
 }

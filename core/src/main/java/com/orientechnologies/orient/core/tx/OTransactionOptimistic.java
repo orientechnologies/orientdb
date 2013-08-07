@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -236,11 +237,22 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         final ORecordOperation txRecord = getRecordEntry(iRecord.getIdentity());
 
-        if (txRecord != null && txRecord.record != iRecord) {
+        if (txRecord == null) {
+          // NOT IN TX, SAVE IT ANYWAY
+          allEntries.put(iRecord.getIdentity(), new ORecordOperation(iRecord, iStatus));
+        } else if (txRecord.record != iRecord) {
           // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
-          OLogManager.instance().debug(this,
-              "Update record in transaction: " + txRecord + ", rid=" + (txRecord != null ? txRecord.record : "NULL"));
+          final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
+          if (!clusterName.equals(OMetadata.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadata.CLUSTER_INDEX_NAME))
+            OLogManager
+                .instance()
+                .warn(
+                    this,
+                    "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
+                    iRecord.getIdentity());
+
           txRecord.record = iRecord;
+          txRecord.type = iStatus;
         }
 
       } else {
