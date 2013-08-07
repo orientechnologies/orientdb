@@ -65,13 +65,14 @@ public class CRUDObjectInheritanceTestSchemaFull {
   @Parameters(value = "url")
   public CRUDObjectInheritanceTestSchemaFull(String iURL) {
     url = iURL;
-    database = new OObjectDatabaseTx(iURL + "_objectschema");
-    database.create();
-    database.close();
+
   }
 
   @BeforeClass
   public void init() {
+    database = new OObjectDatabaseTx(url + "_objectschema");
+    database.create();
+    database.close();
     try {
       ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);
       exportDatabase.open("admin", "admin");
@@ -105,7 +106,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
     } catch (IOException e) {
       Assert.fail("Export import didn't go as expected", e);
     }
-
+    database.open("admin", "admin");
+    database.command(new OCommandSQL("delete from Company")).execute();
+    database.close();
   }
 
   @Test
@@ -115,7 +118,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
-    startRecordNumber = 0;
+    startRecordNumber = database.countClusterElements("Company");
 
     Company company;
 
@@ -147,7 +150,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
     final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
     Assert.assertTrue(result.size() > 0);
-    Assert.assertEquals(result.size(), TOT_RECORDS);
+    Assert.assertEquals(result.size() - startRecordNumber, TOT_RECORDS);
 
     int companyRecords = 0;
     Account account;

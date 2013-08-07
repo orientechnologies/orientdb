@@ -99,6 +99,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
   public void create() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     database.command(new OCommandSQL("delete from Company")).execute();
+    database.command(new OCommandSQL("delete from Account")).execute();
     database.setAutomaticSchemaGeneration(true);
     try {
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
