@@ -617,11 +617,18 @@ public class OWOWCache {
         final WriteGroup group = entry.getValue();
         final GroupKey groupKey = entry.getKey();
 
+        if (group.recencyBit && group.creationTime - currentTime < groupTTL && !forceFlush) {
+          group.recencyBit = false;
+          continue;
+        }
+
         lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
         try {
           if (group.recencyBit && group.creationTime - currentTime < groupTTL && !forceFlush)
             group.recencyBit = false;
           else {
+            group.recencyBit = false;
+
             List<PageKey> lockedPages = new ArrayList<PageKey>();
             for (int i = 0; i < 16; i++) {
               final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
