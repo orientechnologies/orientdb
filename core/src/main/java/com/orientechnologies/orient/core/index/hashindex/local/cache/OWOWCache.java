@@ -631,7 +631,7 @@ public class OWOWCache {
 
             List<PageKey> lockedPages = new ArrayList<PageKey>();
             for (int i = 0; i < 16; i++) {
-              final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+              final PageKey pageKey = new PageKey(groupKey.fileId, (groupKey.groupIndex << 4) + i);
               pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
               lockedPages.add(pageKey);
             }
@@ -646,7 +646,7 @@ public class OWOWCache {
                 final OCachePointer pagePointer = group.pages[i];
 
                 if (pagePointer != null) {
-                  flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer.getDataPointer());
+                  flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                   pagePointer.decrementReferrer();
 
                   cacheSize.decrementAndGet();
@@ -694,7 +694,7 @@ public class OWOWCache {
           GroupKey groupKey = entry.getKey();
           List<PageKey> lockedPages = new ArrayList<PageKey>();
           for (int i = 0; i < 16; i++) {
-            final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+            final PageKey pageKey = new PageKey(groupKey.fileId, (groupKey.groupIndex << 4) + i);
             pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
             lockedPages.add(pageKey);
           }
@@ -709,7 +709,7 @@ public class OWOWCache {
               OCachePointer pagePointer = writeGroup.pages[i];
 
               if (pagePointer != null) {
-                flushPage(groupKey.fileId, groupKey.groupIndex * 16 + i, pagePointer.getDataPointer());
+                flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                 pagePointer.decrementReferrer();
 
                 cacheSize.decrementAndGet();
@@ -754,7 +754,7 @@ public class OWOWCache {
 
           List<PageKey> lockedPages = new ArrayList<PageKey>();
           for (int i = 0; i < 16; i++) {
-            final PageKey pageKey = new PageKey(groupKey.fileId, groupKey.groupIndex << 4 + i);
+            final PageKey pageKey = new PageKey(groupKey.fileId, (groupKey.groupIndex << 4) + i);
             pageFlushLockManger.acquireLock(Thread.currentThread(), pageKey, OLockManager.LOCK.SHARED);
             lockedPages.add(pageKey);
           }
