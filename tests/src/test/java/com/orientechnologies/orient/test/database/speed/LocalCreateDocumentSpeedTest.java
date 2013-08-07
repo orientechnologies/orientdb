@@ -20,7 +20,6 @@ import java.util.Date;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -48,9 +47,6 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   @Override
   @Test(enabled = false)
   public void init() {
-    OGlobalConfiguration.USE_WAL.setValue(false);
-    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("nothing");
-
     database = new ODatabaseDocumentTx(System.getProperty("url"));
     if (database.exists()) {
       database.open("admin", "admin");

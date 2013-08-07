@@ -71,49 +71,6 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     acquireLock(iRequester, iResourceId, iLockType, acquireTimeout);
   }
 
-  public boolean tryLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
-    if (!enabled)
-      return false;
-
-    CountableLock lock;
-    final Object internalLock = internalLock(iResourceId);
-    synchronized (internalLock) {
-      lock = map.get(iResourceId);
-      if (lock == null) {
-        final CountableLock newLock = new CountableLock(false);
-        lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
-        if (lock == null)
-          lock = newLock;
-      }
-      lock.countLocks++;
-    }
-
-    boolean result;
-    try {
-      if (iLockType == LOCK.SHARED)
-        result = lock.readLock().tryLock();
-      else
-        result = lock.writeLock().tryLock();
-    } catch (RuntimeException e) {
-      synchronized (internalLock) {
-        lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
-      }
-      throw e;
-    }
-
-    if (!result) {
-      synchronized (internalLock) {
-        lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
-      }
-    }
-
-    return result;
-  }
-
   public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
     if (!enabled)
       return;

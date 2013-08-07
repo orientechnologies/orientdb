@@ -57,7 +57,7 @@ public enum OGlobalConfiguration {
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 3 * 1024),
 
-  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 20),
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 30),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
