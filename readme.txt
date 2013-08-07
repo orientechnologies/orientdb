@@ -4,86 +4,108 @@
          `,`    ,:`                                   
          .,.   :,,                                    
          .,,  ,,,                                     
-    .    .,.:::::  ````                               
-    ,`   .::,,,,::.,,,,,,`;;                      .:  
-    `,.  ::,,,,,,,:.,,.`  `                       .:  
-     ,,:,:,,,,,,,,::.   `        `         ``     .:  
-      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  :::: 
-       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:  
-        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:  
-  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:  
-  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:  
-    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:  
-      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:  
-           ,::::,,,. `:   ,,   :::::    :     :   .:  
+    .    .,.:::::  ````                                 :::::::::     :::::::::
+    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
+    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
+     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
+      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
+       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
+        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
+  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
+  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
+    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
+      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
+           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                 DOCUMENT-GRAPH DB   
+         ,,.     `,                                          GRAPH DATABASE   
        ``        `.                                   
                  ``                                   
                  `                                    
 *******************************************************************************
-                                  ORIENT DATABASE
-                         http://www.orientechnologies.com
+                                 ORIENT DATABASE
+                        http://www.orientechnologies.com
 *******************************************************************************
 
-1 Pre-requirements
+ Requirements
+---------------
 
-Before to download, compile and install the latest version of Orient please
+Before to download, compile and install the last version of OrientDB please
 assure to have the following tools installed:
 
-1.1 Java
-OrientDB needs Java Run-Time (JRE/JDK) version 6 or major to run the Server. Clients
-need Java release 5 or major. We suggest to use Java version 7 because the
-performance improvement.
+ Java
+---------------
+OrientDB needs Java Run-Time (JRE/JDK) version 6 or major to run the Server.
+We suggest to use Java version 7 because it's faster than Java 6.
  
 To download Java go to: http://www.java.com/en/download/
 
 Note: Please assure to download the JDK and not JRE.
 
-1.2 Apache Ant
+ Apache Ant
+---------------
 Apache Ant version 1.6.5 (previous version should works too).
 
 You can download Ant from here:
 > http://ant.apache.org/bindownload.cgi
 
-1.3 Apache Maven
+ Apache Maven
+---------------
 Apache Maven is used to run part of the test suite
 
 You can download Maven from here:
 > http://maven.apache.org/download.cgi
 
-2 Build the last version of Orient
+ Build the last version of OrientDB
+-------------------------------------
 
-Follow the instruction below:
+The OrientDB development team is very active, so if your in the middle of the
+development of your application we suggest to use last SNAPSHOT from the git
+source repository. All you need is:
 
-a) Open a shell and go in the path where you want to download the
-   sources
-b) Type:
-   git clone git://github.com/nuvolabase/orientdb.git
-c) Move to the directory *orientdb* and execute *ant* (or run the build script)
-d) Wait for building and when finished
-e) Enjoy ;-)
+- JDK (Java Development Kit) 6+ 
+  -> http://www.oracle.com/technetwork/java/javase/downloads/index.html
+- git SCM tool
+  -> http://git-scm.com/
+- Apache Ant v1.8.2+
+  -> http://ant.apache.org/manual/install.html
 
-If you want to build the Graphed Edition type:
-ant clean installg
+Then follow these simple steps in a shell (Mac/Linux) or a Command Prompt
+(Windows):
 
-If you need help, start from here:
-> http://groups.google.com/group/orient-database
+> git clone https://github.com/nuvolabase/orientdb.git
+> cd orientdb
+> git checkout -b develop
+> git pull origin develop
+> ant clean installg
 
-3 Launch the tests
+At the end of the build you will have a brand new distribution under the path:
+../releases/orientdb-graphed-1.5.0. Use it as a normal OrientDB distribution
+directory.
 
-The test suites will create the demo and the tinkerpop (for Graphed Edition) default databases
+Every time you want to update your distribution with last changes do:
 
-Follow the instruction below:
+> git pull origin develop
+> ant clean installg
 
-a) Open a shell and go in the path where you have installed the OrientDB sources.
-b) Type: 
-   ant test
-c) Wait the process completes
-d) Once finished you can close the OrientDB Server instance started for the tests 
-e) Type:
-   mvn clean test
+At the end of the build your distribution (../releases/orientdb-graphed-1.5.0)
+will be updated with last OrientDB libraries. Every time you compile a new version,
+assure to have the permissions to execute the .sh files under the "bin" directory:
+
+> cd ../releases/orientdb-graphed-1.5.0/bin
+> chmod u+x *.sh
 
 
-OrientDB Team
+ Information
+---------------
+
+For more information visit the official website: http://www.orientdb.org.
+
+Remember OrientDB is an Open Source project released with the Apache v2 license,
+so it's always FREE for any purpose. If you're interested to Enterprise tools,
+professional support, training or consultancy contact: info@orientechnologies.com.
+
+Enjoy with Graphs,
+Orient Technologies
+The company behind OrientDB
+(www.orientechnologies.com)

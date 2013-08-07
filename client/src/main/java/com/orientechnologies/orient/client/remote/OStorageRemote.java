@@ -116,7 +116,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                              minPool;
   private int                              maxPool;
   private final boolean                    debug                = false;
-  private ODocument                        clusterConfiguration = new ODocument();
+  private final ODocument                  clusterConfiguration = new ODocument();
   private ORemoteServerEventListener       asynchEventListener;
   private String                           connectionDbType;
   private String                           connectionUserName;

@@ -164,7 +164,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   public void flush() {
     for (final OIndex<?> idx : indexes.values()) {
-      OIndexInternal indexInternal = idx.getInternal();
+      OIndexInternal<?> indexInternal = idx.getInternal();
       if (indexInternal != null)
         indexInternal.flush();
     }

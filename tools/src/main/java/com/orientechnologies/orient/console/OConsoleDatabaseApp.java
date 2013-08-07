@@ -1470,8 +1470,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
-  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text,
-      @ConsoleParameter(name = "delete-rid-mapping", description = "User password", optional = true) final boolean deleteRIDMapping)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") final String text)
       throws IOException {
     checkForDatabase();
 
@@ -1485,8 +1484,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
 
       databaseImport.setOptions(options).importDatabase();
-      if (deleteRIDMapping)
-        databaseImport.removeExportImportRIDsMap();
 
       databaseImport.close();
     } catch (ODatabaseImportException e) {
@@ -1787,6 +1784,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         value = rec.field(fieldName);
         if (value instanceof byte[])
           value = "byte[" + ((byte[]) value).length + "]";
+        else if (value instanceof Iterator<?>) {
+          final List<Object> coll = new ArrayList<Object>();
+          while (((Iterator<?>) value).hasNext())
+            coll.add(((Iterator<?>) value).next());
+          value = coll;
+        }
+
         out.printf("%20s : %-20s\n", fieldName, value);
       }
 

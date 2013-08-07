@@ -18,7 +18,7 @@ The most common reason applications scale out badly is, very often, the database
 
 ## I can't believe it! Why is it so fast?
 
-OrientDB has been designed to be very fast. It inherits the best features and concepts from Object Databases, Graph DBMS and modern [NoSQL](http://en.wikipedia.org/wiki/NoSQL) engines. Furthermore it uses the own **RB+Tree** algorithm as a mix of [Red-Black Tree](http://en.wikipedia.org/wiki/Red-black_tree) and [B+Tree](http://en.wikipedia.org/wiki/B%2Btree). RB+Tree consumes about half memory of the [Red-Black Tree](http://en.wikipedia.org/wiki/Red-black_tree) implementation mantaining the original speed while it balances the tree on insertion/update. Furthermore the RB+Tree allows fast retrieving and storing of nodes in persistent way.
+OrientDB has been designed to be very fast. It inherits the best features and concepts from Object Databases, Graph DBMS and modern [NoSQL](http://en.wikipedia.org/wiki/NoSQL) engines. Furthermore it uses the own **MVRB-Tree** algorithm as a mix of [Red-Black Tree](http://en.wikipedia.org/wiki/Red-black_tree) and [B+Tree](http://en.wikipedia.org/wiki/B%2Btree). MVRB-Tree consumes about half memory of the [Red-Black Tree](http://en.wikipedia.org/wiki/Red-black_tree) implementation mantaining the original speed while it balances the tree on insertion/update. Furthermore the MVRB-Tree allows fast retrieving and storing of nodes in persistent way.
 
 ## Why yet another NoSQL?
 
