@@ -119,6 +119,10 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   }
 
+  public void tryacquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
+
+  }
+
   public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
       throws OLockException {
     if (!enabled)

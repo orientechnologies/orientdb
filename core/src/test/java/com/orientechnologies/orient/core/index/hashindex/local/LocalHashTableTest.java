@@ -3,20 +3,18 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
  * @author Andrey Lomakin
@@ -29,7 +27,6 @@ public class LocalHashTableTest {
   private ODatabaseDocumentTx              databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
-  private O2QCache                         buffer;
 
   @BeforeClass
   public void beforeClass() {
@@ -45,9 +42,6 @@ public class LocalHashTableTest {
 
     databaseDocumentTx.create();
 
-    buffer = new O2QCache(400 * 1024 * 1024, 15000, ODirectMemoryFactory.INSTANCE.directMemory(), null,
-        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
-
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
@@ -61,8 +55,6 @@ public class LocalHashTableTest {
   public void afterClass() throws Exception {
     localHashTable.clear();
     localHashTable.delete();
-    buffer.clear();
-    buffer.close();
     databaseDocumentTx.drop();
   }
 

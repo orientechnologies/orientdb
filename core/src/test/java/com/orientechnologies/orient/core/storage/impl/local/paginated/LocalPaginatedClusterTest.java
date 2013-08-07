@@ -21,8 +21,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -33,8 +31,8 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -71,9 +69,8 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    diskCache = new O2QCache(2L * 1024 * 1024 * 1024, 15000, directMemory, null,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, storage, false);
+    diskCache = new OReadWriteDiskCache(1024L * 1024 * 1024 * 1024, 1024L * 1024 * 1024,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 50, storage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
 
