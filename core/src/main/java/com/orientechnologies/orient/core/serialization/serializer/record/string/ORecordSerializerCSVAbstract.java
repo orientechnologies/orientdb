@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -243,7 +243,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler,
       final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
-      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     if (iValue == null)
       return;
 
@@ -453,7 +453,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue,
-      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
     if (iValue != null) {
@@ -621,7 +621,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public StringBuilder embeddedCollectionToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-      final Set<Long> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
+      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
     final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue);
@@ -735,8 +735,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
    * 
    * @param buffer
    * @param iParentRecord
-   * @param iFieldName
-   *          TODO
    * @param iLinked
    *          Can be an instance of ORID or a Record<?>
    * @return

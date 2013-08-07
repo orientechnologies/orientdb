@@ -51,6 +51,10 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     this(new OMVRBTreeRID());
   }
 
+  public OMVRBTreeRIDSet(int binaryThreshold) {
+    this(new OMVRBTreeRID(binaryThreshold));
+  }
+
   public OMVRBTreeRIDSet(final OIdentifiable iRecord) {
     this(new OMVRBTreeRID((ODocument) iRecord.getRecord()));
   }

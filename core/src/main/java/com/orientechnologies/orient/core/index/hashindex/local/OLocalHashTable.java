@@ -1112,13 +1112,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       try {
         final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
         final int index = bucket.getIndex(key);
+
         if (index > -1) {
-          bucket.updateEntry(index, value);
-          return;
+          bucket.deleteEntry(index);
+          size--;
+          markPageAsDirty(pageIndex, fileLevel);
         }
 
         if (bucket.addEntry(key, value)) {
-          // assert bucket.getEntry(bucket.getIndex(key)).value.equals(value);
           markPageAsDirty(pageIndex, fileLevel);
 
           size++;
