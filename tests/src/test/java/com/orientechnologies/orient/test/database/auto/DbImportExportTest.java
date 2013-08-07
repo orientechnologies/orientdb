@@ -19,15 +19,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = { "db", "import-export" })
 public class DbImportExportTest implements OCommandOutputListener {
@@ -81,6 +81,7 @@ public class DbImportExportTest implements OCommandOutputListener {
       database.unregisterHook(hook);
     }
 
+    impor.setDeleteRIDMapping(false);
     impor.importDatabase();
     impor.close();
 

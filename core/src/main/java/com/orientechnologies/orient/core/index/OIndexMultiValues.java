@@ -92,7 +92,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
-          values = new OMVRBTreeRIDSet();
+          values = new OMVRBTreeRIDSet(8);
           ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
         }
 

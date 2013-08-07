@@ -269,22 +269,6 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
         + NEXT_REMOVED_BUCKET_OFFSET);
   }
 
-  public void updateEntry(int index, V value) {
-    int entryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer
-        + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
-    entryPosition += keySerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer + entryPosition);
-
-    if (valueSerializer.getObjectSize(value) == valueSerializer.getObjectSizeInDirectMemory(directMemory, bufferPointer
-        + entryPosition))
-      valueSerializer.serializeInDirectMemory(value, directMemory, bufferPointer + entryPosition);
-    else {
-      K key = getKey(index);
-
-      deleteEntry(index);
-      insertEntry(key, value, index);
-    }
-  }
-
   public long getSplitHistory(int level) {
     return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, bufferPointer + HISTORY_OFFSET
         + OLongSerializer.LONG_SIZE * level);

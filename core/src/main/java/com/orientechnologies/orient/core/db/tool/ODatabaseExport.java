@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +38,12 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -47,8 +56,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  private OJSONWriter     writer;
-  private long            recordExported;
+  protected OJSONWriter   writer;
+  protected long          recordExported;
   public static final int VERSION = 6;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
@@ -477,8 +486,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       try {
         if (rec.getIdentity().isValid())
           rec.reload();
-        
-        if( useLineFeedForRecords )
+
+        if (useLineFeedForRecords)
           writer.append("\n");
 
         if (recordExported > 0)

@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.5.0-SNAPSHOT"/>
+    <property name="version" value="1.6.0-SNAPSHOT"/>
     <condition property="global.release" value="${releaseHome}/orientdb-${version}"
                else="../releases/orientdb-${version}">
         <isset property="releaseHome"/>
@@ -52,31 +52,30 @@
     </macrodef>
 
     <target name="init">
-        <echo>           .                                              </echo>
-        <echo>          .`        `                                     </echo>
-        <echo>          ,      `:.                                      </echo>
-        <echo>         `,`    ,:`                                       </echo>
-        <echo>         .,.   :,,                                        </echo>
-        <echo>         .,,  ,,,                                         </echo>
-        <echo>    .    .,.:::::  ````                                   </echo>
-        <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:      </echo>
-        <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:      </echo>
-        <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:      </echo>
-        <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::     </echo>
-        <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      </echo>
-        <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      </echo>
-        <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      </echo>
-        <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      </echo>
-        <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:      </echo>
-        <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      </echo>
-        <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:      </echo>
-        <echo>           ,,:` `,,.                                      </echo>
-        <echo>          ,,,    .,`                                      </echo>
-        <echo>         ,,.     `,                 D A T A B A S E       </echo>
-        <echo>       ``        `.                                       </echo>
-        <echo>                 ``                                       </echo>
-        <echo>                 `                                        </echo>
-        <echo>                                                          </echo>
+<echo>           .                                          </echo>
+<echo>          .`        `                                 </echo>
+<echo>          ,      `:.                                  </echo>
+<echo>         `,`    ,:`                                   </echo>
+<echo>         .,.   :,,                                    </echo>
+<echo>         .,,  ,,,                                     </echo>
+<echo>    .    .,.:::::  ````                                 :::::::::     :::::::::</echo>
+<echo>    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::</echo>
+<echo>    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::</echo>
+<echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::</echo>
+<echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::</echo>
+<echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::</echo>
+<echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::</echo>
+<echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::</echo>
+<echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::</echo>
+<echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::</echo>
+<echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::</echo>
+<echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
+<echo>           ,,:` `,,.                                  </echo>
+<echo>          ,,,    .,`                                  </echo>
+<echo>         ,,.     `,                                          GRAPH DATABASE   </echo>
+<echo>       ``        `.                                   </echo>
+<echo>                 ``                                   </echo>
+<echo>                 `                                    </echo>
 
         <mkdir dir="${global.release}"/>
         <mkdir dir="${db.release}"/>
@@ -145,6 +144,7 @@
         <copy todir="${db.release}" file="license.txt"/>
         <copy tofile="${db.release}/readme.txt" file="readme.txt"/>
         <copy tofile="${db.release}/history.txt" file="history.txt"/>
+        <copy tofile="${db.release}/upgrade.txt" file="upgrade.txt"/>
 
         <copy todir="${db.release}/bin/" flatten="true">
             <fileset dir="."
