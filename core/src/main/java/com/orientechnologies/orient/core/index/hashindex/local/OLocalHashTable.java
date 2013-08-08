@@ -1115,6 +1115,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
         if (index > -1) {
           bucket.deleteEntry(index);
+          size--;
           markPageAsDirty(pageIndex, fileLevel);
         }
 
