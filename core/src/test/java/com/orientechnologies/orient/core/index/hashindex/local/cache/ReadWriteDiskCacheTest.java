@@ -8,12 +8,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.zip.CRC32;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -32,8 +26,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 @Test
-public class OReadWriteDiskCacheTest {
+public class ReadWriteDiskCacheTest {
   private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private OReadWriteDiskCache    buffer;
@@ -52,7 +52,7 @@ public class OReadWriteDiskCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/OReadWriteDiskCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
 
     fileName = "readWriteDiskCacheTest.tst";
 
@@ -135,7 +135,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -185,17 +185,17 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 2; i < 4; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
   }
@@ -232,12 +232,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 6; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
@@ -251,17 +251,17 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      OCacheEntry lruEntry = generateRemovedEntry(fileId, i);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 8; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -305,7 +305,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -324,7 +324,7 @@ public class OReadWriteDiskCacheTest {
 
     Assert.assertEquals(am.size(), 0);
     Assert.assertEquals(a1out.size(), 0);
-    OCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
+    OReadCacheEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
@@ -351,7 +351,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -385,7 +385,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -444,7 +444,7 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -478,12 +478,12 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 0; i < 2; i++) {
-      OCacheEntry entry = generateRemovedEntry(fileId, i);
+      OReadCacheEntry entry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
     }
 
     for (int i = 2; i < 6; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -705,7 +705,6 @@ public class OReadWriteDiskCacheTest {
     Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
   }
 
-  @Test(enabled = false)
   public void testLogDirtyTables() throws Exception {
     closeBufferAndDeleteFile();
 
@@ -718,7 +717,7 @@ public class OReadWriteDiskCacheTest {
     OLogSequenceNumber pageLSN = writeAheadLog.logFuzzyCheckPointEnd();
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
+        "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
@@ -751,7 +750,7 @@ public class OReadWriteDiskCacheTest {
 
     Set<ODirtyPage> dirtyPages = buffer.logDirtyPagesTable();
     Set<ODirtyPage> expectedDirtyPages = new HashSet<ODirtyPage>();
-    for (int i = 7; i >= 2; i--)
+    for (int i = 7; i >= 6; i--)
       expectedDirtyPages.add(new ODirtyPage("readWriteDiskCacheTest.tst", i, pageLSN));
 
     Assert.assertEquals(dirtyPages, expectedDirtyPages);
@@ -792,7 +791,7 @@ public class OReadWriteDiskCacheTest {
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 
-    Assert.assertEquals(magicNumber, O2QDiskCache.MAGIC_NUMBER);
+    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
     crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
         - OLongSerializer.LONG_SIZE);
@@ -811,16 +810,12 @@ public class OReadWriteDiskCacheTest {
     fileClassic.close();
   }
 
-  private OCacheEntry generateDirtyEntry(long fileId, long pageIndex, long pointer, OLogSequenceNumber lsn) {
-    return generateEntry(fileId, pageIndex, pointer, true, lsn);
+  private OReadCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
+    return new OReadCacheEntry(fileId, pageIndex, new OCachePointer(pointer, lsn), dirty);
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
-    return new OCacheEntry(fileId, pageIndex, new OCachePointer(pointer), dirty, lsn);
-  }
-
-  private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
-    return new OCacheEntry(fileId, pageIndex, null, false, null);
+  private OReadCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
+    return new OReadCacheEntry(fileId, pageIndex, null, false);
   }
 
   private void setLsn(long dataPointer, OLogSequenceNumber lsn) {

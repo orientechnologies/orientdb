@@ -112,8 +112,9 @@ public class WOWCacheTest {
       pagePointers[i] = directMemory.allocate(new byte[pageSize]);
       directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
-      wowCache.put(fileId, i, cachePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize),
+          new OLogSequenceNumber(0, 0));
+      wowCache.store(fileId, i, cachePointer);
     }
 
     for (int i = 0; i < pagePointers.length; i++) {
@@ -124,7 +125,7 @@ public class WOWCacheTest {
       OCachePointer cachePointer;
       wowCache.acquireFlushLock(fileId, i);
       try {
-        cachePointer = wowCache.get(fileId, i);
+        cachePointer = wowCache.load(fileId, i);
         cachePointer.incrementReferrer();
       } finally {
         wowCache.releaseFlushLock(fileId, i);
@@ -166,8 +167,8 @@ public class WOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, pagePointer);
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
-      wowCache.put(fileId, pageIndex, cachePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize), new OLogSequenceNumber(0, 0));
+      wowCache.store(fileId, pageIndex, cachePointer);
     }
 
     for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
@@ -179,7 +180,7 @@ public class WOWCacheTest {
       OCachePointer cachePointer;
       wowCache.acquireFlushLock(fileId, pageIndex);
       try {
-        cachePointer = wowCache.get(fileId, pageIndex);
+        cachePointer = wowCache.load(fileId, pageIndex);
         cachePointer.incrementReferrer();
       } finally {
         wowCache.releaseFlushLock(fileId, pageIndex);
@@ -204,8 +205,8 @@ public class WOWCacheTest {
       random.nextBytes(data);
 
       directMemory.set(pagePointer + systemOffset, data, 0, data.length);
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
-      wowCache.put(fileId, pageIndex, cachePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize), new OLogSequenceNumber(0, 0));
+      wowCache.store(fileId, pageIndex, cachePointer);
     }
 
     for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
@@ -217,7 +218,7 @@ public class WOWCacheTest {
       OCachePointer cachePointer;
       wowCache.acquireFlushLock(fileId, pageIndex);
       try {
-        cachePointer = wowCache.get(fileId, pageIndex);
+        cachePointer = wowCache.load(fileId, pageIndex);
         cachePointer.incrementReferrer();
       } finally {
         wowCache.releaseFlushLock(fileId, pageIndex);
@@ -246,8 +247,9 @@ public class WOWCacheTest {
       pagePointers[i] = directMemory.allocate(new byte[pageSize]);
       directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
-      wowCache.put(fileId, i, cachePointer);
+      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize),
+          new OLogSequenceNumber(0, 0));
+      wowCache.store(fileId, i, cachePointer);
     }
 
     for (int i = 0; i < pagePointers.length; i++) {
@@ -258,7 +260,7 @@ public class WOWCacheTest {
       OCachePointer cachePointer;
       wowCache.acquireFlushLock(fileId, i);
       try {
-        cachePointer = wowCache.get(fileId, i);
+        cachePointer = wowCache.load(fileId, i);
         cachePointer.incrementReferrer();
       } finally {
         wowCache.releaseFlushLock(fileId, i);
@@ -295,7 +297,7 @@ public class WOWCacheTest {
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 
-    Assert.assertEquals(magicNumber, O2QDiskCache.MAGIC_NUMBER);
+    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
     crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
         - OLongSerializer.LONG_SIZE);

@@ -19,25 +19,38 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
  * @since 05.08.13
  */
 public class OCachePointer {
-  private final ODirectMemory directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final ODirectMemory         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private final AtomicInteger referrersCount = new AtomicInteger();
-  private final AtomicInteger usagesCounter  = new AtomicInteger();
+  private final AtomicInteger         referrersCount = new AtomicInteger();
+  private final AtomicInteger         usagesCounter  = new AtomicInteger();
 
-  private final long          dataPointer;
+  private volatile OLogSequenceNumber lastFlushedLsn;
 
-  public OCachePointer(long dataPointer) {
+  private final long                  dataPointer;
+
+  public OCachePointer(long dataPointer, OLogSequenceNumber lastFlushedLsn) {
+    this.lastFlushedLsn = lastFlushedLsn;
     this.dataPointer = dataPointer;
   }
 
-  public OCachePointer(byte[] data) {
+  public OCachePointer(byte[] data, OLogSequenceNumber lastFlushedLsn) {
+    this.lastFlushedLsn = lastFlushedLsn;
     dataPointer = directMemory.allocate(data);
+  }
+
+  public OLogSequenceNumber getLastFlushedLsn() {
+    return lastFlushedLsn;
+  }
+
+  public void setLastFlushedLsn(OLogSequenceNumber lastFlushedLsn) {
+    this.lastFlushedLsn = lastFlushedLsn;
   }
 
   public void incrementReferrer() {

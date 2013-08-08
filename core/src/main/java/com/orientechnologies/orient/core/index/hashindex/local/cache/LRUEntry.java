@@ -20,14 +20,14 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
  * @since 25.02.13
  */
 class LRUEntry {
-  OCacheEntry cacheEntry;
+  OReadCacheEntry cacheEntry;
 
-  long        hashCode;
+  long            hashCode;
 
-  LRUEntry    next;
+  LRUEntry        next;
 
-  LRUEntry    after;
-  LRUEntry    before;
+  LRUEntry        after;
+  LRUEntry        before;
 
   @Override
   public boolean equals(Object o) {

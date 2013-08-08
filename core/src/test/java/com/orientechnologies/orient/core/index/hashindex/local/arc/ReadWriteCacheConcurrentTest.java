@@ -19,12 +19,6 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -35,11 +29,17 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteD
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 /**
  * @author Artem Loginov
  */
 @Test
-public class OReadWriteCacheConcurrentTest {
+public class ReadWriteCacheConcurrentTest {
   private final int                                  systemOffset    = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private static final int                           THREAD_COUNT    = 4;
@@ -71,7 +71,7 @@ public class OReadWriteCacheConcurrentTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage(
-        "plocal:" + buildDirectory + "/OReadWriteCacheConcurrentTest");
+        "plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
 
     prepareFilesForTest(FILE_COUNT);
 
