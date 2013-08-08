@@ -26,6 +26,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -69,9 +70,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
   }
 
   @BeforeClass
-  public void init() {
+  public void init() throws IOException {
     database = new OObjectDatabaseTx(url + "_objectschema");
-    database.create();
+    ODatabaseHelper.createDatabase(database, url + "_objectschema");
     database.close();
     try {
       ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);
@@ -96,7 +97,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
         importDatabase.unregisterHook(hook);
       }
 
-      impor.setDeleteRIDMapping(false);
+      impor.setDeleteRIDMapping(true);
       impor.importDatabase();
       impor.close();
 
@@ -107,7 +108,19 @@ public class CRUDObjectInheritanceTestSchemaFull {
       Assert.fail("Export import didn't go as expected", e);
     }
     database.open("admin", "admin");
-    database.command(new OCommandSQL("delete from Company")).execute();
+    if (database.getMetadata().getSchema().existsClass("Company"))
+      database.command(new OCommandSQL("delete from Company")).execute();
+    if (database.getMetadata().getSchema().existsClass("Account"))
+      database.command(new OCommandSQL("delete from Account")).execute();
+    if (database.getMetadata().getSchema().existsClass("JavaComplexTestClass"))
+      database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
+    if (database.getMetadata().getSchema().existsClass("Profile"))
+      database.command(new OCommandSQL("delete from Profile")).execute();
+    if (database.getMetadata().getSchema().existsClass("IdentityChild"))
+      database.command(new OCommandSQL("delete from IdentityChild")).execute();
+    // database.command(
+    // new OCommandSQL("delete from Profile where nick = 'PresidentSon1' or nick = 'PresidentSon2' or nick = 'ThePresident'"))
+    // .execute();
     database.close();
   }
 

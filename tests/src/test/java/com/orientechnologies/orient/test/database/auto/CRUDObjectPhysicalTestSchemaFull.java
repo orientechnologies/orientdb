@@ -79,6 +79,7 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
+import com.orientechnologies.orient.test.domain.business.Company;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
@@ -98,8 +99,6 @@ public class CRUDObjectPhysicalTestSchemaFull {
   @Test
   public void create() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    database.command(new OCommandSQL("delete from Company")).execute();
-    database.command(new OCommandSQL("delete from Account")).execute();
     database.setAutomaticSchemaGeneration(true);
     try {
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
@@ -563,6 +562,8 @@ public class CRUDObjectPhysicalTestSchemaFull {
         ids.add(i);
 
       for (Account a : database.browseClass(Account.class)) {
+        if (Company.class.isAssignableFrom(a.getClass()))
+          continue;
         int id = a.getId();
         Assert.assertTrue(ids.remove(id));
 
@@ -597,6 +598,8 @@ public class CRUDObjectPhysicalTestSchemaFull {
 
       List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
       for (Account a : result) {
+        if (Company.class.isAssignableFrom(a.getClass()))
+          continue;
         int id = a.getId();
         Assert.assertTrue(ids.remove(id));
 
@@ -632,6 +635,8 @@ public class CRUDObjectPhysicalTestSchemaFull {
 
       List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
       for (Account a : result) {
+        if (Company.class.isAssignableFrom(a.getClass()))
+          continue;
         int id = a.getId();
         Assert.assertTrue(ids.remove(id));
 

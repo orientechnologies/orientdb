@@ -46,7 +46,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "object", "detachingSchemaFull" })
+@Test(groups = { "object", "detachingSchemaFull" }, dependsOnGroups = "treeSchemaFull")
 public class ObjectDetachingTestSchemaFull {
   private OObjectDatabaseTx database;
   private String            url;
