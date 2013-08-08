@@ -6,17 +6,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
@@ -32,8 +28,6 @@ public class OReadWriteDiskCache implements ODiskCache {
   private LRUList                    am;
   private LRUList                    a1out;
   private LRUList                    a1in;
-
-  private final ODirectMemory        directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final OWOWCache            writeCache;
 
@@ -318,7 +312,6 @@ public class OReadWriteDiskCache implements ODiskCache {
 
     OCachePointer dataPointer = writeCache.load(fileId, pageIndex);
     dataPointer.incrementReferrer();
-    OLogSequenceNumber lsn = OLocalPage.getLogSequenceNumberFromPage(directMemory, dataPointer.getDataPointer());
 
     cacheEntry = new OReadCacheEntry(fileId, pageIndex, dataPointer, false);
     a1in.putToMRU(cacheEntry);
