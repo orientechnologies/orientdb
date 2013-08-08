@@ -222,8 +222,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
 
   public OReadCacheEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove != null
-        && (entryToRemove.cacheEntry.dataPointer != null && entryToRemove.cacheEntry.dataPointer.getUsagesCount() != 0)) {
+    while (entryToRemove != null && (entryToRemove.cacheEntry.dataPointer != null && entryToRemove.cacheEntry.usagesCount != 0)) {
       entryToRemove = entryToRemove.after;
     }
     if (entryToRemove != null) {

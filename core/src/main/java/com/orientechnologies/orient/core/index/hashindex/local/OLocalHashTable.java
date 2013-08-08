@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
@@ -176,10 +177,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       long pageIndex = getPageIndex(bucketPointer);
       int fileLevel = getFileLevel(bucketPointer);
 
-      long dataPointer = loadPage(pageIndex, fileLevel);
+      OCachePointer dataPointer = loadPage(pageIndex, fileLevel);
 
       try {
-        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer, directMemory, keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
 
         OHashIndexBucket.Entry<K, V> entry = bucket.find(key);
         if (entry == null)
@@ -212,9 +214,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final int fileLevel = getFileLevel(bucketPointer);
       final V removed;
 
-      long dataPointer = loadPage(pageIndex, fileLevel);
+      OCachePointer dataPointer = loadPage(pageIndex, fileLevel);
+      dataPointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer, directMemory, keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
         final int positionIndex = bucket.getIndex(key);
         if (positionIndex < 0)
           return null;
@@ -226,6 +230,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           markPageAsDirty(pageIndex, fileLevel);
 
       } finally {
+        dataPointer.releaseExclusiveLock();
         releasePage(pageIndex, fileLevel);
       }
 
@@ -281,9 +286,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
 
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
@@ -298,7 +304,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(nextPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
         }
 
         final int index = bucket.getIndex(key);
@@ -509,9 +515,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
         while (bucket.size() == 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
           if (bucketPath == null)
@@ -524,7 +531,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(nextPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
         }
 
         final int index = bucket.getIndex(key);
@@ -555,9 +562,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
 
         while (bucket.size() == 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
@@ -571,7 +579,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(nextPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
         }
 
         return bucket.getEntry(0);
@@ -595,9 +603,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
 
         while (bucket.size() == 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
@@ -611,7 +620,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(prevPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
 
           bucketPath = prevBucketPath;
         }
@@ -638,9 +647,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
@@ -653,7 +663,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(prevPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
 
           bucketPath = prevBucketPath;
         }
@@ -687,9 +697,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       try {
-        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
         while (bucket.size() == 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
@@ -703,7 +714,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           pageIndex = getPageIndex(prevPointer);
 
           pagePointer = loadPage(pageIndex, fileLevel);
-          bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+          bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
 
           bucketPath = prevBucketPath;
         }
@@ -968,9 +979,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buddyIndex = getPageIndex(buddyPointer);
     }
 
-    long buddyPagePointer = loadPage(buddyIndex, buddyLevel);
+    OCachePointer buddyPagePointer = loadPage(buddyIndex, buddyLevel);
+    buddyPagePointer.acquireExclusiveLock();
     try {
-      buddyBucket = new OHashIndexBucket<K, V>(buddyPagePointer, directMemory, keySerializer, valueSerializer);
+      buddyBucket = new OHashIndexBucket<K, V>(buddyPagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
 
       if (buddyBucket.getDepth() != bucketDepth)
         return false;
@@ -985,10 +997,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       filesMetadata[buddyLevel].setBucketsCount(filesMetadata[buddyLevel].getBucketsCount() + 1);
 
-      final long newBuddyPagePointer = loadPage(newBuddyIndex, newBuddyLevel);
+      final OCachePointer newBuddyPagePointer = loadPage(newBuddyIndex, newBuddyLevel);
+      newBuddyPagePointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> newBuddyBucket = new OHashIndexBucket<K, V>(bucketDepth - 1, newBuddyPagePointer,
-            directMemory, keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> newBuddyBucket = new OHashIndexBucket<K, V>(bucketDepth - 1,
+            newBuddyPagePointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
 
         for (OHashIndexBucket.Entry<K, V> entry : buddyBucket)
           newBuddyBucket.appendEntry(entry.key, entry.value);
@@ -996,6 +1009,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         for (OHashIndexBucket.Entry<K, V> entry : bucket)
           newBuddyBucket.addEntry(entry.key, entry.value);
       } finally {
+        newBuddyPagePointer.releaseExclusiveLock();
         buffer.markDirty(fileLevelIds[newBuddyLevel], newBuddyIndex);
         releasePage(newBuddyIndex, newBuddyLevel);
       }
@@ -1030,6 +1044,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       return true;
     } finally {
+      buddyPagePointer.releaseExclusiveLock();
       releasePage(buddyIndex, buddyLevel);
     }
   }
@@ -1107,10 +1122,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long pageIndex = getPageIndex(bucketPointer);
       final int fileLevel = getFileLevel(bucketPointer);
 
-      long pagePointer = loadPage(pageIndex, fileLevel);
-
+      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
+      pagePointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer, directMemory, keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,
+            valueSerializer);
         final int index = bucket.getIndex(key);
 
         if (index > -1) {
@@ -1126,7 +1142,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           return;
         }
 
-        final BucketSplitResult splitResult = splitBucket(bucket, fileLevel, pageIndex, pagePointer);
+        final BucketSplitResult splitResult = splitBucket(bucket, fileLevel, pageIndex);
 
         final long updatedBucketPointer = splitResult.updatedBucketPointer;
         final long newBucketPointer = splitResult.newBucketPointer;
@@ -1182,6 +1198,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           }
         }
       } finally {
+        pagePointer.releaseExclusiveLock();
         releasePage(pageIndex, fileLevel);
       }
 
@@ -1537,8 +1554,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     assert checkBucketDepth(newBucket);
   }
 
-  private BucketSplitResult splitBucket(OHashIndexBucket<K, V> bucket, int fileLevel, long pageIndex, long pagePointer)
-      throws IOException {
+  private BucketSplitResult splitBucket(OHashIndexBucket<K, V> bucket, int fileLevel, long pageIndex) throws IOException {
     int bucketDepth = bucket.getDepth();
     int newBucketDepth = bucketDepth + 1;
 
@@ -1554,10 +1570,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     final long updatedBucketIndex;
 
     if (tombstoneIndex >= 0) {
-      final long tombstonePagePointer = loadPage(tombstoneIndex, newFileLevel);
+      final OCachePointer tombstonePagePointer = loadPage(tombstoneIndex, newFileLevel);
       try {
-        final OHashIndexBucket<K, V> tombstone = new OHashIndexBucket<K, V>(tombstonePagePointer, directMemory, keySerializer,
-            valueSerializer);
+        final OHashIndexBucket<K, V> tombstone = new OHashIndexBucket<K, V>(tombstonePagePointer.getDataPointer(), directMemory,
+            keySerializer, valueSerializer);
         newFileMetadata.setTombstoneIndex(tombstone.getNextRemovedBucketPair());
 
         updatedBucketIndex = tombstoneIndex;
@@ -1569,14 +1585,16 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     final long newBucketIndex = updatedBucketIndex + 1;
 
-    final long updatedBucketDataPointer = loadPage(updatedBucketIndex, newFileLevel);
+    final OCachePointer updatedBucketDataPointer = loadPage(updatedBucketIndex, newFileLevel);
+    updatedBucketDataPointer.acquireExclusiveLock();
     try {
-      final long newBucketDataPointer = loadPage(newBucketIndex, newFileLevel);
+      final OCachePointer newBucketDataPointer = loadPage(newBucketIndex, newFileLevel);
+      newBucketDataPointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth, updatedBucketDataPointer,
+        final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth,
+            updatedBucketDataPointer.getDataPointer(), directMemory, keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<K, V>(newBucketDepth, newBucketDataPointer.getDataPointer(),
             directMemory, keySerializer, valueSerializer);
-        final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<K, V>(newBucketDepth, newBucketDataPointer, directMemory,
-            keySerializer, valueSerializer);
 
         splitBucketContent(bucket, updatedBucket, newBucket, newBucketDepth);
 
@@ -1597,10 +1615,12 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
         return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
       } finally {
+        newBucketDataPointer.releaseExclusiveLock();
         markPageAsDirty(newBucketIndex, newFileLevel);
         releasePage(newBucketIndex, newFileLevel);
       }
     } finally {
+      updatedBucketDataPointer.releaseExclusiveLock();
       markPageAsDirty(updatedBucketIndex, newFileLevel);
       releasePage(updatedBucketIndex, newFileLevel);
     }
@@ -1643,11 +1663,13 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private void initHashTreeState() throws IOException {
     for (long pageIndex = 0; pageIndex < MAX_LEVEL_SIZE; pageIndex++) {
-      final long pagePointer = loadPage(pageIndex, 0);
+      final OCachePointer pagePointer = loadPage(pageIndex, 0);
+      pagePointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<K, V>(MAX_LEVEL_DEPTH, pagePointer, directMemory,
-            keySerializer, valueSerializer);
+        final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<K, V>(MAX_LEVEL_DEPTH, pagePointer.getDataPointer(),
+            directMemory, keySerializer, valueSerializer);
       } finally {
+        pagePointer.releaseExclusiveLock();
         markPageAsDirty(pageIndex, 0);
         releasePage(pageIndex, 0);
       }
@@ -1689,7 +1711,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     buffer.markDirty(fileLevelIds[fileLevel], pageIndex);
   }
 
-  private long loadPage(long pageIndex, int fileLevel) throws IOException {
+  private OCachePointer loadPage(long pageIndex, int fileLevel) throws IOException {
     return buffer.load(fileLevelIds[fileLevel], pageIndex);
   }
 

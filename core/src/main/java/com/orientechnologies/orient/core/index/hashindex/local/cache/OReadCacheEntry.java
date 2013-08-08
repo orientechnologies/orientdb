@@ -12,6 +12,8 @@ class OReadCacheEntry {
 
   boolean       isDirty;
 
+  int           usagesCount;
+
   public OReadCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
@@ -34,6 +36,8 @@ class OReadCacheEntry {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
+    if (usagesCount != that.usagesCount)
+      return false;
     if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
 
@@ -46,12 +50,13 @@ class OReadCacheEntry {
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
     result = 31 * result + (isDirty ? 1 : 0);
+    result = 31 * result + usagesCount;
     return result;
   }
 
   @Override
   public String toString() {
     return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", isDirty="
-        + isDirty + '}';
+        + isDirty + ", usagesCount=" + usagesCount + '}';
   }
 }

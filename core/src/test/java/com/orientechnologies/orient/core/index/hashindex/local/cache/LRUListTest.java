@@ -159,7 +159,7 @@ public class LRUListTest {
     OCachePointer cachePointerOne = new OCachePointer(1, new OLogSequenceNumber(0, 0));
     OReadCacheEntry cacheEntry = new OReadCacheEntry(1, 10, cachePointerOne, false);
     lruList.putToMRU(cacheEntry);
-    cachePointerOne.incrementUsages();
+    cacheEntry.usagesCount++;
 
     OReadCacheEntry removedLRU = lruList.removeLRU();
 
