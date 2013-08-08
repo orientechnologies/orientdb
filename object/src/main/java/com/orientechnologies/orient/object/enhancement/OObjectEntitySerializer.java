@@ -548,8 +548,8 @@ public class OObjectEntitySerializer {
 
       }
 
-      if (automaticSchemaGeneration && !iClass.equals(Object.class) && !iClass.equals(ODocument.class)) {
-        OObjectSchemaGenerator.generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+      if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
+        OObjectSchemaGenerator.generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();

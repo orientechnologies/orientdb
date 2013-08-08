@@ -37,6 +37,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -102,9 +103,18 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database.setAutomaticSchemaGeneration(true);
     try {
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+      if (url.startsWith(OEngineRemote.NAME)) {
+        database.getMetadata().reload();
+      }
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+      if (url.startsWith(OEngineRemote.NAME)) {
+        database.getMetadata().reload();
+      }
       database.setAutomaticSchemaGeneration(false);
       database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+      if (url.startsWith(OEngineRemote.NAME)) {
+        database.getMetadata().reload();
+      }
 
       startRecordNumber = database.countClusterElements("Account");
 

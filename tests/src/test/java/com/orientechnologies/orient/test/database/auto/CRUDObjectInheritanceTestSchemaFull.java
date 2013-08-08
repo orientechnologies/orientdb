@@ -27,6 +27,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -130,7 +131,13 @@ public class CRUDObjectInheritanceTestSchemaFull {
     database.getEntityManager().deregisterEntityClasses("com.orientechnologies.orient.test.domain");
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
+    if (url.startsWith(OEngineRemote.NAME)) {
+      database.getMetadata().reload();
+    }
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    if (url.startsWith(OEngineRemote.NAME)) {
+      database.getMetadata().reload();
+    }
     startRecordNumber = database.countClusterElements("Company");
 
     Company company;
@@ -284,6 +291,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
     database.open("admin", "admin");
 
     database.generateSchema("com.orientechnologies.orient.test.domain.base");
+    if (url.startsWith(OEngineRemote.NAME)) {
+      database.getMetadata().reload();
+    }
     OClass musicianClass = database.getMetadata().getSchema().getClass(Musician.class);
     OClass instrumentClass = database.getMetadata().getSchema().getClass(Instrument.class);
     checkNotExistsProperty(musicianClass, "id");
@@ -301,6 +311,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
     database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.schemageneration");
+    if (url.startsWith(OEngineRemote.NAME)) {
+      database.getMetadata().reload();
+    }
     OClass testSchemaClass = database.getMetadata().getSchema().getClass(JavaTestSchemaGeneration.class);
     OClass childClass = database.getMetadata().getSchema().getClass(TestSchemaGenerationChild.class);
 
@@ -354,6 +367,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
       database.generateSchema(Musician.class);
       database.generateSchema(JavaTestSchemaGeneration.class);
       database.generateSchema(TestSchemaGenerationChild.class);
+      if (url.startsWith(OEngineRemote.NAME)) {
+        database.getMetadata().reload();
+      }
     } catch (Exception e) {
       Assert.fail("Shouldn't throw exceptions");
     }
