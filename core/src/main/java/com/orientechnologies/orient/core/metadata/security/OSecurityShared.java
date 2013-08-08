@@ -439,8 +439,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
     // CREATE ROLES AND USERS
     ORole adminRole = getRole(ORole.ADMIN);
-    if (adminRole == null)
+    if (adminRole == null) {
       adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+      adminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+    }
 
     OUser adminUser = getUser(OUser.ADMIN);
     if (adminUser == null)
@@ -495,7 +497,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
-
     }
   }
 

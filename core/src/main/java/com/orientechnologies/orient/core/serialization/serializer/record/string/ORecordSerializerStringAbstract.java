@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationLongIdThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 
@@ -49,23 +49,23 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   private static final int            MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<Long> iMarshalledRecords, boolean iOnlyDelta,
+      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 
   public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
     return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationLongIdThreadLocal.INSTANCE.get(), false, true);
+        OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
     return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationLongIdThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
+        OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
   }
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-    return toString(iRecord, iOutput, iFormat, null, OSerializationLongIdThreadLocal.INSTANCE.get(), false, true);
+    return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
   public ORecordInternal<?> fromString(final String iSource) {
@@ -89,7 +89,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     try {
       return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
-          OSerializationLongIdThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
+          OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);

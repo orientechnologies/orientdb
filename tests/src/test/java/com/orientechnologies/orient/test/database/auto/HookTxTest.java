@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
-import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -32,9 +31,19 @@ import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = "hook")
 public class HookTxTest extends ORecordHookAbstract {
+  public static final int   RECORD_BEFORE_CREATE = 3;
+  public static final int   RECORD_AFTER_CREATE  = 5;
+  public static final int   RECORD_BEFORE_READ   = 7;
+  public static final int   RECORD_AFTER_READ    = 11;
+  public static final int   RECORD_BEFORE_UPDATE = 13;
+  public static final int   RECORD_AFTER_UPDATE  = 17;
+  public static final int   RECORD_BEFORE_DELETE = 19;
+  public static final int   RECORD_AFTER_DELETE  = 23;
+
   private OObjectDatabaseTx database;
-  private int               callbackCount = 0;
+  private int               callbackCount        = 0;
   private Profile           p;
+  private int               expectedHookState;
 
   @Parameters(value = "url")
   public HookTxTest(String iURL) {
@@ -51,9 +60,10 @@ public class HookTxTest extends ORecordHookAbstract {
   }
 
   @Test(dependsOnMethods = "testRegisterHook")
-  public void testHookCalls() throws IOException {
-
+  public void testHookCallsCreate() {
     p = new Profile("HookTxTest");
+
+    expectedHookState = 0;
 
     // TEST HOOKS ON CREATE
     Assert.assertEquals(callbackCount, 0);
@@ -61,34 +71,50 @@ public class HookTxTest extends ORecordHookAbstract {
     database.save(p);
     database.commit();
 
-    Assert.assertEquals(callbackCount, 11);
+    expectedHookState += RECORD_BEFORE_CREATE + RECORD_AFTER_CREATE;
+    Assert.assertEquals(callbackCount, expectedHookState);
+  }
 
+  @Test(dependsOnMethods = "testHookCallsCreate")
+  public void testHookCallsRead() {
     // TEST HOOKS ON READ
     database.begin();
     List<Profile> result = database.query(new OSQLSynchQuery<Profile>("select * from Profile where nick = 'HookTxTest'"));
+    expectedHookState += RECORD_BEFORE_READ + RECORD_AFTER_READ;
+
     Assert.assertFalse(result.size() == 0);
 
     for (int i = 0; i < result.size(); ++i) {
-      Assert.assertEquals(callbackCount, 46);
+      Assert.assertEquals(callbackCount, expectedHookState);
 
       p = result.get(i);
     }
-    Assert.assertEquals(callbackCount, 46);
+    Assert.assertEquals(callbackCount, expectedHookState);
     database.commit();
+  }
 
+  @Test(dependsOnMethods = "testHookCallsRead")
+  public void testHookCallsUpdate() {
     database.begin();
     // TEST HOOKS ON UPDATE
     p.setValue(p.getValue() + 1000);
     database.save(p);
 
     database.commit();
-    Assert.assertEquals(callbackCount, 136);
 
+    expectedHookState += RECORD_BEFORE_UPDATE + RECORD_AFTER_UPDATE;
+    Assert.assertEquals(callbackCount, expectedHookState);
+  }
+
+  @Test(dependsOnMethods = "testHookCallsUpdate")
+  public void testHookCallsDelete() throws IOException {
     // TEST HOOKS ON DELETE
     database.begin();
     database.delete(p);
     database.commit();
-    Assert.assertEquals(callbackCount, 266);
+
+    expectedHookState += RECORD_BEFORE_DELETE + RECORD_AFTER_DELETE;
+    Assert.assertEquals(callbackCount, expectedHookState);
 
     database.unregisterHook(this);
     database.close();
@@ -99,7 +125,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public RESULT onRecordBeforeCreate(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 1;
+      callbackCount += RECORD_BEFORE_CREATE;
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -108,7 +134,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public void onRecordAfterCreate(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 10;
+      callbackCount += RECORD_AFTER_CREATE;
   }
 
   @Override
@@ -116,7 +142,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public RESULT onRecordBeforeRead(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 20;
+      callbackCount += RECORD_BEFORE_READ;
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -125,7 +151,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public void onRecordAfterRead(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 15;
+      callbackCount += RECORD_AFTER_READ;
   }
 
   @Override
@@ -133,7 +159,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public RESULT onRecordBeforeUpdate(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 40;
+      callbackCount += RECORD_BEFORE_UPDATE;
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -142,7 +168,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public void onRecordAfterUpdate(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 50;
+      callbackCount += RECORD_AFTER_UPDATE;
   }
 
   @Override
@@ -150,7 +176,7 @@ public class HookTxTest extends ORecordHookAbstract {
   public RESULT onRecordBeforeDelete(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 60;
+      callbackCount += RECORD_BEFORE_DELETE;
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -159,6 +185,6 @@ public class HookTxTest extends ORecordHookAbstract {
   public void onRecordAfterDelete(ORecord<?> iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
-      callbackCount += 70;
+      callbackCount += RECORD_AFTER_DELETE;
   }
 }
