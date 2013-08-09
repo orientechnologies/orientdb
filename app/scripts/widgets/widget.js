@@ -1,68 +1,5 @@
 var Widget = angular.module('rendering', []);
 
-Widget.directive('render', function($compile,Database) {
-
-  var getTemplate = function(scope,name,element,ngModel) {
-    var tpl;
-    var type = Database.findType(scope.doc['@class'],scope.doc[name],name);
-    
-    
-    
-    switch(type){          
-      case "STRING":
-      tpl = getStringTemplate(element,name);
-      break;
-      case "INTEGER":
-      tpl = getNumberTemplate(element,name);
-      break;
-      case "DATE":
-      var format = Database.getDateFormat();
-      tpl = getDateTemplate(element,format,name);           
-      break;
-      case "DATETIME":
-      var format = Database.getDateTimeFormat();
-      tpl = getDateTimeTemplate(element,format,name);
-
-      break;
-    }
-
-
-    var select = "<select class='span2' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
-    var del = "<a href='javascript:void(0)'' class='btn btn-mini pull-right' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
-    return '<ng-form name="formID">{{formID.$valid}}' + tpl +  select + del + '</ng-form>';
-  }
-
-  var linker = function(scope, element, attrs,ngModel) {
-
-    attrs.$observe('render-field',function(){
-      var name = element.attr('render-field') ? element.attr('render-field') : "text";
-      var el = angular.element($compile(getTemplate(scope,name,element,ngModel))(scope));
-      element.append(el);
-    });
-
-  }
-
-  var getStringTemplate = function(element,name){
-    return "<textarea class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' ></textarea>";
-  };
-  var getNumberTemplate = function(element,name){
-    return "<input type='number' name='" +name+ "' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' />";
-  };
-  var getDateTemplate = function (element,format,name){
-    return "<input type='text' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='" + format+ "' bs-datepicker>";
-  };
-  var getDateTimeTemplate = function(element,format,name){
-    return "<input type='text' class='input-xlarge span6' ng-model='" + element.attr('ng-model') + "' data-date-type='string' data-date-format='"+format+"' bs-datepicker>";
-  };
-  return {
-    // A = attribute, E = Element, C = Class and M = HTML Comment
-    require: 'ngModel',
-    restrict:'A',
-    //The link function is responsible for registering DOM listeners as well as updating the DOM.
-    link: linker
-  }
-});
-
 Widget.directive('docform', function($compile,Database) {
 
   var getTemplate = function(scope,name,element) {
@@ -82,7 +19,6 @@ Widget.directive('docform', function($compile,Database) {
         });
         if(!found){
           var value = scope.doc[name];
-          console.log(value);
           if(typeof value === 'number'){
            type = "INTEGER";
          }else if(typeof value === 'boolean') {
@@ -91,7 +27,6 @@ Widget.directive('docform', function($compile,Database) {
        }
      } else {
       var value = scope.doc[name];
-      console.log(value);
       if(typeof value === 'number'){
        type = "INTEGER";
      }else if(typeof value === 'boolean') {
@@ -104,9 +39,7 @@ Widget.directive('docform', function($compile,Database) {
   type = property.type;
 }
 switch(type){          
-  case "STRING":
-  tpl = getStringTemplate(property);
-  break;
+  
   case "INTEGER":
   tpl = getNumberTemplate(property);
   break;
@@ -121,6 +54,12 @@ switch(type){
   case "BOOLEAN":
   tpl = getBooleanTemplate(property);
   break;
+  case "LINK":
+  tpl = getLinkTemplate(property);
+  break;
+  default: 
+    tpl = getStringTemplate(property);
+    break;
 }
 var select = "<select class='span3 form-control' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
 var del = "<a href='javascript:void(0)'' class='btn btn-mini pull-right' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
@@ -134,7 +73,7 @@ var linker = function(scope, element, attrs) {
     scope.docValid = validity;
   });
   scope.$watch('headers.length',function(h){
-    var docHtml = '<ng-form name="formID">{{formID.$valid}}'
+    var docHtml = '<ng-form name="formID">' //{{formID.$valid}}
     angular.forEach(scope.headers,function(el){
       docHtml = docHtml +'<div class="control-group" ><label class="control-label">'+ el +' </label> <div class="controls controls-row" >' + getTemplate(scope,el,element) + '</div></div>'
     });
@@ -165,6 +104,12 @@ var getDateTemplate = function (format,property){
 };
 var getDateTimeTemplate = function(format,property){
   return "<input type='text' class='input-xlarge span6' ng-model='doc[\""+ property.name +"\"]' data-date-type='string' data-date-format='"+format+"' bs-datepicker>";
+};
+var getLinkTemplate = function(property){
+  var required = property.mandatory ? "required" : "";
+
+  var tpl = "<select ui-select2 class='input-xlarge span6' ng-model='doc[\""+ property.name +"\"]' data-placeholder='@rid'></select>";
+  return tpl;
 };
 return {
     // A = attribute, E = Element, C = Class and M = HTML Comment

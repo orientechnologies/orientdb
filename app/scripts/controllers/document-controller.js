@@ -84,6 +84,18 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 	$scope.create = function(){
 		$location.path('/database/'+database + '/browse/create/' + $scope.doc['@class']);
 	}
+	$scope.showModalConnection = function(label) {
+		var modalScope = $scope.$new(true);	
+		modalScope.type = Database.listPropertyForClass($scope.doc['@class'],label);
+		modalScope.db = database;
+		modalScope.originRid = rid;
+		modalScope.container = $scope;	
+		modalScope.label = label
+		var modalPromise = $modal({template: '/views/document/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
+		$q.when(modalPromise).then(function(modalEl) {
+			modalEl.modal('show');
+		});
+	}
 }]);
 DocController.controller("DocumentCreateController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){
 
@@ -163,4 +175,58 @@ DocController.controller("CreateController",['$scope','$routeParams','$location'
 	$scope.isNew = true;
 	$scope.template = Database.isGraph(clazz) ? '/views/database/editVertex.html' : '/views/database/editDocument.html'
 	
+}]);
+DocController.controller("DocumentModalBrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
+
+	$scope.database = Database;
+	$scope.limit = 20;
+	$scope.queries = new Array;
+	$scope.added = new Array;
+	$scope.queryText = "select * from " + $scope.type.linkedClass;
+	$scope.editorOptions = {
+		lineWrapping : true,
+		lineNumbers: true,
+		readOnly: false,
+		theme : 'ambiance',
+		mode: 'text/x-sql',
+		extraKeys: {
+			"Ctrl-Enter": function(instance) { $scope.query() }
+		}
+	};
+	$scope.query = function(){
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
+			if(data.result){
+				$scope.headers = Database.getPropertyTableFromResults(data.result);
+				$scope.results = data.result;
+			}
+			if($scope.queries.indexOf($scope.queryText)==-1)
+				$scope.queries.push($scope.queryText);
+		});
+	}
+	$scope.select = function(result){
+		var index = $scope.added.indexOf(result['@rid']);
+		if(index==-1){
+			$scope.added.push(result['@rid']);
+		}else {
+			$scope.added.splice(index,1);
+		}
+	}
+	$scope.createLink = function(){
+
+		// if($scope.label.contains('in_')){
+		// 	command = "CREATE EDGE " + $scope.label.replace("in_","") + " FROM [" + $scope.added + "]" + " TO " + $scope.originRid;	
+		// }else {
+		// 	command = "CREATE EDGE " + $scope.label.replace("out_","") + " FROM " + $scope.originRid + " TO [" + $scope.added + "]";	
+		// }
+		// CommandApi.queryText({database : $routeParams.database, language : 'sql', text : command},function(data){
+		// 	$scope.added = new Array;		
+		// 	$scope.container.reload();
+		// });
+		if(!$scope.container.doc[$scope.label]){
+			$scope.container.doc[$scope.label] = new Array;
+		}
+		$scope.container.doc[$scope.label] = $scope.container.doc[$scope.label].concat($scope.added);
+		$scope.container.save();
+		
+	}
 }]);

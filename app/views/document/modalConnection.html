@@ -1,7 +1,7 @@
-<div ng-controller="VertexModalBrowseController" >
+<div ng-controller="DocumentModalBrowseController" >
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h3>Create edge</h3>
+		<h3>Add Link</h3>
 	</div>
 	
 	<div class="modal-body row-fluid">
@@ -43,6 +43,6 @@
 	</div>
 	<div class="modal-footer">
 		<button type="button" class="btn" ng-click="hide()">Close</button>
-		<button class="btn btn-primary" ng-click="modal.saved=true;hide();createEdges()">Create edges</button>
+		<button class="btn btn-primary" ng-click="modal.saved=true;hide();createLink()">Add link</button>
 	</div>
 </div>
