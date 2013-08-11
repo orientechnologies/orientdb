@@ -130,7 +130,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           final Set<ORole> roles = user.getRoles();
           if (roles == null || roles.isEmpty() || roles.iterator().next() == null) {
             // SEEMS CORRUPTED: INSTALL DEFAULT ROLE
-            for (ODatabaseListener l : underlying.getListeners()) {
+            for (ODatabaseListener l : underlying.browseListeners()) {
               if (l.onCorruptionRepairDatabase(this, "Security metadata is broken: current user '" + user.getName()
                   + "' has no roles defined",
                   "The 'admin' user will be reinstalled with default role ('admin') and password 'admin'")) {

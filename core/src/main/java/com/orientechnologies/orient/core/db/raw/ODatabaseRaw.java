@@ -15,11 +15,22 @@
  */
 package com.orientechnologies.orient.core.db.raw;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
@@ -40,8 +51,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -53,17 +69,17 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * 
  */
 @SuppressWarnings("unchecked")
-public class ODatabaseRaw implements ODatabase {
-  protected String                     url;
-  protected OStorage                   storage;
-  protected STATUS                     status;
-  protected OIntent                    currentIntent;
+public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements ODatabase {
+  protected String                  url;
+  protected OStorage                storage;
+  protected STATUS                  status;
+  protected OIntent                 currentIntent;
 
-  private ODatabaseRecord              databaseOwner;
-  private final Map<String, Object>    properties = new HashMap<String, Object>();
-  private final Set<ODatabaseListener> listeners  = Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64));
+  private ODatabaseRecord           databaseOwner;
+  private final Map<String, Object> properties = new HashMap<String, Object>();
 
   public ODatabaseRaw(final String iURL) {
+    super(Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64)), new ONoLock());
     if (iURL == null)
       throw new IllegalArgumentException("URL parameter is null");
 
@@ -116,7 +132,7 @@ public class ODatabaseRaw implements ODatabase {
         it.next().onOpen(getDatabaseOwner());
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : listeners)
+      for (ODatabaseListener listener : browseListeners())
         try {
           listener.onCreate(this);
         } catch (Throwable t) {
@@ -140,7 +156,7 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void drop() {
-    final List<ODatabaseListener> tmpListeners = new ArrayList<ODatabaseListener>(listeners);
+    final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
     close();
 
     try {
@@ -482,24 +498,6 @@ public class ODatabaseRaw implements ODatabase {
     return properties.entrySet().iterator();
   }
 
-  public void registerListener(final ODatabaseListener iListener) {
-    if (iListener == null)
-      return;
-
-    listeners.add(iListener);
-  }
-
-  public void unregisterListener(final ODatabaseListener listener) {
-    if (listener == null)
-      return;
-
-    listeners.remove(listener);
-  }
-
-  public List<ODatabaseListener> getListeners() {
-    return new ArrayList<ODatabaseListener>(listeners);
-  }
-
   public OLevel2RecordCache getLevel2Cache() {
     return storage.getLevel2Cache();
   }
@@ -514,7 +512,7 @@ public class ODatabaseRaw implements ODatabase {
     }
 
     callOnCloseListeners();
-    listeners.clear();
+    resetListeners();
 
     if (storage != null)
       storage.close();
@@ -731,7 +729,7 @@ public class ODatabaseRaw implements ODatabase {
       it.next().onOpen(getDatabaseOwner());
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
+    for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Throwable t) {
@@ -745,7 +743,7 @@ public class ODatabaseRaw implements ODatabase {
       it.next().onClose(getDatabaseOwner());
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
+    for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {

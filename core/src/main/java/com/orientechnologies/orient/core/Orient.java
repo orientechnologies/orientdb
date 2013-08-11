@@ -16,12 +16,22 @@
 package com.orientechnologies.orient.core;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Timer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -41,7 +51,7 @@ import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
-public class Orient extends OSharedResourceAbstract {
+public class Orient extends OListenerManger<OOrientListener> {
   public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
   public static final String                      URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
@@ -51,7 +61,6 @@ public class Orient extends OSharedResourceAbstract {
   protected final Map<String, OEngine>            engines                = new HashMap<String, OEngine>();
   protected final Map<String, OStorage>           storages               = new HashMap<String, OStorage>();
   protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
-  protected final List<OOrientListener>           listeners              = new ArrayList<OOrientListener>();
   protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                  scriptManager          = new OScriptManager();
   protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
@@ -70,11 +79,12 @@ public class Orient extends OSharedResourceAbstract {
   protected volatile boolean                      active                 = false;
 
   protected Orient() {
+    super(new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean()));
     startup();
   }
 
   public Orient startup() {
-    acquireExclusiveLock();
+    getLock().lock();
     try {
       if (active)
         // ALREADY ACTIVE
@@ -102,12 +112,12 @@ public class Orient extends OSharedResourceAbstract {
       return this;
 
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
   }
 
   public Orient shutdown() {
-    acquireExclusiveLock();
+    getLock().lock();
     try {
       if (!active)
         return this;
@@ -130,12 +140,11 @@ public class Orient extends OSharedResourceAbstract {
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
-      if (listeners != null)
-        // CALL THE SHUTDOWN ON ALL THE LISTENERS
-        for (OOrientListener l : listeners) {
-          if (l != null)
-            l.onShutdown();
-        }
+      // CALL THE SHUTDOWN ON ALL THE LISTENERS
+      for (OOrientListener l : browseListeners()) {
+        if (l != null)
+          l.onShutdown();
+      }
 
       // SHUTDOWN ENGINES
       if (engines != null) {
@@ -165,8 +174,7 @@ public class Orient extends OSharedResourceAbstract {
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
 
-      if (listeners != null)
-        listeners.clear();
+      resetListeners();
 
       timer.cancel();
 
@@ -178,7 +186,7 @@ public class Orient extends OSharedResourceAbstract {
       OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
 
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
     return this;
   }
@@ -198,7 +206,7 @@ public class Orient extends OSharedResourceAbstract {
 
     final String engineName = iURL.substring(0, pos);
 
-    acquireExclusiveLock();
+    getLock().lock();
     try {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
@@ -247,46 +255,46 @@ public class Orient extends OSharedResourceAbstract {
         storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
       }
 
-      for (OOrientListener l : listeners)
+      for (OOrientListener l : browseListeners())
         l.onStorageRegistered(storage);
 
       return storage;
 
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
   }
 
   public OStorage registerStorage(final OStorage iStorage) throws IOException {
-    acquireExclusiveLock();
+    getLock().lock();
     try {
-      for (OOrientListener l : listeners)
+      for (OOrientListener l : browseListeners())
         l.onStorageRegistered(iStorage);
 
       if (!storages.containsKey(iStorage.getName()))
         storages.put(iStorage.getName(), iStorage);
 
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
     return iStorage;
   }
 
   public OStorage getStorage(final String iDbName) {
-    acquireSharedLock();
+    getLock().lock();
     try {
       return storages.get(iDbName);
     } finally {
-      releaseSharedLock();
+      getLock().unlock();
     }
   }
 
   public void registerEngine(OEngine iEngine) {
-    acquireExclusiveLock();
+    getLock().lock();
     try {
       engines.put(iEngine.getName(), iEngine);
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
   }
 
@@ -306,20 +314,20 @@ public class Orient extends OSharedResourceAbstract {
    * @return OEngine instance of found, otherwise null
    */
   public OEngine getEngine(final String iEngineName) {
-    acquireSharedLock();
+    getLock().lock();
     try {
       return engines.get(iEngineName);
     } finally {
-      releaseSharedLock();
+      getLock().unlock();
     }
   }
 
   public Set<String> getEngines() {
-    acquireSharedLock();
+    getLock().lock();
     try {
       return Collections.unmodifiableSet(engines.keySet());
     } finally {
-      releaseSharedLock();
+      getLock().unlock();
     }
   }
 
@@ -337,13 +345,13 @@ public class Orient extends OSharedResourceAbstract {
     if (iStorage == null)
       return;
 
-    acquireExclusiveLock();
+    getLock().lock();
     try {
       // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
-      final ArrayList<OOrientListener> listenerCopy = new ArrayList<OOrientListener>(listeners);
+      final Iterable<OOrientListener> listenerCopy = getListenersCopy();
       for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext();) {
         final OOrientListener l = it.next();
-        listeners.remove(l);
+        unregisterListener(l);
         l.onStorageUnregistered(iStorage);
       }
 
@@ -354,18 +362,18 @@ public class Orient extends OSharedResourceAbstract {
         }
       }
     } finally {
-      releaseExclusiveLock();
+      getLock().unlock();
     }
   }
 
   public Collection<OStorage> getStorages() {
+    getLock().lock();
     try {
-      acquireSharedLock();
 
       return new ArrayList<OStorage>(storages.values());
 
     } finally {
-      releaseSharedLock();
+      getLock().unlock();
     }
   }
 
@@ -416,47 +424,6 @@ public class Orient extends OSharedResourceAbstract {
 
   public ODatabaseFactory getDatabaseFactory() {
     return databaseFactory;
-  }
-
-  public void registerListener(final OOrientListener iListener) {
-    acquireExclusiveLock();
-    try {
-
-      if (!listeners.contains(iListener))
-        listeners.add(iListener);
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public void unregisterListener(final OOrientListener iListener) {
-    if (!active)
-      // SHUTDOWNING OR NOT ACTIVE: RETURN
-      return;
-
-    acquireExclusiveLock();
-    try {
-
-      for (int i = 0; i < listeners.size(); ++i)
-        if (listeners.get(i) == iListener) {
-          listeners.remove(i);
-          break;
-        }
-
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  public List<OOrientListener> getListeners() {
-    acquireExclusiveLock();
-    try {
-      return new ArrayList<OOrientListener>(listeners);
-
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
   public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
