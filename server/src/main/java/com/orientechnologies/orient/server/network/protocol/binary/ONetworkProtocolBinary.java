@@ -117,6 +117,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   @Override
   protected void onBeforeRequest() throws IOException {
+    waitNodeIsOnline();
+
     connection = OClientConnectionManager.instance().getConnection(clientTxId);
 
     if (clientTxId < 0) {
@@ -513,7 +515,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void addDataSegment() throws IOException {
     setDataCommandInfo("Add data segment");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final String name = channel.readString();
     final String location = channel.readString();
@@ -532,7 +535,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void dropDataSegment() throws IOException {
     setDataCommandInfo("Drop data segment");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final String name = channel.readString();
 
@@ -550,7 +554,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void removeCluster() throws IOException {
     setDataCommandInfo("Remove cluster");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final int id = channel.readShort();
 
@@ -573,7 +578,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void addCluster() throws IOException {
     setDataCommandInfo("Add cluster");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final String type = channel.readString();
     final String name = channel.readString();
@@ -608,7 +614,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void rangeCluster() throws IOException {
     setDataCommandInfo("Get the begin/end range of data in cluster");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     OClusterPosition[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
@@ -625,7 +632,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void isLHClustersAreUsed() throws IOException {
     setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
 
@@ -641,7 +649,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void countClusters() throws IOException {
     setDataCommandInfo("Count cluster elements");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     int[] clusterIds = new int[channel.readShort()];
     for (int i = 0; i < clusterIds.length; ++i)
@@ -665,7 +674,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void reloadDatabase() throws IOException {
     setDataCommandInfo("Reload database information");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     beginResponse();
     try {
@@ -866,7 +876,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void countDatabaseRecords() throws IOException {
     setDataCommandInfo("Database count records");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     beginResponse();
     try {
@@ -880,7 +891,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void sizeDatabase() throws IOException {
     setDataCommandInfo("Database size");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     beginResponse();
     try {
@@ -1059,7 +1071,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void commit() throws IOException {
     setDataCommandInfo("Transaction commit");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy((ODatabaseRecordTx) connection.database.getUnderlying(),
         channel);
@@ -1135,6 +1148,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // FORCE THE SERVER'S TIMEOUT
         command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
+      if (!isConnectionAlive())
+        return;
+
       // ASSIGNED THE PARSED FETCHPLAN
       listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
 
@@ -1194,6 +1210,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  private boolean isConnectionAlive() {
+    if (connection == null || connection.database == null) {
+      // CONNECTION/DATABASE CLOSED
+      OClientConnectionManager.instance().disconnect(connection);
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Use DATACLUSTER_COUNT
    * 
@@ -1203,7 +1228,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void countCluster() throws IOException {
     setDataCommandInfo("Count cluster records");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final String clusterName = channel.readString();
     final long size = connection.database.countClusterElements(clusterName);
@@ -1220,7 +1246,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void deleteRecord() throws IOException {
     setDataCommandInfo("Delete record");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final ORID rid = channel.readRID();
     final ORecordVersion version = channel.readVersion();
@@ -1242,7 +1269,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void cleanOutRecord() throws IOException {
     setDataCommandInfo("Clean out record");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final ORID rid = channel.readRID();
     final ORecordVersion version = channel.readVersion();
@@ -1274,7 +1302,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void updateRecord() throws IOException {
     setDataCommandInfo("Update record");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
+
+    if (!isConnectionAlive())
+      return;
 
     final ORecordId rid = channel.readRID();
     final byte[] buffer = channel.readBytes();
@@ -1298,7 +1330,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void createRecord() throws IOException {
     setDataCommandInfo("Create record");
 
-    checkDatabase();
+    if (!isConnectionAlive())
+      return;
 
     final int dataSegmentId = connection.data.protocolVersion >= 10 ? channel.readInt() : 0;
     final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
@@ -1339,6 +1372,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   protected void readRecord() throws IOException {
     setDataCommandInfo("Load record");
+
+    if (!isConnectionAlive())
+      return;
 
     final ORecordId rid = channel.readRID();
     final String fetchPlanString = channel.readString();
@@ -1499,14 +1535,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
     account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
     return true;
-  }
-
-  protected void checkDatabase() {
-    if (connection == null)
-      throw new OStorageException("Connection with remote server has been lost");
-
-    if (connection.database == null)
-      throw new OSecurityAccessException("You need to authenticate before to execute the requested operation");
   }
 
   @Override

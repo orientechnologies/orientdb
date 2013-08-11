@@ -81,6 +81,10 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
       try {
         totAligned = 0;
         int aligned = 0;
+
+        ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+            "****** BEGIN PREPARING ALIGNMENT BLOCK db=%s ******", databaseName);
+
         final OMultipleRemoteTasks tasks = new OMultipleRemoteTasks(serverInstance, dManager, databaseName,
             EXECUTION_MODE.SYNCHRONOUS);
         final List<Long> positions = new ArrayList<Long>();
@@ -117,8 +121,9 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
         if (tasks.getTasks() > 0)
           totAligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
 
-        ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
-            "aligned %d operations db=%s", totAligned, databaseName);
+        ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+            "****** END PREPARING ALIGNMENT BLOCK db=%s total=%d ******", databaseName, totAligned);
+
       } finally {
         alignmentLock.unlock();
       }

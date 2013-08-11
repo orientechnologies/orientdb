@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
@@ -45,15 +47,26 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   @Override
   public Object[] call() throws Exception {
+    ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+        "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
+
     final Object[] result = new Object[tasks.size()];
 
-    for (int i = 0; i < tasks.size(); ++i) {
-      final OAbstractRemoteTask<?> task = tasks.get(i);
+    int executedTasks = 0;
+    try {
 
-      // RESET QUEUE TO AVOID HOLES
-      serverInstance.getDistributedManager().resetOperationQueue(task.getRunId(), task.getOperationSerial() - 1);
+      for (; executedTasks < tasks.size(); ++executedTasks) {
+        final OAbstractRemoteTask<?> task = tasks.get(executedTasks);
 
-      result[i] = task.call();
+        // RESET QUEUE TO AVOID HOLES
+        serverInstance.getDistributedManager().resetOperationQueue(task.getRunId(), task.getOperationSerial() - 1);
+
+        result[executedTasks] = task.call();
+      }
+    } finally {
+
+      ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", databaseName, executedTasks, tasks.size());
     }
 
     return result;

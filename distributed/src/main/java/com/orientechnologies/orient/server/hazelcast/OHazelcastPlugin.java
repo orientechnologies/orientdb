@@ -650,7 +650,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
           ODistributedServerLog
               .warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
-                  "sending align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0],
+                  "sending align request in broadcast for database '%s' from operation %d:%d", databaseName, lastOperationId[0],
                   lastOperationId[1]);
 
           synchronized (pendingAlignments) {
