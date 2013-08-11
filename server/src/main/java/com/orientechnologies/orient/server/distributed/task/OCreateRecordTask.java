@@ -106,8 +106,11 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   @Override
   public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
     final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleCreateConflict(iRemoteNodeId, rid, new ORecordId(rid.getClusterId(),
-        ((OPhysicalPosition) remoteResult).clusterPosition));
+
+    final OPhysicalPosition remote = (OPhysicalPosition) remoteResult;
+
+    resolver.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(),
+        remote.clusterPosition), remote.recordVersion.getCounter());
   }
 
   @Override
