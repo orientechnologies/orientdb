@@ -214,7 +214,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final int fileLevel = getFileLevel(bucketPointer);
       final V removed;
 
-      OCachePointer dataPointer = loadPage(pageIndex, fileLevel);
+      final OCachePointer dataPointer = loadPage(pageIndex, fileLevel);
       dataPointer.acquireExclusiveLock();
       try {
         final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer.getDataPointer(), directMemory, keySerializer,
@@ -1122,7 +1122,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long pageIndex = getPageIndex(bucketPointer);
       final int fileLevel = getFileLevel(bucketPointer);
 
-      OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
+      final OCachePointer pagePointer = loadPage(pageIndex, fileLevel);
       pagePointer.acquireExclusiveLock();
       try {
         final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(pagePointer.getDataPointer(), directMemory, keySerializer,

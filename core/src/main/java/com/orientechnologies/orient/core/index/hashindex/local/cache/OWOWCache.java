@@ -372,12 +372,13 @@ public class OWOWCache {
   }
 
   private OCachePointer cacheFileContent(long fileId, long pageIndex) throws IOException {
-    final OFileClassic fileClassic = files.get(fileId);
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
     byte[] content = new byte[pageSize];
     OCachePointer dataPointer;
+    final OFileClassic fileClassic = files.get(fileId);
+
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length);
       final long pointer = directMemory.allocate(content);
@@ -407,13 +408,8 @@ public class OWOWCache {
 
     final int crc32 = calculatePageCrc(content);
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
+
     final OFileClassic fileClassic = files.get(fileId);
-    final long startPosition = pageIndex * pageSize;
-    final long endPosition = startPosition + pageSize;
-
-    if (fileClassic.getFilledUpTo() < endPosition)
-      fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
-
     fileClassic.write(pageIndex * pageSize, content);
 
     if (syncOnPageFlush)
@@ -683,9 +679,12 @@ public class OWOWCache {
                   pagePointer.releaseExclusiveLock();
                 }
 
-                pagePointer.decrementReferrer();
               }
             }
+
+            for (OCachePointer pagePointer : group.pages)
+              if (pagePointer != null)
+                pagePointer.decrementReferrer();
 
             entriesIterator.remove();
             flushedWriteGroups++;

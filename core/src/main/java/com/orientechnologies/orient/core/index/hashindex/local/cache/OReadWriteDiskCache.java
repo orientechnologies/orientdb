@@ -162,6 +162,7 @@ public class OReadWriteDiskCache implements ODiskCache {
                   + "can not be freed because it is used.");
 
             cacheEntry.dataPointer.decrementReferrer();
+            cacheEntry.dataPointer = null;
           }
         } else {
           throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId + " was not found in cache");
@@ -194,8 +195,11 @@ public class OReadWriteDiskCache implements ODiskCache {
         if (cacheEntry != null) {
           if (cacheEntry.usagesCount == 0) {
             cacheEntry = remove(fileId, pageIndex);
-            if (cacheEntry.dataPointer != null)
+            if (cacheEntry.dataPointer != null) {
               cacheEntry.dataPointer.decrementReferrer();
+              cacheEntry.dataPointer = null;
+            }
+
           }
         } else
           throw new OStorageException("Page with index " + pageIndex + " was  not found in cache for file with id " + fileId);
@@ -225,15 +229,21 @@ public class OReadWriteDiskCache implements ODiskCache {
       writeCache.flush();
 
       for (OReadCacheEntry cacheEntry : am)
-        if (cacheEntry.usagesCount == 0)
+        if (cacheEntry.usagesCount == 0) {
           cacheEntry.dataPointer.decrementReferrer();
+          cacheEntry.dataPointer = null;
+        }
+
         else
           throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
               + " is used and can not be removed");
 
       for (OReadCacheEntry cacheEntry : a1in)
-        if (cacheEntry.usagesCount == 0)
+        if (cacheEntry.usagesCount == 0) {
           cacheEntry.dataPointer.decrementReferrer();
+          cacheEntry.dataPointer = null;
+        }
+
         else
           throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
               + " is used and can not be removed");
@@ -324,7 +334,6 @@ public class OReadWriteDiskCache implements ODiskCache {
           assert !removedFromAInEntry.isDirty;
 
           removedFromAInEntry.dataPointer.decrementReferrer();
-
           removedFromAInEntry.dataPointer = null;
 
           a1out.putToMRU(removedFromAInEntry);
@@ -348,6 +357,7 @@ public class OReadWriteDiskCache implements ODiskCache {
           assert !removedEntry.isDirty;
 
           removedEntry.dataPointer.decrementReferrer();
+          removedEntry.dataPointer = null;
 
           Set<Long> pageEntries = filePages.get(removedEntry.fileId);
           pageEntries.remove(removedEntry.pageIndex);
