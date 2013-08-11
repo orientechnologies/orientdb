@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import com.orientechnologies.common.concur.resource.OAdaptiveLock;
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
