@@ -22,7 +22,12 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -30,7 +35,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -111,6 +120,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
+
+    waitNodeIsOnline();
 
     final long begin = System.currentTimeMillis();
 
