@@ -147,12 +147,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       // SHUTDOWN ENGINES
-      if (engines != null) {
-        for (OEngine engine : engines.values()) {
-          engine.shutdown();
-        }
-        engines.clear();
-      }
+      for (OEngine engine : engines.values())
+        engine.shutdown();
+      engines.clear();
 
       if (databaseFactory != null)
         // CLOSE ALL DATABASES
@@ -289,7 +286,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void registerEngine(OEngine iEngine) {
+  public void registerEngine(final OEngine iEngine) {
     getLock().lock();
     try {
       engines.put(iEngine.getName(), iEngine);
@@ -356,7 +353,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue() == iStorage) {
+        if (s.getValue().equals(iStorage)) {
           storages.remove(s.getKey());
           break;
         }

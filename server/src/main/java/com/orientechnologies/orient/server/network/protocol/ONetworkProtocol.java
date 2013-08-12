@@ -28,7 +28,8 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 public abstract class ONetworkProtocol extends OSoftThread {
-  protected OServer server;
+  private static final int MAX_RETRIES = 20;
+  protected OServer        server;
 
   public ONetworkProtocol(ThreadGroup group, String name) {
     super(group, name);
@@ -54,15 +55,15 @@ public abstract class ONetworkProtocol extends OSoftThread {
     return server;
   }
 
-  public void waitNodeIsOnline() {
+  public void waitNodeIsOnline() throws OTimeoutException {
     // WAIT THE NODE IS ONLINE AGAIN
     final ODistributedServerManager mgr = server.getDistributedManager();
     if (mgr != null && mgr.isOfflineNode(mgr.getLocalNodeId())) {
-      for (int retry = 0; retry < 10; ++retry) {
+      for (int retry = 0; retry < MAX_RETRIES; ++retry) {
         if (mgr != null && mgr.isOfflineNode(mgr.getLocalNodeId())) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
           OLogManager.instance().info(this, "Node is not online yet (status=%s), blocking the command until it's online %d/%d",
-              mgr.getStatus(), retry + 1, 10);
+              mgr.getStatus(), retry + 1, MAX_RETRIES);
           pauseCurrentThread(300);
         } else
           // OK, RETURN

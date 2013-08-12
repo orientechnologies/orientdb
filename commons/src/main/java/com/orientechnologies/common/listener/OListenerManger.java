@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.orientechnologies.common.concur.lock.OLock;
+import com.orientechnologies.common.concur.lock.ONoLock;
 
 /**
  * Abstract class to manage listeners.
@@ -33,7 +34,7 @@ public abstract class OListenerManger<L> {
   private final OLock         lock;
 
   public OListenerManger() {
-    this(new HashSet<L>(8), null);
+    this(new HashSet<L>(8), new ONoLock());
   }
 
   public OListenerManger(final OLock iLock) {

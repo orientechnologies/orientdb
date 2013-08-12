@@ -29,8 +29,9 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-  final protected int                 socketTimeout;     // IN MS
-  final private short                 srvProtocolVersion;
+  protected final int                 socketTimeout;     // IN MS
+  protected final short               srvProtocolVersion;
+  private final String                serverURL;
   private OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
@@ -41,6 +42,7 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
   public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int iProtocolVersion, final ORemoteServerEventListener asynchEventListener) throws IOException {
     super(new Socket(), iConfig);
+    serverURL = remoteHost + ":" + remotePort;
     socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
     socket.setPerformancePreferences(0, 2, 1);
@@ -124,5 +126,9 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
 
   public OAdaptiveLock getLockWrite() {
     return lockWrite;
+  }
+
+  public String getServerURL() {
+    return serverURL;
   }
 }

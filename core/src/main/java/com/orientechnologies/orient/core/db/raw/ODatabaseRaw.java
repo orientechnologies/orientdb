@@ -511,7 +511,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       currentIntent = null;
     }
 
-    callOnCloseListeners();
     resetListeners();
 
     if (storage != null)

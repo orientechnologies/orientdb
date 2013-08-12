@@ -225,6 +225,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void close() {
     setCurrentDatabaseinThreadLocal();
 
+    underlying.callOnCloseListeners();
+
     if (metadata != null) {
       if (!(getStorage() instanceof OStorageProxy)) {
         final OIndexManager indexManager = metadata.getIndexManager();

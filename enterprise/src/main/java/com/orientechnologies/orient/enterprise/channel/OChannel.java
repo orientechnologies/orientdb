@@ -21,15 +21,17 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.orientechnologies.common.concur.resource.OAdaptiveLock;
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
-public abstract class OChannel {
+public abstract class OChannel extends OListenerManger<OChannelListener> {
   private static final OJVMProfiler PROFILER                     = Orient.instance().getProfiler();
 
   public Socket                     socket;
@@ -124,6 +126,13 @@ public abstract class OChannel {
         outStream.close();
     } catch (IOException e) {
     }
+
+    for (OChannelListener l : browseListeners())
+      try {
+        l.onChannelClose(this);
+      } catch (Exception e) {
+        // IGNORE ANY EXCEPTION
+      }
   }
 
   public void connected() {

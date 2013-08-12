@@ -149,6 +149,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
+        OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
         shutdown();
         throw new OIOException("Found unknown session " + clientTxId);
       }
@@ -1212,8 +1213,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private boolean isConnectionAlive() {
     if (connection == null || connection.database == null) {
-      // CONNECTION/DATABASE CLOSED
-      OClientConnectionManager.instance().disconnect(connection);
+      // CONNECTION/DATABASE CLOSED, KILL IT
+      OClientConnectionManager.instance().kill(connection);
       return false;
     }
     return true;
@@ -1501,6 +1502,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   @Override
   public void shutdown() {
+    sendShutdown();
     super.shutdown();
 
     if (connection == null)
