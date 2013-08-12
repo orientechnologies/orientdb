@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String ORIENT_VERSION = "1.5.1-SNAPSHOT";
+  public static final String ORIENT_VERSION = "1.6.0-SNAPSHOT";
   public static final String ORIENT_URL     = "www.orientechnologies.com";
 
   public static String getVersion() {
