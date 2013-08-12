@@ -213,6 +213,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
+    underlying.callOnCloseListeners();
+
     if (metadata != null) {
       metadata.close();
       metadata = null;
