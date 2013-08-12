@@ -112,14 +112,15 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   public void handleCreateConflict(final String iRemoteNode, final ORecordId iCurrentRID, final int iCurrentVersion,
       final ORecordId iOtherRID, final int iOtherVersion) {
     if (iCurrentRID.equals(iOtherRID)) {
-      // PATCH FOR THE CASE THE RECORD WAS DELETED WHILE THE NODE WAS OFFLINE: FORCE THE OTHER VERSION TO THE LOCAL ONE (-1 BECAUSE IT'S ALWAYS INCREMENTED)
+      // PATCH FOR THE CASE THE RECORD WAS DELETED WHILE THE NODE WAS OFFLINE: FORCE THE OTHER VERSION TO THE LOCAL ONE (-1 BECAUSE
+      // IT'S ALWAYS INCREMENTED)
       ODistributedServerLog
           .debug(
               this,
               cluster.getLocalNodeId(),
               iRemoteNode,
               DIRECTION.IN,
-              "Found conflict between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten and no exception will be thrown",
+              "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
               database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
 
       final ORecordInternal<?> record = iCurrentRID.getRecord();
