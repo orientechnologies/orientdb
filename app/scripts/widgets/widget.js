@@ -1,120 +1,125 @@
 var Widget = angular.module('rendering', []);
 
-Widget.directive('docform', function($compile,Database) {
 
-  var getTemplate = function(scope,name,element) {
-    var tpl;
-    var type = "STRING";
-    var property = Database.listPropertyForClass(scope.doc['@class'],name);
-    if(!property){
-      var fieldTypes = scope.doc['@fieldTypes'];
-      if(fieldTypes){
-        var found = true;
-        fieldTypes.split(",").forEach(function(element,index,array){
-          element.split("=").forEach(function(elem,i,a){
-           if(i==0 && elem == name){
-            type = Database.getMappingForKey(a[1]); 
-          }
+Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
+
+
+    var compileForm = function (response, scope, element, attrs) {
+        var formScope = scope.$new(true);
+        formScope.doc = scope.doc;
+        formScope.headers = scope.headers;
+        formScope.deleteField = scope.deleteField;
+        formScope.options = new Array;
+        formScope.getTemplate = function (header) {
+            if (formScope.doc['@class']) {
+                var type = findType(formScope,header)
+                if (type) {
+                    return 'views/widget/' + type.toLowerCase() + '.html';
+                }
+                else {
+                    return 'views/widget/string.html';
+                }
+            }
+        }
+        formScope.getType = function (header) {
+            if (formScope.doc['@class']) {
+                return findType(formScope, header);
+            } else {
+                return "STRING";
+            }
+        }
+        formScope.isRequired = function (header) {
+
+            var property = Database.listPropertyForClass(formScope.doc['@class'], header);
+            if (property) {
+                return property.mandatory;
+            } else {
+                return false;
+            }
+        }
+        formScope.findAll = function(header){
+            var property = Database.listPropertyForClass(formScope.doc['@class'], header);
+            if(!formScope.options[header]){
+                CommandApi.getAll(scope.database,property.linkedClass,function(data){
+                    formScope.options[header] = data.result;
+                    console.log(formScope.options[header]);
+                });
+            }
+        }
+        formScope.$watch('formID.$valid', function (validity) {
+            scope.docValid = validity;
         });
+
+        var el = angular.element($compile(response.data)(formScope));
+        element.empty();
+        element.append(el);
+    }
+    var findType = function(scope,name){
+        var type = null;
+        var property = Database.listPropertyForClass(scope.doc['@class'],name);
+
+        var guessType = function(value){
+            var value = scope.doc[name];
+            var type = null;
+            if(typeof value === 'number'){
+                type = "INTEGER";
+            }else if(typeof value === 'boolean') {
+                type = "BOOLEAN";
+            }
+            return type;
+        }
+        if(!property){
+            var fieldTypes = scope.doc['@fieldTypes'];
+            if(fieldTypes){
+                var found = false;
+                fieldTypes.split(",").forEach(function(element,index,array){
+                    element.split("=").forEach(function(elem,i,a){
+                        if(i==0 && elem == name){
+                            found = true;
+                            type = Database.getMappingForKey(a[1]);
+                        }
+                    });
+                });
+                if(!found){
+                    type = guessType(scope.doc[name])
+                }
+            } else {
+                type = guessType(scope.doc[name])
+            }
+            property = new Object;
+            property.name = name;
+        }else {
+            type = property.type;
+        }
+        return type !=null ? type : "STRING";
+    }
+    var linker = function(scope, element, attrs) {
+        $http.get( 'views/widget/form.html' ).then(function(response){
+            compileForm(response,scope,element,attrs);
         });
-        if(!found){
-          var value = scope.doc[name];
-          if(typeof value === 'number'){
-           type = "INTEGER";
-         }else if(typeof value === 'boolean') {
-           type = "BOOLEAN";
-         }
-       }
-     } else {
-      var value = scope.doc[name];
-      if(typeof value === 'number'){
-       type = "INTEGER";
-     }else if(typeof value === 'boolean') {
-       type = "BOOLEAN";
-     }
-   }
-   property = new Object;
-   property.name = name;
- }else {
-  type = property.type;
-}
-switch(type){          
-  
-  case "INTEGER":
-  tpl = getNumberTemplate(property);
-  break;
-  case "DATE":
-  var format = Database.getDateFormat();
-  tpl = getDateTemplate(format,property);           
-  break;
-  case "DATETIME":
-  var format = Database.getDateTimeFormat();
-  tpl = getDateTimeTemplate(format,property);
-  break;
-  case "BOOLEAN":
-  tpl = getBooleanTemplate(property);
-  break;
-  case "LINK":
-  tpl = getLinkTemplate(property);
-  break;
-  default: 
-    tpl = getStringTemplate(property);
-    break;
-}
-var select = "<select class='span3 form-control' ng-disabled='true'><option value='" +type+"''>" + type+ "</option></select>";
-var del = "<a href='javascript:void(0)'' class='btn btn-mini pull-right' tooltip='Delete field' ng-click='deleteField(\"" + name + "\")' ><i class='icon-trash'></i></a>";
-return  tpl +  select + del ;
-}
+    }
+    return {
+        // A = attribute, E = Element, C = Class and M = HTML Comment
+        restrict:'A',
+        //The link function is responsible for registering DOM listeners as well as updating the DOM.
+        link: linker
+    }
+});
 
-var linker = function(scope, element, attrs) {
+Widget.directive('jsontext', function() {
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function(scope, element, attr, ngModel) {
+            function into(input) {
+                return JSON.parse(input);
+            }
+            function out(data) {
+                return JSON.stringify(data);
+            }
+            ngModel.$parsers.push(into);
+            ngModel.$formatters.push(out);
 
-
-  scope.$watch('formID.$valid', function(validity) {
-    scope.docValid = validity;
-  });
-  scope.$watch('headers.length',function(h){
-    var docHtml = '<ng-form name="formID">' //{{formID.$valid}}
-    angular.forEach(scope.headers,function(el){
-      docHtml = docHtml +'<div class="control-group" ><label class="control-label">'+ el +' </label> <div class="controls controls-row" >' + getTemplate(scope,el,element) + '</div></div>'
-    });
-    docHtml = docHtml + '</ng-form>';
-    var el = angular.element($compile(docHtml)(scope));
-    element.empty();
-    element.append(el);
-  });
-}
-
-var getStringTemplate = function(property){
-  var required = property.mandatory ? "required" : "";
-  var tpl = "<textarea class='input-xlarge span6' " + required + " ng-model='doc[\""+ property.name + "\"]' ></textarea>";
-  return tpl;
-};
-var getBooleanTemplate = function(property){
-  var required = property.mandatory ? "required" : "";
-  var tpl = "<input type='checkbox' class='input-xlarge span6' name='" +property.name+ "'  "+ required +" ng-model='doc[\""+ property.name +"\"]' />";
-  return tpl;
-};
-var getNumberTemplate = function(property){
-  var required = property.mandatory ? "required" : "";
-  var tpl = "<input type='number' name='" +property.name+ "' class='input-xlarge span6'  "+ required +" ng-model='doc[\""+ property.name +"\"]' />";
-  return tpl;
-};
-var getDateTemplate = function (format,property){
-  return "<input type='text' class='input-xlarge span6' ng-model='doc[\""+ property.name +"\"]' data-date-type='string' data-date-format='" + format+ "' bs-datepicker>";
-};
-var getDateTimeTemplate = function(format,property){
-  return "<input type='text' class='input-xlarge span6' ng-model='doc[\""+ property.name +"\"]' data-date-type='string' data-date-format='"+format+"' bs-datepicker>";
-};
-var getLinkTemplate = function(property){
-  var required = property.mandatory ? "required" : "";
-
-  var tpl = "<select ui-select2 class='input-xlarge span6' ng-model='doc[\""+ property.name +"\"]' data-placeholder='@rid'></select>";
-  return tpl;
-};
-return {
-    // A = attribute, E = Element, C = Class and M = HTML Comment
-    restrict:'A',
-    //The link function is responsible for registering DOM listeners as well as updating the DOM.
-    link: linker
-  }
+        }
+    };
 });

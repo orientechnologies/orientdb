@@ -1,8 +1,7 @@
 var  DocController = angular.module('document.controller',[]);
-DocController.controller("DocumentEditController",['$scope','$routeParams','$location','$modal','$dialog','$q','DocumentApi','Database','Notification',function($scope,$routeParams,$location,$modal,$dialog,$q,DocumentApi,Database,Notification){
+DocController.controller("DocumentEditController",['$scope','$injector','$routeParams','$location','$modal','$dialog','$q','DocumentApi','Database','Notification',function($scope,$injector,$routeParams,$location,$modal,$dialog,$q,DocumentApi,Database,Notification){
 
-	var database = $routeParams.database;
-	var rid = $routeParams.rid;
+	$injector.invoke(BaseEditController, this, {$scope: $scope});
 	$scope.fixed = Database.header;
 	$scope.canSave = true;
 	$scope.canDelete = true;
@@ -12,26 +11,14 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 	// Toggle modal
 	$scope.showModal = function(rid) {
 		modalScope = $scope.$new(true);	
-		modalScope.db = database;
+		modalScope.db = $scope.database;
 		modalScope.rid = rid;
 		var modalPromise = $modal({template: '/views/document/modalEdit.html', persist: true, show: false, backdrop: 'static',modalClass : 'editEdge',scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
 	};
-	$scope.reload = function(){
 
-		$scope.doc = DocumentApi.get({ database : database , document : rid},function(){
-			$scope.headers = Database.getPropertyFromDoc($scope.doc);
-			$scope.isGraph = Database.isGraph($scope.doc['@class']);
-			$scope.incomings = Database.getEdge($scope.doc,'in');
-			$scope.outgoings = Database.getEdge($scope.doc,'out');
-			$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
-		}, function(error){
-			Notification.push({content : JSON.stringify(error)});
-			$location.path('/404');
-		});
-	}
 	if(!$scope.doc){
 		$scope.reload();
 	}else {
@@ -41,19 +28,7 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 		$scope.outgoings = Database.getEdge($scope.doc,'out');
 		$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
 	}
-	$scope.save = function(){
-		if(!$scope.isNew){
-			DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
-				Notification.push({content : data});
-				$scope.reload();
-			});
-		}else {
-			DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
-				Notification.push({content : JSON.stringify(data)});
-				$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
-			});
-		}
-	}
+	
 	$scope.filterArray = function(arr) {
 		if(arr instanceof Array){
 			return arr;
@@ -64,31 +39,16 @@ DocController.controller("DocumentEditController",['$scope','$routeParams','$loc
 		}
 
 	}
-	$scope.deleteField = function(name){
-		Utilities.confirm($scope,$dialog,{
-			title : 'Warning!',
-			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
-			success : function() {
-				delete $scope.doc[name];
-				$scope.save();
-			}
-		});
-	}
 	$scope.deleteLink = function(group,rid) {
 		var index = $scope.doc[group].indexOf(rid);
 		$scope.doc[group].splice(index,1);
 	}
-	$scope.navigate = function(rid){
-		$location.path('/database/'+database + '/browse/edit/' + rid.replace('#',''));
-	}
-	$scope.create = function(){
-		$location.path('/database/'+database + '/browse/create/' + $scope.doc['@class']);
-	}
+
 	$scope.showModalConnection = function(label) {
 		var modalScope = $scope.$new(true);	
 		modalScope.type = Database.listPropertyForClass($scope.doc['@class'],label);
 		modalScope.db = database;
-		modalScope.originRid = rid;
+		modalScope.originRid = $scope.rid;
 		modalScope.container = $scope;	
 		modalScope.label = label
 		var modalPromise = $modal({template: '/views/document/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
@@ -212,16 +172,6 @@ DocController.controller("DocumentModalBrowseController",['$scope','$routeParams
 		}
 	}
 	$scope.createLink = function(){
-
-		// if($scope.label.contains('in_')){
-		// 	command = "CREATE EDGE " + $scope.label.replace("in_","") + " FROM [" + $scope.added + "]" + " TO " + $scope.originRid;	
-		// }else {
-		// 	command = "CREATE EDGE " + $scope.label.replace("out_","") + " FROM " + $scope.originRid + " TO [" + $scope.added + "]";	
-		// }
-		// CommandApi.queryText({database : $routeParams.database, language : 'sql', text : command},function(data){
-		// 	$scope.added = new Array;		
-		// 	$scope.container.reload();
-		// });
 		if(!$scope.container.doc[$scope.label]){
 			$scope.container.doc[$scope.label] = new Array;
 		}
@@ -230,3 +180,105 @@ DocController.controller("DocumentModalBrowseController",['$scope','$routeParams
 		
 	}
 }]);
+
+
+
+function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,DocumentApi,Database,Notification,CommandApi){
+	 $scope.database = $routeParams.database;
+	 $scope.rid = $routeParams.rid;
+
+
+
+	 $scope.save = function(){
+		if(!$scope.isNew){
+			DocumentApi.updateDocument($scope.database,$scope.rid,$scope.doc,function(data){
+				Notification.push({content : data});
+				$scope.reload();
+			});
+		}else {
+			DocumentApi.createDocument($scope.database,$scope.doc['@rid'],$scope.doc,function(data){
+				Notification.push({content : JSON.stringify(data)});
+				$location.path('/database/'+$scope.database + '/browse/edit/' + data['@rid'].replace('#',''));
+			});
+		}
+	}
+
+
+	$scope.reload = function(){
+
+		$scope.doc = DocumentApi.get({ database : $scope.database , document : $scope.rid},function(){
+			$scope.headers = Database.getPropertyFromDoc($scope.doc);
+			$scope.isGraph = Database.isGraph($scope.doc['@class']);
+			$scope.incomings = Database.getEdge($scope.doc,'in');
+			$scope.outgoings = Database.getEdge($scope.doc,'out');
+			$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
+		}, function(error){
+			Notification.push({content : JSON.stringify(error)});
+			$location.path('/404');
+		});
+	}
+
+
+	$scope.delete = function(){
+
+		var recordID = $scope.doc['@rid'];
+		var clazz = $scope.doc['@class'];
+		Utilities.confirm($scope,$dialog,{
+			title : 'Warning!',
+			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
+			success : function() {
+				var command = "DELETE Vertex " + recordID;
+				CommandApi.queryText({database : $scope.database, language : 'sql', text : command},function(data){
+					var clazz = $scope.doc['@class'];
+					$location.path('/database/'+$scope.database + '/browse/' + 'select * from ' + clazz);
+				});
+			}
+		});
+	}
+
+	$scope.deleteField = function(name){
+		Utilities.confirm($scope,$dialog,{
+			title : 'Warning!',
+			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
+			success : function() {
+				delete $scope.doc[name];
+				var idx = $scope.headers.indexOf(name);
+				$scope.headers.splice(idx,1);
+			}
+		});
+	}
+
+	$scope.addField = function(name,type){
+		if(name){
+			$scope.doc[name] = null;
+			var types = $scope.doc['@fieldTypes'];
+			if(type == 'BOOLEAN'){
+				$scope.doc[name] = false;
+			}
+			if(Database.getMappingFor(type)){
+				if(types){
+					types = types + ',' + name + '=' + Database.getMappingFor(type);
+				}else {
+					types = name + '=' + Database.getMappingFor(type);	
+				}
+				$scope.doc['@fieldTypes'] = types;
+			}
+			$scope.headers.push(name);
+		}else {
+			var modalScope = $scope.$new(true);	
+			modalScope.addField = $scope.addField;
+			modalScope.types = Database.getSupportedTypes();
+			var modalPromise = $modal({template: '/views/database/newField.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
+			$q.when(modalPromise).then(function(modalEl) {
+				modalEl.modal('show');
+			});
+		}
+		
+	}
+	$scope.navigate = function(rid){
+		$location.path('/database/'+$scope.database + '/browse/edit/' + rid.replace('#',''));
+	}
+	$scope.create = function(){
+		$location.path('/database/'+$scope.database + '/browse/create/' + $scope.doc['@class']);
+	}
+}

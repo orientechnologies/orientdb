@@ -412,6 +412,14 @@ database.factory('CommandApi', function($http,$resource,Notification){
 			if(error) error(data);
 		});
 	}
+    resource.getAll = function(database,clazz,callback){
+        var text = '/api/command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
+        var query = "select * from " + clazz;
+        $http.post(text,query).success(function(data){
+          callback(data);
+        });
+
+    }
 	return resource;
 }) ;
 database.factory('DocumentApi', function($http,$resource,Database){

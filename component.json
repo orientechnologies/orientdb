@@ -14,8 +14,7 @@
     "angular-localstorage" : "latest",
     "bootstrap-datepicker" : "1.0.2",
     "moment" : "latest",
-    "angular-ui-bootstrap-bower" : "latest",
-    "angular-ui-select2" : "latest"
+    "angular-ui-bootstrap-bower" : "latest"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

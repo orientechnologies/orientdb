@@ -259,7 +259,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 			return true;
 		}
 		
-		if(res['type'] == 'LINKLIST' || res['type'] =='LINKSET' || res['type'] =='LINKMAP' || res['type'] =='EMBEDDED' || res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP'){
+		if(res['type'] == 'LINK' || res['type'] == 'LINKLIST' || res['type'] =='LINKSET' || res['type'] =='LINKMAP' || res['type'] =='EMBEDDED' || res['type'] == 'EMBEDDEDLIST' || res['type'] =='EMBEDDEDSET' || res['type'] =='EMBEDDEDMAP'){
 			return false;
 		}
 		
@@ -440,11 +440,11 @@ console.log(propName)
 	$scope.checkDisableLinkedClass = function(entry){
 
 		var occupatoType =  $scope.checkDisable('linkedType');
+
 		if(occupatoType){
 		$scope.property['linkedClass'] = null;
 			return true;
 		}
-		
 		if($scope.property['type'] == 'LINKLIST' || $scope.property['type'] =='LINKSET' || $scope.property['type'] =='LINKMAP' || $scope.property['type'] =='EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] =='EMBEDDEDSET' || $scope.property['type'] =='EMBEDDEDMAP'){
 			return false;
 		}

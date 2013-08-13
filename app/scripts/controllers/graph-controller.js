@@ -1,8 +1,7 @@
 var  GrapgController = angular.module('vertex.controller',['ui.bootstrap']);
-GrapgController.controller("VertexEditController",['$scope','$routeParams','$location','$modal','$q','$dialog','DocumentApi','Database','CommandApi','Notification',function($scope,$routeParams,$location,$modal,$q,$dialog,DocumentApi,Database,CommandApi,Notification){
+GrapgController.controller("VertexEditController",['$scope','$injector','$routeParams','$location','$modal','$q','$dialog','DocumentApi','Database','CommandApi','Notification',function($scope,$injector,$routeParams,$location,$modal,$q,$dialog,DocumentApi,Database,CommandApi,Notification){
 
-	var database = $routeParams.database;
-	var rid = $routeParams.rid;
+	$injector.invoke(BaseEditController, this, {$scope: $scope});
 	$scope.fixed = Database.header;
 	$scope.canSave = true;
 	$scope.canDelete = true;
@@ -15,7 +14,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 	// Toggle modal
 	$scope.showModal = function(rid) {
 		var modalScope = $scope.$new(true);
-		modalScope.db = database;
+		modalScope.db = $scope.database;
 		modalScope.rid = rid;
 		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'editEdge'});
 		$q.when(modalPromise).then(function(modalEl) {
@@ -24,26 +23,13 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 	};
 	$scope.showModalConnection = function(label) {
 		var modalScope = $scope.$new(true);	
-		modalScope.db = database;
+		modalScope.db = $scope.database;
 		modalScope.originRid = rid;
 		modalScope.container = $scope;	
 		modalScope.label = label
 		var modalPromise = $modal({template: '/views/vertex/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
-		});
-	}
-	$scope.reload = function(){
-
-		$scope.doc = DocumentApi.get({ database : database , document : rid},function(){
-			$scope.headers = Database.getPropertyFromDoc($scope.doc);
-			$scope.isGraph = Database.isGraph($scope.doc['@class']);
-			$scope.incomings = Database.getEdge($scope.doc,'in');
-			$scope.outgoings = Database.getEdge($scope.doc,'out');
-			$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
-		}, function(error){
-			Notification.push({content : JSON.stringify(error)});
-			$location.path('/404');
 		});
 	}
 	if(!$scope.doc){
@@ -56,48 +42,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 		$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
 	}
 	
-	$scope.addField = function(name,type){
-		if(name){
-			$scope.doc[name] = null;
-			var types = $scope.doc['@fieldTypes'];
-			if(type == 'BOOLEAN'){
-				$scope.doc[name] = false;
-			}
-			if(Database.getMappingFor(type)){
-				if(types){
-					types = types + ',' + name + '=' + Database.getMappingFor(type);
-				}else {
-					types = name + '=' + Database.getMappingFor(type);	
-				}
-				$scope.doc['@fieldTypes'] = types;
-			}
-			$scope.headers.push(name);
-		}else {
-			var modalScope = $scope.$new(true);	
-			modalScope.addField = $scope.addField;
-			modalScope.types = Database.getSupportedTypes();
-			var modalPromise = $modal({template: '/views/database/newField.html', persist: true, show: false, backdrop: 'static',scope: modalScope});
-			$q.when(modalPromise).then(function(modalEl) {
-				modalEl.modal('show');
-			});
-		}
-		
-	}
-	$scope.save = function(docForm){
-		if(!$scope.isNew){
-			DocumentApi.updateDocument(database,rid,$scope.doc,function(data){
-				Notification.push({content : data});
-				$scope.reload();
-			});
-		}else {
-			DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
-				Notification.push({content : JSON.stringify(data)});
-				$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
-			});
-		}
-	}
 	$scope.delete = function(){
-
 		var recordID = $scope.doc['@rid']
 		Utilities.confirm($scope,$dialog,{
 			title : 'Warning!',
@@ -111,18 +56,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			}
 		});
 	}
-	$scope.deleteField = function(name){
-		Utilities.confirm($scope,$dialog,{
-			title : 'Warning!',
-			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
-			success : function() {
-				delete $scope.doc[name];
-				var idx = $scope.headers.indexOf(name);
-				$scope.headers.splice(idx,1);
-				//$scope.save();
-			}
-		});
-	}
+
 	$scope.filterArray = function(arr) {
 		if(arr instanceof Array){
 			return arr;
@@ -139,7 +73,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 			title : 'Warning!',
 			body : 'You are removing edge '+ edge + '. Are you sure?',
 			success : function() {
-				var edgeDoc = DocumentApi.get({ database : database , document : edge},function(){
+				var edgeDoc = DocumentApi.get({ database : $scope.database , document : edge},function(){
 					var command =""
 					if(Database.isEdge(edgeDoc['@class'])){
 						command = "DELETE EDGE " + edge;	
@@ -151,7 +85,7 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 							command = "DELETE EDGE FROM " + rid + " TO " + edge;
 						}
 					}
-					CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
+					CommandApi.queryText({database : $scope.database, language : 'sql', text : command},function(data){
 						$scope.reload();
 					});
 				}, function(error){
@@ -161,12 +95,6 @@ GrapgController.controller("VertexEditController",['$scope','$routeParams','$loc
 				
 			}
 		});
-	}
-	$scope.navigate = function(rid){
-		$location.path('/database/'+database + '/browse/edit/' + rid.replace('#',''));
-	}
-	$scope.create = function(){
-		$location.path('/database/'+database + '/browse/create/' + $scope.doc['@class']);
 	}
 }]);
 GrapgController.controller("VertexCreateController",['$scope','$routeParams','$location','DocumentApi','Database','Notification',function($scope,$routeParams,$location,DocumentApi,Database,Notification){

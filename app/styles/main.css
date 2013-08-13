@@ -164,5 +164,8 @@ padding: 0 5px;
 color: #cccccc;
 content: "/\00a0";
 }
+.input-xlarge-auto {
+    width: 90%;
+}
 
 
