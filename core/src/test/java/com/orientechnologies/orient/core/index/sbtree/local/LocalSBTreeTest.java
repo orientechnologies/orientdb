@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -51,6 +52,11 @@ public class LocalSBTreeTest {
     localSBTree.create("localSBTree", OIntegerSerializer.INSTANCE, (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
+  @AfterMethod
+  public void afterMethod() {
+    localSBTree.clear();
+  }
+
   @AfterClass
   public void afterClass() throws Exception {
     localSBTree.clear();
@@ -74,11 +80,10 @@ public class LocalSBTreeTest {
 
   public void testKeyPutRandomUniform() {
     final Set<Integer> keys = new HashSet<Integer>();
-    final MersenneTwisterFast random = new MersenneTwisterFast(1);
+    final MersenneTwisterFast random = new MersenneTwisterFast();
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
-
       localSBTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
       keys.add(key);
 
@@ -91,8 +96,11 @@ public class LocalSBTreeTest {
 
   public void testKeyPutRandomGaussian() {
     Set<Integer> keys = new HashSet<Integer>();
-    MersenneTwisterFast random = new MersenneTwisterFast();
-    keys.clear();
+    long seed = 1376477211861L;
+
+    System.out.println("testKeyPutRandomGaussian seed : " + seed);
+
+    MersenneTwisterFast random = new MersenneTwisterFast(seed);
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
@@ -101,6 +109,7 @@ public class LocalSBTreeTest {
 
       localSBTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
       keys.add(key);
+
       Assert.assertEquals(localSBTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
@@ -132,7 +141,11 @@ public class LocalSBTreeTest {
   public void testKeyDeleteRandomGaussian() {
     HashSet<Integer> keys = new HashSet<Integer>();
 
-    MersenneTwisterFast random = new MersenneTwisterFast();
+    long seed = System.currentTimeMillis();
+
+    System.out.println("testKeyDeleteRandomGaussian seed : " + seed);
+    MersenneTwisterFast random = new MersenneTwisterFast(seed);
+
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
       if (key < 0)
@@ -140,6 +153,8 @@ public class LocalSBTreeTest {
 
       localSBTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
       keys.add(key);
+
+      Assert.assertEquals(localSBTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
     for (int key : keys) {
@@ -175,8 +190,11 @@ public class LocalSBTreeTest {
   }
 
   public void testKeyAddDelete() {
-    for (int i = 0; i < KEYS_COUNT; i++)
+    for (int i = 0; i < KEYS_COUNT; i++) {
       localSBTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+      Assert.assertEquals(localSBTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+    }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)

@@ -30,8 +30,7 @@ public class OSBTreeBucket<K> {
   private static final int            FREE_POINTER_OFFSET    = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            SIZE_OFFSET            = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            IS_LEAF_OFFSET         = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            PARENT_OFFSET          = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int            LEFT_SIBLING_OFFSET    = PARENT_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            LEFT_SIBLING_OFFSET    = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int            RIGHT_SIBLING_OFFSET   = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int            TREE_SIZE_OFFSET       = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
@@ -56,7 +55,6 @@ public class OSBTreeBucket<K> {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(0, directMemory, cachePointer + SIZE_OFFSET);
     directMemory.setByte(cachePointer + IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
 
-    OLongSerializer.INSTANCE.serializeInDirectMemory(-1L, directMemory, cachePointer + PARENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(-1L, directMemory, cachePointer + LEFT_SIBLING_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(-1L, directMemory, cachePointer + RIGHT_SIBLING_OFFSET);
 
@@ -215,10 +213,6 @@ public class OSBTreeBucket<K> {
     }
   }
 
-  public long getParent() {
-    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, cachePointer + PARENT_OFFSET);
-  }
-
   public boolean addEntry(int index, SBTreeEntry<K> treeEntry) {
     final int keySize = keySerializer.getObjectSize(treeEntry.key);
     int entrySize = keySize;
@@ -287,10 +281,6 @@ public class OSBTreeBucket<K> {
 
     entryPosition += keySerializer.getObjectSizeInDirectMemory(directMemory, cachePointer + entryPosition);
     OLinkSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, cachePointer + entryPosition);
-  }
-
-  public void setParent(long parentIndex) {
-    OLongSerializer.INSTANCE.serializeInDirectMemory(parentIndex, directMemory, cachePointer + PARENT_OFFSET);
   }
 
   public void setLeftSibling(long pageIndex) {

@@ -28,12 +28,10 @@ public class SBTreeLeafBucketTest {
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
 
     OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
-    Assert.assertEquals(treeBucket.getParent(), -1);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
 
     treeBucket = new OSBTreeBucket<Long>(pointer, OLongSerializer.INSTANCE);
-    Assert.assertEquals(treeBucket.getParent(), -1);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
