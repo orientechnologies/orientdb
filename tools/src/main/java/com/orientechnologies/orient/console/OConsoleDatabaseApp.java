@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -82,6 +83,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -994,7 +996,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (stg instanceof OStorageRemoteThread) {
         final ODocument clusterConfig = ((OStorageRemoteThread) stg).getClusterConfiguration();
         if (clusterConfig != null)
-          out.println("\nCluster configuration: " + clusterConfig.toJSON("indent:2"));
+          out.println("\nCluster configuration: " + clusterConfig.toJSON("prettyPrint"));
         else
           out.println("\nCluster configuration: none");
       } else if (stg instanceof OStorageLocal) {
@@ -1020,10 +1022,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final OStorage stg = currentDatabase.getStorage();
 
-    if (stg.getConfiguration().properties != null) {
-      out.println("\nDB CUSTOM PROPERTIES:\n");
-      for (OStorageEntryConfiguration cfg : stg.getConfiguration().properties)
-        out.println(String.format("%-30s : %s", cfg.name, cfg.value));
+    final OStorageConfiguration dbCfg = stg.getConfiguration();
+
+    out.println("\nDATABASE PROPERTIES:");
+
+    if (dbCfg.properties != null) {
+      out.println("-------------------------------+----------------------------------------------------+");
+      out.println(" NAME                          | VALUE                                              |");
+      out.println("-------------------------------+----------------------------------------------------+");
+      out.println(String.format("%-30s | %-50s |", "Name", format(dbCfg.name, 50)));
+      out.println(String.format("%-30s | %-50s |", "Version", format("" + dbCfg.version, 50)));
+      out.println(String.format("%-30s | %-50s |", "Date format", format(dbCfg.dateFormat, 50)));
+      out.println(String.format("%-30s | %-50s |", "Datetime format", format(dbCfg.dateTimeFormat, 50)));
+      out.println(String.format("%-30s | %-50s |", "Schema RID", format(dbCfg.schemaRecordId, 50)));
+      out.println(String.format("%-30s | %-50s |", "Index Manager RID", format(dbCfg.indexMgrRecordId, 50)));
+      out.println(String.format("%-30s | %-50s |", "Dictionary RID", format(dbCfg.dictionaryRecordId, 50)));
+      out.println("-------------------------------+----------------------------------------------------+");
+
+      if (dbCfg.properties != null && !dbCfg.properties.isEmpty()) {
+        out.println("\nDATABASE CUSTOM PROPERTIES:");
+        out.println(" +-------------------------------+--------------------------------------------------+");
+        out.println(" | NAME                          | VALUE                                            |");
+        out.println(" +-------------------------------+--------------------------------------------------+");
+        for (OStorageEntryConfiguration cfg : dbCfg.properties)
+          out.println(String.format( " | %-29s | %-49s|", cfg.name, format(cfg.value, 49)));
+        out.println(" +-------------------------------+--------------------------------------------------+");
+      }
     }
   }
 
@@ -1110,9 +1134,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listIndexes() {
     if (currentDatabaseName != null) {
       out.println("\nINDEXES:");
-      out.println("----------------------------------------------+------------+-----------------------+----------------+-----------+");
-      out.println(" NAME                                         | TYPE       |         CLASS         |     FIELDS     | RECORDS   |");
-      out.println("----------------------------------------------+------------+-----------------------+----------------+-----------+");
+      out.println("----------------------------------------------+------------+-----------------------+----------------+------------+");
+      out.println(" NAME                                         | TYPE       |         CLASS         |     FIELDS     | RECORDS    |");
+      out.println("----------------------------------------------+------------+-----------------------+----------------+------------+");
 
       int totalIndexes = 0;
       long totalRecords = 0;
@@ -1128,18 +1152,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
           if (indexDefinition == null || indexDefinition.getClassName() == null) {
-            out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10), "", "",
+            out.printf(" %-45s| %-10s | %-22s| %-15s|%11d |\n", format(index.getName(), 45), format(index.getType(), 10), "", "",
                 index.getSize());
           } else {
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
-              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10),
+              out.printf(" %-45s| %-10s | %-22s| %-15s|%11d |\n", format(index.getName(), 45), format(index.getType(), 10),
                   format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
             } else {
-              out.printf(" %-45s| %-10s | %-22s| %-15s|%10d |\n", format(index.getName(), 45), format(index.getType(), 10),
+              out.printf(" %-45s| %-10s | %-22s| %-15s|%11d |\n", format(index.getName(), 45), format(index.getType(), 10),
                   format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
               for (int i = 1; i < fields.size(); i++) {
-                out.printf(" %-45s| %-10s | %-22s| %-15s|%10s |\n", "", "", "", fields.get(i), "");
+                out.printf(" %-45s| %-10s | %-22s| %-15s|%11s |\n", "", "", "", fields.get(i), "");
               }
             }
           }
@@ -1149,10 +1173,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         } catch (Exception e) {
         }
       }
-      out.println("----------------------------------------------+------------+-----------------------+----------------+-----------+");
-      out.printf(" TOTAL = %-3d                                                                                    %15d |\n",
+      out.println("----------------------------------------------+------------+-----------------------+----------------+------------+");
+      out.printf(" TOTAL = %-3d                                                                                     %15d |\n",
           totalIndexes, totalRecords);
-      out.println("----------------------------------------------------------------------------------------------------------------+\n");
+      out.println("-----------------------------------------------------------------------------------------------------------------+\n");
     } else
       out.println("No database selected yet.");
   }
@@ -1161,16 +1185,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listClusters() {
     if (currentDatabaseName != null) {
       out.println("\nCLUSTERS:");
-      out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
-      out.println(" NAME                                         |  ID  | TYPE                | RECORDS   | SIZE         |");
-      out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
+      out.println("----------------------------------------------+-------+---------------------+---------+-----------------+");
+      out.println(" NAME                                         |   ID  | TYPE                | DATASEG | RECORDS         |");
+      out.println("----------------------------------------------+-------+---------------------+---------+-----------------+");
 
       int clusterId;
       String clusterType = null;
       long totalElements = 0;
       long count;
-      long size = 0;
-      long totalSize = 0;
 
       final List<String> clusters = new ArrayList<String>(currentDatabase.getClusterNames());
       Collections.sort(clusters);
@@ -1179,24 +1201,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           clusterType = currentDatabase.getClusterType(clusterName);
+          final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
 
           if (!(currentDatabase.getStorage() instanceof OStorageProxy)) {
-            totalSize += size;
-            out.printf(" %-45s|%6d| %-20s|%10d |%13s |\n", format(clusterName, 45), clusterId, clusterType, count,
-                OFileUtils.getSizeAsString(size));
+            out.printf(" %-45s| %5d | %-20s| %7d | %15d |\n", format(clusterName, 45), clusterId, clusterType,
+                cluster.getDataSegmentId(), cluster.compression(), count);
           } else {
-            out.printf(" %-45s|%6d| %-20s|%10d |%13s |\n", format(clusterName, 45), clusterId, clusterType, count, "Not supported");
+            out.printf(" %-45s| %5d | %-20s| %7d | %15d |\n", format(clusterName, 45), clusterId, clusterType,
+                cluster.getDataSegmentId(), count);
           }
         } catch (Exception e) {
         }
       }
-      out.println("----------------------------------------------+------+---------------------+-----------+--------------+");
-      out.printf(" TOTAL                                                                 %15d |%13s |\n", totalElements,
-          OFileUtils.getSizeAsString(totalSize));
-      out.println("---------------------------------------------------------------------------------------+--------------+");
+      out.println("----------------------------------------------+-------+---------------------+---------+-----------------+");
+      out.printf(" TOTAL = %-3d                                                                |         | %15s |\n",
+          clusters.size(), totalElements);
+      out.println("----------------------------------------------------------------------------+---------+-----------------+");
     } else
       out.println("No database selected yet.");
   }
@@ -1205,9 +1228,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listClasses() {
     if (currentDatabaseName != null) {
       out.println("\nCLASSES:");
-      out.println("----------------------------------------------+---------------------+-----------+");
-      out.println(" NAME                                         | CLUSTERS            | RECORDS   |");
-      out.println("----------------------------------------------+---------------------+-----------+");
+      out.println("----------------------------------------------+------------------------------------+------------+----------------+");
+      out.println(" NAME                                         | SUPERCLASS                         | CLUSTERS   | RECORDS        |");
+      out.println("----------------------------------------------+------------------------------------+------------+----------------+");
 
       long totalElements = 0;
       long count;
@@ -1221,23 +1244,29 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       for (OClass cls : classes) {
         try {
-          StringBuilder clusters = new StringBuilder();
-          for (int i = 0; i < cls.getClusterIds().length; ++i) {
-            if (i > 0)
-              clusters.append(", ");
-            clusters.append(cls.getClusterIds()[i]);
-          }
+          final StringBuilder clusters = new StringBuilder();
+          if (cls.isAbstract())
+            clusters.append("-");
+          else
+            for (int i = 0; i < cls.getClusterIds().length; ++i) {
+              if (i > 0)
+                clusters.append(", ");
+              clusters.append(cls.getClusterIds()[i]);
+            }
 
           count = currentDatabase.countClass(cls.getName());
           totalElements += count;
 
-          out.printf(" %-45s| %-20s|%10d |\n", format(cls.getName(), 45), clusters.toString(), count);
+          final String superClass = cls.getSuperClass() != null ? cls.getSuperClass().getName() : "";
+
+          out.printf(" %-45s| %-35s| %-11s|%15d |\n", format(cls.getName(), 45), format(superClass, 35), clusters.toString(), count);
         } catch (Exception e) {
         }
       }
-      out.println("----------------------------------------------+---------------------+-----------+");
-      out.printf(" TOTAL                                                          %15d |\n", totalElements);
-      out.println("--------------------------------------------------------------------------------+");
+      out.println("----------------------------------------------+------------------------------------+------------+----------------+");
+      out.printf(" TOTAL = %-3d                                                                                     %15d |\n",
+          classes.size(), totalElements);
+      out.println("----------------------------------------------+------------------------------------+------------+----------------+");
 
     } else
       out.println("No database selected yet.");

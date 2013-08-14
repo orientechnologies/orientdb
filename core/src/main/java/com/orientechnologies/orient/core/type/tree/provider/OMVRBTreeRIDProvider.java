@@ -104,6 +104,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   protected OMVRBTreeRIDProvider(final OStorage iStorage, final String iClusterName) {
     super(new ODocument(), iStorage, iClusterName);
     ((ODocument) record).field("pageSize", pageSize);
+
+    getDatabase().getMetadata().getSchema().getOrCreateClass(PERSISTENT_CLASS_NAME);
   }
 
   @Override

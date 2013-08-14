@@ -1,25 +1,22 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-class OCacheEntry {
-  final long         fileId;
-  final long         pageIndex;
+class OReadCacheEntry {
+  final long    fileId;
+  final long    pageIndex;
 
-  OLogSequenceNumber loadedLSN;
+  OCachePointer dataPointer;
 
-  OCachePointer      dataPointer;
+  boolean       isDirty;
 
-  boolean            isDirty;
+  int           usagesCount;
 
-  public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty, OLogSequenceNumber loadedLSN) {
+  public OReadCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
-    this.loadedLSN = loadedLSN;
     this.dataPointer = dataPointer;
     isDirty = dirty;
   }
@@ -31,7 +28,7 @@ class OCacheEntry {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OCacheEntry that = (OCacheEntry) o;
+    OReadCacheEntry that = (OReadCacheEntry) o;
 
     if (fileId != that.fileId)
       return false;
@@ -39,9 +36,9 @@ class OCacheEntry {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
+    if (usagesCount != that.usagesCount)
       return false;
-    if (loadedLSN != null ? !loadedLSN.equals(that.loadedLSN) : that.loadedLSN != null)
+    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
 
     return true;
@@ -51,15 +48,15 @@ class OCacheEntry {
   public int hashCode() {
     int result = (int) (fileId ^ (fileId >>> 32));
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    result = 31 * result + (loadedLSN != null ? loadedLSN.hashCode() : 0);
     result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
     result = 31 * result + (isDirty ? 1 : 0);
+    result = 31 * result + usagesCount;
     return result;
   }
 
   @Override
   public String toString() {
-    return "OCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", loadedLSN=" + loadedLSN + ", dataPointer="
-        + dataPointer + ", isDirty=" + isDirty + '}';
+    return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", isDirty="
+        + isDirty + ", usagesCount=" + usagesCount + '}';
   }
 }

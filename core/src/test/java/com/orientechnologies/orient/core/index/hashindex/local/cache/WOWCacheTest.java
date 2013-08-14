@@ -9,12 +9,6 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.zip.CRC32;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -28,12 +22,18 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 /**
  * @author Andrey Lomakin
  * @since 26.07.13
  */
 @Test
-public class OWOWCacheTest {
+public class WOWCacheTest {
   private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
   private int                    pageSize     = systemOffset + 8;
 
@@ -55,7 +55,7 @@ public class OWOWCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/OWOWCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
 
     fileName = "wowCacheTest.tst";
 
@@ -99,58 +99,47 @@ public class OWOWCacheTest {
     wowCache = new OWOWCache(true, pageSize, 10000, writeAheadLog, 10, 100, storageLocal, false);
   }
 
-  public void testPutGet() throws IOException {
+  public void testLoadStore() throws IOException {
     Random random = new Random();
 
-    long[] pagePointers = new long[200];
+    byte[][] pageData = new byte[200][];
     long fileId = wowCache.openFile(fileName);
 
-    for (int i = 0; i < pagePointers.length; i++) {
+    for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
       random.nextBytes(data);
 
-      pagePointers[i] = directMemory.allocate(new byte[pageSize]);
-      directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
+      pageData[i] = data;
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
-      wowCache.put(fileId, i, cachePointer);
+      final OCachePointer cachePointer = wowCache.load(fileId, i);
+      cachePointer.acquireExclusiveLock();
+      directMemory.set(cachePointer.getDataPointer() + systemOffset, data, 0, data.length);
+      cachePointer.releaseExclusiveLock();
+
+      wowCache.store(fileId, i, cachePointer);
+      cachePointer.decrementReferrer();
     }
 
-    for (int i = 0; i < pagePointers.length; i++) {
-      long dataPointer = pagePointers[i];
+    for (int i = 0; i < pageData.length; i++) {
+      byte[] dataOne = pageData[i];
 
-      byte[] dataOne = directMemory.get(dataPointer + systemOffset, 8);
-
-      OCachePointer cachePointer;
-      wowCache.acquireFlushLock(fileId, i);
-      try {
-        cachePointer = wowCache.get(fileId, i);
-        cachePointer.incrementReferrer();
-      } finally {
-        wowCache.releaseFlushLock(fileId, i);
-      }
-
+      OCachePointer cachePointer = wowCache.load(fileId, i);
       byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
       cachePointer.decrementReferrer();
-      cachePointer = null;
 
       Assert.assertEquals(dataTwo, dataOne);
     }
 
     wowCache.flush();
 
-    for (int i = 0; i < pagePointers.length; i++) {
-      byte[] dataContent = directMemory.get(pagePointers[i] + systemOffset, 8);
+    for (int i = 0; i < pageData.length; i++) {
+      byte[] dataContent = pageData[i];
       assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
-    }
-
-    for (long pagePointer : pagePointers) {
-      directMemory.free(pagePointer);
     }
   }
 
   public void testDataUpdate() throws Exception {
-    final NavigableMap<Long, Long> pageIndexDataMap = new TreeMap<Long, Long>();
+    final NavigableMap<Long, byte[]> pageIndexDataMap = new TreeMap<Long, byte[]>();
     long fileId = wowCache.openFile(fileName);
 
     Random random = new Random();
@@ -161,30 +150,22 @@ public class OWOWCacheTest {
       byte[] data = new byte[8];
       random.nextBytes(data);
 
-      long pagePointer = directMemory.allocate(new byte[pageSize]);
-      directMemory.set(pagePointer + systemOffset, data, 0, data.length);
+      pageIndexDataMap.put(pageIndex, data);
 
-      pageIndexDataMap.put(pageIndex, pagePointer);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+      cachePointer.acquireExclusiveLock();
+      directMemory.set(cachePointer.getDataPointer() + systemOffset, data, 0, data.length);
+      cachePointer.releaseExclusiveLock();
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
-      wowCache.put(fileId, pageIndex, cachePointer);
+      wowCache.store(fileId, pageIndex, cachePointer);
+      cachePointer.decrementReferrer();
     }
 
-    for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
+    for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
-      long pagePointer = entry.getValue();
+      byte[] dataOne = entry.getValue();
 
-      byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
-
-      OCachePointer cachePointer;
-      wowCache.acquireFlushLock(fileId, pageIndex);
-      try {
-        cachePointer = wowCache.get(fileId, pageIndex);
-        cachePointer.incrementReferrer();
-      } finally {
-        wowCache.releaseFlushLock(fileId, pageIndex);
-      }
-
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
       byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
 
       cachePointer.decrementReferrer();
@@ -198,72 +179,63 @@ public class OWOWCacheTest {
       if (pageIndex == null)
         pageIndex = pageIndexDataMap.floorKey(desiredIndex);
 
-      long pagePointer = pageIndexDataMap.get(pageIndex);
-
       byte[] data = new byte[8];
       random.nextBytes(data);
+      pageIndexDataMap.put(pageIndex, data);
 
-      directMemory.set(pagePointer + systemOffset, data, 0, data.length);
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointer, pageSize));
-      wowCache.put(fileId, pageIndex, cachePointer);
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
+
+      cachePointer.acquireExclusiveLock();
+      directMemory.set(cachePointer.getDataPointer() + systemOffset, data, 0, data.length);
+      cachePointer.releaseExclusiveLock();
+
+      wowCache.store(fileId, pageIndex, cachePointer);
+      cachePointer.decrementReferrer();
     }
 
-    for (Map.Entry<Long, Long> entry : pageIndexDataMap.entrySet()) {
+    for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
-      long pagePointer = entry.getValue();
-
-      byte[] dataOne = directMemory.get(pagePointer + systemOffset, 8);
-
-      OCachePointer cachePointer;
-      wowCache.acquireFlushLock(fileId, pageIndex);
-      try {
-        cachePointer = wowCache.get(fileId, pageIndex);
-        cachePointer.incrementReferrer();
-      } finally {
-        wowCache.releaseFlushLock(fileId, pageIndex);
-      }
-
+      byte[] dataOne = entry.getValue();
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex);
       byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
       cachePointer.decrementReferrer();
 
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    for (long pagePointer : pageIndexDataMap.values())
-      directMemory.free(pagePointer);
+    wowCache.flush();
+
+    for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
+      assertFile(entry.getKey(), entry.getValue(), new OLogSequenceNumber(0, 0));
+    }
+
   }
 
   public void testFlushAllContentEventually() throws Exception {
     Random random = new Random();
 
-    long[] pagePointers = new long[200];
+    byte[][] pageData = new byte[200][];
     long fileId = wowCache.openFile(fileName);
 
-    for (int i = 0; i < pagePointers.length; i++) {
+    for (int i = 0; i < pageData.length; i++) {
       byte[] data = new byte[8];
       random.nextBytes(data);
 
-      pagePointers[i] = directMemory.allocate(new byte[pageSize]);
-      directMemory.set(pagePointers[i] + systemOffset, data, 0, data.length);
+      pageData[i] = data;
 
-      final OCachePointer cachePointer = new OCachePointer(directMemory.get(pagePointers[i], pageSize));
-      wowCache.put(fileId, i, cachePointer);
+      final OCachePointer cachePointer = wowCache.load(fileId, i);
+      cachePointer.acquireExclusiveLock();
+      directMemory.set(cachePointer.getDataPointer() + systemOffset, data, 0, data.length);
+      cachePointer.releaseExclusiveLock();
+
+      wowCache.store(fileId, i, cachePointer);
+      cachePointer.decrementReferrer();
     }
 
-    for (int i = 0; i < pagePointers.length; i++) {
-      long dataPointer = pagePointers[i];
+    for (int i = 0; i < pageData.length; i++) {
+      byte[] dataOne = pageData[i];
 
-      byte[] dataOne = directMemory.get(dataPointer + systemOffset, 8);
-
-      OCachePointer cachePointer;
-      wowCache.acquireFlushLock(fileId, i);
-      try {
-        cachePointer = wowCache.get(fileId, i);
-        cachePointer.incrementReferrer();
-      } finally {
-        wowCache.releaseFlushLock(fileId, i);
-      }
-
+      OCachePointer cachePointer = wowCache.load(fileId, i);
       byte[] dataTwo = directMemory.get(cachePointer.getDataPointer() + systemOffset, 8);
       cachePointer.decrementReferrer();
 
@@ -272,13 +244,9 @@ public class OWOWCacheTest {
 
     Thread.sleep(5000);
 
-    for (int i = 0; i < pagePointers.length; i++) {
-      byte[] dataContent = directMemory.get(pagePointers[i] + systemOffset, 8);
+    for (int i = 0; i < pageData.length; i++) {
+      byte[] dataContent = pageData[i];
       assertFile(i, dataContent, new OLogSequenceNumber(0, 0));
-    }
-
-    for (long pagePointer : pagePointers) {
-      directMemory.free(pagePointer);
     }
   }
 
@@ -295,7 +263,7 @@ public class OWOWCacheTest {
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 
-    Assert.assertEquals(magicNumber, O2QDiskCache.MAGIC_NUMBER);
+    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
     crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
         - OLongSerializer.LONG_SIZE);

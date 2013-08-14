@@ -33,12 +33,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * Executes random operations against multiple servers
  */
 public class SimulateOperationsAgainstServer {
-  protected static final int delay           = 0;
+  protected static final int delay           = 500;
   protected final AtomicLong totalOperations = new AtomicLong();
-  protected int              count           = 1000000;
-  protected int              threads         = 20;
-  protected String[]         urls            = new String[] { "remote:localhost:2424/KidsAndIceCreams",
-      "remote:localhost:2425/KidsAndIceCreams" };
+  protected int              count           = 1000;
+  protected int              threads         = 2;
+  protected String[]         urls            = new String[] { "remote:localhost:2424/test", "remote:localhost:2425/test" };
   protected String           className       = "Customer";
   protected String           userName        = "admin";
   protected String           userPassword    = "admin";

@@ -98,11 +98,11 @@ public class ORole extends ODocumentWrapper {
 
     try {
       mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
-    }catch(Exception ex) {
-    	OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
-    	mode =  ALLOW_MODES.DENY_ALL_BUT;
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
+      mode = ALLOW_MODES.DENY_ALL_BUT;
     }
-     
+
     final OIdentifiable role = document.field("inheritedRole");
     parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
 
@@ -111,6 +111,10 @@ public class ORole extends ODocumentWrapper {
       for (Entry<String, Number> a : storedRules.entrySet()) {
         rules.put(a.getKey().toLowerCase(), a.getValue().byteValue());
       }
+
+    if (getName().equals("admin") && !hasRule(ODatabaseSecurityResources.BYPASS_RESTRICTED))
+      // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
+      addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
   }
 
   public boolean allow(final String iResource, final int iCRUDOperation) {
@@ -128,12 +132,13 @@ public class ORole extends ODocumentWrapper {
   }
 
   public boolean hasRule(final String iResource) {
-    return rules.containsKey(iResource);
+    return rules.containsKey(iResource.toLowerCase());
   }
 
-  public void addRule(final String iResource, final int iOperation) {
+  public ORole addRule(final String iResource, final int iOperation) {
     rules.put(iResource.toLowerCase(), (byte) iOperation);
     document.field("rules", rules);
+    return this;
   }
 
   /**
@@ -143,8 +148,9 @@ public class ORole extends ODocumentWrapper {
    *          Requested resource
    * @param iOperation
    *          Permission to grant/add
+   * @return
    */
-  public void grant(final String iResource, final int iOperation) {
+  public ORole grant(final String iResource, final int iOperation) {
     final Byte current = rules.get(iResource);
     byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
 
@@ -152,6 +158,7 @@ public class ORole extends ODocumentWrapper {
 
     rules.put(iResource.toLowerCase(), currentValue);
     document.field("rules", rules);
+    return this;
   }
 
   /**
@@ -162,9 +169,9 @@ public class ORole extends ODocumentWrapper {
    * @param iOperation
    *          Permission to grant/remove
    */
-  public void revoke(final String iResource, final int iOperation) {
+  public ORole revoke(final String iResource, final int iOperation) {
     if (iOperation == PERMISSION_NONE)
-      return;
+      return this;
 
     final Byte current = rules.get(iResource);
 
@@ -178,6 +185,7 @@ public class ORole extends ODocumentWrapper {
 
     rules.put(iResource.toLowerCase(), currentValue);
     document.field("rules", rules);
+    return this;
   }
 
   public String getName() {

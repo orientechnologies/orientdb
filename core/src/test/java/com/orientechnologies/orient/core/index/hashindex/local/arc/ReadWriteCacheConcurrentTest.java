@@ -19,27 +19,28 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Artem Loginov
  */
 @Test
-public class OReadWriteCacheConcurrentTest {
+public class ReadWriteCacheConcurrentTest {
   private final int                                  systemOffset    = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
   private static final int                           THREAD_COUNT    = 4;
@@ -71,7 +72,7 @@ public class OReadWriteCacheConcurrentTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage(
-        "plocal:" + buildDirectory + "/OReadWriteCacheConcurrentTest");
+        "plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
 
     prepareFilesForTest(FILE_COUNT);
 
@@ -221,13 +222,13 @@ public class OReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-
-      long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
+      OCachePointer pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
+      pointer.acquireExclusiveLock();
       buffer.markDirty(fileIds.get(fileNumber), pageIndex);
 
-      directMemory.set(pointer + systemOffset, new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber,
-          (byte) (pageIndex & 0xFF) }, 0, 8);
-
+      directMemory.set(pointer.getDataPointer() + systemOffset, new byte[] { version.byteValue(), 2, 3, seed, 5, 6,
+          (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
+      pointer.releaseExclusiveLock();
       buffer.release(fileIds.get(fileNumber), pageIndex);
     }
 
@@ -274,9 +275,9 @@ public class OReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      long pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
+      OCachePointer pointer = buffer.load(fileIds.get(fileNumber), pageIndex);
 
-      byte[] content = directMemory.get(pointer + systemOffset, 8);
+      byte[] content = directMemory.get(pointer.getDataPointer() + systemOffset, 8);
 
       buffer.release(fileIds.get(fileNumber), pageIndex);
 

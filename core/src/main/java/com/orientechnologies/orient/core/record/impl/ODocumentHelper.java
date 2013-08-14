@@ -337,6 +337,10 @@ public class ODocumentHelper {
               conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
 
             final Object fieldValue = getFieldValue(currentRecord, conditionFieldName);
+
+            if (conditionFieldValue != null && fieldValue != null)
+              conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
+
             if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
                 & !fieldValue.equals(conditionFieldValue))
               value = null;

@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.remote;
+package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
 
-public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
-  public static OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
-
-  public class OStorageRemoteSession {
-    public boolean commandExecuting = false;
-    public Integer sessionId        = -1;
-    public String  serverURL        = null;
-  }
-
-  @Override
-  protected OStorageRemoteSession initialValue() {
-    return new OStorageRemoteSession();
-  }
+/**
+ * Listener of events against network channel
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public interface OChannelListener {
+  public void onChannelClose(OChannel iChannel);
 }

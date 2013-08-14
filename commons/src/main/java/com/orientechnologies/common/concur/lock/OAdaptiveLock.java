@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.concur.resource;
+package com.orientechnologies.common.concur.lock;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OLockException;
 
 /**
  * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
@@ -28,7 +27,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAdaptiveLock {
+public class OAdaptiveLock extends OAbstractLock {
   private final ReentrantLock lock = new ReentrantLock();
   private final boolean       concurrent;
   private final int           timeout;

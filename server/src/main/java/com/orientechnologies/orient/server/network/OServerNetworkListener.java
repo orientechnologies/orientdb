@@ -163,6 +163,7 @@ public class OServerNetworkListener extends Thread {
 
             // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
             Thread.sleep(100);
+            continue;
           }
 
           socket.setPerformancePreferences(0, 2, 1);

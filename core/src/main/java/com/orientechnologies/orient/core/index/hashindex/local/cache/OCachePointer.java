@@ -16,54 +16,77 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
  * @since 05.08.13
  */
-public class OCachePointer {
-  private final ODirectMemory directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
+public class OCachePointer extends OSharedResourceAdaptive {
+  private final ODirectMemory         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  private final AtomicInteger referrersCount = new AtomicInteger();
-  private final AtomicInteger usagesCounter  = new AtomicInteger();
+  private final AtomicInteger         referrersCount = new AtomicInteger();
+  private final Lock                  writeLock      = new ReentrantLock();
 
-  private final long          dataPointer;
+  private final AtomicInteger         usagesCounter  = new AtomicInteger();
 
-  public OCachePointer(long dataPointer) {
+  private volatile OLogSequenceNumber lastFlushedLsn;
+
+  private final long                  dataPointer;
+
+  public OCachePointer(long dataPointer, OLogSequenceNumber lastFlushedLsn) {
+    super(true, 300000, false);
+    this.lastFlushedLsn = lastFlushedLsn;
     this.dataPointer = dataPointer;
   }
 
-  public OCachePointer(byte[] data) {
+  public OCachePointer(byte[] data, OLogSequenceNumber lastFlushedLsn) {
+    super(true, 300000, false);
+    this.lastFlushedLsn = lastFlushedLsn;
     dataPointer = directMemory.allocate(data);
   }
 
-  public void incrementReferrer() {
+  OLogSequenceNumber getLastFlushedLsn() {
+    return lastFlushedLsn;
+  }
+
+  void setLastFlushedLsn(OLogSequenceNumber lastFlushedLsn) {
+    this.lastFlushedLsn = lastFlushedLsn;
+  }
+
+  void incrementReferrer() {
     referrersCount.incrementAndGet();
   }
 
-  public void decrementReferrer() {
+  void decrementReferrer() {
     if (referrersCount.decrementAndGet() == 0) {
       directMemory.free(dataPointer);
     }
   }
 
-  public void incrementUsages() {
-    usagesCounter.incrementAndGet();
-  }
-
-  public void decrementUsages() {
-    usagesCounter.decrementAndGet();
-  }
-
-  public int getUsagesCount() {
-    return usagesCounter.get();
-  }
-
   public long getDataPointer() {
     return dataPointer;
+  }
+
+  @Override
+  public void acquireExclusiveLock() {
+    super.acquireExclusiveLock();
+  }
+
+  @Override
+  public boolean tryAcquireExclusiveLock() {
+    return super.tryAcquireExclusiveLock();
+  }
+
+  @Override
+  public void releaseExclusiveLock() {
+    super.releaseExclusiveLock();
   }
 
   @Override
@@ -96,7 +119,7 @@ public class OCachePointer {
 
   @Override
   public String toString() {
-    return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCounter=" + usagesCounter + ", dataPointer="
+    return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + ", dataPointer="
         + dataPointer + '}';
   }
 }
