@@ -122,8 +122,9 @@ public class OSBTreeBucket<K> {
 
     int size = size();
     if (entryIndex < size - 1) {
-      directMemory.copyData(cachePointer + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, cachePointer + entryIndex
-          * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
+      directMemory.copyData(cachePointer + POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, cachePointer
+          + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1)
+          * OIntegerSerializer.INT_SIZE);
     }
 
     size--;
@@ -132,13 +133,14 @@ public class OSBTreeBucket<K> {
     if (size > 0) {
       int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, cachePointer + FREE_POINTER_OFFSET);
       if (entryPosition > freePointer) {
-        directMemory.copyData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+        directMemory.copyData(cachePointer + freePointer, cachePointer + freePointer + entrySize, entryPosition - freePointer);
       }
       OIntegerSerializer.INSTANCE
           .serializeInDirectMemory(freePointer + entrySize, directMemory, cachePointer + FREE_POINTER_OFFSET);
     }
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
+
     for (int i = 0; i < size; i++) {
       int currentEntryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, cachePointer
           + currentPositionOffset);

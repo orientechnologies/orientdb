@@ -107,4 +107,95 @@ public class LocalSBTreeTest {
     for (int key : keys)
       Assert.assertEquals(localSBTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
   }
+
+  public void testKeyDeleteRandomUniform() {
+    HashSet<Integer> keys = new HashSet<Integer>();
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      localSBTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      keys.add(i);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0)
+        localSBTree.remove(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0) {
+        Assert.assertNull(localSBTree.get(key));
+      } else {
+        Assert.assertEquals(localSBTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      }
+    }
+  }
+
+  public void testKeyDeleteRandomGaussian() {
+    HashSet<Integer> keys = new HashSet<Integer>();
+
+    MersenneTwisterFast random = new MersenneTwisterFast();
+    while (keys.size() < KEYS_COUNT) {
+      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
+      if (key < 0)
+        continue;
+
+      localSBTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      keys.add(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0)
+        localSBTree.remove(key);
+    }
+
+    for (int key : keys) {
+      if (key % 3 == 0) {
+        Assert.assertNull(localSBTree.get(key));
+      } else {
+        Assert.assertEquals(localSBTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      }
+    }
+  }
+
+  public void testKeyDelete() {
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      localSBTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+    }
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0)
+        Assert.assertEquals(localSBTree.remove(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+    }
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0)
+        Assert.assertNull(localSBTree.get(i));
+      else
+        Assert.assertEquals(localSBTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+    }
+  }
+
+  public void testKeyAddDelete() {
+    for (int i = 0; i < KEYS_COUNT; i++)
+      localSBTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0)
+        Assert.assertEquals(localSBTree.remove(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+      if (i % 2 == 0)
+        localSBTree.put(KEYS_COUNT + i,
+            new ORecordId((KEYS_COUNT + i) % 32000, OClusterPositionFactory.INSTANCE.valueOf(KEYS_COUNT + i)));
+    }
+
+    for (int i = 0; i < KEYS_COUNT; i++) {
+      if (i % 3 == 0)
+        Assert.assertNull(localSBTree.get(i));
+      else
+        Assert.assertEquals(localSBTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+      if (i % 2 == 0)
+        Assert.assertEquals(localSBTree.get(KEYS_COUNT + i), new ORecordId((KEYS_COUNT + i) % 32000,
+            OClusterPositionFactory.INSTANCE.valueOf(KEYS_COUNT + i)));
+    }
+  }
 }

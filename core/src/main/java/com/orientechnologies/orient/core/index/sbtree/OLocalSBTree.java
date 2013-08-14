@@ -245,6 +245,32 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
+  public ORID remove(K key) {
+    acquireExclusiveLock();
+    try {
+      BucketSearchResult bucketSearchResult = findBucket(key);
+      if (bucketSearchResult.index < 0)
+        return null;
+
+      long keyBucketPointer = diskCache.load(fileId, bucketSearchResult.pageIndex);
+      try {
+        OSBTreeBucket<K> keyBucket = new OSBTreeBucket<K>(keyBucketPointer, keySerializer);
+
+        final ORID removed = keyBucket.getEntry(bucketSearchResult.index).value;
+
+        keyBucket.remove(bucketSearchResult.index);
+        return removed;
+      } finally {
+        diskCache.markDirty(fileId, bucketSearchResult.pageIndex);
+        diskCache.release(fileId, bucketSearchResult.pageIndex);
+      }
+    } catch (IOException e) {
+      throw new OIndexException("Error during removing key " + key + " from sbtree " + name, e);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   private BucketSearchResult splitBucket(long pageIndex, int keyIndex) throws IOException {
     long bucketPointer = diskCache.load(fileId, pageIndex);
     try {
@@ -260,13 +286,13 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
       for (int i = startRightIndex; i < bucketSize; i++)
         rightEntries.add(bucketToSplit.getEntry(i));
 
-      long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
-      long rightBucketPointer = diskCache.load(fileId, rightBucketPageIndex);
-      try {
-        OSBTreeBucket<K> newRightBucket = new OSBTreeBucket<K>(rightBucketPointer, bucketToSplit.isLeaf(), keySerializer);
-        newRightBucket.addAll(rightEntries);
+      if (pageIndex != ROOT_INDEX) {
+        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
+        long rightBucketPointer = diskCache.load(fileId, rightBucketPageIndex);
+        try {
+          OSBTreeBucket<K> newRightBucket = new OSBTreeBucket<K>(rightBucketPointer, bucketToSplit.isLeaf(), keySerializer);
+          newRightBucket.addAll(rightEntries);
 
-        if (pageIndex != ROOT_INDEX) {
           bucketToSplit.shrink(indexToSplit);
 
           long parentIndex = bucketToSplit.getParent();
@@ -298,44 +324,53 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
             diskCache.markDirty(fileId, parentIndex);
             diskCache.release(fileId, parentIndex);
           }
+        } finally {
+          diskCache.markDirty(fileId, rightBucketPageIndex);
+          diskCache.release(fileId, rightBucketPageIndex);
+        }
+        if (keyIndex < indexToSplit)
+          return new BucketSearchResult(keyIndex, pageIndex);
 
-          if (keyIndex < indexToSplit)
-            return new BucketSearchResult(keyIndex, pageIndex);
+        return new BucketSearchResult(keyIndex - indexToSplit, rightBucketPageIndex);
+      } else {
+        final List<OSBTreeBucket.SBTreeEntry<K>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K>>(indexToSplit);
 
-          return new BucketSearchResult(keyIndex - indexToSplit, rightBucketPageIndex);
-        } else {
-          final List<OSBTreeBucket.SBTreeEntry<K>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K>>(indexToSplit);
+        for (int i = 0; i < indexToSplit; i++)
+          leftEntries.add(bucketToSplit.getEntry(i));
 
-          for (int i = 0; i < indexToSplit; i++)
-            leftEntries.add(bucketToSplit.getEntry(i));
+        long leftBucketPageIndex = diskCache.getFilledUpTo(fileId);
+        long leftBucketPointer = diskCache.load(fileId, leftBucketPageIndex);
 
-          long leftBucketPageIndex = diskCache.getFilledUpTo(fileId);
-          long leftBucketPointer = diskCache.load(fileId, leftBucketPageIndex);
+        try {
+          OSBTreeBucket<K> newLeftBucket = new OSBTreeBucket<K>(leftBucketPointer, bucketToSplit.isLeaf(), keySerializer);
+          newLeftBucket.addAll(leftEntries);
 
-          try {
-            OSBTreeBucket<K> newLeftBucket = new OSBTreeBucket<K>(leftBucketPointer, bucketToSplit.isLeaf(), keySerializer);
-            newLeftBucket.addAll(leftEntries);
+          newLeftBucket.setParent(pageIndex);
+          diskCache.markDirty(fileId, leftBucketPageIndex);
+        } finally {
+          diskCache.release(fileId, leftBucketPageIndex);
+        }
 
-            newLeftBucket.setParent(pageIndex);
-          } finally {
-            diskCache.markDirty(fileId, leftBucketPageIndex);
-            diskCache.release(fileId, leftBucketPageIndex);
-          }
+        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
+        long rightBucketPointer = diskCache.load(fileId, rightBucketPageIndex);
+        try {
+          OSBTreeBucket<K> newRightBucket = new OSBTreeBucket<K>(rightBucketPointer, bucketToSplit.isLeaf(), keySerializer);
+          newRightBucket.addAll(rightEntries);
 
           newRightBucket.setParent(pageIndex);
-
-          bucketToSplit = new OSBTreeBucket<K>(bucketPointer, false, keySerializer);
-          bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketPageIndex, rightBucketPageIndex,
-              rightEntries.get(0).key, null));
-
-          if (keyIndex < indexToSplit)
-            return new BucketSearchResult(keyIndex, leftBucketPageIndex);
-
-          return new BucketSearchResult(keyIndex - indexToSplit, rightBucketPageIndex);
+          diskCache.markDirty(fileId, rightBucketPageIndex);
+        } finally {
+          diskCache.release(fileId, rightBucketPageIndex);
         }
-      } finally {
-        diskCache.markDirty(fileId, rightBucketPageIndex);
-        diskCache.release(fileId, rightBucketPageIndex);
+
+        bucketToSplit = new OSBTreeBucket<K>(bucketPointer, false, keySerializer);
+        bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketPageIndex, rightBucketPageIndex,
+            rightEntries.get(0).key, null));
+
+        if (keyIndex < indexToSplit)
+          return new BucketSearchResult(keyIndex, leftBucketPageIndex);
+
+        return new BucketSearchResult(keyIndex - indexToSplit, rightBucketPageIndex);
       }
     } finally {
       diskCache.markDirty(fileId, pageIndex);
