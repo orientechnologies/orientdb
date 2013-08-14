@@ -15,7 +15,7 @@ public interface ODiskCache {
 
   void markDirty(long fileId, long pageIndex);
 
-  long load(long fileId, long pageIndex) throws IOException;
+  OCachePointer load(long fileId, long pageIndex) throws IOException;
 
   void release(long fileId, long pageIndex);
 

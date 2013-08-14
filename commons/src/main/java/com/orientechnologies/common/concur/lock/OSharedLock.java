@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.client.remote;
+package com.orientechnologies.common.concur.lock;
 
-import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
+import java.util.concurrent.locks.ReadWriteLock;
 
-public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
-  public static OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
+/**
+ * Lock that uses the write lock of a reader writer lock object.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
+ */
+public class OSharedLock extends OAbstractLock {
+  private final ReadWriteLock lock;
 
-  public class OStorageRemoteSession {
-    public boolean commandExecuting = false;
-    public Integer sessionId        = -1;
-    public String  serverURL        = null;
+  public OSharedLock(final ReadWriteLock iLock) {
+    lock = iLock;
   }
 
-  @Override
-  protected OStorageRemoteSession initialValue() {
-    return new OStorageRemoteSession();
+  public void lock() {
+    lock.readLock().lock();
+  }
+
+  public void unlock() {
+    lock.readLock().unlock();
   }
 }

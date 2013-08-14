@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
@@ -69,7 +70,7 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
-    diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
+    diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
@@ -903,8 +904,8 @@ public class LocalPaginatedClusterTest {
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(record, OVersionFactory.instance().createVersion(),
         (byte) 1, null);
 
-    long pagePointer = diskCache.load(1, 0);
-    OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    OCachePointer pagePointer = diskCache.load(1, 0);
+    OLocalPage page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
     int recordPageOffset = page.getRecordPageOffset(physicalPosition.clusterPosition.intValue());
 
     byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(physicalPosition.clusterPosition.intValue()));
@@ -928,8 +929,8 @@ public class LocalPaginatedClusterTest {
 
     record = OSnappyCompression.INSTANCE.compress(record);
 
-    long pagePointer = diskCache.load(1, 0);
-    OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    OCachePointer pagePointer = diskCache.load(1, 0);
+    OLocalPage page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
     int recordPageOffset = page.getRecordPageOffset(physicalPosition.clusterPosition.intValue());
 
     byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(physicalPosition.clusterPosition.intValue()));
@@ -951,8 +952,8 @@ public class LocalPaginatedClusterTest {
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(record, OVersionFactory.instance().createVersion(),
         (byte) 1, null);
 
-    long pagePointer = diskCache.load(1, 0);
-    OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    OCachePointer pagePointer = diskCache.load(1, 0);
+    OLocalPage page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
 
     Assert.assertEquals(page.getRecordSize(physicalPosition.clusterPosition.intValue()), ((int) (record.length * 1.5))
         + RECORD_SYSTEM_INFORMATION);
@@ -961,7 +962,7 @@ public class LocalPaginatedClusterTest {
     paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 2);
     physicalPosition = paginatedCluster.createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1, null);
     pagePointer = diskCache.load(1, 0);
-    page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
 
     Assert.assertEquals(page.getRecordSize(physicalPosition.clusterPosition.intValue()), record.length * 2
         + RECORD_SYSTEM_INFORMATION);
@@ -985,8 +986,8 @@ public class LocalPaginatedClusterTest {
 
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1, null);
 
-    long pagePointer = diskCache.load(1, 0);
-    OLocalPage page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    OCachePointer pagePointer = diskCache.load(1, 0);
+    OLocalPage page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
 
     Assert.assertEquals(page.getRecordSize(physicalPosition.clusterPosition.intValue()), record.length + RECORD_SYSTEM_INFORMATION);
     diskCache.release(1, 0);
@@ -997,7 +998,7 @@ public class LocalPaginatedClusterTest {
     paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1, null);
 
     pagePointer = diskCache.load(1, 0);
-    page = new OLocalPage(pagePointer, false, OLocalPage.TrackMode.NONE);
+    page = new OLocalPage(pagePointer.getDataPointer(), false, OLocalPage.TrackMode.NONE);
 
     int fullContentSize = 500 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE; // type + real size
 

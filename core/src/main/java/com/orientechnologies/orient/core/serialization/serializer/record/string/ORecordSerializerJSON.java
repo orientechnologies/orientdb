@@ -77,9 +77,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     public boolean attribSameRow;
     public boolean alwaysFetchEmbeddedDocuments;
     public int     indentLevel;
-    public String  fetchPlan  = null;
+    public String  fetchPlan   = null;
     public boolean keepTypes;
-    public boolean dateAsLong = false;
+    public boolean dateAsLong  = false;
+    public boolean prettyPrint = false;
 
     public FormatSettings(final String iFormat) {
       if (iFormat == null) {
@@ -88,7 +89,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeId = true;
         includeClazz = true;
         attribSameRow = true;
-        indentLevel = 0;
+        indentLevel = 1;
         fetchPlan = "";
         keepTypes = true;
         alwaysFetchEmbeddedDocuments = true;
@@ -99,7 +100,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeClazz = false;
         attribSameRow = false;
         alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 0;
+        indentLevel = 1;
         keepTypes = true;
 
         final String[] format = iFormat.split(",");
@@ -124,6 +125,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             alwaysFetchEmbeddedDocuments = true;
           else if (f.startsWith("dateAsLong"))
             dateAsLong = true;
+          else if (f.startsWith("prettyPrint"))
+            prettyPrint = true;
       }
     }
   }
@@ -569,7 +572,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
       final FormatSettings settings = new FormatSettings(iFormat);
 
-      json.beginObject(settings.indentLevel);
+      json.beginObject();
       OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
@@ -592,7 +595,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
             + "' to JSON. The record type cannot be exported to JSON");
 
-      json.endObject(settings.indentLevel);
+      json.endObject(0, true);
 
       iOutput.append(buffer);
       return iOutput;
